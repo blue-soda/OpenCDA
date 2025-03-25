@@ -88,27 +88,34 @@ def draw_waypoints(world, waypoints, z=0.5):
         world.debug.draw_point(begin, size=0.1, life_time=1.0)
 
 
-def get_speed(vehicle, meters=False):
+def get_speed(vehicle, meters=False, return_direction=False):
     """
-    Compute speed of a vehicle in Km/h.
-
+    Compute speed of a vehicle and optionally its direction.
     Parameters
     ----------
-    meters : bool
-        Whether to use m/s (True) or km/h (False).
-
-    vehicle : carla.vehicle
+    vehicle : carla.Vehicle
         The vehicle for which speed is calculated.
-
+    meters : bool, optional
+        Whether to use m/s (True) or km/h (False).
+    return_direction : bool, optional
+        Whether to return the direction of the velocity vector.
     Returns
     -------
     speed : float
         The vehicle speed.
+    direction : tuple, optional
+        A tuple (x, y, z) representing the normalized velocity direction vector.
     """
+    # Calculate speed
     vel = vehicle.get_velocity()
     vel_meter_per_second = math.sqrt(vel.x ** 2 + vel.y ** 2 + vel.z ** 2)
-    return vel_meter_per_second if meters else 3.6 * vel_meter_per_second
-
+    speed = vel_meter_per_second if meters else 3.6 * vel_meter_per_second
+    if not return_direction:
+        return speed
+    # Calculate direction
+    magnitude = vel_meter_per_second if vel_meter_per_second != 0 else 1  # Avoid division by zero
+    direction = (vel.x / magnitude, vel.y / magnitude, vel.z / magnitude)
+    return speed, direction
 
 def get_acc(vehicle, meters=False):
     """

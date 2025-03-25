@@ -552,8 +552,8 @@ class PerceptionManager:
         data.update(ego_data)
 
         if self.enable_communicate:
-            nearby_objects = self.co_manager.communicate()
-            for vid, nearby_data_dict in nearby_objects.items():
+            nearby_vehicles = self.co_manager.communicate()
+            for vid, nearby_data_dict in nearby_vehicles.items():
                 nearby_vm = nearby_data_dict['vehicle_manager']
                 nearby_v2x_manager = nearby_data_dict['v2x_manager']
                 nearby_data = self.co_manager.prepare_data(
@@ -617,7 +617,7 @@ class PerceptionManager:
         rgb_images = []
         for rgb_camera in self.rgb_camera:
             while rgb_camera.image is None:
-                print("no camera.image")
+                #print("no camera.image")
                 continue
             rgb_images.append(
                 cv2.cvtColor(

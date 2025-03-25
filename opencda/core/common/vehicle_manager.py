@@ -11,8 +11,10 @@ from opencda.core.actuation.control_manager \
     import ControlManager
 from opencda.core.application.platooning.platoon_behavior_agent\
     import PlatooningBehaviorAgent
-from opencda.core.common.v2x_manager \
-    import V2XManager
+# from opencda.core.common.v2x_manager \
+#     import V2XManager
+from opencda.customize.core.v2x.extended_v2x_manager \
+    import ExtendedV2XManager as V2XManager
 from opencda.core.sensing.localization.localization_manager \
     import LocalizationManager
 from opencda.core.sensing.perception.perception_manager \
@@ -144,6 +146,7 @@ class VehicleManager(object):
         else:
             self.data_dumper = None
 
+        self.pre_obejcts_num = 0
         cav_world.update_vehicle_manager(self)
 
 
@@ -187,11 +190,15 @@ class VehicleManager(object):
 
         ego_pos = self.localizer.get_ego_pos()
         ego_spd = self.localizer.get_ego_spd()
+        ego_dir = self.localizer.get_ego_dir()
         ego_lidar = self.perception_manager.lidar
         ego_image = self.perception_manager.rgb_camera
 
         # object detection
         objects = self.perception_manager.detect(ego_pos)
+        if len(objects['vehicles']) > self.pre_obejcts_num:
+            print('detect objects:', len(objects['vehicles']), ' vehicles.')
+        self.pre_obejcts_num = len(objects['vehicles'])
         # print('objects:', objects)
 
         # update the ego pose for map manager
@@ -208,7 +215,7 @@ class VehicleManager(object):
 
         # update ego position and speed to v2x manager,
         # and then v2x manager will search the nearby cavs
-        self.v2x_manager.update_info(ego_pos, ego_spd, ego_lidar, ego_image)
+        self.v2x_manager.update_info(ego_pos, ego_spd, ego_lidar, ego_image, ego_dir)
 
         self.agent.update_information(ego_pos, ego_spd, objects)
         # pass position and speed info to controller

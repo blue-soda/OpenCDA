@@ -70,6 +70,7 @@ class V2XManager(object):
         # ego position buffer. use deque so we can simulate lagging
         self.ego_pos = deque(maxlen=100)
         self.ego_spd = deque(maxlen=100)
+        self.ego_dir = deque(maxlen=100)
         # ego sensor buffer. Use deque so we can simulate lagging
         self.ego_lidar = deque(maxlen=100)
         self.ego_image = deque(maxlen=100)
@@ -93,7 +94,7 @@ class V2XManager(object):
         if 'lag' in config_yaml:
             self.lag = config_yaml['lag']
 
-    def update_info(self, ego_pos, ego_spd, ego_lidar, ego_image):
+    def update_info(self, ego_pos, ego_spd, ego_lidar, ego_image, ego_dir=None):
         """
         Update all communication plugins with current localization info.
         """
@@ -101,6 +102,9 @@ class V2XManager(object):
         self.ego_spd.append(ego_spd)
         self.ego_lidar.append(ego_lidar)
         self.ego_image.append(ego_image)
+        if ego_dir:
+            self.ego_dir.append(ego_dir)
+        #print('update_info:', ego_pos, ego_spd, ego_dir)
         self.search()
 
         # the ego pos in platooning_plugin is used for self-localization,
@@ -154,6 +158,14 @@ class V2XManager(object):
 
         return processed_ego_speed
 
+    def get_ego_dir(self):
+        if not self.ego_dir:
+            return None
+        # add lag
+        ego_dir = self.ego_dir[0] if len(self.ego_dir) < self.lag else \
+            self.ego_dir[-1 - int(abs(self.lag))]
+        return ego_dir
+    
     def get_ego_lidar(self):
         if not self.ego_lidar:
             return
@@ -168,7 +180,7 @@ class V2XManager(object):
             self.ego_image[-1 - int(abs(self.lag))]
         return image
 
-    def search(self):
+    def search(self):  # can be viewed as Beaconing
         """
         Search the CAVs nearby.
         """

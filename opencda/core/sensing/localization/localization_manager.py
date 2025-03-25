@@ -177,6 +177,7 @@ class LocalizationManager(object):
         # speed and transform and current timestamp
         self._ego_pos = None
         self._speed = 0
+        self._direction = None
 
         # history track
         self._ego_pos_history = deque(maxlen=100)
@@ -205,9 +206,9 @@ class LocalizationManager(object):
 
         if not self.activate:
             self._ego_pos = self.vehicle.get_transform()
-            self._speed = get_speed(self.vehicle)
+            self._speed, self._direction = get_speed(self.vehicle, return_direction=True)
         else:
-            speed_true = get_speed(self.vehicle)
+            speed_true, self._direction = get_speed(self.vehicle, return_direction=True)
             speed_noise = self.add_speed_noise(speed_true)
 
             # gnss coordinates under ESU(Unreal coordinate system)
@@ -306,6 +307,12 @@ class LocalizationManager(object):
         """
         return self._speed
 
+    def get_ego_dir(self):
+        """
+        Retrieve ego vehicle direction
+        """
+        return self._direction
+    
     def destroy(self):
         """
         Destroy the sensors
