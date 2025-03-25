@@ -49,7 +49,7 @@ def main():
     # set the default yaml file
     default_yaml = config_yaml = os.path.join(
         os.path.dirname(os.path.realpath(__file__)),
-        'opencda/scenario_testing/config_yaml/mydefault.yaml')
+        'opencda/scenario_testing/config_yaml/default.yaml')
     # set the yaml file for the specific testing scenario
     config_yaml = os.path.join(os.path.dirname(os.path.realpath(__file__)),
                                'opencda/scenario_testing/config_yaml/%s.yaml' % opt.test_scenario)

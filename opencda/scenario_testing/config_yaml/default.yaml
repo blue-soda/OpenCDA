@@ -59,12 +59,13 @@ rsu_base:
 vehicle_base:
   sensing: # include perception and localization
     perception:
-      activate: true # when not activated, objects positions will be retrieved from server directly
+      #activate: true # when not activated, objects positions will be retrieved from server directly. Deprecated, please use --apply_ml.
+      #coperception: true # whether to use the co-perception. Deprecated, please use --apply_cp.
       camera:
         visualize: 4
         num: 4
         positions:
-          - [2.5, 0, 1.0, 0]
+          - [3.2, 0, 1.3, 0]
           - [0.0, 0.3, 1.8, 100]
           - [0.0, -0.3, 1.8, -100]
           - [-2.0, 0.0, 1.5, 180]
