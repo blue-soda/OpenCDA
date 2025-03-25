@@ -8,7 +8,6 @@ Scenario testing: Single vehicle dring in the customized 2 lane highway map.
 import os
 
 import carla
-
 import opencda.scenario_testing.utils.sim_api as sim_api
 import opencda.scenario_testing.utils.customized_map_api as map_api
 
@@ -28,10 +27,11 @@ def run_scenario(opt, scenario_params):
             '../assets/2lane_freeway_simplified/2lane_freeway_simplified.xodr')
 
         # create CAV world
-        cav_world = CavWorld(opt.apply_ml)
+        cav_world = CavWorld(opt.apply_ml, apply_coperception=opt.apply_cp, coperception_params=scenario_params['coperception'])
         # create scenario manager
         scenario_manager = sim_api.ScenarioManager(scenario_params,
                                                    opt.apply_ml,
+                                                   opt.apply_cp,
                                                    opt.version,
                                                    xodr_path=xodr_path,
                                                    cav_world=cav_world)

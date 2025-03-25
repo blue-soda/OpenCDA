@@ -50,12 +50,14 @@ class CavWorld(object):
         if apply_ml and apply_coperception:
             ml_manager = getattr(importlib.import_module(
                 "opencda.customize.ml_libs.opencood_manager"), 'OpenCOODManager')
+            print("opencda.customize.ml_libs.opencood_manager", 'OpenCOODManager')
             self.ml_manager = ml_manager(coperception_params)
         elif apply_ml:
             # we import in this way so the user don't need to install ml
             # packages unless they require to
             ml_manager = getattr(importlib.import_module(
                 "opencda.customize.ml_libs.ml_manager"), 'MLManager')
+            print("opencda.customize.ml_libs.ml_manager", 'MLManager')
             # initialize the ml manager to load the DL/ML models into memory
             self.ml_manager = ml_manager()
         # this is used only when co-simulation activated.

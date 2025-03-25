@@ -9,10 +9,11 @@ dependencies:
     - numpy
     - open3d
     - opencv-python==4.5.5.62
-    - cython
+    - cython==3.0.12
     - pygame
     - tensorboardX
     - shapely==2.0.0
     - einops
     - cumm
     - timm
+    - spconv-cu117

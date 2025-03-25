@@ -30,6 +30,9 @@ def arg_parse():
                         action='store_true',
                         help='whether ml/dl framework such as sklearn/pytorch is needed in the testing. '
                              'Set it to true only when you have installed the pytorch/sklearn package.')
+    parser.add_argument("--apply_cp",
+                        action='store_true',
+                        help='whether to apply coperception.')
     parser.add_argument('-v', "--version", type=str, default='0.9.11',
                         help='Specify the CARLA simulator version, default'
                              'is 0.9.11, 0.9.12 is also supported.')
@@ -46,7 +49,7 @@ def main():
     # set the default yaml file
     default_yaml = config_yaml = os.path.join(
         os.path.dirname(os.path.realpath(__file__)),
-        'opencda/scenario_testing/config_yaml/default.yaml')
+        'opencda/scenario_testing/config_yaml/mydefault.yaml')
     # set the yaml file for the specific testing scenario
     config_yaml = os.path.join(os.path.dirname(os.path.realpath(__file__)),
                                'opencda/scenario_testing/config_yaml/%s.yaml' % opt.test_scenario)
@@ -86,8 +89,14 @@ def main():
 
     # get the function for running the scenario from the testing script
     scenario_runner = getattr(testing_scenario, 'run_scenario')
-    # run the scenario testing
-    scenario_runner(opt, scene_dict, experiment_dict)
+
+    from opencda.constants import Profile
+    experiment_profile = Profile.PREDICTION_OPENCOOD_CAV
+    for profile in experiment_profile.profiles():
+        scenario_params = OmegaConf.merge(scene_dict, experiment_dict[profile])
+    scenario_params['vehicle_base']['sensing']['perception']['coperception'] = opt.apply_cp
+    scenario_params['vehicle_base']['sensing']['perception']['activate'] = opt.apply_ml
+    scenario_runner(opt, scenario_params)
 
 
 if __name__ == '__main__':

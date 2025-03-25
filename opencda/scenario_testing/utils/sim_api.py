@@ -167,8 +167,9 @@ class ScenarioManager:
     """
 
     def __init__(self, scenario_params,
-                 apply_ml,
-                 carla_version,
+                 apply_ml=False,
+                 apply_cp=False,
+                 carla_version='0.9.11',
                  xodr_path=None,
                  town=None,
                  cav_world=None):
@@ -237,6 +238,7 @@ class ScenarioManager:
         self.cav_world = cav_world
         self.carla_map = self.world.get_map()
         self.apply_ml = apply_ml
+        self.apply_cp = apply_cp
 
     @staticmethod
     def set_weather(weather_settings):
@@ -472,7 +474,7 @@ class ScenarioManager:
         """
         print('Creating platoons/')
         platoon_list = []
-        self.cav_world = CavWorld(self.apply_ml)
+        self.cav_world = CavWorld(self.apply_ml, self.apply_cp)
 
         # we use lincoln as default choice since our UCLA mobility lab use the
         # same car

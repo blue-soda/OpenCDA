@@ -26,8 +26,10 @@ class MLManager(object):
 
     def __init__(self):
 
-        self.object_detector = torch.hub.load('ultralytics/yolov5', 'yolov5m')
-
+        #self.object_detector = torch.hub.load('ultralytics/yolov5', 'yolov5m')
+        from yolov5 import YOLOv5
+        self.object_detector = YOLOv5('yolov5m.pt').predict
+        
     def draw_2d_box(self, result, rgb_image, index):
         """
         Draw 2d bounding box based on the yolo detection.

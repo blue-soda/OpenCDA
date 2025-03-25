@@ -192,6 +192,7 @@ class VehicleManager(object):
 
         # object detection
         objects = self.perception_manager.detect(ego_pos)
+        print('objects:', objects)
 
         # update the ego pose for map manager
         self.map_manager.update_information(ego_pos)

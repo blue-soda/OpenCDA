@@ -429,6 +429,13 @@ class PerceptionManager:
             self.lidar = None
             self.o3d_vis = None
 
+        if self.activate:
+            if self.coperception:
+                print("coperception mode")
+            else:
+                print("activate mode")
+        else:
+            print("deactivate mode")
         # if data dump is true, semantic lidar is also spawned
         self.data_dump = data_dump
         if data_dump:
@@ -610,6 +617,7 @@ class PerceptionManager:
         rgb_images = []
         for rgb_camera in self.rgb_camera:
             while rgb_camera.image is None:
+                print("no camera.image")
                 continue
             rgb_images.append(
                 cv2.cvtColor(
@@ -619,6 +627,7 @@ class PerceptionManager:
 
         # yolo detection
         yolo_detection = self.ml_manager.object_detector(rgb_images)
+        #print(yolo_detection.xyxy)
         # rgb_images for drawing
         rgb_draw_images = []
 

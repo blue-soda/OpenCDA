@@ -14,3 +14,4 @@ seaborn
 lxml
 shapely==1.8.4
 omegaconf
+yolov5==7.0.0
