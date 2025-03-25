@@ -2,8 +2,8 @@ enable_coperception:
   vehicle_base: &vehicle_base
     sensing: &base_sensing
       perception: &base_perception
-        activate: true
-        coperception: true
+        activate: true # Deprecated, please use --apply_ml.
+        coperception: true # Deprecated, please use --apply_cp.
         enable_communicate: true
         enable_show_gt: true
     v2x: &base_v2x # communication related

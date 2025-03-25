@@ -70,6 +70,7 @@ def car_blueprint_filter(blueprint_library, carla_version='0.9.11'):
         ]
 
     else:
+        print('carla version:', carla_version)
         blueprints = [
             blueprint_library.find('vehicle.audi.a2'),
             blueprint_library.find('vehicle.audi.tt'),
@@ -175,7 +176,7 @@ class ScenarioManager:
                  cav_world=None):
         self.scenario_params = scenario_params
         self.carla_version = carla_version
-
+        print('carla_version:', carla_version)
         simulation_config = scenario_params['world']
 
         # set random seed if stated

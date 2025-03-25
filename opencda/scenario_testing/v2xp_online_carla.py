@@ -15,7 +15,7 @@ from opencda.scenario_testing.evaluations.evaluate_manager import \
 from opencda.scenario_testing.utils.yaml_utils import add_current_time, save_yaml
 
 
-def run_scenario(opt, scenario_params, experiment_params=None):
+def run_scenario(opt, scenario_params):
     try:
         scenario_params = add_current_time(scenario_params)
 
@@ -27,6 +27,7 @@ def run_scenario(opt, scenario_params, experiment_params=None):
         # create scenario manager
         scenario_manager = sim_api.ScenarioManager(scenario_params,
                                                    opt.apply_ml,
+                                                   opt.apply_cp,
                                                    opt.version,
                                                    town='Town06',
                                                    cav_world=cav_world)

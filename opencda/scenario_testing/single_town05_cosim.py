@@ -30,6 +30,7 @@ def run_scenario(opt, scenario_params):
         scenario_manager = \
             sim_api.CoScenarioManager(scenario_params,
                                       opt.apply_ml,
+                                      opt.apply_cp,
                                       opt.version,
                                       town='Town05',
                                       cav_world=cav_world,

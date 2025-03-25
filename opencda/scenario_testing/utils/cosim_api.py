@@ -50,7 +50,7 @@ class CoScenarioManager(ScenarioManager):
 
     """
 
-    def __init__(self, scenario_params, apply_ml, carla_version,
+    def __init__(self, scenario_params, apply_ml, apply_cp=False, carla_version='0.9.11',
                  xodr_path=None,
                  town=None,
                  cav_world=None,
@@ -59,6 +59,7 @@ class CoScenarioManager(ScenarioManager):
         # manager
         super(CoScenarioManager, self).__init__(scenario_params,
                                                 apply_ml,
+                                                apply_cp,
                                                 carla_version,
                                                 xodr_path,
                                                 town,
