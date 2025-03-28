@@ -1,1 +1,6 @@
+opencood/logs/pointpillar_v2xvit_fusion/net_epoch60.pth filter=lfs diff=lfs merge=lfs -text
+opencood/logs/pointpillar_cobevt_fusion/net_epoch91.pth filter=lfs diff=lfs merge=lfs -text
+opencood/logs/pointpillar_attentive_fusion/latest.pth filter=lfs diff=lfs merge=lfs -text
+opencood/logs/pointpillar_early_fusion/latest.pth filter=lfs diff=lfs merge=lfs -text
+opencood/logs/pointpillar_late_fusion/net_epoch30.pth filter=lfs diff=lfs merge=lfs -text
 *.pth filter=lfs diff=lfs merge=lfs -text
