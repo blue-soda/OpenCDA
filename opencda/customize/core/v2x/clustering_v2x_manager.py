@@ -177,7 +177,7 @@ class ClusteringV2XManager(V2XManager):
             if similarity_score > adjusted_threshold and neighbor_data['cluster_head'] == neighbor_data['vid']:
                 # Exists a suitable cluster head candidate, join the cluster
                 self.cluster_state['cluster_head'] = neighbor_data['cluster_head']
-                print('Vehicle %s joined cluster %s with similarity_score %f' % (self.vid, self.cluster_state['cluster_head'], similarity_score))
+                print('Vehicle %s joined cluster %s with similarity_score %f\n' % (self.vid, self.cluster_state['cluster_head'], similarity_score))
 
         # Decide whether to join a cluster or create a new one
         if self.cluster_state['cluster_head'] is None:
@@ -187,7 +187,7 @@ class ClusteringV2XManager(V2XManager):
             if random.random() < p_create:
                 # Create a new cluster
                 self.cluster_state['cluster_head'] = self.vid
-                print(f'Vehicle {self.vid} created new cluster with p_create:{p_create}')
+                print(f'Vehicle {self.vid} created new cluster with p_create:{p_create}\n')
 
         self.update_cluster_membership()
         self.elect_cluster_head()
@@ -205,7 +205,7 @@ class ClusteringV2XManager(V2XManager):
             similarity_score = self.cluster_state['similarity_scores'].get(vid, 0)
             if similarity_score < self.cluster_params['eta_leave']:
                 self.cluster_state['members'].pop(vid, None)
-                print(f'Vehicle {vid} left cluster {self.cluster_state["cluster_head"]} with similarity_score {similarity_score}')
+                print(f'Vehicle {vid} left cluster {self.cluster_state["cluster_head"]} with similarity_score {similarity_score}\n')
 
     def promote_shadow_head(self):
         """
@@ -217,12 +217,13 @@ class ClusteringV2XManager(V2XManager):
 
         # Elect a new shadow head if necessary
         if self.cluster_state['shadow_head'] is None:
-            self.elect_shadow_head()
+            self.elect_cluster_head()
+            return
         # Promote shadow head to cluster head
         self.cluster_state['cluster_head'] = self.cluster_state['shadow_head']
         self.cluster_state['shadow_head'] = None
         print(f'Shadow cluster head Vehicle {self.cluster_state["cluster_head"]} has been promoted to cluster head')
-        self.elect_shadow_head()
+        self.elect_cluster_head()
 
     def elect_cluster_head(self):
         """
@@ -243,15 +244,16 @@ class ClusteringV2XManager(V2XManager):
                 elif member_data['priority_score'] > second_highest_priority:
                     second_highest_priority = member_data['priority_score']
                     cluster_head = vid
-        if shadow_head is not None:
-            self.cluster_state['shadow_head'] = shadow_head
-            print('Vehicle %s elected shadow cluster head with priority_score %f' % (self.vid, second_highest_priority))
-        if cluster_head is not None:
+                    
+        if cluster_head is not None and self.cluster_state['cluster_head'] is None:
             self.cluster_state['cluster_head'] = cluster_head
-            print('Vehicle %s elected cluster head with priority_score' % (self.vid, highest_priority))
+        if shadow_head is not None and self.cluster_state['shadow_head'] is None:
+            self.cluster_state['shadow_head'] = shadow_head
+
         members = [vid for vid in self.cluster_state['members']]
-        print('cluster members: ', members)
-        
+        if self.vid == self.cluster_state['cluster_head']:
+            print(f"cluster head:{self.vid}, shadow head:{self.cluster_state['shadow_head']}, cluster members:{members}\n")
+
     def search(self, receive_beacons=False):
         """
         Search for nearby vehicles and update cluster state based on received beacons.
@@ -295,6 +297,8 @@ class ClusteringV2XManager(V2XManager):
                         # Cluster head has moved out of range
                         self.cluster_state['cluster_head'] = None
                         self.promote_shadow_head()
+                    elif vid == self.cluster_state['shadow_head']:
+                        self.cluster_state['shadow_head'] = None
                 # Update cluster membership
                 self.update_cluster()
             

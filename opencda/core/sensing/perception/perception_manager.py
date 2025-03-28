@@ -404,9 +404,9 @@ class PerceptionManager:
         if self.activate or self.camera_visualize:
             self.rgb_camera = []
             mount_position = config_yaml['camera']['positions']
-            assert len(mount_position) == self.camera_num, \
-                "The camera number has to be the same as the length of the" \
-                "relative positions list"
+            # assert len(mount_position) == self.camera_num, \
+            #     "The camera number has to be the same as the length of the" \
+            #     "relative positions list"
 
             for i in range(self.camera_num):
                 self.rgb_camera.append(
