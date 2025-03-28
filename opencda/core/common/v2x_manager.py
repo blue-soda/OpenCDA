@@ -180,7 +180,7 @@ class V2XManager(object):
             self.ego_image[-1 - int(abs(self.lag))]
         return image
 
-    def search(self):  # can be viewed as Beaconing
+    def search(self):
         """
         Search the CAVs nearby.
         """

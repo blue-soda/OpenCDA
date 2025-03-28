@@ -20,12 +20,21 @@ def calculate_cos(direction1, direction2):
 def sigmoid(x):
     return 1 / (1 + math.exp(-x))
 
-class ExtendedV2XManager(V2XManager):
+class ClusteringV2XManager(V2XManager):
+    Communication_Volume = 0.0
+    Instance_Nums = 0
+
     def __init__(self, cav_world, config_yaml, vid):
-        super(ExtendedV2XManager, self).__init__(cav_world, config_yaml, vid)
+        super(ClusteringV2XManager, self).__init__(cav_world, config_yaml, vid)
+
+        
         self.computing_capability = STANDARD_CAPABILITY
         self.cp_model = 'default_model'
-        print('ExtendedV2XManager initialized')
+
+        self.tick = 0
+        ClusteringV2XManager.Instance_Nums += 1
+        print(f'{ClusteringV2XManager.Instance_Nums} ExtendedV2XManager initialized')
+
         # 分簇协议相关参数
         self.cluster_params = {
             'd0': 50.0,           # 距离归一化参数 (单位: m)
@@ -202,7 +211,7 @@ class ExtendedV2XManager(V2XManager):
         """
         Update shadow head based on cluster head status and timeout.
         """
-        current_cluster_head = self.cluster_tate['cluster_head']
+        current_cluster_head = self.cluster_state['cluster_head']
         if current_cluster_head is None:
             return
 
@@ -243,40 +252,20 @@ class ExtendedV2XManager(V2XManager):
         members = [vid for vid in self.cluster_state['members']]
         print('cluster members: ', members)
         
-    def search(self):
+    def search(self, receive_beacons=False):
         """
         Search for nearby vehicles and update cluster state based on received beacons.
         """
         vehicle_manager_dict = self.cav_world.get_vehicle_managers()
-        print('searching for nearby vehicles')
-        # Broadcast beacon
-        #beacon = self.broadcast_beacon()
+
+        self.tick += 1
+        receive_beacons = self.tick >= 10 #send and receive beacon on 20/10=2(Hz)
 
         for vid, vm in vehicle_manager_dict.items():
             # Skip invalid or self
             if vid == self.vid or not vm.v2x_manager.get_ego_pos():
                 continue
-
-            # Receive beacon from neighbor
-            neighbor_beacon = vm.v2x_manager.beacon()
             distance = compute_distance(self.ego_pos[-1].location, vm.v2x_manager.get_ego_pos().location)
-
-            # Update neighbor information
-            if distance < self.communication_range:
-                self.cluster_state['neighbors'][vid] = neighbor_beacon
-                # Compute and store similarity score
-                self.cluster_state['similarity_scores'][vid] = self.compute_similarity(neighbor_beacon)
-            else:
-                self.cluster_state['neighbors'].pop(vid, None)
-                self.cluster_state['similarity_scores'].pop(vid, None)
-                if vid in self.cluster_state['members']:
-                    # Remove from cluster membership
-                    self.cluster_state['members'].pop(vid, None)
-                if vid == self.cluster_state['cluster_head']:
-                    # Cluster head has moved out of range
-                    self.cluster_state['cluster_head'] = None
-                    self.promote_shadow_head()
-                
             # update v2x_manager.cav_nearby
             if distance < self.communication_range:
                 self.cav_nearby.update({vm.vehicle.id: {
@@ -285,5 +274,27 @@ class ExtendedV2XManager(V2XManager):
                 }})
             else:
                 self.cav_nearby.pop(vm.vehicle.id, None)
-        # Update cluster membership
-        self.update_cluster()
+
+            if receive_beacons:
+                self.tick = 0
+                # Receive beacon from neighbor
+                neighbor_beacon = vm.v2x_manager.beacon()
+
+                # Update neighbor information
+                if distance < self.communication_range:
+                    self.cluster_state['neighbors'][vid] = neighbor_beacon
+                    # Compute and store similarity score
+                    self.cluster_state['similarity_scores'][vid] = self.compute_similarity(neighbor_beacon)
+                else:
+                    self.cluster_state['neighbors'].pop(vid, None)
+                    self.cluster_state['similarity_scores'].pop(vid, None)
+                    if vid in self.cluster_state['members']:
+                        # Remove from cluster membership
+                        self.cluster_state['members'].pop(vid, None)
+                    if vid == self.cluster_state['cluster_head']:
+                        # Cluster head has moved out of range
+                        self.cluster_state['cluster_head'] = None
+                        self.promote_shadow_head()
+                # Update cluster membership
+                self.update_cluster()
+            

@@ -18,7 +18,7 @@ from opencda.scenario_testing.utils.yaml_utils import add_current_time, save_yam
 def run_scenario(opt, scenario_params):
     try:
         scenario_params = add_current_time(scenario_params)
-
+        application = ['single', 'cooperative', 'cluster']
         # create CAV world
         cav_world = CavWorld(apply_ml=opt.apply_ml,
                              apply_coperception=True,
@@ -37,14 +37,19 @@ def run_scenario(opt, scenario_params):
                 start_recorder("v2xp_online_carla.log", True)
 
         single_cav_list = \
-            scenario_manager.create_vehicle_manager(application=['single', 'cooperative'],
-                                                    data_dump=False)
+            scenario_manager.create_vehicle_manager(application=application, data_dump=False)
         # rsu_list = \
         #     scenario_manager.create_rsu_manager(data_dump=False)
 
         # create background traffic in carla
         traffic_manager, bg_veh_list = \
             scenario_manager.create_traffic_carla()
+        
+        traffic_cav_list = []
+        if 'cluster' in application:
+            traffic_cav_list = \
+                scenario_manager.create_vehicle_manager_for_traffic(bg_veh_list)
+
 
         # create evaluation manager
         eval_manager = \
@@ -68,6 +73,9 @@ def run_scenario(opt, scenario_params):
                 single_cav.update_info()
                 control = single_cav.run_step()
                 single_cav.vehicle.apply_control(control)
+
+            for j, traffic_cav in enumerate(traffic_cav_list):
+                traffic_cav.update_info()
             # for rsu in rsu_list:
             #     rsu.update_info()
             #     rsu.run_step()
@@ -85,5 +93,9 @@ def run_scenario(opt, scenario_params):
             v.destroy()
         # for r in rsu_list:
         #     r.destroy()
-        for v in bg_veh_list:
-            v.destroy()
+        if 'cluster' in application:
+            for v in traffic_cav_list:
+                v.destroy()
+        else:
+            for v in bg_veh_list:
+                v.destroy()

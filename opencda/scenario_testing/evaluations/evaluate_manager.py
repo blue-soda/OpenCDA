@@ -70,7 +70,7 @@ class EvaluationManager(object):
 
         """
         lprint(log_file, "***********Kinematics Module***********")
-        for vid, vm in self.cav_world.get_vehicle_managers().items():
+        for vid, vm in self.cav_world.get_evaluate_vehicle_managers().items():
             actor_id = vm.vehicle.id
             lprint(log_file, 'Actor ID: %d' % actor_id)
 
@@ -94,7 +94,7 @@ class EvaluationManager(object):
             -log_file (File): The log file to write the data.
         """
         lprint(log_file, "***********Localization Module***********")
-        for vid, vm in self.cav_world.get_vehicle_managers().items():
+        for vid, vm in self.cav_world.get_evaluate_vehicle_managers().items():
             actor_id = vm.vehicle.id
             lprint(log_file, 'Actor ID: %d' % actor_id)
 

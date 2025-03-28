@@ -11,10 +11,10 @@ from opencda.core.actuation.control_manager \
     import ControlManager
 from opencda.core.application.platooning.platoon_behavior_agent\
     import PlatooningBehaviorAgent
-# from opencda.core.common.v2x_manager \
-#     import V2XManager
-from opencda.customize.core.v2x.extended_v2x_manager \
-    import ExtendedV2XManager as V2XManager
+from opencda.core.common.v2x_manager \
+    import V2XManager
+from opencda.customize.core.v2x.clustering_v2x_manager \
+    import ClusteringV2XManager
 from opencda.core.sensing.localization.localization_manager \
     import LocalizationManager
 from opencda.core.sensing.perception.perception_manager \
@@ -79,7 +79,7 @@ class VehicleManager(object):
             self,
             vehicle,
             config_yaml,
-            application,
+            application,  #['single', 'cooperative', 'traffic', 'cluster']
             carla_map,
             cav_world,
             current_time='',
@@ -90,6 +90,7 @@ class VehicleManager(object):
         self.vehicle = vehicle
         self.carla_map = carla_map
         self.cav_world = cav_world
+        self.application = application
         # retrieve the configure for different modules
         sensing_config = config_yaml['sensing']
         map_config = config_yaml['map_manager']
@@ -97,36 +98,48 @@ class VehicleManager(object):
         control_config = config_yaml['controller']
         v2x_config = config_yaml['v2x']
 
+        self.isTrafficVehicle = 'traffic' in application
         # v2x module
-        self.v2x_manager = V2XManager(cav_world, v2x_config, self.vid)
+        if 'cluster' in application:
+            self.v2x_manager = ClusteringV2XManager(cav_world, v2x_config, self.vid)
+        else:
+            self.v2x_manager = V2XManager(cav_world, v2x_config, self.vid)
+    
         # localization module
         self.localizer = LocalizationManager(
             vehicle, sensing_config['localization'], carla_map)
-        # map manager
-        self.map_manager = MapManager(vehicle,
-                                      carla_map,
-                                      map_config)
-        # safety manager
-        self.safety_manager = SafetyManager(vehicle=vehicle,
-                                            params=config_yaml['safety_manager'])
-
-        cav_world.update_global_ego_id(self.vehicle.id)
-        # behavior agent
-        self.agent = None
-        if 'platooning' in application:
-            platoon_config = config_yaml['platoon']
-            self.agent = PlatooningBehaviorAgent(
-                vehicle,
-                self,
-                self.v2x_manager,
-                behavior_config,
-                platoon_config,
-                carla_map)
+        
+        if self.isTrafficVehicle:
+            self.map_manager = None
+            self.safety_manager = None
+            self.agent = None
+            self.controller = None
         else:
-            self.agent = BehaviorAgent(vehicle, carla_map, behavior_config, self.cav_world.ego_id)
 
-        # Control module
-        self.controller = ControlManager(control_config)
+            # map manager
+            self.map_manager = MapManager(vehicle,
+                                        carla_map,
+                                        map_config)
+            # safety manager
+            self.safety_manager = SafetyManager(vehicle=vehicle,
+                                                params=config_yaml['safety_manager'])
+
+            cav_world.update_global_ego_id(self.vehicle.id)
+            # behavior agent
+            if 'platooning' in application:
+                platoon_config = config_yaml['platoon']
+                self.agent = PlatooningBehaviorAgent(
+                    vehicle,
+                    self,
+                    self.v2x_manager,
+                    behavior_config,
+                    platoon_config,
+                    carla_map)
+            else:
+                self.agent = BehaviorAgent(vehicle, carla_map, behavior_config, self.cav_world.ego_id)
+
+            # Control module
+            self.controller = ControlManager(control_config)
 
         # perception module
         # move it down here to pass in the behavior manager & localization manager
@@ -147,7 +160,8 @@ class VehicleManager(object):
             self.data_dumper = None
 
         self.pre_obejcts_num = 0
-        cav_world.update_vehicle_manager(self)
+        
+        cav_world.update_vehicle_manager(self, self.isTrafficVehicle)
 
 
     def set_destination(
@@ -194,6 +208,10 @@ class VehicleManager(object):
         ego_lidar = self.perception_manager.lidar
         ego_image = self.perception_manager.rgb_camera
 
+        if 'traffic' in self.application:
+            self.v2x_manager.update_info(ego_pos, ego_spd, ego_lidar, ego_image, ego_dir)
+            return
+        
         # object detection
         objects = self.perception_manager.detect(ego_pos)
         if len(objects['vehicles']) > self.pre_obejcts_num:
@@ -225,6 +243,8 @@ class VehicleManager(object):
         """
         Execute one step of navigation.
         """
+        if 'traffic' in self.application:
+            return
         # visualize the bev map if needed
         self.map_manager.run_step()
         target_speed, target_pos = self.agent.run_step(target_speed, self.cav_world.ego_id)
@@ -242,7 +262,11 @@ class VehicleManager(object):
         """
         Destroy the actor vehicle
         """
-        self.perception_manager.destroy()
-        self.localizer.destroy()
-        self.vehicle.destroy()
-        self.map_manager.destroy()
+        if self.perception_manager:
+            self.perception_manager.destroy()
+        if self.localizer:
+            self.localizer.destroy()
+        if self.vehicle:
+            self.vehicle.destroy()
+        if self.map_manager:
+            self.map_manager.destroy()

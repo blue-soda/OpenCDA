@@ -44,6 +44,7 @@ class CavWorld(object):
         self._vehicle_manager_dict = {}
         self._platooning_dict = {}
         self._rsu_manager_dict = {}
+        self._evaluate_vehicle_manager_dict = {}
         self.ml_manager = None
         self.ego_id = None
 
@@ -69,7 +70,7 @@ class CavWorld(object):
         """
         self.ego_id = min(self.vehicle_id_set) if len(self.vehicle_id_set) > 0 else id
 
-    def update_vehicle_manager(self, vehicle_manager):
+    def update_vehicle_manager(self, vehicle_manager, isTrafficVehicle):
         """
         Update created CAV manager to the world.
 
@@ -80,6 +81,9 @@ class CavWorld(object):
         """
         self.vehicle_id_set.add(vehicle_manager.vehicle.id)
         self._vehicle_manager_dict.update(
+            {vehicle_manager.vid: vehicle_manager})
+        if not isTrafficVehicle:
+            self._evaluate_vehicle_manager_dict.update(
             {vehicle_manager.vid: vehicle_manager})
 
     def update_platooning(self, platooning_manger):
@@ -122,6 +126,12 @@ class CavWorld(object):
         Return vehicle manager dictionary.
         """
         return self._vehicle_manager_dict
+    
+    def get_evaluate_vehicle_managers(self):
+        """
+        Return vehicle manager dictionary for evaluation.
+        """
+        return self._evaluate_vehicle_manager_dict
 
     def get_platoon_dict(self):
         """
