@@ -16,17 +16,6 @@ def _read_requirements_file():
     with open(req_file_path) as f:
         return [line.strip() for line in f]
 
-import numpy as np
-extensions = [
-    Extension(
-        "opencood.utils.box_overlaps",
-        sources=["opencood/utils/box_overlaps.pyx"],
-        include_dirs=[np.get_include()],  # 自动获取numpy头文件路径
-        extra_compile_args=[],
-    )
-]
-
-
 setup(
     name='OpenCOOD',
     version=__version__,
@@ -39,7 +28,4 @@ setup(
                 'cooperative detection',
     long_description = open("README.md", encoding="utf-8").read(),
     install_requires=_read_requirements_file(),
-
-    ext_modules=cythonize(extensions),
-    cmdclass={'build_ext': build_ext},
 )

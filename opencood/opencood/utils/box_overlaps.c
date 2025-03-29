@@ -4,9 +4,6 @@
 {
     "distutils": {
         "depends": [],
-        "extra_compile_args": [
-            "-O3"
-        ],
         "name": "opencood.utils.box_overlaps",
         "sources": [
             "opencood/utils/box_overlaps.pyx"
