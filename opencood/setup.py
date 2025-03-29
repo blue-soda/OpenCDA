@@ -6,9 +6,6 @@
 from os.path import dirname, realpath
 from setuptools import setup, find_packages, Distribution
 from opencood.version import __version__
-from Cython.Build import cythonize
-from setuptools import Extension
-from distutils.command.build_ext import build_ext
 
 def _read_requirements_file():
     """Return the elements in requirements.txt."""
