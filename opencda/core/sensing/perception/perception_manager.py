@@ -401,7 +401,7 @@ class PerceptionManager:
 
         # we only spawn the camera when perception module is activated or
         # camera visualization is needed
-        if self.activate or self.camera_visualize:
+        if 'camera' in config_yaml:
             self.rgb_camera = []
             mount_position = config_yaml['camera']['positions']
             # assert len(mount_position) == self.camera_num, \
@@ -419,7 +419,7 @@ class PerceptionManager:
 
         # we only spawn the LiDAR when perception module is activated or lidar
         # visualization is needed
-        if self.activate:
+        if 'lidar' in config_yaml:
             self.lidar = LidarSensor(vehicle,
                                      self.carla_world,
                                      config_yaml['lidar'],
