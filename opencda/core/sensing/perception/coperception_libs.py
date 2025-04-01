@@ -94,10 +94,30 @@ class CoperceptionLibs:
         gt_transformation_matrix = x1_to_x2(cur_cav_lidar_pose, cur_ego_lidar_pose)
         return {
             'transformation_matrix': transformation_matrix,
-            'gt_transformation_matrx': gt_transformation_matrix,
+            'gt_transformation_matrix': gt_transformation_matrix,
             'spatial_correction_matrix': spatial_correction_matrix
         }
 
+    @staticmethod
+    def load_transformation_matrix_from_pose(ego_pose, cav_pose):
+        """
+        TODO: needs revision to reflect the cur/delay params
+        """
+        delay_cav_lidar_pose = cav_pose
+        cur_cav_lidar_pose = cav_pose
+        cur_ego_lidar_pose = ego_pose
+        delay_ego_lidar_pose = ego_pose
+        #print('pose: ', ego_pose, cav_pose)
+
+        transformation_matrix = x1_to_x2(delay_cav_lidar_pose, delay_ego_lidar_pose)
+        spatial_correction_matrix = x1_to_x2(delay_ego_lidar_pose, cur_ego_lidar_pose)
+        gt_transformation_matrix = x1_to_x2(cur_cav_lidar_pose, cur_ego_lidar_pose)
+        return {
+            'transformation_matrix': transformation_matrix,
+            'gt_transformation_matrix': gt_transformation_matrix,
+            'spatial_correction_matrix': spatial_correction_matrix
+        }
+    
     @staticmethod
     def load_cur_lidar_pose(lidar):
         lidar_transformation = lidar.sensor.get_transform()
@@ -112,7 +132,8 @@ class CoperceptionLibs:
             ]
         }
 
-    def load_camera_data(self, lidar, rgb_camera):
+    @staticmethod
+    def load_camera_data(lidar, rgb_camera):
         data = {}
         for (i, camera) in enumerate(rgb_camera):
             camera_param = {}
@@ -128,7 +149,7 @@ class CoperceptionLibs:
 
             # dump intrinsic matrix
             camera_intrinsic = st.get_camera_intrinsic(camera.sensor)
-            camera_intrinsic = self.matrix2list(camera_intrinsic)
+            camera_intrinsic = CoperceptionLibs.matrix2list(camera_intrinsic)
             camera_param.update({'intrinsic': camera_intrinsic})
 
             # dump extrinsic matrix lidar2camera
@@ -139,7 +160,7 @@ class CoperceptionLibs:
 
             world2camera = np.linalg.inv(camera2world)
             lidar2camera = np.dot(world2camera, lidar2world)
-            lidar2camera = self.matrix2list(lidar2camera)
+            lidar2camera = CoperceptionLibs.matrix2list(lidar2camera)
             camera_param.update({'extrinsic': lidar2camera})
             data.update({'camera%d' % i: camera_param})
         return data
@@ -181,7 +202,7 @@ class CoperceptionLibs:
         data = {'RSU': True}
         if agent is not None:
             trajectory_deque = \
-                self.agent.get_local_planner().get_trajectory()
+                agent.get_local_planner().get_trajectory() #self.agent.get_local_planner().get_trajectory()
             trajectory_list = []
 
             for i in range(len(trajectory_deque)):

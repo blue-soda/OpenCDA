@@ -186,23 +186,23 @@ class IntermediateFusionDataset(basedataset.BaseDataset):
                     projected_lidar_stack)})
         return processed_data_dict
 
-    def get_item_test(self, base_data_dict):
+    def get_item_test(self, base_data_dict, ego_lidar_pose=None):
         processed_data_dict = OrderedDict()
         processed_data_dict['ego'] = {}
+        if ego_lidar_pose is None:
+            #ego_id = -1
+            ego_lidar_pose = []
 
-        ego_id = -1
-        ego_lidar_pose = []
-
-        # first find the ego vehicle's lidar pose
-        for cav_id, cav_content in base_data_dict.items():
-            if cav_content['ego']:
-                ego_id = cav_id
-                ego_lidar_pose = cav_content['params']['lidar_pose']
-                break
-        assert cav_id == list(base_data_dict.keys())[
-            0], "The first element in the OrderedDict must be ego"
-        assert ego_id != -1
-        assert len(ego_lidar_pose) > 0
+            # first find the ego vehicle's lidar pose
+            for cav_id, cav_content in base_data_dict.items():
+                if cav_content['ego']:
+                    #ego_id = cav_id
+                    ego_lidar_pose = cav_content['params']['lidar_pose']
+                    break
+            assert cav_id == list(base_data_dict.keys())[
+                0], "The first element in the OrderedDict must be ego"
+            #assert ego_id != -1
+            assert len(ego_lidar_pose) > 0
 
         pairwise_t_matrix = \
             self.get_pairwise_transformation(base_data_dict,

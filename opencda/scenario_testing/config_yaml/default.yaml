@@ -197,7 +197,8 @@ traffic_vehicle_base:
   sensing: # include perception and localization
     perception:
       activate: true # when not activated, objects positions will be retrieved from server directly.
-      coperception: false # whether to use the co-perception.
+      coperception: true # whether to use the co-perception.
+      enable_communicate: true
       camera:
         visualize: 0
         num: 0

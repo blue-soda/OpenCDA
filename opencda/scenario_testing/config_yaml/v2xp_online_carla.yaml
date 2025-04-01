@@ -191,18 +191,18 @@ scenario:
           <<: *base_local_planner
           debug_trajectory: false
           debug: false
-    - <<: *vehicle_base
-      spawn_position: [-5.51, 160.24, 0.3, 0, 90, 0]
-      destination: [-2.43, 263, 0.3]
-      v2x:
-        <<: *base_v2x
-        communication_range: 70
-      behavior:
-        <<: *base_behavior
-        local_planner:
-          <<: *base_local_planner
-          debug_trajectory: false
-          debug: false
+    # - <<: *vehicle_base
+    #   spawn_position: [-5.51, 160.24, 0.3, 0, 90, 0]
+    #   destination: [-2.43, 263, 0.3]
+    #   v2x:
+    #     <<: *base_v2x
+    #     communication_range: 70
+    #   behavior:
+    #     <<: *base_behavior
+    #     local_planner:
+    #       <<: *base_local_planner
+    #       debug_trajectory: false
+    #       debug: false
 
 # these are parameters supporting cooperative perception
 # models are pending to be added with all the models supported in the intermediate fusion

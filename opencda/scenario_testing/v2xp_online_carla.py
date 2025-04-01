@@ -69,13 +69,15 @@ def run_scenario(opt, scenario_params):
                     pitch=-
                     90)))
 
-            for i, single_cav in enumerate(single_cav_list):
+            for single_cav in single_cav_list:
                 single_cav.update_info()
+
+            for traffic_cav in traffic_cav_list:
+                traffic_cav.update_info()
+            
+            for single_cav in single_cav_list:               
                 control = single_cav.run_step()
                 single_cav.vehicle.apply_control(control)
-
-            for j, traffic_cav in enumerate(traffic_cav_list):
-                traffic_cav.update_info()
             # for rsu in rsu_list:
             #     rsu.update_info()
             #     rsu.run_step()

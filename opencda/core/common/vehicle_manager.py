@@ -19,6 +19,8 @@ from opencda.core.sensing.localization.localization_manager \
     import LocalizationManager
 from opencda.core.sensing.perception.perception_manager \
     import PerceptionManager
+from opencda.customize.core.v2x.clustering_perception_manager \
+    import ClusteringPerceptionManager
 from opencda.core.safety.safety_manager import SafetyManager
 from opencda.core.plan.behavior_agent \
     import BehaviorAgent
@@ -101,7 +103,7 @@ class VehicleManager(object):
         self.isTrafficVehicle = 'traffic' in application
         # v2x module
         if 'cluster' in application:
-            self.v2x_manager = ClusteringV2XManager(cav_world, v2x_config, self.vid)
+            self.v2x_manager = ClusteringV2XManager(cav_world, v2x_config, self.vid, self.vehicle.id)
         else:
             self.v2x_manager = V2XManager(cav_world, v2x_config, self.vid)
     
@@ -143,15 +145,25 @@ class VehicleManager(object):
 
         # perception module
         # move it down here to pass in the behavior manager & localization manager
-        self.perception_manager = PerceptionManager(
-            v2x_manager=self.v2x_manager,
-            localization_manager=self.localizer,
-            behavior_agent=self.agent,
-            vehicle=vehicle,
-            config_yaml=sensing_config['perception'],
-            cav_world=cav_world,
-            data_dump=data_dumping)
-
+        if 'cluster' in application:
+            self.perception_manager = ClusteringPerceptionManager(
+                v2x_manager=self.v2x_manager,
+                localization_manager=self.localizer,
+                behavior_agent=self.agent,
+                vehicle=vehicle,
+                config_yaml=sensing_config['perception'],
+                cav_world=cav_world,
+                data_dump=data_dumping)
+        else:
+            self.perception_manager = PerceptionManager(
+                v2x_manager=self.v2x_manager,
+                localization_manager=self.localizer,
+                behavior_agent=self.agent,
+                vehicle=vehicle,
+                config_yaml=sensing_config['perception'],
+                cav_world=cav_world,
+                data_dump=data_dumping)
+            
         if data_dumping:
             self.data_dumper = DataDumper(self.perception_manager,
                                           vehicle.id,
@@ -210,13 +222,17 @@ class VehicleManager(object):
 
         if 'traffic' in self.application:
             self.v2x_manager.update_info(ego_pos, ego_spd, ego_lidar, ego_image, ego_dir)
+            objects = self.perception_manager.detect(ego_pos)
             return
         
+        # update ego position and speed to v2x manager,
+        # and then v2x manager will search the nearby cavs
+        self.v2x_manager.update_info(ego_pos, ego_spd, ego_lidar, ego_image, ego_dir)
         # object detection
         objects = self.perception_manager.detect(ego_pos)
-        if len(objects['vehicles']) > self.pre_obejcts_num:
-            print('detect objects:', len(objects['vehicles']), ' vehicles.')
-        self.pre_obejcts_num = len(objects['vehicles'])
+        # if len(objects['vehicles']) > self.pre_obejcts_num:
+        #     print('detect objects:', len(objects['vehicles']), ' vehicles.')
+        # self.pre_obejcts_num = len(objects['vehicles'])
         # print('objects:', objects)
 
         # update the ego pose for map manager
@@ -230,10 +246,6 @@ class VehicleManager(object):
                         'world': self.vehicle.get_world(),
                         'static_bev': self.map_manager.static_bev}
         self.safety_manager.update_info(safety_input)
-
-        # update ego position and speed to v2x manager,
-        # and then v2x manager will search the nearby cavs
-        self.v2x_manager.update_info(ego_pos, ego_spd, ego_lidar, ego_image, ego_dir)
 
         self.agent.update_information(ego_pos, ego_spd, objects)
         # pass position and speed info to controller
@@ -270,3 +282,5 @@ class VehicleManager(object):
             self.vehicle.destroy()
         if self.map_manager:
             self.map_manager.destroy()
+        if self.safety_manager:
+            self.safety_manager.destroy()

@@ -707,7 +707,6 @@ class PerceptionManager:
                         v.id != self.id]
 
         # use semantic lidar to filter out vehicles out of the range
-        # TODO: self.coperception?
         if self.data_dump:
             vehicle_list = self.filter_vehicle_out_sensor(vehicle_list)
 

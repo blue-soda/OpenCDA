@@ -37,6 +37,18 @@ class OpenCOODManager(object):
         _, model = train_utils.load_saved_model(saved_path, self.model)
         model.eval()
 
+        # if self.fusion_method == 'late':
+        #     self.late_fusion_model = self.model
+        # else:       
+        #     late_fusion_opt = argparse.Namespace(model_dir=models['late'])         
+        #     hypes = yaml_utils.load_yaml(None, late_fusion_opt)         
+        #     self.late_fusion_model = train_utils.create_model(hypes)         
+        #     if torch.cuda.is_available():             
+        #         self.late_fusion_model.cuda()         
+        #     saved_path = models[fusion_method]        
+        #     _, late_fusion_model = train_utils.load_saved_model(saved_path, self.late_fusion_model)         
+        #     late_fusion_model.eval()
+
         self.opencood_dataset = build_dataset(hypes, visualize=True, train=False)
 
         # Create the dictionary for evaluation
@@ -47,22 +59,49 @@ class OpenCOODManager(object):
     def to_device(self, data):
         return train_utils.to_device(data, self.device)
 
-    def inference(self, batch_data):
-        if self.fusion_method == 'late':
-            pred_box_tensor, pred_score, gt_box_tensor = \
+    def submit_results(self, pred_box_tensor, pred_score, gt_box_tensor, with_stats=True):
+        if not with_stats:
+            return
+        
+        print('submit_results')
+        eval_utils.caluclate_tp_fp(pred_box_tensor,
+                                    pred_score,
+                                    gt_box_tensor,
+                                    self.result_stat,
+                                    0.3)
+        eval_utils.caluclate_tp_fp(pred_box_tensor,
+                                    pred_score,
+                                    gt_box_tensor,
+                                    self.result_stat,
+                                    0.5)
+        eval_utils.caluclate_tp_fp(pred_box_tensor,
+                                    pred_score,
+                                    gt_box_tensor,
+                                    self.result_stat,
+                                    0.7)
+        
+    def inference(self, batch_data, with_stats=True, fusion_method='default', return_output=False):
+        if fusion_method == 'default':
+            fusion_method = self.fusion_method
+
+        if fusion_method == 'late':
+            pred_box_tensor, pred_score, gt_box_tensor, output_dict = \
                 inference_utils.inference_late_fusion(batch_data,
                                                       self.model,
-                                                      self.opencood_dataset)
-        elif self.fusion_method == 'early':
-            pred_box_tensor, pred_score, gt_box_tensor = \
+                                                      self.opencood_dataset,
+                                                      return_output=return_output)
+        elif fusion_method == 'early':
+            pred_box_tensor, pred_score, gt_box_tensor, output_dict = \
                 inference_utils.inference_early_fusion(batch_data,
                                                        self.model,
-                                                       self.opencood_dataset)
-        elif self.fusion_method.startswith('intermediate'): # intermediate would be different models
-            pred_box_tensor, pred_score, gt_box_tensor = \
+                                                       self.opencood_dataset,
+                                                       return_output=return_output)
+        elif fusion_method.startswith('intermediate'): # intermediate would be different models
+            pred_box_tensor, pred_score, gt_box_tensor, output_dict = \
                 inference_utils.inference_intermediate_fusion(batch_data,
                                                               self.model,
-                                                              self.opencood_dataset)
+                                                              self.opencood_dataset,
+                                                              return_output=return_output)
         else:
             raise NotImplementedError('Only early, late and intermediate'
                                       'fusion is supported.')
@@ -70,22 +109,10 @@ class OpenCOODManager(object):
         # skip the first 60 ticks for calculating the average precision
         if self.counter > 60 and self.counter % 2 == 0:
             print(f"Aggregating the current stats into final results: {self.counter}")
-            eval_utils.caluclate_tp_fp(pred_box_tensor,
-                                       pred_score,
-                                       gt_box_tensor,
-                                       self.result_stat,
-                                       0.3)
-            eval_utils.caluclate_tp_fp(pred_box_tensor,
-                                       pred_score,
-                                       gt_box_tensor,
-                                       self.result_stat,
-                                       0.5)
-            eval_utils.caluclate_tp_fp(pred_box_tensor,
-                                       pred_score,
-                                       gt_box_tensor,
-                                       self.result_stat,
-                                       0.7)
+            self.submit_results(pred_box_tensor, pred_score, gt_box_tensor, with_stats)
         self.counter += 1
+        if return_output:
+            return pred_box_tensor, pred_score, gt_box_tensor, output_dict
         return pred_box_tensor, pred_score, gt_box_tensor
 
     def evaluate_final_average_precision(self):
@@ -111,3 +138,20 @@ class OpenCOODManager(object):
                                                     True,
                                                     vis_save_path,
                                                     mode='constant')
+
+    # def naive_late_fusion(self, batch_data, output_dict):
+    #     return self.opencood_dataset.post_process(batch_data, output_dict)
+
+    @staticmethod
+    def naive_late_fusion(pred_box_tensors, pred_scores, gt_box_tensors):
+        if len(pred_box_tensors) == 0:
+            return None, None, None
+        
+        #TODO:重复框删除
+        all_predict_boxes = torch.cat(pred_box_tensors, dim=0)
+        all_predict_scores = torch.cat(pred_scores, dim=0)
+        all_gt_boxes = torch.cat(gt_box_tensors, dim=0)
+        print("预测框总形状:", all_predict_boxes.shape)  # torch.Size([40, 8, 3])
+        print("预测分数总形状:", all_predict_scores.shape)  # torch.Size([40])
+        print("真实框总形状:", all_gt_boxes.shape)  # torch.Size([56, 8, 3])
+        return all_predict_boxes, all_predict_scores, all_gt_boxes

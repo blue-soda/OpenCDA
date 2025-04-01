@@ -1,0 +1,221 @@
+from collections import OrderedDict
+from opencda.core.sensing.perception.perception_manager \
+    import PerceptionManager
+from opencda.customize.core.v2x.clustering_v2x_manager \
+    import ClusteringV2XManager
+from opencda.customize.core.v2x.clustering_coperception_manager import ClusteringCoperceptionManager
+from opencda.core.sensing.perception.o3d_lidar_libs import \
+    o3d_visualizer_init, o3d_pointcloud_encode, o3d_visualizer_show, \
+    o3d_camera_lidar_fusion, o3d_visualizer_show_coperception, o3d_predict_bbox_to_object
+import sys
+from opencda.core.sensing.perception.coperception_libs import CoperceptionLibs
+
+
+class ClusteringPerceptionManager(PerceptionManager):
+    #static ego_data_dict
+    ego_lidar_pose = None
+    ego_vm = None
+    predict_box_tensors = []
+    predict_scores = []
+    gt_box_tensors = []
+    def __init__(self, v2x_manager, localization_manager, behavior_agent, vehicle,
+                 config_yaml, cav_world, data_dump=False, carla_world=None, infra_id=None, ):
+        super().__init__(v2x_manager, localization_manager, behavior_agent, vehicle,
+                 config_yaml, cav_world, data_dump, carla_world, infra_id)
+        self.communication_volume = 0.0
+        self.co_manager = ClusteringCoperceptionManager(self.id, v2x_manager, self.coperception_libs)
+        if ClusteringPerceptionManager.ego_vm is None:
+            ClusteringPerceptionManager.ego_vm = cav_world.get_ego_vehicle_manager()
+
+    @staticmethod
+    def update_ego_lidar_pose():
+        ego_vm = ClusteringPerceptionManager.ego_vm
+        ego_v2x_manager = ego_vm.v2x_manager
+        lidar=ego_v2x_manager.get_ego_lidar()
+        ClusteringPerceptionManager.ego_lidar_pose = CoperceptionLibs.load_cur_lidar_pose(lidar)['lidar_pose']
+
+    @staticmethod
+    def clear():
+        ClusteringPerceptionManager.predict_box_tensors = []
+        ClusteringPerceptionManager.predict_scores = []
+        ClusteringPerceptionManager.gt_box_tensors = []
+
+
+    def detect(self, ego_pos):
+        """
+        Detect surrounding objects. Currently only vehicle detection supported.
+
+        Parameters
+        ----------
+        ego_pos : carla.Transform
+            Ego vehicle pose.
+
+        Returns
+        -------
+        objects : list
+            A list that contains all detected obstacle vehicles.
+
+        """
+        self.ego_pos = ego_pos
+        objects = {
+            'vehicles': [],
+            'traffic_lights': []
+        }
+
+        objects = self.coperception_mode(objects)
+        self.count += 1
+
+        return objects
+
+    def inference(self, data, objects = {'vehicles': [], 'traffic_lights': []}, with_submit=False):
+        # inference
+        reformat_data_dict = self.ml_manager.opencood_dataset.get_item_test(data, ClusteringPerceptionManager.ego_lidar_pose)
+        output_dict = self.ml_manager.opencood_dataset.collate_batch_test(
+            [reformat_data_dict])  # should have batch size dim
+        batch_data = self.ml_manager.to_device(output_dict)
+        predict_box_tensor, predict_score, gt_box_tensor, results_dict = self.ml_manager.inference(batch_data, with_submit, return_output=True)
+        if predict_box_tensor is not None and predict_score is not None and gt_box_tensor is not None:
+            print('predict_box_tensor: ', predict_box_tensor.shape)
+            print('predict_score :', predict_score.shape)
+            print('gt_box_tensor :', gt_box_tensor.shape)
+            ClusteringPerceptionManager.predict_box_tensors.append(predict_box_tensor)
+            ClusteringPerceptionManager.predict_scores.append(predict_score)
+            ClusteringPerceptionManager.gt_box_tensors.append(gt_box_tensor)
+        # self.ml_manager.show_vis(pred_box_tensor, gt_box_tensor, batch_data) show predict results frame by frame
+        objects = o3d_predict_bbox_to_object(objects, predict_box_tensor, self.lidar.sensor)
+        # retrieve speed from server
+        self.speed_retrieve(objects)
+        self.transform_retrieve(objects)
+
+        # plot the opencood inference results
+        if self.lidar_visualize:
+            while self.lidar.data is None:
+                continue
+            o3d_pointcloud_encode(self.lidar.data, self.lidar.o3d_pointcloud)
+            o3d_visualizer_show(
+                self.o3d_vis,
+                self.count,
+                self.lidar.o3d_pointcloud,
+                objects)
+            
+        objects = self.retrieve_traffic_lights(objects)
+        return objects, results_dict
+
+    def coperception_mode(self, objects):
+        """
+        Use OpenCOOD to detect objects
+        Note that we only apply detection for ego, and transform all data into ego's lidar_pose
+        """
+        # self.predict_box_tensors = []
+        # self.predict_scores = []
+        # self.gt_box_tensors = []
+        
+        if self.lidar.data is None:
+            return objects
+        #self.cav_world.update_global_ego_id(self.vehicle.id)
+        if ClusteringPerceptionManager.ego_vm is None:
+            ClusteringPerceptionManager.ego_vm = self.cav_world.get_ego_vehicle_manager()
+        ego_id = self.cav_world.ego_id
+        is_ego = self.id == ego_id
+        self.update_ego_lidar_pose()
+        record_results = is_ego
+        data = OrderedDict()
+        if self.enable_communicate:
+            if self.v2x_manager.is_cluster_head():  #cluster head do cp
+                vehicles_inside_cluster = self.co_manager.communicate_inside_cluster()
+                print(f'{self.v2x_manager.vehicle_id} is collecting data from {vehicles_inside_cluster.keys()}:')
+
+                ego_data = self.co_manager.prepare_data(
+                    cav_id=self.id,
+                    camera=self.rgb_camera,
+                    lidar=self.lidar,
+                    pos=self.ego_pos,
+                    localizer=self.localization_manager,
+                    agent=self.behavior_agent,
+                    is_ego=is_ego,
+                )
+                ego_data = self.co_manager.calculate_transformation(
+                    cav_id=self.id,
+                    cav_data=ego_data,
+                    ego_pose=ClusteringPerceptionManager.ego_lidar_pose
+                )
+                data.update(ego_data)
+
+                for vid, nearby_data_dict in vehicles_inside_cluster.items():
+                    if vid == ego_id:           # ego_vehicle is inside this cluster, record the results and senc to ego
+                        record_results = True
+                    if not nearby_data_dict:
+                        continue
+                    nearby_vm = nearby_data_dict['vehicle_manager']
+                    nearby_v2x_manager = nearby_data_dict['v2x_manager']
+                    nearby_data = self.co_manager.prepare_data(
+                        cav_id=vid,
+                        camera=nearby_v2x_manager.get_ego_rgb_image(),
+                        lidar=nearby_v2x_manager.get_ego_lidar(),
+                        pos=nearby_v2x_manager.get_ego_pos(),
+                        localizer=nearby_vm.localizer,
+                        agent=nearby_vm.agent,
+                        is_ego=False,
+                    )
+                    nearby_data = self.co_manager.calculate_transformation(
+                        cav_id=vid,
+                        cav_data=nearby_data,
+                        ego_pose=ClusteringPerceptionManager.ego_lidar_pose
+                    )
+                    data.update(nearby_data)
+
+                data_size = sys.getsizeof(data)
+                ClusteringV2XManager.Communication_Volume += data_size
+                ClusteringV2XManager.Communication_Volume_Inside_Cluster_Collect += data_size
+                #count communication_volume
+                if record_results:
+                    objects, results_dict = self.inference(data, objects, with_submit=is_ego)
+                    if is_ego:
+                        ClusteringPerceptionManager.clear()
+
+                    self.objects = objects
+                    self.co_manager.broadcast_inside_cluster(self.id, objects, results_dict)
+                    print(f"{self.id} is cluster head, detect {len(objects['vehicles'])} vehicles and {len(objects['traffic_lights'])} traffic_lights")
+                
+            else:
+                #For other vehicles, 1. get results from cluster head 2. communicate with vehicles outside the cluster
+                #Note that only ego vehicle need the real results.
+                if is_ego: 
+                    print('coperception: ', self.v2x_manager.vehicle_id)
+                    output_dict_all = {}
+                    ego_data = self.co_manager.prepare_data(
+                    cav_id=self.id,
+                    camera=self.rgb_camera,
+                    lidar=self.lidar,
+                    pos=self.ego_pos,
+                    localizer=self.localization_manager,
+                    agent=self.behavior_agent,
+                    is_ego=is_ego,
+                    )
+                    ego_data = self.co_manager.calculate_transformation(
+                        cav_id=self.id,
+                        cav_data=ego_data,
+                        ego_pose=ClusteringPerceptionManager.ego_lidar_pose
+                    )
+                    objects_self, results_dict = self.inference(ego_data, objects, with_submit=False)  #detect objects on its own
+                    print(f"{self.id}: {len(objects_self['vehicles'])} vehicles and {len(objects_self['traffic_lights'])} traffic_lights detected from self")
+                    output_dict_all[self.id] = results_dict
+
+                    buffer = (self.v2x_manager.read_buffer()) #get results from cluster head
+                    objects_cluster, results_dict_cluster, cluster_head_id = buffer['objects'], buffer['results'], buffer['source']
+                    #cluster_head = self.v2x_manager.cluster_state['cluster_head']
+                    print(f"{self.id}: {len(objects_cluster['vehicles'])} vehicles and {len(objects_cluster['traffic_lights'])} traffic_lights detected from cluster head {cluster_head_id}")
+                    if results_dict_cluster['rm'] and results_dict_cluster['psm'] :
+                        output_dict_all[cluster_head_id] = results_dict_cluster
+                    pred_box_tensor, pred_score, gt_box_tensor = self.ml_manager.naive_late_fusion(
+                                                                    ClusteringPerceptionManager.predict_box_tensors, 
+                                                                    ClusteringPerceptionManager.predict_scores, 
+                                                                    ClusteringPerceptionManager.gt_box_tensors)
+                    ClusteringPerceptionManager.clear()
+                    if pred_box_tensor is not None:
+                        self.ml_manager.submit_results(pred_box_tensor, pred_score, gt_box_tensor, with_stats=True)
+                    #communicate with vehicles outside the cluster
+                    # for vid, nearby_data_dict in self.co_manager.communicate().items(): 
+                    #     if nearby_data_dict['v2x_manager'].is_cluster_head():
+                    #         objects.update(nearby_data_dict['v2x_manager'].read_buffer()) 
+        return objects

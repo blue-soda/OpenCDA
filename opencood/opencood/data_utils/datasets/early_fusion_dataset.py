@@ -146,22 +146,23 @@ class EarlyFusionDataset(basedataset.BaseDataset):
 
         return processed_data_dict
 
-    def get_item_test(self, base_data_dict):
+    def get_item_test(self, base_data_dict, ego_lidar_pose=None):
         processed_data_dict = OrderedDict()
         processed_data_dict['ego'] = {}
 
-        ego_id = -1
-        ego_lidar_pose = []
+        if ego_lidar_pose is None:
+            #ego_id = -1
+            ego_lidar_pose = []
 
-        # first find the ego vehicle's lidar pose
-        for cav_id, cav_content in base_data_dict.items():
-            if cav_content['ego']:
-                ego_id = cav_id
-                ego_lidar_pose = cav_content['params']['lidar_pose']
-                break
+            # first find the ego vehicle's lidar pose
+            for cav_id, cav_content in base_data_dict.items():
+                if cav_content['ego']:
+                    #ego_id = cav_id
+                    ego_lidar_pose = cav_content['params']['lidar_pose']
+                    break
 
-        assert ego_id != -1
-        assert len(ego_lidar_pose) > 0
+            #assert ego_id != -1
+            assert len(ego_lidar_pose) > 0
 
         projected_lidar_stack = []
         object_stack = []

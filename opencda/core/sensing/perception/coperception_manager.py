@@ -20,6 +20,11 @@ class CoperceptionManager:
         cav_data[cav_id]['params'].update(t_matrix)
         return cav_data
 
+    def calculate_transformation(self, cav_id, cav_data, ego_pose):
+        t_matrix = self.coperception_libs.load_transformation_matrix_from_pose(ego_pose, cav_data[cav_id]['params']['lidar_pose'])
+        cav_data[cav_id]['params'].update(t_matrix)
+        return cav_data
+    
     def prepare_data(self, cav_id, camera, lidar, pos, localizer, agent, is_ego, ego_params=None):
         data = {cav_id: OrderedDict()}
         data[cav_id]['ego'] = is_ego

@@ -64,11 +64,20 @@ class CavWorld(object):
         # this is used only when co-simulation activated.
         self.sumo2carla_ids = {}
 
-    def update_global_ego_id(self, id):
+    def update_global_ego_id(self, id=0):
         """
         Return the smallest id as the ego_id
         """
         self.ego_id = min(self.vehicle_id_set) if len(self.vehicle_id_set) > 0 else id
+        #print('ego_id:', self.ego_id)
+    
+    def get_ego_vehicle_manager(self):
+        for vid, vm in self.get_evaluate_vehicle_managers().items():
+            #print('vid:', vid, self.ego_id)
+            if vid == self.ego_id:
+                #print('find')
+                return vm
+        return None
 
     def update_vehicle_manager(self, vehicle_manager, isTrafficVehicle):
         """
@@ -79,12 +88,20 @@ class CavWorld(object):
         vehicle_manager : opencda object
             The vehicle manager class.
         """
-        self.vehicle_id_set.add(vehicle_manager.vehicle.id)
+        # self._vehicle_manager_dict.update(
+        #     {vehicle_manager.vid: vehicle_manager})
+        # if not isTrafficVehicle:
+        #     self._evaluate_vehicle_manager_dict.update(
+        #     {vehicle_manager.vid: vehicle_manager})
+        vid = vehicle_manager.vehicle.id
+        self.vehicle_id_set.add(vid)
         self._vehicle_manager_dict.update(
-            {vehicle_manager.vid: vehicle_manager})
+            {vid: vehicle_manager})
         if not isTrafficVehicle:
             self._evaluate_vehicle_manager_dict.update(
-            {vehicle_manager.vid: vehicle_manager})
+            {vid: vehicle_manager})
+
+        self.update_global_ego_id()
 
     def update_platooning(self, platooning_manger):
         """

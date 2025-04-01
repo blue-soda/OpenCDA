@@ -2,6 +2,7 @@ from opencda.core.common.v2x_manager import V2XManager
 import math
 from opencda.core.common.misc import compute_distance
 import random
+import sys
 
 STANDARD_CAPABILITY= 100
 def calculate_cos(direction1, direction2):
@@ -23,15 +24,27 @@ def sigmoid(x):
 class ClusteringV2XManager(V2XManager):
     Communication_Volume = 0.0
     Instance_Nums = 0
+    Communication_Volume_Inside_Cluster_Collect = 0.0
+    Communication_Volume_Inside_Cluster_Broadcast = 0.0
+    Communication_Volume_Outside_Cluster = 0.0
+    UpdateSucceed = True
 
-    def __init__(self, cav_world, config_yaml, vid):
+    def __init__(self, cav_world, config_yaml, vid, vehicle_id):
         super(ClusteringV2XManager, self).__init__(cav_world, config_yaml, vid)
-
+        self.vehicle_id = vehicle_id
         
         self.computing_capability = STANDARD_CAPABILITY
+        self.communication_quality = STANDARD_CAPABILITY
         self.cp_model = 'default_model'
 
         self.tick = 0
+
+        self._unread_buffer = False
+        # used for cooperative perception.
+        # self._recieved_buffer = {} defined in v2xmanager
+
+        self.beacon_frequency = 2 #(Hz)
+
         ClusteringV2XManager.Instance_Nums += 1
         print(f'{ClusteringV2XManager.Instance_Nums} ExtendedV2XManager initialized')
 
@@ -52,7 +65,7 @@ class ClusteringV2XManager(V2XManager):
             'T_timeout': 1.0,  # 簇头超时时间 (单位: s)
             'shadow_timeout': 0.5,  # 影子簇头超时时间 (单位: s)
             'eta_join': 0.7,  # 加入阈值
-            'eta_leave': 0.6,  # 离开阈值 (eta_join - delta_eta)
+            'eta_leave': 0.3,  # 离开阈值 (eta_join - delta_eta)
         }
 
         # 分簇协议状态
@@ -67,6 +80,39 @@ class ClusteringV2XManager(V2XManager):
             'priority_score': 0.0,  # 本地优先级得分
         }
 
+
+    def is_cluster_head(self):
+        # print('vehicle_id', self.vehicle_id, self.cluster_state['cluster_head'], self.vehicle_id == self.cluster_state['cluster_head'])
+        return self.vehicle_id == self.cluster_state['cluster_head']
+
+    def set_buffer(self, source=None, objects=None, results=None):
+        if source:
+            self._recieved_buffer['source'] = source
+        if objects:
+            self._recieved_buffer['objects'] = objects
+        if results:
+            self._recieved_buffer['results'] = results
+        self._unread_buffer = True
+        ClusteringV2XManager.Communication_Volume_Inside_Cluster_Broadcast += sys.getsizeof(objects)
+
+    def read_buffer(self):
+        if self._unread_buffer:
+            self._unread_buffer = False
+            return self._recieved_buffer
+        else:
+            return {'source': "0",
+                    'objects':
+                    {
+                        'vehicles': [],
+                        'traffic_lights': []
+                    },
+                    'results':
+                    {
+                        'psm': None,
+                        'rm': None,
+                    }
+                }
+
     def beacon(self):
         """
         Broadcast a beacon frame to nearby vehicles.
@@ -77,7 +123,7 @@ class ClusteringV2XManager(V2XManager):
             - Cooperative perception model information
         """
         beacon = {
-            'vid': self.vid,
+            'vehicle_id': self.vehicle_id,
             'position': self.get_ego_pos(),
             'speed': self.get_ego_speed(),
             'direction': self.get_ego_dir(),
@@ -85,6 +131,7 @@ class ClusteringV2XManager(V2XManager):
             'communication_quality': 1.0, # Placeholder for communication quality
             'perception_model': self.cp_model,  # Placeholder for model info
             'cluster_head': self.cluster_state['cluster_head'],  # Placeholder for cluster head info
+            'priority_score': self.compute_priority_score()
         }
         return beacon
 
@@ -128,6 +175,11 @@ class ClusteringV2XManager(V2XManager):
 
         return similarity_score
 
+    def compute_average_cluster_speed(self):
+        #print(self.cluster_state['members'])
+        speed = [member_data['speed'] for member_id, member_data in self.cluster_state['members'].items()]
+        return sum(speed) / len(speed) if len(speed) > 0 else 0
+    
     def compute_priority_score(self):
         """
         Compute the priority score for cluster head election.
@@ -143,8 +195,8 @@ class ClusteringV2XManager(V2XManager):
         w3 = self.cluster_params['w3']
 
         # Extract local information
-        communication_quality = self.get_communication_quality()
-        computing_capability = self.get_computing_capability()
+        communication_quality = self.communication_quality
+        computing_capability = self.computing_capability
         speed = self.get_ego_speed()
 
         # Compute average cluster speed (if part of a cluster)
@@ -155,6 +207,8 @@ class ClusteringV2XManager(V2XManager):
         priority_score = (w1 * communication_quality +
                         w2 * computing_capability +
                         w3 * speed_consistency)
+        
+        self.cluster_state['priority_score'] = priority_score
         return priority_score
 
     def update_cluster(self):
@@ -162,59 +216,84 @@ class ClusteringV2XManager(V2XManager):
         Update cluster membership based on similarity scores and network conditions.
         """
         # Check if the vehicle is already part of a cluster
+        if self.cluster_state['cluster_head'] is None:
+            self.look_for_existed_clusters()
+            self.try_to_create_cluster()
+
+        self.update_cluster_membership()
+        self.elect_cluster_head()
+
+    def look_for_existed_clusters(self):
         if self.cluster_state['cluster_head'] is not None:
             return
-
         # Find the best cluster head candidate
         self.cluster_state['members'] = {}
-        self.cluster_state['members'][self.vid] = self.beacon()
-        for vid, neighbor_data in self.cluster_state['neighbors'].items():
-            similarity_score = self.cluster_state['similarity_scores'].get(vid, 0)
+        self.cluster_state['members'][self.vehicle_id] = self.beacon()
+        for vehicle_id, neighbor_data in self.cluster_state['neighbors'].items():
+            similarity_score = self.cluster_state['similarity_scores'].get(vehicle_id, 0)
             RSSI = neighbor_data['RSSI'] if 'RSSI' in neighbor_data else 0
 
             # Adjusted join condition
             adjusted_threshold = self.cluster_params['eta_join'] * (1 + RSSI / self.cluster_params['RSSI_max'])
-            if similarity_score > adjusted_threshold and neighbor_data['cluster_head'] == neighbor_data['vid']:
+            if similarity_score > adjusted_threshold and neighbor_data['cluster_head'] == neighbor_data['vehicle_id']:
                 # Exists a suitable cluster head candidate, join the cluster
+                print('Vehicle %s joined cluster %s with similarity_score %f\n' % (self.vehicle_id, neighbor_data['cluster_head'], similarity_score))
                 self.cluster_state['cluster_head'] = neighbor_data['cluster_head']
-                print('Vehicle %s joined cluster %s with similarity_score %f\n' % (self.vid, self.cluster_state['cluster_head'], similarity_score))
+                vm = self.cav_nearby.get(neighbor_data['vehicle_id'], {'v2x_manager': None})['v2x_manager']
+                if vm:
+                    vm.cluster_state['members'][vehicle_id] = self.beacon()
+                else:
+                    print(f"{neighbor_data['vehicle_id']} is not neighbor")
+                break
 
+
+    def try_to_create_cluster(self):
         # Decide whether to join a cluster or create a new one
-        if self.cluster_state['cluster_head'] is None:
-            # Calculate the probability of creating a new cluster
-            sim_avg = sum(self.cluster_state['similarity_scores'].values()) / len(self.cluster_state['similarity_scores']) if self.cluster_state['similarity_scores'] else 0
-            p_create = sigmoid((sim_avg - self.cluster_params['eta_create']) / self.cluster_params['sigma'])
-            if random.random() < p_create:
-                # Create a new cluster
-                self.cluster_state['cluster_head'] = self.vid
-                print(f'Vehicle {self.vid} created new cluster with p_create:{p_create}\n')
+        if self.cluster_state['cluster_head'] is not None:
+            return
+        # Calculate the probability of creating a new cluster
+        sim_avg = sum(self.cluster_state['similarity_scores'].values()) / len(self.cluster_state['similarity_scores']) if self.cluster_state['similarity_scores'] else 0
+        p_create = sigmoid((sim_avg - self.cluster_params['eta_create']) / self.cluster_params['sigma'])
+        if random.random() < p_create:
+            # Create a new cluster
+            self.cluster_state['cluster_head'] = self.vehicle_id
+            print(f'Vehicle {self.vehicle_id} created new cluster with p_create:{p_create}\n')
 
-        self.update_cluster_membership()
-        self.elect_cluster_head()
 
     def update_cluster_membership(self):
         """
         Update cluster membership based on similarity scores and hysteresis mechanism.
         """
-        for vid, neighbor_data in self.cluster_state['neighbors'].items():
+
+        # Check if the vehicle should leave the cluster
+        similarity_score = self.cluster_state['similarity_scores'].get(self.cluster_state['cluster_head'], 0)
+        if self.is_cluster_head() or self.cluster_state['cluster_head'] is None:
+            similarity_score = 1.0
+        if similarity_score < self.cluster_params['eta_leave']:
+            print(f'Vehicle {self.vehicle_id} left cluster {self.cluster_state["cluster_head"]} with similarity_score {similarity_score}\n')
+            self.cluster_state['members'].clear()
+            self.cluster_state["cluster_head"] = None
+            self.update_cluster()
+            return
+
+        #self.cluster_state['members'].clear()
+
+        members = self.cluster_state['members'].copy()
+        for vehicle_id, neighbor_data in members.items():
+            if neighbor_data['cluster_head'] != self.cluster_state['cluster_head']:
+                #no longer in the same cluster
+                self.cluster_state['members'].pop(vehicle_id, None)
+
+        for vehicle_id, neighbor_data in self.cluster_state['neighbors'].items():
             if neighbor_data['cluster_head'] == self.cluster_state['cluster_head']:
                 #in the same cluster
-                self.cluster_state['members'][vid] = neighbor_data
-
-            # Check if the neighbor should leave the cluster
-            similarity_score = self.cluster_state['similarity_scores'].get(vid, 0)
-            if similarity_score < self.cluster_params['eta_leave']:
-                self.cluster_state['members'].pop(vid, None)
-                print(f'Vehicle {vid} left cluster {self.cluster_state["cluster_head"]} with similarity_score {similarity_score}\n')
+                self.cluster_state['members'][vehicle_id] = neighbor_data
+                
 
     def promote_shadow_head(self):
         """
         Update shadow head based on cluster head status and timeout.
         """
-        current_cluster_head = self.cluster_state['cluster_head']
-        if current_cluster_head is None:
-            return
-
         # Elect a new shadow head if necessary
         if self.cluster_state['shadow_head'] is None:
             self.elect_cluster_head()
@@ -229,6 +308,7 @@ class ClusteringV2XManager(V2XManager):
         """
         Elect a shadow head from the cluster members.
         """
+        #print('members:', self.cluster_state['members'].keys())
         if not self.cluster_state['members']:
             return
         # Elect the member with the highest priority score
@@ -236,23 +316,23 @@ class ClusteringV2XManager(V2XManager):
         second_highest_priority = -1
         cluster_head = None
         shadow_head = None
-        for vid, member_data in self.cluster_state['members'].items():
+        for vehicle_id, member_data in self.cluster_state['members'].items():
             if 'priority_score' in member_data:
                 if member_data['priority_score'] > highest_priority:
                     highest_priority = member_data['priority_score']
-                    shadow_head = vid
+                    cluster_head = vehicle_id
                 elif member_data['priority_score'] > second_highest_priority:
                     second_highest_priority = member_data['priority_score']
-                    cluster_head = vid
+                    shadow_head = vehicle_id
                     
         if cluster_head is not None and self.cluster_state['cluster_head'] is None:
             self.cluster_state['cluster_head'] = cluster_head
         if shadow_head is not None and self.cluster_state['shadow_head'] is None:
             self.cluster_state['shadow_head'] = shadow_head
 
-        members = [vid for vid in self.cluster_state['members']]
-        if self.vid == self.cluster_state['cluster_head']:
-            print(f"cluster head:{self.vid}, shadow head:{self.cluster_state['shadow_head']}, cluster members:{members}\n")
+        members = [vehicle_id for vehicle_id in self.cluster_state['members']]
+        if self.is_cluster_head():
+            print(f"cluster head:{self.vehicle_id}, shadow head:{self.cluster_state['shadow_head']}, cluster members:{members}\n")
 
     def search(self, receive_beacons=False):
         """
@@ -261,11 +341,12 @@ class ClusteringV2XManager(V2XManager):
         vehicle_manager_dict = self.cav_world.get_vehicle_managers()
 
         self.tick += 1
-        receive_beacons = self.tick >= 10 #send and receive beacon on 20/10=2(Hz)
+        receive_beacons = self.tick >= (20/self.beacon_frequency) #send and receive beacon on 20/10=2(Hz)
 
         for vid, vm in vehicle_manager_dict.items():
+            vehicle_id = vm.vehicle.id
             # Skip invalid or self
-            if vid == self.vid or not vm.v2x_manager.get_ego_pos():
+            if vehicle_id == self.vehicle_id or not vm.v2x_manager.get_ego_pos():
                 continue
             distance = compute_distance(self.ego_pos[-1].location, vm.v2x_manager.get_ego_pos().location)
             # update v2x_manager.cav_nearby
@@ -278,27 +359,29 @@ class ClusteringV2XManager(V2XManager):
                 self.cav_nearby.pop(vm.vehicle.id, None)
 
             if receive_beacons:
+                #print(f"{self.vehicle_id}  receive_beacons, tick: {self.tick}")
                 self.tick = 0
                 # Receive beacon from neighbor
                 neighbor_beacon = vm.v2x_manager.beacon()
 
                 # Update neighbor information
                 if distance < self.communication_range:
-                    self.cluster_state['neighbors'][vid] = neighbor_beacon
-                    # Compute and store similarity score
-                    self.cluster_state['similarity_scores'][vid] = self.compute_similarity(neighbor_beacon)
+                    self.cluster_state['neighbors'][vehicle_id] = neighbor_beacon
+                    self.cluster_state['similarity_scores'][vehicle_id] = self.compute_similarity(neighbor_beacon)
                 else:
-                    self.cluster_state['neighbors'].pop(vid, None)
-                    self.cluster_state['similarity_scores'].pop(vid, None)
-                    if vid in self.cluster_state['members']:
+                    self.cluster_state['neighbors'].pop(vehicle_id, None)
+                    self.cluster_state['similarity_scores'].pop(vehicle_id, None)
+                    if vehicle_id in self.cluster_state['members']:
                         # Remove from cluster membership
-                        self.cluster_state['members'].pop(vid, None)
-                    if vid == self.cluster_state['cluster_head']:
+                        self.cluster_state['members'].pop(vehicle_id, None)
+                    if vehicle_id == self.cluster_state['cluster_head']:
                         # Cluster head has moved out of range
                         self.cluster_state['cluster_head'] = None
                         self.promote_shadow_head()
-                    elif vid == self.cluster_state['shadow_head']:
+                    elif vehicle_id == self.cluster_state['shadow_head']:
                         self.cluster_state['shadow_head'] = None
-                # Update cluster membership
-                self.update_cluster()
+        if receive_beacons:
+            # Update cluster membership
+            # print("Update cluster membership")
+            self.update_cluster()
             
