@@ -177,8 +177,8 @@ class EarlyFusionDataset(basedataset.BaseDataset):
                                   selected_cav_base['params'][
                                       'lidar_pose'][1] - ego_lidar_pose[
                                       1]) ** 2)
-            if distance > opencood.data_utils.datasets.COM_RANGE:
-                continue
+            # if distance > opencood.data_utils.datasets.COM_RANGE:
+            #     continue
 
             selected_cav_processed = self.get_item_single_car(
                 selected_cav_base,
@@ -255,6 +255,7 @@ class EarlyFusionDataset(basedataset.BaseDataset):
             processed_data_dict['ego'].update({'origin_lidar':
                                                    projected_lidar_stack})
 
+ #       print(processed_data_dict['ego']['processed_lidar']['voxel_coords'])
         return processed_data_dict
 
     def get_item_single_car(self, selected_cav_base, ego_pose):

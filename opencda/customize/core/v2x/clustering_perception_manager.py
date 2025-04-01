@@ -72,6 +72,12 @@ class ClusteringPerceptionManager(PerceptionManager):
         reformat_data_dict = self.ml_manager.opencood_dataset.get_item_test(data, ClusteringPerceptionManager.ego_lidar_pose)
         output_dict = self.ml_manager.opencood_dataset.collate_batch_test(
             [reformat_data_dict])  # should have batch size dim
+        if output_dict['ego']['processed_lidar']['voxel_coords'].numel() == 0:
+            print('Warning: coords is empty.')
+            return objects, None
+        # if len(output_dict['ego']['processed_lidar']['pillar_features'].shape) == 1:
+        #     print('Warning: pillar_features is 1-dim tensor.')
+        #     return objects, None            
         batch_data = self.ml_manager.to_device(output_dict)
         predict_box_tensor, predict_score, gt_box_tensor, results_dict = self.ml_manager.inference(batch_data, with_submit, return_output=True)
         if predict_box_tensor is not None and predict_score is not None and gt_box_tensor is not None:
@@ -118,7 +124,7 @@ class ClusteringPerceptionManager(PerceptionManager):
         ego_id = self.cav_world.ego_id
         is_ego = self.id == ego_id
         self.update_ego_lidar_pose()
-        record_results = is_ego
+        # record_results = is_ego
         data = OrderedDict()
         if self.enable_communicate:
             if self.v2x_manager.is_cluster_head():  #cluster head do cp
@@ -142,8 +148,8 @@ class ClusteringPerceptionManager(PerceptionManager):
                 data.update(ego_data)
 
                 for vid, nearby_data_dict in vehicles_inside_cluster.items():
-                    if vid == ego_id:           # ego_vehicle is inside this cluster, record the results and senc to ego
-                        record_results = True
+                    # if vid == ego_id:# ego_vehicle is inside this cluster, record the results and senc to ego
+                    #     record_results = True
                     if not nearby_data_dict:
                         continue
                     nearby_vm = nearby_data_dict['vehicle_manager']
@@ -168,15 +174,15 @@ class ClusteringPerceptionManager(PerceptionManager):
                 ClusteringV2XManager.Communication_Volume += data_size
                 ClusteringV2XManager.Communication_Volume_Inside_Cluster_Collect += data_size
                 #count communication_volume
-                if record_results:
-                    objects, results_dict = self.inference(data, objects, with_submit=is_ego)
-                    if is_ego:
-                        ClusteringPerceptionManager.clear()
+                #if record_results:
+                objects, results_dict = self.inference(data, objects, with_submit=is_ego)
+                if is_ego:
+                    ClusteringPerceptionManager.clear()
 
-                    self.objects = objects
-                    self.co_manager.broadcast_inside_cluster(self.id, objects, results_dict)
-                    print(f"{self.id} is cluster head, detect {len(objects['vehicles'])} vehicles and {len(objects['traffic_lights'])} traffic_lights")
-                
+                self.objects = objects
+                self.co_manager.broadcast_inside_cluster(self.id, objects, results_dict)
+                print(f"{self.id} is cluster head, detect {len(objects['vehicles'])} vehicles and {len(objects['traffic_lights'])} traffic_lights")
+            
             else:
                 #For other vehicles, 1. get results from cluster head 2. communicate with vehicles outside the cluster
                 #Note that only ego vehicle need the real results.
@@ -218,4 +224,5 @@ class ClusteringPerceptionManager(PerceptionManager):
                     # for vid, nearby_data_dict in self.co_manager.communicate().items(): 
                     #     if nearby_data_dict['v2x_manager'].is_cluster_head():
                     #         objects.update(nearby_data_dict['v2x_manager'].read_buffer()) 
+
         return objects

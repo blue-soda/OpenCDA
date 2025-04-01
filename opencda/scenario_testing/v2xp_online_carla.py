@@ -81,6 +81,7 @@ def run_scenario(opt, scenario_params):
             # for rsu in rsu_list:
             #     rsu.update_info()
             #     rsu.run_step()
+            #TODO: destory the bg_vehicles which have left the scenario
 
     finally:
         eval_manager.evaluate()

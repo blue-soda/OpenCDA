@@ -151,7 +151,7 @@ class OpenCOODManager(object):
         all_predict_boxes = torch.cat(pred_box_tensors, dim=0)
         all_predict_scores = torch.cat(pred_scores, dim=0)
         all_gt_boxes = torch.cat(gt_box_tensors, dim=0)
-        print("预测框总形状:", all_predict_boxes.shape)  # torch.Size([40, 8, 3])
-        print("预测分数总形状:", all_predict_scores.shape)  # torch.Size([40])
-        print("真实框总形状:", all_gt_boxes.shape)  # torch.Size([56, 8, 3])
+        # print("预测框总形状:", all_predict_boxes.shape)  # torch.Size([40, 8, 3])
+        # print("预测分数总形状:", all_predict_scores.shape)  # torch.Size([40])
+        # print("真实框总形状:", all_gt_boxes.shape)  # torch.Size([56, 8, 3])
         return all_predict_boxes, all_predict_scores, all_gt_boxes

@@ -61,6 +61,13 @@ class EvaluationManager(object):
         self.platooning_eval(log_file)
         print('Platooning Evaluation Done.')
 
+        from opencda.customize.core.v2x.clustering_v2x_manager \
+            import ClusteringV2XManager
+        print(f"Communication_Volume: {ClusteringV2XManager.Communication_Volume} = \
+            {ClusteringV2XManager.Communication_Volume_Inside_Cluster_Collect} + \
+            {ClusteringV2XManager.Communication_Volume_Inside_Cluster_Broadcast} + \
+            {ClusteringV2XManager.Communication_Volume_Outside_Cluster} ")
+
     def kinematics_eval(self, log_file):
         """
         vehicle kinematics related evaluation.

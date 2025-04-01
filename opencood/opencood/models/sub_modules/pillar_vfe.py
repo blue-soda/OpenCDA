@@ -142,5 +142,8 @@ class PillarVFE(nn.Module):
         for pfn in self.pfn_layers:
             features = pfn(features)
         features = features.squeeze()
+        if len(features.shape) == 1:
+            print('Warning: len(pillar_features.shape) == 1')
+            features = features.unsqueeze(0) 
         batch_dict['pillar_features'] = features
         return batch_dict

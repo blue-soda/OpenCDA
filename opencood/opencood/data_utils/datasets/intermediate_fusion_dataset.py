@@ -231,8 +231,8 @@ class IntermediateFusionDataset(basedataset.BaseDataset):
                                   selected_cav_base['params'][
                                       'lidar_pose'][1] - ego_lidar_pose[
                                       1]) ** 2)
-            if distance > opencood.data_utils.datasets.COM_RANGE:
-                continue
+            # if distance > opencood.data_utils.datasets.COM_RANGE:
+            #     continue
 
             selected_cav_processed = self.get_item_single_car(
                 selected_cav_base,

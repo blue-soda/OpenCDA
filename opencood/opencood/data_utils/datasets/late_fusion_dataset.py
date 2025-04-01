@@ -144,8 +144,8 @@ class LateFusionDataset(basedataset.BaseDataset):
                                       selected_cav_base['params'][
                                           'lidar_pose'][1] - ego_lidar_pose[
                                           1])**2)
-            if distance > opencood.data_utils.datasets.COM_RANGE:
-                continue
+            # if distance > opencood.data_utils.datasets.COM_RANGE:
+            #     continue
 
             # find the transformation matrix from current cav to ego.
             cav_lidar_pose = selected_cav_base['params']['lidar_pose']
