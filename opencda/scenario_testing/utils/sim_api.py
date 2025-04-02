@@ -836,5 +836,10 @@ class ScenarioManager:
         """
         Simulation close.
         """
-        # restore to origin setting
-        self.world.apply_settings(self.origin_settings)
+        print("Destroying all the actors...")
+        self.client.reload_world()
+        settings = self.origin_settings
+        settings.synchronous_mode = False
+        settings.no_rendering_mode = True
+        self.world.apply_settings(settings)
+        print("Simulation closed")

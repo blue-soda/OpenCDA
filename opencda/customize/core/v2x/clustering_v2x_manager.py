@@ -2,7 +2,7 @@ from opencda.core.common.v2x_manager import V2XManager
 import math
 from opencda.core.common.misc import compute_distance
 import random
-import sys
+from pympler.asizeof import asizeof
 
 STANDARD_CAPABILITY= 100
 def calculate_cos(direction1, direction2):
@@ -85,15 +85,21 @@ class ClusteringV2XManager(V2XManager):
         # print('vehicle_id', self.vehicle_id, self.cluster_state['cluster_head'], self.vehicle_id == self.cluster_state['cluster_head'])
         return self.vehicle_id == self.cluster_state['cluster_head']
 
-    def set_buffer(self, source=None, objects=None, results=None):
+    def set_buffer(self, source=None, objects=None):#, results=None):
         if source:
             self._recieved_buffer['source'] = source
         if objects:
             self._recieved_buffer['objects'] = objects
-        if results:
-            self._recieved_buffer['results'] = results
+        # if results:
+        #     self._recieved_buffer['results'] = results
         self._unread_buffer = True
-        ClusteringV2XManager.Communication_Volume_Inside_Cluster_Broadcast += sys.getsizeof(objects)
+        if objects and 'vehicles' in objects and len(objects['vehicles']) > 0:
+            #print('objects', objects, sys.getsizeof(objects['vehicles'][0]))
+            #size per <opencda.core.sensing.perception.obstacle_vehicle.ObstacleVehicle> : 56
+            objects_size = asizeof(objects)
+            # print('broadcast data size: ', objects_size)
+            ClusteringV2XManager.Communication_Volume_Inside_Cluster_Broadcast += objects_size
+            ClusteringV2XManager.Communication_Volume += objects_size
 
     def read_buffer(self):
         if self._unread_buffer:
@@ -106,11 +112,11 @@ class ClusteringV2XManager(V2XManager):
                         'vehicles': [],
                         'traffic_lights': []
                     },
-                    'results':
-                    {
-                        'psm': None,
-                        'rm': None,
-                    }
+                    # 'results':
+                    # {
+                    #     'psm': None,
+                    #     'rm': None,
+                    # }
                 }
 
     def beacon(self):
@@ -365,7 +371,7 @@ class ClusteringV2XManager(V2XManager):
                 neighbor_beacon = vm.v2x_manager.beacon()
 
                 # Update neighbor information
-                if distance < self.communication_range:
+                if distance < self.communication_range and vm.is_ok:
                     self.cluster_state['neighbors'][vehicle_id] = neighbor_beacon
                     self.cluster_state['similarity_scores'][vehicle_id] = self.compute_similarity(neighbor_beacon)
                 else:

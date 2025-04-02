@@ -13,7 +13,7 @@ from opencda.core.common.cav_world import CavWorld
 from opencda.scenario_testing.evaluations.evaluate_manager import \
     EvaluationManager
 from opencda.scenario_testing.utils.yaml_utils import add_current_time, save_yaml
-
+from opencda.core.sensing.localization.localization_manager import LocalizationManager
 
 def run_scenario(opt, scenario_params):
     try:
@@ -72,8 +72,16 @@ def run_scenario(opt, scenario_params):
             for single_cav in single_cav_list:
                 single_cav.update_info()
 
-            for traffic_cav in traffic_cav_list:
+            i = 0
+            while i < len(traffic_cav_list):
+                traffic_cav = traffic_cav_list[i]
                 traffic_cav.update_info()
+                if traffic_cav.is_ok and LocalizationManager.is_vehicle_out_of_sight(traffic_cav.vehicle.get_transform().location, transform.location):
+                    traffic_cav.is_ok = False
+                    traffic_cav_list.pop(i)
+                    print(f"bg_vehicle {i} is out of range.")
+                else:
+                    i += 1
             
             for single_cav in single_cav_list:               
                 control = single_cav.run_step()
@@ -81,7 +89,6 @@ def run_scenario(opt, scenario_params):
             # for rsu in rsu_list:
             #     rsu.update_info()
             #     rsu.run_step()
-            #TODO: destory the bg_vehicles which have left the scenario
 
     finally:
         eval_manager.evaluate()
@@ -91,14 +98,3 @@ def run_scenario(opt, scenario_params):
             scenario_manager.client.stop_recorder()
 
         scenario_manager.close()
-
-        for v in single_cav_list:
-            v.destroy()
-        # for r in rsu_list:
-        #     r.destroy()
-        if 'cluster' in application:
-            for v in traffic_cav_list:
-                v.destroy()
-        else:
-            for v in bg_veh_list:
-                v.destroy()

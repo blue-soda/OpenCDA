@@ -11,13 +11,12 @@ from collections import deque
 import carla
 import numpy as np
 
-from opencda.core.common.misc import get_speed
+from opencda.core.common.misc import get_speed, compute_distance
 from opencda.core.sensing.localization.localization_debug_helper \
     import LocDebugHelper
 from opencda.core.sensing.localization.kalman_filter import KalmanFilter
 from opencda.core.sensing.localization.coordinate_transform \
     import geo_to_transform
-
 
 class GnssSensor(object):
     """
@@ -319,3 +318,8 @@ class LocalizationManager(object):
         """
         self.gnss.sensor.destroy()
         self.imu.sensor.destroy()
+
+    @staticmethod
+    def is_vehicle_out_of_sight(main_location, location, max_distance=100):
+        distance = compute_distance(main_location, location)
+        return distance > max_distance

@@ -7,7 +7,7 @@ from opencda.customize.core.v2x.clustering_coperception_manager import Clusterin
 from opencda.core.sensing.perception.o3d_lidar_libs import \
     o3d_visualizer_init, o3d_pointcloud_encode, o3d_visualizer_show, \
     o3d_camera_lidar_fusion, o3d_visualizer_show_coperception, o3d_predict_bbox_to_object
-import sys
+from pympler.asizeof import asizeof
 from opencda.core.sensing.perception.coperception_libs import CoperceptionLibs
 
 
@@ -74,12 +74,12 @@ class ClusteringPerceptionManager(PerceptionManager):
             [reformat_data_dict])  # should have batch size dim
         if output_dict['ego']['processed_lidar']['voxel_coords'].numel() == 0:
             print('Warning: coords is empty.')
-            return objects, None
+            return objects
         # if len(output_dict['ego']['processed_lidar']['pillar_features'].shape) == 1:
         #     print('Warning: pillar_features is 1-dim tensor.')
         #     return objects, None            
         batch_data = self.ml_manager.to_device(output_dict)
-        predict_box_tensor, predict_score, gt_box_tensor, results_dict = self.ml_manager.inference(batch_data, with_submit, return_output=True)
+        predict_box_tensor, predict_score, gt_box_tensor = self.ml_manager.inference(batch_data, with_submit)
         if predict_box_tensor is not None and predict_score is not None and gt_box_tensor is not None:
             print('predict_box_tensor: ', predict_box_tensor.shape)
             print('predict_score :', predict_score.shape)
@@ -105,7 +105,7 @@ class ClusteringPerceptionManager(PerceptionManager):
                 objects)
             
         objects = self.retrieve_traffic_lights(objects)
-        return objects, results_dict
+        return objects
 
     def coperception_mode(self, objects):
         """
@@ -128,6 +128,7 @@ class ClusteringPerceptionManager(PerceptionManager):
         data = OrderedDict()
         if self.enable_communicate:
             if self.v2x_manager.is_cluster_head():  #cluster head do cp
+                data_size = 0.0
                 vehicles_inside_cluster = self.co_manager.communicate_inside_cluster()
                 print(f'{self.v2x_manager.vehicle_id} is collecting data from {vehicles_inside_cluster.keys()}:')
 
@@ -145,6 +146,7 @@ class ClusteringPerceptionManager(PerceptionManager):
                     cav_data=ego_data,
                     ego_pose=ClusteringPerceptionManager.ego_lidar_pose
                 )
+                data_size += asizeof(ego_data)
                 data.update(ego_data)
 
                 for vid, nearby_data_dict in vehicles_inside_cluster.items():
@@ -168,19 +170,20 @@ class ClusteringPerceptionManager(PerceptionManager):
                         cav_data=nearby_data,
                         ego_pose=ClusteringPerceptionManager.ego_lidar_pose
                     )
+                    data_size += asizeof(nearby_data)
                     data.update(nearby_data)
 
-                data_size = sys.getsizeof(data)
                 ClusteringV2XManager.Communication_Volume += data_size
                 ClusteringV2XManager.Communication_Volume_Inside_Cluster_Collect += data_size
+                print('collect data size: ', data_size)
                 #count communication_volume
                 #if record_results:
-                objects, results_dict = self.inference(data, objects, with_submit=is_ego)
+                objects = self.inference(data, objects, with_submit=is_ego)
                 if is_ego:
                     ClusteringPerceptionManager.clear()
 
                 self.objects = objects
-                self.co_manager.broadcast_inside_cluster(self.id, objects, results_dict)
+                self.co_manager.broadcast_inside_cluster(self.id, objects)
                 print(f"{self.id} is cluster head, detect {len(objects['vehicles'])} vehicles and {len(objects['traffic_lights'])} traffic_lights")
             
             else:
@@ -188,7 +191,7 @@ class ClusteringPerceptionManager(PerceptionManager):
                 #Note that only ego vehicle need the real results.
                 if is_ego: 
                     print('coperception: ', self.v2x_manager.vehicle_id)
-                    output_dict_all = {}
+                    # output_dict_all = {}
                     ego_data = self.co_manager.prepare_data(
                     cav_id=self.id,
                     camera=self.rgb_camera,
@@ -203,16 +206,16 @@ class ClusteringPerceptionManager(PerceptionManager):
                         cav_data=ego_data,
                         ego_pose=ClusteringPerceptionManager.ego_lidar_pose
                     )
-                    objects_self, results_dict = self.inference(ego_data, objects, with_submit=False)  #detect objects on its own
+                    objects_self = self.inference(ego_data, objects, with_submit=False)  #detect objects on its own
                     print(f"{self.id}: {len(objects_self['vehicles'])} vehicles and {len(objects_self['traffic_lights'])} traffic_lights detected from self")
-                    output_dict_all[self.id] = results_dict
+                    # output_dict_all[self.id] = results_dict
 
                     buffer = (self.v2x_manager.read_buffer()) #get results from cluster head
-                    objects_cluster, results_dict_cluster, cluster_head_id = buffer['objects'], buffer['results'], buffer['source']
+                    objects_cluster, cluster_head_id = buffer['objects'], buffer['source']
                     #cluster_head = self.v2x_manager.cluster_state['cluster_head']
                     print(f"{self.id}: {len(objects_cluster['vehicles'])} vehicles and {len(objects_cluster['traffic_lights'])} traffic_lights detected from cluster head {cluster_head_id}")
-                    if results_dict_cluster['rm'] and results_dict_cluster['psm'] :
-                        output_dict_all[cluster_head_id] = results_dict_cluster
+                    # if results_dict_cluster['rm'] and results_dict_cluster['psm'] :
+                    #     output_dict_all[cluster_head_id] = results_dict_cluster
                     pred_box_tensor, pred_score, gt_box_tensor = self.ml_manager.naive_late_fusion(
                                                                     ClusteringPerceptionManager.predict_box_tensors, 
                                                                     ClusteringPerceptionManager.predict_scores, 

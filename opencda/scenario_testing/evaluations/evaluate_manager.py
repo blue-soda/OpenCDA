@@ -63,10 +63,10 @@ class EvaluationManager(object):
 
         from opencda.customize.core.v2x.clustering_v2x_manager \
             import ClusteringV2XManager
-        print(f"Communication_Volume: {ClusteringV2XManager.Communication_Volume} = \
-            {ClusteringV2XManager.Communication_Volume_Inside_Cluster_Collect} + \
-            {ClusteringV2XManager.Communication_Volume_Inside_Cluster_Broadcast} + \
-            {ClusteringV2XManager.Communication_Volume_Outside_Cluster} ")
+        print(f"Communication_Volume(MB): {ClusteringV2XManager.Communication_Volume / 1024 / 1024:.4f} = \
+            {ClusteringV2XManager.Communication_Volume_Inside_Cluster_Collect  / 1024 / 1024:.4f} + \
+            {ClusteringV2XManager.Communication_Volume_Inside_Cluster_Broadcast / 1024 / 1024:.4f} + \
+            {ClusteringV2XManager.Communication_Volume_Outside_Cluster / 1024 / 1024} ")
 
     def kinematics_eval(self, log_file):
         """

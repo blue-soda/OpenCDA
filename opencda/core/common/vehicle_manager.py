@@ -93,6 +93,7 @@ class VehicleManager(object):
         self.carla_map = carla_map
         self.cav_world = cav_world
         self.application = application
+        self.is_ok = True
         # retrieve the configure for different modules
         sensing_config = config_yaml['sensing']
         map_config = config_yaml['map_manager']
@@ -219,6 +220,9 @@ class VehicleManager(object):
         ego_dir = self.localizer.get_ego_dir()
         ego_lidar = self.perception_manager.lidar
         ego_image = self.perception_manager.rgb_camera
+
+        if not self.is_ok:
+            return
 
         if 'traffic' in self.application:
             self.v2x_manager.update_info(ego_pos, ego_spd, ego_lidar, ego_image, ego_dir)
