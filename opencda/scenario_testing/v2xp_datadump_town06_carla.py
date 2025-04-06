@@ -89,9 +89,4 @@ def run_scenario(opt, scenario_params):
 
         scenario_manager.close()
 
-        for v in single_cav_list:
-            v.destroy()
-        for r in rsu_list:
-            r.destroy()
-        for v in bg_veh_list:
-            v.destroy()
+
