@@ -67,9 +67,4 @@ def run_scenario(opt, scenario_params):
             scenario_manager.client.stop_recorder()
 
         scenario_manager.close()
-
-        for v in single_cav_list:
-            v.destroy()
-        for v in bg_veh_list:
-            v.destroy()
-
+        #

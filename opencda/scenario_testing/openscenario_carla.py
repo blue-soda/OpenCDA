@@ -107,3 +107,4 @@ def run_scenario(opt, scenario_params):
         if scenario_runner is not None:
             scenario_runner.destroy()
         print("Destroyed scenario_runner")
+        #

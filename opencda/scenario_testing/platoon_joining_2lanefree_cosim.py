@@ -87,9 +87,4 @@ def run_scenario(opt, scenario_params):
     finally:
         eval_manager.evaluate()
         scenario_manager.close()
-
-        for platoon in platoon_list:
-            platoon.destroy()
-
-        for v in single_cav_list:
-            v.destroy()
+#

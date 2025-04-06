@@ -88,3 +88,4 @@ def run_scenario(opt, config_yaml):
             scenario_manager.client.stop_recorder()
 
         scenario_manager.close()
+#

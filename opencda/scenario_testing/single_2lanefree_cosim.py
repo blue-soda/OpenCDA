@@ -73,5 +73,4 @@ def run_scenario(opt, scenario_params):
     finally:
         eval_manager.evaluate()
         scenario_manager.close()
-        for v in single_cav_list:
-            v.destroy()
+        #
