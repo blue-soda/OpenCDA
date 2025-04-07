@@ -320,6 +320,6 @@ class LocalizationManager(object):
         self.imu.sensor.destroy()
 
     @staticmethod
-    def is_vehicle_out_of_sight(main_location, location, max_distance=100):
+    def is_vehicle_out_of_sight(main_location, location, max_distance=70):
         distance = compute_distance(main_location, location)
         return distance > max_distance

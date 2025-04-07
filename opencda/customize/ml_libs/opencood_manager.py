@@ -11,7 +11,7 @@ from opencood.data_utils.datasets import build_dataset
 from opencood.data_utils.datasets.late_fusion_dataset import LateFusionDataset
 from opencood.data_utils.datasets.early_fusion_dataset import EarlyFusionDataset
 from opencood.data_utils.datasets.intermediate_fusion_dataset import IntermediateFusionDataset
-
+from opencda.log.logger_config import logger
 DATASET_DICT = {
     'late': LateFusionDataset,
     'early': EarlyFusionDataset,
@@ -63,7 +63,7 @@ class OpenCOODManager(object):
         if not with_stats:
             return
         
-        print('submit_results')
+        logger.debug('submit_results')
         eval_utils.caluclate_tp_fp(pred_box_tensor,
                                     pred_score,
                                     gt_box_tensor,
@@ -108,7 +108,7 @@ class OpenCOODManager(object):
 
         # skip the first 60 ticks for calculating the average precision
         if self.counter > 60 and self.counter % 2 == 0:
-            print(f"Aggregating the current stats into final results: {self.counter}")
+            logger.debug(f"Aggregating the current stats into final results: {self.counter}")
             self.submit_results(pred_box_tensor, pred_score, gt_box_tensor, with_stats)
         self.counter += 1
         return pred_box_tensor, pred_score, gt_box_tensor

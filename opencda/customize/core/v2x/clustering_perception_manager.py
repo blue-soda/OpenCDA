@@ -9,7 +9,7 @@ from opencda.core.sensing.perception.o3d_lidar_libs import \
     o3d_camera_lidar_fusion, o3d_visualizer_show_coperception, o3d_predict_bbox_to_object
 from pympler.asizeof import asizeof
 from opencda.core.sensing.perception.coperception_libs import CoperceptionLibs
-
+from opencda.log.logger_config import logger
 
 class ClusteringPerceptionManager(PerceptionManager):
     #static ego_data_dict
@@ -73,17 +73,17 @@ class ClusteringPerceptionManager(PerceptionManager):
         output_dict = self.ml_manager.opencood_dataset.collate_batch_test(
             [reformat_data_dict])  # should have batch size dim
         if output_dict['ego']['processed_lidar']['voxel_coords'].numel() == 0:
-            print('Warning: coords is empty.')
+            logger.debug('Warning: coords is empty.')
             return objects
         # if len(output_dict['ego']['processed_lidar']['pillar_features'].shape) == 1:
-        #     print('Warning: pillar_features is 1-dim tensor.')
+        #     logger.debug('Warning: pillar_features is 1-dim tensor.')
         #     return objects, None            
         batch_data = self.ml_manager.to_device(output_dict)
         predict_box_tensor, predict_score, gt_box_tensor = self.ml_manager.inference(batch_data, with_submit)
         if predict_box_tensor is not None and predict_score is not None and gt_box_tensor is not None:
-            print('predict_box_tensor: ', predict_box_tensor.shape)
-            print('predict_score :', predict_score.shape)
-            print('gt_box_tensor :', gt_box_tensor.shape)
+            logger.debug(f'predict_box_tensor: {predict_box_tensor.shape}')
+            logger.debug(f'predict_score : {predict_score.shape}')
+            logger.debug(f'gt_box_tensor : {gt_box_tensor.shape}')
             ClusteringPerceptionManager.predict_box_tensors.append(predict_box_tensor)
             ClusteringPerceptionManager.predict_scores.append(predict_score)
             ClusteringPerceptionManager.gt_box_tensors.append(gt_box_tensor)
@@ -130,7 +130,7 @@ class ClusteringPerceptionManager(PerceptionManager):
             if self.v2x_manager.is_cluster_head():  #cluster head do cp
                 data_size = 0.0
                 vehicles_inside_cluster = self.co_manager.communicate_inside_cluster()
-                print(f'{self.v2x_manager.vehicle_id} is collecting data from {vehicles_inside_cluster.keys()}:')
+                logger.debug(f'{self.v2x_manager.vehicle_id} is collecting data from {vehicles_inside_cluster.keys()}:')
 
                 ego_data = self.co_manager.prepare_data(
                     cav_id=self.id,
@@ -175,7 +175,7 @@ class ClusteringPerceptionManager(PerceptionManager):
 
                 ClusteringV2XManager.Communication_Volume += data_size
                 ClusteringV2XManager.Communication_Volume_Inside_Cluster_Collect += data_size
-                print('collect data size: ', data_size)
+                logger.debug(f'collect data size: {data_size}')
                 #count communication_volume
                 #if record_results:
                 objects = self.inference(data, objects, with_submit=is_ego)
@@ -184,13 +184,13 @@ class ClusteringPerceptionManager(PerceptionManager):
 
                 self.objects = objects
                 self.co_manager.broadcast_inside_cluster(self.id, objects)
-                print(f"{self.id} is cluster head, detect {len(objects['vehicles'])} vehicles and {len(objects['traffic_lights'])} traffic_lights")
+                logger.debug(f"{self.id} is cluster head, detect {len(objects['vehicles'])} vehicles and {len(objects['traffic_lights'])} traffic_lights")
             
             else:
                 #For other vehicles, 1. get results from cluster head 2. communicate with vehicles outside the cluster
                 #Note that only ego vehicle need the real results.
                 if is_ego: 
-                    print('coperception: ', self.v2x_manager.vehicle_id)
+                    logger.debug(f'coperception: {self.v2x_manager.vehicle_id}')
                     # output_dict_all = {}
                     ego_data = self.co_manager.prepare_data(
                     cav_id=self.id,
@@ -207,13 +207,13 @@ class ClusteringPerceptionManager(PerceptionManager):
                         ego_pose=ClusteringPerceptionManager.ego_lidar_pose
                     )
                     objects_self = self.inference(ego_data, objects, with_submit=False)  #detect objects on its own
-                    print(f"{self.id}: {len(objects_self['vehicles'])} vehicles and {len(objects_self['traffic_lights'])} traffic_lights detected from self")
+                    logger.debug(f"{self.id}: {len(objects_self['vehicles'])} vehicles and {len(objects_self['traffic_lights'])} traffic_lights detected from self")
                     # output_dict_all[self.id] = results_dict
 
                     buffer = (self.v2x_manager.read_buffer()) #get results from cluster head
                     objects_cluster, cluster_head_id = buffer['objects'], buffer['source']
                     #cluster_head = self.v2x_manager.cluster_state['cluster_head']
-                    print(f"{self.id}: {len(objects_cluster['vehicles'])} vehicles and {len(objects_cluster['traffic_lights'])} traffic_lights detected from cluster head {cluster_head_id}")
+                    logger.debug(f"{self.id}: {len(objects_cluster['vehicles'])} vehicles and {len(objects_cluster['traffic_lights'])} traffic_lights detected from cluster head {cluster_head_id}")
                     # if results_dict_cluster['rm'] and results_dict_cluster['psm'] :
                     #     output_dict_all[cluster_head_id] = results_dict_cluster
                     pred_box_tensor, pred_score, gt_box_tensor = self.ml_manager.naive_late_fusion(

@@ -14,6 +14,7 @@ from opencda.scenario_testing.evaluations.evaluate_manager import \
     EvaluationManager
 from opencda.scenario_testing.utils.yaml_utils import add_current_time, save_yaml
 from opencda.core.sensing.localization.localization_manager import LocalizationManager
+from opencda.log.logger_config import logger
 
 def run_scenario(opt, scenario_params):
     try:
@@ -58,6 +59,7 @@ def run_scenario(opt, scenario_params):
                               current_time=scenario_params['current_time'])
 
         spectator = scenario_manager.world.get_spectator()
+        debug_helper = scenario_manager.world.debug 
         while True:
             scenario_manager.tick()
             transform = single_cav_list[0].vehicle.get_transform()
@@ -71,17 +73,31 @@ def run_scenario(opt, scenario_params):
 
             for single_cav in single_cav_list:
                 single_cav.update_info()
+                vehicle_location = single_cav.vehicle.get_transform().location
+                color = single_cav.v2x_manager.rgb
+                cluster_head = single_cav.v2x_manager.cluster_state['cluster_head']
+                debug_helper.draw_string(vehicle_location + carla.Location(z=2.5),
+                            f"EGO: {single_cav.vehicle.id}, {cluster_head}",
+                            life_time=0.1,persistent_lines=True,draw_shadow=False,
+                            color=carla.Color(*color))
 
-            i = 0
-            while i < len(traffic_cav_list):
-                traffic_cav = traffic_cav_list[i]
+            for traffic_cav in traffic_cav_list:
                 traffic_cav.update_info()
-                if traffic_cav.is_ok and LocalizationManager.is_vehicle_out_of_sight(traffic_cav.vehicle.get_transform().location, transform.location):
+                isOutOfSight = LocalizationManager.is_vehicle_out_of_sight( \
+                    traffic_cav.vehicle.get_transform().location, transform.location)
+                if traffic_cav.is_ok and isOutOfSight:
                     traffic_cav.is_ok = False
-                    traffic_cav_list.pop(i)
-                    print(f"bg_vehicle {i} is out of range.")
-                else:
-                    i += 1
+                    logger.debug(f"bg_vehicle {traffic_cav.vehicle.id} is out of range.")
+                elif not traffic_cav.is_ok and not isOutOfSight:
+                    traffic_cav.is_ok = True
+                    logger.debug(f"bg_vehicle {traffic_cav.vehicle.id} is back.")
+                vehicle_location = traffic_cav.vehicle.get_transform().location
+                color = traffic_cav.v2x_manager.rgb
+                cluster_head = traffic_cav.v2x_manager.cluster_state['cluster_head']
+                debug_helper.draw_string(vehicle_location + carla.Location(z=2.5),
+                            f"{traffic_cav.vehicle.id}, {int(not isOutOfSight)}, {cluster_head}",
+                            life_time=0.1,persistent_lines=True,draw_shadow=False,
+                            color=carla.Color(*color))
             
             for single_cav in single_cav_list:               
                 control = single_cav.run_step()

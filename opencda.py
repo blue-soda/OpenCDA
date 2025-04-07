@@ -14,7 +14,6 @@ from omegaconf import OmegaConf
 
 from opencda.version import __version__
 
-
 def arg_parse():
     # create an argument parser
     parser = argparse.ArgumentParser(description="OpenCDA scenario runner.")

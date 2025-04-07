@@ -1,12 +1,13 @@
 from opencda.core.sensing.perception.coperception_manager \
     import CoperceptionManager
+from opencda.log.logger_config import logger
 
 class ClusteringCoperceptionManager(CoperceptionManager):
     def __init__(self, vid, v2x_manager, coperception_libs):
         super().__init__(vid, v2x_manager, coperception_libs)
 
     def communicate_inside_cluster(self):
-        print(f"cluster head {self.v2x_manager.vehicle_id} is communicating inside cluster")
+        logger.debug(f"cluster head {self.v2x_manager.vehicle_id} is communicating inside cluster")
         data = {}
         if self.v2x_manager is not None:
             for vehicle_id in self.v2x_manager.cluster_state['members'].keys():
@@ -14,7 +15,7 @@ class ClusteringCoperceptionManager(CoperceptionManager):
                     continue
                 data_dict = self.v2x_manager.cav_nearby.get(vehicle_id)
                 if data_dict is None:
-                    print(f"member {vehicle_id} is not a neighbor")
+                    logger.debug(f"member {vehicle_id} is not a neighbor")
                     continue
                 data.update({str(vehicle_id): data_dict})
         return data
