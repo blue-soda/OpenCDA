@@ -9,7 +9,7 @@ Evaluation manager.
 import os
 from datetime import datetime
 from opencda.scenario_testing.evaluations.utils import lprint
-
+from opencda.log.logger_config import logger
 
 class EvaluationManager(object):
     """
@@ -64,6 +64,11 @@ class EvaluationManager(object):
         from opencda.customize.core.v2x.clustering_v2x_manager \
             import ClusteringV2XManager
         print(f"Communication_Volume(MB): {ClusteringV2XManager.Communication_Volume / 1024 / 1024:.4f} = \
+            {ClusteringV2XManager.Communication_Volume_Inside_Cluster_Collect  / 1024 / 1024:.4f} + \
+            {ClusteringV2XManager.Communication_Volume_Inside_Cluster_Broadcast / 1024 / 1024:.4f} + \
+            {ClusteringV2XManager.Communication_Volume_Outside_Cluster / 1024 / 1024} ")
+        
+        logger.info(f"Communication_Volume(MB): {ClusteringV2XManager.Communication_Volume / 1024 / 1024:.4f} = \
             {ClusteringV2XManager.Communication_Volume_Inside_Cluster_Collect  / 1024 / 1024:.4f} + \
             {ClusteringV2XManager.Communication_Volume_Inside_Cluster_Broadcast / 1024 / 1024:.4f} + \
             {ClusteringV2XManager.Communication_Volume_Outside_Cluster / 1024 / 1024} ")

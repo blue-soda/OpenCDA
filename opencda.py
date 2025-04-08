@@ -13,6 +13,7 @@ import sys
 from omegaconf import OmegaConf
 
 from opencda.version import __version__
+from opencda.log.logger_config import logger
 
 def arg_parse():
     # create an argument parser
@@ -43,6 +44,7 @@ def arg_parse():
 def main():
     # parse the arguments
     opt = arg_parse()
+    logger.info(opt)
     # print the version of OpenCDA
     print("OpenCDA Version: %s" % __version__)
     # set the default yaml file
@@ -95,6 +97,13 @@ def main():
         scenario_params = OmegaConf.merge(scene_dict, experiment_dict[profile])
     scenario_params['vehicle_base']['sensing']['perception']['coperception'] = opt.apply_cp
     scenario_params['vehicle_base']['sensing']['perception']['activate'] = opt.apply_ml
+
+    #ignore deprecated warning 
+    import warnings
+    from shapely.errors import ShapelyDeprecationWarning
+    warnings.filterwarnings("ignore", category=UserWarning, message="nn.functional.sigmoid is deprecated. Use torch.sigmoid instead.")
+    warnings.filterwarnings("ignore", category=ShapelyDeprecationWarning)
+
     scenario_runner(opt, scenario_params)
 
 

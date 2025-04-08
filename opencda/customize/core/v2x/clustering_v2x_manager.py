@@ -4,6 +4,7 @@ from opencda.core.common.misc import compute_distance
 import random
 from pympler.asizeof import asizeof
 from opencda.log.logger_config import logger
+from random import uniform
 
 STANDARD_CAPABILITY= 100
 def calculate_cos(direction1, direction2):
@@ -34,8 +35,8 @@ class ClusteringV2XManager(V2XManager):
         super(ClusteringV2XManager, self).__init__(cav_world, config_yaml, vid)
         self.vehicle_id = vehicle_id
         
-        self.computing_capability = STANDARD_CAPABILITY
-        self.communication_quality = STANDARD_CAPABILITY
+        self.computing_capability = STANDARD_CAPABILITY * uniform(0.4, 1)
+        self.communication_quality = STANDARD_CAPABILITY * uniform(0.6, 1)
         self.cp_model = 'default_model'
         self.rgb = (255, 255, 0)
 
@@ -63,11 +64,11 @@ class ClusteringV2XManager(V2XManager):
             'sigma': 0.2,         # 创建簇的概率调节参数
             'w1': 0.4,  # 通信质量权重
             'w2': 0.3,  # 计算能力权重
-            'w3': 0.3,  # 速度一致性权重
+            'w3': 0.2,  # 速度一致性权重
             'T_timeout': 1.0,  # 簇头超时时间 (单位: s)
             'shadow_timeout': 0.5,  # 影子簇头超时时间 (单位: s)
-            'eta_join': 0.7,  # 加入阈值
             'eta_leave': 0.3,  # 离开阈值 (eta_join - delta_eta)
+            'eta_elect': 0.05 #选举阈值(超过当前簇头优先级得分 + eta_elect 才能当选)
         }
 
         # 分簇协议状态
@@ -92,6 +93,9 @@ class ClusteringV2XManager(V2XManager):
         r = int((hash_value >> 16) & 0xFF)
         g = int((hash_value >> 8) & 0xFF)
         b = int(hash_value & 0xFF)
+        # r = (vehicle_id * 79) % 256
+        # g = (vehicle_id * 101) % 256
+        # b = (vehicle_id * 127) % 256
         r = 255 if r > 127 else 0
         g = 255 if g > 127 else 0
         b = 255 if b > 127 else 0
@@ -145,6 +149,7 @@ class ClusteringV2XManager(V2XManager):
             - Computing capability and communication quality
             - Cooperative perception model information
         """
+        self.cluster_state['priority_score'] = self.compute_priority_score()
         beacon = {
             'vehicle_id': self.vehicle_id,
             'position': self.get_ego_pos(),
@@ -154,7 +159,7 @@ class ClusteringV2XManager(V2XManager):
             'communication_quality': 1.0, # Placeholder for communication quality
             'perception_model': self.cp_model,  # Placeholder for model info
             'cluster_head': self.cluster_state['cluster_head'],  # Placeholder for cluster head info
-            'priority_score': self.compute_priority_score()
+            'priority_score': self.cluster_state['priority_score'],
         }
         return beacon
 
@@ -349,28 +354,34 @@ class ClusteringV2XManager(V2XManager):
         #logger.debug('members:', self.cluster_state['members'].keys())
         if not self.cluster_state['members']:
             return
-        # Elect the member with the highest priority score
-        highest_priority = -1
-        second_highest_priority = -1
-        cluster_head = None
-        shadow_head = None
-        for vehicle_id, member_data in self.cluster_state['members'].items():
-            if 'priority_score' in member_data:
-                if member_data['priority_score'] > highest_priority:
-                    highest_priority = member_data['priority_score']
-                    cluster_head = vehicle_id
-                elif member_data['priority_score'] > second_highest_priority:
-                    second_highest_priority = member_data['priority_score']
-                    shadow_head = vehicle_id
-                    
-        if cluster_head is not None and self.cluster_state['cluster_head'] is None:
-            self.cluster_state['cluster_head'] = cluster_head
-        if shadow_head is not None and self.cluster_state['shadow_head'] is None:
-            self.cluster_state['shadow_head'] = shadow_head
-
-        members = [vehicle_id for vehicle_id in self.cluster_state['members']]
+        # let the current leader hold the election, then the members will know the results next round.
         if self.is_cluster_head():
-            logger.debug(f"cluster head:{self.vehicle_id}, shadow head:{self.cluster_state['shadow_head']}, cluster members:{members}")
+            # Elect the member with the highest priority score
+            highest_priority = -1
+            second_highest_priority = -1
+            cluster_head = None
+            shadow_head = None
+
+            cur_priority_score = self.cluster_state['priority_score']
+            eta_elect = self.cluster_params['eta_elect']
+            highest_priority = cur_priority_score * (1 + eta_elect)
+            for vehicle_id, member_data in self.cluster_state['members'].items():
+                if 'priority_score' in member_data:
+                    if member_data['priority_score'] > highest_priority:
+                        highest_priority = member_data['priority_score']
+                        cluster_head = vehicle_id
+                        logger.debug(f"{vehicle_id} win the election over {self.vehicle_id}.")
+                    elif member_data['priority_score'] > second_highest_priority:
+                        second_highest_priority = member_data['priority_score']
+                        shadow_head = vehicle_id
+                        
+            if cluster_head is not None: #and self.cluster_state['cluster_head'] is None:
+                self.cluster_state['cluster_head'] = cluster_head
+            if shadow_head is not None: #and self.cluster_state['shadow_head'] is None:
+                self.cluster_state['shadow_head'] = shadow_head
+
+            members = [vehicle_id for vehicle_id in self.cluster_state['members']]
+            logger.debug(f"cluster head:{self.vehicle_id} with score {cur_priority_score:.3f}, shadow head:{self.cluster_state['shadow_head']} with score {second_highest_priority:.3f}, cluster members:{members}")
 
     def search(self, receive_beacons=False):
         """
