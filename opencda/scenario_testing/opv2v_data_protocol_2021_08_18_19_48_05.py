@@ -21,8 +21,8 @@ def run_scenario(opt, config_yaml):
         scenario_params = add_current_time(config_yaml)
 
         # create CAV world
-        cav_world = CavWorld(apply_ml=opt.apply_ml,
-                             apply_coperception=True,
+        cav_world = CavWorld(apply_ml=opt.apply_ml, 
+                             apply_cp=opt.apply_cp, 
                              coperception_params=scenario_params['coperception'])
 
         # create scenario manager

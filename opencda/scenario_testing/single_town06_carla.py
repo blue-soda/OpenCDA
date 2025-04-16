@@ -14,7 +14,9 @@ from opencda.scenario_testing.utils.yaml_utils import add_current_time
 def run_scenario(opt, scenario_params):
     try:
         scenario_params = add_current_time(scenario_params)
-        cav_world = CavWorld(opt.apply_ml, apply_coperception=opt.apply_cp, coperception_params=scenario_params['coperception'])
+        cav_world = CavWorld(apply_ml=opt.apply_ml, 
+                             apply_cp=opt.apply_cp, 
+                             coperception_params=scenario_params['coperception'])
 
         # create scenario manager
         scenario_manager = sim_api.ScenarioManager(scenario_params,

@@ -13,13 +13,13 @@ from opencda.core.application.platooning.platoon_behavior_agent\
     import PlatooningBehaviorAgent
 from opencda.core.common.v2x_manager \
     import V2XManager
-from opencda.customize.core.v2x.clustering_v2x_manager \
+from opencda.customize.core.clustering.clustering_v2x_manager \
     import ClusteringV2XManager
 from opencda.core.sensing.localization.localization_manager \
     import LocalizationManager
 from opencda.core.sensing.perception.perception_manager \
     import PerceptionManager
-from opencda.customize.core.v2x.clustering_perception_manager \
+from opencda.customize.core.clustering.clustering_perception_manager \
     import ClusteringPerceptionManager
 from opencda.core.safety.safety_manager import SafetyManager
 from opencda.core.plan.behavior_agent \

@@ -24,7 +24,9 @@ def run_scenario(opt, scenario_params):
         scenario_params = add_current_time(scenario_params)
 
         # create CAV world
-        cav_world = CavWorld(opt.apply_ml)
+        cav_world = CavWorld(apply_ml=opt.apply_ml, 
+                             apply_cp=opt.apply_cp, 
+                             coperception_params=scenario_params['coperception'])
 
         # sumo conifg file path
         current_path = os.path.dirname(os.path.realpath(__file__))

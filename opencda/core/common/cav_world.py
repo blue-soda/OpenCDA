@@ -5,6 +5,8 @@
 
 import importlib
 
+from opencda.customize.core.v2x.network_manager import NetworkManager
+
 
 class CavWorld(object):
     """
@@ -35,10 +37,11 @@ class CavWorld(object):
     ml_manager : opencda object.
         The machine learning manager class.
     """
-
+    network_manager = None
     def __init__(self, apply_ml=False,
-                 apply_coperception=False,
-                 coperception_params=None):
+                 apply_cp=False,
+                 coperception_params=None,
+                 network_params=None):
 
         self.vehicle_id_set = set()
         self._vehicle_manager_dict = {}
@@ -48,7 +51,7 @@ class CavWorld(object):
         self.ml_manager = None
         self.ego_id = None
 
-        if apply_ml and apply_coperception:
+        if apply_ml and apply_cp:
             ml_manager = getattr(importlib.import_module(
                 "opencda.customize.ml_libs.opencood_manager"), 'OpenCOODManager')
             print("opencda.customize.ml_libs.opencood_manager", 'OpenCOODManager')
@@ -63,6 +66,14 @@ class CavWorld(object):
             self.ml_manager = ml_manager()
         # this is used only when co-simulation activated.
         self.sumo2carla_ids = {}
+
+        self.network_enabled = False
+        print(network_params)
+        if network_params:
+            self.network_enabled = network_params['enabled']
+            if self.network_enabled and CavWorld.network_manager is None:
+                CavWorld.network_manager = NetworkManager(cav_world=self, \
+                                                            config=network_params)
 
     def update_global_ego_id(self, id=0):
         """
@@ -143,6 +154,9 @@ class CavWorld(object):
         Return vehicle manager dictionary.
         """
         return self._vehicle_manager_dict
+    
+    def get_vehicle_manager(self, vehicle_id):
+        return self._vehicle_manager_dict[vehicle_id]
     
     def get_evaluate_vehicle_managers(self):
         """

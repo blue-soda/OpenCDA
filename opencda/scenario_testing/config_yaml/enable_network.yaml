@@ -1,0 +1,4 @@
+enable_network:
+  network:
+    enabled: true
+    scheduler: 'roundrobin'

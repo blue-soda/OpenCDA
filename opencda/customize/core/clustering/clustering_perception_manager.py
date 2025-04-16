@@ -1,9 +1,11 @@
 from collections import OrderedDict
 from opencda.core.sensing.perception.perception_manager \
     import PerceptionManager
-from opencda.customize.core.v2x.clustering_v2x_manager \
-    import ClusteringV2XManager
-from opencda.customize.core.v2x.clustering_coperception_manager import ClusteringCoperceptionManager
+from opencda.core.common.v2x_manager \
+    import V2XManager
+from opencda.core.common.cav_world \
+    import CavWorld
+from opencda.customize.core.clustering.clustering_coperception_manager import ClusteringCoperceptionManager
 from opencda.core.sensing.perception.o3d_lidar_libs import \
     o3d_visualizer_init, o3d_pointcloud_encode, o3d_visualizer_show, \
     o3d_camera_lidar_fusion, o3d_visualizer_show_coperception, o3d_predict_bbox_to_object
@@ -18,6 +20,7 @@ class ClusteringPerceptionManager(PerceptionManager):
     predict_box_tensors = []
     predict_scores = []
     gt_box_tensors = []
+
     def __init__(self, v2x_manager, localization_manager, behavior_agent, vehicle,
                  config_yaml, cav_world, data_dump=False, carla_world=None, infra_id=None, ):
         super().__init__(v2x_manager, localization_manager, behavior_agent, vehicle,
@@ -39,6 +42,12 @@ class ClusteringPerceptionManager(PerceptionManager):
         ClusteringPerceptionManager.predict_box_tensors = []
         ClusteringPerceptionManager.predict_scores = []
         ClusteringPerceptionManager.gt_box_tensors = []
+    
+    @staticmethod
+    def get_boxes_size():
+        return asizeof(ClusteringPerceptionManager.predict_box_tensors) + \
+            asizeof(ClusteringPerceptionManager.predict_scores) + \
+            asizeof(ClusteringPerceptionManager.gt_box_tensors)
 
 
     def detect(self, ego_pos):
@@ -129,9 +138,6 @@ class ClusteringPerceptionManager(PerceptionManager):
         if self.enable_communicate:
             if self.v2x_manager.is_cluster_head():  #cluster head do cp
                 data_size = 0.0
-                vehicles_inside_cluster = self.co_manager.communicate_inside_cluster()
-                logger.debug(f'{self.v2x_manager.vehicle_id} is collecting data from {vehicles_inside_cluster.keys()}:')
-
                 ego_data = self.co_manager.prepare_data(
                     cav_id=self.id,
                     camera=self.rgb_camera,
@@ -146,12 +152,12 @@ class ClusteringPerceptionManager(PerceptionManager):
                     cav_data=ego_data,
                     ego_pose=ClusteringPerceptionManager.ego_lidar_pose
                 )
-                data_size += asizeof(ego_data)
+                # data_size += asizeof(ego_data)
                 data.update(ego_data)
 
+                vehicles_inside_cluster = self.co_manager.communicate_inside_cluster()
+                logger.debug(f'{self.v2x_manager.vehicle_id} is collecting data from {vehicles_inside_cluster.keys()}:')
                 for vid, nearby_data_dict in vehicles_inside_cluster.items():
-                    # if vid == ego_id:# ego_vehicle is inside this cluster, record the results and senc to ego
-                    #     record_results = True
                     if not nearby_data_dict:
                         continue
                     nearby_vm = nearby_data_dict['vehicle_manager']
@@ -170,11 +176,16 @@ class ClusteringPerceptionManager(PerceptionManager):
                         cav_data=nearby_data,
                         ego_pose=ClusteringPerceptionManager.ego_lidar_pose
                     )
+
+                    source, target = nearby_v2x_manager, self.v2x_manager
+                    '''
+                    TODO
+                    '''
                     data_size += asizeof(nearby_data)
                     data.update(nearby_data)
 
-                ClusteringV2XManager.Communication_Volume += data_size
-                ClusteringV2XManager.Communication_Volume_Inside_Cluster_Collect += data_size
+                # V2XManager.network_manager.update_communication_volume(data_size, communication_type="collect")
+                CavWorld.network_manager._update_communication_stats(data_size, "upload")
                 logger.debug(f'collect data size: {data_size}')
                 #count communication_volume
                 #if record_results:
@@ -208,24 +219,22 @@ class ClusteringPerceptionManager(PerceptionManager):
                     )
                     objects_self = self.inference(ego_data, objects, with_submit=False)  #detect objects on its own
                     logger.debug(f"{self.id}: {len(objects_self['vehicles'])} vehicles and {len(objects_self['traffic_lights'])} traffic_lights detected from self")
-                    # output_dict_all[self.id] = results_dict
 
                     buffer = (self.v2x_manager.read_buffer()) #get results from cluster head
                     objects_cluster, cluster_head_id = buffer['objects'], buffer['source']
-                    #cluster_head = self.v2x_manager.cluster_state['cluster_head']
+  
                     logger.debug(f"{self.id}: {len(objects_cluster['vehicles'])} vehicles and {len(objects_cluster['traffic_lights'])} traffic_lights detected from cluster head {cluster_head_id}")
-                    # if results_dict_cluster['rm'] and results_dict_cluster['psm'] :
-                    #     output_dict_all[cluster_head_id] = results_dict_cluster
+
+                    objects_size = self.get_boxes_size()
+                    # V2XManager.network_manager.update_communication_volume(objects_size, communication_type="outside")
+                    CavWorld.network_manager._update_communication_stats(objects_size, "inter")
                     pred_box_tensor, pred_score, gt_box_tensor = self.ml_manager.naive_late_fusion(
                                                                     ClusteringPerceptionManager.predict_box_tensors, 
                                                                     ClusteringPerceptionManager.predict_scores, 
                                                                     ClusteringPerceptionManager.gt_box_tensors)
                     ClusteringPerceptionManager.clear()
+
                     if pred_box_tensor is not None:
                         self.ml_manager.submit_results(pred_box_tensor, pred_score, gt_box_tensor, with_stats=True)
-                    #communicate with vehicles outside the cluster
-                    # for vid, nearby_data_dict in self.co_manager.communicate().items(): 
-                    #     if nearby_data_dict['v2x_manager'].is_cluster_head():
-                    #         objects.update(nearby_data_dict['v2x_manager'].read_buffer()) 
 
         return objects

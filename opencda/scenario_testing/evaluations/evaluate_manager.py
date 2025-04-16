@@ -61,17 +61,8 @@ class EvaluationManager(object):
         self.platooning_eval(log_file)
         print('Platooning Evaluation Done.')
 
-        from opencda.customize.core.v2x.clustering_v2x_manager \
-            import ClusteringV2XManager
-        print(f"Communication_Volume(MB): {ClusteringV2XManager.Communication_Volume / 1024 / 1024:.4f} = \
-            {ClusteringV2XManager.Communication_Volume_Inside_Cluster_Collect  / 1024 / 1024:.4f} + \
-            {ClusteringV2XManager.Communication_Volume_Inside_Cluster_Broadcast / 1024 / 1024:.4f} + \
-            {ClusteringV2XManager.Communication_Volume_Outside_Cluster / 1024 / 1024} ")
-        
-        logger.info(f"Communication_Volume(MB): {ClusteringV2XManager.Communication_Volume / 1024 / 1024:.4f} = \
-            {ClusteringV2XManager.Communication_Volume_Inside_Cluster_Collect  / 1024 / 1024:.4f} + \
-            {ClusteringV2XManager.Communication_Volume_Inside_Cluster_Broadcast / 1024 / 1024:.4f} + \
-            {ClusteringV2XManager.Communication_Volume_Outside_Cluster / 1024 / 1024} ")
+        self.print_communication_volume()
+
 
     def kinematics_eval(self, log_file):
         """
@@ -146,3 +137,12 @@ class EvaluationManager(object):
 
             # save log txt
             lprint(log_file, perform_txt)
+
+    def print_communication_volume(self):
+        from opencda.core.common.cav_world \
+            import CavWorld
+        report = {}
+        if CavWorld.network_manager is not None:
+            report = CavWorld.network_manager.get_communication_report()
+        print(report)
+        logger.info(report)

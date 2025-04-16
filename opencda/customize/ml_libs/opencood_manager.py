@@ -99,7 +99,7 @@ class OpenCOODManager(object):
                                                        self.opencood_dataset,
                                                        )
         elif fusion_method.startswith('intermediate'): # intermediate would be different models
-            pred_box_tensor, pred_score, gt_box_tensor, output_dict = \
+            pred_box_tensor, pred_score, gt_box_tensor = \
                 inference_utils.inference_intermediate_fusion(batch_data,
                                                               self.model,
                                                               self.opencood_dataset,

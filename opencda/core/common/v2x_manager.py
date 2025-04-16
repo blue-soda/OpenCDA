@@ -15,6 +15,9 @@ from opencda.core.application.platooning.platooning_plugin \
     import PlatooningPlugin
 from opencda.core.common.misc import compute_distance
 
+from pympler.asizeof import asizeof
+
+from opencda.core.common.cav_world import CavWorld
 
 class V2XManager(object):
     """
@@ -50,6 +53,8 @@ class V2XManager(object):
 
     """
 
+    instance_nums = 0
+
     def __init__(self, cav_world, config_yaml, vid):
         # if disabled, no cooperation will be operated
         self.cda_enabled = config_yaml['enabled']
@@ -60,6 +65,7 @@ class V2XManager(object):
 
         # used for cooperative perception.
         self._recieved_buffer = {}
+        self._unread_buffer = False
 
         # used for platooning communication
         self.platooning_plugin = PlatooningPlugin(
@@ -93,6 +99,13 @@ class V2XManager(object):
             self.speed_noise = config_yaml['speed_noise']
         if 'lag' in config_yaml:
             self.lag = config_yaml['lag']
+        
+        self.scheduler = None
+        if self.cav_world.network_enabled and 'network' in config_yaml:
+            self.scheduler = self.build_scheduler(config_yaml['network']['scheduler'])
+
+        V2XManager.instance_nums += 1
+        print(f'{V2XManager.instance_nums} vehicles initialized')
 
     def update_info(self, ego_pos, ego_spd, ego_lidar, ego_image, ego_dir=None):
         """
@@ -205,6 +218,32 @@ class V2XManager(object):
             else:
                 self.cav_nearby.pop(vm.vehicle.id, None)
 
+
+
+    def set_buffer(self, source=None, objects=None):#, results=None):
+        if source:
+            self._recieved_buffer['source'] = source
+        if objects:
+            self._recieved_buffer['objects'] = objects
+        self._unread_buffer = True
+        if objects and 'vehicles' in objects and len(objects['vehicles']) > 0:
+            objects_size = asizeof(objects)
+            # V2XManager.network_manager.update_communication_volume(objects_size, communication_type="broadcast")
+            CavWorld.network_manager._update_communication_stats(objects_size, "download")
+
+    def read_buffer(self):
+        if self._unread_buffer:
+            self._unread_buffer = False
+            return self._recieved_buffer
+        else:
+            return {'source': "0",
+                    'objects':
+                    {
+                        'vehicles': [],
+                        'traffic_lights': []
+                    },
+                }
+        
     """
     -----------------------------------------------------------
                  Below is platooning related 
@@ -342,3 +381,5 @@ class V2XManager(object):
         """
         return self.platooning_plugin.front_vehicle, \
             self.platooning_plugin.rear_vechile
+
+

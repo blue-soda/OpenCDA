@@ -2,11 +2,13 @@ from opencda.core.common.v2x_manager import V2XManager
 import math
 from opencda.core.common.misc import compute_distance
 import random
-from pympler.asizeof import asizeof
 from opencda.log.logger_config import logger
 from random import uniform
 
-STANDARD_CAPABILITY= 100
+STANDARD_CAPABILITY = 1
+MAX_TX_POWER = 1
+BASE_NOISE_LEVEL = 0.3
+
 def calculate_cos(direction1, direction2):
     dot_product = (
         direction1[0] * direction2[0] +
@@ -24,33 +26,22 @@ def sigmoid(x):
     return 1 / (1 + math.exp(-x))
 
 class ClusteringV2XManager(V2XManager):
-    Communication_Volume = 0.0
-    Instance_Nums = 0
-    Communication_Volume_Inside_Cluster_Collect = 0.0
-    Communication_Volume_Inside_Cluster_Broadcast = 0.0
-    Communication_Volume_Outside_Cluster = 0.0
-    UpdateSucceed = True
-
     def __init__(self, cav_world, config_yaml, vid, vehicle_id):
         super(ClusteringV2XManager, self).__init__(cav_world, config_yaml, vid)
         self.vehicle_id = vehicle_id
         
         self.computing_capability = STANDARD_CAPABILITY * uniform(0.4, 1)
         self.communication_quality = STANDARD_CAPABILITY * uniform(0.6, 1)
+
+        self.tx_power = MAX_TX_POWER * self.communication_quality
+        self.noise_level = BASE_NOISE_LEVEL / self.communication_quality
+
         self.cp_model = 'default_model'
         self.rgb = (255, 255, 0)
 
         self.tick = 0
-
-        self._unread_buffer = False
-        # used for cooperative perception.
-        # self._recieved_buffer = {} defined in v2xmanager
-
+ 
         self.beacon_frequency = 2 #(Hz)
-
-        ClusteringV2XManager.Instance_Nums += 1
-        print(f'{ClusteringV2XManager.Instance_Nums} vehicles initialized')
-
         # 分簇协议相关参数
         self.cluster_params = {
             'd0': 50.0,           # 距离归一化参数 (单位: m)
@@ -101,44 +92,40 @@ class ClusteringV2XManager(V2XManager):
         b = 255 if b > 127 else 0
         self.rgb = (r, g, b)
 
+    def get_cluster_members(self):
+        """
+        Returns a processed version of self.cluster_state
+        """
+        # Extract and transform the needed fields
+        cluster_head_id = self.cluster_state.get('cluster_head')
+        members_dict = self.cluster_state.get('members', {})
+        neighbors_dict = self.cluster_state.get('neighbors', {})
 
+        # Resolve cluster head
+        cluster_head_vm = self.cav_world.get_vehicle_manager(cluster_head_id).v2x_manager if cluster_head_id is not None else None
+
+        # Resolve members
+        members_vm = {}
+        for vid in members_dict:
+            vm = self.cav_world.get_vehicle_manager(vid)
+            members_vm[vid] = vm.v2x_manager
+
+        # Resolve neighbors
+        neighbors_vm = {}
+        for vid in neighbors_dict:
+            vm = self.cav_world.get_vehicle_manager(vid)
+            neighbors_vm[vid] = vm.v2x_manager
+
+        return {
+            'cluster_head': cluster_head_vm,
+            'members': members_vm,
+            'neighbors': neighbors_vm,
+        }
+
+        
     def is_cluster_head(self):
         # logger.debug('vehicle_id', self.vehicle_id, self.cluster_state['cluster_head'], self.vehicle_id == self.cluster_state['cluster_head'])
         return self.vehicle_id == self.cluster_state['cluster_head']
-
-    def set_buffer(self, source=None, objects=None):#, results=None):
-        if source:
-            self._recieved_buffer['source'] = source
-        if objects:
-            self._recieved_buffer['objects'] = objects
-        # if results:
-        #     self._recieved_buffer['results'] = results
-        self._unread_buffer = True
-        if objects and 'vehicles' in objects and len(objects['vehicles']) > 0:
-            #logger.debug('objects', objects, sys.getsizeof(objects['vehicles'][0]))
-            #size per <opencda.core.sensing.perception.obstacle_vehicle.ObstacleVehicle> : 56
-            objects_size = asizeof(objects)
-            # logger.debug('broadcast data size: ', objects_size)
-            ClusteringV2XManager.Communication_Volume_Inside_Cluster_Broadcast += objects_size
-            ClusteringV2XManager.Communication_Volume += objects_size
-
-    def read_buffer(self):
-        if self._unread_buffer:
-            self._unread_buffer = False
-            return self._recieved_buffer
-        else:
-            return {'source': "0",
-                    'objects':
-                    {
-                        'vehicles': [],
-                        'traffic_lights': []
-                    },
-                    # 'results':
-                    # {
-                    #     'psm': None,
-                    #     'rm': None,
-                    # }
-                }
 
     def beacon(self):
         """

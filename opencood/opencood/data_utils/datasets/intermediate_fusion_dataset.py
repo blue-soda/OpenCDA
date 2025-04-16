@@ -291,8 +291,14 @@ class IntermediateFusionDataset(basedataset.BaseDataset):
         time_delay = time_delay + (self.max_cav - len(time_delay)) * [0.]
         infra = infra + (self.max_cav - len(infra)) * [0.]
         spatial_correction_matrix = np.stack(spatial_correction_matrix)
-        padding_eye = np.tile(np.eye(4)[None],(self.max_cav - len(
-                                               spatial_correction_matrix),1,1))
+        # padding_eye = np.tile(np.eye(4)[None],(self.max_cav - len(
+        #                                        spatial_correction_matrix),1,1))
+        padding_size = self.max_cav - len(spatial_correction_matrix)
+        if padding_size > 0:
+            padding_eye = np.tile(np.eye(4)[None], (padding_size, 1, 1))
+        else:
+            padding_eye = np.empty((0, 4, 4))  # Return empty array if no padding needed
+
         spatial_correction_matrix = np.concatenate([spatial_correction_matrix,
                                                    padding_eye], axis=0)
 

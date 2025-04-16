@@ -21,9 +21,10 @@ def run_scenario(opt, scenario_params):
         scenario_params = add_current_time(scenario_params)
         application = ['single', 'cooperative', 'cluster']
         # create CAV world
-        cav_world = CavWorld(apply_ml=opt.apply_ml,
-                             apply_coperception=True,
-                             coperception_params=scenario_params['coperception'])
+        cav_world = CavWorld(apply_ml=opt.apply_ml, 
+                             apply_cp=opt.apply_cp, 
+                             coperception_params=scenario_params['coperception'],
+                             network_params=scenario_params['network'],)
 
         # create scenario manager
         scenario_manager = sim_api.ScenarioManager(scenario_params,

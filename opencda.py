@@ -68,11 +68,16 @@ def main():
     prediction_yaml = os.path.join(
         os.path.dirname(os.path.realpath(__file__)),
         'opencda/scenario_testing/config_yaml/enable_prediction.yaml')
+    
+    network_yaml = os.path.join(
+        os.path.dirname(os.path.realpath(__file__)),
+        'opencda/scenario_testing/config_yaml/enable_network.yaml')
 
     # load the default yaml file and the scenario yaml file as dictionaries
     default_dict = OmegaConf.load(default_yaml)
     scene_dict = OmegaConf.load(config_yaml)
     open_scenario_dict = OmegaConf.load(open_scenario_yaml)
+    network_dict = OmegaConf.load(network_yaml)
 
     # coperception & prediction
     coperception_dict = OmegaConf.load(coperception_yaml)
@@ -80,7 +85,9 @@ def main():
     # merge the dictionaries
     scene_dict = OmegaConf.merge(default_dict, scene_dict, open_scenario_dict)
     # import the testing script
-    experiment_dict = OmegaConf.merge(coperception_dict, enable_prediction_dict)
+    experiment_dict = OmegaConf.merge(coperception_dict, enable_prediction_dict, network_dict)
+    # add network_dict here
+
     testing_scenario = importlib.import_module(
         "opencda.scenario_testing.%s" % opt.test_scenario)
     # check if the yaml file for the specific testing scenario exists
@@ -92,7 +99,7 @@ def main():
     scenario_runner = getattr(testing_scenario, 'run_scenario')
 
     from opencda.constants import Profile
-    experiment_profile = Profile.PREDICTION_OPENCOOD_CAV
+    experiment_profile = Profile.PREDICTION_OPENCOOD_V2X #PREDICTION_OPENCOOD_CAV
     for profile in experiment_profile.profiles():
         scenario_params = OmegaConf.merge(scene_dict, experiment_dict[profile])
     scenario_params['vehicle_base']['sensing']['perception']['coperception'] = opt.apply_cp
@@ -103,7 +110,9 @@ def main():
     from shapely.errors import ShapelyDeprecationWarning
     warnings.filterwarnings("ignore", category=UserWarning, message="nn.functional.sigmoid is deprecated. Use torch.sigmoid instead.")
     warnings.filterwarnings("ignore", category=ShapelyDeprecationWarning)
-
+    warnings.filterwarnings("ignore", category=UserWarning, message="nn.init.xavier_uniform is now deprecated in favor of nn.init.xavier_uniform_.")
+    logger.debug(scenario_params['coperception'])
+    logger.debug(scenario_params['network'])
     scenario_runner(opt, scenario_params)
 
 
