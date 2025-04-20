@@ -18,6 +18,7 @@ from opencda.core.common.misc import compute_distance
 from pympler.asizeof import asizeof
 
 from opencda.core.common.cav_world import CavWorld
+from opencda.customize.core.v2x.scheduler_builder import build_scheduler
 
 class V2XManager(object):
     """
@@ -101,8 +102,8 @@ class V2XManager(object):
             self.lag = config_yaml['lag']
         
         self.scheduler = None
-        if self.cav_world.network_enabled and 'network' in config_yaml:
-            self.scheduler = self.build_scheduler(config_yaml['network']['scheduler'])
+        if self.cav_world.network_enabled and config_yaml['network']['enabled']:
+            self.scheduler = build_scheduler(config_yaml['network']['scheduler'])
 
         V2XManager.instance_nums += 1
         print(f'{V2XManager.instance_nums} vehicles initialized')
@@ -226,7 +227,7 @@ class V2XManager(object):
         if objects:
             self._recieved_buffer['objects'] = objects
         self._unread_buffer = True
-        if objects and 'vehicles' in objects and len(objects['vehicles']) > 0:
+        if objects and 'vehicles' in objects and len(objects['vehicles']) > 0 and CavWorld.network_manager:
             objects_size = asizeof(objects)
             # V2XManager.network_manager.update_communication_volume(objects_size, communication_type="broadcast")
             CavWorld.network_manager._update_communication_stats(objects_size, "download")

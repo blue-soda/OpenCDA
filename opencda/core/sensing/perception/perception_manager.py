@@ -362,12 +362,14 @@ class PerceptionManager:
     """
 
     def __init__(self, v2x_manager, localization_manager, behavior_agent, vehicle,
-                 config_yaml, cav_world, data_dump=False, carla_world=None, infra_id=None):
+                 config_yaml, cav_world, data_dump=False, carla_world=None, infra_id=None,
+                 enable_network=False):
         self.vehicle = vehicle
         self.carla_world = carla_world if carla_world is not None \
             else self.vehicle.get_world()
         self._map = self.carla_world.get_map()
         self.id = infra_id if infra_id is not None else vehicle.id
+        self.enable_network = enable_network
 
         self.activate = config_yaml['activate']
         self.camera_visualize = config_yaml['camera']['visualize']

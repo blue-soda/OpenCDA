@@ -1,9 +1,11 @@
+from opencda.core.common.cav_world import CavWorld
 from opencda.core.common.v2x_manager import V2XManager
 import math
 from opencda.core.common.misc import compute_distance
 import random
 from opencda.log.logger_config import logger
 from random import uniform
+from pympler.asizeof import asizeof
 
 STANDARD_CAPABILITY = 1
 MAX_TX_POWER = 1
@@ -404,6 +406,9 @@ class ClusteringV2XManager(V2XManager):
                 if distance < self.communication_range and vm.is_ok:
                     self.cluster_state['neighbors'][vehicle_id] = neighbor_beacon
                     self.cluster_state['similarity_scores'][vehicle_id] = self.compute_similarity(neighbor_beacon)
+                    if CavWorld.network_manager:
+                        objects_size = asizeof(neighbor_beacon)
+                        CavWorld.network_manager._update_communication_stats(objects_size, "control")
                 else:
                     self.cluster_state['neighbors'].pop(vehicle_id, None)
                     self.cluster_state['similarity_scores'].pop(vehicle_id, None)

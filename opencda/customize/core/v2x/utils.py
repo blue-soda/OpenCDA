@@ -5,17 +5,17 @@ def get_interference_contribution(source_vm, target_vm):
     """
     Calculate the interference contribution of a single source-target pair.
     Args:
-        source_vm (VehicleManager): Source vehicle manager.
-        target_vm (VehicleManager): Target vehicle manager.
+        source_vm (V2XManager): Source vehicle manager.
+        target_vm (V2XManager): Target vehicle manager.
     Returns:
         float: The interference contribution.
     """
     if not source_vm or not target_vm:
         return 0.0
-    distance = calculate_distance(source_vm.v2x_manager, target_vm.v2x_manager)
+    distance = calculate_distance(source_vm, target_vm)
     channel_gain = calculate_channel_gain(distance)
-    tx_power = source_vm.v2x_manager.tx_power
-    noise_level = target_vm.v2x_manager.noise_level
+    tx_power = source_vm.tx_power
+    noise_level = target_vm.noise_level
     return tx_power * channel_gain / noise_level
 
 def calculate_distance(source_vehicle, target_vehicle):

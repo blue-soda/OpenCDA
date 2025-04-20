@@ -33,6 +33,9 @@ def arg_parse():
     parser.add_argument("--apply_cp",
                         action='store_true',
                         help='whether to apply coperception.')
+    parser.add_argument("--network",
+                        action='store_true',
+                        help='whether to enable network.')
     parser.add_argument('-v', "--version", type=str, default='0.9.11',
                         help='Specify the CARLA simulator version, default'
                              'is 0.9.11, 0.9.12 is also supported.')
@@ -79,6 +82,8 @@ def main():
     open_scenario_dict = OmegaConf.load(open_scenario_yaml)
     network_dict = OmegaConf.load(network_yaml)
 
+    network_dict['enable_network']['network']['enabled'] = opt.network
+
     # coperception & prediction
     coperception_dict = OmegaConf.load(coperception_yaml)
     enable_prediction_dict = OmegaConf.load(prediction_yaml)
@@ -104,7 +109,10 @@ def main():
         scenario_params = OmegaConf.merge(scene_dict, experiment_dict[profile])
     scenario_params['vehicle_base']['sensing']['perception']['coperception'] = opt.apply_cp
     scenario_params['vehicle_base']['sensing']['perception']['activate'] = opt.apply_ml
-
+    scenario_params['vehicle_base']['v2x'].update(network_dict['enable_network'])
+    scenario_params['traffic_vehicle_base']['v2x'].update(network_dict['enable_network'])
+    # scenario_params['vehicle_base']['v2x'] = network_dict['enable_network']
+    # scenario_params['traffic_vehicle_base']['v2x'] = network_dict['enable_network']
     #ignore deprecated warning 
     import warnings
     from shapely.errors import ShapelyDeprecationWarning

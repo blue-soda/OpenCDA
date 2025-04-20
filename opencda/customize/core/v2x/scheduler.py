@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 import weakref
 from typing import List, Tuple, Optional
-from opencda.core.common.v2x_manager import V2XManager
+# from opencda.core.common.v2x_manager import V2XManager
 from opencda.customize.core.v2x.network_manager import NetworkManager, ResourceConflictError
 
 
@@ -25,7 +25,7 @@ class Scheduler(ABC):
         return self._network_manager()
 
     @abstractmethod
-    def schedule(self, source: 'V2XManager', target: 'V2XManager', volume: float) -> Tuple[int, int, int, bool]:
+    def schedule(self, source, target, volume: float) -> Tuple[int, int, int, bool]:
         """
         Schedule resources for a communication request.
 
@@ -59,13 +59,13 @@ class RoundRobinScheduler(Scheduler):
         super().__init__(network_manager)
         self.next_subchannel = 0  # Start scheduling from the first subchannel
 
-    def schedule(self, source: 'V2XManager', target: 'V2XManager', volume: float) -> Tuple[int, int, int, bool]:
+    def schedule(self, source, target, volume: float) -> Tuple[int, int, int, bool]:
         nm = self.network_manager
         if nm is None:
             return -1, -1, -1, False  # NetworkManager has been garbage collected
 
         subchannel = self.next_subchannel
-        self.next_subchannel = (self.next_subchannel + 1) % nm.subchannels
+        self.next_subchannel = (self.next_subchannel + 1) % nm.subchannel_num
 
         try:
             subchannel, start_time_slot, end_time_slot = nm.allocate_resource(source, target, volume, subchannel)
@@ -87,7 +87,7 @@ class InterferenceAwareScheduler(Scheduler):
     Allocates resources while minimizing interference.
     """
 
-    def schedule(self, source: 'V2XManager', target: 'V2XManager', volume: float) -> Tuple[int, int, int, bool]:
+    def schedule(self, source, target, volume: float) -> Tuple[int, int, int, bool]:
         nm = self.network_manager
         if nm is None:
             return -1, -1, -1, False  # NetworkManager has been garbage collected
@@ -118,31 +118,3 @@ class InterferenceAwareScheduler(Scheduler):
 
 
 #///////////////////////////////////////////////////////////////////////////////////////////////////
-from opencda.customize.core.clustering.clustering_scheduler import ClusterBasedScheduler
-from opencda.core.common.cav_world import CavWorld
-
-def build_scheduler(scheduler_name):
-    """
-    Factory method to build a scheduler object given its name.
-    Args:
-    scheduler_name (str): Name of the scheduler (e.g., "RoundRobin", "Greedy", "ClusterBased").
-    network_manager (NetworkManager): Required network manager.
-
-    Returns:
-        Scheduler: An instance of the corresponding Scheduler subclass.
-
-    Raises:
-        ValueError: If the scheduler name is not recognized.
-    """
-    scheduler_name = scheduler_name.lower()
-
-    if scheduler_name == 'roundrobin':
-        return RoundRobinScheduler(CavWorld.network_manager)
-    elif scheduler_name == 'greedy':
-        return InterferenceAwareScheduler(CavWorld.network_manager)
-    elif scheduler_name == 'clusterbased':
-        return ClusterBasedScheduler(CavWorld.network_manager)
-    # elif scheduler_name == 'random':
-    #     return RandomScheduler(CavWorld.network_manager)
-    else:
-        raise ValueError(f"Unknown scheduler name: {scheduler_name}")

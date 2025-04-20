@@ -81,11 +81,12 @@ class VehicleManager(object):
             self,
             vehicle,
             config_yaml,
-            application,  #['single', 'cooperative', 'traffic', 'cluster']
+            application,  #['single', 'coperception 'traffic', 'cluster'， 'network]
             carla_map,
             cav_world,
             current_time='',
-            data_dumping=False):
+            data_dumping=False, 
+            ):
 
         # an unique uuid for this vehicle
         self.vid = str(uuid.uuid1())
@@ -102,6 +103,8 @@ class VehicleManager(object):
         v2x_config = config_yaml['v2x']
 
         self.isTrafficVehicle = 'traffic' in application
+        self.enableNetwork = 'network' in application
+
         # v2x module
         if 'cluster' in application:
             self.v2x_manager = ClusteringV2XManager(cav_world, v2x_config, self.vid, self.vehicle.id)
@@ -154,7 +157,8 @@ class VehicleManager(object):
                 vehicle=vehicle,
                 config_yaml=sensing_config['perception'],
                 cav_world=cav_world,
-                data_dump=data_dumping)
+                data_dump=data_dumping,
+                enable_network = self.enableNetwork)
         else:
             self.perception_manager = PerceptionManager(
                 v2x_manager=self.v2x_manager,
@@ -163,7 +167,8 @@ class VehicleManager(object):
                 vehicle=vehicle,
                 config_yaml=sensing_config['perception'],
                 cav_world=cav_world,
-                data_dump=data_dumping)
+                data_dump=data_dumping,
+                enable_network = self.enableNetwork)
             
         if data_dumping:
             self.data_dumper = DataDumper(self.perception_manager,

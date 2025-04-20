@@ -51,7 +51,7 @@ class CavWorld(object):
         self.ml_manager = None
         self.ego_id = None
 
-        if apply_ml and apply_cp:
+        if apply_ml and apply_cp and coperception_params:
             ml_manager = getattr(importlib.import_module(
                 "opencda.customize.ml_libs.opencood_manager"), 'OpenCOODManager')
             print("opencda.customize.ml_libs.opencood_manager", 'OpenCOODManager')
@@ -68,7 +68,7 @@ class CavWorld(object):
         self.sumo2carla_ids = {}
 
         self.network_enabled = False
-        print(network_params)
+        # print(network_params)
         if network_params:
             self.network_enabled = network_params['enabled']
             if self.network_enabled and CavWorld.network_manager is None:

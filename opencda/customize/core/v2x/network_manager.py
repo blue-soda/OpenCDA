@@ -20,8 +20,10 @@ class NetworkManager:
 
     def __init__(self, cav_world, config):
         self.cav_world = cav_world
-        self.subchannel_bandwidth = config.get("subchannel_bandwidth", 20)
+        self.subchannel_bandwidth = config.get("subchannel_bandwidth", 20) * 1024 * 1024
+        self.subchannel_num = config.get("subchannel_num", 10)
         self.max_interference = config.get("max_interference", 0.2)
+        self.time_slot = config.get("time_slot", 0.5)
         self.current_time_slot = 0
 
         # Allocation state
@@ -57,7 +59,7 @@ class NetworkManager:
         # Sum interference from all active transmissions on this subchannel
         for src_id, tgt_id, _ in self.active_allocations[subchannel]:
             # Skip our own transmission (we want OTHER transmitters' interference)
-            if tgt_id == target_vehicle.id:
+            if tgt_id == target_vehicle.vehicle_id:
                 continue
                 
             source_vm = self.cav_world.get_vehicle_manager(src_id).v2x_manager
@@ -113,12 +115,13 @@ class NetworkManager:
             snr,
             interference=total_interference  # Realistic interference environment
         )
+        logger.info(f"data rate: {data_rate}")
         
-        time_slots = math.ceil(volume / data_rate)
+        time_slots = math.ceil(volume / data_rate / self.time_slot)
         
         # Record allocation
         end_time_slot = self.current_time_slot + time_slots
-        self.active_allocations[subchannel].add((source.id, target.id, end_time_slot))
+        self.active_allocations[subchannel].add((source.vehicle_id, target.vehicle_id, end_time_slot))
 
         # # Update communication stats (assume 'upload' type for now)
         # self._update_communication_stats(volume, "upload")
@@ -240,6 +243,7 @@ class NetworkManager:
         
         return {
             'current': self.current_slot,
+            'traffic_distribution': dist,
             'historical': {
                 'total_slots': len(self.history),
                 'avg_throughput': float(np.mean(hist_arrays['throughput'])),
@@ -247,9 +251,8 @@ class NetworkManager:
                 'avg_utilization': float(np.mean(hist_arrays['utilization'])),
                 'total_volume_mb': float(hist_arrays['throughput'].sum()),
                 'max_throughput': float(np.max(hist_arrays['throughput'])),
-                'throughput_trend': hist_arrays['throughput'].tolist()  # Full history
+                # 'throughput_trend': hist_arrays['throughput'].tolist()  # Full history
             },
-            'traffic_distribution': dist,
         }
 
     def advance_time_slot(self):

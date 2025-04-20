@@ -2,7 +2,6 @@ from opencda.customize.core.v2x.scheduler import Scheduler
 import networkx as nx
 from typing import Dict, List, Tuple, Optional
 import math
-from opencda.core.common.v2x_manager import V2XManager
 from opencda.customize.core.v2x.network_manager import NetworkManager, ResourceConflictError
 import opencda.customize.core.v2x.utils as utils
 
@@ -76,7 +75,7 @@ class ClusterBasedScheduler(Scheduler):
                                        weight=lambda e: self.weighted_conflict_graph.edges[e]['weight'])
         
 
-    def schedule(self, source: 'V2XManager', target: 'V2XManager', volume: float) -> Tuple[int, int, int, bool]:
+    def schedule(self, source, target, volume: float) -> Tuple[int, int, int, bool]:
         """
         Schedule resources using cluster-based weighted conflict graph coloring.
         Args:
@@ -105,7 +104,10 @@ class ClusterBasedScheduler(Scheduler):
             return -1, -1, -1, False
         
 
-    def is_conflicting(self, i: 'V2XManager', j: 'V2XManager', k: int) -> bool:
-        """Check if two vehicles conflict on a subchannel."""
+    def is_conflicting(self, i, j, k: int) -> bool:
+        """
+        Check if two vehicles conflict on a subchannel.
+        i: 'V2XManager', j: 'V2XManager'
+        """
         # Placeholder for conflict detection
         return self.get_distance(i, j) <= self.d_th

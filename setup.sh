@@ -15,7 +15,7 @@ fi
 
 # Activate the environment
 echo "Activating 'opencda' environment..."
-source $(conda info --base)/etc/profile.d/conda.sh
+# source $(conda info --base)/etc/profile.d/conda.sh
 conda activate opencda
 if [ $? -ne 0 ]; then
     echo "❌ Failed to activate conda environment!"

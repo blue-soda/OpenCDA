@@ -22,9 +22,9 @@ class ClusteringPerceptionManager(PerceptionManager):
     gt_box_tensors = []
 
     def __init__(self, v2x_manager, localization_manager, behavior_agent, vehicle,
-                 config_yaml, cav_world, data_dump=False, carla_world=None, infra_id=None, ):
+                 config_yaml, cav_world, data_dump=False, carla_world=None, infra_id=None, enable_network=False):
         super().__init__(v2x_manager, localization_manager, behavior_agent, vehicle,
-                 config_yaml, cav_world, data_dump, carla_world, infra_id)
+                 config_yaml, cav_world, data_dump, carla_world, infra_id, enable_network)
         self.communication_volume = 0.0
         self.co_manager = ClusteringCoperceptionManager(self.id, v2x_manager, self.coperception_libs)
         if ClusteringPerceptionManager.ego_vm is None:
@@ -176,17 +176,20 @@ class ClusteringPerceptionManager(PerceptionManager):
                         cav_data=nearby_data,
                         ego_pose=ClusteringPerceptionManager.ego_lidar_pose
                     )
+                    nearby_data_size = asizeof(nearby_data)
+                    if self.enable_network:
+                        source, target = nearby_v2x_manager, self.v2x_manager
+                        # def schedule(self, source: 'V2XManager', target: 'V2XManager', volume: float) -> Tuple[int, int, int, bool]:
+                        subchannel, start_time, end_time, success = self.v2x_manager.scheduler.schedule(source, target, nearby_data_size)
+                        logger.info(f"network {self.id}: {subchannel}, {start_time}, {end_time}, {success}")
 
-                    source, target = nearby_v2x_manager, self.v2x_manager
-                    '''
-                    TODO
-                    '''
-                    data_size += asizeof(nearby_data)
+                    data_size += nearby_data_size
                     data.update(nearby_data)
 
-                # V2XManager.network_manager.update_communication_volume(data_size, communication_type="collect")
-                CavWorld.network_manager._update_communication_stats(data_size, "upload")
-                logger.debug(f'collect data size: {data_size}')
+                if CavWorld.network_manager:
+                    # V2XManager.network_manager.update_communication_volume(data_size, communication_type="collect")
+                    CavWorld.network_manager._update_communication_stats(data_size, "upload")
+                    logger.debug(f'collect data size: {data_size}')
                 #count communication_volume
                 #if record_results:
                 objects = self.inference(data, objects, with_submit=is_ego)
@@ -225,9 +228,10 @@ class ClusteringPerceptionManager(PerceptionManager):
   
                     logger.debug(f"{self.id}: {len(objects_cluster['vehicles'])} vehicles and {len(objects_cluster['traffic_lights'])} traffic_lights detected from cluster head {cluster_head_id}")
 
-                    objects_size = self.get_boxes_size()
-                    # V2XManager.network_manager.update_communication_volume(objects_size, communication_type="outside")
-                    CavWorld.network_manager._update_communication_stats(objects_size, "inter")
+                    if CavWorld.network_manager:
+                        objects_size = self.get_boxes_size()
+                        # V2XManager.network_manager.update_communication_volume(objects_size, communication_type="outside")
+                        CavWorld.network_manager._update_communication_stats(objects_size, "inter")
                     pred_box_tensor, pred_score, gt_box_tensor = self.ml_manager.naive_late_fusion(
                                                                     ClusteringPerceptionManager.predict_box_tensors, 
                                                                     ClusteringPerceptionManager.predict_scores, 

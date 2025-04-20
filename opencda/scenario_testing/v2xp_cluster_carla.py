@@ -19,12 +19,20 @@ from opencda.log.logger_config import logger
 def run_scenario(opt, scenario_params):
     try:
         scenario_params = add_current_time(scenario_params)
-        application = ['single', 'cooperative', 'cluster']
+
+        application = ['single', 'cluster']
+        coperception_params, network_params = None, None
+        if opt.apply_cp:
+            application.append('coperception')
+            coperception_params = scenario_params['coperception']
+        if opt.network:
+            application.append('network')
+            network_params = scenario_params['network']
         # create CAV world
         cav_world = CavWorld(apply_ml=opt.apply_ml, 
                              apply_cp=opt.apply_cp, 
-                             coperception_params=scenario_params['coperception'],
-                             network_params=scenario_params['network'],)
+                             coperception_params=coperception_params,
+                             network_params=network_params,)
 
         # create scenario manager
         scenario_manager = sim_api.ScenarioManager(scenario_params,
@@ -106,6 +114,8 @@ def run_scenario(opt, scenario_params):
             # for rsu in rsu_list:
             #     rsu.update_info()
             #     rsu.run_step()
+            if 'network' in application:
+                cav_world.network_manager.advance_time_slot()
 
     finally:
         eval_manager.evaluate()

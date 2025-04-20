@@ -837,9 +837,12 @@ class ScenarioManager:
         Simulation close.
         """
         print("Destroying all the actors...")
-        self.client.reload_world()
-        settings = self.origin_settings
-        settings.synchronous_mode = False
-        settings.no_rendering_mode = True
-        self.world.apply_settings(settings)
+        try:
+            self.client.reload_world()
+            settings = self.origin_settings
+            settings.synchronous_mode = False
+            settings.no_rendering_mode = True
+            self.world.apply_settings(settings)
+        except Exception as e:
+            print(f"Reload world failed: {e}")
         print("Simulation closed")
