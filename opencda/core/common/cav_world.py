@@ -201,3 +201,9 @@ class CavWorld(object):
             vehicle_manager.destroy()
         for rsu_manager in self._rsu_manager_dict.values():
             rsu_manager.destory()
+
+    # def __del__(self):
+    #     try:
+    #         self.destroy()
+    #     except Exception as e:
+    #         print(f'destroying {self.__class__}: {e}')

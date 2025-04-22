@@ -225,6 +225,7 @@ class LidarSensor:
         self.timestamp = event.timestamp
 
 
+
 class SemanticLidarSensor:
     """
     Semantic lidar sensor manager. This class is used when data dumping

@@ -27,6 +27,7 @@ from opencda.core.plan.behavior_agent \
 from opencda.core.map.map_manager import MapManager
 from opencda.core.common.data_dumper import DataDumper
 
+from opencda.log.logger_config import logger
 
 class VehicleManager(object):
     """
@@ -109,6 +110,10 @@ class VehicleManager(object):
         if 'cluster' in application:
             self.v2x_manager = ClusteringV2XManager(cav_world, v2x_config, self.vid, self.vehicle.id)
         else:
+            if v2x_config['network']['enabled'] and v2x_config['network']['scheduler'] == 'clusterbased':
+                v2x_config['network']['scheduler'] = 'roundrobin'
+                print('Warning: do not use cluster_based scheduler when clustering is not active. scheduler param has been changed to roundrobin automately.')
+                logger.warning('do not use cluster_based scheduler when clustering is not active. scheduler param has been changed to roundrobin automately.')
             self.v2x_manager = V2XManager(cav_world, v2x_config, self.vid)
     
         # localization module

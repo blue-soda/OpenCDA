@@ -18,10 +18,20 @@ def run_scenario(opt, scenario_params, _):
     try:
         scenario_params = add_current_time(scenario_params)
 
+        application = ['single']
+        coperception_params, network_params = None, None
+        if opt.apply_cp:
+            application.append('coperception')
+            coperception_params = scenario_params['coperception']
+        if opt.network:
+            application.append('network')
+            network_params = scenario_params['network']
+            
         # create CAV world
         cav_world = CavWorld(apply_ml=opt.apply_ml, 
                              apply_cp=opt.apply_cp, 
-                             coperception_params=scenario_params['coperception'])
+                             coperception_params=coperception_params,
+                             network_params=network_params,)
 
         # create scenario manager
         scenario_manager = sim_api.ScenarioManager(scenario_params,
@@ -36,7 +46,7 @@ def run_scenario(opt, scenario_params, _):
                 start_recorder("single_town06_carla.log", True)
 
         single_cav_list = \
-            scenario_manager.create_vehicle_manager(application=['single'])
+            scenario_manager.create_vehicle_manager(application=application)
 
         # create background traffic in carla
         traffic_manager, bg_veh_list = \
@@ -67,10 +77,12 @@ def run_scenario(opt, scenario_params, _):
                 single_cav.vehicle.apply_control(control)
 
     finally:
-        eval_manager.evaluate()
+        try:
+            eval_manager.evaluate()
 
-        if opt.record:
-            scenario_manager.client.stop_recorder()
-
-        scenario_manager.close()
-#
+            if opt.record:
+                scenario_manager.client.stop_recorder()
+                
+        finally:
+            scenario_manager.close()
+        #

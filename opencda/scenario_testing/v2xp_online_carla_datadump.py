@@ -20,10 +20,21 @@ def run_scenario(opt, config_yaml):
     try:
         scenario_params = load_yaml(config_yaml)
 
+        application = ['single']
+
+        coperception_params, network_params = None, None
+        if opt.apply_cp:
+            application.append('coperception')
+            coperception_params = scenario_params['coperception']
+        if opt.network:
+            application.append('network')
+            network_params = scenario_params['network']
+
         # create CAV world
         cav_world = CavWorld(apply_ml=opt.apply_ml, 
                              apply_cp=opt.apply_cp, 
-                             coperception_params=scenario_params['coperception'])
+                             coperception_params=coperception_params,
+                             network_params=network_params,)
 
         # create scenario manager
         scenario_manager = sim_api.ScenarioManager(scenario_params,
@@ -38,7 +49,7 @@ def run_scenario(opt, config_yaml):
                 start_recorder("single_town06_carla.log", True)
 
         single_cav_list = \
-            scenario_manager.create_vehicle_manager(application=['single'],
+            scenario_manager.create_vehicle_manager(application=application,
                                                     data_dump=True)
         # rsu_list = \
         #     scenario_manager.create_rsu_manager(data_dump=True)
@@ -84,10 +95,12 @@ def run_scenario(opt, config_yaml):
             #     rsu.run_step()
 
     finally:
-        eval_manager.evaluate()
+        try:
+            eval_manager.evaluate()
 
-        if opt.record:
-            scenario_manager.client.stop_recorder()
-
-        scenario_manager.close()
+            if opt.record:
+                scenario_manager.client.stop_recorder()
+                
+        finally:
+            scenario_manager.close()
 #

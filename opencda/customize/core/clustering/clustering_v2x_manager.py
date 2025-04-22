@@ -4,12 +4,7 @@ import math
 from opencda.core.common.misc import compute_distance
 import random
 from opencda.log.logger_config import logger
-from random import uniform
 from pympler.asizeof import asizeof
-
-STANDARD_CAPABILITY = 1
-MAX_TX_POWER = 1
-BASE_NOISE_LEVEL = 0.3
 
 def calculate_cos(direction1, direction2):
     dot_product = (
@@ -28,16 +23,9 @@ def sigmoid(x):
     return 1 / (1 + math.exp(-x))
 
 class ClusteringV2XManager(V2XManager):
-    def __init__(self, cav_world, config_yaml, vid, vehicle_id):
-        super(ClusteringV2XManager, self).__init__(cav_world, config_yaml, vid)
-        self.vehicle_id = vehicle_id
+    def __init__(self, cav_world, config_yaml, vid, vehicle_id=None):
+        super(ClusteringV2XManager, self).__init__(cav_world, config_yaml, vid, vehicle_id)
         
-        self.computing_capability = STANDARD_CAPABILITY * uniform(0.4, 1)
-        self.communication_quality = STANDARD_CAPABILITY * uniform(0.6, 1)
-
-        self.tx_power = MAX_TX_POWER * self.communication_quality
-        self.noise_level = BASE_NOISE_LEVEL / self.communication_quality
-
         self.cp_model = 'default_model'
         self.rgb = (255, 255, 0)
 
@@ -108,15 +96,15 @@ class ClusteringV2XManager(V2XManager):
 
         # Resolve members
         members_vm = {}
-        for vid in members_dict:
-            vm = self.cav_world.get_vehicle_manager(vid)
-            members_vm[vid] = vm.v2x_manager
+        for vehicle_id in members_dict:
+            vm = self.cav_world.get_vehicle_manager(vehicle_id)
+            members_vm[vehicle_id] = vm.v2x_manager
 
         # Resolve neighbors
         neighbors_vm = {}
-        for vid in neighbors_dict:
-            vm = self.cav_world.get_vehicle_manager(vid)
-            neighbors_vm[vid] = vm.v2x_manager
+        for vehicle_id in neighbors_dict:
+            vm = self.cav_world.get_vehicle_manager(vehicle_id)
+            neighbors_vm[vehicle_id] = vm.v2x_manager
 
         return {
             'cluster_head': cluster_head_vm,
@@ -427,4 +415,5 @@ class ClusteringV2XManager(V2XManager):
             # logger.debug("Update cluster membership")
             self.update_cluster()
             self.id_to_rgb()
-            
+            if self.scheduler is not None and self.scheduler_type == 'clusterbased' and self.is_cluster_head():
+                self.scheduler.update_scheduler(self.get_cluster_members())

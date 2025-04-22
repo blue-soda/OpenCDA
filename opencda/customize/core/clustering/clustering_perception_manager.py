@@ -133,6 +133,7 @@ class ClusteringPerceptionManager(PerceptionManager):
         ego_id = self.cav_world.ego_id
         is_ego = self.id == ego_id
         self.update_ego_lidar_pose()
+
         # record_results = is_ego
         data = OrderedDict()
         if self.enable_communicate:
@@ -181,7 +182,7 @@ class ClusteringPerceptionManager(PerceptionManager):
                         source, target = nearby_v2x_manager, self.v2x_manager
                         # def schedule(self, source: 'V2XManager', target: 'V2XManager', volume: float) -> Tuple[int, int, int, bool]:
                         subchannel, start_time, end_time, success = self.v2x_manager.scheduler.schedule(source, target, nearby_data_size)
-                        logger.info(f"network {self.id}: {subchannel}, {start_time}, {end_time}, {success}")
+                        logger.info(f"network {source.vehicle_id} to {target.vehicle_id}: {subchannel}, {start_time}, {end_time}, {success}")
 
                     data_size += nearby_data_size
                     data.update(nearby_data)

@@ -1,4 +1,9 @@
 enable_network:
   network:
     enabled: true
-    scheduler: 'roundrobin'
+    # scheduler: 'roundrobin'
+    scheduler: 'clusterbased'
+    subchannel_bandwidth: 20 #MHz
+    subchannel_num: 10 
+    min_sinr_threshold: 10 #dB
+    time_slot: 0.5 

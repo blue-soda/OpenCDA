@@ -118,12 +118,14 @@ def run_scenario(opt, scenario_params):
                 cav_world.network_manager.advance_time_slot()
 
     finally:
-        eval_manager.evaluate()
-        if 'cooperative' in application:
-            cav_world.ml_manager.evaluate_final_average_precision()
+        try:
+            eval_manager.evaluate()
+            if 'coperception' in application:
+                cav_world.ml_manager.evaluate_final_average_precision()
 
-        if opt.record:
-            scenario_manager.client.stop_recorder()
-
-        scenario_manager.close()
+            if opt.record:
+                scenario_manager.client.stop_recorder()
+                
+        finally:
+            scenario_manager.close()
         #

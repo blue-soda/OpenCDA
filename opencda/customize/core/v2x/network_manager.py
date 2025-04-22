@@ -20,9 +20,10 @@ class NetworkManager:
 
     def __init__(self, cav_world, config):
         self.cav_world = cav_world
-        self.subchannel_bandwidth = config.get("subchannel_bandwidth", 20) * 1024 * 1024
+        self.subchannel_bandwidth = config.get("subchannel_bandwidth", 20) * 1e6  #Hz
         self.subchannel_num = config.get("subchannel_num", 10)
-        self.max_interference = config.get("max_interference", 0.2)
+        # self.max_interference = config.get("max_interference", 0.2)
+        self.min_sinr_threshold = config.get("min_sinr_threshold", 10) #dB
         self.time_slot = config.get("time_slot", 0.5)
         self.current_time_slot = 0
 
@@ -97,23 +98,23 @@ class NetworkManager:
         # 3. Total interference = other transmitters + noise floor
         total_interference = other_interference + target.noise_level
         
-        # 4. Verify interference threshold
-        if (other_interference + our_signal) > self.max_interference:
-            logger.debug(f"Total interference would exceed maximum allowed when {source.vehicle_id}-->{target.vehicle_id} in sc{subchannel}")
-            raise ResourceConflictError("Resource conflict detected.")
+        # 4. Calculate actual SINR
+        # snr = utils.calculate_snr(
+        #     tx_power=source.tx_power,
+        #     noise_level=total_interference,  # Includes other transmitters + noise
+        #     distance=utils.calculate_distance(source, target)
+        # )
+        sinr = utils.calculate_sinr(our_signal, total_interference)
         
-        # 5. Calculate actual SNR
-        snr = utils.calculate_snr(
-            tx_power=source.tx_power,
-            noise_level=total_interference,  # Includes other transmitters + noise
-            distance=utils.calculate_distance(source, target)
-        )
+        # 5. Verify interference threshold
+        logger.info(f"sinr: {sinr}")
+        if sinr < self.min_sinr_threshold: 
+            raise ResourceConflictError("SINR too low for reliable communication.")
         
         # 6. Determine data rate and time slots needed
         data_rate = utils.calculate_available_data_rate(
             self.subchannel_bandwidth,
-            snr,
-            interference=total_interference  # Realistic interference environment
+            sinr,
         )
         logger.info(f"data rate: {data_rate}")
         

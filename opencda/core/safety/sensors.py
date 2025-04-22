@@ -75,6 +75,7 @@ class CollisionSensor(object):
             self.sensor.destroy()
 
 
+
 class StuckDetector(object):
     """
     Stuck detector used to detect vehicle stuck in simulator.
@@ -118,7 +119,6 @@ class StuckDetector(object):
         Clear speed history
         """
         self._speed_queue.clear()
-
 
 class OffRoadDetector(object):
     """

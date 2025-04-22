@@ -6,6 +6,7 @@
 # License: TDG-Attribution-NonCommercial-NoDistrib
 
 from collections import deque
+from random import uniform
 import weakref
 
 import carla
@@ -19,6 +20,11 @@ from pympler.asizeof import asizeof
 
 from opencda.core.common.cav_world import CavWorld
 from opencda.customize.core.v2x.scheduler_builder import build_scheduler
+
+
+STANDARD_CAPABILITY = 1
+MAX_TX_POWER = 1
+BASE_NOISE_LEVEL = 0.3
 
 class V2XManager(object):
     """
@@ -56,7 +62,7 @@ class V2XManager(object):
 
     instance_nums = 0
 
-    def __init__(self, cav_world, config_yaml, vid):
+    def __init__(self, cav_world, config_yaml, vid, vehicle_id=None):
         # if disabled, no cooperation will be operated
         self.cda_enabled = config_yaml['enabled']
         self.communication_range = config_yaml['communication_range']
@@ -84,7 +90,7 @@ class V2XManager(object):
         # used to exclude the cav self during searching
         self.ego_data = deque(maxlen=100)
         self.vid = vid
-
+        self.vehicle_id = vehicle_id
         # check if lag or noise needed to be added during communication
         self.loc_noise = 0.0
         self.yaw_noise = 0.0
@@ -102,8 +108,16 @@ class V2XManager(object):
             self.lag = config_yaml['lag']
         
         self.scheduler = None
+        self.scheduler_type = None
         if self.cav_world.network_enabled and config_yaml['network']['enabled']:
             self.scheduler = build_scheduler(config_yaml['network']['scheduler'])
+            self.scheduler_type = (config_yaml['network']['scheduler'])
+
+        self.computing_capability = STANDARD_CAPABILITY * uniform(0.4, 1)
+        self.communication_quality = STANDARD_CAPABILITY * uniform(0.6, 1)
+
+        self.tx_power = MAX_TX_POWER * self.communication_quality  # Watt
+        self.noise_level = BASE_NOISE_LEVEL # / self.communication_quality # Watt
 
         V2XManager.instance_nums += 1
         print(f'{V2XManager.instance_nums} vehicles initialized')
