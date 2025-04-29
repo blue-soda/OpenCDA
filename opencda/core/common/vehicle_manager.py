@@ -82,7 +82,7 @@ class VehicleManager(object):
             self,
             vehicle,
             config_yaml,
-            application,  #['single', 'coperception 'traffic', 'cluster'， 'network]
+            application,  #['single', 'coperception', 'traffic', 'cluster'， 'network]
             carla_map,
             cav_world,
             current_time='',
@@ -105,9 +105,12 @@ class VehicleManager(object):
 
         self.isTrafficVehicle = 'traffic' in application
         self.enableNetwork = 'network' in application
+        self.enableCluster = 'cluster' in application
+        self.enableCoperception = 'coperception' in application
+        self.enablePlatooning = 'platooning' in application
 
         # v2x module
-        if 'cluster' in application:
+        if self.enableCluster:
             self.v2x_manager = ClusteringV2XManager(cav_world, v2x_config, self.vid, self.vehicle.id)
         else:
             if v2x_config['network']['enabled'] and v2x_config['network']['scheduler'] == 'clusterbased':
@@ -137,7 +140,7 @@ class VehicleManager(object):
 
             cav_world.update_global_ego_id(self.vehicle.id)
             # behavior agent
-            if 'platooning' in application:
+            if self.enablePlatooning:
                 platoon_config = config_yaml['platoon']
                 self.agent = PlatooningBehaviorAgent(
                     vehicle,
@@ -154,7 +157,13 @@ class VehicleManager(object):
 
         # perception module
         # move it down here to pass in the behavior manager & localization manager
-        if 'cluster' in application:
+        if self.enableCluster:
+            if not self.enableCoperception:
+                import sys
+                sys.exit(
+                        'If you activate the cluster module, '
+                        'then apply_cp must be set to true in'
+                        'the argument parser to load the opencood manager')
             self.perception_manager = ClusteringPerceptionManager(
                 v2x_manager=self.v2x_manager,
                 localization_manager=self.localizer,

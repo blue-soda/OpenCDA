@@ -20,10 +20,10 @@ class NetworkManager:
 
     def __init__(self, cav_world, config):
         self.cav_world = cav_world
-        self.subchannel_bandwidth = config.get("subchannel_bandwidth", 20) * 1e6  #Hz
-        self.subchannel_num = config.get("subchannel_num", 10)
+        self.subchannel_num = config.get("subchannel_num", 25)
+        self.subchannel_bandwidth = config.get("subchannel_bandwidth", 0.180) * 1e6  #Hz
         # self.max_interference = config.get("max_interference", 0.2)
-        self.min_sinr_threshold = config.get("min_sinr_threshold", 10) #dB
+        self.min_sinr_threshold = config.get("min_sinr_threshold", 3) #dB
         self.time_slot = config.get("time_slot", 0.5)
         self.current_time_slot = 0
 
@@ -37,7 +37,7 @@ class NetworkManager:
             'inter_cluster': 0.0,
             'control_overhead': 0.0,
             'collisions': 0,
-            'latency_ms': 0.0,
+            'latency': [],
             'utilization': 0.0  # Will be calculated when slot ends
         }
         
@@ -60,43 +60,43 @@ class NetworkManager:
         # Sum interference from all active transmissions on this subchannel
         for src_id, tgt_id, _ in self.active_allocations[subchannel]:
             # Skip our own transmission (we want OTHER transmitters' interference)
-            if tgt_id == target_vehicle.vehicle_id:
-                continue
+            # if tgt_id == target_vehicle.vehicle_id:
+            #     continue
                 
             source_vm = self.cav_world.get_vehicle_manager(src_id).v2x_manager
             if source_vm:
                 interference += utils.get_interference_contribution(
-                    source_vm.v2x_manager, 
+                    source_vm, 
                     target_vehicle
                 )
         
         return interference
 
     def allocate_resource(self, source, target, volume: float,
-                        subchannel: int) -> int:
+                        subchannel: int):
         """
         Allocate resources for a communication request and calculate the required number of time slots.
         
         Args:
             source (V2XManager): Source V2XManager.
             target (V2XManager): Target V2XManager.
-            volume (float): Data volume to transmit (in MB).
+            volume (float): Data volume to transmit (in bytes).
             subchannel (int): Subchannel to allocate.
 
         Returns:
-            int: Number of time slots required to complete the transmission.
+            Tuple: subchannel, current_time_slot, end_time_slot
 
         Raises:
             ValueError: If the maximum interference threshold is exceeded.
         """
         # 1. Calculate interference at receiver from OTHER transmitters
-        other_interference = self.calculate_interference(subchannel, target)
+        interference = self.calculate_interference(subchannel, target)
         
         # 2. Calculate our signal's contribution to receiver
         our_signal = utils.get_interference_contribution(source, target)
         
         # 3. Total interference = other transmitters + noise floor
-        total_interference = other_interference + target.noise_level
+        # total_interference = interference + target.noise_level
         
         # 4. Calculate actual SINR
         # snr = utils.calculate_snr(
@@ -104,26 +104,31 @@ class NetworkManager:
         #     noise_level=total_interference,  # Includes other transmitters + noise
         #     distance=utils.calculate_distance(source, target)
         # )
-        sinr = utils.calculate_sinr(our_signal, total_interference)
+        sinr = utils.calculate_sinr(our_signal, interference, target.noise_level)
         
         # 5. Verify interference threshold
+        logger.debug(f"signal power: {our_signal}, {interference}, {target.noise_level} in subchannel {subchannel}")
         logger.info(f"sinr: {sinr}")
         if sinr < self.min_sinr_threshold: 
-            raise ResourceConflictError("SINR too low for reliable communication.")
+            # raise ResourceConflictError("SINR too low for reliable communication.")
+            self._record_collision()
+            return -1, -1, -1
         
         # 6. Determine data rate and time slots needed
         data_rate = utils.calculate_available_data_rate(
             self.subchannel_bandwidth,
             sinr,
-        )
+        ) / 8 #(bit to byte)
         logger.info(f"data rate: {data_rate}")
         
-        time_slots = math.ceil(volume / data_rate / self.time_slot)
+        delay = volume / data_rate
+        time_slots = math.ceil(delay / self.time_slot)
         
         # Record allocation
         end_time_slot = self.current_time_slot + time_slots
         self.active_allocations[subchannel].add((source.vehicle_id, target.vehicle_id, end_time_slot))
 
+        self._record_packet_latency(delay)
         # # Update communication stats (assume 'upload' type for now)
         # self._update_communication_stats(volume, "upload")
 
@@ -154,20 +159,19 @@ class NetworkManager:
         elif comm_type == "control":
             self.current_slot['control_overhead'] += volume
 
-    def _calculate_utilization(self, max_capacity: float = 10.0):
+    def _calculate_utilization(self):
         """
         Calculate network utilization percentage for current slot
         
-        Args:
-            max_capacity: Maximum theoretical network capacity in MB/s
         Returns:
             Utilization percentage (0-100)
         """
+        max_capacity = self.subchannel_bandwidth * self.subchannel_num / 8 * 0.9
         if max_capacity <= 0:
             return 0.0
         return min(100.0, (self.current_slot['total_volume'] / max_capacity) * 100)
     
-    def finalize_slot(self, max_capacity: float = 10.0):
+    def finalize_slot(self):
         """
         Finalize current time slot statistics and archive to history
         
@@ -175,7 +179,7 @@ class NetworkManager:
             max_capacity: Used for utilization calculation
         """
         # Calculate final utilization before archiving
-        self.current_slot['utilization'] = self._calculate_utilization(max_capacity)
+        self.current_slot['utilization'] = self._calculate_utilization()
         
         # Deep copy current slot to history
         self.history.append({
@@ -195,13 +199,16 @@ class NetworkManager:
             'inter_cluster': 0.0,
             'control_overhead': 0.0,
             'collisions': 0,
-            'latency_ms': 0.0,
+            'latency': [],
             'utilization': 0.0
         }
 
     def _record_collision(self):
         """Handle collision events in statistics."""
         self.current_slot['collisions'] += 1
+
+    def _record_packet_latency(self, latency: float):
+        self.current_slot['latency'].append(latency)
 
     def get_communication_report(self) -> dict:
         """
@@ -213,6 +220,8 @@ class NetworkManager:
             - historical: Aggregated statistics over all slots
             - traffic_distribution: Percentage breakdown by type
         """
+        self.current_slot['utilization'] = self._calculate_utilization()
+
         if not self.history:
             return {'current': self.current_slot, 'historical': None}
         
@@ -223,7 +232,7 @@ class NetworkManager:
             'intra_download': np.array([s['intra_cluster']['download'] for s in self.history]),
             'inter_cluster': np.array([s['inter_cluster'] for s in self.history]),
             'control': np.array([s['control_overhead'] for s in self.history]),
-            'latency': np.array([s['latency_ms'] for s in self.history]),
+            'latency': np.array([latency_value for s in self.history for latency_value in s['latency']]),
             'utilization': np.array([s['utilization'] for s in self.history])
         }
         
@@ -248,9 +257,9 @@ class NetworkManager:
             'historical': {
                 'total_slots': len(self.history),
                 'avg_throughput': float(np.mean(hist_arrays['throughput'])),
-                'avg_latency_ms': float(np.mean(hist_arrays['latency'])),
+                'avg_latency': float(np.mean(hist_arrays['latency'])),
                 'avg_utilization': float(np.mean(hist_arrays['utilization'])),
-                'total_volume_mb': float(hist_arrays['throughput'].sum()),
+                'total_volume_bytes': float(hist_arrays['throughput'].sum()),
                 'max_throughput': float(np.max(hist_arrays['throughput'])),
                 # 'throughput_trend': hist_arrays['throughput'].tolist()  # Full history
             },

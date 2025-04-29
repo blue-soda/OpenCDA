@@ -3,7 +3,11 @@ enable_network:
     enabled: true
     # scheduler: 'roundrobin'
     scheduler: 'clusterbased'
-    subchannel_bandwidth: 20 #MHz
+    # 5Mhz LTE:
+    # subchannel_bandwidth: 0.180 #MHz
+    # subchannel_num: 25
+    # 100Mhz:
+    subchannel_bandwidth: 10 #MHz
     subchannel_num: 10 
-    min_sinr_threshold: 10 #dB
+    min_sinr_threshold: 3 #dB
     time_slot: 0.5 

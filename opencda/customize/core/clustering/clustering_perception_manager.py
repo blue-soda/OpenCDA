@@ -178,14 +178,18 @@ class ClusteringPerceptionManager(PerceptionManager):
                         ego_pose=ClusteringPerceptionManager.ego_lidar_pose
                     )
                     nearby_data_size = asizeof(nearby_data)
+
+                    success = True
+                    # print('self.enable_network', self.enable_network)
                     if self.enable_network:
                         source, target = nearby_v2x_manager, self.v2x_manager
                         # def schedule(self, source: 'V2XManager', target: 'V2XManager', volume: float) -> Tuple[int, int, int, bool]:
                         subchannel, start_time, end_time, success = self.v2x_manager.scheduler.schedule(source, target, nearby_data_size)
                         logger.info(f"network {source.vehicle_id} to {target.vehicle_id}: {subchannel}, {start_time}, {end_time}, {success}")
 
-                    data_size += nearby_data_size
-                    data.update(nearby_data)
+                    if success:
+                        data_size += nearby_data_size
+                        data.update(nearby_data)
 
                 if CavWorld.network_manager:
                     # V2XManager.network_manager.update_communication_volume(data_size, communication_type="collect")
@@ -233,6 +237,7 @@ class ClusteringPerceptionManager(PerceptionManager):
                         objects_size = self.get_boxes_size()
                         # V2XManager.network_manager.update_communication_volume(objects_size, communication_type="outside")
                         CavWorld.network_manager._update_communication_stats(objects_size, "inter")
+
                     pred_box_tensor, pred_score, gt_box_tensor = self.ml_manager.naive_late_fusion(
                                                                     ClusteringPerceptionManager.predict_box_tensors, 
                                                                     ClusteringPerceptionManager.predict_scores, 

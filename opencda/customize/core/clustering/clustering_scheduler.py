@@ -7,6 +7,8 @@ import opencda.customize.core.v2x.utils as utils
 import matplotlib.pyplot as plt
 import matplotlib.colors as mcolors
 from matplotlib import cm
+from opencda.log.logger_config import logger
+from random import uniform
 
 class ClusterBasedScheduler(Scheduler):
     """
@@ -16,10 +18,13 @@ class ClusterBasedScheduler(Scheduler):
         super().__init__(network_manager)
 
         # Interference model parameters
-        self.d_th = 35  # Distance threshold for interference (meters)
+        self.d_th = 70  # Distance threshold for interference (meters)
         self.I_max = 1.0  # Maximum possible interference contribution
         self.eta = 2.0  # Path loss exponent (environment-specific)
-        self.conflict_distance = 35 # meters
+        self.conflict_distance = 70 # meters
+        self.M = 5
+        self.subchannel_num = 25
+        self.offset = int(uniform(0.0, 1.0) * self.subchannel_num)
 
         # Internal scheduler state
         self.cluster_state = {}  # Stores members and neighbors from the cluster
@@ -39,17 +44,17 @@ class ClusterBasedScheduler(Scheduler):
         self.cluster_state = cluster_state
 
         # Step 1: Build vehicle-level interference graph based on wireless model
-        self.build_weighted_conflict_graph(cluster_state)
+        self.build_weighted_conflict_graph()
 
         # Step 2: Build conflict graph between communication pairs
-        self.build_link_conflict_graph()
+        self.weighted_coloring_upload_scheduling()
 
         # Step 3: Perform graph coloring to assign subchannels
-        self.assign_subchannels()
+        # self.assign_subchannels()
 
-        self.draw_weighted_conflict_graph()
+        # self.draw_weighted_conflict_graph()
 
-    def build_weighted_conflict_graph(self, cluster_state: Dict):
+    def build_weighted_conflict_graph(self):
         """
         Build a directed graph where a directed edge (i → j) indicates
         that vehicle i will cause interference to vehicle j if it transmits.
@@ -61,8 +66,9 @@ class ClusterBasedScheduler(Scheduler):
             cluster_state (Dict): Contains 'members' and 'neighbors' (vehicles)
         """
         self.weighted_conflict_graph = nx.DiGraph()
-        members = cluster_state['members']
-        neighbors = cluster_state['neighbors']
+        members = self.cluster_state['members']
+        neighbors = self.cluster_state['neighbors']
+        self.cluster_head = self.cluster_state['cluster_head'].vehicle_id
 
         # Add all vehicle nodes to the graph
         for vid in set(list(members.keys()) + list(neighbors.keys())):
@@ -73,11 +79,11 @@ class ClusterBasedScheduler(Scheduler):
             for j_id, j in members.items():
                 if i_id == j_id:
                     continue
-                if self.is_conflicting(i, j):
-                    d_ij = utils.calculate_distance(i, j)
-                    I_ij_k = utils.get_interference_contribution(i, j)
-                    edge_weight = (d_ij / self.d_th) * (I_ij_k / self.I_max)
-                    self.weighted_conflict_graph.add_edge(i_id, j_id, weight=edge_weight)
+                # if self.is_conflicting(i, j):
+                d_ij = utils.calculate_distance(i, j)
+                I_ij_k = utils.get_interference_contribution(i, j)
+                edge_weight = (d_ij / self.d_th) * (I_ij_k / self.I_max)
+                self.weighted_conflict_graph.add_edge(i_id, j_id, weight=edge_weight)
 
         # Handle interference from members to external neighbors
         for i_id, i in members.items():
@@ -100,44 +106,58 @@ class ClusterBasedScheduler(Scheduler):
         distance = utils.calculate_distance(sender, receiver)
         return distance <= self.conflict_distance
 
-    def build_link_conflict_graph(self):
+    def weighted_coloring_upload_scheduling(self, eps=0.0):
         """
-        Build a conflict graph where:
-        - Each node represents a communication link (i → j)
-        - Two nodes are connected if their transmissions interfere with each other
+        Assign vehicles to different subchannels using graph coloring.
+        Each vehicle must occupy a different subchannel.
+        There are exactly M subchannels available.
+        Using greedy coloring from networkx.
+
+        Args:
+            eps (float): Interference tolerance (not used directly here since strict 1-to-1 mapping).
         """
-        self.conflict_graph.clear()
-        self.communication_edges.clear()
-        all_edges = list(self.weighted_conflict_graph.edges())
 
-        # Each directed communication (i → j) forms a communication node
-        for (u, v) in all_edges:
-            if u == v:
-                continue
-            self.conflict_graph.add_node((u, v))
-            self.communication_edges.add((u, v))
+        uploads = [vid for vid in self.cluster_state['members'].keys() if vid != self.cluster_head]
+        
+        # Step 1: Build the effective conflict graph among uploads
+        G = nx.Graph()
 
-        edges_list = list(self.communication_edges)
-        n = len(edges_list)
+        G.add_nodes_from(uploads)
 
-        # Check pairwise conflicts between communication edges
-        for i in range(n):
-            u1, v1 = edges_list[i]
-            for j in range(i + 1, n):
-                u2, v2 = edges_list[j]
-                conflict = False
+        for i in uploads:
+            for j in uploads:
+                if i == j:
+                    continue
+                # If interference between i and j is nonzero, add an undirected edge
+                w = 0
+                if self.weighted_conflict_graph.has_edge(i, j):
+                    w += self.weighted_conflict_graph[i][j]['weight']
+                if self.weighted_conflict_graph.has_edge(j, i):
+                    w += self.weighted_conflict_graph[j][i]['weight']
+                if w > eps:
+                    G.add_edge(i, j, weight=w)
 
-                # Rule 1: Same transmitter (cannot use same subchannel)
-                if u1 == u2:
-                    conflict = True
-                # Rule 2: u1's transmission interferes with v2's reception or vice versa
-                elif self.weighted_conflict_graph.has_edge(u1, v2):
-                    conflict = True
-                elif self.weighted_conflict_graph.has_edge(u2, v1):
-                    conflict = True
+        # Step 2: Perform greedy coloring
+        # strategy: smallest_last, largest_first, random_sequential, saturation_largest_first
+        # smallest_last tends to use fewer colors
+        coloring_result = nx.coloring.greedy_color(G, strategy='smallest_last')
 
-                if conflict:
-                    self.conflict_graph.add_edge((u1, v1), (u2, v2))
+        logger.debug(f"{self.cluster_head}'s coloring_result: {coloring_result}")
+        # Step 3: Check if we used too many colors
+        if len(coloring_result) == 0:
+            max_color_used = 1
+        else:
+            max_color_used = max(coloring_result.values()) + 1  # from 0
+        if max_color_used > self.M:
+            logger.warning(f"Cannot schedule! Required subchannels ({max_color_used}) > available M ({self.M}).")
+
+        # Step 4: Save formatting: (u, head) -> color
+        coloring = dict()
+        for u, color in coloring_result.items():
+            coloring[(u, self.cluster_head)] = color
+
+        self.coloring = coloring
+
 
     def assign_subchannels(self):
         """
@@ -159,21 +179,33 @@ class ClusterBasedScheduler(Scheduler):
         key = (source.vehicle_id, target.vehicle_id)
         # Step 1: Check if the link was already assigned a color during coloring
         if key not in self.coloring:
+            logger.error(f"key {key} not in self.coloring {self.coloring}")
             return -1, -1, -1, False  # communication edge not activated
         # Step 2: Attempt to allocate resource using the coloring result (subchannel)
-        subchannel = self.coloring[key]
-        try:
-            # Call the underlying resource manager to allocate time slot and subchannel
-            subchannel, start_slot, end_slot = self.network_manager.allocate_resource(
-                source, target, volume, subchannel
-            )
-            return subchannel, start_slot, end_slot, True
-        except ResourceConflictError as e:
-            print(f"[ClusterBasedScheduler] Resource conflict: {e}")
-            return -1, -1, -1, False
+        subchannel = (self.coloring[key] + self.offset) % self.subchannel_num
+
+        # try:
+        # Call the underlying resource manager to allocate time slot and subchannel
+        subchannel, start_slot, end_slot = self.network_manager.allocate_resource(
+            source, target, volume, subchannel 
+        )
+
+        success = subchannel >= 0
+        if start_slot == 100: #debug
+            self.visualize_weighted_conflict_graph()
+            self.visualize_coloring()
+
+        if not success: #Reset the offset if failed
+            self.offset = int(uniform(0.0, 1.0) * self.subchannel_num)
+
+        return subchannel, start_slot, end_slot, success
+        
+        # except ResourceConflictError as e:
+        #     print(f"[ClusterBasedScheduler] Resource conflict: {e}")
+        #     return -1, -1, -1, False
 
 
-    def draw_weighted_conflict_graph(self):
+    def visualize_weighted_conflict_graph(self):
         """
         Visualize and save the graph.
         """
@@ -195,54 +227,46 @@ class ClusterBasedScheduler(Scheduler):
         plt.savefig(filename)
         plt.close()
 
-        filename='link_conflict_graph.png'
-        plt.figure(figsize=(12, 9))
-        pos = nx.spring_layout(self.conflict_graph, seed=42)
+    def visualize_coloring(self):
+        """
+        Visualize the result of self.coloring on the full weighted_conflict_graph.
+        Nodes without assigned color will be shown in gray.
+        """
+        if not hasattr(self, 'coloring'):
+            print("No coloring found! Please run weighted_coloring_upload_scheduling first.")
+            return
 
-        nx.draw_networkx_nodes(self.conflict_graph, pos, node_size=600, node_color='lightgreen')
-        nx.draw_networkx_labels(self.conflict_graph, pos, font_size=8)
-        edge_labels = nx.get_edge_attributes(self.conflict_graph, 'weight')
-        nx.draw_networkx_edges(self.conflict_graph, pos, edge_color='black')
-        nx.draw_networkx_edge_labels(self.conflict_graph, pos, edge_labels={k: f'{v:.2f}' for k, v in edge_labels.items()}, font_size=7)
-        plt.title('Conflict Graph (Link-level with Weights)')
-        plt.axis('off')
-        plt.tight_layout()
-        plt.savefig(filename)
-        plt.close()
+        # Use the full weighted conflict graph
+        G = self.weighted_conflict_graph
 
-        filename='coloring_graph.png'
-        plt.figure(figsize=(12, 10))
-        G = nx.Graph()
-        # 1. Build nodes based on coloring
-        for link, color in self.coloring.items():
-            G.add_node(link, color=color)
-        # 2. Optional: Add conflicts as edges (from conflict graph)
-        if hasattr(self, 'conflict_graph'):
-            for u, v in self.conflict_graph.edges():
-                if u in G.nodes and v in G.nodes:
-                    G.add_edge(u, v)
-        # 3. Extract colors
-        color_values = [G.nodes[n]['color'] for n in G.nodes()]
-        num_colors = max(color_values) + 1 if color_values else 1
-        cmap = cm.get_cmap('tab20', num_colors)  # 20 个颜色支持
-        norm = mcolors.Normalize(vmin=0, vmax=num_colors - 1)
-        node_colors = [cmap(norm(c)) for c in color_values]
-        # 4. plot
-        pos = nx.spring_layout(G, seed=42)
-        nx.draw_networkx_nodes(G, pos,
-                            node_color=node_colors,
-                            node_size=800)
-        nx.draw_networkx_labels(G, pos,
-                                labels={n: f"{n[0]}→{n[1]}" for n in G.nodes()},
-                                font_size=8)
-        nx.draw_networkx_edges(G, pos, alpha=0.3)
-        sm = cm.ScalarMappable(cmap=cmap, norm=norm)
-        sm.set_array([])
-        cbar = plt.colorbar(sm, ticks=range(num_colors))
-        cbar.set_label("Subchannel (Color Index)")
-        cbar.ax.set_yticklabels([str(i) for i in range(num_colors)])
-        plt.title("Communication Link Coloring Result")
+        # Extract node -> color mapping
+        node_colors = dict()
+        for (v, head), color in self.coloring.items():
+            node_colors[v] = color
+
+        # Prepare color mapping
+        unique_color_ids = sorted(set(node_colors.values()))
+        cmap = plt.get_cmap('tab20')  # Colormap with 20 distinct colors
+        color_map = {color_id: cmap(i / max(1, len(unique_color_ids)-1)) for i, color_id in enumerate(unique_color_ids)}
+
+        # Generate color list for all nodes
+        node_color_list = []
+        for v in G.nodes():
+            if v in node_colors:
+                node_color_list.append(color_map[node_colors[v]])
+            else:
+                node_color_list.append('lightgray')  # Default color for unassigned nodes
+
+        # Plot the graph
+        plt.figure(figsize=(8, 6))
+        pos = nx.spring_layout(G, seed=42)  # Layout positions
+
+        nx.draw_networkx_nodes(G, pos, node_color=node_color_list, node_size=500, alpha=0.9)
+        nx.draw_networkx_edges(G, pos, edge_color='gray', alpha=0.5)
+        nx.draw_networkx_labels(G, pos, labels={v: str(v) for v in G.nodes()}, font_color='black')
+
+        plt.title("Weighted Upload Scheduling Result (Full Graph)")
         plt.axis('off')
-        plt.tight_layout()
-        plt.savefig(filename, dpi=200)
+        # plt.show()
+        plt.savefig('coloring.png')
         plt.close()

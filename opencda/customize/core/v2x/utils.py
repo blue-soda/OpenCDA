@@ -28,9 +28,10 @@ def calculate_snr(tx_power, noise_level, distance):
     """Calculate the signal-to-noise ratio (SNR)."""
     return tx_power * calculate_channel_gain(distance) / noise_level
 
-def calculate_sinr(tx_power, noise_power):
-    """Calculate the Signal-to-Interference-plus-Noise Ratio (SINR) (dB)."""
-    linear_value = tx_power / (noise_power + tx_power)
+def calculate_sinr(tx_power, interference_power, noise_power):
+    """Calculate the Signal-to-Interference-plus-Noise Ratio (SINR) in dB."""
+    denominator = interference_power + noise_power
+    linear_value = tx_power / denominator if denominator > 0 else 0
     return 10 * math.log10(linear_value) if linear_value > 0 else -math.inf
 
 def calculate_channel_gain(distance, path_loss_exponent=2.0):
@@ -50,5 +51,5 @@ def calculate_channel_gain(distance, path_loss_exponent=2.0):
     return reference_gain / (distance / reference_distance) ** path_loss_exponent
 
 def calculate_available_data_rate(subchannel_bandwidth, sinr):
-    """Calculate the available data rate based on SNR and interference."""
+    """Calculate the available data rate(bps) based on SNR and interference."""
     return subchannel_bandwidth * math.log2(1 + sinr)

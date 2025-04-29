@@ -67,12 +67,12 @@ class RoundRobinScheduler(Scheduler):
         subchannel = self.next_subchannel
         self.next_subchannel = (self.next_subchannel + 1) % nm.subchannel_num
 
-        try:
-            subchannel, start_time_slot, end_time_slot = nm.allocate_resource(source, target, volume, subchannel)
-            return subchannel, start_time_slot, end_time_slot, True
-        except ResourceConflictError as e:
-            print(f"RoundRobinScheduler: {e}")
-            return subchannel, -1, -1, False
+        # try:
+        subchannel, start_time_slot, end_time_slot = nm.allocate_resource(source, target, volume, subchannel)
+        return subchannel, start_time_slot, end_time_slot, subchannel>=0
+        # except ResourceConflictError as e:
+        #     print(f"RoundRobinScheduler: {e}")
+        #     return subchannel, -1, -1, False
 
 
 
@@ -105,11 +105,11 @@ class InterferenceAwareScheduler(Scheduler):
                 continue
 
         if best_subchannel != -1:
-            try:
+            # try:
                 subchannel, start_time_slot, end_time_slot = nm.allocate_resource(source, target, volume, best_subchannel)
-                return subchannel, start_time_slot, end_time_slot, True
-            except ResourceConflictError as e:
-                print(f"InterferenceAwareScheduler: {e}")
+                return subchannel, start_time_slot, end_time_slot, subchannel>=0
+            # except ResourceConflictError as e:
+            #     print(f"InterferenceAwareScheduler: {e}")
 
         return -1, -1, -1, False
 

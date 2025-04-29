@@ -797,13 +797,12 @@ class ScenarioManager:
         print('CARLA traffic flow generated.')
         return tm, bg_list
 
-    def create_vehicle_manager_for_traffic(self, traffic_vehicles):
+    def create_vehicle_manager_for_traffic(self, traffic_vehicles, application=['traffic', 'coperception', 'cluster']):
         traffic_cav_list = []
-
         for vehicle in traffic_vehicles:
             vehicle_manager = VehicleManager(
                 vehicle, config_yaml=self.scenario_params['traffic_vehicle_base'], 
-                application=['traffic', 'cooperative', 'cluster'],
+                application=application,
                 carla_map=self.carla_map, cav_world=self.cav_world,
                 current_time=self.scenario_params['current_time'],
                 data_dumping=False)

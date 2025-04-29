@@ -20,7 +20,7 @@ def run_scenario(opt, scenario_params):
     try:
         scenario_params = add_current_time(scenario_params)
 
-        application = ['single', 'cluster']
+        application = ['cluster']
         coperception_params, network_params = None, None
         if opt.apply_cp:
             application.append('coperception')
@@ -47,7 +47,7 @@ def run_scenario(opt, scenario_params):
                 start_recorder("v2xp_cluster_carla.log", True)
 
         single_cav_list = \
-            scenario_manager.create_vehicle_manager(application=application, data_dump=False)
+            scenario_manager.create_vehicle_manager(application=application+['single'], data_dump=False)
         # rsu_list = \
         #     scenario_manager.create_rsu_manager(data_dump=False)
 
@@ -58,7 +58,7 @@ def run_scenario(opt, scenario_params):
         traffic_cav_list = []
         if 'cluster' in application:
             traffic_cav_list = \
-                scenario_manager.create_vehicle_manager_for_traffic(bg_veh_list)
+                scenario_manager.create_vehicle_manager_for_traffic(bg_veh_list, application=application+['traffic'])
 
 
         # create evaluation manager
@@ -92,19 +92,23 @@ def run_scenario(opt, scenario_params):
 
             for traffic_cav in traffic_cav_list:
                 traffic_cav.update_info()
-                isOutOfSight = LocalizationManager.is_vehicle_out_of_sight( \
+                is_out_of_sight = LocalizationManager.is_vehicle_out_of_sight( \
                     traffic_cav.vehicle.get_transform().location, transform.location)
-                if traffic_cav.is_ok and isOutOfSight:
+                
+                if traffic_cav.is_ok and is_out_of_sight:
                     traffic_cav.is_ok = False
                     logger.debug(f"bg_vehicle {traffic_cav.vehicle.id} is out of range.")
-                elif not traffic_cav.is_ok and not isOutOfSight:
+
+                elif not traffic_cav.is_ok and not is_out_of_sight:
                     traffic_cav.is_ok = True
                     logger.debug(f"bg_vehicle {traffic_cav.vehicle.id} is back.")
+
                 vehicle_location = traffic_cav.vehicle.get_transform().location
                 color = traffic_cav.v2x_manager.rgb
                 cluster_head = traffic_cav.v2x_manager.cluster_state['cluster_head']
+
                 debug_helper.draw_string(vehicle_location + carla.Location(z=2.5),
-                            f"{traffic_cav.vehicle.id}, {int(not isOutOfSight)}, {cluster_head}",
+                            f"{traffic_cav.vehicle.id}, {int(not is_out_of_sight)}, {cluster_head}",
                             life_time=0.1,persistent_lines=True,draw_shadow=False,
                             color=carla.Color(*color))
             
@@ -125,7 +129,7 @@ def run_scenario(opt, scenario_params):
 
             if opt.record:
                 scenario_manager.client.stop_recorder()
-                
+        
         finally:
             scenario_manager.close()
         #

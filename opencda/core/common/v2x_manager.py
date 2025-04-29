@@ -24,7 +24,7 @@ from opencda.customize.core.v2x.scheduler_builder import build_scheduler
 
 STANDARD_CAPABILITY = 1
 MAX_TX_POWER = 1
-BASE_NOISE_LEVEL = 0.3
+BASE_NOISE_LEVEL = 1e-13
 
 class V2XManager(object):
     """
