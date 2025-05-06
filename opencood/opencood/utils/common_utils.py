@@ -176,8 +176,9 @@ def torch_tensor_to_numpy(torch_tensor):
     -------
     A numpy array.
     """
-    return torch_tensor.numpy() if not torch_tensor.is_cuda else \
-        torch_tensor.cpu().detach().numpy()
+    # return torch_tensor.numpy() if not torch_tensor.is_cuda else \
+    #     torch_tensor.cpu().detach().numpy()
+    return torch_tensor.detach().cpu().numpy()
 
 
 def get_voxel_centers(voxel_coords,

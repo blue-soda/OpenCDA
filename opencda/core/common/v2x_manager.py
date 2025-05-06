@@ -79,7 +79,8 @@ class V2XManager(object):
             self.communication_range, self.cda_enabled)
 
         self.cav_world = weakref.ref(cav_world)()
-
+        
+        self.rgb = (255, 255, 0)
         # ego position buffer. use deque so we can simulate lagging
         self.ego_pos = deque(maxlen=100)
         self.ego_spd = deque(maxlen=100)

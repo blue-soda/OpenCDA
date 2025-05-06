@@ -27,7 +27,6 @@ class ClusteringV2XManager(V2XManager):
         super(ClusteringV2XManager, self).__init__(cav_world, config_yaml, vid, vehicle_id)
         
         self.cp_model = 'default_model'
-        self.rgb = (255, 255, 0)
 
         self.tick = 0
  

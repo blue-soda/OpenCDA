@@ -33,6 +33,9 @@ def arg_parse():
     parser.add_argument("--apply_cp",
                         action='store_true',
                         help='whether to apply coperception.')
+    parser.add_argument("--prediction",
+                        action='store_true',
+                        help='whether to enable prediction.')
     parser.add_argument("--network",
                         action='store_true',
                         help='whether to enable network.')
@@ -103,29 +106,36 @@ def main():
     # get the function for running the scenario from the testing script
     scenario_runner = getattr(testing_scenario, 'run_scenario')
 
-    from opencda.constants import Profile
-    experiment_profile = Profile.PREDICTION_OPENCOOD_V2X #PREDICTION_OPENCOOD_CAV
-    for profile in experiment_profile.profiles():
-        scenario_params = OmegaConf.merge(scene_dict, experiment_dict[profile])
+    logger.debug(experiment_dict)
+    scenario_params = scene_dict
+    # from opencda.constants import Profile
+    # experiment_profile = Profile.PREDICTION_OPENCOOD_V2X #PREDICTION_OPENCOOD_CAV
+    # for profile in experiment_profile.profiles():
+    #     scenario_params = OmegaConf.merge(scenario_params, experiment_dict[profile])
+    if opt.apply_cp:
+        scenario_params = OmegaConf.merge(scenario_params, experiment_dict['enable_coperception'])
+    if opt.network:
+        scenario_params = OmegaConf.merge(scenario_params, experiment_dict['enable_network'])
+        scenario_params['vehicle_base']['v2x'].update(network_dict['enable_network'])
+        scenario_params['traffic_vehicle_base']['v2x'].update(network_dict['enable_network'])
+    if opt.prediction:
+        scenario_params = OmegaConf.merge(scenario_params, experiment_dict['enable_prediction'])    
+
     scenario_params['vehicle_base']['sensing']['perception']['coperception'] = opt.apply_cp
     scenario_params['vehicle_base']['sensing']['perception']['activate'] = opt.apply_ml
-    scenario_params['vehicle_base']['v2x'].update(network_dict['enable_network'])
-    scenario_params['traffic_vehicle_base']['v2x'].update(network_dict['enable_network'])
-    # scenario_params['vehicle_base']['v2x'] = network_dict['enable_network']
-    # scenario_params['traffic_vehicle_base']['v2x'] = network_dict['enable_network']
+
     #ignore deprecated warning 
     import warnings
     from shapely.errors import ShapelyDeprecationWarning
     warnings.filterwarnings("ignore", category=UserWarning, message="nn.functional.sigmoid is deprecated. Use torch.sigmoid instead.")
     warnings.filterwarnings("ignore", category=ShapelyDeprecationWarning)
     warnings.filterwarnings("ignore", category=UserWarning, message="nn.init.xavier_uniform is now deprecated in favor of nn.init.xavier_uniform_.")
-    logger.debug(scenario_params['coperception'])
-    logger.debug(scenario_params['network'])
+    logger.debug(scenario_params)
     scenario_runner(opt, scenario_params)
 
 
 if __name__ == '__main__':
-    try:
+    # try:
         main()
-    except KeyboardInterrupt:
-        print(' - Exited by user.')
+    # except KeyboardInterrupt:
+    #     print(' - Exited by user.')
