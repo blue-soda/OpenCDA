@@ -243,20 +243,14 @@ class VehicleManager(object):
         if not self.is_ok:
             return
 
-        if 'traffic' in self.application:
-            self.v2x_manager.update_info(ego_pos, ego_spd, ego_lidar, ego_image, ego_dir)
-            objects = self.perception_manager.detect(ego_pos)
-            return
-        
         # update ego position and speed to v2x manager,
         # and then v2x manager will search the nearby cavs
         self.v2x_manager.update_info(ego_pos, ego_spd, ego_lidar, ego_image, ego_dir)
         # object detection
         objects = self.perception_manager.detect(ego_pos)
-        # if len(objects['vehicles']) > self.pre_obejcts_num:
-        #     print('detect objects:', len(objects['vehicles']), ' vehicles.')
-        # self.pre_obejcts_num = len(objects['vehicles'])
-        # print('objects:', objects)
+        
+        if 'traffic' in self.application:
+            return
 
         # update the ego pose for map manager
         self.map_manager.update_information(ego_pos)

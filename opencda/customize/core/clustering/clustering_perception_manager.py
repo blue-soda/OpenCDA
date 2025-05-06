@@ -29,6 +29,8 @@ class ClusteringPerceptionManager(PerceptionManager):
         self.co_manager = ClusteringCoperceptionManager(self.id, v2x_manager, self.coperception_libs)
         if ClusteringPerceptionManager.ego_vm is None:
             ClusteringPerceptionManager.ego_vm = cav_world.get_ego_vehicle_manager()
+        self.do_cp = False
+        self.cp_data = {}
 
     @staticmethod
     def update_ego_lidar_pose():
@@ -133,6 +135,7 @@ class ClusteringPerceptionManager(PerceptionManager):
         ego_id = self.cav_world.ego_id
         is_ego = self.id == ego_id
         self.update_ego_lidar_pose()
+        self.do_cp = self.v2x_manager.receive_beacon
 
         # record_results = is_ego
         data = OrderedDict()
@@ -189,14 +192,22 @@ class ClusteringPerceptionManager(PerceptionManager):
 
                     if success:
                         data_size += nearby_data_size
-                        data.update(nearby_data)
+                        self.cp_data.update(nearby_data)
+                        self.co_manager.uploaded_member[vid] = True
+                        
 
+                # count communication_volume
                 if CavWorld.network_manager:
                     # V2XManager.network_manager.update_communication_volume(data_size, communication_type="collect")
                     CavWorld.network_manager._update_communication_stats(data_size, "upload")
                     logger.debug(f'collect data size: {data_size}')
-                #count communication_volume
-                #if record_results:
+
+                # merge ego data with neighbor data to apply coperception
+                if self.do_cp:
+                    data.update(self.cp_data)
+                    self.cp_data.clear()
+                    self.co_manager.uploaded_member.clear()
+                
                 objects = self.inference(data, objects, with_submit=is_ego)
                 if is_ego:
                     ClusteringPerceptionManager.clear()

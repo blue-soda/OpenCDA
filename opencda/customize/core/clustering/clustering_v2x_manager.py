@@ -28,9 +28,10 @@ class ClusteringV2XManager(V2XManager):
         
         self.cp_model = 'default_model'
 
-        self.tick = 0
+        self.t = 0 #Timer
  
         self.beacon_frequency = 2 #(Hz)
+        self.receive_beacon = False
         # 分簇协议相关参数
         self.cluster_params = {
             'd0': 50.0,           # 距离归一化参数 (单位: m)
@@ -115,6 +116,13 @@ class ClusteringV2XManager(V2XManager):
     def is_cluster_head(self):
         # logger.debug('vehicle_id', self.vehicle_id, self.cluster_state['cluster_head'], self.vehicle_id == self.cluster_state['cluster_head'])
         return self.vehicle_id == self.cluster_state['cluster_head']
+    
+    def tick(self):
+        self.t += 1
+        self.receive_beacon = self.t >= (20/self.beacon_frequency) #send and receive beacon on 20/10=2(Hz)
+        if self.receive_beacon:
+            self.t = 0
+        return self.receive_beacon
 
     def beacon(self):
         """
@@ -359,14 +367,13 @@ class ClusteringV2XManager(V2XManager):
             members = [vehicle_id for vehicle_id in self.cluster_state['members']]
             logger.debug(f"cluster head:{self.vehicle_id} with score {cur_priority_score:.3f}, shadow head:{self.cluster_state['shadow_head']} with score {second_highest_priority:.3f}, cluster members:{members}")
 
-    def search(self, receive_beacons=False):
+    def search(self):
         """
         Search for nearby vehicles and update cluster state based on received beacons.
         """
         vehicle_manager_dict = self.cav_world.get_vehicle_managers()
 
-        self.tick += 1
-        receive_beacons = self.tick >= (20/self.beacon_frequency) #send and receive beacon on 20/10=2(Hz)
+        self.tick()
 
         for vid, vm in vehicle_manager_dict.items():
             vehicle_id = vm.vehicle.id
@@ -383,9 +390,8 @@ class ClusteringV2XManager(V2XManager):
             else:
                 self.cav_nearby.pop(vm.vehicle.id, None)
 
-            if receive_beacons:
+            if self.receive_beacon:
                 #logger.debug(f"{self.vehicle_id}  receive_beacons, tick: {self.tick}")
-                self.tick = 0
                 # Receive beacon from neighbor
                 neighbor_beacon = vm.v2x_manager.beacon()
 
@@ -409,7 +415,7 @@ class ClusteringV2XManager(V2XManager):
                     elif vehicle_id == self.cluster_state['shadow_head']:
                         self.cluster_state['shadow_head'] = None
 
-        if receive_beacons:
+        if self.receive_beacon:
             # Update cluster membership
             # logger.debug("Update cluster membership")
             self.update_cluster()
