@@ -10,9 +10,10 @@ class Scheduler(ABC):
     Abstract base class for resource scheduling algorithms.
     """
 
-    def __init__(self, network_manager: 'NetworkManager'):
+    def __init__(self, network_manager: 'NetworkManager', config={}):
         # Use weakref to avoid circular references
         self._network_manager = weakref.ref(network_manager)
+        self.config = config
 
     @property
     def network_manager(self) -> Optional['NetworkManager']:
@@ -55,8 +56,8 @@ class RoundRobinScheduler(Scheduler):
     Allocates resources in a round-robin fashion.
     """
 
-    def __init__(self, network_manager: 'NetworkManager'):
-        super().__init__(network_manager)
+    def __init__(self, network_manager: 'NetworkManager', config={}):
+        super().__init__(network_manager, config)
         self.next_subchannel = 0  # Start scheduling from the first subchannel
 
     def schedule(self, source, target, volume: float) -> Tuple[int, int, int, bool]:

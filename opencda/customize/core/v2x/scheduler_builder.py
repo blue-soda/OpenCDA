@@ -19,9 +19,9 @@ def build_scheduler(scheduler_name, config={}):
     scheduler_name = scheduler_name.lower()
 
     if scheduler_name == 'roundrobin':
-        return RoundRobinScheduler(CavWorld.network_manager)
+        return RoundRobinScheduler(CavWorld.network_manager, config)
     elif scheduler_name == 'greedy':
-        return InterferenceAwareScheduler(CavWorld.network_manager)
+        return InterferenceAwareScheduler(CavWorld.network_manager, config)
     elif scheduler_name == 'clusterbased':
         return ClusterBasedScheduler(CavWorld.network_manager, config)
     # elif scheduler_name == 'random':

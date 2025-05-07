@@ -15,7 +15,7 @@ class ClusterBasedScheduler(Scheduler):
     Scheduler based on cluster-based weighted conflict graph coloring.
     """
     def __init__(self, network_manager: 'NetworkManager', config={}):
-        super().__init__(network_manager)
+        super().__init__(network_manager, config)
 
         # Interference model parameters
         self.I_max = 1.0  # Maximum possible interference contribution
