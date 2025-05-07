@@ -111,7 +111,7 @@ class V2XManager(object):
         self.scheduler = None
         self.scheduler_type = None
         if self.cav_world.network_enabled and config_yaml['network']['enabled']:
-            self.scheduler = build_scheduler(config_yaml['network']['scheduler'])
+            self.scheduler = build_scheduler(config_yaml['network']['scheduler'], config_yaml['network'])
             self.scheduler_type = (config_yaml['network']['scheduler'])
 
         self.computing_capability = STANDARD_CAPABILITY * uniform(0.4, 1)

@@ -113,7 +113,7 @@ class VehicleManager(object):
         if self.enableCluster:
             self.v2x_manager = ClusteringV2XManager(cav_world, v2x_config, self.vid, self.vehicle.id)
         else:
-            if v2x_config['network']['enabled'] and v2x_config['network']['scheduler'] == 'clusterbased':
+            if 'network' in v2x_config and v2x_config['network']['enabled'] and v2x_config['network']['scheduler'] == 'clusterbased':
                 v2x_config['network']['scheduler'] = 'roundrobin'
                 print('Warning: do not use cluster_based scheduler when clustering is not active. scheduler param has been changed to roundrobin automately.')
                 logger.warning('do not use cluster_based scheduler when clustering is not active. scheduler param has been changed to roundrobin automately.')

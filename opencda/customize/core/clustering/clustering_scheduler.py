@@ -14,16 +14,17 @@ class ClusterBasedScheduler(Scheduler):
     """
     Scheduler based on cluster-based weighted conflict graph coloring.
     """
-    def __init__(self, network_manager: 'NetworkManager'):
+    def __init__(self, network_manager: 'NetworkManager', config={}):
         super().__init__(network_manager)
 
         # Interference model parameters
-        self.d_th = 70  # Distance threshold for interference (meters)
         self.I_max = 1.0  # Maximum possible interference contribution
         self.eta = 2.0  # Path loss exponent (environment-specific)
-        self.conflict_distance = 70 # meters
-        self.M = 5
-        self.subchannel_num = 25
+
+        self.conflict_distance = config.get('conflict_distance', 70) # meters
+        self.d_th = self.conflict_distance  # Distance threshold for interference (meters)
+        self.M = config.get('M', 5)
+        self.subchannel_num = config.get('subchannel_num', 20)
         self.offset = int(uniform(0.0, 1.0) * self.subchannel_num)
 
         # Internal scheduler state

@@ -3,7 +3,7 @@ from opencda.customize.core.v2x.scheduler import InterferenceAwareScheduler, Rou
 from opencda.customize.core.clustering.clustering_scheduler import ClusterBasedScheduler
 from opencda.core.common.cav_world import CavWorld
 
-def build_scheduler(scheduler_name):
+def build_scheduler(scheduler_name, config={}):
     """
     Factory method to build a scheduler object given its name.
     Args:
@@ -23,7 +23,7 @@ def build_scheduler(scheduler_name):
     elif scheduler_name == 'greedy':
         return InterferenceAwareScheduler(CavWorld.network_manager)
     elif scheduler_name == 'clusterbased':
-        return ClusterBasedScheduler(CavWorld.network_manager)
+        return ClusterBasedScheduler(CavWorld.network_manager, config)
     # elif scheduler_name == 'random':
     #     return RandomScheduler(CavWorld.network_manager)
     else:

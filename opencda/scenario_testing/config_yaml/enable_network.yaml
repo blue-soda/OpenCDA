@@ -10,4 +10,6 @@ enable_network:
     subchannel_bandwidth: 10 #MHz
     subchannel_num: 10 
     min_sinr_threshold: 3 #dB
-    time_slot: 0.5 
+    time_slot: 0.5 #s
+    M: 5
+    conflict_distance: 70 #meter
