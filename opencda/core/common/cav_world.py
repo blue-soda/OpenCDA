@@ -41,7 +41,8 @@ class CavWorld(object):
     def __init__(self, apply_ml=False,
                  apply_cp=False,
                  coperception_params=None,
-                 network_params=None):
+                 network_params=None,
+                 world_params=None):
 
         self.vehicle_id_set = set()
         self._vehicle_manager_dict = {}
@@ -67,13 +68,18 @@ class CavWorld(object):
         # this is used only when co-simulation activated.
         self.sumo2carla_ids = {}
 
+        self.fixed_delta_seconds = world_params.get('fixed_delta_seconds', 0.05)
+        self.frequency = 1 / self.fixed_delta_seconds
+
         self.network_enabled = False
         # print(network_params)
         if network_params:
             self.network_enabled = network_params['enabled']
+            network_params.update({'time_slot': self.fixed_delta_seconds})
             if self.network_enabled and CavWorld.network_manager is None:
                 CavWorld.network_manager = NetworkManager(cav_world=self, \
                                                             config=network_params)
+        
 
     def update_global_ego_id(self, id=0):
         """

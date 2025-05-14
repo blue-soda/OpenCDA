@@ -33,8 +33,9 @@ def run_scenario(opt, scenario_params, application=[], filename="-", town=None, 
     xodr_path_name = xdor_path
     file_name = filename
     sumo_cfg_name = sumo_cfg
-    init(opt, scenario_params)
+
     try:
+        init(opt, scenario_params)
         run()
     finally:
         stop(opt)
@@ -58,7 +59,8 @@ def init(opt, scenario_params):
     cav_world = CavWorld(apply_ml=opt.apply_ml, 
                             apply_cp=opt.apply_cp, 
                             coperception_params=coperception_params,
-                            network_params=network_params,)
+                            network_params=network_params,
+                            world_params=scenario_params['world'])
 
     # create scenario manager
     if sumo_cfg_name:
@@ -114,8 +116,9 @@ def init(opt, scenario_params):
         
 
 def run(debug=True):
-    global scenario_manager, applications, single_cav_list, traffic_cav_list, rsu_list
+    global scenario_manager, applications, single_cav_list, traffic_cav_list, platoon_list, rsu_list
 
+    all_cavs = single_cav_list + traffic_cav_list
     spectator = scenario_manager.world.get_spectator()
     if 'platoon' in applications:
         spectator_vehicle = platoon_list[0].vehicle_manager_list[1].vehicle
@@ -156,6 +159,9 @@ def run(debug=True):
             if debug:
                 draw_string(debug_helper, traffic_cav)
         
+        if 'cluster' in applications:
+            update_cluster(all_cavs)
+
         for single_cav in single_cav_list:               
             control = single_cav.run_step()
             single_cav.vehicle.apply_control(control)
@@ -171,15 +177,17 @@ def run(debug=True):
 def stop(opt):
     global cav_world, scenario_manager, eval_manager
     try:
-        eval_manager.evaluate()
-        if 'coperception' in applications:
+        if eval_manager:
+            eval_manager.evaluate()
+        if 'coperception' in applications and cav_world:
             cav_world.ml_manager.evaluate_final_average_precision()
 
-        if opt.record:
+        if opt.record and scenario_manager:
             scenario_manager.client.stop_recorder()
     
     finally:
-        scenario_manager.close()
+        if scenario_manager:
+            scenario_manager.close()
 
 
 def draw_string(debug_helper, cav):
@@ -208,3 +216,14 @@ def check_is_out_sight(transform, cav):
     elif not cav.is_ok and not is_out_of_sight:
         cav.is_ok = True
         logger.debug(f"bg_vehicle {cav.vehicle.id} is back.")
+
+def update_cluster(all_cavs):
+    if all_cavs and all_cavs[0].v2x_manager.receive_beacon:
+        for cav in all_cavs:
+            cav.join_cluster()
+        for cav in all_cavs:
+            cav.elect_leader()    
+        for cav in all_cavs:
+            cav.check_cluster_leader()                      
+        for cav in all_cavs:
+            cav.check_cluster_members()     

@@ -102,6 +102,7 @@ class VehicleManager(object):
         behavior_config = config_yaml['behavior']
         control_config = config_yaml['controller']
         v2x_config = config_yaml['v2x']
+        cluster_config = config_yaml['cluster']
 
         self.isTrafficVehicle = 'traffic' in application
         self.enableNetwork = 'network' in application
@@ -111,7 +112,7 @@ class VehicleManager(object):
 
         # v2x module
         if self.enableCluster:
-            self.v2x_manager = ClusteringV2XManager(cav_world, v2x_config, self.vid, self.vehicle.id)
+            self.v2x_manager = ClusteringV2XManager(cav_world, v2x_config, self.vid, self.vehicle.id, cluster_config)
         else:
             if 'network' in v2x_config and v2x_config['network']['enabled'] and v2x_config['network']['scheduler'] == 'clusterbased':
                 v2x_config['network']['scheduler'] = 'roundrobin'
@@ -172,7 +173,8 @@ class VehicleManager(object):
                 config_yaml=sensing_config['perception'],
                 cav_world=cav_world,
                 data_dump=data_dumping,
-                enable_network = self.enableNetwork)
+                enable_network=self.enableNetwork,
+                cluster_config=cluster_config)
         else:
             self.perception_manager = PerceptionManager(
                 v2x_manager=self.v2x_manager,
@@ -182,7 +184,7 @@ class VehicleManager(object):
                 config_yaml=sensing_config['perception'],
                 cav_world=cav_world,
                 data_dump=data_dumping,
-                enable_network = self.enableNetwork)
+                enable_network=self.enableNetwork)
             
         if data_dumping:
             self.data_dumper = DataDumper(self.perception_manager,
@@ -301,3 +303,35 @@ class VehicleManager(object):
             self.map_manager.destroy()
         if self.safety_manager:
             self.safety_manager.destroy()
+
+
+    """
+    -----------------------------------------------------------
+                 Below is clustering related 
+    -----------------------------------------------------------
+    """
+
+    def join_cluster(self):
+        if not self.enableCluster:
+            return
+        self.v2x_manager.update_cluster_join()
+
+    def elect_leader(self):
+        if not self.enableCluster:
+            return
+        self.v2x_manager.elect_cluster_head()
+
+    def check_cluster_leader(self):
+        if not self.enableCluster:
+            return
+        self.v2x_manager.check_current_leader()
+        self.v2x_manager.update_cluster_membership()
+
+    def check_cluster_members(self):
+        if not self.enableCluster:
+            return
+        self.v2x_manager.check_current_leader()
+        self.v2x_manager.check_current_members()
+        self.v2x_manager.id_to_rgb()
+        if self.v2x_manager.is_cluster_head() and self.v2x_manager.scheduler is not None and self.v2x_manager.scheduler_type == 'clusterbased':
+            self.v2x_manager.scheduler.update_scheduler(self.v2x_manager.get_cluster_members())

@@ -24,7 +24,7 @@ class NetworkManager:
         self.subchannel_bandwidth = config.get("subchannel_bandwidth", 0.180) * 1e6  #Hz
         # self.max_interference = config.get("max_interference", 0.2)
         self.min_sinr_threshold = config.get("min_sinr_threshold", 3) #dB
-        self.time_slot = config.get("time_slot", 0.5)
+        self.time_slot = config.get("time_slot", 0.05)
         self.current_time_slot = 0
 
         # Allocation state
@@ -37,7 +37,8 @@ class NetworkManager:
             'inter_cluster': 0.0,
             'control_overhead': 0.0,
             'collisions': 0,
-            'latency': [],
+            't_latency': [],
+            'p_latency': [],
             'utilization': 0.0  # Will be calculated when slot ends
         }
         
@@ -121,14 +122,14 @@ class NetworkManager:
         ) / 8 #(bit to byte)
         logger.info(f"data rate: {data_rate}")
         
-        delay = volume / data_rate
-        time_slots = math.ceil(delay / self.time_slot)
+        transmission_delay = volume / data_rate
+        time_slots = math.ceil(transmission_delay / self.time_slot)
         
         # Record allocation
         end_time_slot = self.current_time_slot + time_slots
         self.active_allocations[subchannel].add((source.vehicle_id, target.vehicle_id, end_time_slot))
 
-        self._record_packet_latency(delay)
+        self._record_transmission_latency(transmission_delay)
         # # Update communication stats (assume 'upload' type for now)
         # self._update_communication_stats(volume, "upload")
 
@@ -141,7 +142,7 @@ class NetworkManager:
         Update real-time communication metrics for current time slot
         
         Args:
-            volume: Data volume in MB
+            volume: Data volume in Bytes
             comm_type: Type of communication, one of:
                       'upload' - intra-cluster upstream (child->leader)
                       'download' - intra-cluster downstream (leader->child)
@@ -199,7 +200,8 @@ class NetworkManager:
             'inter_cluster': 0.0,
             'control_overhead': 0.0,
             'collisions': 0,
-            'latency': [],
+            't_latency': [],
+            'p_latency': [],
             'utilization': 0.0
         }
 
@@ -207,8 +209,11 @@ class NetworkManager:
         """Handle collision events in statistics."""
         self.current_slot['collisions'] += 1
 
+    def _record_transmission_latency(self, latency: float):
+        self.current_slot['t_latency'].append(latency)
+
     def _record_packet_latency(self, latency: float):
-        self.current_slot['latency'].append(latency)
+        self.current_slot['p_latency'].append(latency)
 
     def get_communication_report(self) -> dict:
         """
@@ -232,7 +237,8 @@ class NetworkManager:
             'intra_download': np.array([s['intra_cluster']['download'] for s in self.history]),
             'inter_cluster': np.array([s['inter_cluster'] for s in self.history]),
             'control': np.array([s['control_overhead'] for s in self.history]),
-            'latency': np.array([latency_value for s in self.history for latency_value in s['latency']]),
+            't_latency': np.array([latency_value for s in self.history for latency_value in s['t_latency']]),
+            'p_latency': np.array([latency_value for s in self.history for latency_value in s['p_latency']]),
             'utilization': np.array([s['utilization'] for s in self.history])
         }
         
@@ -241,7 +247,7 @@ class NetworkManager:
         dist = {}
         if total_vol > 0:
             dist = {
-                'total_vol(MB)': total_vol,
+                'total_vol(Bytes)': total_vol,
                 'intra_upload_pct(%)': 100 * hist_arrays['intra_upload'].sum() / total_vol,
                 'intra_download_pct(%)': 100 * hist_arrays['intra_download'].sum() / total_vol,
                 'inter_cluster_pct(%)': 100 * hist_arrays['inter_cluster'].sum() / total_vol,
@@ -257,7 +263,8 @@ class NetworkManager:
             'historical': {
                 'total_slots': len(self.history),
                 'avg_throughput': float(np.mean(hist_arrays['throughput'])),
-                'avg_latency': float(np.mean(hist_arrays['latency'])),
+                'avg_t_latency': float(np.mean(hist_arrays['t_latency'])),
+                'avg_p_latency': float(np.mean(hist_arrays['p_latency'])),
                 'avg_utilization': float(np.mean(hist_arrays['utilization'])),
                 'total_volume_bytes': float(hist_arrays['throughput'].sum()),
                 'max_throughput': float(np.max(hist_arrays['throughput'])),

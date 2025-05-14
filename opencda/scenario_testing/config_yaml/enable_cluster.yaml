@@ -1,0 +1,22 @@
+enable_cluster:
+  cluster:
+    d0: 50.0         # 距离归一化参数 (单位: m)
+    s0: 5.0            # 速度归一化参数 (单位: m/s)
+    N_th: 7 #4           # 邻居数阈值
+    N_max: 9         # 最大簇成员数
+    kappa: 0.05        # 权重调节系数
+    eta_join: 0.60     # 加入簇的阈值
+    eta_create: 0.40    # 创建簇的阈值
+    RSSI_max: 100      # 最大接收信号强度
+    epsilon: 0.1       # 协同感知模型差异阈值
+    sigma: 1.0         # 创建簇的概率调节参数
+    w1: 0.4  # 通信质量权重
+    w2: 0.3  # 计算能力权重
+    w3: 0.2  # 速度一致性权重
+    T_timeout: 1.0  # 簇头超时时间 (单位: s)
+    shadow_timeout: 0.5  # 影子簇头超时时间 (单位: s)
+    eta_leave: 0.35  # 离开阈值 (eta_join - delta_eta)
+    eta_elect: 0.10 #选举阈值(超过当前簇头优先级得分 + eta_elect 才能当选)
+    ego_must_be_leader: false #ego车辆是否指定为簇头
+    apply_late_fusion: false #是否跨簇晚期协作
+    record_all_cavs: false #统计所有车辆结果

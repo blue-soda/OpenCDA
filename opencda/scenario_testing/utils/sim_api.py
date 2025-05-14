@@ -193,11 +193,12 @@ class ScenarioManager:
         elif town:
             try:
                 self.world = self.client.load_world(town)
-            except RuntimeError:
+            except RuntimeError as e:
                 print(
                     f"{bcolors.FAIL} %s is not found in your CARLA repo! "
                     f"Please download all town maps to your CARLA "
                     f"repo!{bcolors.ENDC}" % town)
+                print(f"{bcolors.FAIL} Error: {e} {bcolors.ENDC}")
         else:
             self.world = self.client.get_world()
 
@@ -305,8 +306,10 @@ class ScenarioManager:
             # in case the cav wants to join a platoon later
             # it will be empty dictionary for single cav application
             platoon_base = OmegaConf.create({'platoon': self.scenario_params.get('platoon_base',{})})
+            cluster_base = OmegaConf.create({'cluster': self.scenario_params.get('cluster',{})})
             cav_config = OmegaConf.merge(self.scenario_params['vehicle_base'],
                                          platoon_base,
+                                         cluster_base,
                                          cav_config)
             # if the spawn position is a single scalar, we need to use map
             # helper to transfer to spawn transform
@@ -372,11 +375,12 @@ class ScenarioManager:
         #     raise ValueError('Only support one ego vehicle for ScenarioRunner')
 
         cav_config = single_cav_params[0]
-        platoon_base = OmegaConf.create(
-            {'platoon': self.scenario_params.get('platoon_base', {})})
+        platoon_base = OmegaConf.create({'platoon': self.scenario_params.get('platoon_base',{})})
+        cluster_base = OmegaConf.create({'cluster': self.scenario_params.get('cluster',{})})
         cav_config = OmegaConf.merge(self.scenario_params['vehicle_base'],
-                                     platoon_base,
-                                     cav_config)
+                                        platoon_base,
+                                        cluster_base,
+                                        cav_config)
         vehicle_manager = VehicleManager(
             vehicle, cav_config, ['single', 'cooperative'], self.carla_map, self.cav_world)
 
@@ -427,11 +431,12 @@ class ScenarioManager:
                 self.scenario_params['scenario']['single_cav_list']):
             # in case the cav wants to join a platoon later
             # it will be empty dictionary for single cav application
-            platoon_base = OmegaConf.create(
-                {'platoon': self.scenario_params.get('platoon_base', {})})
+            platoon_base = OmegaConf.create({'platoon': self.scenario_params.get('platoon_base',{})})
+            cluster_base = OmegaConf.create({'cluster': self.scenario_params.get('cluster',{})})
             cav_config = OmegaConf.merge(self.scenario_params['vehicle_base'],
-                                         platoon_base,
-                                         cav_config)
+                                            platoon_base,
+                                            cluster_base,
+                                            cav_config)
             # create vehicle manager for each cav
             vehicle_manager = VehicleManager(
                 vehicles[i], cav_config, application,
@@ -799,9 +804,15 @@ class ScenarioManager:
 
     def create_vehicle_manager_for_traffic(self, traffic_vehicles, application=['traffic', 'coperception', 'cluster']):
         traffic_cav_list = []
+        platoon_base = OmegaConf.create({'platoon': self.scenario_params.get('platoon_base',{})})
+        cluster_base = OmegaConf.create({'cluster': self.scenario_params.get('cluster',{})})
+        cav_config = OmegaConf.merge(self.scenario_params['traffic_vehicle_base'],
+                                        platoon_base,
+                                        cluster_base,
+                                        )
         for vehicle in traffic_vehicles:
             vehicle_manager = VehicleManager(
-                vehicle, config_yaml=self.scenario_params['traffic_vehicle_base'], 
+                vehicle, config_yaml=cav_config, 
                 application=application,
                 carla_map=self.carla_map, cav_world=self.cav_world,
                 current_time=self.scenario_params['current_time'],
@@ -837,7 +848,7 @@ class ScenarioManager:
         """
         print("Destroying all the actors...")
         try:
-            self.cav_world.destroy()
+            # self.cav_world.destroy()
             self.client.reload_world()
             settings = self.origin_settings
             settings.synchronous_mode = False

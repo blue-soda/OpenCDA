@@ -22,16 +22,22 @@ class ClusteringPerceptionManager(PerceptionManager):
     gt_box_tensors = []
 
     def __init__(self, v2x_manager, localization_manager, behavior_agent, vehicle,
-                 config_yaml, cav_world, data_dump=False, carla_world=None, infra_id=None, enable_network=False):
+                 config_yaml, cav_world, data_dump=False, carla_world=None, infra_id=None, enable_network=False, cluster_config=None):
         super().__init__(v2x_manager, localization_manager, behavior_agent, vehicle,
                  config_yaml, cav_world, data_dump, carla_world, infra_id, enable_network)
         self.communication_volume = 0.0
         self.co_manager = ClusteringCoperceptionManager(self.id, v2x_manager, self.coperception_libs)
         if ClusteringPerceptionManager.ego_vm is None:
             ClusteringPerceptionManager.ego_vm = cav_world.get_ego_vehicle_manager()
-        self.do_cp = False
+        self.do_cp = 0
         self.cp_data = {}
+        self.apply_late_fusion = False
+        self.record_all_cavs = False
+        if cluster_config:
+            self.apply_late_fusion = cluster_config['apply_late_fusion']
+            self.record_all_cavs = cluster_config['record_all_cavs']            
 
+    #TODO: if self.record_all_cavs: do late fusion for all cavs in the cluster, not only ego.
     @staticmethod
     def update_ego_lidar_pose():
         ego_vm = ClusteringPerceptionManager.ego_vm
@@ -78,7 +84,7 @@ class ClusteringPerceptionManager(PerceptionManager):
 
         return objects
 
-    def inference(self, data, objects = {'vehicles': [], 'traffic_lights': []}, with_submit=False):
+    def inference(self, data, objects = {'vehicles': [], 'traffic_lights': []}, with_submit=False, with_update=True):
         # inference
         reformat_data_dict = self.ml_manager.opencood_dataset.get_item_test(data, ClusteringPerceptionManager.ego_lidar_pose)
         output_dict = self.ml_manager.opencood_dataset.collate_batch_test(
@@ -91,7 +97,7 @@ class ClusteringPerceptionManager(PerceptionManager):
         #     return objects, None            
         batch_data = self.ml_manager.to_device(output_dict)
         predict_box_tensor, predict_score, gt_box_tensor = self.ml_manager.inference(batch_data, with_submit)
-        if predict_box_tensor is not None and predict_score is not None and gt_box_tensor is not None:
+        if with_update and predict_box_tensor is not None and predict_score is not None and gt_box_tensor is not None:
             logger.debug(f'predict_box_tensor: {predict_box_tensor.shape}')
             logger.debug(f'predict_score : {predict_score.shape}')
             logger.debug(f'gt_box_tensor : {gt_box_tensor.shape}')
@@ -134,13 +140,23 @@ class ClusteringPerceptionManager(PerceptionManager):
             ClusteringPerceptionManager.ego_vm = self.cav_world.get_ego_vehicle_manager()
         ego_id = self.cav_world.ego_id
         is_ego = self.id == ego_id
+        ego_in_cluster = False
         self.update_ego_lidar_pose()
-        self.do_cp = self.v2x_manager.receive_beacon
+        if self.v2x_manager.receive_beacon:
+            self.do_cp += 1
 
         # record_results = is_ego
         data = OrderedDict()
         if self.enable_communicate:
             if self.v2x_manager.is_cluster_head():  #cluster head do cp
+
+                if ego_id in self.v2x_manager.cluster_state['members']:
+                    ego_in_cluster = True
+                    logger.debug(f"ego is in cluster {self.id}")
+                if not self.record_all_cavs and not is_ego and not ego_in_cluster and not self.apply_late_fusion:
+                    logger.debug(f"ego is not in cluster {self.id}, skipped")
+                    return objects
+            
                 data_size = 0.0
                 ego_data = self.co_manager.prepare_data(
                     cav_id=self.id,
@@ -161,6 +177,7 @@ class ClusteringPerceptionManager(PerceptionManager):
 
                 vehicles_inside_cluster = self.co_manager.communicate_inside_cluster()
                 logger.debug(f'{self.v2x_manager.vehicle_id} is collecting data from {vehicles_inside_cluster.keys()}:')
+
                 for vid, nearby_data_dict in vehicles_inside_cluster.items():
                     if not nearby_data_dict:
                         continue
@@ -184,6 +201,7 @@ class ClusteringPerceptionManager(PerceptionManager):
 
                     success = True
                     # print('self.enable_network', self.enable_network)
+                    start_time = 0
                     if self.enable_network:
                         source, target = nearby_v2x_manager, self.v2x_manager
                         # def schedule(self, source: 'V2XManager', target: 'V2XManager', volume: float) -> Tuple[int, int, int, bool]:
@@ -193,7 +211,7 @@ class ClusteringPerceptionManager(PerceptionManager):
                     if success:
                         data_size += nearby_data_size
                         self.cp_data.update(nearby_data)
-                        self.co_manager.uploaded_member[vid] = True
+                        self.co_manager.uploaded_member[vid] = start_time
                         
 
                 # count communication_volume
@@ -203,19 +221,26 @@ class ClusteringPerceptionManager(PerceptionManager):
                     logger.debug(f'collect data size: {data_size}')
 
                 # merge ego data with neighbor data to apply coperception
-                if self.do_cp:
+                if self.do_cp > 0 and len(vehicles_inside_cluster) == 0:
                     data.update(self.cp_data)
                     self.cp_data.clear()
+                    if CavWorld.network_manager:
+                        cur_time = CavWorld.network_manager.current_time_slot
+                        time_slot = CavWorld.network_manager.time_slot
+                        for vid, start_time in self.co_manager.uploaded_member.items():
+                            CavWorld.network_manager._record_packet_latency((cur_time - start_time) * time_slot)
                     self.co_manager.uploaded_member.clear()
+                    self.do_cp -= 1
                 
-                objects = self.inference(data, objects, with_submit=is_ego)
-                if is_ego:
-                    ClusteringPerceptionManager.clear()
+                    objects = self.inference(data, objects, with_submit=is_ego, with_update=(self.apply_late_fusion or ego_in_cluster))
+                    # objects = self.inference(data, objects, with_submit=True, with_update=(self.apply_late_fusion or ego_in_cluster))
+                    if is_ego:
+                        ClusteringPerceptionManager.clear()
 
-                self.objects = objects
-                self.co_manager.broadcast_inside_cluster(self.id, objects)
-                logger.debug(f"{self.id} is cluster head, detect {len(objects['vehicles'])} vehicles and {len(objects['traffic_lights'])} traffic_lights")
-            
+                    self.objects = objects
+                    self.co_manager.broadcast_inside_cluster(self.id, objects)
+                    logger.debug(f"{self.id} is cluster head, detect {len(objects['vehicles'])} vehicles and {len(objects['traffic_lights'])} traffic_lights")
+                
             else:
                 #For other vehicles, 1. get results from cluster head 2. communicate with vehicles outside the cluster
                 #Note that only ego vehicle need the real results.
@@ -236,7 +261,14 @@ class ClusteringPerceptionManager(PerceptionManager):
                         cav_data=ego_data,
                         ego_pose=ClusteringPerceptionManager.ego_lidar_pose
                     )
-                    objects_self = self.inference(ego_data, objects, with_submit=False)  #detect objects on its own
+
+                    with_submit = False
+                    with_update = True
+                    if self.apply_late_fusion:
+                        with_submit = True
+                        with_update = False
+
+                    objects_self = self.inference(ego_data, objects, with_submit=with_submit, with_update=with_update)  #detect objects on its own
                     logger.debug(f"{self.id}: {len(objects_self['vehicles'])} vehicles and {len(objects_self['traffic_lights'])} traffic_lights detected from self")
 
                     buffer = (self.v2x_manager.read_buffer()) #get results from cluster head
@@ -257,5 +289,7 @@ class ClusteringPerceptionManager(PerceptionManager):
 
                     if pred_box_tensor is not None:
                         self.ml_manager.submit_results(pred_box_tensor, pred_score, gt_box_tensor, with_stats=True)
+
+                    #TODO: submit gt_box_tensors in ego's 100m range
 
         return objects

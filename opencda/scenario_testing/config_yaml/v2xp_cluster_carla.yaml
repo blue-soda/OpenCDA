@@ -180,8 +180,10 @@ scenario:
 
   single_cav_list:
     - <<: *vehicle_base
-      spawn_position: [12.00, 192.31, 0.3, 0, -90, 0]
-      destination: [37.12, 150.2, 1.0]
+      # spawn_position: [12.00, 192.31, 0.3, 0, -90, 0]
+      # destination: [37.12, 150.2, 1.0]
+      spawn_position: [8.00, 180.31, 0.3, 0, -90, 0]
+      destination: [8.00, 140.2, 1.0]
       v2x:
         <<: *base_v2x
         communication_range: 70
