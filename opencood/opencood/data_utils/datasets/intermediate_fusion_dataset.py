@@ -225,12 +225,12 @@ class IntermediateFusionDataset(basedataset.BaseDataset):
         # loop over all CAVs to process information
         for cav_id, selected_cav_base in base_data_dict.items():
             # check if the cav is within the communication range with ego
-            distance = \
-                math.sqrt((selected_cav_base['params']['lidar_pose'][0] -
-                           ego_lidar_pose[0]) ** 2 + (
-                                  selected_cav_base['params'][
-                                      'lidar_pose'][1] - ego_lidar_pose[
-                                      1]) ** 2)
+            # distance = \
+            #     math.sqrt((selected_cav_base['params']['lidar_pose'][0] -
+            #                ego_lidar_pose[0]) ** 2 + (
+            #                       selected_cav_base['params'][
+            #                           'lidar_pose'][1] - ego_lidar_pose[
+            #                           1]) ** 2)
             # if distance > opencood.data_utils.datasets.COM_RANGE:
             #     continue
 

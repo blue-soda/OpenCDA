@@ -31,6 +31,7 @@ class ClusteringPerceptionManager(PerceptionManager):
             ClusteringPerceptionManager.ego_vm = cav_world.get_ego_vehicle_manager()
         self.do_cp = 0
         self.cp_data = {}
+        self.ego_data = {}
         self.apply_late_fusion = False
         self.record_all_cavs = False
         if cluster_config:
@@ -89,7 +90,7 @@ class ClusteringPerceptionManager(PerceptionManager):
         reformat_data_dict = self.ml_manager.opencood_dataset.get_item_test(data, ClusteringPerceptionManager.ego_lidar_pose)
         output_dict = self.ml_manager.opencood_dataset.collate_batch_test(
             [reformat_data_dict])  # should have batch size dim
-        if output_dict['ego']['processed_lidar']['voxel_coords'].numel() == 0:
+        if 'ego' in output_dict and 'processed_lidar' in output_dict['ego'] and output_dict['ego']['processed_lidar']['voxel_coords'].numel() == 0:
             logger.debug('Warning: coords is empty.')
             return objects
         # if len(output_dict['ego']['processed_lidar']['pillar_features'].shape) == 1:
@@ -109,17 +110,6 @@ class ClusteringPerceptionManager(PerceptionManager):
         # retrieve speed from server
         self.speed_retrieve(objects)
         self.transform_retrieve(objects)
-
-        # plot the opencood inference results
-        if self.lidar_visualize:
-            while self.lidar.data is None:
-                continue
-            o3d_pointcloud_encode(self.lidar.data, self.lidar.o3d_pointcloud)
-            o3d_visualizer_show(
-                self.o3d_vis,
-                self.count,
-                self.lidar.o3d_pointcloud,
-                objects)
             
         objects = self.retrieve_traffic_lights(objects)
         return objects
@@ -158,14 +148,14 @@ class ClusteringPerceptionManager(PerceptionManager):
                     return objects
             
                 data_size = 0.0
-                ego_data = self.co_manager.prepare_data(
+                ego_data = self.co_manager.prepare_data_fixed(
                     cav_id=self.id,
                     camera=self.rgb_camera,
                     lidar=self.lidar,
                     pos=self.ego_pos,
                     localizer=self.localization_manager,
                     agent=self.behavior_agent,
-                    is_ego=is_ego,
+                    is_ego=True,
                 )
                 ego_data = self.co_manager.calculate_transformation(
                     cav_id=self.id,
@@ -173,7 +163,7 @@ class ClusteringPerceptionManager(PerceptionManager):
                     ego_pose=ClusteringPerceptionManager.ego_lidar_pose
                 )
                 # data_size += asizeof(ego_data)
-                data.update(ego_data)
+                self.ego_data = ego_data
 
                 vehicles_inside_cluster = self.co_manager.communicate_inside_cluster()
                 logger.debug(f'{self.v2x_manager.vehicle_id} is collecting data from {vehicles_inside_cluster.keys()}:')
@@ -183,7 +173,7 @@ class ClusteringPerceptionManager(PerceptionManager):
                         continue
                     nearby_vm = nearby_data_dict['vehicle_manager']
                     nearby_v2x_manager = nearby_data_dict['v2x_manager']
-                    nearby_data = self.co_manager.prepare_data(
+                    nearby_data = self.co_manager.prepare_data_fixed(
                         cav_id=vid,
                         camera=nearby_v2x_manager.get_ego_rgb_image(),
                         lidar=nearby_v2x_manager.get_ego_lidar(),
@@ -223,6 +213,7 @@ class ClusteringPerceptionManager(PerceptionManager):
                 # merge ego data with neighbor data to apply coperception
                 if self.do_cp > 0 and len(vehicles_inside_cluster) == 0:
                     data.update(self.cp_data)
+                    data.update(self.ego_data)
                     self.cp_data.clear()
                     if CavWorld.network_manager:
                         cur_time = CavWorld.network_manager.current_time_slot
@@ -291,5 +282,17 @@ class ClusteringPerceptionManager(PerceptionManager):
                         self.ml_manager.submit_results(pred_box_tensor, pred_score, gt_box_tensor, with_stats=True)
 
                     #TODO: submit gt_box_tensors in ego's 100m range
+
+        # plot the opencood inference results
+        if self.lidar_visualize and is_ego:
+            while self.lidar.data is None:
+                continue
+            o3d_pointcloud_encode(self.lidar.data, self.lidar.o3d_pointcloud)
+            o3d_visualizer_show(
+                self.o3d_vis,
+                self.count,
+                self.lidar.o3d_pointcloud,
+                objects)
+            
 
         return objects

@@ -17,6 +17,6 @@ enable_cluster:
     shadow_timeout: 0.5  # 影子簇头超时时间 (单位: s)
     eta_leave: 0.35  # 离开阈值 (eta_join - delta_eta)
     eta_elect: 0.10 #选举阈值(超过当前簇头优先级得分 + eta_elect 才能当选)
-    ego_must_be_leader: false #ego车辆是否指定为簇头
+    ego_must_be_leader: true #ego车辆是否指定为簇头
     apply_late_fusion: false #是否跨簇晚期协作
     record_all_cavs: false #统计所有车辆结果

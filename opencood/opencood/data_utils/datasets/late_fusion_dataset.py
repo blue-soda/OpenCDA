@@ -121,29 +121,44 @@ class LateFusionDataset(basedataset.BaseDataset):
 
         return processed_data_dict
 
-    def get_item_test(self, base_data_dict):
+    def get_item_test(self, base_data_dict, ego_lidar_pose=None):
         processed_data_dict = OrderedDict()
         ego_id = -1
-        ego_lidar_pose = []
+        # ego_lidar_pose = []
 
         # first find the ego vehicle's lidar pose
-        for cav_id, cav_content in base_data_dict.items():
-            if cav_content['ego']:
-                ego_id = cav_id
-                ego_lidar_pose = cav_content['params']['lidar_pose']
-                break
+        # for cav_id, cav_content in base_data_dict.items():
+        #     if cav_content['ego']:
+        #         ego_id = cav_id
+        #         ego_lidar_pose = cav_content['params']['lidar_pose']
+        #         break
 
-        assert ego_id != -1
-        assert len(ego_lidar_pose) > 0
+        # assert ego_id != -1
+        # assert len(ego_lidar_pose) > 0
+
+        if ego_lidar_pose is None:
+            ego_id = -1
+            ego_lidar_pose = []
+
+            # first find the ego vehicle's lidar pose
+            for cav_id, cav_content in base_data_dict.items():
+                if cav_content['ego']:
+                    ego_id = cav_id
+                    ego_lidar_pose = cav_content['params']['lidar_pose']
+                    break
+
+            #assert ego_id != -1
+            assert len(ego_lidar_pose) > 0
 
         # loop over all CAVs to process information
+        # processed_data_dict['ego'] = {}
         for cav_id, selected_cav_base in base_data_dict.items():
-            distance = \
-                math.sqrt((selected_cav_base['params']['lidar_pose'][0] -
-                           ego_lidar_pose[0])**2 + (
-                                      selected_cav_base['params'][
-                                          'lidar_pose'][1] - ego_lidar_pose[
-                                          1])**2)
+            # distance = \
+            #     math.sqrt((selected_cav_base['params']['lidar_pose'][0] -
+            #                ego_lidar_pose[0])**2 + (
+            #                           selected_cav_base['params'][
+            #                               'lidar_pose'][1] - ego_lidar_pose[
+            #                               1])**2)
             # if distance > opencood.data_utils.datasets.COM_RANGE:
             #     continue
 
@@ -186,7 +201,9 @@ class LateFusionDataset(basedataset.BaseDataset):
             projected_lidar_list = []
             origin_lidar = []
 
+        # print(batch)
         for cav_id, cav_content in batch.items():
+            # print(cav_id, cav_content.keys())
             output_dict.update({cav_id: {}})
             # shape: (1, max_num, 7)
             object_bbx_center = \
@@ -240,10 +257,12 @@ class LateFusionDataset(basedataset.BaseDataset):
                 origin_lidar = torch.from_numpy(origin_lidar)
                 output_dict[cav_id].update({'origin_lidar': origin_lidar})
 
-        if self.visualize:
-            projected_lidar_stack = torch.from_numpy(
-                np.vstack(projected_lidar_list))
-            output_dict['ego'].update({'origin_lidar': projected_lidar_stack})
+        # if self.visualize:
+        #     projected_lidar_stack = torch.from_numpy(
+        #         np.vstack(projected_lidar_list))
+        #     if 'ego' not in output_dict:
+        #         output_dict['ego'] = {}
+        #     output_dict['ego'].update({'origin_lidar': projected_lidar_stack})
 
         return output_dict
 

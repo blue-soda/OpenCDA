@@ -7,6 +7,7 @@ class CoperceptionManager:
         self.v2x_manager = v2x_manager
         self.coperception_libs = coperception_libs
         self.ego_data_dict = None
+        self.vehicles = None
 
     def communicate(self):
         data = {}
@@ -48,3 +49,32 @@ class CoperceptionManager:
         if is_ego:
             self.ego_data_dict = data[cav_id]['params']
         return data
+
+    def prepare_data_fixed(self, cav_id, camera, lidar, pos, localizer, agent, is_ego, ego_params=None):
+        data = {cav_id: OrderedDict()}
+        data[cav_id]['ego'] = is_ego
+        data[cav_id]['time_delay'] = self.coperception_libs.time_delay
+        data[cav_id]['params'] = {}
+        camera_data = self.coperception_libs.load_camera_data(lidar, camera)
+        ego_data = self.coperception_libs.load_ego_data(localizer)
+        plan_trajectory_data = self.coperception_libs.load_plan_trajectory(agent)
+        lidar_pose_data = self.coperception_libs.load_cur_lidar_pose(lidar)
+        # vehicles = self.coperception_libs.load_vehicles(cav_id, pos, lidar)
+        data[cav_id]['params'].update(plan_trajectory_data)
+        data[cav_id]['params'].update(camera_data)
+        data[cav_id]['params'].update(ego_data)
+        data[cav_id]['params'].update(lidar_pose_data)
+        # data[cav_id]['params'].update(vehicles)
+        data[cav_id].update({'lidar_np': lidar.data})
+        # get base_data_dict
+        if is_ego:
+            self.ego_data_dict = data[cav_id]['params']
+
+            #only use gt_box near ego
+            self.vehicles = self.coperception_libs.load_vehicles(cav_id, pos, lidar)
+
+        if self.vehicles:
+            data[cav_id]['params'].update(self.vehicles)
+            
+        return data
+    
