@@ -148,12 +148,14 @@ def run(debug=True):
                 single_cav_list.pop(i)
                 continue
 
-            single_cav.update_info()
+            single_cav.update_data()
+            # single_cav.update_info()
             if debug:
                 draw_string(debug_helper, single_cav)
 
         for traffic_cav in traffic_cav_list:
-            traffic_cav.update_info()
+            traffic_cav.update_data()
+            # traffic_cav.update_info()
             check_is_out_sight(transform, traffic_cav)
 
             if debug:
@@ -161,6 +163,9 @@ def run(debug=True):
         
         if 'cluster' in applications:
             update_cluster(all_cavs)
+
+        for cav in all_cavs:
+            cav.update_info(update_data=False)
 
         for single_cav in single_cav_list:               
             control = single_cav.run_step()

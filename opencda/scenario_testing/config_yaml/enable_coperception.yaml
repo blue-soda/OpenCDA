@@ -20,4 +20,4 @@ enable_coperception:
       intermediate_attentive: 'opencood/logs/pointpillar_attentive_fusion'
       intermediate_cobevt: 'opencood/logs/pointpillar_cobevt_fusion'
       late: 'opencood/logs/pointpillar_late_fusion'
-    fusion_method: 'intermediate_attentive'
+    fusion_method: 'early'

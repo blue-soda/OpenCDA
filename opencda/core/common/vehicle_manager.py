@@ -193,8 +193,12 @@ class VehicleManager(object):
         else:
             self.data_dumper = None
 
-        self.pre_obejcts_num = 0
-        
+        self.ego_pos = None 
+        self.ego_spd = None
+        self.ego_dir = None
+        self.ego_lidar = None
+        self.ego_image = None
+
         cav_world.update_vehicle_manager(self, self.isTrafficVehicle)
 
 
@@ -228,47 +232,97 @@ class VehicleManager(object):
         self.agent.set_destination(
             start_location, end_location, clean, end_reset)
 
-    def update_info(self):
+    def update_data(self):
+        # if not self.is_ok:
+        #     return
+
+        # localization
+        self.localizer.localize()
+
+        self.ego_pos = self.localizer.get_ego_pos()
+        self.ego_spd = self.localizer.get_ego_spd()
+        self.ego_dir = self.localizer.get_ego_dir()
+        self.ego_lidar = self.perception_manager.lidar
+        self.ego_image = self.perception_manager.rgb_camera
+
+        # update ego position and speed to v2x manager,
+        # and then v2x manager will search the nearby cavs
+        self.v2x_manager.update_info(self.ego_pos, self.ego_spd, self.ego_lidar, self.ego_image, self.ego_dir)
+
+
+    def update_info(self, update_data=True):
         """
         Call perception and localization module to
         retrieve surrounding info an ego position.
         """
-        # localization
-        self.localizer.localize()
-
-        ego_pos = self.localizer.get_ego_pos()
-        ego_spd = self.localizer.get_ego_spd()
-        ego_dir = self.localizer.get_ego_dir()
-        ego_lidar = self.perception_manager.lidar
-        ego_image = self.perception_manager.rgb_camera
-
         if not self.is_ok:
             return
-
-        # update ego position and speed to v2x manager,
-        # and then v2x manager will search the nearby cavs
-        self.v2x_manager.update_info(ego_pos, ego_spd, ego_lidar, ego_image, ego_dir)
-        # object detection
-        objects = self.perception_manager.detect(ego_pos)
         
-        if 'traffic' in self.application:
+        if update_data:
+            self.update_data()
+        # object detection
+        objects = self.perception_manager.detect(self.ego_pos)
+        
+        if self.isTrafficVehicle:
             return
 
         # update the ego pose for map manager
-        self.map_manager.update_information(ego_pos)
+        self.map_manager.update_information(self.ego_pos)
 
         # this is required by safety manager
-        safety_input = {'ego_pos': ego_pos,
-                        'ego_speed': ego_spd,
+        safety_input = {'ego_pos': self.ego_pos,
+                        'ego_speed': self.ego_spd,
                         'objects': objects,
                         'carla_map': self.carla_map,
                         'world': self.vehicle.get_world(),
                         'static_bev': self.map_manager.static_bev}
         self.safety_manager.update_info(safety_input)
 
-        self.agent.update_information(ego_pos, ego_spd, objects)
+        self.agent.update_information(self.ego_pos, self.ego_spd, objects)
         # pass position and speed info to controller
-        self.controller.update_info(ego_pos, ego_spd)
+        self.controller.update_info(self.ego_pos, self.ego_spd)
+
+    # def update_info(self):
+    #     """
+    #     Call perception and localization module to
+    #     retrieve surrounding info an ego position.
+    #     """
+    #     # localization
+    #     self.localizer.localize()
+
+    #     ego_pos = self.localizer.get_ego_pos()
+    #     ego_spd = self.localizer.get_ego_spd()
+    #     ego_dir = self.localizer.get_ego_dir()
+    #     ego_lidar = self.perception_manager.lidar
+    #     ego_image = self.perception_manager.rgb_camera
+
+    #     if not self.is_ok:
+    #         return
+
+    #     # update ego position and speed to v2x manager,
+    #     # and then v2x manager will search the nearby cavs
+    #     self.v2x_manager.update_info(ego_pos, ego_spd, ego_lidar, ego_image, ego_dir)
+    #     # object detection
+    #     objects = self.perception_manager.detect(ego_pos)
+        
+    #     if 'traffic' in self.application:
+    #         return
+
+    #     # update the ego pose for map manager
+    #     self.map_manager.update_information(ego_pos)
+
+    #     # this is required by safety manager
+    #     safety_input = {'ego_pos': ego_pos,
+    #                     'ego_speed': ego_spd,
+    #                     'objects': objects,
+    #                     'carla_map': self.carla_map,
+    #                     'world': self.vehicle.get_world(),
+    #                     'static_bev': self.map_manager.static_bev}
+    #     self.safety_manager.update_info(safety_input)
+
+    #     self.agent.update_information(ego_pos, ego_spd, objects)
+    #     # pass position and speed info to controller
+    #     self.controller.update_info(ego_pos, ego_spd)
 
     def run_step(self, target_speed=None):
         """

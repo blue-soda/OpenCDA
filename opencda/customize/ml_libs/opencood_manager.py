@@ -109,7 +109,7 @@ class OpenCOODManager(object):
                                       'fusion is supported.')
 
         # skip the first 60 ticks for calculating the average precision
-        if self.counter > 1 and self.counter % 2 == 0:
+        if self.counter > 15: #and self.counter % 2 == 0:
             logger.debug(f"Aggregating the current stats into final results: {self.counter}")
             self.submit_results(pred_box_tensor, pred_score, gt_box_tensor, with_stats)
         self.counter += 1

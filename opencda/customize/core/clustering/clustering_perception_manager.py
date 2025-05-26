@@ -17,9 +17,9 @@ class ClusteringPerceptionManager(PerceptionManager):
     #static ego_data_dict
     ego_lidar_pose = None
     ego_vm = None
-    predict_box_tensors = []
-    predict_scores = []
-    gt_box_tensors = []
+    ego_predict_box_tensors = []
+    ego_predict_scores = []
+    ego_gt_box_tensors = []
 
     def __init__(self, v2x_manager, localization_manager, behavior_agent, vehicle,
                  config_yaml, cav_world, data_dump=False, carla_world=None, infra_id=None, enable_network=False, cluster_config=None):
@@ -34,6 +34,8 @@ class ClusteringPerceptionManager(PerceptionManager):
         self.ego_data = {}
         self.apply_late_fusion = False
         self.record_all_cavs = False
+        self.predict_box_tensor = None
+        self.gt_box_tensor = None
         if cluster_config:
             self.apply_late_fusion = cluster_config['apply_late_fusion']
             self.record_all_cavs = cluster_config['record_all_cavs']            
@@ -48,15 +50,15 @@ class ClusteringPerceptionManager(PerceptionManager):
 
     @staticmethod
     def clear():
-        ClusteringPerceptionManager.predict_box_tensors = []
-        ClusteringPerceptionManager.predict_scores = []
-        ClusteringPerceptionManager.gt_box_tensors = []
+        ClusteringPerceptionManager.ego_predict_box_tensors = []
+        ClusteringPerceptionManager.ego_predict_scores = []
+        ClusteringPerceptionManager.ego_gt_box_tensors = []
     
     @staticmethod
     def get_boxes_size():
-        return asizeof(ClusteringPerceptionManager.predict_box_tensors) + \
-            asizeof(ClusteringPerceptionManager.predict_scores) + \
-            asizeof(ClusteringPerceptionManager.gt_box_tensors)
+        return asizeof(ClusteringPerceptionManager.ego_predict_box_tensors) + \
+            asizeof(ClusteringPerceptionManager.ego_predict_scores) + \
+            asizeof(ClusteringPerceptionManager.ego_gt_box_tensors)
 
 
     def detect(self, ego_pos):
@@ -102,9 +104,11 @@ class ClusteringPerceptionManager(PerceptionManager):
             logger.debug(f'predict_box_tensor: {predict_box_tensor.shape}')
             logger.debug(f'predict_score : {predict_score.shape}')
             logger.debug(f'gt_box_tensor : {gt_box_tensor.shape}')
-            ClusteringPerceptionManager.predict_box_tensors.append(predict_box_tensor)
-            ClusteringPerceptionManager.predict_scores.append(predict_score)
-            ClusteringPerceptionManager.gt_box_tensors.append(gt_box_tensor)
+            ClusteringPerceptionManager.ego_predict_box_tensors.append(predict_box_tensor)
+            ClusteringPerceptionManager.ego_predict_scores.append(predict_score)
+            ClusteringPerceptionManager.ego_gt_box_tensors.append(gt_box_tensor)
+            self.predict_box_tensor = predict_box_tensor
+            self.gt_box_tensor = gt_box_tensor
         # self.ml_manager.show_vis(pred_box_tensor, gt_box_tensor, batch_data) show predict results frame by frame
         objects = o3d_predict_bbox_to_object(objects, predict_box_tensor, self.lidar.sensor)
         # retrieve speed from server
@@ -119,9 +123,9 @@ class ClusteringPerceptionManager(PerceptionManager):
         Use OpenCOOD to detect objects
         Note that we only apply detection for ego, and transform all data into ego's lidar_pose
         """
-        # self.predict_box_tensors = []
-        # self.predict_scores = []
-        # self.gt_box_tensors = []
+        # self.ego_predict_box_tensors = []
+        # self.ego_predict_scores = []
+        # self.ego_gt_box_tensors = []
         
         if self.lidar.data is None:
             return objects
@@ -134,6 +138,7 @@ class ClusteringPerceptionManager(PerceptionManager):
         self.update_ego_lidar_pose()
         if self.v2x_manager.receive_beacon:
             self.do_cp += 1
+        did_cp = False
 
         # record_results = is_ego
         data = OrderedDict()
@@ -223,10 +228,11 @@ class ClusteringPerceptionManager(PerceptionManager):
                     self.co_manager.uploaded_member.clear()
                     self.do_cp -= 1
                 
-                    objects = self.inference(data, objects, with_submit=is_ego, with_update=(self.apply_late_fusion or ego_in_cluster))
+                    objects = self.inference(data, objects, with_submit=is_ego, with_update=(self.apply_late_fusion or ego_in_cluster or is_ego))
                     # objects = self.inference(data, objects, with_submit=True, with_update=(self.apply_late_fusion or ego_in_cluster))
                     if is_ego:
-                        ClusteringPerceptionManager.clear()
+                        did_cp = True
+                        # ClusteringPerceptionManager.clear()
 
                     self.objects = objects
                     self.co_manager.broadcast_inside_cluster(self.id, objects)
@@ -273,26 +279,39 @@ class ClusteringPerceptionManager(PerceptionManager):
                         CavWorld.network_manager._update_communication_stats(objects_size, "inter")
 
                     pred_box_tensor, pred_score, gt_box_tensor = self.ml_manager.naive_late_fusion(
-                                                                    ClusteringPerceptionManager.predict_box_tensors, 
-                                                                    ClusteringPerceptionManager.predict_scores, 
-                                                                    ClusteringPerceptionManager.gt_box_tensors)
-                    ClusteringPerceptionManager.clear()
+                                                                    ClusteringPerceptionManager.ego_predict_box_tensors, 
+                                                                    ClusteringPerceptionManager.ego_predict_scores, 
+                                                                    ClusteringPerceptionManager.ego_gt_box_tensors)
+                    if is_ego:
+                        did_cp = True
+                    # ClusteringPerceptionManager.clear()
 
                     if pred_box_tensor is not None:
                         self.ml_manager.submit_results(pred_box_tensor, pred_score, gt_box_tensor, with_stats=True)
 
-                    #TODO: submit gt_box_tensors in ego's 100m range
+                    #TODO: submit ego_gt_box_tensors in ego's 100m range
 
         # plot the opencood inference results
-        if self.lidar_visualize and is_ego:
+        if self.lidar_visualize and is_ego:# and did_cp:
             while self.lidar.data is None:
                 continue
             o3d_pointcloud_encode(self.lidar.data, self.lidar.o3d_pointcloud)
-            o3d_visualizer_show(
+            # o3d_visualizer_show(
+            #     self.o3d_vis,
+            #     self.count,
+            #     self.lidar.o3d_pointcloud,
+            #     objects)
+            o3d_visualizer_show_coperception(
                 self.o3d_vis,
                 self.count,
                 self.lidar.o3d_pointcloud,
-                objects)
-            
+                self.predict_box_tensor,
+                self.gt_box_tensor,
+                # ClusteringPerceptionManager.ego_predict_box_tensors, ClusteringPerceptionManager.ego_gt_box_tensors,
+                True, 
+                objects)           
+        
+        if did_cp:
+            ClusteringPerceptionManager.clear()
 
         return objects
