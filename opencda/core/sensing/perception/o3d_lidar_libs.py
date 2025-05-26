@@ -99,11 +99,12 @@ def o3d_visualizer_init(actor_id):
 
     """
     vis = o3d.visualization.Visualizer()
+    scale_factor = 3
     vis.create_window(window_name=str(actor_id),
-                      width=480,
-                      height=320,
-                      left=480,
-                      top=270)
+                      width=480*scale_factor,
+                      height=320*scale_factor,
+                      left=480*scale_factor,
+                      top=270*scale_factor)
     vis.get_render_option().background_color = [0.05, 0.05, 0.05]
     vis.get_render_option().point_size = 1
     vis.get_render_option().show_coordinate_frame = True
@@ -160,13 +161,16 @@ def o3d_visualizer_show(vis, count, point_cloud, objects):
             vis.remove_geometry(aabb)
 
 
-def o3d_visualizer_show_coperception(vis, count, point_cloud, predict_bbx_tensor, gt_box_tensor, show_gt, objects):
+def o3d_visualizer_show_coperception(vis, count, point_cloud, predict_bbx_tensor, gt_box_tensor, show_gt, objects, take_screenshot=False):
+   
     if count == 2:
         vis.add_geometry(point_cloud)
+
     if predict_bbx_tensor is not None:
         oabbs_pred = bbx2oabb(predict_bbx_tensor, color=(1, 0, 0))
         for p in oabbs_pred:
             vis.add_geometry(p)
+
     if show_gt:
         if gt_box_tensor is not None:
             oabbs_gt = bbx2oabb(gt_box_tensor, color=(0, 1, 0))
@@ -186,6 +190,10 @@ def o3d_visualizer_show_coperception(vis, count, point_cloud, predict_bbx_tensor
     vis.update_renderer()
     # # This can fix Open3D jittering issues:
     time.sleep(0.001)
+
+    if take_screenshot and count == 20:
+        path = './visualize.png'
+        vis.capture_screen_image(path)
 
     for key, object_list in objects.items():
         if key != 'vehicles':

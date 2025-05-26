@@ -142,7 +142,7 @@ class ClusteringPerceptionManager(PerceptionManager):
 
         # record_results = is_ego
         data = OrderedDict()
-        if self.enable_communicate:
+        if self.enable_communicate and self.do_cp > 0:
             if self.v2x_manager.is_cluster_head():  #cluster head do cp
 
                 if ego_id in self.v2x_manager.cluster_state['members']:
@@ -309,7 +309,8 @@ class ClusteringPerceptionManager(PerceptionManager):
                 self.gt_box_tensor,
                 # ClusteringPerceptionManager.ego_predict_box_tensors, ClusteringPerceptionManager.ego_gt_box_tensors,
                 True, 
-                objects)           
+                objects,
+                take_screenshot=True)           
         
         if did_cp:
             ClusteringPerceptionManager.clear()
