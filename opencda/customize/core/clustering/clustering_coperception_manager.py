@@ -18,7 +18,7 @@ class ClusteringCoperceptionManager(CoperceptionManager):
                 if data_dict is None:
                     logger.debug(f"member {vehicle_id} is not a neighbor")
                     continue
-                if self.uploaded_member.get(str(vehicle_id), None):
+                if self.uploaded_member.get(str(vehicle_id), None) is not None:
                     logger.debug(f"member {vehicle_id} has already uploaded its data")
                     continue
                 data.update({str(vehicle_id): data_dict})

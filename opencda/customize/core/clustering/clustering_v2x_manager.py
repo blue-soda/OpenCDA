@@ -24,17 +24,24 @@ def calculate_cos(direction1, direction2):
 def sigmoid(x):
     return 1 / (1 + math.exp(-x))
 
+
+# TODO: 
+# 1. 簇内聚类分工，分担计算任务
+# 2. 感知范围： LOS邻居并集最大
+# 3. 簇内聚类做感知融合，多个聚类上传给簇头晚期融合（簇间再融合）
+
+
 class ClusteringV2XManager(V2XManager):
     def __init__(self, cav_world, config_yaml, vid, vehicle_id=None, cluster_yaml=None):
         super(ClusteringV2XManager, self).__init__(cav_world, config_yaml, vid, vehicle_id)
         
         self.cp_model = 'default_model'
 
-        self.t = 0 #Timer
+        self.t = 0 #Timer 
  
         self.beacon_frequency = 4 #(Hz)
         self.receive_beacon = False
-        # 分簇协议相关参数
+        # 分簇协议相关参数 
         # self.cluster_params = {
         #     'd0': 50.0,           # 距离归一化参数 (单位: m)
         #     's0': 5.0,            # 速度归一化参数 (单位: m/s)

@@ -91,6 +91,7 @@ def caluclate_tp_fp(det_boxes, det_score, gt_boxes, result_stat, iou_thresh):
     result_stat[iou_thresh]['tp'] += tp
     result_stat[iou_thresh]['gt'] += gt
 
+    # print(iou_thresh, tp, fp, gt)
 
 def calculate_ap(result_stat, iou):
     """

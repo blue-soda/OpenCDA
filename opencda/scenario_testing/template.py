@@ -167,6 +167,10 @@ def run(debug=True):
         for cav in all_cavs:
             cav.update_info(update_data=False)
 
+        if 'cluster' in applications:
+            for cav in all_cavs:
+                cav.submit_cp_results()
+
         for single_cav in single_cav_list:               
             control = single_cav.run_step()
             single_cav.vehicle.apply_control(control)

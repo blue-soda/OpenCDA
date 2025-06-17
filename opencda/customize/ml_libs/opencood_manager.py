@@ -156,11 +156,22 @@ class OpenCOODManager(object):
     #     all_gt_boxes = torch.cat(gt_box_tensors, dim=0)
     #     return all_predict_boxes, all_predict_scores, all_gt_boxes
 
-
+    @staticmethod
+    def all_boxes(pred_box_tensors, pred_scores, gt_box_tensors):
+        # If no predicted boxes are provided, return None for all outputs
+        if len(pred_box_tensors) == 0 or len(gt_box_tensors) == 0:
+            return None, None, None
+        
+        # Concatenate all predicted boxes, scores, and ground truth boxes
+        all_predict_boxes = torch.cat(pred_box_tensors, dim=0)  # Shape: [N, 8, 3]
+        all_predict_scores = torch.cat(pred_scores, dim=0)       # Shape: [N]
+        all_gt_boxes = torch.cat(gt_box_tensors, dim=0)         # Shape: [M, 8, 3]
+        return all_predict_boxes, all_predict_scores, all_gt_boxes
+    
     @staticmethod
     def naive_late_fusion(pred_box_tensors, pred_scores, gt_box_tensors):
         # If no predicted boxes are provided, return None for all outputs
-        if len(pred_box_tensors) == 0:
+        if len(pred_box_tensors) == 0 or len(gt_box_tensors) == 0:
             return None, None, None
         
         # Concatenate all predicted boxes, scores, and ground truth boxes

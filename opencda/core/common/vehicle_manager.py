@@ -255,6 +255,7 @@ class VehicleManager(object):
         Call perception and localization module to
         retrieve surrounding info an ego position.
         """
+        # print(f"update_start:{self.vehicle.id}")
         if not self.is_ok:
             return
         
@@ -264,6 +265,7 @@ class VehicleManager(object):
         objects = self.perception_manager.detect(self.ego_pos)
         
         if self.isTrafficVehicle:
+            # print(f"update_end:{self.vehicle.id}")
             return
 
         # update the ego pose for map manager
@@ -281,7 +283,7 @@ class VehicleManager(object):
         self.agent.update_information(self.ego_pos, self.ego_spd, objects)
         # pass position and speed info to controller
         self.controller.update_info(self.ego_pos, self.ego_spd)
-
+        # print(f"update_end:{self.vehicle.id}")
     # def update_info(self):
     #     """
     #     Call perception and localization module to
@@ -389,3 +391,9 @@ class VehicleManager(object):
         self.v2x_manager.id_to_rgb()
         if self.v2x_manager.is_cluster_head() and self.v2x_manager.scheduler is not None and self.v2x_manager.scheduler_type == 'clusterbased':
             self.v2x_manager.scheduler.update_scheduler(self.v2x_manager.get_cluster_members())
+
+    def submit_cp_results(self):
+        # print(f"submit: {self.vehicle.id}")
+        if not self.enableCluster:
+            return
+        self.perception_manager.submit_cp_results()
