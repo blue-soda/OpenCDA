@@ -49,7 +49,8 @@ class CoperceptionLibs:
 
         world = self.carla_world
         vehicle_list = world.get_actors().filter("*vehicle*")
-        vehicle_list = [v for v in vehicle_list if dist_to_ego(v) < 120 and v.id != ego_id]
+        gt_box_range = 120 #meters
+        vehicle_list = [v for v in vehicle_list if dist_to_ego(v) < gt_box_range and v.id != ego_id]
         vehicle_dict = {}
         if lidar:
             for v in vehicle_list:

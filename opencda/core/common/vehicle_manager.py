@@ -163,7 +163,7 @@ class VehicleManager(object):
                 import sys
                 sys.exit(
                         'If you activate the cluster module, '
-                        'then apply_cp must be set to true in'
+                        'then apply_cp must be set to true in '
                         'the argument parser to load the opencood manager')
             self.perception_manager = ClusteringPerceptionManager(
                 v2x_manager=self.v2x_manager,
