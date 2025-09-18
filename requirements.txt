@@ -13,6 +13,7 @@ scipy==1.6.3
 seaborn
 lxml
 shapely==1.8.4
-omegaconf
+omegaconf==2.3.0
 yolov5==7.0.0
 pympler==1.1
+spconv-cu102

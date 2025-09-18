@@ -15,4 +15,4 @@ shapely==1.8.4
 einops
 cumm
 timm==0.4.5
-spconv-cu113
+# spconv-cu113
