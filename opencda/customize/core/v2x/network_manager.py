@@ -1,11 +1,16 @@
 # from opencda.core.common.v2x_manager import V2XManager
 from collections import defaultdict
+import threading
+from typing import Tuple
 import opencda.customize.core.v2x.utils as utils
 import numpy as np
 from collections import defaultdict
 import math
 import numpy as np
+import time
 from opencda.log.logger_config import logger
+from .ns3_co_simulation.carla.vehicle_data import collect_vehicle_data
+from .ns3_co_simulation.bridge.carla_ns3_bridge import CarlaNs3Bridge
 
 class NetworkManager:
     """
@@ -25,6 +30,7 @@ class NetworkManager:
         # self.max_interference = config.get("max_interference", 0.2)
         self.min_sinr_threshold = config.get("min_sinr_threshold", 3) #dB
         self.time_slot = config.get("time_slot", 0.05)
+        self.use_ns3 = config.get("use_ns3", False)
         self.current_time_slot = 0
 
         # Allocation state
@@ -45,34 +51,91 @@ class NetworkManager:
         # History stores complete snapshots of each time slot
         self.history = []  # List of slot records
 
-    def calculate_interference(self, subchannel: int, target_vehicle) -> float:
-        """
-        Calculate the total interference experienced by a target vehicle on a subchannel.
-        
-        Args:
-            subchannel: Subchannel index
-            target_vehicle: The receiving vehicle experiencing interference, a V2XManager instance
-            
-        Returns:
-            Total interference power at the receiver from all other transmitters
-        """
-        interference = 0.0
-        
-        # Sum interference from all active transmissions on this subchannel
-        for src_id, tgt_id, _ in self.active_allocations[subchannel]:
-            # Skip our own transmission (we want OTHER transmitters' interference)
-            # if tgt_id == target_vehicle.vehicle_id:
-            #     continue
-                
-            source_vm = self.cav_world.get_vehicle_manager(src_id).v2x_manager
-            if source_vm:
-                interference += utils.get_interference_contribution(
-                    source_vm, 
-                    target_vehicle
-                )
-        
-        return interference
+        self.bridge = None
+        self.communication_requests = []
+        self.receiver_thread = None
+        self.sender_thread = None
+        self.all_vehicles = []
+        if self.use_ns3:
+            self.init_ns3()
 
+    def add_vehicles(self, vehicles):
+        self.all_vehicles.extend(vehicles)
+
+    def send_msg_to_ns3(self):
+        """Send messages to ns-3 if needed."""
+        try:
+            # self.bridge.send_vehicles_num(30)  # Initial vehicle count
+            while self.bridge.is_simulation_running():
+                while len(self.communication_requests) == 0:
+                    time.sleep(self.time_slot)
+                self.bridge.send_vehicles_num(len(self.all_vehicles))
+                vehicle_data = collect_vehicle_data(self.all_vehicles)
+                self.bridge.send_vehicles_position(vehicle_data)
+                self.bridge.send_transfer_requests(self.communication_requests[0:1])
+                self.communication_requests = []
+                time.sleep(self.time_slot)
+                
+        except KeyboardInterrupt:
+            logger.info("Simulation interrupted by user")
+
+        finally:
+            try:
+                self.bridge.stop()
+            except Exception as e:
+                logger.error(f"Error during cleanup: {e}")
+        logger.info("Simulation ended")
+
+    def init_ns3(self):
+        """Initialize ns-3 module if needed."""
+        if not self.use_ns3:
+            return
+        
+        self.bridge = CarlaNs3Bridge()
+        self.bridge.start()
+
+        if not self.sender_thread:
+            self.sender_thread = threading.Thread(target=self.send_msg_to_ns3)
+            self.sender_thread.daemon = True
+            self.sender_thread.start()
+
+    def communicate(self, source, target, volume: float, subchannel: int = 0) -> bool:
+        """
+        Wrapper for resource allocation and communication handling.
+        """
+        if(self.use_ns3):
+            return self.communicate_through_ns3(source, target, volume)
+        elif(subchannel >= 0 and subchannel <= self.subchannel_num):
+            return self.allocate_resource(source, target, volume, subchannel)
+        else:
+            raise ValueError("Invalid subchannel index.")
+
+    def communicate_through_ns3(self, source, target, volume: float) -> bool:
+        """
+        Handle communication via ns-3 bridge.
+        """
+        if self.bridge is None:
+            raise RuntimeError("ns-3 bridge not initialized.")
+        
+        # Send communication request to ns-3
+        self.communication_requests.append({
+            "source": source.vehicle_id,
+            "target": target.vehicle_id,
+            "size": 2200 # bytes
+            #TODO: fix volume
+        })
+
+        return True
+    
+    def analyze_ns3_results(self):
+        if self.bridge is None:
+            return
+        for cam in self.bridge.received_cams:
+            delay = cam.get('receive_timestamp', -1) - cam.get('send_timestamp', -1)
+            self._record_transmission_latency(delay)  #ms
+            print(f"CAM from {cam.get('sender_id')} to {cam.get('receiver_id')} delay: {delay} ms")
+        self.bridge.received_cams = []
+    
     def allocate_resource(self, source, target, volume: float,
                         subchannel: int):
         """
@@ -85,7 +148,7 @@ class NetworkManager:
             subchannel (int): Subchannel to allocate.
 
         Returns:
-            Tuple: subchannel, current_time_slot, end_time_slot
+            bool: Whether the communication was successful.
 
         Raises:
             ValueError: If the maximum interference threshold is exceeded.
@@ -96,26 +159,18 @@ class NetworkManager:
         # 2. Calculate our signal's contribution to receiver
         our_signal = utils.get_interference_contribution(source, target)
         
-        # 3. Total interference = other transmitters + noise floor
-        # total_interference = interference + target.noise_level
-        
-        # 4. Calculate actual SINR
-        # snr = utils.calculate_snr(
-        #     tx_power=source.tx_power,
-        #     noise_level=total_interference,  # Includes other transmitters + noise
-        #     distance=utils.calculate_distance(source, target)
-        # )
+        # 3. Calculate SINR
         sinr = utils.calculate_sinr(our_signal, interference, target.noise_level)
         
-        # 5. Verify interference threshold
+        # 4. Verify interference threshold
         logger.debug(f"signal power: {our_signal}, {interference}, {target.noise_level} in subchannel {subchannel}")
         logger.info(f"sinr: {sinr}")
         if sinr < self.min_sinr_threshold: 
             # raise ResourceConflictError("SINR too low for reliable communication.")
             self._record_collision()
-            return -1, -1, -1
+            return False
         
-        # 6. Determine data rate and time slots needed
+        # 5. Determine data rate and time slots needed
         data_rate = utils.calculate_available_data_rate(
             self.subchannel_bandwidth,
             sinr,
@@ -134,9 +189,33 @@ class NetworkManager:
         # self._update_communication_stats(volume, "upload")
 
         # return time_slots
-        return subchannel, self.current_time_slot, end_time_slot
+        return True
     
-
+    def calculate_interference(self, subchannel: int, target_vehicle) -> float:
+        """
+        Calculate the total interference experienced by a target vehicle on a subchannel.
+        
+        Args:
+            subchannel: Subchannel index
+            target_vehicle: The receiving vehicle experiencing interference, a V2XManager instance
+            
+        Returns:
+            Total interference power at the receiver from all other transmitters
+        """
+        interference = 0.0
+        
+        # Sum interference from all active transmissions on this subchannel
+        for src_id, tgt_id, _ in self.active_allocations[subchannel]:
+                
+            source_vm = self.cav_world.get_vehicle_manager(src_id).v2x_manager
+            if source_vm:
+                interference += utils.get_interference_contribution(
+                    source_vm, 
+                    target_vehicle
+                )
+        
+        return interference
+    
     def _update_communication_stats(self, volume: float, comm_type: str = "upload"):
         """
         Update real-time communication metrics for current time slot
@@ -189,6 +268,7 @@ class NetworkManager:
                for k, v in self.current_slot.items()}
         })
         
+        self.analyze_ns3_results()
         # Reset current slot counters
         self._reset_current_slot()
 
@@ -212,7 +292,7 @@ class NetworkManager:
     def _record_transmission_latency(self, latency: float):
         self.current_slot['t_latency'].append(latency)
 
-    def _record_packet_latency(self, latency: float):
+    def _record_cp_latency(self, latency: float):
         self.current_slot['p_latency'].append(latency)
 
     def get_communication_report(self) -> dict:

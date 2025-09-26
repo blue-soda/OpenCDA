@@ -26,7 +26,7 @@ class Scheduler(ABC):
         return self._network_manager()
 
     @abstractmethod
-    def schedule(self, source, target, volume: float) -> Tuple[int, int, int, bool]:
+    def schedule(self, source, target, volume: float) -> bool:
         """
         Schedule resources for a communication request.
 
@@ -36,12 +36,12 @@ class Scheduler(ABC):
             volume (float): The data volume to transmit (in MB).
 
         Returns:
-            Tuple[int, int, int, bool]: A tuple containing:
-                - subchannel: The allocated subchannel index.
-                - start_time_slot: The starting time slot for the communication.
-                - end_time_slot: The ending time slot for the communication.
-                - success: Whether the allocation was successful.
+                success(bool): Whether the communication was successful.
         """
+                #     Tuple[int, int, int, bool]: A tuple containing:
+                # - subchannel: The allocated subchannel index.
+                # - start_time_slot: The starting time slot for the communication.
+                # - end_time_slot: The ending time slot for the communication.
         pass
 
 
@@ -63,19 +63,10 @@ class RoundRobinScheduler(Scheduler):
     def schedule(self, source, target, volume: float) -> Tuple[int, int, int, bool]:
         nm = self.network_manager
         if nm is None:
-            return -1, -1, -1, False  # NetworkManager has been garbage collected
-
+            return False  # NetworkManager has been garbage collected
         subchannel = self.next_subchannel
         self.next_subchannel = (self.next_subchannel + 1) % nm.subchannel_num
-
-        # try:
-        subchannel, start_time_slot, end_time_slot = nm.allocate_resource(source, target, volume, subchannel)
-        return subchannel, start_time_slot, end_time_slot, subchannel>=0
-        # except ResourceConflictError as e:
-        #     print(f"RoundRobinScheduler: {e}")
-        #     return subchannel, -1, -1, False
-
-
+        return nm.communicate(source, target, volume, subchannel)
 
 
 
@@ -88,11 +79,10 @@ class InterferenceAwareScheduler(Scheduler):
     Allocates resources while minimizing interference.
     """
 
-    def schedule(self, source, target, volume: float) -> Tuple[int, int, int, bool]:
+    def schedule(self, source, target, volume: float) -> bool:
         nm = self.network_manager
         if nm is None:
-            return -1, -1, -1, False  # NetworkManager has been garbage collected
-
+            return False
         min_interference = float('inf')
         best_subchannel = -1
 
@@ -106,13 +96,9 @@ class InterferenceAwareScheduler(Scheduler):
                 continue
 
         if best_subchannel != -1:
-            # try:
-                subchannel, start_time_slot, end_time_slot = nm.allocate_resource(source, target, volume, best_subchannel)
-                return subchannel, start_time_slot, end_time_slot, subchannel>=0
-            # except ResourceConflictError as e:
-            #     print(f"InterferenceAwareScheduler: {e}")
+                return nm.communicate(source, target, volume, best_subchannel)
 
-        return -1, -1, -1, False
+        return False
 
 
 

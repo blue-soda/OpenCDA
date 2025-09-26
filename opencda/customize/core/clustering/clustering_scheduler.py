@@ -168,14 +168,10 @@ class ClusterBasedScheduler(Scheduler):
         self.coloring = nx.coloring.greedy_color(self.conflict_graph, strategy="largest_first")
         return self.coloring  # {(u, v): subchannel_id}
 
-    def schedule(self, source, target, volume: float) -> Tuple[int, int, int, bool]:
+    def schedule(self, source, target, volume: float) -> bool:
         """
         Query if the communication from sender_id to receiver_id has been scheduled
         (i.e., a subchannel assigned).
-
-        Returns:
-            (subchannel_id: int, valid: bool): If scheduled, return assigned color;
-                                            else (-1, False)
         """
         key = (source.vehicle_id, target.vehicle_id)
         # Step 1: Check if the link was already assigned a color during coloring
@@ -187,24 +183,19 @@ class ClusterBasedScheduler(Scheduler):
 
         # try:
         # Call the underlying resource manager to allocate time slot and subchannel
-        subchannel, start_slot, end_slot = self.network_manager.allocate_resource(
+        success = self.network_manager.communicate(
             source, target, volume, subchannel 
         )
 
-        success = subchannel >= 0
-        if start_slot == 100: #debug
-            self.visualize_weighted_conflict_graph()
-            self.visualize_coloring()
+        # if start_slot == 100: #debug
+        #     self.visualize_weighted_conflict_graph()
+        #     self.visualize_coloring()
 
         if not success: #Reset the offset if failed
             self.offset = int(uniform(0.0, 1.0) * self.subchannel_num)
 
-        return subchannel, start_slot, end_slot, success
+        return success
         
-        # except ResourceConflictError as e:
-        #     print(f"[ClusterBasedScheduler] Resource conflict: {e}")
-        #     return -1, -1, -1, False
-
 
     def visualize_weighted_conflict_graph(self):
         """

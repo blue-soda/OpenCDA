@@ -10,6 +10,7 @@ enable_network:
     subchannel_bandwidth: 10 #MHz
     subchannel_num: 10 
     min_sinr_threshold: 3 #dB
-    # time_slot: 0.05 #s
+    time_slot: 0.10 #second, decided by world.fixed_delta_seconds in default.yaml
     M: 5
     conflict_distance: 70 #meter
+    use_ns3: true

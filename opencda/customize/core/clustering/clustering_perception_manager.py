@@ -204,12 +204,12 @@ class ClusteringPerceptionManager(PerceptionManager):
 
                     success = True
                     # print('self.enable_network', self.enable_network)
-                    start_time = 1
+                    start_time = CavWorld.network_manager.current_time_slot
                     if self.enable_network:
                         source, target = nearby_v2x_manager, self.v2x_manager
                         # def schedule(self, source: 'V2XManager', target: 'V2XManager', volume: float) -> Tuple[int, int, int, bool]:
-                        subchannel, start_time, end_time, success = self.v2x_manager.scheduler.schedule(source, target, nearby_data_size)
-                        logger.info(f"network {source.vehicle_id} to {target.vehicle_id}: {subchannel}, {start_time}, {end_time}, {success}")
+                        success = self.v2x_manager.scheduler.schedule(source, target, nearby_data_size)
+                        logger.info(f"network {source.vehicle_id} to {target.vehicle_id}: {success}")
 
                     if success:
                         success_members_num += 1
@@ -234,7 +234,7 @@ class ClusteringPerceptionManager(PerceptionManager):
                         cur_time = CavWorld.network_manager.current_time_slot
                         time_slot = CavWorld.network_manager.time_slot
                         for vid, start_time in self.co_manager.uploaded_member.items():
-                            CavWorld.network_manager._record_packet_latency((cur_time - start_time) * time_slot)
+                            CavWorld.network_manager._record_cp_latency((cur_time - start_time) * time_slot * 1000)  # ms
                     self.co_manager.uploaded_member.clear()
                     self.do_cp -= 1
                 

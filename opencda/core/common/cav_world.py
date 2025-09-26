@@ -75,6 +75,7 @@ class CavWorld(object):
         # print(network_params)
         if network_params:
             self.network_enabled = network_params['enabled']
+            network_params['time_slot'] = self.fixed_delta_seconds
             network_params.update({'time_slot': self.fixed_delta_seconds})
             if self.network_enabled and CavWorld.network_manager is None:
                 CavWorld.network_manager = NetworkManager(cav_world=self, \
