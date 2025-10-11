@@ -72,7 +72,7 @@ class NetworkManager:
                 self.bridge.send_vehicles_num(len(self.all_vehicles))
                 vehicle_data = collect_vehicle_data(self.all_vehicles)
                 self.bridge.send_vehicles_position(vehicle_data)
-                self.bridge.send_transfer_requests(self.communication_requests[0:1])
+                self.bridge.send_transfer_requests(self.communication_requests[:])
                 self.communication_requests = []
                 time.sleep(self.time_slot)
                 
@@ -121,7 +121,8 @@ class NetworkManager:
         self.communication_requests.append({
             "source": source.vehicle_id,
             "target": target.vehicle_id,
-            "size": 2200 # bytes
+            "size": volume // 8,
+            # bytes
             #TODO: fix volume
         })
 
