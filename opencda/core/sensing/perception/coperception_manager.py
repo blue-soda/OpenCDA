@@ -1,25 +1,87 @@
 from collections import OrderedDict
-
+from pympler.asizeof import asizeof
+from opencda.log.logger_config import logger
 
 class CoperceptionManager:
-    def __init__(self, vid, v2x_manager, coperception_libs):
+    def __init__(self, vid, v2x_manager, coperception_libs, enable_network=False, network_manager=None):
         self.vid = vid
         self.v2x_manager = v2x_manager
         self.coperception_libs = coperception_libs
         self.ego_data_dict = None
         self.vehicles = None
 
-    def communicate(self):
-        data = {}
-        if self.v2x_manager is not None:
-            for vid, vm in self.v2x_manager.cav_nearby.items():
-                data.update({str(vid): vm})
-        return data
+        self.enable_network = enable_network
+        self.network_manager = network_manager
+        self.uploaded_cavs = {}
+        self.uploading_cavs = {}
+        self.all_cavs = {}
+        self.uploading_data = None
 
-    # def calculate_transformation(self, cav_id, cav_data):
-    #     t_matrix = self.coperception_libs.load_transformation_matrix(self.ego_data_dict, cav_data[cav_id]['params'])
-    #     cav_data[cav_id]['params'].update(t_matrix)
-    #     return cav_data
+    def get_coperception_cavs_dict(self) -> dict:
+        # dict of {vid: {'vehicle_manager': vm, 'v2x_manager': v2x_manager}}
+        return self.v2x_manager.cav_nearby
+    
+    def communicate(self, is_ego=False, ego_lidar_pose=None, use_ego_vehicles=False):
+        data = {}
+        if self.uploading_data:
+            data = self.uploading_data
+        else:
+            self.all_cavs = self.get_coperception_cavs_dict()
+            data = self.prepare_and_transform_data_from_dict(self.all_cavs, is_ego, ego_lidar_pose, use_ego_vehicles)
+            self.uploading_data = data
+        if not self.enable_network:
+            self.uploading_data = None
+            return data
+        return self.communicate_via_network()
+    
+    def communicate_via_network(self):
+        # print("Coperception via network...")
+        self.send_cams_via_network()
+        return self.receive_cams_via_network()
+
+    def send_cams_via_network(self):
+        for cav_id, vm_dict in self.all_cavs.items():
+            self.uploading_cavs[cav_id] = self.network_manager.current_time_slot
+            cav_v2x_manager = vm_dict['v2x_manager']
+            cav_data = self.uploading_data.get(cav_id, None)
+            data_size = asizeof(cav_data)
+            # print(f"cav {cav_id} is uploading its data to network, size: {data_size} bytes.")
+            self.v2x_manager.scheduler.schedule(cav_v2x_manager, self.v2x_manager, data_size)
+
+    def receive_cams_via_network(self):
+        # cams = self.network_manager.get_received_cams()
+        cams = self.network_manager.take_out_received_cams(self.vid)
+        received_data = {}
+        for cam in cams:
+            sender_id = cam.get('sender_id')
+            receiver_id = cam.get('receiver_id')
+            if receiver_id != self.vid:
+                continue
+            data = self.uploading_data.get(sender_id, None)
+            if data:
+                self.uploaded_cavs[sender_id] = self.network_manager.current_time_slot
+                received_data[sender_id] = data
+                # print(f"cav {sender_id} has uploaded its data to {self.vid} via network.")
+            else:
+                logger.warning(f"cav {sender_id} data not found in uploading_data of {self.vid}.")
+        return received_data
+
+
+    def all_data_uploaded(self, percent=0.9):
+        uploaded_num = len(self.uploaded_cavs)
+        all_cavs_num = len(self.all_cavs)
+        if all_cavs_num == 0 or self.enable_network is False:
+            return True
+        ok = uploaded_num / all_cavs_num >= percent
+        logger.info(f"Coperception data uploaded: {uploaded_num}/{all_cavs_num} ({uploaded_num / all_cavs_num:.2%})")
+        if ok:
+            self.clear_uploaded_and_uploading()
+        return ok
+
+    def clear_uploaded_and_uploading(self):
+        self.uploaded_cavs = {}
+        self.uploading_cavs = {}
+        self.uploading_data = None
 
     def calculate_transformation(self, cav_id, cav_data, ego_pose=None):
         if ego_pose is None:
@@ -29,7 +91,7 @@ class CoperceptionManager:
         cav_data[cav_id]['params'].update(t_matrix)
         return cav_data
     
-    def prepare_data(self, cav_id, camera, lidar, pos, localizer, agent, is_ego, ego_params=None):
+    def prepare_data(self, cav_id, camera, lidar, pos, localizer, agent, is_ego, use_ego_vehicles=False):
         data = {cav_id: OrderedDict()}
         data[cav_id]['ego'] = is_ego
         data[cav_id]['time_delay'] = self.coperception_libs.time_delay
@@ -38,43 +100,76 @@ class CoperceptionManager:
         ego_data = self.coperception_libs.load_ego_data(localizer)
         plan_trajectory_data = self.coperception_libs.load_plan_trajectory(agent)
         lidar_pose_data = self.coperception_libs.load_cur_lidar_pose(lidar)
-        vehicles = self.coperception_libs.load_vehicles(cav_id, pos, lidar)
         data[cav_id]['params'].update(plan_trajectory_data)
         data[cav_id]['params'].update(camera_data)
         data[cav_id]['params'].update(ego_data)
         data[cav_id]['params'].update(lidar_pose_data)
-        data[cav_id]['params'].update(vehicles)
         data[cav_id].update({'lidar_np': lidar.data})
         # get base_data_dict
         if is_ego:
             self.ego_data_dict = data[cav_id]['params']
-        return data
-
-    def prepare_data_fixed(self, cav_id, camera, lidar, pos, localizer, agent, is_ego, ego_params=None):
-        data = {cav_id: OrderedDict()}
-        data[cav_id]['ego'] = is_ego
-        data[cav_id]['time_delay'] = self.coperception_libs.time_delay
-        data[cav_id]['params'] = {}
-        camera_data = self.coperception_libs.load_camera_data(lidar, camera)
-        ego_data = self.coperception_libs.load_ego_data(localizer)
-        plan_trajectory_data = self.coperception_libs.load_plan_trajectory(agent)
-        lidar_pose_data = self.coperception_libs.load_cur_lidar_pose(lidar)
-        # vehicles = self.coperception_libs.load_vehicles(cav_id, pos, lidar)
-        data[cav_id]['params'].update(plan_trajectory_data)
-        data[cav_id]['params'].update(camera_data)
-        data[cav_id]['params'].update(ego_data)
-        data[cav_id]['params'].update(lidar_pose_data)
-        # data[cav_id]['params'].update(vehicles)
-        data[cav_id].update({'lidar_np': lidar.data})
-        # get base_data_dict
-        if is_ego:
-            self.ego_data_dict = data[cav_id]['params']
-
-            #only use gt_box near ego
             self.vehicles = self.coperception_libs.load_vehicles(cav_id, pos, lidar)
 
-        if self.vehicles:
+        if use_ego_vehicles and self.vehicles:  # use ego's vehicles for others
             data[cav_id]['params'].update(self.vehicles)
-            
+        else:
+            data[cav_id]['params'].update(self.coperception_libs.load_vehicles(cav_id, pos, lidar))
+
         return data
+
+    def prepare_and_transform_data(self, vid, camera, lidar, pos, localizer, agent, is_ego, ego_lidar_pose=None, use_ego_vehicles=False):
+        transformed_data = self.prepare_data(
+            cav_id=vid,
+            camera=camera,
+            lidar=lidar,
+            pos=pos,
+            localizer=localizer,
+            agent=agent,
+            is_ego=is_ego,
+            use_ego_vehicles=use_ego_vehicles
+        )
+        transformed_data = self.calculate_transformation(
+            cav_id=vid,
+            cav_data=transformed_data,
+            ego_pose=ego_lidar_pose
+        )
+        return transformed_data
+
+    def prepare_and_transform_data_from_managers(self, v2x_manager, localizer, agent, is_ego, ego_lidar_pose=None, use_ego_vehicles=False):
+        nearby_data = self.prepare_and_transform_data(
+            vid=v2x_manager.vehicle_id,
+            camera=v2x_manager.get_ego_rgb_image(),
+            lidar=v2x_manager.get_ego_lidar(),
+            pos=v2x_manager.get_ego_pos(),
+            localizer=localizer,
+            agent=agent,
+            is_ego=is_ego,
+            ego_lidar_pose=ego_lidar_pose,
+            use_ego_vehicles=use_ego_vehicles
+        )
+        return nearby_data
     
+    def prepare_and_transform_data_from_dict(self, data: dict, is_ego=False, ego_lidar_pose=None, use_ego_vehicles=False):
+        transformed_data = {}
+        for vid, nearby_data_dict in data.items():
+            if not nearby_data_dict:
+                continue
+            nearby_vm = nearby_data_dict['vehicle_manager']
+            nearby_v2x_manager = nearby_data_dict['v2x_manager']
+            nearby_data = self.prepare_and_transform_data_from_managers(
+                v2x_manager=nearby_v2x_manager,
+                localizer=nearby_vm.localizer,
+                agent=nearby_vm.agent,
+                is_ego=is_ego,
+                ego_lidar_pose=ego_lidar_pose,
+                use_ego_vehicles=use_ego_vehicles
+            )
+            transformed_data[vid] = nearby_data[vid]
+        return transformed_data
+    
+    def send_objects_info_buffer(self, target_id, objects):
+        target = self.get_coperception_cavs_dict().get(target_id, None)
+        target_v2x_manager = target['v2x_manager'] if target else None
+        if target_v2x_manager is not None:
+            target_v2x_manager.set_buffer(source_id=self.vid)
+            target_v2x_manager.set_buffer(objects=objects)

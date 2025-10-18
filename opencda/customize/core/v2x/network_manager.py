@@ -56,8 +56,13 @@ class NetworkManager:
         self.receiver_thread = None
         self.sender_thread = None
         self.all_vehicles = []
+        self.max_vehicle_num = 30
         if self.use_ns3:
             self.init_ns3()
+        self.data_event = None
+
+    def set_data_event(self, event):
+        self.data_event = event
 
     def add_vehicles(self, vehicles):
         self.all_vehicles.extend(vehicles)
@@ -65,11 +70,11 @@ class NetworkManager:
     def send_msg_to_ns3(self):
         """Send messages to ns-3 if needed."""
         try:
-            # self.bridge.send_vehicles_num(30)  # Initial vehicle count
+            self.bridge.send_vehicles_num(self.max_vehicle_num)  # Initial vehicle count
             while self.bridge.is_simulation_running():
                 while len(self.communication_requests) == 0:
                     time.sleep(self.time_slot)
-                self.bridge.send_vehicles_num(len(self.all_vehicles))
+                # self.bridge.send_vehicles_num(len(self.all_vehicles))
                 vehicle_data = collect_vehicle_data(self.all_vehicles)
                 self.bridge.send_vehicles_position(vehicle_data)
                 self.bridge.send_transfer_requests(self.communication_requests[:])
@@ -128,15 +133,39 @@ class NetworkManager:
 
         return True
     
-    def analyze_ns3_results(self):
+    def get_received_cams(self):
+        if self.bridge is None:
+            return []
+        return self.bridge.received_cams
+    
+    def set_received_cams(self, cams):
         if self.bridge is None:
             return
-        for cam in self.bridge.received_cams:
+        self.bridge.received_cams = cams
+
+    def clear_received_cams(self):
+        if self.bridge is None:
+            return
+        self.bridge.received_cams = []
+
+    def take_out_received_cams(self, receiver_id):
+        if self.bridge is None:
+            return []
+        cams = self.get_received_cams()
+        # for cam in cams:
+        #     print(f"{receiver_id} Received CAM: sender {cam.get('sender_id')}, receiver {cam.get('receiver_id')}")
+        selected_cams = [cam for cam in cams if cam.get('receiver_id') == receiver_id]
+        self.set_received_cams([cam for cam in cams if cam.get('receiver_id') != receiver_id])
+        self.analyze_ns3_results(selected_cams)
+        return selected_cams
+
+    def analyze_ns3_results(self, cams):
+        for cam in cams:
             delay = cam.get('receive_timestamp', -1) - cam.get('send_timestamp', -1)
             self._record_transmission_latency(delay)  #ms
             print(f"CAM from {cam.get('sender_id')} to {cam.get('receiver_id')} delay: {delay} ms")
-        self.bridge.received_cams = []
-    
+            logger.info(f"CAM from {cam.get('sender_id')} to {cam.get('receiver_id')} delay: {delay} ms")
+
     def allocate_resource(self, source, target, volume: float,
                         subchannel: int):
         """
@@ -269,7 +298,7 @@ class NetworkManager:
                for k, v in self.current_slot.items()}
         })
         
-        self.analyze_ns3_results()
+        # self.analyze_ns3_results()
         # Reset current slot counters
         self._reset_current_slot()
 

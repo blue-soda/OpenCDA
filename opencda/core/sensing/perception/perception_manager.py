@@ -14,6 +14,7 @@ import cv2
 import numpy as np
 import open3d as o3d
 
+from opencda.core.common.cav_world import CavWorld
 import opencda.core.sensing.perception.sensor_transformation as st
 from opencda.core.common.misc import \
     cal_distance_angle, get_speed, get_speed_sumo
@@ -196,10 +197,16 @@ class LidarSensor:
         else:
             self.sensor = world.spawn_actor(blueprint, spawn_point)
 
+        # frequency
+        self.rotate_frequency = int(config_yaml['rotation_frequency'])
+        self.world_frequency = int(1.0 / world.get_settings().fixed_delta_seconds)
+        self.tick = 0
+        self.points_buffer = []
         # lidar data
         self.data = None
         self.timestamp = None
         self.frame = 0
+        self.last_rotation_time = None
         # open3d point cloud object
         self.o3d_pointcloud = o3d.geometry.PointCloud()
 
@@ -208,6 +215,13 @@ class LidarSensor:
             lambda event: LidarSensor._on_data_event(
                 weak_self, event))
 
+    def rotate_tick(self):
+        self.tick += 1
+        if self.tick * self.rotate_frequency >= self.world_frequency:
+            self.tick = 0
+            return True
+        return False
+    
     @staticmethod
     def _on_data_event(weak_self, event):
         """Lidar  method"""
@@ -215,15 +229,19 @@ class LidarSensor:
         if not self:
             return
 
-        # retrieve the raw lidar data and reshape to (N, 4)
-        data = np.copy(np.frombuffer(event.raw_data, dtype=np.dtype('f4')))
+        frame_data = np.copy(np.frombuffer(event.raw_data, dtype=np.dtype('f4')))
         # (x, y, z, intensity)
-        data = np.reshape(data, (int(data.shape[0] / 4), 4))
+        frame_data = np.reshape(frame_data, (int(frame_data.shape[0] / 4), 4))
+        self.points_buffer.append(frame_data)
 
-        self.data = data
         self.frame = event.frame
         self.timestamp = event.timestamp
 
+        if self.rotate_tick():
+            full_rotation_points = np.vstack(self.points_buffer)
+            self.data = full_rotation_points
+            self.last_rotation_time = event.timestamp
+            self.points_buffer = []
 
 
 class SemanticLidarSensor:
@@ -371,6 +389,7 @@ class PerceptionManager:
         self._map = self.carla_world.get_map()
         self.id = infra_id if infra_id is not None else vehicle.id
         self.enable_network = enable_network
+        print("enable_network:", self.enable_network)
 
         self.activate = config_yaml['activate']
         self.camera_visualize = config_yaml['camera']['visualize']
@@ -387,6 +406,10 @@ class PerceptionManager:
         self.v2x_manager = v2x_manager
         self.localization_manager = localization_manager
         self.behavior_agent = behavior_agent
+
+        self.perception_frequency = config_yaml.get('perception_frequency', 10)
+        self.world_frequency = cav_world.frequency
+        self.tick = 0
 
         self.cav_world = weakref.ref(cav_world)()
         ml_manager = cav_world.ml_manager
@@ -472,7 +495,9 @@ class PerceptionManager:
         self.co_manager = CoperceptionManager(
             vid=self.id,
             v2x_manager=self.v2x_manager,
-            coperception_libs=self.coperception_libs
+            coperception_libs=self.coperception_libs,
+            enable_network=self.enable_network,
+            network_manager=CavWorld.network_manager if self.enable_network else None,
         )
 
     def dist(self, a):
@@ -492,6 +517,14 @@ class PerceptionManager:
         """
         return a.get_location().distance(self.ego_pos.location)
 
+    def perception_tick(self):
+        self.tick += 1
+        if self.tick * self.perception_frequency >= self.world_frequency:
+            self.tick = 0
+            # print("Perception Tick")
+            return True
+        return False
+    
     def detect(self, ego_pos):
         """
         Detect surrounding objects. Currently only vehicle detection supported.
@@ -510,7 +543,8 @@ class PerceptionManager:
         self.ego_pos = ego_pos
         objects = {
             'vehicles': [],
-            'traffic_lights': []
+            'traffic_lights': [],
+            'is_skipped': False
         }
 
         if not self.activate:
@@ -556,24 +590,7 @@ class PerceptionManager:
         data.update(ego_data)
 
         if self.enable_communicate:
-            nearby_vehicles = self.co_manager.communicate()
-            for vid, nearby_data_dict in nearby_vehicles.items():
-                nearby_vm = nearby_data_dict['vehicle_manager']
-                nearby_v2x_manager = nearby_data_dict['v2x_manager']
-                nearby_data = self.co_manager.prepare_data(
-                    cav_id=vid,
-                    camera=nearby_v2x_manager.get_ego_rgb_image(),
-                    lidar=nearby_v2x_manager.get_ego_lidar(),
-                    pos=nearby_v2x_manager.get_ego_pos(),
-                    localizer=nearby_vm.localizer,
-                    agent=nearby_vm.agent,
-                    is_ego=False
-                )
-                nearby_data = self.co_manager.calculate_transformation(
-                    cav_id=vid,
-                    cav_data=nearby_data,
-                )
-                data.update(nearby_data)
+            data.update(self.co_manager.communicate())
 
         # inference
         reformat_data_dict = self.ml_manager.opencood_dataset.get_item_test(data)

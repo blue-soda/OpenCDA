@@ -4,6 +4,7 @@
 # License: TDG-Attribution-NonCommercial-NoDistrib
 
 import importlib
+import weakref
 
 from opencda.customize.core.v2x.network_manager import NetworkManager
 
@@ -69,7 +70,7 @@ class CavWorld(object):
         self.sumo2carla_ids = {}
 
         self.fixed_delta_seconds = world_params.get('fixed_delta_seconds', 0.05)
-        self.frequency = 1 / self.fixed_delta_seconds
+        self.frequency = int(1 / self.fixed_delta_seconds)
 
         self.network_enabled = False
         # print(network_params)
@@ -94,7 +95,7 @@ class CavWorld(object):
             #print('vid:', vid, self.ego_id)
             if vid == self.ego_id:
                 #print('find')
-                return vm
+                return weakref.ref(vm)()
         return None
 
     def update_vehicle_manager(self, vehicle_manager, isTrafficVehicle):

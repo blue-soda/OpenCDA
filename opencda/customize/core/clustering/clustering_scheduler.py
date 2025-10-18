@@ -42,6 +42,9 @@ class ClusterBasedScheduler(Scheduler):
         Args:
             cluster_state (Dict): Cluster info (members, neighbors, positions)
         """
+        for key, value in cluster_state.items():
+            for vid, vm in value.items():
+                vm = vm.v2x_manager
         self.cluster_state = cluster_state
 
         # Step 1: Build vehicle-level interference graph based on wireless model

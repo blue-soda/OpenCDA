@@ -36,11 +36,6 @@ class ClusteringV2XManager(V2XManager):
         super(ClusteringV2XManager, self).__init__(cav_world, config_yaml, vid, vehicle_id)
         
         self.cp_model = 'default_model'
-
-        self.t = 0 #Timer 
- 
-        self.beacon_frequency = 4 #(Hz)
-        self.receive_beacon = False
         # 分簇协议相关参数 
         # self.cluster_params = {
         #     'd0': 50.0,           # 距离归一化参数 (单位: m)
@@ -88,9 +83,6 @@ class ClusteringV2XManager(V2XManager):
         r = int((hash_value >> 16) & 0xFF)
         g = int((hash_value >> 8) & 0xFF)
         b = int(hash_value & 0xFF)
-        # r = (vehicle_id * 79) % 256
-        # g = (vehicle_id * 101) % 256
-        # b = (vehicle_id * 127) % 256
         r = 255 if r > 127 else 0
         g = 255 if g > 127 else 0
         b = 255 if b > 127 else 0
@@ -112,13 +104,13 @@ class ClusteringV2XManager(V2XManager):
         members_vm = {}
         for vehicle_id in members_dict:
             vm = self.cav_world.get_vehicle_manager(vehicle_id)
-            members_vm[vehicle_id] = vm.v2x_manager
+            members_vm[vehicle_id] = vm
 
         # Resolve neighbors
         neighbors_vm = {}
         for vehicle_id in neighbors_dict:
             vm = self.cav_world.get_vehicle_manager(vehicle_id)
-            neighbors_vm[vehicle_id] = vm.v2x_manager
+            neighbors_vm[vehicle_id] = vm
 
         return {
             'cluster_head': cluster_head_vm,
@@ -130,13 +122,6 @@ class ClusteringV2XManager(V2XManager):
     def is_cluster_head(self):
         # logger.debug('vehicle_id', self.vehicle_id, self.cluster_state['cluster_head'], self.vehicle_id == self.cluster_state['cluster_head'])
         return self.vehicle_id == self.cluster_state['cluster_head']
-    
-    def tick(self):
-        self.t += 1
-        self.receive_beacon = self.t >= (self.cav_world.frequency/self.beacon_frequency) #send and receive beacon on 20/10=2(Hz)
-        if self.receive_beacon:
-            self.t = 0
-        return self.receive_beacon
 
     def beacon(self):
         """
@@ -247,6 +232,7 @@ class ClusteringV2XManager(V2XManager):
         Update cluster membership based on similarity scores and network conditions.
         """
         # Check if the vehicle is already part of a cluster
+        # print("update_cluster_join", self.vehicle_id, self.cluster_state['cluster_head'])
         if self.cluster_state['cluster_head'] is None:
             self.look_for_existed_clusters()
             self.try_to_create_cluster()
@@ -413,11 +399,10 @@ class ClusteringV2XManager(V2XManager):
         """
         vehicle_manager_dict = self.cav_world.get_vehicle_managers()
 
+        # print("ClusteringV2XManager search()", self.vehicle_id)
         if self.ego_must_be_leader and self.vehicle_id == self.cav_world.ego_id:
             self.cluster_state['cluster_head'] = self.vehicle_id
             # logger.debug("ego_must_be_leader!")
-
-        self.tick()
 
         for vid, vm in vehicle_manager_dict.items():
             vehicle_id = vm.vehicle.id
@@ -427,42 +412,33 @@ class ClusteringV2XManager(V2XManager):
             distance = compute_distance(self.ego_pos[-1].location, vm.v2x_manager.get_ego_pos().location)
             # update v2x_manager.cav_nearby
             if distance < self.communication_range:
-                self.cav_nearby.update({vm.vehicle.id: {
+                self.cav_nearby.update({vid: {
                     'vehicle_manager': weakref.ref(vm)(),
                     'v2x_manager': weakref.ref(vm.v2x_manager)()
                 }})
             else:
-                self.cav_nearby.pop(vm.vehicle.id, None)
+                self.cav_nearby.pop(vid, None)
 
-            if self.receive_beacon:
-                #logger.debug(f"{self.vehicle_id}  receive_beacons, tick: {self.tick}")
-                # Receive beacon from neighbor
-                neighbor_beacon = vm.v2x_manager.beacon()
+            #logger.debug(f"{self.vehicle_id}  receive_beacons, tick: {self.tick}")
+            # Receive beacon from neighbor
+            neighbor_beacon = vm.v2x_manager.beacon()
 
-                # Update neighbor information
-                if distance < self.communication_range and vm.is_ok:
-                    self.cluster_state['neighbors'][vehicle_id] = neighbor_beacon
-                    self.cluster_state['similarity_scores'][vehicle_id] = self.compute_similarity(neighbor_beacon)
-                    if CavWorld.network_manager:
-                        objects_size = asizeof(neighbor_beacon)
-                        CavWorld.network_manager._update_communication_stats(objects_size, "control")
-                else:
-                    self.cluster_state['neighbors'].pop(vehicle_id, None)
-                    self.cluster_state['similarity_scores'].pop(vehicle_id, None)
-                    if vehicle_id in self.cluster_state['members']:
-                        # Remove from cluster membership
-                        self.cluster_state['members'].pop(vehicle_id, None)
-                    if vehicle_id == self.cluster_state['cluster_head']:
-                        # Cluster head has moved out of range
-                        self.cluster_state['cluster_head'] = None
-                        self.promote_shadow_head()
-                    elif vehicle_id == self.cluster_state['shadow_head']:
-                        self.cluster_state['shadow_head'] = None
-
-        # if self.receive_beacon:
-        #     # Update cluster membership
-        #     # logger.debug("Update cluster membership")
-        #     self.update_cluster()
-        #     self.id_to_rgb()
-        #     if self.scheduler is not None and self.scheduler_type == 'clusterbased' and self.is_cluster_head():
-        #         self.scheduler.update_scheduler(self.get_cluster_members())
+            # Update neighbor information
+            if distance < self.communication_range and vm.is_ok:
+                self.cluster_state['neighbors'][vehicle_id] = neighbor_beacon
+                self.cluster_state['similarity_scores'][vehicle_id] = self.compute_similarity(neighbor_beacon)
+                if CavWorld.network_manager:
+                    objects_size = asizeof(neighbor_beacon)
+                    CavWorld.network_manager._update_communication_stats(objects_size, "control")
+            else:
+                self.cluster_state['neighbors'].pop(vehicle_id, None)
+                self.cluster_state['similarity_scores'].pop(vehicle_id, None)
+                if vehicle_id in self.cluster_state['members']:
+                    # Remove from cluster membership
+                    self.cluster_state['members'].pop(vehicle_id, None)
+                if vehicle_id == self.cluster_state['cluster_head']:
+                    # Cluster head has moved out of range
+                    self.cluster_state['cluster_head'] = None
+                    self.promote_shadow_head()
+                elif vehicle_id == self.cluster_state['shadow_head']:
+                    self.cluster_state['shadow_head'] = None

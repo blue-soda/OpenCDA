@@ -3,42 +3,38 @@ from opencda.core.sensing.perception.coperception_manager \
 from opencda.log.logger_config import logger
 
 class ClusteringCoperceptionManager(CoperceptionManager):
-    def __init__(self, vid, v2x_manager, coperception_libs):
-        super().__init__(vid, v2x_manager, coperception_libs)
-        self.uploaded_member = {}
+    def __init__(self, vid, v2x_manager, coperception_libs, enable_network=False, network_manager=None):
+        super().__init__(vid, v2x_manager, coperception_libs, enable_network, network_manager)
+        self.communicate_inside_cluster = True
 
-    def communicate_inside_cluster(self):
-        logger.debug(f"cluster head {self.v2x_manager.vehicle_id} is communicating inside cluster")
-        data = {}
-        if self.v2x_manager is not None:
-            for vehicle_id in self.v2x_manager.cluster_state['members'].keys():
-                if vehicle_id == self.v2x_manager.vehicle_id:
-                    continue
-                data_dict = self.v2x_manager.cav_nearby.get(vehicle_id)
-                if data_dict is None:
-                    logger.debug(f"member {vehicle_id} is not a neighbor")
-                    continue
-                if self.uploaded_member.get(str(vehicle_id), None) is not None:
-                    logger.debug(f"member {vehicle_id} has already uploaded its data")
-                    continue
-                data.update({str(vehicle_id): data_dict})
-        return data
+    def set_communicate_inside_cluster(self):
+        self.communicate_inside_cluster = True
     
-    def communicate_outside_cluster(self):
-        all_neighbors = self.comunicate()
-        cluster_members = self.communicate_inside_cluster()
-        key_diff = all_neighbors.keys() - cluster_members.keys()
-        data_outside_cluster = {k: all_neighbors[k] for k in key_diff}
-        return data_outside_cluster
+    def set_communicate_outside_cluster(self):
+        self.communicate_inside_cluster = False
+
+    def get_coperception_cavs_dict(self):
+        if self.communicate_inside_cluster:
+            data_inside_cluster = {}
+            vms = self.v2x_manager.get_cluster_members()['members']
+            for vid, vm in vms.items():
+                v2x_manager = vm.v2x_manager
+                data_inside_cluster.update({vid: {'v2x_manager': v2x_manager, 'vehicle_manager': vm}})
+                # print(f"cluster member vid: {vid}")
+            return data_inside_cluster
+        else:
+            all_neighbors = self.v2x_manager.cav_nearby
+            cluster_members = self.v2x_manager.cluster_state['members']
+            key_diff = all_neighbors.keys() - cluster_members.keys()
+            data_outside_cluster = {k: all_neighbors[k] for k in key_diff}
+            return data_outside_cluster
     
-    def broadcast_inside_cluster(self, source=None, objects=None):#, results=None):
+    def broadcast_objects_info(self, objects):
         if self.v2x_manager.is_cluster_head():
-            for vid, member_data_dict in self.communicate_inside_cluster().items():
+            for vid, member_data_dict in self.get_coperception_cavs_dict().items():
                 member_v2x_manager = member_data_dict['v2x_manager']
-                if source:
-                    member_v2x_manager.set_buffer(source=source)
-                if objects:
-                    member_v2x_manager.set_buffer(objects=objects)
+                member_v2x_manager.set_buffer(source_id=self.vid)
+                member_v2x_manager.set_buffer(objects=objects)
 
 
     

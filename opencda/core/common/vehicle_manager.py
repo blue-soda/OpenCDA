@@ -132,7 +132,6 @@ class VehicleManager(object):
             self.agent = None
             self.controller = None
         else:
-
             # map manager
             self.map_manager = MapManager(vehicle,
                                         carla_map,
@@ -140,7 +139,6 @@ class VehicleManager(object):
             # safety manager
             self.safety_manager = SafetyManager(vehicle=vehicle,
                                                 params=config_yaml['safety_manager'])
-
             cav_world.update_global_ego_id(self.vehicle.id)
             # behavior agent
             if self.enablePlatooning:
@@ -154,10 +152,8 @@ class VehicleManager(object):
                     carla_map)
             else:
                 self.agent = BehaviorAgent(vehicle, carla_map, behavior_config, self.cav_world.ego_id)
-
             # Control module
             self.controller = ControlManager(control_config)
-
         # perception module
         # move it down here to pass in the behavior manager & localization manager
         if self.enableCluster:
@@ -202,7 +198,6 @@ class VehicleManager(object):
         self.ego_image = None
 
         cav_world.update_vehicle_manager(self, self.isTrafficVehicle)
-
 
     def set_destination(
             self,
@@ -263,70 +258,31 @@ class VehicleManager(object):
         
         if update_data:
             self.update_data()
-        # object detection
-        objects = self.perception_manager.detect(self.ego_pos)
         
         if self.isTrafficVehicle:
-            # print(f"update_end:{self.vehicle.id}")
             return
 
         # update the ego pose for map manager
         self.map_manager.update_information(self.ego_pos)
 
-        # this is required by safety manager
-        safety_input = {'ego_pos': self.ego_pos,
-                        'ego_speed': self.ego_spd,
-                        'objects': objects,
-                        'carla_map': self.carla_map,
-                        'world': self.vehicle.get_world(),
-                        'static_bev': self.map_manager.static_bev}
-        self.safety_manager.update_info(safety_input)
-
-        self.agent.update_information(self.ego_pos, self.ego_spd, objects)
         # pass position and speed info to controller
         self.controller.update_info(self.ego_pos, self.ego_spd)
-        # print(f"update_end:{self.vehicle.id}")
-    # def update_info(self):
-    #     """
-    #     Call perception and localization module to
-    #     retrieve surrounding info an ego position.
-    #     """
-    #     # localization
-    #     self.localizer.localize()
 
-    #     ego_pos = self.localizer.get_ego_pos()
-    #     ego_spd = self.localizer.get_ego_spd()
-    #     ego_dir = self.localizer.get_ego_dir()
-    #     ego_lidar = self.perception_manager.lidar
-    #     ego_image = self.perception_manager.rgb_camera
-
-    #     if not self.is_ok:
-    #         return
-
-    #     # update ego position and speed to v2x manager,
-    #     # and then v2x manager will search the nearby cavs
-    #     self.v2x_manager.update_info(ego_pos, ego_spd, ego_lidar, ego_image, ego_dir)
-    #     # object detection
-    #     objects = self.perception_manager.detect(ego_pos)
+        # object detection
+        objects = self.perception_manager.detect(self.ego_pos)
         
-    #     if 'traffic' in self.application:
-    #         return
+        if not objects['is_skipped']:
+            # this is required by safety manager
+            safety_input = {'ego_pos': self.ego_pos,
+                            'ego_speed': self.ego_spd,
+                            'objects': objects,
+                            'carla_map': self.carla_map,
+                            'world': self.vehicle.get_world(),
+                            'static_bev': self.map_manager.static_bev}
+            self.safety_manager.update_info(safety_input)
 
-    #     # update the ego pose for map manager
-    #     self.map_manager.update_information(ego_pos)
+            self.agent.update_information(self.ego_pos, self.ego_spd, objects)
 
-    #     # this is required by safety manager
-    #     safety_input = {'ego_pos': ego_pos,
-    #                     'ego_speed': ego_spd,
-    #                     'objects': objects,
-    #                     'carla_map': self.carla_map,
-    #                     'world': self.vehicle.get_world(),
-    #                     'static_bev': self.map_manager.static_bev}
-    #     self.safety_manager.update_info(safety_input)
-
-    #     self.agent.update_information(ego_pos, ego_spd, objects)
-    #     # pass position and speed info to controller
-    #     self.controller.update_info(ego_pos, ego_spd)
 
     def run_step(self, target_speed=None):
         """

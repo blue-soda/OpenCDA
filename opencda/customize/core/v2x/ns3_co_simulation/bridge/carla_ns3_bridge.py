@@ -19,7 +19,6 @@ class CarlaNs3Bridge:
         self.running = True
         self.reconnect_thread = None
         self.receiver_thread = None
-        self.received_msgs = []
         self.received_cams = []
 
     def _connect(self) -> bool:

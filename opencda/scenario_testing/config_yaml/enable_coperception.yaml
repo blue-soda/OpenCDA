@@ -4,11 +4,13 @@ enable_coperception:
       perception: &base_perception
         activate: true # Deprecated, please use --apply_ml.
         coperception: true # Deprecated, please use --apply_cp.
+        perception_frequency: 10 # perception frequency in Hz
         enable_communicate: true
         enable_show_gt: true
     v2x: &base_v2x # communication related
       enabled: true
       communication_range: 35
+      beacon_frequency: 20  # Hz
       loc_noise: 0.0
       yaw_noise: 0.0
       speed_noise: 0.0

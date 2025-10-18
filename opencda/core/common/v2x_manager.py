@@ -79,6 +79,9 @@ class V2XManager(object):
             self.communication_range, self.cda_enabled)
 
         self.cav_world = weakref.ref(cav_world)()
+        self.world_frequency = self.cav_world.frequency
+        self.beacon_frequency = config_yaml.get('beacon_frequency', 0)  # Hz
+        self.tick = 0
         
         self.rgb = (255, 255, 0)
         # ego position buffer. use deque so we can simulate lagging
@@ -123,6 +126,16 @@ class V2XManager(object):
         V2XManager.instance_nums += 1
         print(f'{V2XManager.instance_nums} vehicles initialized')
 
+    def beacon_tick(self):
+        if self.beacon_frequency <= 0:
+            return False
+        self.tick += 1
+        if self.tick * self.beacon_frequency >= self.world_frequency:
+            self.tick = 0
+            # print(f"Beacon Tick")
+            return True
+        return False
+
     def update_info(self, ego_pos, ego_spd, ego_lidar, ego_image, ego_dir=None):
         """
         Update all communication plugins with current localization info.
@@ -133,8 +146,9 @@ class V2XManager(object):
         self.ego_image.append(ego_image)
         if ego_dir:
             self.ego_dir.append(ego_dir)
-        #print('update_info:', ego_pos, ego_spd, ego_dir)
-        self.search()
+
+        if self.beacon_tick():
+            self.search()
 
         # the ego pos in platooning_plugin is used for self-localization,
         # so we shouldn't add noise or lag.
@@ -227,18 +241,18 @@ class V2XManager(object):
                 vm.v2x_manager.get_ego_pos().location)
 
             if distance < self.communication_range:
-                self.cav_nearby.update({vm.vehicle.id: {
+                self.cav_nearby.update({vid: {
                     'vehicle_manager': vm,
                     'v2x_manager': vm.v2x_manager
                 }})
             else:
-                self.cav_nearby.pop(vm.vehicle.id, None)
+                self.cav_nearby.pop(vid, None)
 
 
 
-    def set_buffer(self, source=None, objects=None):#, results=None):
-        if source:
-            self._recieved_buffer['source'] = source
+    def set_buffer(self, source_id=None, objects=None):#, results=None):
+        if source_id:
+            self._recieved_buffer['source_id'] = source_id
         if objects:
             self._recieved_buffer['objects'] = objects
         self._unread_buffer = True
@@ -252,7 +266,7 @@ class V2XManager(object):
             self._unread_buffer = False
             return self._recieved_buffer
         else:
-            return {'source': "0",
+            return {'source_id': "0",
                     'objects':
                     {
                         'vehicles': [],

@@ -44,7 +44,6 @@ def run_scenario(opt, scenario_params, application=[], filename="-", town=None, 
 def init(opt, scenario_params):
     global cav_world, scenario_manager, eval_manager, applications, single_cav_list, traffic_cav_list, rsu_list, town_name, xodr_path_name, sumo_cfg_name
     scenario_params = add_current_time(scenario_params)
-
     # add params
     coperception_params, network_params = None, None
     if opt.apply_cp: #and 'coperception' in scenario_params:
@@ -227,12 +226,11 @@ def check_is_out_sight(transform, cav):
         logger.debug(f"bg_vehicle {cav.vehicle.id} is back.")
 
 def update_cluster(all_cavs):
-    if all_cavs and all_cavs[0].v2x_manager.receive_beacon:
-        for cav in all_cavs:
-            cav.join_cluster()
-        for cav in all_cavs:
-            cav.elect_leader()    
-        for cav in all_cavs:
-            cav.check_cluster_leader()                      
-        for cav in all_cavs:
-            cav.check_cluster_members()     
+    for cav in all_cavs:
+        cav.join_cluster()
+    for cav in all_cavs:
+        cav.elect_leader()    
+    for cav in all_cavs:
+        cav.check_cluster_leader()                      
+    for cav in all_cavs:
+        cav.check_cluster_members()     

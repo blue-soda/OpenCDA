@@ -7,7 +7,7 @@ description: |-
 world:
   sync_mode: true
   client_port: 2000
-  fixed_delta_seconds: 0.10
+  fixed_delta_seconds: 0.05  #seconds
   seed: 11 # seed for numpy and random
   weather:
     sun_altitude_angle: 15 # 90 is the midday and -90 is the midnight
@@ -59,8 +59,9 @@ rsu_base:
 vehicle_base:
   sensing: # include perception and localization
     perception:
-      #activate: true # when not activated, objects positions will be retrieved from server directly. Deprecated, please use --apply_ml.
-      #coperception: true # whether to use the co-perception. Deprecated, please use --apply_cp.
+      activate: true # when not activated, objects positions will be retrieved from server directly. Deprecated, please use --apply_ml.
+      coperception: true # whether to use the co-perception. Deprecated, please use --apply_cp.
+      perception_frequency: 10 # perception frequency in Hz
       camera:
         visualize: 4
         num: 4
@@ -156,7 +157,7 @@ vehicle_base:
   v2x: &base_v2x # communication related
     enabled: true
     communication_range: 35
-
+    beacon_frequency: 20  # Hz
 
 # define the background traffic control by carla
 carla_traffic_manager:
