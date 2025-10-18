@@ -16,6 +16,7 @@ class CoperceptionManager:
         self.uploading_cavs = {}
         self.all_cavs = {}
         self.uploading_data = None
+        self.timeout_slots = 3
 
     def get_coperception_cavs_dict(self) -> dict:
         # dict of {vid: {'vehicle_manager': vm, 'v2x_manager': v2x_manager}}
@@ -40,12 +41,17 @@ class CoperceptionManager:
         return self.receive_cams_via_network()
 
     def send_cams_via_network(self):
+        current_time_slot = self.network_manager.current_time_slot
         for cav_id, vm_dict in self.all_cavs.items():
-            self.uploading_cavs[cav_id] = self.network_manager.current_time_slot
+            if cav_id in self.uploaded_cavs:
+                continue
+            if (cav_id in self.uploading_cavs and self.uploading_cavs[cav_id] > current_time_slot - self.timeout_slots):
+                continue
+            self.uploading_cavs[cav_id] = current_time_slot
             cav_v2x_manager = vm_dict['v2x_manager']
             cav_data = self.uploading_data.get(cav_id, None)
             data_size = asizeof(cav_data)
-            # print(f"cav {cav_id} is uploading its data to network, size: {data_size} bytes.")
+            print(f"cav {cav_id} is uploading its data to {self.vid}, size: {data_size} bytes at {self.network_manager.current_time_slot}.")
             self.v2x_manager.scheduler.schedule(cav_v2x_manager, self.v2x_manager, data_size)
 
     def receive_cams_via_network(self):
@@ -61,21 +67,19 @@ class CoperceptionManager:
             if data:
                 self.uploaded_cavs[sender_id] = self.network_manager.current_time_slot
                 received_data[sender_id] = data
-                # print(f"cav {sender_id} has uploaded its data to {self.vid} via network.")
+                print(f"cav {sender_id} has uploaded its data to {self.vid} via network at {self.network_manager.current_time_slot}.")
             else:
                 logger.warning(f"cav {sender_id} data not found in uploading_data of {self.vid}.")
         return received_data
 
 
-    def all_data_uploaded(self, percent=0.9):
+    def all_data_uploaded(self, percent=0.6):
         uploaded_num = len(self.uploaded_cavs)
         all_cavs_num = len(self.all_cavs)
         if all_cavs_num == 0 or self.enable_network is False:
             return True
         ok = uploaded_num / all_cavs_num >= percent
         logger.info(f"Coperception data uploaded: {uploaded_num}/{all_cavs_num} ({uploaded_num / all_cavs_num:.2%})")
-        if ok:
-            self.clear_uploaded_and_uploading()
         return ok
 
     def clear_uploaded_and_uploading(self):

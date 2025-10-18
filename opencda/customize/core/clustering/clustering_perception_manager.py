@@ -190,7 +190,8 @@ class ClusteringPerceptionManager(PerceptionManager):
                 if members_data:
                     self.cp_data.update(members_data)
 
-                if self.co_manager.all_data_uploaded(percent=0.9):
+                #TODO:  The start_time of the current time slot is refreshed, causing inaccurate delay statistics
+                if self.co_manager.all_data_uploaded():
                     self.doing_cp = False
                     data.update(self.cp_data)
                     data.update(self.ego_data)
@@ -200,8 +201,10 @@ class ClusteringPerceptionManager(PerceptionManager):
                         cur_time = CavWorld.network_manager.current_time_slot
                         time_slot = CavWorld.network_manager.time_slot
                         for vid, start_time in self.co_manager.uploading_cavs.items():
+                            print(f"{vid} {cur_time} {start_time} {time_slot}")
                             CavWorld.network_manager._record_cp_latency((cur_time - start_time) * time_slot * 1000)  # ms
 
+                    self.co_manager.clear_uploaded_and_uploading()
                     objects = self.inference(data, objects, with_submit=(not self.apply_late_fusion and self.is_ego), with_update=(self.apply_late_fusion or ego_in_cluster or self.is_ego))
                     if self.is_ego and not self.apply_late_fusion:
                         did_cp = True
