@@ -16,7 +16,8 @@ class CoperceptionManager:
         self.uploading_cavs = {}
         self.all_cavs = {}
         self.uploading_data = None
-        self.timeout_slots = 3
+        self.uploading_data_size = {}
+        self.timeout_slots = 5 # number of time slots to wait before re-uploading data from a cav
 
     def get_coperception_cavs_dict(self) -> dict:
         # dict of {vid: {'vehicle_manager': vm, 'v2x_manager': v2x_manager}}
@@ -51,18 +52,25 @@ class CoperceptionManager:
             cav_v2x_manager = vm_dict['v2x_manager']
             cav_data = self.uploading_data.get(cav_id, None)
             data_size = asizeof(cav_data)
+            self.uploading_data_size[cav_id] = data_size
             print(f"cav {cav_id} is uploading its data to {self.vid}, size: {data_size} bytes at {self.network_manager.current_time_slot}.")
             self.v2x_manager.scheduler.schedule(cav_v2x_manager, self.v2x_manager, data_size)
 
     def receive_cams_via_network(self):
         # cams = self.network_manager.get_received_cams()
-        cams = self.network_manager.take_out_received_cams(self.vid)
+        cams = self.network_manager.get_received_cams(self.vid)
         received_data = {}
-        for cam in cams:
+        for cam in cams.values():
             sender_id = cam.get('sender_id')
             receiver_id = cam.get('receiver_id')
-            if receiver_id != self.vid:
+            packet_size = cam.get('packet_size')
+            data_size = self.uploading_data_size.get(sender_id, None)
+            if not data_size or data_size * 0.95 > packet_size:
+                print(f"cav {sender_id} data upload to {receiver_id} incomplete. Received size: {packet_size} bytes, expected size: {data_size} bytes.")
                 continue
+            
+            print(f"cav {sender_id} data upload to {receiver_id} succeeded. Received size: {packet_size} bytes, expected size: {data_size} bytes.")
+            self.network_manager.pop_received_cams(receiver_id, sender_id)
             data = self.uploading_data.get(sender_id, None)
             if data:
                 self.uploaded_cavs[sender_id] = self.network_manager.current_time_slot

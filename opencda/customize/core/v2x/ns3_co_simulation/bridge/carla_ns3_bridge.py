@@ -19,7 +19,8 @@ class CarlaNs3Bridge:
         self.running = True
         self.reconnect_thread = None
         self.receiver_thread = None
-        self.received_cams = []
+        self.received_cams = {}
+        self.combine_threshold_ms = 10  # Time threshold to combine messages from the same sender (in milliseconds)
 
     def _connect(self) -> bool:
         """Connect to ns-3 server"""
@@ -71,9 +72,39 @@ class CarlaNs3Bridge:
                             elif message.get("type") == "cam_received":
                                 receiver_id = message.get("receiver_id")
                                 sender_id = message.get("sender_id")
-                                logger.info(f"Info from NS-3: Vehicle {receiver_id} received msg from Vehicle {sender_id}, " +
-                                            f"msg sent at {message.get('send_timestamp')}, received at {message.get('receive_timestamp')}")
-                                self.received_cams.append(message)
+                                packet_size = message.get("packet_size")
+                                receive_timestamp = message.get("receive_timestamp")
+                                send_timestamp = message.get("send_timestamp")
+                                logger.info(f"Info from NS-3: Vehicle {receiver_id} received msg of {packet_size} bytes from Vehicle {sender_id}, " +
+                                            f"msg sent at {send_timestamp}, received at {receive_timestamp}")
+                                print(f"Info from NS-3: Vehicle {receiver_id} received msg of {packet_size} bytes from Vehicle {sender_id}, " +
+                                            f"msg sent at {send_timestamp}, received at {receive_timestamp} " +
+                                            f"delay: {receive_timestamp - send_timestamp} ms")
+                                if receiver_id not in self.received_cams:
+                                    self.received_cams[receiver_id] = {sender_id: message}
+                                else:
+                                    if sender_id not in self.received_cams[receiver_id]:
+                                        self.received_cams[receiver_id][sender_id] = message
+                                    else:
+                                        #combine messages if multiple received
+                                        cam = self.received_cams[receiver_id][sender_id]
+                                        cam_send_timestamp = cam.get("send_timestamp")
+                                        if abs(send_timestamp - cam_send_timestamp) > self.combine_threshold_ms:
+                                            # treat as separate messages if time difference exceeds threshold
+                                            self.received_cams[receiver_id][sender_id] = message
+                                            logger.info(f"New separate msg for Vehicle {receiver_id} from Vehicle {sender_id} due to time gap.")
+                                            print(f"New separate msg for Vehicle {receiver_id} from Vehicle {sender_id} due to time gap.")
+                                        else:
+                                            # combine messages
+                                            cam["packet_size"] += packet_size
+                                            logger.info(f"Combined msg for Vehicle {receiver_id} from Vehicle {sender_id}, total size: {cam['packet_size']} bytes")
+                                            print(f"Combined msg for Vehicle {receiver_id} from Vehicle {sender_id}, total size: {cam['packet_size']} bytes \n" + 
+                                                f"1 send timestamp: {cam['send_timestamp']}, receive timestamp: {cam['receive_timestamp']}, delay: {cam['receive_timestamp'] - cam.get('send_timestamp')} ms \n" + 
+                                                f"2 send timestamp: {message.get('send_timestamp')}, receive timestamp: {receive_timestamp}, delay: {receive_timestamp - message.get('send_timestamp')} ms \n" + 
+                                                f"Total delay : {receive_timestamp - cam.get('send_timestamp')} ms")
+                                            cam["receive_timestamp"] = receive_timestamp
+                                            self.received_cams[receiver_id][sender_id] = cam
+
                         except json.JSONDecodeError:
                             pass
                     # client_socket.close()

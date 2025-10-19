@@ -57,6 +57,7 @@ class NetworkManager:
         self.sender_thread = None
         self.all_vehicles = []
         self.max_vehicle_num = 30
+        self.max_packet_size = 64000 # bytes, UDP packet size
         if self.use_ns3:
             self.init_ns3()
         self.data_event = None
@@ -122,49 +123,57 @@ class NetworkManager:
         if self.bridge is None:
             raise RuntimeError("ns-3 bridge not initialized.")
         
-        # Send communication request to ns-3
+        while volume > self.max_packet_size:
+            self.communication_requests.append({
+                "source": source.vehicle_id,
+                "target": target.vehicle_id,
+                "size": self.max_packet_size,
+                # bytes
+            })
+            volume -= self.max_packet_size
+
         self.communication_requests.append({
             "source": source.vehicle_id,
             "target": target.vehicle_id,
-            "size": volume // 8,
+            "size": volume,
             # bytes
-            #TODO: fix volume
         })
 
         return True
     
-    def get_received_cams(self):
-        if self.bridge is None:
-            return []
-        return self.bridge.received_cams
+    def get_all_received_cams(self):
+        return self.bridge.received_cams.copy()
     
-    def set_received_cams(self, cams):
-        if self.bridge is None:
-            return
+    def set_all_received_cams(self, cams):
         self.bridge.received_cams = cams
 
-    def clear_received_cams(self):
-        if self.bridge is None:
-            return
-        self.bridge.received_cams = []
+    def clear_all_received_cams(self):
+        self.bridge.received_cams = {}
 
-    def take_out_received_cams(self, receiver_id):
-        if self.bridge is None:
-            return []
-        cams = self.get_received_cams()
-        # for cam in cams:
-        #     print(f"{receiver_id} Received CAM: sender {cam.get('sender_id')}, receiver {cam.get('receiver_id')}")
-        selected_cams = [cam for cam in cams if cam.get('receiver_id') == receiver_id]
-        self.set_received_cams([cam for cam in cams if cam.get('receiver_id') != receiver_id])
-        self.analyze_ns3_results(selected_cams)
-        return selected_cams
+    def get_received_cams(self, receiver_id):
+        return self.bridge.received_cams.get(receiver_id, {}).copy()
+
+    def pop_received_cams(self, receiver_id, sender_id=None):
+        if sender_id is None:
+            cams = self.bridge.received_cams.pop(receiver_id, None)
+            if cams:
+                self.analyze_ns3_results(cams)
+            return
+        cams = self.bridge.received_cams.get(receiver_id, None)
+        if cams:
+            cam = cams.pop(sender_id, None)
+            self.analyze_ns3_result(cam)
+            self.bridge.received_cams[receiver_id] = cams
+
+    def analyze_ns3_result(self, cam):
+        delay = cam.get('receive_timestamp', -1) - cam.get('send_timestamp', -1)
+        self._record_transmission_latency(delay)  #ms
+        # print(f"CAM from {cam.get('sender_id')} to {cam.get('receiver_id')} delay: {delay} ms")
+        logger.info(f"CAM from {cam.get('sender_id')} to {cam.get('receiver_id')} delay: {delay} ms")
 
     def analyze_ns3_results(self, cams):
-        for cam in cams:
-            delay = cam.get('receive_timestamp', -1) - cam.get('send_timestamp', -1)
-            self._record_transmission_latency(delay)  #ms
-            print(f"CAM from {cam.get('sender_id')} to {cam.get('receiver_id')} delay: {delay} ms")
-            logger.info(f"CAM from {cam.get('sender_id')} to {cam.get('receiver_id')} delay: {delay} ms")
+        for cam in cams.values():
+            self.analyze_ns3_result(cam)
 
     def allocate_resource(self, source, target, volume: float,
                         subchannel: int):

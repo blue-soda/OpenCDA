@@ -109,13 +109,14 @@ class OpenCOODManager(object):
                                       'fusion is supported.')
 
         # skip the first 60 ticks for calculating the average precision
-        if self.counter > 10: #and self.counter % 2 == 0:
+        if self.counter > 2: #and self.counter % 2 == 0:
             logger.debug(f"Aggregating the current stats into final results: {self.counter}")
             self.submit_results(pred_box_tensor, pred_score, gt_box_tensor, with_stats)
         self.counter += 1
         return pred_box_tensor, pred_score, gt_box_tensor
 
     def evaluate_final_average_precision(self):
+        print(f'cp counter: {self.counter}')
         print('Evaluate final average precision results:')
         print(f'  - Fusion method: {self.fusion_method}')
         ap_30, mrec_30, mpre_30 = calculate_ap(self.result_stat, 0.30)
@@ -142,19 +143,6 @@ class OpenCOODManager(object):
                                                     True,
                                                     vis_save_path,
                                                     mode='constant')
-
-    # def naive_late_fusion(self, batch_data, output_dict):
-    #     return self.opencood_dataset.post_process(batch_data, output_dict)
-
-    # @staticmethod
-    # def naive_late_fusion(pred_box_tensors, pred_scores, gt_box_tensors):
-    #     if len(pred_box_tensors) == 0:
-    #         return None, None, None
-        
-    #     all_predict_boxes = torch.cat(pred_box_tensors, dim=0)
-    #     all_predict_scores = torch.cat(pred_scores, dim=0)
-    #     all_gt_boxes = torch.cat(gt_box_tensors, dim=0)
-    #     return all_predict_boxes, all_predict_scores, all_gt_boxes
 
     @staticmethod
     def all_boxes(pred_box_tensors, pred_scores, gt_box_tensors):
