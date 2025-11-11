@@ -17,7 +17,7 @@ class CoperceptionManager:
         self.all_cavs = {}
         self.uploading_data = None
         self.uploading_data_size = {}
-        self.timeout_slots = 5 # number of time slots to wait before re-uploading data from a cav
+        self.timeout_slots = 4 # number of time slots to wait before re-uploading data from a cav
 
     def get_coperception_cavs_dict(self) -> dict:
         # dict of {vid: {'vehicle_manager': vm, 'v2x_manager': v2x_manager}}
@@ -46,14 +46,22 @@ class CoperceptionManager:
         for cav_id, vm_dict in self.all_cavs.items():
             if cav_id in self.uploaded_cavs:
                 continue
-            if (cav_id in self.uploading_cavs and self.uploading_cavs[cav_id] > current_time_slot - self.timeout_slots):
-                continue
+            if cav_id in self.uploading_cavs:
+                if self.uploading_cavs[cav_id] > current_time_slot - self.timeout_slots:
+                    continue
+                else:
+                    print(f"cav {cav_id} timeout, current_time_slot: {current_time_slot}, start_slot: {self.uploading_cavs[cav_id]}")
             self.uploading_cavs[cav_id] = current_time_slot
             cav_v2x_manager = vm_dict['v2x_manager']
-            cav_data = self.uploading_data.get(cav_id, None)
-            data_size = asizeof(cav_data)
-            self.uploading_data_size[cav_id] = data_size
-            print(f"cav {cav_id} is uploading its data to {self.vid}, size: {data_size} bytes at {self.network_manager.current_time_slot}.")
+            # data_size = asizeof(cav_data) - data_size_received
+            if cav_id not in self.uploading_data_size:
+                cav_data = self.uploading_data.get(cav_id, None)
+                data_size = asizeof(cav_data) 
+                self.uploading_data_size[cav_id] = data_size
+                print(f"cav {cav_id} is uploading its data to {self.vid} for the FIRST time, size: {data_size} bytes at {self.network_manager.current_time_slot}.")
+            else:
+                data_size = self.uploading_data_size[cav_id]
+                print(f"cav {cav_id} is uploading its data to {self.vid} AGAIN, size: {data_size} bytes at {self.network_manager.current_time_slot}.")
             self.v2x_manager.scheduler.schedule(cav_v2x_manager, self.v2x_manager, data_size)
 
     def receive_cams_via_network(self):
@@ -65,7 +73,11 @@ class CoperceptionManager:
             receiver_id = cam.get('receiver_id')
             packet_size = cam.get('packet_size')
             data_size = self.uploading_data_size.get(sender_id, None)
-            if not data_size or data_size * 0.95 > packet_size:
+            if not data_size:
+                continue
+            if packet_size < data_size * 0.90:
+                self.uploading_data_size[sender_id] -= packet_size
+                self.network_manager.pop_received_cams(self.vid)
                 print(f"cav {sender_id} data upload to {receiver_id} incomplete. Received size: {packet_size} bytes, expected size: {data_size} bytes.")
                 continue
             

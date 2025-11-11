@@ -57,7 +57,7 @@ class NetworkManager:
         self.sender_thread = None
         self.all_vehicles = []
         self.max_vehicle_num = 30
-        self.max_packet_size = 64000 # bytes, UDP packet size
+        self.max_packet_size = 10000 # 64000 # bytes, UDP packet size
         if self.use_ns3:
             self.init_ns3()
         self.data_event = None
