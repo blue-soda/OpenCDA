@@ -1,5 +1,5 @@
 
-from opencda.customize.core.v2x.scheduler import InterferenceAwareScheduler, RoundRobinScheduler
+from opencda.customize.core.v2x.scheduler import DefaultScheduler, InterferenceAwareScheduler, RoundRobinScheduler
 from opencda.customize.core.clustering.clustering_scheduler import ClusterBasedScheduler
 from opencda.core.common.cav_world import CavWorld
 
@@ -18,7 +18,9 @@ def build_scheduler(scheduler_name, config={}):
     """
     scheduler_name = scheduler_name.lower()
 
-    if scheduler_name == 'roundrobin':
+    if scheduler_name == 'default':
+        return DefaultScheduler(CavWorld.network_manager, config)
+    elif scheduler_name == 'roundrobin':
         return RoundRobinScheduler(CavWorld.network_manager, config)
     elif scheduler_name == 'greedy':
         return InterferenceAwareScheduler(CavWorld.network_manager, config)

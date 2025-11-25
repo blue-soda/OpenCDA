@@ -50,6 +50,14 @@ class Scheduler(ABC):
 
 
 #///////////////////////////////////////////////////////////////////////////////////////////////////
+class DefaultScheduler(Scheduler):
+    """
+    Default scheduler that allocates the first available subchannel.
+    """
+    def __init__(self, network_manager: 'NetworkManager', config={}):
+        super().__init__(network_manager, config)
+    def schedule(self, source, target, volume: float) -> bool:
+        return self.network_manager.communicate(source, target, volume)
 
 class RoundRobinScheduler(Scheduler):
     """
@@ -66,7 +74,7 @@ class RoundRobinScheduler(Scheduler):
             return False  # NetworkManager has been garbage collected
         subchannel = self.next_subchannel
         self.next_subchannel = (self.next_subchannel + 1) % nm.subchannel_num
-        return nm.communicate(source, target, volume, subchannel)
+        return nm.communicate(source, target, volume, subchannel, 1)
 
 
 
@@ -96,7 +104,7 @@ class InterferenceAwareScheduler(Scheduler):
                 continue
 
         if best_subchannel != -1:
-                return nm.communicate(source, target, volume, best_subchannel)
+                return nm.communicate(source, target, volume, best_subchannel, 1)
 
         return False
 

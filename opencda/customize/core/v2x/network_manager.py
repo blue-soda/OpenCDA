@@ -105,7 +105,7 @@ class NetworkManager:
             self.sender_thread.daemon = True
             self.sender_thread.start()
 
-    def communicate(self, source, target, volume: float, subchannel_start: int = -1, subchannel_num: int = 1) -> bool:
+    def communicate(self, source, target, volume: float, subchannel_start: int = -1, subchannel_num: int = 0) -> bool:
         """
         Wrapper for resource allocation and communication handling.
         """

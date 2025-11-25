@@ -1,7 +1,7 @@
 enable_network:
   network:
     enabled: true
-    scheduler: roundrobin
+    scheduler: default
     # scheduler: clusterbased
     # 5Mhz LTE:
     # subchannel_bandwidth: 0.180 #MHz

@@ -17,7 +17,7 @@ from opencda.core.sensing.localization.localization_manager import LocalizationM
 from opencda.log.logger_config import logger
 import os
 
-#cluster, rsu, platoon, data_dump
+#cluster, rsu, platoon, data_dump, traffic
 applications = []
 
 

@@ -187,7 +187,7 @@ class ClusterBasedScheduler(Scheduler):
         # try:
         # Call the underlying resource manager to allocate time slot and subchannel
         success = self.network_manager.communicate(
-            source, target, volume, subchannel 
+            source, target, volume, subchannel, 1 
         )
 
         # if start_slot == 100: #debug
