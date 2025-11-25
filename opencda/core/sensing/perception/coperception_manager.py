@@ -17,7 +17,7 @@ class CoperceptionManager:
         self.all_cavs = {}
         self.uploading_data = None
         self.uploading_data_size = {}
-        self.timeout_slots = 4 # number of time slots to wait before re-uploading data from a cav
+        self.timeout_slots = 3 # number of time slots to wait before re-uploading data from a cav
 
     def get_coperception_cavs_dict(self) -> dict:
         # dict of {vid: {'vehicle_manager': vm, 'v2x_manager': v2x_manager}}

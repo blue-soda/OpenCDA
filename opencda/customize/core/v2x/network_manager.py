@@ -105,18 +105,18 @@ class NetworkManager:
             self.sender_thread.daemon = True
             self.sender_thread.start()
 
-    def communicate(self, source, target, volume: float, subchannel: int = 0) -> bool:
+    def communicate(self, source, target, volume: float, subchannel_start: int = -1, subchannel_num: int = 1) -> bool:
         """
         Wrapper for resource allocation and communication handling.
         """
         if(self.use_ns3):
-            return self.communicate_through_ns3(source, target, volume)
-        elif(subchannel >= 0 and subchannel <= self.subchannel_num):
-            return self.allocate_resource(source, target, volume, subchannel)
+            return self.communicate_through_ns3(source, target, volume, subchannel_start, subchannel_num)
+        elif(subchannel_start >= 0 and subchannel_start + subchannel_num <= self.subchannel_num):
+            return self.allocate_resource(source, target, volume, subchannel_start)
         else:
             raise ValueError("Invalid subchannel index.")
 
-    def communicate_through_ns3(self, source, target, volume: float) -> bool:
+    def communicate_through_ns3(self, source, target, volume: float, subchannel_start: int = -1, subchannel_num: int = 0) -> bool:
         """
         Handle communication via ns-3 bridge.
         """
@@ -124,23 +124,30 @@ class NetworkManager:
             raise RuntimeError("ns-3 bridge not initialized.")
         
         while volume > self.max_packet_size:
-            self.communication_requests.append({
-                "source": source.vehicle_id,
-                "target": target.vehicle_id,
-                "size": self.max_packet_size,
-                # bytes
-            })
+            self.send_cams_via_ns3(source.vehicle_id, target.vehicle_id, self.max_packet_size, subchannel_start, subchannel_num)
             volume -= self.max_packet_size
 
-        self.communication_requests.append({
-            "source": source.vehicle_id,
-            "target": target.vehicle_id,
-            "size": volume,
-            # bytes
-        })
+        self.send_cams_via_ns3(source.vehicle_id, target.vehicle_id, volume, subchannel_start, subchannel_num)
 
         return True
     
+    def send_cams_via_ns3(self, src_id, tgt_id, volume: float, subchannel_start: int = -1, subchannel_num: int = 0):
+        use_default_subchannel = subchannel_start == -1 or subchannel_num == 0
+        if use_default_subchannel:
+            self.communication_requests.append({
+                "source": src_id,
+                "target": tgt_id,
+                "size": volume, # bytes
+            })
+        else:
+            self.communication_requests.append({
+                "source": src_id,
+                "target": tgt_id,
+                "size": volume, # bytes
+                "sc_start": subchannel_start,
+                "sc_num": subchannel_num
+            })
+            
     def get_all_received_cams(self):
         return self.bridge.received_cams.copy()
     
@@ -162,7 +169,8 @@ class NetworkManager:
         cams = self.bridge.received_cams.get(receiver_id, None)
         if cams:
             cam = cams.pop(sender_id, None)
-            self.analyze_ns3_result(cam)
+            if cam:
+                self.analyze_ns3_result(cam)
             self.bridge.received_cams[receiver_id] = cams
 
     def analyze_ns3_result(self, cam):
@@ -176,7 +184,7 @@ class NetworkManager:
             self.analyze_ns3_result(cam)
 
     def allocate_resource(self, source, target, volume: float,
-                        subchannel: int):
+                        subchannel_start: int, subchannel_num: int):
         """
         Allocate resources for a communication request and calculate the required number of time slots.
         
@@ -193,7 +201,7 @@ class NetworkManager:
             ValueError: If the maximum interference threshold is exceeded.
         """
         # 1. Calculate interference at receiver from OTHER transmitters
-        interference = self.calculate_interference(subchannel, target)
+        interference = self.calculate_interference(subchannel_start, target)
         
         # 2. Calculate our signal's contribution to receiver
         our_signal = utils.get_interference_contribution(source, target)
@@ -202,7 +210,7 @@ class NetworkManager:
         sinr = utils.calculate_sinr(our_signal, interference, target.noise_level)
         
         # 4. Verify interference threshold
-        logger.debug(f"signal power: {our_signal}, {interference}, {target.noise_level} in subchannel {subchannel}")
+        logger.debug(f"signal power: {our_signal}, {interference}, {target.noise_level} in subchannel {subchannel_start}-{subchannel_start + subchannel_num -1}")
         logger.info(f"sinr: {sinr}")
         if sinr < self.min_sinr_threshold: 
             # raise ResourceConflictError("SINR too low for reliable communication.")
@@ -211,7 +219,7 @@ class NetworkManager:
         
         # 5. Determine data rate and time slots needed
         data_rate = utils.calculate_available_data_rate(
-            self.subchannel_bandwidth,
+            self.subchannel_bandwidth * subchannel_num,
             sinr,
         ) / 8 #(bit to byte)
         logger.info(f"data rate: {data_rate}")
@@ -221,7 +229,8 @@ class NetworkManager:
         
         # Record allocation
         end_time_slot = self.current_time_slot + time_slots
-        self.active_allocations[subchannel].add((source.vehicle_id, target.vehicle_id, end_time_slot))
+        for sc in range(subchannel_start, subchannel_start + subchannel_num):
+            self.active_allocations[sc].add((source.vehicle_id, target.vehicle_id, end_time_slot))
 
         self._record_transmission_latency(transmission_delay)
         # # Update communication stats (assume 'upload' type for now)

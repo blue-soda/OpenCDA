@@ -56,6 +56,7 @@ class CarlaNs3Bridge:
         try:
             self.receiver_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             self.receiver_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+            self.receiver_socket.setsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF, 1024 * 1024)
             self.receiver_socket.bind((self.ns3_host, self.ns3_recv_port))
             self.receiver_socket.listen(1)
             client_socket, addr = self.receiver_socket.accept()
@@ -106,9 +107,11 @@ class CarlaNs3Bridge:
                                             self.received_cams[receiver_id][sender_id] = cam
 
                         except json.JSONDecodeError:
+                            print("Received invalid JSON message from NS-3")
                             pass
                     # client_socket.close()
                 except socket.error:
+                    print("Socket error while receiving data from NS-3")
                     break
         except Exception as e:
             logger.error(f"Error in end signal listener: {e}")
