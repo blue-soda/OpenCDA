@@ -20,6 +20,7 @@ class CarlaNs3Bridge:
         self.reconnect_thread = None
         self.receiver_thread = None
         self.received_cams = {}
+        self.lock = threading.Lock() # Lock for thread-safe operations
         self.combine_threshold_ms = 10  # Time threshold to combine messages from the same sender (in milliseconds)
 
     def _connect(self) -> bool:
@@ -52,73 +53,137 @@ class CarlaNs3Bridge:
             self.reconnect_thread.start()
 
     def _listen_for_messages(self):
-        """Listen for messages from ns-3"""
-        try:
-            self.receiver_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            self.receiver_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-            self.receiver_socket.setsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF, 1024 * 1024)
-            self.receiver_socket.bind((self.ns3_host, self.ns3_recv_port))
-            self.receiver_socket.listen(1)
-            client_socket, addr = self.receiver_socket.accept()
-            while self.running:
-                try:
-                    data = client_socket.recv(1024)
-                    if data:
-                        try:
-                            message = json.loads(data.decode('utf-8'))
-                            if message.get("type") == "simulation_end":
-                                logger.info("Received simulation end signal from NS-3")
-                                self.running = False
-                                break
-                            elif message.get("type") == "cam_received":
-                                receiver_id = message.get("receiver_id")
-                                sender_id = message.get("sender_id")
-                                packet_size = message.get("packet_size")
-                                receive_timestamp = message.get("receive_timestamp")
-                                send_timestamp = message.get("send_timestamp")
-                                logger.info(f"Info from NS-3: Vehicle {receiver_id} received msg of {packet_size} bytes from Vehicle {sender_id}, " +
-                                            f"msg sent at {send_timestamp}, received at {receive_timestamp}")
-                                print(f"Info from NS-3: Vehicle {receiver_id} received msg of {packet_size} bytes from Vehicle {sender_id}, " +
-                                            f"msg sent at {send_timestamp}, received at {receive_timestamp} " +
-                                            f"delay: {receive_timestamp - send_timestamp} ms")
-                                if receiver_id not in self.received_cams:
-                                    self.received_cams[receiver_id] = {sender_id: message}
-                                else:
-                                    if sender_id not in self.received_cams[receiver_id]:
-                                        self.received_cams[receiver_id][sender_id] = message
-                                    else:
-                                        #combine messages if multiple received
-                                        cam = self.received_cams[receiver_id][sender_id]
-                                        cam_send_timestamp = cam.get("send_timestamp")
-                                        if abs(send_timestamp - cam_send_timestamp) > self.combine_threshold_ms:
-                                            # treat as separate messages if time difference exceeds threshold
-                                            self.received_cams[receiver_id][sender_id] = message
-                                            logger.info(f"New separate msg for Vehicle {receiver_id} from Vehicle {sender_id} due to time gap.")
-                                            print(f"New separate msg for Vehicle {receiver_id} from Vehicle {sender_id} due to time gap.")
-                                        else:
-                                            # combine messages
-                                            cam["packet_size"] += packet_size
-                                            logger.info(f"Combined msg for Vehicle {receiver_id} from Vehicle {sender_id}, total size: {cam['packet_size']} bytes")
-                                            print(f"Combined msg for Vehicle {receiver_id} from Vehicle {sender_id}, total size: {cam['packet_size']} bytes \n" + 
-                                                f"1 send timestamp: {cam['send_timestamp']}, receive timestamp: {cam['receive_timestamp']}, delay: {cam['receive_timestamp'] - cam.get('send_timestamp')} ms \n" + 
-                                                f"2 send timestamp: {message.get('send_timestamp')}, receive timestamp: {receive_timestamp}, delay: {receive_timestamp - message.get('send_timestamp')} ms \n" + 
-                                                f"Total delay : {receive_timestamp - cam.get('send_timestamp')} ms")
-                                            cam["receive_timestamp"] = receive_timestamp
-                                            self.received_cams[receiver_id][sender_id] = cam
+            """Listen for messages from ns-3 (fixed:粘包/拆包、资源泄漏、超时处理)"""
+            self.running = True
+            incomplete_data = b""  # 缓存不完整的消息数据
+            try:
+                # 创建套接字并配置
+                self.receiver_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                self.receiver_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+                self.receiver_socket.setsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF, 1024 * 1024)
+                self.receiver_socket.bind((self.ns3_host, self.ns3_recv_port))
+                self.receiver_socket.listen(1)
+                self.receiver_socket.settimeout(10.0)  # 监听超时，避免永久阻塞
+                logger.info(f"Listening for NS-3 connections on {self.ns3_host}:{self.ns3_recv_port}")
 
-                        except json.JSONDecodeError:
-                            print("Received invalid JSON message from NS-3")
-                            pass
-                    # client_socket.close()
-                except socket.error:
-                    print("Socket error while receiving data from NS-3")
-                    break
-        except Exception as e:
-            logger.error(f"Error in end signal listener: {e}")
-        finally:
-            client_socket.close()
-            if self.receiver_socket:
-                self.receiver_socket.close()
+                # 等待NS-3连接
+                try:
+                    self.client_socket, addr = self.receiver_socket.accept()
+                    logger.info(f"Connected to NS-3 at {addr}")
+                    print(f"Connected to NS-3 at {addr}")
+                    self.client_socket.settimeout(5.0)  # 接收超时
+                except socket.timeout:
+                    logger.error("Timeout waiting for NS-3 connection")
+                    print("Timeout waiting for NS-3 connection")
+                    return
+
+                while self.running:
+                    try:
+                        # 读取数据（处理粘包/拆包）
+                        chunk = self.client_socket.recv(4096)  # 增大缓冲区，减少调用次数
+                        if not chunk:  # 连接断开
+                            logger.warning("NS-3 closed the connection")
+                            print("NS-3 closed the connection")
+                            break
+
+                        incomplete_data += chunk
+                        # 按换行符分割消息（NS-3需在每条JSON后加\n）
+                        while b"\n\r" in incomplete_data:
+                            msg_bytes, incomplete_data = incomplete_data.split(b"\n", 1)
+                            if not msg_bytes:
+                                continue
+                            # 解析JSON
+                            try:
+                                message = json.loads(msg_bytes.decode('utf-8'))
+                                self._process_message(message)
+                            except json.JSONDecodeError as e:
+                                logger.error(f"Invalid JSON from NS-3: {e}, raw data: {msg_bytes}")
+                                print(f"Invalid JSON from NS-3: {e}")
+                                continue
+
+                    except socket.timeout:
+                        continue  # 超时无数据，继续循环
+                    except socket.error as e:
+                        logger.error(f"Socket error: {e}")
+                        print(f"Socket error: {e}")
+                        break
+
+            except Exception as e:
+                logger.error(f"Fatal error in listener: {e}")
+                print(f"Fatal error in listener: {e}")
+            finally:
+                # 安全关闭套接字
+                if self.client_socket:
+                    try:
+                        self.client_socket.shutdown(socket.SHUT_RDWR)
+                        self.client_socket.close()
+                    except:
+                        pass
+                if self.receiver_socket:
+                    self.receiver_socket.close()
+                self.running = False
+                logger.info("Listener stopped")
+                print("Listener stopped")
+
+    def _process_message(self, message: Dict[str, Any]):
+        """Process a single NS-3 message (thread-safe)"""
+        with self.lock:  # 保护共享数据
+            msg_type = message.get("type")
+            if msg_type == "simulation_end":
+                logger.info("Received simulation end signal from NS-3")
+                print("Received simulation end signal from NS-3")
+                self.running = False
+            elif msg_type == "cam_received":
+                self._process_cam_message(message)
+
+    def _process_cam_message(self, message: Dict[str, Any]):
+        """Process CAM received message (thread-safe)"""
+        receiver_id = message.get("receiver_id")
+        sender_id = message.get("sender_id")
+        packet_size = message.get("packet_size", 0)
+        receive_timestamp = message.get("receive_timestamp", 0)
+        send_timestamp = message.get("send_timestamp", 0)
+
+        if not all([receiver_id, sender_id, receive_timestamp, send_timestamp]):
+            logger.warning("Invalid CAM message: missing fields")
+            return
+
+        # 打印日志
+        delay = receive_timestamp - send_timestamp
+        logger.info(
+            f"NS-3 Info: Vehicle {receiver_id} received {packet_size} bytes from {sender_id}, "
+            f"delay: {delay}ms (send: {send_timestamp}, receive: {receive_timestamp})"
+        )
+        print(
+            f"NS-3 Info: Vehicle {receiver_id} received {packet_size} bytes from {sender_id}, "
+            f"delay: {delay}ms (send: {send_timestamp}, receive: {receive_timestamp})"
+        )
+
+        # 消息合并逻辑
+        if receiver_id not in self.received_cams:
+            self.received_cams[receiver_id] = {sender_id: message.copy()}
+        else:
+            sender_dict = self.received_cams[receiver_id]
+            if sender_id not in sender_dict:
+                sender_dict[sender_id] = message.copy()
+            else:
+                existing_msg = sender_dict[sender_id]
+                existing_send_ts = existing_msg.get("send_timestamp", 0)
+                if abs(send_timestamp - existing_send_ts) > self.combine_threshold_ms:
+                    # 新消息：时间差超过阈值
+                    sender_dict[sender_id] = message.copy()
+                    logger.info(f"New message for {receiver_id}->{sender_id} (time gap)")
+                    print(f"New message for {receiver_id}->{sender_id} (time gap)")
+                else:
+                    # 合并消息
+                    existing_msg["packet_size"] += packet_size
+                    existing_msg["receive_timestamp"] = receive_timestamp
+                    logger.info(
+                        f"Combined message for {receiver_id}->{sender_id}, total size: {existing_msg['packet_size']} bytes"
+                    )
+                    print(
+                        f"Combined message for {receiver_id}->{sender_id}, total size: {existing_msg['packet_size']} bytes"
+                    )
 
     def _start_receiver(self):
         """Start threads to receive messages from ns-3"""
