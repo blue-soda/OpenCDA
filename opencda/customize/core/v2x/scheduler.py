@@ -10,20 +10,11 @@ class Scheduler(ABC):
     Abstract base class for resource scheduling algorithms.
     """
 
-    def __init__(self, network_manager: 'NetworkManager', config={}):
+    def __init__(self, cav_world, config={}):
         # Use weakref to avoid circular references
-        self._network_manager = weakref.ref(network_manager)
+        self.cav_world = cav_world
+        self.network_manager = cav_world.network_manager
         self.config = config
-
-    @property
-    def network_manager(self) -> Optional['NetworkManager']:
-        """
-        Get the NetworkManager instance (or None if it has been garbage collected).
-
-        Returns:
-            Optional[NetworkManager]: The NetworkManager instance.
-        """
-        return self._network_manager()
 
     @abstractmethod
     def schedule(self, source, target, volume: float) -> bool:

@@ -15,6 +15,7 @@ class CarlaNs3Bridge:
         self.ns3_recv_port = ns3_recv_port
         self.socket = None
         self.receiver_socket = None
+        self.client_socket = None
         self.connected = False
         self.running = True
         self.reconnect_thread = None
@@ -224,6 +225,8 @@ class CarlaNs3Bridge:
             self.socket.close()
         if self.receiver_socket:
             self.receiver_socket.close()
+        if self.client_socket:
+            self.client_socket.close()
         if self.reconnect_thread:
             self.reconnect_thread.join(timeout=1.0)
         if self.receiver_thread:

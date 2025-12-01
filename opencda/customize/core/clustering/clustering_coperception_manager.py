@@ -16,7 +16,7 @@ class ClusteringCoperceptionManager(CoperceptionManager):
     def get_coperception_cavs_dict(self):
         if self.communicate_inside_cluster:
             data_inside_cluster = {}
-            vms = self.v2x_manager.get_cluster_members()['members']
+            vms = self.v2x_manager.get_cluster_member_vms()['members']
             for vid, vm in vms.items():
                 v2x_manager = vm.v2x_manager
                 data_inside_cluster.update({vid: {'v2x_manager': v2x_manager, 'vehicle_manager': vm}})

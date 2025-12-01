@@ -1,9 +1,8 @@
 
-from opencda.customize.core.v2x.scheduler import DefaultScheduler, InterferenceAwareScheduler, RoundRobinScheduler
-from opencda.customize.core.clustering.clustering_scheduler import ClusterBasedScheduler
-from opencda.core.common.cav_world import CavWorld
+from opencda.customize.core.v2x.scheduler import *
+from opencda.customize.core.clustering.clustering_scheduler import *
 
-def build_scheduler(scheduler_name, config={}):
+def build_scheduler(scheduler_name, cav_world, config={}):
     """
     Factory method to build a scheduler object given its name.
     Args:
@@ -19,15 +18,13 @@ def build_scheduler(scheduler_name, config={}):
     scheduler_name = scheduler_name.lower()
 
     if scheduler_name == 'default':
-        return DefaultScheduler(CavWorld.network_manager, config)
+        return DefaultScheduler(cav_world, config)
     elif scheduler_name == 'roundrobin':
-        return RoundRobinScheduler(CavWorld.network_manager, config)
+        return RoundRobinScheduler(cav_world, config)
     elif scheduler_name == 'greedy':
-        return InterferenceAwareScheduler(CavWorld.network_manager, config)
-    elif scheduler_name == 'clusterbased':
-        return ClusterBasedScheduler(CavWorld.network_manager, config)
-    # elif scheduler_name == 'random':
-    #     return RandomScheduler(CavWorld.network_manager)
+        return InterferenceAwareScheduler(cav_world, config)
+    elif scheduler_name == 'wcgc':
+        return WCGCScheduler(cav_world, config)
     else:
         raise ValueError(f"Unknown scheduler name: {scheduler_name}")
 

@@ -1,6 +1,7 @@
 from opencda.customize.core.v2x.scheduler import Scheduler
 import networkx as nx
-from typing import Dict, List, Tuple, Optional
+from typing import Dict, List, Tuple, Optional, Set
+from collections import defaultdict
 import math
 from opencda.customize.core.v2x.network_manager import NetworkManager, ResourceConflictError
 import opencda.customize.core.v2x.utils as utils
@@ -9,259 +10,158 @@ import matplotlib.colors as mcolors
 from matplotlib import cm
 from opencda.log.logger_config import logger
 from random import uniform
+import numpy as np
+from opencda.customize.core.v2x.utils import *
 
-class ClusterBasedScheduler(Scheduler):
+class WCGCScheduler(Scheduler):
     """
     Scheduler based on cluster-based weighted conflict graph coloring.
     """
-    def __init__(self, network_manager: 'NetworkManager', config={}):
-        super().__init__(network_manager, config)
+    def __init__(self, cav_world, config={}):
+        super().__init__(cav_world, config)
 
-        # Interference model parameters
-        self.I_max = 1.0  # Maximum possible interference contribution
-        self.eta = 2.0  # Path loss exponent (environment-specific)
+        self.subchannels = list(range(self.network_manager.subchannel_num))
+        self.sinr_threshold = config.get('sinr_threshold', 6)  # dB
+        self.max_power = config.get('max_power', 20)  # dBm
+        self.link_weights: Dict[Tuple[int, int], float] = {}  # {(source_id, target_id): 权重}
+        self.conflict_graph: Dict[Tuple[int, int], Set[Tuple[int, int]]] = defaultdict(set)  # 冲突图邻接表
+        self.channel_allocation: Dict[Tuple[int, int], int] = {}  # {(source, target): 子信道}
+        self.power_allocation: Dict[Tuple[int, int], float] = {}  # {(source, target): 功率(dBm)}
 
-        self.conflict_distance = config.get('conflict_distance', 70) # meters
-        self.d_th = self.conflict_distance  # Distance threshold for interference (meters)
-        self.M = config.get('M', 5)
-        self.subchannel_num = config.get('subchannel_num', 20)
-        self.offset = int(uniform(0.0, 1.0) * self.subchannel_num)
-
-        # Internal scheduler state
-        self.cluster_state = {}  # Stores members and neighbors from the cluster
-        self.weighted_conflict_graph = nx.DiGraph()  # Vehicle-level interference graph
-        self.conflict_graph = nx.Graph()  # Communication-pair-level conflict graph
-        self.communication_edges = set()  # Set of valid communication links (i → j)
-        self.coloring = {}  # Mapping of communication edges → subchannel (color)
-
-    def update_scheduler(self, cluster_state: Dict):
-        """
-        Main interface: update the scheduler with current cluster state
-        and perform subchannel assignment.
-
-        Args:
-            cluster_state (Dict): Cluster info (members, neighbors, positions)
-        """
-        for key, value in cluster_state.items():
-            for vid, vm in value.items():
-                vm = vm.v2x_manager
-        self.cluster_state = cluster_state
-
-        # Step 1: Build vehicle-level interference graph based on wireless model
-        self.build_weighted_conflict_graph()
-
-        # Step 2: Build conflict graph between communication pairs
-        self.weighted_coloring_upload_scheduling()
-
-        # Step 3: Perform graph coloring to assign subchannels
-        # self.assign_subchannels()
-
-        # self.draw_weighted_conflict_graph()
-
-    def build_weighted_conflict_graph(self):
-        """
-        Build a directed graph where a directed edge (i → j) indicates
-        that vehicle i will cause interference to vehicle j if it transmits.
-
-        The edge weight quantifies how severe the interference is and may
-        be used to prioritize certain links or assess impact.
-
-        Args:
-            cluster_state (Dict): Contains 'members' and 'neighbors' (vehicles)
-        """
-        self.weighted_conflict_graph = nx.DiGraph()
-        members = self.cluster_state['members']
-        neighbors = self.cluster_state['neighbors']
-        self.cluster_head = self.cluster_state['cluster_head'].vehicle_id
-
-        # Add all vehicle nodes to the graph
-        for vid in set(list(members.keys()) + list(neighbors.keys())):
-            self.weighted_conflict_graph.add_node(vid)
-
-        # Handle interference between member vehicles
-        for i_id, i in members.items():
-            for j_id, j in members.items():
-                if i_id == j_id:
-                    continue
-                # if self.is_conflicting(i, j):
-                d_ij = utils.calculate_distance(i, j)
-                I_ij_k = utils.get_interference_contribution(i, j)
-                edge_weight = (d_ij / self.d_th) * (I_ij_k / self.I_max)
-                self.weighted_conflict_graph.add_edge(i_id, j_id, weight=edge_weight)
-
-        # Handle interference from members to external neighbors
-        for i_id, i in members.items():
-            for j_id, j in neighbors.items():
-                if j_id in members:
-                    continue
-                if self.is_conflicting(i, j):
-                    d_ij = utils.calculate_distance(i, j)
-                    edge_weight = (d_ij ** self.eta) / (self.d_th ** self.eta)
-                    self.weighted_conflict_graph.add_edge(i_id, j_id, weight=edge_weight)
-
-    def is_conflicting(self, sender, receiver) -> bool:
-        """
-        Determine if transmission from sender will cause too much interference
-        to the receiver, based on the path-loss model.
-
-        Returns:
-            bool: True if interference >= threshold, meaning conflict
-        """
-        distance = utils.calculate_distance(sender, receiver)
-        return distance <= self.conflict_distance
-
-    def weighted_coloring_upload_scheduling(self, eps=0.0):
-        """
-        Assign vehicles to different subchannels using graph coloring.
-        Each vehicle must occupy a different subchannel.
-        There are exactly M subchannels available.
-        Using greedy coloring from networkx.
-
-        Args:
-            eps (float): Interference tolerance (not used directly here since strict 1-to-1 mapping).
-        """
-
-        uploads = [vid for vid in self.cluster_state['members'].keys() if vid != self.cluster_head]
+    def _collect_global_links(self) -> List[Tuple[int, int, float]]:
+        """收集全网链路并计算权重"""
+        global_links = []
+        nm = self.network_manager
         
-        # Step 1: Build the effective conflict graph among uploads
-        G = nx.Graph()
-
-        G.add_nodes_from(uploads)
-
-        for i in uploads:
-            for j in uploads:
-                if i == j:
+        for vehicle_id, vm in self.cav_world.get_vehicle_managers().items():
+            cluster_state = vm.v2x_manager.cluster_state
+            
+            # 簇内上行链路（成员→簇头）
+            if cluster_state['cluster_head'] is not None and vehicle_id == cluster_state['cluster_head']:
+                # 收集簇头信息
+                ch_id = cluster_state['cluster_head']
+                ch_v2x = nm.vehicles.get(ch_id)
+                if not ch_v2x:
                     continue
-                # If interference between i and j is nonzero, add an undirected edge
-                w = 0
-                if self.weighted_conflict_graph.has_edge(i, j):
-                    w += self.weighted_conflict_graph[i][j]['weight']
-                if self.weighted_conflict_graph.has_edge(j, i):
-                    w += self.weighted_conflict_graph[j][i]['weight']
-                if w > eps:
-                    G.add_edge(i, j, weight=w)
+                for member_id, (data_vol, g) in cluster_state['members'].items():
+                    member_v2x = nm.vehicles.get(member_id)
+                    if not member_v2x:
+                        continue
+                    # 权重 = 数据量 × 感知贡献系数 × 可用数据率（链路质量）
+                    distance = calculate_distance(member_v2x, ch_v2x)
+                    channel_gain = calculate_channel_gain(distance)
+                    tx_power_w = 10 ** (member_v2x.tx_power / 10) / 1000
+                    sinr_linear = (tx_power_w * channel_gain) / ch_v2x.noise_power
+                    data_rate = calculate_available_data_rate(self.config.get('subchannel_bandwidth', 1) * 1e6, sinr_linear)
+                    weight = data_vol * g * (data_rate / 1e6)  # 归一化数据率
+                    self.link_weights[(member_id, ch_id)] = weight
+                    global_links.append((member_id, ch_id, weight))
+            
+                # 簇间下行广播链路（簇头→邻居）
+                weight = self._calc_broadcast_weight(vm.v2x_manager)
+                self.link_weights[(vehicle_id, -1)] = weight
+                global_links.append((vehicle_id, -1, weight))
+        
+        return global_links
+    
+    def _calc_broadcast_weight(self, ch_v2x) -> float:
+        """计算广播链路权重"""
+        cluster_state = ch_v2x.cluster_state
+        avg_g = np.mean([g for _, g in cluster_state['members'].values()]) if cluster_state['members'] else 1.0
+        # 广播链路权重 = 簇头优先级 × 平均贡献系数 × 覆盖邻居数
+        return cluster_state['priority_score'] * avg_g * len(cluster_state['neighbors'])
 
-        # Step 2: Perform greedy coloring
-        # strategy: smallest_last, largest_first, random_sequential, saturation_largest_first
-        # smallest_last tends to use fewer colors
-        coloring_result = nx.coloring.greedy_color(G, strategy='smallest_last')
+    def _build_conflict_graph(self, global_links: List[Tuple[int, int, float]]):
+        """基于SINR阈值构建冲突图"""
+        nm = self.network_manager
+        self.conflict_graph.clear()
+        
+        for i, (s1_id, t1_id, _) in enumerate(global_links):
+            s1_v2x = nm.vehicles.get(s1_id)
+            t1_v2x = nm.vehicles.get(t1_id) if t1_id != -1 else s1_v2x  # 广播目标为自身
+            if not s1_v2x or not t1_v2x:
+                continue
+            
+            for j, (s2_id, t2_id, _) in enumerate(global_links):
+                if i >= j or (s1_id == s2_id and t1_id == t2_id):
+                    continue
+                s2_v2x = nm.vehicles.get(s2_id)
+                t2_v2x = nm.vehicles.get(t2_id) if t2_id != -1 else s2_v2x
+                if not s2_v2x or not t2_v2x:
+                    continue
+                
+                # 判断链路(s1→t1)与(s2→t2)是否冲突
+                if is_link_conflict(s1_v2x, t1_v2x, s2_v2x, t2_v2x, self.sinr_threshold_dB):
+                    self.conflict_graph[(s1_id, t1_id)].add((s2_id, t2_id))
+                    self.conflict_graph[(s2_id, t2_id)].add((s1_id, t1_id))
 
-        logger.debug(f"{self.cluster_head}'s coloring_result: {coloring_result}")
-        # Step 3: Check if we used too many colors
-        if len(coloring_result) == 0:
-            max_color_used = 1
-        else:
-            max_color_used = max(coloring_result.values()) + 1  # from 0
-        if max_color_used > self.M:
-            logger.warning(f"Cannot schedule! Required subchannels ({max_color_used}) > available M ({self.M}).")
+    def _weighted_graph_coloring(self):
+        """加权冲突图着色"""
+        sorted_links = sorted(self.link_weights.keys(), key=lambda x: self.link_weights[x], reverse=True)
+        self.channel_allocation.clear()
+        
+        for link in sorted_links:
+            neighbor_channels = set()
+            for neighbor_link in self.conflict_graph[link]:
+                if neighbor_link in self.channel_allocation:
+                    neighbor_channels.add(self.channel_allocation[neighbor_link])
+            available_channels = [ch for ch in self.subchannels if ch not in neighbor_channels]
+            self.channel_allocation[link] = available_channels[0] if available_channels else -1
 
-        # Step 4: Save formatting: (u, head) -> color
-        coloring = dict()
-        for u, color in coloring_result.items():
-            coloring[(u, self.cluster_head)] = color
-
-        self.coloring = coloring
-
-
-    def assign_subchannels(self):
-        """
-        Perform greedy graph coloring on the link conflict graph,
-        assigning a color (subchannel) to each communication link node.
-        """
-        self.coloring = nx.coloring.greedy_color(self.conflict_graph, strategy="largest_first")
-        return self.coloring  # {(u, v): subchannel_id}
+    def _power_control(self):
+        """功率控制：满足SINR阈值的最小功率"""
+        nm = self.network_manager
+        self.power_allocation.clear()
+        
+        for (s_id, t_id), ch in self.channel_allocation.items():
+            if ch == -1:
+                continue
+            s_v2x = nm.vehicles.get(s_id)
+            t_v2x = nm.vehicles.get(t_id) if t_id != -1 else s_v2x
+            if not s_v2x or not t_v2x:
+                continue
+            
+            # 计算同信道干扰总和
+            interf_total = 0.0
+            for (s2_id, t2_id), ch2 in self.channel_allocation.items():
+                if ch2 != ch or (s2_id == s_id and t2_id == t_id):
+                    continue
+                s2_v2x = nm.vehicles.get(s2_id)
+                if not s2_v2x:
+                    continue
+                interf_total += get_interference_contribution(s2_v2x, t_v2x)
+            
+            # 计算所需最小发射功率（线性域）
+            sinr_linear_threshold = 10 ** (self.sinr_threshold_dB / 10)
+            required_signal_power = sinr_linear_threshold * (interf_total + t_v2x.noise_power)
+            distance = calculate_distance(s_v2x, t_v2x)
+            channel_gain = calculate_channel_gain(distance, s_v2x.path_loss_exponent)
+            min_tx_power_w = required_signal_power / channel_gain if channel_gain > 0 else s_v2x.tx_power
+            
+            # 限制最大功率
+            max_tx_power_w = 10 ** (s_v2x.tx_power / 10) / 1000
+            self.power_allocation[(s_id, t_id)] = min(min_tx_power_w, max_tx_power_w)
 
     def schedule(self, source, target, volume: float) -> bool:
-        """
-        Query if the communication from sender_id to receiver_id has been scheduled
-        (i.e., a subchannel assigned).
-        """
-        key = (source.vehicle_id, target.vehicle_id)
-        # Step 1: Check if the link was already assigned a color during coloring
-        if key not in self.coloring:
-            logger.error(f"key {key} not in self.coloring {self.coloring}")
-            return -1, -1, -1, False  # communication edge not activated
-        # Step 2: Attempt to allocate resource using the coloring result (subchannel)
-        subchannel = (self.coloring[key] + self.offset) % self.subchannel_num
-
-        # try:
-        # Call the underlying resource manager to allocate time slot and subchannel
-        success = self.network_manager.communicate(
-            source, target, volume, subchannel, 1 
-        )
-
-        # if start_slot == 100: #debug
-        #     self.visualize_weighted_conflict_graph()
-        #     self.visualize_coloring()
-
-        if not success: #Reset the offset if failed
-            self.offset = int(uniform(0.0, 1.0) * self.subchannel_num)
-
-        return success
+        """执行调度并调用NS3接口"""
+        # 全局链路收集与冲突图构建
+        global_links = self._collect_global_links()
+        self._build_conflict_graph(global_links)
+        self._weighted_graph_coloring()
+        self._power_control()
         
-
-    def visualize_weighted_conflict_graph(self):
-        """
-        Visualize and save the graph.
-        """
-        filename='weighted_conflict_graph.png'
-        plt.figure(figsize=(10, 8))
-        pos = nx.spring_layout(self.weighted_conflict_graph, seed=42)
-
-        # Draw nodes
-        nx.draw_networkx_nodes(self.weighted_conflict_graph, pos, node_size=500, node_color='lightblue')
-        nx.draw_networkx_labels(self.weighted_conflict_graph, pos)
-        # Edge weights
-        edge_labels = nx.get_edge_attributes(self.weighted_conflict_graph, 'weight')
-        # Draw edges with arrows
-        nx.draw_networkx_edges(self.weighted_conflict_graph, pos, edge_color='gray', arrows=True)
-        nx.draw_networkx_edge_labels(self.weighted_conflict_graph, pos, edge_labels={k: f'{v:.2f}' for k, v in edge_labels.items()})
-        plt.title("Weighted Conflict Graph (Vehicle-level)")
-        plt.axis('off')
-        plt.tight_layout()
-        plt.savefig(filename)
-        plt.close()
-
-    def visualize_coloring(self):
-        """
-        Visualize the result of self.coloring on the full weighted_conflict_graph.
-        Nodes without assigned color will be shown in gray.
-        """
-        if not hasattr(self, 'coloring'):
-            print("No coloring found! Please run weighted_coloring_upload_scheduling first.")
-            return
-
-        # Use the full weighted conflict graph
-        G = self.weighted_conflict_graph
-
-        # Extract node -> color mapping
-        node_colors = dict()
-        for (v, head), color in self.coloring.items():
-            node_colors[v] = color
-
-        # Prepare color mapping
-        unique_color_ids = sorted(set(node_colors.values()))
-        cmap = plt.get_cmap('tab20')  # Colormap with 20 distinct colors
-        color_map = {color_id: cmap(i / max(1, len(unique_color_ids)-1)) for i, color_id in enumerate(unique_color_ids)}
-
-        # Generate color list for all nodes
-        node_color_list = []
-        for v in G.nodes():
-            if v in node_colors:
-                node_color_list.append(color_map[node_colors[v]])
-            else:
-                node_color_list.append('lightgray')  # Default color for unassigned nodes
-
-        # Plot the graph
-        plt.figure(figsize=(8, 6))
-        pos = nx.spring_layout(G, seed=42)  # Layout positions
-
-        nx.draw_networkx_nodes(G, pos, node_color=node_color_list, node_size=500, alpha=0.9)
-        nx.draw_networkx_edges(G, pos, edge_color='gray', alpha=0.5)
-        nx.draw_networkx_labels(G, pos, labels={v: str(v) for v in G.nodes()}, font_color='black')
-
-        plt.title("Weighted Upload Scheduling Result (Full Graph)")
-        plt.axis('off')
-        # plt.show()
-        plt.savefig('coloring.png')
-        plt.close()
+        # 获取当前链路分配结果
+        link = (source.id, target.id if target else -1)
+        if link not in self.channel_allocation or self.channel_allocation[link] == -1:
+            return False
+        
+        # 调用NS3通信接口（转换功率为dBm）
+        ch = self.channel_allocation[link]
+        tx_power_w = self.power_allocation.get(link, 10 ** (source.tx_power / 10) / 1000)
+        tx_power_dBm = 10 * math.log10(tx_power_w * 1000) if tx_power_w > 0 else source.tx_power
+        
+        success = self.network_manager.communicate(
+            self, source, target, volume,
+            subchannel_start=ch, subchannel_num=1
+        )
+        return success

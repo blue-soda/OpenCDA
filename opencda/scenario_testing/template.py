@@ -203,7 +203,7 @@ def draw_string(debug_helper, cav):
     color = cav.v2x_manager.rgb
 
     if 'cluster' in applications:
-        cluster_head = str(cav.v2x_manager.cluster_state['cluster_head'])
+        cluster_head = str(cav.v2x_manager.cluster_state['head_id'])
     else:
         cluster_head = ""
 
@@ -226,11 +226,12 @@ def check_is_out_sight(transform, cav):
         logger.debug(f"bg_vehicle {cav.vehicle.id} is back.")
 
 def update_cluster(all_cavs):
-    for cav in all_cavs:
-        cav.join_cluster()
-    for cav in all_cavs:
-        cav.elect_leader()    
-    for cav in all_cavs:
-        cav.check_cluster_leader()                      
-    for cav in all_cavs:
-        cav.check_cluster_members()     
+    pass
+    # for cav in all_cavs:
+    #     cav.join_cluster()
+    # for cav in all_cavs:
+    #     cav.elect_leader()    
+    # for cav in all_cavs:
+    #     cav.check_cluster_leader()                      
+    # for cav in all_cavs:
+    #     cav.check_cluster_members()     

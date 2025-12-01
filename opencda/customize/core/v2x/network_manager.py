@@ -25,7 +25,7 @@ class NetworkManager:
 
     def __init__(self, cav_world, config):
         self.cav_world = cav_world
-        self.subchannel_num = config.get("subchannel_num", 25)
+        self.subchannel_num = config.get("subchannel_num", 10)
         self.subchannel_bandwidth = config.get("subchannel_bandwidth", 0.180) * 1e6  #Hz
         # self.max_interference = config.get("max_interference", 0.2)
         self.min_sinr_threshold = config.get("min_sinr_threshold", 3) #dB

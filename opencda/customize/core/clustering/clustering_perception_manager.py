@@ -172,7 +172,7 @@ class ClusteringPerceptionManager(PerceptionManager):
         else:
             data = OrderedDict()
             if self.enable_communicate and self.v2x_manager.is_cluster_head():  # cluster head do cp
-                if ego_id in self.v2x_manager.cluster_state['members']:
+                if ego_id in self.v2x_manager.cluster_state['member_ids']:
                     ego_in_cluster = True
                     logger.debug(f"ego is in cluster {self.id}")
                 if not self.record_all_cavs and not self.is_ego and not ego_in_cluster and not self.apply_late_fusion:
@@ -227,7 +227,7 @@ class ClusteringPerceptionManager(PerceptionManager):
                     logger.debug(f"{self.id}: {len(objects_self['vehicles'])} vehicles and {len(objects_self['traffic_lights'])} traffic_lights detected from self")
 
                     buffer = (self.v2x_manager.read_buffer()) #get results from cluster head
-                    objects_cluster, cluster_head_id = buffer['objects'], buffer['source']  
+                    objects_cluster, cluster_head_id = buffer['objects'], buffer['source_id']  
                     logger.debug(f"{self.id}: {len(objects_cluster['vehicles'])} vehicles and {len(objects_cluster['traffic_lights'])} traffic_lights detected from cluster head {cluster_head_id}")
 
                     if self.enable_network:
