@@ -29,6 +29,7 @@ class CoperceptionManager:
             data = self.uploading_data
         else:
             self.all_cavs = self.get_coperception_cavs_dict()
+            logger.info(f"CoperceptionManager {self.vid} preparing data from {list(self.all_cavs.keys())} CAVs.")
             data = self.prepare_and_transform_data_from_dict(self.all_cavs, is_ego, ego_lidar_pose, use_ego_vehicles)
             self.uploading_data = data
         if not self.enable_network:

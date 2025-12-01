@@ -144,6 +144,7 @@ class ClusteringV2XManager(V2XManager):
             self._compute_local_priority()  # 仅簇头选举时计算优先级
             self._elect_cluster_head()
             self._broadcast_cluster_state()
+            logger.debug(f"Cluster Head {self.vehicle_id}, members: {self.cluster_state['member_ids']}")
 
         self._update_rgb()
 
@@ -297,6 +298,8 @@ class ClusteringV2XManager(V2XManager):
         
         if priority_list:
             priority_list.sort(reverse=True)
+            if priority_list[0][1] == self.cluster_state['head_id'] and ((len(priority_list) > 1 and priority_list[1][1] == self.cluster_state['shadow_head_id']) or len(priority_list) == 1):
+                return  # 簇头未变更
             self.cluster_state['head_id'] = priority_list[0][1]
             self.cluster_state['shadow_head_id'] = priority_list[1][1] if len(priority_list) > 1 else None
             self._broadcast_cluster_state()  # 立即同步全簇状态
@@ -336,7 +339,7 @@ class ClusteringV2XManager(V2XManager):
             return
         
         shadow_vm = self._get_v2x_manager(shadow_head_id)
-        if shadow_vm and shadow_head_id in self.cluster_state['neighbor_ids']:
+        if shadow_vm and (shadow_head_id in self.cluster_state['neighbor_ids'] or shadow_head_id == self.vehicle_id):
             self.cluster_state['head_id'] = shadow_head_id
             shadow_vm._broadcast_cluster_state()
             logger.debug(f"Vehicle {self.vehicle_id} shadow head {shadow_head_id} took over as new head.")
