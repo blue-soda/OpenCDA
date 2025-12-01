@@ -31,8 +31,8 @@ class ClusteringV2XManager(V2XManager):
             'priority_score': 0.0          # 本地优先级得分
         }
 
-     # ------------------------------
-    # 对外接口
+    # ------------------------------
+    # 对外接口: 簇状态查询
     # ------------------------------
     def is_cluster_head(self):
         return self.cluster_state['head_id'] == self.vehicle_id
@@ -78,9 +78,9 @@ class ClusteringV2XManager(V2XManager):
             'member_ids': self.cluster_state['member_ids'].copy(),
             'is_head': self.is_cluster_head()
         }
-
+    
     # ------------------------------
-    # 核心功能实现
+    # 信标数据结构
     # ------------------------------
     def beacon(self):
         """标准化信标数据结构"""
@@ -98,15 +98,15 @@ class ClusteringV2XManager(V2XManager):
             'RSSI': self._calc_rssi()
         }
 
+    # ------------------------------
+    # 对外接口: 簇状态更新
+    # ------------------------------
+
     def search(self):
         """唯一更新邻居数据的入口"""
         vehicle_manager_dict = self.cav_world.get_vehicle_managers()
         self.cluster_state['neighbor_ids'].clear()
         self.cluster_state['neighbor_data'].clear()
-
-        # 强制ego为簇头
-        if self.ego_must_be_leader and self.vehicle_id == self.cav_world.ego_id:
-            self._force_ego_as_head()
 
         for vid, vm in vehicle_manager_dict.items():
             vehicle_id = vm.vehicle.id
@@ -132,52 +132,53 @@ class ClusteringV2XManager(V2XManager):
                 self._handle_out_of_range_neighbor(vehicle_id)
 
         # 执行分簇逻辑
-        self._update_cluster_logic()
+        # self._update_cluster_logic()
 
-    def _update_cluster_logic(self):
-        """分簇核心逻辑（依赖标准化的neighbor_data）"""
+    # def _update_cluster_logic(self):
+    #     """分簇核心逻辑（依赖标准化的neighbor_data）"""
+    #     self._update_similarity()
+    #     self._update_cluster_membership()
+
+    #     if self.is_cluster_head():
+    #         self._elect_cluster_head()
+    #         logger.debug(f"Cluster Head {self.vehicle_id}, members: {self.cluster_state['member_ids']}")
+
+    #     self._sync_cluster_state()
+
+    #     self._update_rgb()
+
+    def leave_join_create_cluster(self):
         self._update_similarity()
         self._update_cluster_membership()
-        self._sync_cluster_state_with_neighbors()
-
+    
+    def elect_leader(self):
         if self.is_cluster_head():
-            self._compute_local_priority()  # 仅簇头选举时计算优先级
             self._elect_cluster_head()
-            self._broadcast_cluster_state()
-            logger.debug(f"Cluster Head {self.vehicle_id}, members: {self.cluster_state['member_ids']}")
-
+    
+    def sync_update_cluster_state(self):
+        self._sync_cluster_state()
         self._update_rgb()
 
     # ------------------------------
     # 数据一致性保障
     # ------------------------------
-    def _sync_cluster_state_with_neighbors(self):
-        """与邻居同步簇状态，确保全簇一致"""
+    def _sync_cluster_state(self):
+        """与簇头同步簇状态，确保全簇一致"""
         if not self.cluster_state['head_id']:
             return
-        
-        # 获取簇头的最新状态
         head_vm = self._get_v2x_manager(self.cluster_state['head_id'])
-        if not head_vm or (self.cluster_state['head_id'] not in self.cluster_state['neighbor_ids'] and not self.is_cluster_head()):
-            self._trigger_shadow_head_takeover()
+        if not head_vm:
             return
-        
-        # 同步簇头的状态
         head_state = head_vm.get_cluster_state()
-        self.cluster_state['head_id'] = head_state['head_id']
-        self.cluster_state['shadow_head_id'] = head_state['shadow_head_id']
-        self.cluster_state['member_ids'] = set(head_state['member_ids'])
+        self._update_cluster_state(head_state)
+
 
     def _broadcast_cluster_state(self):
         """簇头广播最新状态，强制同步所有成员"""
         for mid in self.cluster_state['member_ids']:
             member_vm = self._get_v2x_manager(mid)
             if member_vm and member_vm.vehicle_id != self.vehicle_id:
-                member_vm._update_cluster_state({
-                    'head_id': self.cluster_state['head_id'],
-                    'shadow_head_id': self.cluster_state['shadow_head_id'],
-                    'member_ids': self.cluster_state['member_ids'].copy()
-                })
+                member_vm._update_cluster_state(self.cluster_state)
 
     def _update_cluster_state(self, new_state):
         """成员接收簇头的状态更新"""
@@ -189,8 +190,7 @@ class ClusteringV2XManager(V2XManager):
     # ------------------------------
     # 优先级计算
     # ------------------------------
-    def _compute_local_priority(self):
-        """仅在簇头选举时计算优先级（唯一计算入口）"""
+    def _compute_cluster_avg_speed(self):
         member_speeds = []
         for mid in self.cluster_state['member_ids']:
             member_vm = self._get_v2x_manager(mid)
@@ -198,6 +198,15 @@ class ClusteringV2XManager(V2XManager):
                 member_speeds.append(member_vm.get_ego_speed())
         
         cluster_avg_speed = sum(member_speeds) / len(member_speeds) if member_speeds else self.get_ego_speed()
+        return cluster_avg_speed
+    
+    def _compute_local_priority(self, cluster_avg_speed=None):
+        """仅在簇头选举时计算优先级"""
+        if self.ego_must_be_leader and self.vehicle_id == self.cav_world.ego_id:
+            self.cluster_state['local_priority'] = float('inf')
+            return
+        if cluster_avg_speed is None:
+            cluster_avg_speed = self._compute_cluster_avg_speed()
         self.cluster_state['local_priority'] = ClusterAlgorithm.compute_priority_score({
             'speed': self.get_ego_speed(),
             'communication_quality': getattr(self, 'communication_quality', 1.0),
@@ -223,16 +232,13 @@ class ClusteringV2XManager(V2XManager):
             )
 
     def _update_cluster_membership(self):
-        if self.ego_must_be_leader and self.vehicle_id == self.cav_world.ego_id:
-            return
-        
         # 离开簇逻辑
         if self.cluster_state['head_id'] and not self.is_cluster_head():
             head_similarity = self.cluster_state['similarity_scores'].get(self.cluster_state['head_id'], 0)
             if head_similarity < self.params.get('eta_leave', 0.35):
                 if self.ego_must_be_leader and self.cluster_state['head_id'] == self.cav_world.ego_id:
                     if len(self.cluster_state['member_ids']) <= self.params['N_max']:
-                        logger.debug(f"{self.vehicle_id} wanted to leave ego's cluster with similarity_score {head_similarity}, but stopped")
+                        logger.debug(f"{self.vehicle_id} wanted to leave ego's cluster with similarity_score {head_similarity:.3f}, but stopped")
                         return
                 self._leave_cluster()
                 logger.debug(f"Vehicle {self.vehicle_id} left cluster of {self.cluster_state['head_id']} due to low similarity={head_similarity:.3f}")
@@ -259,7 +265,6 @@ class ClusteringV2XManager(V2XManager):
                 if head_vm and len(head_vm.cluster_state['member_ids']) < self.params.get('N_max', 4):
                     self.cluster_state['head_id'] = nid
                     head_vm.cluster_state['member_ids'].add(self.vehicle_id)
-                    head_vm._broadcast_cluster_state()  # 立即同步状态
                     logger.debug(f"Vehicle {self.vehicle_id} joined cluster of {nid} with similarity={similarity:.3f}, threshold={adjusted_threshold:.3f}")
                     break
 
@@ -271,14 +276,14 @@ class ClusteringV2XManager(V2XManager):
         if random.random() < create_prob:
             self.cluster_state['head_id'] = self.vehicle_id
             self.cluster_state['member_ids'] = {self.vehicle_id}
-            self._broadcast_cluster_state()
+            # self._broadcast_cluster_state()
             logger.debug(f"Vehicle {self.vehicle_id} created new cluster with avg_similarity={avg_similarity:.3f}, prob={create_prob:.3f}")
 
     def _leave_cluster(self):
         head_vm = self._get_v2x_manager(self.cluster_state['head_id'])
         if head_vm:
             head_vm.cluster_state['member_ids'].discard(self.vehicle_id)
-            head_vm._broadcast_cluster_state()
+            # head_vm._broadcast_cluster_state()
         
         self.cluster_state['head_id'] = None
         self.cluster_state['member_ids'].clear()
@@ -287,33 +292,30 @@ class ClusteringV2XManager(V2XManager):
     def _elect_cluster_head(self):
         """簇头选举"""
         priority_list = []
+        cluster_avg_speed = self._compute_cluster_avg_speed()
         for mid in self.cluster_state['member_ids']:
             member_vm = self._get_v2x_manager(mid)
             if not member_vm:
                 continue
-            
             # 触发成员计算自身优先级
-            member_vm._compute_local_priority()
+            member_vm._compute_local_priority(cluster_avg_speed)
             priority_list.append((member_vm.cluster_state['local_priority'], mid))
         
         if priority_list:
             priority_list.sort(reverse=True)
-            if priority_list[0][1] == self.cluster_state['head_id'] and ((len(priority_list) > 1 and priority_list[1][1] == self.cluster_state['shadow_head_id']) or len(priority_list) == 1):
-                return  # 簇头未变更
-            self.cluster_state['head_id'] = priority_list[0][1]
-            self.cluster_state['shadow_head_id'] = priority_list[1][1] if len(priority_list) > 1 else None
-            self._broadcast_cluster_state()  # 立即同步全簇状态
-            logger.debug(f"Vehicle {self.vehicle_id} elected new head {self.cluster_state['head_id']}(score:{priority_list[0][0]}) "
-                         f"with shadow {self.cluster_state['shadow_head_id'] if self.cluster_state['shadow_head_id'] else 'None'}(score:{priority_list[1][0] if len(priority_list) > 1 else 'N/A'})")
+            if priority_list[0][1] != self.cluster_state['head_id']: 
+                self.cluster_state['head_id'] = priority_list[0][1]
+                self._broadcast_cluster_state()  # 簇头变更, 立即同步全簇状态
+                logger.debug(f"Vehicle {self.vehicle_id} elected new head {self.cluster_state['head_id']}(score:{priority_list[0][0]:.3f}) ")
+            if len(priority_list) > 1 and priority_list[1][1] != self.cluster_state['shadow_head_id']:
+                self.cluster_state['shadow_head_id'] = priority_list[1][1]
+                logger.debug(f"Vehicle {self.vehicle_id} elected new shadow head {self.cluster_state['shadow_head_id']}(score:{priority_list[1][0]:.3f}) ")
 
-    # ------------------------------
-    # 辅助方法
-    # ------------------------------
-    def _force_ego_as_head(self):
+    def _force_self_as_head(self):
         """强制设置ego为簇头并同步状态"""
         self.cluster_state['head_id'] = self.vehicle_id
         self.cluster_state['member_ids'] = {self.vehicle_id}
-        self._broadcast_cluster_state()
+        # self._broadcast_cluster_state()
 
     def _handle_out_of_range_neighbor(self, vehicle_id):
         """处理超出范围的邻居"""
@@ -322,12 +324,13 @@ class ClusteringV2XManager(V2XManager):
         elif vehicle_id == self.cluster_state['shadow_head_id']:
             self.cluster_state['shadow_head_id'] = None
             if self.is_cluster_head():
+                logger.debug(f"Vehicle {self.vehicle_id}: shadow head {vehicle_id} went out of range, triggering takeover.")
                 self._elect_cluster_head()
         elif vehicle_id in self.cluster_state['member_ids']:
             self.cluster_state['member_ids'].discard(vehicle_id)
-            if self.is_cluster_head():
-                self._broadcast_cluster_state()
-            logger.debug(f"Vehicle {self.vehicle_id} removed out-of-range member {vehicle_id} from cluster.")
+            # if self.is_cluster_head():
+            #     self._broadcast_cluster_state()
+            logger.debug(f"Vehicle {self.vehicle_id}: removed out-of-range member {vehicle_id} from cluster.")
 
     def _trigger_shadow_head_takeover(self):
         """影子簇头接管流程"""
@@ -341,12 +344,16 @@ class ClusteringV2XManager(V2XManager):
         shadow_vm = self._get_v2x_manager(shadow_head_id)
         if shadow_vm and (shadow_head_id in self.cluster_state['neighbor_ids'] or shadow_head_id == self.vehicle_id):
             self.cluster_state['head_id'] = shadow_head_id
-            shadow_vm._broadcast_cluster_state()
+            shadow_vm._broadcast_cluster_state() #簇头变更, 立即同步全簇状态
             logger.debug(f"Vehicle {self.vehicle_id} shadow head {shadow_head_id} took over as new head.")
         else:
             self.cluster_state['head_id'] = None
             self.cluster_state['shadow_head_id'] = None
             logger.debug(f"Vehicle {self.vehicle_id} shadow head {shadow_head_id} is no longer valid.")
+
+    # ------------------------------
+    # 辅助方法
+    # ------------------------------
 
     def _calc_rssi(self):
         """简化的RSSI计算"""

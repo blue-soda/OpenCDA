@@ -325,30 +325,22 @@ class VehicleManager(object):
     -----------------------------------------------------------
     """
 
-    # def join_cluster(self):
-    #     if not self.enableCluster:
-    #         return
-    #     self.v2x_manager.update_cluster_join()
+    def leave_join_create_cluster(self):
+        if not self.enableCluster:
+            return
+        self.v2x_manager.leave_join_create_cluster()
 
-    # def elect_leader(self):
-    #     if not self.enableCluster:
-    #         return
-    #     self.v2x_manager.elect_cluster_head()
+    def elect_leader(self):
+        if not self.enableCluster:
+            return
+        self.v2x_manager.elect_leader()
 
-    # def check_cluster_leader(self):
-    #     if not self.enableCluster:
-    #         return
-    #     self.v2x_manager.check_current_leader()
-    #     self.v2x_manager.update_cluster_membership()
-
-    # def check_cluster_members(self):
-    #     if not self.enableCluster:
-    #         return
-    #     self.v2x_manager.check_current_leader()
-    #     self.v2x_manager.check_current_members()
-    #     self.v2x_manager.id_to_rgb()
-    #     if self.v2x_manager.is_cluster_head() and self.v2x_manager.scheduler is not None and self.v2x_manager.scheduler_type == 'clusterbased':
-    #         self.v2x_manager.scheduler.update_scheduler(self.v2x_manager.get_cluster_member_vms())
+    def sync_update_cluster_state(self):
+        if not self.enableCluster:
+            return
+        self.v2x_manager.sync_update_cluster_state()
+        if self.v2x_manager.is_cluster_head() and self.v2x_manager.scheduler is not None and self.v2x_manager.scheduler_type == 'clusterbased':
+            self.v2x_manager.scheduler.update_scheduler(self.v2x_manager.get_cluster_member_vms())
 
     def submit_cp_results(self):
         # print(f"submit: {self.vehicle.id}")

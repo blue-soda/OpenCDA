@@ -226,12 +226,9 @@ def check_is_out_sight(transform, cav):
         logger.debug(f"bg_vehicle {cav.vehicle.id} is back.")
 
 def update_cluster(all_cavs):
-    pass
-    # for cav in all_cavs:
-    #     cav.join_cluster()
-    # for cav in all_cavs:
-    #     cav.elect_leader()    
-    # for cav in all_cavs:
-    #     cav.check_cluster_leader()                      
-    # for cav in all_cavs:
-    #     cav.check_cluster_members()     
+    for cav in all_cavs:
+        cav.leave_join_create_cluster()
+    for cav in all_cavs:
+        cav.elect_leader()    
+    for cav in all_cavs:
+        cav.sync_update_cluster_state()                        
