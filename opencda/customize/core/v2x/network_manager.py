@@ -164,24 +164,30 @@ class NetworkManager:
         if sender_id is None:
             cams = self.bridge.received_cams.pop(receiver_id, None)
             if cams:
-                self.analyze_ns3_results(cams)
-            return
+                return self.analyze_ns3_results(cams)
+            else:
+                return {}
         cams = self.bridge.received_cams.get(receiver_id, None)
         if cams:
             cam = cams.pop(sender_id, None)
-            if cam:
-                self.analyze_ns3_result(cam)
             self.bridge.received_cams[receiver_id] = cams
+            if cam:
+                return self.analyze_ns3_result(cam)
+            else:
+                return {}
 
     def analyze_ns3_result(self, cam):
         delay = cam.get('receive_timestamp', -1) - cam.get('send_timestamp', -1)
         self._record_transmission_latency(delay)  #ms
         # print(f"CAM from {cam.get('sender_id')} to {cam.get('receiver_id')} delay: {delay} ms")
         logger.info(f"CAM from {cam.get('sender_id')} to {cam.get('receiver_id')} delay: {delay} ms")
+        return { (cam.get('sender_id'), cam.get('receiver_id')): delay}
 
     def analyze_ns3_results(self, cams):
+        ret = {}
         for cam in cams.values():
-            self.analyze_ns3_result(cam)
+            ret.update(self.analyze_ns3_result(cam))
+        return ret
 
     def allocate_resource(self, source, target, volume: float,
                         subchannel_start: int, subchannel_num: int):
@@ -207,10 +213,10 @@ class NetworkManager:
         our_signal = utils.get_interference_contribution(source, target)
         
         # 3. Calculate SINR
-        sinr = utils.calculate_sinr(our_signal, interference, target.noise_level)
+        sinr = utils.calculate_sinr(our_signal, interference, target.noise_power)
         
         # 4. Verify interference threshold
-        logger.debug(f"signal power: {our_signal}, {interference}, {target.noise_level} in subchannel {subchannel_start}-{subchannel_start + subchannel_num -1}")
+        logger.debug(f"signal power: {our_signal}, {interference}, {target.noise_power} in subchannel {subchannel_start}-{subchannel_start + subchannel_num -1}")
         logger.info(f"sinr: {sinr}")
         if sinr < self.min_sinr_threshold: 
             # raise ResourceConflictError("SINR too low for reliable communication.")

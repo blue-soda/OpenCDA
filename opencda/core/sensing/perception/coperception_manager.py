@@ -59,6 +59,7 @@ class CoperceptionManager:
                 cav_data = self.uploading_data.get(cav_id, None)
                 data_size = asizeof(cav_data) 
                 self.uploading_data_size[cav_id] = data_size
+                self.v2x_manager.scheduler.record_data_size_infos({(cav_id, self.v2x_manager.vehicle_id) : data_size}) # let scheduler know the data size 
                 print(f"cav {cav_id} is uploading its data to {self.vid} for the FIRST time, size: {data_size} bytes at {self.network_manager.current_time_slot}.")
             else:
                 data_size = self.uploading_data_size[cav_id]
@@ -83,7 +84,9 @@ class CoperceptionManager:
                 continue
             
             print(f"cav {sender_id} data upload to {receiver_id} succeeded. Received size: {packet_size} bytes, expected size: {data_size} bytes.")
-            self.network_manager.pop_received_cams(receiver_id, sender_id)
+            delay_infos = self.network_manager.pop_received_cams(receiver_id, sender_id)
+            print(f"cav {sender_id} communication delay info: {delay_infos}")
+            self.v2x_manager.scheduler.record_communication_delay_infos(delay_infos)
             data = self.uploading_data.get(sender_id, None)
             if data:
                 self.uploaded_cavs[sender_id] = self.network_manager.current_time_slot

@@ -17,12 +17,18 @@ class WCGCScheduler(Scheduler):
     """
     Scheduler based on cluster-based weighted conflict graph coloring.
     """
+    def f(v: float, t: float) -> float:
+        """感知贡献函数 f(x) = 1 - e^(-x)"""
+        return (1 - math.exp(-v / 1e6)) * math.exp(-t / 0.1)
+    
     def __init__(self, cav_world, config={}):
         super().__init__(cav_world, config)
 
         self.subchannels = list(range(self.network_manager.subchannel_num))
         self.sinr_threshold = config.get('sinr_threshold', 6)  # dB
         self.max_power = config.get('max_power', 20)  # dBm
+
+        self.function_cp_value = self.f
         self.link_weights: Dict[Tuple[int, int], float] = {}  # {(source_id, target_id): 权重}
         self.conflict_graph: Dict[Tuple[int, int], Set[Tuple[int, int]]] = defaultdict(set)  # 冲突图邻接表
         self.channel_allocation: Dict[Tuple[int, int], int] = {}  # {(source, target): 子信道}
@@ -34,64 +40,63 @@ class WCGCScheduler(Scheduler):
         nm = self.network_manager
         
         for vehicle_id, vm in self.cav_world.get_vehicle_managers().items():
-            cluster_state = vm.v2x_manager.cluster_state
-            
-            # 簇内上行链路（成员→簇头）
-            if cluster_state['cluster_head'] is not None and vehicle_id == cluster_state['cluster_head']:
-                # 收集簇头信息
-                ch_id = cluster_state['cluster_head']
-                ch_v2x = nm.vehicles.get(ch_id)
-                if not ch_v2x:
-                    continue
-                for member_id, (data_vol, g) in cluster_state['members'].items():
-                    member_v2x = nm.vehicles.get(member_id)
-                    if not member_v2x:
-                        continue
-                    # 权重 = 数据量 × 感知贡献系数 × 可用数据率（链路质量）
-                    distance = calculate_distance(member_v2x, ch_v2x)
-                    channel_gain = calculate_channel_gain(distance)
-                    tx_power_w = 10 ** (member_v2x.tx_power / 10) / 1000
-                    sinr_linear = (tx_power_w * channel_gain) / ch_v2x.noise_power
-                    data_rate = calculate_available_data_rate(self.config.get('subchannel_bandwidth', 1) * 1e6, sinr_linear)
-                    weight = data_vol * g * (data_rate / 1e6)  # 归一化数据率
-                    self.link_weights[(member_id, ch_id)] = weight
-                    global_links.append((member_id, ch_id, weight))
-            
-                # 簇间下行广播链路（簇头→邻居）
-                weight = self._calc_broadcast_weight(vm.v2x_manager)
-                self.link_weights[(vehicle_id, -1)] = weight
-                global_links.append((vehicle_id, -1, weight))
+            if vm.v2x_manager.is_cluster_head():
+                head_v2x = vm.v2x_manager
+                # 簇内上行链路（成员→簇头）
+                for source_id, target_id in head_v2x.get_uplink_links():
+                    weight = self._calc_uplink_weight(source_id, target_id)
+                    self.link_weights[(source_id, target_id)] = weight
+                    global_links.append((source_id, target_id, weight))
+                # 簇间下行广播链路（簇头→邻居）, 暂不考虑
+                # for source_id, target_id in head_v2x.get_downlink_links():
+                #     weight = self._calc_broadcast_weight(source_id)
+                #     self.link_weights[(source_id, target_id)] = weight
+                #     global_links.append((source_id, target_id, weight))
         
         return global_links
     
-    def _calc_broadcast_weight(self, ch_v2x) -> float:
-        """计算广播链路权重"""
-        cluster_state = ch_v2x.cluster_state
-        avg_g = np.mean([g for _, g in cluster_state['members'].values()]) if cluster_state['members'] else 1.0
-        # 广播链路权重 = 簇头优先级 × 平均贡献系数 × 覆盖邻居数
-        return cluster_state['priority_score'] * avg_g * len(cluster_state['neighbors'])
-
+    def _calc_broadcast_weight(self, cluster_head_id) -> float:
+        """下行链路权重: w_l = f_u( S_{i, t}^{tot\_u}, \bar \delta t)"""
+        if len(self.data_size_infos[cluster_head_id]) == 0:
+            return 0.0
+        data_vol = sum([size for _, size in self.data_size_infos[cluster_head_id].items()])
+        avg_delay = sum([delay for _, delay in self.data_delay_infos[cluster_head_id].items()]) / len(self.data_delay_infos[cluster_head_id])
+        return self.function_cp_value(data_vol, avg_delay)
+    
+    def _calc_uplink_weight(self, member_id, cluster_head_id) -> float:
+        """计算上行链路权重（成员→簇头）"""
+        # 权重 = 数据量 x 感知贡献 x 归一化
+        if cluster_head_id not in self.data_size_infos or member_id not in self.data_size_infos[cluster_head_id]:
+            return 0.0
+        data_vol = self.data_size_infos[cluster_head_id][member_id]
+        # cluster_head = self.cav_world.get_vehicle_managers().get(cluster_head_id).v2x_manager
+        # member = self.cav_world.get_vehicle_managers().get(member_id).v2x_manager
+        # g = cluster_head.calculate_contribution_coefficient(member)
+        g = 0.5
+        print(f"Calculating uplink weight for member {member_id} to cluster head {cluster_head_id}: data_vol={data_vol}, contribution={g}")
+        return data_vol * g / 1e6
+    
     def _build_conflict_graph(self, global_links: List[Tuple[int, int, float]]):
         """基于SINR阈值构建冲突图"""
         nm = self.network_manager
         self.conflict_graph.clear()
         
         for i, (s1_id, t1_id, _) in enumerate(global_links):
-            s1_v2x = nm.vehicles.get(s1_id)
-            t1_v2x = nm.vehicles.get(t1_id) if t1_id != -1 else s1_v2x  # 广播目标为自身
+            s1_v2x = self.cav_world.get_vehicle_managers().get(s1_id).v2x_manager
+            t1_v2x = self.cav_world.get_vehicle_managers().get(t1_id).v2x_manager if t1_id != -1 else s1_v2x  # 广播目标为自身
             if not s1_v2x or not t1_v2x:
                 continue
             
             for j, (s2_id, t2_id, _) in enumerate(global_links):
                 if i >= j or (s1_id == s2_id and t1_id == t2_id):
                     continue
-                s2_v2x = nm.vehicles.get(s2_id)
-                t2_v2x = nm.vehicles.get(t2_id) if t2_id != -1 else s2_v2x
+                s2_v2x = self.cav_world.get_vehicle_managers().get(s2_id).v2x_manager
+                t2_v2x = self.cav_world.get_vehicle_managers().get(t2_id).v2x_manager if t2_id != -1 else s2_v2x
                 if not s2_v2x or not t2_v2x:
                     continue
                 
                 # 判断链路(s1→t1)与(s2→t2)是否冲突
-                if is_link_conflict(s1_v2x, t1_v2x, s2_v2x, t2_v2x, self.sinr_threshold_dB):
+                if is_link_conflict(s1_v2x, t1_v2x, s2_v2x, t2_v2x, self.config['min_sinr_threshold']):
                     self.conflict_graph[(s1_id, t1_id)].add((s2_id, t2_id))
                     self.conflict_graph[(s2_id, t2_id)].add((s1_id, t1_id))
 
@@ -116,8 +121,8 @@ class WCGCScheduler(Scheduler):
         for (s_id, t_id), ch in self.channel_allocation.items():
             if ch == -1:
                 continue
-            s_v2x = nm.vehicles.get(s_id)
-            t_v2x = nm.vehicles.get(t_id) if t_id != -1 else s_v2x
+            s_v2x = self.cav_world.get_vehicle_managers().get(s_id).v2x_manager
+            t_v2x = self.cav_world.get_vehicle_managers().get(t_id).v2x_manager if t_id != -1 else s_v2x
             if not s_v2x or not t_v2x:
                 continue
             
@@ -126,16 +131,16 @@ class WCGCScheduler(Scheduler):
             for (s2_id, t2_id), ch2 in self.channel_allocation.items():
                 if ch2 != ch or (s2_id == s_id and t2_id == t_id):
                     continue
-                s2_v2x = nm.vehicles.get(s2_id)
+                s2_v2x = self.cav_world.get_vehicle_managers().get(s2_id).v2x_manager
                 if not s2_v2x:
                     continue
                 interf_total += get_interference_contribution(s2_v2x, t_v2x)
             
             # 计算所需最小发射功率（线性域）
-            sinr_linear_threshold = 10 ** (self.sinr_threshold_dB / 10)
+            sinr_linear_threshold = 10 ** (self.config['min_sinr_threshold'] / 10)
             required_signal_power = sinr_linear_threshold * (interf_total + t_v2x.noise_power)
             distance = calculate_distance(s_v2x, t_v2x)
-            channel_gain = calculate_channel_gain(distance, s_v2x.path_loss_exponent)
+            channel_gain = calculate_channel_gain(distance)
             min_tx_power_w = required_signal_power / channel_gain if channel_gain > 0 else s_v2x.tx_power
             
             # 限制最大功率
@@ -151,7 +156,7 @@ class WCGCScheduler(Scheduler):
         self._power_control()
         
         # 获取当前链路分配结果
-        link = (source.id, target.id if target else -1)
+        link = (source.vehicle_id, target.vehicle_id if target else -1)
         if link not in self.channel_allocation or self.channel_allocation[link] == -1:
             return False
         
@@ -160,8 +165,9 @@ class WCGCScheduler(Scheduler):
         tx_power_w = self.power_allocation.get(link, 10 ** (source.tx_power / 10) / 1000)
         tx_power_dBm = 10 * math.log10(tx_power_w * 1000) if tx_power_w > 0 else source.tx_power
         
+        print(f"Scheduling link {link}: channel={ch}, power={tx_power_dBm} dBm")
         success = self.network_manager.communicate(
-            self, source, target, volume,
+            source, target, volume,
             subchannel_start=ch, subchannel_num=1
         )
         return success

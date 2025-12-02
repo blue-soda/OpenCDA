@@ -20,7 +20,10 @@ class ClusteringV2XManager(V2XManager):
         self.cp_model = 'default_model'
         self.params = cluster_yaml
         self.ego_must_be_leader = self.params.get('ego_must_be_leader', False)
+
+        # ------------------------------
         # 分簇协议状态
+        # ------------------------------
         self.cluster_state = {
             'head_id': None,               # 当前簇头ID
             'shadow_head_id': None,        # 影子簇头ID
@@ -30,6 +33,27 @@ class ClusteringV2XManager(V2XManager):
             'similarity_scores': {},       # 邻居相似度 {neighbor_id: score}
             'priority_score': 0.0          # 本地优先级得分
         }
+
+
+    # ------------------------------
+    # 信标数据结构
+    # ------------------------------
+    def beacon(self):
+        """标准化信标数据结构"""
+        return {
+            'vehicle_id': self.vehicle_id,
+            'position': self.get_ego_pos().location,
+            'speed': self.get_ego_speed(),
+            'direction': self.get_ego_dir(),
+            'computing_capability': getattr(self, 'computing_capability', 1.0),
+            'communication_quality': getattr(self, 'communication_quality', 1.0),
+            'perception_model': self.cp_model,
+            'cluster_head_id': self.cluster_state['head_id'],
+            'cluster_shadow_id': self.cluster_state['shadow_head_id'],
+            'cluster_member_ids': list(self.cluster_state['member_ids']),
+            'RSSI': self._calc_rssi()
+        }
+
 
     # ------------------------------
     # 对外接口: 簇状态查询
@@ -80,25 +104,6 @@ class ClusteringV2XManager(V2XManager):
         }
     
     # ------------------------------
-    # 信标数据结构
-    # ------------------------------
-    def beacon(self):
-        """标准化信标数据结构"""
-        return {
-            'vehicle_id': self.vehicle_id,
-            'position': self.get_ego_pos().location,
-            'speed': self.get_ego_speed(),
-            'direction': self.get_ego_dir(),
-            'computing_capability': getattr(self, 'computing_capability', 1.0),
-            'communication_quality': getattr(self, 'communication_quality', 1.0),
-            'perception_model': self.cp_model,
-            'cluster_head_id': self.cluster_state['head_id'],
-            'cluster_shadow_id': self.cluster_state['shadow_head_id'],
-            'cluster_member_ids': list(self.cluster_state['member_ids']),
-            'RSSI': self._calc_rssi()
-        }
-
-    # ------------------------------
     # 对外接口: 簇状态更新
     # ------------------------------
 
@@ -131,22 +136,6 @@ class ClusteringV2XManager(V2XManager):
                 self.cav_nearby.pop(vid, None)
                 self._handle_out_of_range_neighbor(vehicle_id)
 
-        # 执行分簇逻辑
-        # self._update_cluster_logic()
-
-    # def _update_cluster_logic(self):
-    #     """分簇核心逻辑（依赖标准化的neighbor_data）"""
-    #     self._update_similarity()
-    #     self._update_cluster_membership()
-
-    #     if self.is_cluster_head():
-    #         self._elect_cluster_head()
-    #         logger.debug(f"Cluster Head {self.vehicle_id}, members: {self.cluster_state['member_ids']}")
-
-    #     self._sync_cluster_state()
-
-    #     self._update_rgb()
-
     def leave_join_create_cluster(self):
         self._update_similarity()
         self._update_cluster_membership()
@@ -159,24 +148,24 @@ class ClusteringV2XManager(V2XManager):
         self._sync_cluster_state()
         self._update_rgb()
 
+
     # ------------------------------
-    # 数据一致性保障
+    # 分簇数据同步
     # ------------------------------
     def _sync_cluster_state(self):
         """与簇头同步簇状态，确保全簇一致"""
         if not self.cluster_state['head_id']:
             return
-        head_vm = self._get_v2x_manager(self.cluster_state['head_id'])
+        head_vm = self.get_v2x_manager(self.cluster_state['head_id'])
         if not head_vm:
             return
         head_state = head_vm.get_cluster_state()
         self._update_cluster_state(head_state)
 
-
     def _broadcast_cluster_state(self):
         """簇头广播最新状态，强制同步所有成员"""
         for mid in self.cluster_state['member_ids']:
-            member_vm = self._get_v2x_manager(mid)
+            member_vm = self.get_v2x_manager(mid)
             if member_vm and member_vm.vehicle_id != self.vehicle_id:
                 member_vm._update_cluster_state(self.cluster_state)
 
@@ -193,7 +182,7 @@ class ClusteringV2XManager(V2XManager):
     def _compute_cluster_avg_speed(self):
         member_speeds = []
         for mid in self.cluster_state['member_ids']:
-            member_vm = self._get_v2x_manager(mid)
+            member_vm = self.get_v2x_manager(mid)
             if member_vm:
                 member_speeds.append(member_vm.get_ego_speed())
         
@@ -261,7 +250,7 @@ class ClusteringV2XManager(V2XManager):
             adjusted_threshold = self.params.get('eta_join', 0.6) * (1 + neighbor_data['RSSI'] / self.params.get('RSSI_max', 100))
             
             if similarity > adjusted_threshold:
-                head_vm = self._get_v2x_manager(nid)
+                head_vm = self.get_v2x_manager(nid)
                 if head_vm and len(head_vm.cluster_state['member_ids']) < self.params.get('N_max', 4):
                     self.cluster_state['head_id'] = nid
                     head_vm.cluster_state['member_ids'].add(self.vehicle_id)
@@ -280,7 +269,7 @@ class ClusteringV2XManager(V2XManager):
             logger.debug(f"Vehicle {self.vehicle_id} created new cluster with avg_similarity={avg_similarity:.3f}, prob={create_prob:.3f}")
 
     def _leave_cluster(self):
-        head_vm = self._get_v2x_manager(self.cluster_state['head_id'])
+        head_vm = self.get_v2x_manager(self.cluster_state['head_id'])
         if head_vm:
             head_vm.cluster_state['member_ids'].discard(self.vehicle_id)
             # head_vm._broadcast_cluster_state()
@@ -294,7 +283,7 @@ class ClusteringV2XManager(V2XManager):
         priority_list = []
         cluster_avg_speed = self._compute_cluster_avg_speed()
         for mid in self.cluster_state['member_ids']:
-            member_vm = self._get_v2x_manager(mid)
+            member_vm = self.get_v2x_manager(mid)
             if not member_vm:
                 continue
             # 触发成员计算自身优先级
@@ -341,7 +330,7 @@ class ClusteringV2XManager(V2XManager):
             logger.debug(f"Vehicle {self.vehicle_id} has no shadow head to takeover.")
             return
         
-        shadow_vm = self._get_v2x_manager(shadow_head_id)
+        shadow_vm = self.get_v2x_manager(shadow_head_id)
         if shadow_vm and (shadow_head_id in self.cluster_state['neighbor_ids'] or shadow_head_id == self.vehicle_id):
             self.cluster_state['head_id'] = shadow_head_id
             shadow_vm._broadcast_cluster_state() #簇头变更, 立即同步全簇状态
@@ -351,15 +340,15 @@ class ClusteringV2XManager(V2XManager):
             self.cluster_state['shadow_head_id'] = None
             logger.debug(f"Vehicle {self.vehicle_id} shadow head {shadow_head_id} is no longer valid.")
 
+
     # ------------------------------
     # 辅助方法
     # ------------------------------
-
     def _calc_rssi(self):
         """简化的RSSI计算"""
         return 0  # 实际应根据距离和通信质量计算
 
-    def _get_v2x_manager(self, vehicle_id):
+    def get_v2x_manager(self, vehicle_id):
         vm = self.cav_world.get_vehicle_manager(vehicle_id)
         return vm.v2x_manager if vm else None
     

@@ -24,10 +24,10 @@ def calculate_distance(source_vm, target_vm):
     target_pos = target_vm.get_ego_pos().location
     return compute_distance(source_pos, target_pos)
 
-def calculate_snr(tx_power, noise_level, distance):
+def calculate_snr(tx_power, noise_power, distance):
     """Calculate the signal-to-noise ratio (SNR)."""
     tx_power_w = 10 ** (tx_power / 10) / 1000 # dBm转W
-    return tx_power_w * calculate_channel_gain(distance) / noise_level
+    return tx_power_w * calculate_channel_gain(distance) / noise_power
 
 def calculate_sinr(tx_power, interference_power, noise_power):
     """Calculate the Signal-to-Interference-plus-Noise Ratio (SINR) in dB."""
