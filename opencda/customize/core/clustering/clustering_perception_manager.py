@@ -42,7 +42,8 @@ class ClusteringPerceptionManager(PerceptionManager):
         self.gt_box_tensor_fusion = None
         if cluster_config:
             self.apply_late_fusion = cluster_config['apply_late_fusion']
-            self.record_all_cavs = cluster_config['record_all_cavs']            
+            self.record_all_cavs = cluster_config['record_all_cavs']           
+        self.set_enable_grids(True) 
 
     #TODO: if self.record_all_cavs: do late fusion for all cavs in the cluster, not only ego.
     @staticmethod

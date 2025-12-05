@@ -82,6 +82,7 @@ vehicle_base:
         dropoff_intensity_limit: 1.0
         dropoff_zero_intensity: 0.0
         noise_stddev: 0.0
+        enable_grids: false # whether to enable grid-based lidar processing
 
     localization: &base_localization
       activate: false # when not activated, ego position will be retrieved from server directly

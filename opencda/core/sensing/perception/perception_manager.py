@@ -222,8 +222,10 @@ class LidarSensor:
                 weak_self, event))
 
         # 网格相关参数
+        self.enable_grids = config_yaml.get('enable_grids', True)
         self.lidar_range = float(config_yaml['range'])
         self.required_perception_range = self.lidar_range * 2
+
         self.grid_size = config_yaml.get('grid_size', 10.0)
         self.perception_grids = self._generate_perception_grids()  # {grid_id: shapely.box}
         print(f"grid_size = {self.grid_size}, Generated {len(self.perception_grids)} perception grids.")
@@ -235,6 +237,9 @@ class LidarSensor:
         self.density_threshold = 2.0 # config_yaml['points_per_second'] * self.world_slot_seconds / (self.lidar_range * self.lidar_range * 3.14) * 2.0
         print("Density threshold set to:", self.density_threshold)
         #config_yaml.get('density_threshold', 5.0)
+    
+    def set_enable_grids(self, enable):
+        self.enable_grids = enable
         
     def rotate_tick(self):
         self.tick += 1
@@ -254,16 +259,17 @@ class LidarSensor:
         frame_data = np.copy(np.frombuffer(event.raw_data, dtype=np.dtype('f4')))
         # frame_data = np.reshape(frame_data, (int(frame_data.shape[0] / 4), 4))  # (N,4) [x,y,z,intensity]
         frame_data = frame_data.reshape(-1, 4)
-        
+
         # 2. 分离本地坐标和强度，转换全局坐标
-        local_points = frame_data[:, :3]  # (N,3) 本地坐标
-        sensor_transform = self.sensor.get_transform()
-        global_points = st.lidar_local_to_global(local_points, sensor_transform)  # 调用工具函数
+        if self.enable_grids:
+            local_points = frame_data[:, :3]  # (N,3) 本地坐标
+            sensor_transform = self.sensor.get_transform()
+            global_points = st.lidar_local_to_global(local_points, sensor_transform)  # 调用工具函数
         
         # 3. 缓存数据
         self.points_buffer.append({
             'local': frame_data, # 本地坐标+强度 (N,4)
-            'global': global_points # 全局坐标 (N,3)
+            'global':  global_points if self.enable_grids else None # 全局坐标 (N,3)
         })
         self.frame = event.frame
         self.timestamp = event.timestamp
@@ -273,14 +279,15 @@ class LidarSensor:
             local_list = [item['local'] for item in self.points_buffer]
             global_list = [item['global'] for item in self.points_buffer]
             self.local_data = np.vstack(local_list)  # 本地坐标 (N,4)
-            self.global_data = np.vstack(global_list)  # 全局坐标 (N,3)
+            self.global_data = np.vstack(global_list) if self.enable_grids else None  # 全局坐标 (N,3)
 
             self.data = self.local_data
             self.last_rotation_time = event.timestamp
 
-            self.perception_grids = self._generate_perception_grids()
-            self.update_grid_local_points()
-            self.update_grid_density_dict()
+            if self.enable_grids:
+                self.perception_grids = self._generate_perception_grids()
+                self.update_grid_local_points()
+                self.update_grid_density_dict()
         
             self.points_buffer = []
 
@@ -712,6 +719,10 @@ class PerceptionManager:
             enable_network=self.enable_network,
             network_manager=CavWorld.network_manager if self.enable_network else None,
         )
+
+    def set_enable_grids(self, enable):
+        if self.lidar is not None:
+            self.lidar.set_enable_grids(enable)
 
     def dist(self, a):
         """
