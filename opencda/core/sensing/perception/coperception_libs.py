@@ -43,13 +43,15 @@ class CoperceptionLibs:
             "speed": veh_speed
         }
 
+
     def load_vehicles(self, ego_id, ego_pos, lidar):
         def dist_to_ego(actor):
             return actor.get_location().distance(ego_pos.location)
 
         world = self.carla_world
         vehicle_list = world.get_actors().filter("*vehicle*")
-        gt_box_range = 120 #meters
+        
+        gt_box_range = 120 #meters, 真值框范围
         vehicle_list = [v for v in vehicle_list if dist_to_ego(v) < gt_box_range and v.id != ego_id]
         vehicle_dict = {}
         if lidar:

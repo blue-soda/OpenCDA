@@ -37,7 +37,6 @@ class WCGCScheduler(Scheduler):
     def _collect_global_links(self) -> List[Tuple[int, int, float]]:
         """收集全网链路并计算权重"""
         global_links = []
-        nm = self.network_manager
         
         for vehicle_id, vm in self.cav_world.get_vehicle_managers().items():
             if vm.v2x_manager.is_cluster_head():
@@ -69,8 +68,8 @@ class WCGCScheduler(Scheduler):
         if cluster_head_id not in self.data_size_infos or member_id not in self.data_size_infos[cluster_head_id]:
             return 0.0
         data_vol = self.data_size_infos[cluster_head_id][member_id]
-        # cluster_head = self.cav_world.get_vehicle_managers().get(cluster_head_id).v2x_manager
-        # member = self.cav_world.get_vehicle_managers().get(member_id).v2x_manager
+        # cluster_head = self.get_v2x_manager(cluster_head_id)
+        # member = self.get_v2x_manager(member_id)
         # g = cluster_head.calculate_contribution_coefficient(member)
         g = 0.5
         print(f"Calculating uplink weight for member {member_id} to cluster head {cluster_head_id}: data_vol={data_vol}, contribution={g}")
@@ -78,20 +77,19 @@ class WCGCScheduler(Scheduler):
     
     def _build_conflict_graph(self, global_links: List[Tuple[int, int, float]]):
         """基于SINR阈值构建冲突图"""
-        nm = self.network_manager
         self.conflict_graph.clear()
         
         for i, (s1_id, t1_id, _) in enumerate(global_links):
-            s1_v2x = self.cav_world.get_vehicle_managers().get(s1_id).v2x_manager
-            t1_v2x = self.cav_world.get_vehicle_managers().get(t1_id).v2x_manager if t1_id != -1 else s1_v2x  # 广播目标为自身
+            s1_v2x = self.get_v2x_manager(s1_id)
+            t1_v2x = self.get_v2x_manager(t1_id) if t1_id != -1 else s1_v2x  # 广播目标为自身
             if not s1_v2x or not t1_v2x:
                 continue
             
             for j, (s2_id, t2_id, _) in enumerate(global_links):
                 if i >= j or (s1_id == s2_id and t1_id == t2_id):
                     continue
-                s2_v2x = self.cav_world.get_vehicle_managers().get(s2_id).v2x_manager
-                t2_v2x = self.cav_world.get_vehicle_managers().get(t2_id).v2x_manager if t2_id != -1 else s2_v2x
+                s2_v2x = self.get_v2x_manager(s2_id)
+                t2_v2x = self.get_v2x_manager(t2_id) if t2_id != -1 else s2_v2x
                 if not s2_v2x or not t2_v2x:
                     continue
                 
@@ -115,14 +113,13 @@ class WCGCScheduler(Scheduler):
 
     def _power_control(self):
         """功率控制：满足SINR阈值的最小功率"""
-        nm = self.network_manager
         self.power_allocation.clear()
         
         for (s_id, t_id), ch in self.channel_allocation.items():
             if ch == -1:
                 continue
-            s_v2x = self.cav_world.get_vehicle_managers().get(s_id).v2x_manager
-            t_v2x = self.cav_world.get_vehicle_managers().get(t_id).v2x_manager if t_id != -1 else s_v2x
+            s_v2x = self.get_v2x_manager(s_id)
+            t_v2x = self.get_v2x_manager(t_id) if t_id != -1 else s_v2x
             if not s_v2x or not t_v2x:
                 continue
             
@@ -131,7 +128,7 @@ class WCGCScheduler(Scheduler):
             for (s2_id, t2_id), ch2 in self.channel_allocation.items():
                 if ch2 != ch or (s2_id == s_id and t2_id == t_id):
                     continue
-                s2_v2x = self.cav_world.get_vehicle_managers().get(s2_id).v2x_manager
+                s2_v2x = self.get_v2x_manager(s2_id)
                 if not s2_v2x:
                     continue
                 interf_total += get_interference_contribution(s2_v2x, t_v2x)

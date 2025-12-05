@@ -229,6 +229,23 @@ def vehicle_to_sensor(cords, vehicle, sensor_transform):
 
     return sensor_cord
 
+def lidar_local_to_global(local_points, sensor_transform):
+    """
+    Lidar本地坐标转全局坐标
+    :param local_points: np.ndarray, (N, 3) 本地坐标点云
+    :param sensor_transform: carla.Transform 传感器全局位姿
+    :return: np.ndarray, (N, 3) 全局坐标点云
+    """
+    # 转换为齐次坐标 (3, N) -> (4, N)
+    local_points_T = local_points.T  # (3, N)
+    local_points_hom = np.r_[local_points_T, [np.ones(local_points_T.shape[1])]]
+    
+    # 调用工具函数转换
+    global_points_hom = sensor_to_world(local_points_hom, sensor_transform)
+    
+    # 还原为 (N, 3) 全局坐标
+    global_points = global_points_hom[:3].T
+    return global_points
 
 def get_bounding_box(vehicle, camera, sensor_transform):
     """

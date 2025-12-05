@@ -27,7 +27,10 @@ from opencda.core.sensing.perception.o3d_lidar_libs import \
     o3d_camera_lidar_fusion, o3d_visualizer_show_coperception, o3d_predict_bbox_to_object
 
 from opencda.core.sensing.perception.coperception_libs import CoperceptionLibs
-from collections import OrderedDict
+from collections import OrderedDict, defaultdict
+
+from shapely.geometry import box, Point
+from shapely.ops import unary_union
 
 
 class CameraSensor:
@@ -194,12 +197,15 @@ class LidarSensor:
         if vehicle is not None:
             self.sensor = world.spawn_actor(
                 blueprint, spawn_point, attach_to=vehicle)
+            self.vid = str(vehicle.id)
         else:
             self.sensor = world.spawn_actor(blueprint, spawn_point)
+            self.vid = "None"
 
         # frequency
         self.rotate_frequency = int(config_yaml['rotation_frequency'])
-        self.world_frequency = int(1.0 / world.get_settings().fixed_delta_seconds)
+        self.world_slot_seconds = world.get_settings().fixed_delta_seconds
+        self.world_frequency = int(1.0 / self.world_slot_seconds)
         self.tick = 0
         self.points_buffer = []
         # lidar data
@@ -215,6 +221,21 @@ class LidarSensor:
             lambda event: LidarSensor._on_data_event(
                 weak_self, event))
 
+        # 网格相关参数
+        self.lidar_range = float(config_yaml['range'])
+        self.required_perception_range = self.lidar_range * 2
+        self.grid_size = config_yaml.get('grid_size', 10.0)
+        self.perception_grids = self._generate_perception_grids()  # {grid_id: shapely.box}
+        print(f"grid_size = {self.grid_size}, Generated {len(self.perception_grids)} perception grids.")
+        # 核心存储：grid_id -> 本地坐标点云列表
+        self.grid_local_points = defaultdict(list)
+        # grid_id -> 点云密度（点/平方米）
+        self.grid_density_dict = {}
+        # 点云密度阈值
+        self.density_threshold = 2.0 # config_yaml['points_per_second'] * self.world_slot_seconds / (self.lidar_range * self.lidar_range * 3.14) * 2.0
+        print("Density threshold set to:", self.density_threshold)
+        #config_yaml.get('density_threshold', 5.0)
+        
     def rotate_tick(self):
         self.tick += 1
         if self.tick * self.rotate_frequency >= self.world_frequency:
@@ -229,21 +250,213 @@ class LidarSensor:
         if not self:
             return
 
+        # 1. 解析原始点云（传感器本地坐标）
         frame_data = np.copy(np.frombuffer(event.raw_data, dtype=np.dtype('f4')))
-        # (x, y, z, intensity)
-        frame_data = np.reshape(frame_data, (int(frame_data.shape[0] / 4), 4))
-        self.points_buffer.append(frame_data)
-
+        # frame_data = np.reshape(frame_data, (int(frame_data.shape[0] / 4), 4))  # (N,4) [x,y,z,intensity]
+        frame_data = frame_data.reshape(-1, 4)
+        
+        # 2. 分离本地坐标和强度，转换全局坐标
+        local_points = frame_data[:, :3]  # (N,3) 本地坐标
+        sensor_transform = self.sensor.get_transform()
+        global_points = st.lidar_local_to_global(local_points, sensor_transform)  # 调用工具函数
+        
+        # 3. 缓存数据
+        self.points_buffer.append({
+            'local': frame_data, # 本地坐标+强度 (N,4)
+            'global': global_points # 全局坐标 (N,3)
+        })
         self.frame = event.frame
         self.timestamp = event.timestamp
 
         if self.rotate_tick():
-            full_rotation_points = np.vstack(self.points_buffer)
-            self.data = full_rotation_points
+            # 合并缓存数据
+            local_list = [item['local'] for item in self.points_buffer]
+            global_list = [item['global'] for item in self.points_buffer]
+            self.local_data = np.vstack(local_list)  # 本地坐标 (N,4)
+            self.global_data = np.vstack(global_list)  # 全局坐标 (N,3)
+
+            self.data = self.local_data
             self.last_rotation_time = event.timestamp
+
+            self.perception_grids = self._generate_perception_grids()
+            self.update_grid_local_points()
+            self.update_grid_density_dict()
+        
             self.points_buffer = []
 
+    def _generate_perception_grids(self):
+        """生成统一Grid ID的感知网格（全局坐标系对齐）"""
+        grids = {}
+        grid_size = self.grid_size
+        half_range = self.required_perception_range
 
+        # 计算Lidar在全局坐标系中的初始位置
+        sensor_transform = self.sensor.get_transform()
+        sensor_x = sensor_transform.location.x
+        sensor_y = sensor_transform.location.y
+
+        # 生成覆盖感知范围的网格（全局坐标系）
+        start_x = int(np.floor((sensor_x - half_range) / grid_size) * grid_size)
+        end_x = int(np.ceil((sensor_x + half_range) / grid_size) * grid_size)
+        start_y = int(np.floor((sensor_y - half_range) / grid_size) * grid_size)
+        end_y = int(np.ceil((sensor_y + half_range) / grid_size) * grid_size)
+
+        for x in range(start_x, end_x + int(grid_size), int(grid_size)):
+            for y in range(start_y, end_y + int(grid_size), int(grid_size)):
+                grid_id = self.get_point_grid_id((x, y))
+                grid_box = box(x, y, x + grid_size, y + grid_size)
+                grids[grid_id] = grid_box
+
+        return grids
+
+    
+    def get_point_grid_id(self, point):
+        """根据全局坐标点获取统一Grid ID"""
+        x, y = point[0], point[1]
+        x_idx = int(np.floor(x / self.grid_size))
+        y_idx = int(np.floor(y / self.grid_size))
+        return f"grid_{x_idx}_{y_idx}"
+
+    def update_grid_local_points(self):
+        """更新网格-本地坐标点云映射(全局坐标找Grid ID, 存储本地坐标)"""
+        if self.local_data is None or self.global_data is None:
+            return
+        
+        self.grid_local_points.clear()
+        local_points = self.local_data  # 本地坐标 (N,4)
+        global_points = self.global_data[:, :3]  # 全局坐标 (N,3)
+        
+        # 遍历每个点：全局坐标找Grid ID，存储本地坐标
+        for local_p, global_p in zip(local_points, global_points):
+            grid_id = self.get_point_grid_id(global_p)
+            if grid_id in self.perception_grids:
+                self.grid_local_points[grid_id].append(local_p)
+
+    def get_local_points_by_grid_ids(self, grid_id_list):
+        """
+        获取指定Grid ID列表的所有本地坐标点云，合并为一个数组返回
+        :param grid_id_list: list[str] 目标Grid ID列表（如["grid_2_3", "grid_4_5"]）
+        :return: np.ndarray 合并后的本地坐标点云，形状为 (N, 4)，无点时返回空数组
+        """
+        
+        # 收集所有指定网格的本地点云
+        merged_points = []
+        grids_num = 0
+        for grid_id in grid_id_list:
+            # 跳过不存在的Grid ID
+            if grid_id not in self.grid_local_points or len(self.grid_local_points[grid_id]) < 5:
+                continue
+            # 追加当前网格的本地坐标点云
+            merged_points.extend(self.grid_local_points[grid_id])
+            grids_num += 1
+        
+        # 转换为numpy数组（无点时返回空数组）
+        if len(merged_points) == 0:
+            print("No points found in the specified grid IDs.")
+            return np.empty((0, 4), dtype=np.float32)
+        
+        ret = np.array(merged_points, dtype=np.float32)
+        print(f"vehicle {self.vid} returns points with shape: {ret.shape} from {grids_num} grids")
+        print(f"all points shape: {self.data.shape}")
+        return ret
+    
+    def update_grid_density_dict(self):
+        """计算并更新grid_id: 点云密度字典"""
+        self.grid_density_dict.clear()
+        # total_points = self.local_data.shape[0]
+        # print("Total points in last rotation:", total_points)
+        total_points = 0
+        for grid_id in self.perception_grids:
+            # 获取网格内本地点云数量
+            local_points = self.grid_local_points.get(grid_id, [])
+            point_count = len(local_points)
+            total_points += point_count
+            
+            # 计算网格面积
+            grid_box = self.perception_grids[grid_id]
+            grid_area = grid_box.area
+            
+            # 计算密度（点/平方米）
+            if grid_area <= 0 or point_count == 0:
+                density = 0.0
+            else:
+                density = point_count / grid_area
+                # print("density, point_count, grid_area", density, point_count, grid_area)
+            
+            self.grid_density_dict[grid_id] = density
+        # print("Updated grid density dict, total points:", total_points)
+
+    def get_grid_density(self, grid_id):
+        """获取指定网格的点云密度"""
+        return self.grid_density_dict.get(grid_id, 0.0)
+
+    def get_low_density_grids(self, threshold=None):
+        """
+        返回所有密度低于阈值的网格字典 {grid_id: (current_density, threshold)}
+        :param threshold: float 密度阈值（点/平方米），默认使用类内阈值
+        :return: dict 低密网格字典
+        """
+        if threshold is None:
+            threshold = self.density_threshold
+        
+        low_density_grids = {}
+        for grid_id, current_density in self.grid_density_dict.items():
+            if current_density < threshold:
+                low_density_grids[grid_id] = (current_density, threshold)
+        
+        return low_density_grids
+    
+    def get_area_density(self, x_min, y_min, x_max, y_max):
+        """
+        计算任意矩形区域的平均点云密度
+        :param x_min, y_min, x_max, y_max: 区域边界（全局坐标系）
+        :return: 平均密度值（float）
+        """
+        target_area = box(x_min, y_min, x_max, y_max)
+        total_points = 0
+        total_area = 0
+        
+        # 遍历所有与目标区域相交的网格
+        for grid_id, grid_box in self.perception_grids.items():
+            if grid_box.intersects(target_area):
+                # 计算网格与目标区域的交集面积
+                intersection = grid_box.intersection(target_area)
+                intersect_area = intersection.area
+                
+                if intersect_area <= 0:
+                    continue
+                
+                # 累加点云数量和面积
+                points = self.grid_points.get(grid_id, [])
+                # 估算交集中的点数（按面积比例）
+                grid_points_count = len(points)
+                intersect_points = int(grid_points_count * (intersect_area / grid_box.area))
+                
+                total_points += intersect_points
+                total_area += intersect_area
+        
+        if total_area <= 0:
+            return 0.0
+        
+        # 计算平均密度
+        avg_density = total_points / total_area
+        return avg_density
+    
+    @staticmethod
+    def grid_union(grid_set1, grid_set2):
+        """计算两个网格集合的并集"""
+        return grid_set1 | grid_set2
+
+    @staticmethod
+    def grid_intersection(grid_set1, grid_set2):
+        """计算两个网格集合的交集"""
+        return grid_set1 & grid_set2
+
+    @staticmethod
+    def grid_difference(grid_set1, grid_set2):
+        """计算两个网格集合的差集"""
+        return grid_set1 - grid_set2
+    
 class SemanticLidarSensor:
     """
     Semantic lidar sensor manager. This class is used when data dumping

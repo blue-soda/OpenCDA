@@ -22,7 +22,7 @@ from opencda.core.sensing.perception.sensor_transformation import *
 
 class TestSensorTransformation(unittest.TestCase):
     def setUp(self):
-        # random cords, [(x, y, z, 1), n]
+        # random cords, [(x, y, z, 1), n] (4, n)
         self.cords = np.random.random(size=(4, 10))
         self.vehicle = mcarla.Vehicle()
         self.camera = mcarla.Camera({'image_size_x': 600,

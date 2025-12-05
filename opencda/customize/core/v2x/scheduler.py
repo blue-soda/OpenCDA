@@ -21,10 +21,15 @@ class Scheduler(ABC):
     def record_data_size_infos(self, data_size_info: dict):
         for (source_id, target_id), size in data_size_info.items():
             self.data_size_infos[target_id] = {source_id : size}
+
     def record_communication_delay_infos(self, delay_info: dict):
         for (source_id, target_id), delay in delay_info.items():
             self.data_delay_infos[target_id] = {source_id : delay}
 
+    def get_v2x_manager(self, vehicle_id):
+        vm = self.cav_world.get_vehicle_manager(vehicle_id)
+        return vm.v2x_manager if vm else None
+    
     @abstractmethod
     def schedule(self, source, target, volume: float) -> bool:
         """

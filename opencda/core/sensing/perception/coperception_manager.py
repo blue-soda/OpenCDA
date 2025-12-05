@@ -119,6 +119,9 @@ class CoperceptionManager:
         cav_data[cav_id]['params'].update(t_matrix)
         return cav_data
     
+    def get_data_from_lidar(self, lidar):
+        return lidar.data # 这一步获取了点云数据, 可以改为lidar.get_local_points_by_grid_ids([])按照网格划分获取点云数据
+    
     def prepare_data(self, cav_id, camera, lidar, pos, localizer, agent, is_ego, use_ego_vehicles=False):
         data = {cav_id: OrderedDict()}
         data[cav_id]['ego'] = is_ego
@@ -132,7 +135,7 @@ class CoperceptionManager:
         data[cav_id]['params'].update(camera_data)
         data[cav_id]['params'].update(ego_data)
         data[cav_id]['params'].update(lidar_pose_data)
-        data[cav_id].update({'lidar_np': lidar.data})
+        data[cav_id].update({'lidar_np': self.get_data_from_lidar(lidar)})
         # get base_data_dict
         if is_ego:
             self.ego_data_dict = data[cav_id]['params']
