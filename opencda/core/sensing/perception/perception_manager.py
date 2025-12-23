@@ -228,6 +228,10 @@ class LidarSensor:
 
         self.grid_size = config_yaml.get('grid_size', 10.0)
         self.perception_grids = self._generate_perception_grids()  # {grid_id: shapely.box}
+        self.sens_grids = set()
+        self.req_grids = set()
+        self.high_density_grids = set()
+        self.low_density_grids = set()
         print(f"grid_size = {self.grid_size}, Generated {len(self.perception_grids)} perception grids.")
         # 核心存储：grid_id -> 本地坐标点云列表
         self.grid_local_points = defaultdict(list)
@@ -294,35 +298,35 @@ class LidarSensor:
     def _generate_perception_grids(self):
         """生成统一Grid ID的感知网格（全局坐标系对齐）"""
         grids = {}
-        grid_size = self.grid_size
-        half_range = self.required_perception_range
+        grid_size = int(self.grid_size)
+        half_range = int(self.required_perception_range)
 
         # 计算Lidar在全局坐标系中的初始位置
         sensor_transform = self.sensor.get_transform()
-        sensor_x = sensor_transform.location.x
-        sensor_y = sensor_transform.location.y
+        sensor_x = int(sensor_transform.location.x)
+        sensor_y = int(sensor_transform.location.y)
 
         # 生成覆盖感知范围的网格（全局坐标系）
-        start_x = int(np.floor((sensor_x - half_range) / grid_size) * grid_size)
-        end_x = int(np.ceil((sensor_x + half_range) / grid_size) * grid_size)
-        start_y = int(np.floor((sensor_y - half_range) / grid_size) * grid_size)
-        end_y = int(np.ceil((sensor_y + half_range) / grid_size) * grid_size)
+        start_x = int((sensor_x - half_range) // grid_size) * grid_size
+        end_x = int((sensor_x + half_range) // grid_size) * grid_size
+        start_y = int((sensor_y - half_range) // grid_size) * grid_size
+        end_y = int((sensor_y + half_range) // grid_size) * grid_size
 
-        for x in range(start_x, end_x + int(grid_size), int(grid_size)):
-            for y in range(start_y, end_y + int(grid_size), int(grid_size)):
+        for x in range(start_x, end_x + grid_size, grid_size):
+            for y in range(start_y, end_y + grid_size, grid_size):
                 grid_id = self.get_point_grid_id((x, y))
                 grid_box = box(x, y, x + grid_size, y + grid_size)
                 grids[grid_id] = grid_box
 
+        self.req_grids = set(grids.keys())
         return grids
 
-    
     def get_point_grid_id(self, point):
         """根据全局坐标点获取统一Grid ID"""
-        x, y = point[0], point[1]
-        x_idx = int(np.floor(x / self.grid_size))
-        y_idx = int(np.floor(y / self.grid_size))
-        return f"grid_{x_idx}_{y_idx}"
+        x, y = int(point[0]), int(point[1])
+        x_idx = int(x // self.grid_size)
+        y_idx = int(y // self.grid_size)
+        return f"{x_idx}_{y_idx}"
 
     def update_grid_local_points(self):
         """更新网格-本地坐标点云映射(全局坐标找Grid ID, 存储本地坐标)"""
@@ -330,6 +334,7 @@ class LidarSensor:
             return
         
         self.grid_local_points.clear()
+        self.sens_grids.clear()
         local_points = self.local_data  # 本地坐标 (N,4)
         global_points = self.global_data[:, :3]  # 全局坐标 (N,3)
         
@@ -338,6 +343,7 @@ class LidarSensor:
             grid_id = self.get_point_grid_id(global_p)
             if grid_id in self.perception_grids:
                 self.grid_local_points[grid_id].append(local_p)
+                self.sens_grids.add(grid_id)
 
     def get_local_points_by_grid_ids(self, grid_id_list):
         """
@@ -351,7 +357,8 @@ class LidarSensor:
         grids_num = 0
         for grid_id in grid_id_list:
             # 跳过不存在的Grid ID
-            if grid_id not in self.grid_local_points or len(self.grid_local_points[grid_id]) < 5:
+            # if grid_id not in self.grid_local_points or len(self.grid_local_points[grid_id]) < 5:
+            if grid_id not in self.high_density_grids:
                 continue
             # 追加当前网格的本地坐标点云
             merged_points.extend(self.grid_local_points[grid_id])
@@ -391,6 +398,11 @@ class LidarSensor:
                 # print("density, point_count, grid_area", density, point_count, grid_area)
             
             self.grid_density_dict[grid_id] = density
+
+            if density >= self.density_threshold:
+                self.high_density_grids.add(grid_id)
+            else:
+                self.low_density_grids.add(grid_id)
         # print("Updated grid density dict, total points:", total_points)
 
     def get_grid_density(self, grid_id):

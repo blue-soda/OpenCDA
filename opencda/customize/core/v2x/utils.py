@@ -24,16 +24,24 @@ def calculate_distance(source_vm, target_vm):
     target_pos = target_vm.get_ego_pos().location
     return compute_distance(source_pos, target_pos)
 
-def calculate_snr(tx_power, noise_power, distance):
-    """Calculate the signal-to-noise ratio (SNR)."""
-    tx_power_w = 10 ** (tx_power / 10) / 1000 # dBm转W
-    return tx_power_w * calculate_channel_gain(distance) / noise_power
+def calculate_sinr_linear(tx_power_w, interference_power_w, noise_power_w):
+    """Calculate the Signal-to-Interference-plus-Noise Ratio (SINR) in watt."""
+    denominator = interference_power_w + noise_power_w
+    linear_value = tx_power_w / denominator if denominator > 0.0 else 0.0
+    return linear_value
 
-def calculate_sinr(tx_power, interference_power, noise_power):
-    """Calculate the Signal-to-Interference-plus-Noise Ratio (SINR) in dB."""
-    denominator = interference_power + noise_power
-    linear_value = tx_power / denominator if denominator > 0 else 0
+def linear_to_dB(linear_value):
+    """Convert linear value to dB."""
     return 10 * math.log10(linear_value) if linear_value > 0 else -math.inf
+
+def dB_to_linear(dB_value):
+    """Convert dBm value to linear."""
+    return 10 ** (dB_value / 10)
+
+def calculate_sinr(tx_power_w, interference_power_w, noise_power_w):
+    """Calculate the Signal-to-Interference-plus-Noise Ratio (SINR) in dB."""
+    linear_value = calculate_sinr_linear(tx_power_w, interference_power_w, noise_power_w)
+    return linear_to_dB(linear_value)
 
 def calculate_channel_gain(distance, path_loss_exponent=2.0):
     """
@@ -54,6 +62,9 @@ def calculate_channel_gain(distance, path_loss_exponent=2.0):
 def calculate_available_data_rate(subchannel_bandwidth, sinr):
     """Calculate the available data rate(bps) based on SNR and interference."""
     return subchannel_bandwidth * math.log2(1 + sinr)
+
+def calculate_data_rate_with_0_interference(subchannel_bandwidth, M=256):
+    return 2 * subchannel_bandwidth * math.log2(M)
 
 def is_link_conflict(s1, t1, s2, t2, sinr_threshold_dB) -> bool:
     """Determine if two links conflict based on SINR threshold."""

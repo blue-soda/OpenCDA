@@ -127,6 +127,10 @@ def run(debug=True):
     if debug:
         debug_helper = scenario_manager.world.debug 
 
+    from opencda.customize.core.clustering.clustering_game_manager import \
+        CoalitionGame, PotentialGame
+    coalition_game = CoalitionGame(cav_world)
+
     while True:
         scenario_manager.tick()
         transform = spectator_vehicle.get_transform()
@@ -181,6 +185,9 @@ def run(debug=True):
         if 'network' in applications:
             cav_world.network_manager.advance_time_slot()
 
+        coalitions = coalition_game.run()
+        potential_game = PotentialGame(cav_world, coalitions)
+        strategies = potential_game.run()
 
 def stop(opt):
     global cav_world, scenario_manager, eval_manager

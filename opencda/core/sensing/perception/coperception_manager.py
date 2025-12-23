@@ -54,10 +54,10 @@ class CoperceptionManager:
                     print(f"cav {cav_id} timeout, current_time_slot: {current_time_slot}, start_slot: {self.uploading_cavs[cav_id]}")
             self.uploading_cavs[cav_id] = current_time_slot
             cav_v2x_manager = vm_dict['v2x_manager']
-            # data_size = asizeof(cav_data) - data_size_received
             if cav_id not in self.uploading_data_size:
                 cav_data = self.uploading_data.get(cav_id, None)
-                data_size = asizeof(cav_data) 
+                # data_size = asizeof(cav_data) 
+                data_size = cav_data[cav_id]['lidar_np'].nbytes
                 self.uploading_data_size[cav_id] = data_size
                 self.v2x_manager.scheduler.record_data_size_infos({(cav_id, self.v2x_manager.vehicle_id) : data_size}) # let scheduler know the data size 
                 print(f"cav {cav_id} is uploading its data to {self.vid} for the FIRST time, size: {data_size} bytes at {self.network_manager.current_time_slot}.")
@@ -94,6 +94,7 @@ class CoperceptionManager:
                 print(f"cav {sender_id} has uploaded its data to {self.vid} via network at {self.network_manager.current_time_slot}.")
             else:
                 logger.warning(f"cav {sender_id} data not found in uploading_data of {self.vid}.")
+                
         return received_data
 
 

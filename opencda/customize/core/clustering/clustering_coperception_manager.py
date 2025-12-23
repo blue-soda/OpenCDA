@@ -14,9 +14,11 @@ class ClusteringCoperceptionManager(CoperceptionManager):
         self.communicate_inside_cluster = False
 
     def get_data_from_lidar(self, lidar):
-        low_density_grids = lidar.get_low_density_grids()
-        grid_data = lidar.get_local_points_by_grid_ids(low_density_grids.keys())
-        return grid_data
+        # low_density_grids = lidar.get_low_density_grids()
+        # grid_data = lidar.get_local_points_by_grid_ids(low_density_grids.keys())
+        # low_density_grids = lidar.low_density_grids
+        # grid_data = lidar.get_local_points_by_grid_ids(lidar.low_density_grids)
+        return lidar.data
     
     def get_coperception_cavs_dict(self):
         if self.communicate_inside_cluster:

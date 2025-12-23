@@ -182,7 +182,8 @@ class ClusteringPerceptionManager(PerceptionManager):
 
                 ego_data = self.collect_self_data(is_ego=self.is_ego)
 
-                ego_data_size = asizeof(ego_data)
+                # ego_data_size = asizeof(ego_data)
+                ego_data_size = ego_data[ego_id]['lidar_np'].nbytes
                 logger.debug(f"head {self.id}, collect ego data size: {ego_data_size}")
                 # print(f"head {self.id}, collect ego data size: {ego_data_size} bytes.")
                 self.ego_data = ego_data

@@ -23,8 +23,8 @@ from opencda.customize.core.v2x.scheduler_builder import build_scheduler
 
 
 STANDARD_CAPABILITY = 1
-MAX_TX_POWER = 1
-BASE_NOISE_POWER = 1e-13
+MAX_TX_POWER = 23  # dBm
+BASE_NOISE_POWER = -100 # dBm
 
 class V2XManager(object):
     """
@@ -121,7 +121,7 @@ class V2XManager(object):
         self.computing_capability = STANDARD_CAPABILITY * uniform(0.4, 1)
         self.communication_quality = STANDARD_CAPABILITY * uniform(0.6, 1)
 
-        self.tx_power = MAX_TX_POWER * self.communication_quality  # Watt
+        self.tx_power = MAX_TX_POWER * self.communication_quality  # dBm
         self.noise_power = BASE_NOISE_POWER # / self.communication_quality # Watt
 
         V2XManager.instance_nums += 1
