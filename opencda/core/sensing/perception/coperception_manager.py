@@ -19,7 +19,7 @@ class CoperceptionManager:
         self.uploading_data = None
         self.uploading_data_size = {}
         self.timeout_slots = 4 # number of time slots to wait before re-uploading data from a cav
-        self.re_upload_when_timeout = False
+        self.re_upload_when_timeout = True
 
     def get_coperception_cavs_dict(self) -> dict:
         # dict of {vid: {'vehicle_manager': vm, 'v2x_manager': v2x_manager}}
@@ -39,8 +39,9 @@ class CoperceptionManager:
             return data
         return self.communicate_via_network()
     
-    def communicate_via_network(self):
-        self.send_cams_via_network()
+    def communicate_via_network(self, try_to_send=True):
+        if try_to_send:
+            self.send_cams_via_network()
         return self.receive_cams_via_network()
 
     def send_cams_via_network(self):
@@ -76,6 +77,7 @@ class CoperceptionManager:
     def receive_cams_via_network(self):
         # cams = self.network_manager.get_received_cams()
         cams = self.network_manager.get_received_cams(self.vid)
+        logger.info(f"{self.vid} received {len(cams)} CAMS from network.")
         received_data = {}
         for cam in cams.values():
             sender_id = cam.get('sender_id')
@@ -84,13 +86,15 @@ class CoperceptionManager:
             data_size = self.uploading_data_size.get(sender_id, None)
             if not data_size:
                 continue
-            if packet_size < data_size * 0.90:
+            if packet_size < data_size * 0.80:
                 self.uploading_data_size[sender_id] -= packet_size
                 self.network_manager.pop_received_cams(self.vid)
                 print(f"cav {sender_id} data upload to {receiver_id} incomplete. Received size: {packet_size} bytes, expected size: {data_size} bytes.")
+                logger.info(f"cav {sender_id} data upload to {receiver_id} incomplete. Received size: {packet_size} bytes, expected size: {data_size} bytes.")
                 continue
             
             print(f"cav {sender_id} data upload to {receiver_id} succeeded. Received size: {packet_size} bytes, expected size: {data_size} bytes.")
+            logger.info(f"cav {sender_id} data upload to {receiver_id} succeeded. Received size: {packet_size} bytes, expected size: {data_size} bytes.")
             delay_infos = self.network_manager.pop_received_cams(receiver_id, sender_id)
             print(f"cav {sender_id} communication delay info: {delay_infos}")
             if delay_infos:
@@ -109,9 +113,11 @@ class CoperceptionManager:
         uploaded_num = len(self.uploaded_cavs)
         all_cavs_num = len(self.all_cavs)
         if all_cavs_num == 0 or self.enable_network is False:
+            print(f"{self.vid} all_data_uploaded, all_cavs_num: {all_cavs_num}, return True")
             return True
-        ok = uploaded_num / all_cavs_num >= percent
-        logger.info(f"Coperception data uploaded: {uploaded_num}/{all_cavs_num} ({uploaded_num / all_cavs_num:.2%})")
+        ok = (uploaded_num / all_cavs_num) >= percent
+        logger.info(f"{self.vid} Coperception data uploaded: {uploaded_num}/{all_cavs_num} ({uploaded_num / all_cavs_num:.2%}), return {ok}")
+        print(f"{self.vid} Coperception data uploaded: {uploaded_num}/{all_cavs_num} ({uploaded_num / all_cavs_num:.2%}), return {ok}")
         return ok
 
     def clear_uploaded_and_uploading(self):

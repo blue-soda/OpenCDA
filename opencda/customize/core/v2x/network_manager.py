@@ -165,6 +165,8 @@ class NetworkManager:
         self.bridge.received_cams = {}
 
     def get_received_cams(self, receiver_id):
+        logger.debug(f"get_received_cams, {self.bridge.received_cams}")
+        logger.debug(f"get_received_cams, {self.bridge.received_cams.keys()}")
         return self.bridge.received_cams.get(receiver_id, {}).copy()
 
     def pop_received_cams(self, receiver_id, sender_id=None):

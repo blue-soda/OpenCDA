@@ -166,25 +166,27 @@ class CarlaNs3Bridge:
         else:
             sender_dict = self.received_cams[receiver_id]
             if sender_id not in sender_dict:
-                sender_dict[sender_id] = message.copy()
+                self.received_cams[receiver_id][sender_id] = message.copy()
             else:
                 existing_msg = sender_dict[sender_id]
                 existing_send_ts = existing_msg.get("send_timestamp", 0)
                 if abs(send_timestamp - existing_send_ts) > self.combine_threshold_ms:
                     # 新消息：时间差超过阈值
-                    sender_dict[sender_id] = message.copy()
-                    logger.info(f"New message for {receiver_id}->{sender_id} (time gap)")
-                    print(f"New message for {receiver_id}->{sender_id} (time gap)")
+                    self.received_cams[receiver_id][sender_id] = message.copy()
+                    logger.info(f"New message for {sender_id}->{receiver_id} (time gap)")
+                    print(f"New message for {sender_id}->{receiver_id} (time gap)")
                 else:
                     # 合并消息
                     existing_msg["packet_size"] += packet_size
                     existing_msg["receive_timestamp"] = receive_timestamp
+                    self.received_cams[receiver_id][sender_id] = existing_msg
                     logger.info(
-                        f"Combined message for {receiver_id}->{sender_id}, total size: {existing_msg['packet_size']} bytes"
+                        f"Combined message for {sender_id}->{receiver_id}, total size: {existing_msg['packet_size']} bytes"
                     )
                     # print(
                     #     f"Combined message for {receiver_id}->{sender_id}, total size: {existing_msg['packet_size']} bytes"
                     # )
+
 
     def _start_receiver(self):
         """Start threads to receive messages from ns-3"""

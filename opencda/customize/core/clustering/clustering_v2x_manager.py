@@ -13,6 +13,8 @@ from opencda.customize.core.clustering.algorithm.coalition_game import Coalition
 
 class ClusteringV2XManager(V2XManager):
     cluster_algorithm = None
+    clusters = None
+    cnt = 0
     def __init__(self, cav_world, config_yaml, vid):
         super(ClusteringV2XManager, self).__init__(cav_world, config_yaml, vid)
         self.cp_model = 'default_model'
@@ -28,9 +30,11 @@ class ClusteringV2XManager(V2XManager):
 
     def run_algorithm(self):
         self.cluster_algorithm.initialize()
-        clusters = self.cluster_algorithm.run()
+        if self.cnt < 3:
+            self.clusters = self.cluster_algorithm.run()
+            self.cnt += 1
         if self.enable_scheduler and hasattr(self.scheduler, 'is_cluster_based') and self.scheduler.is_cluster_based:
-            self.scheduler.set_clusters(clusters)
+            self.scheduler.set_clusters(self.clusters)
             self.scheduler.run()
 
     @staticmethod

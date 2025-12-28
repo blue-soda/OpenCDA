@@ -34,7 +34,7 @@ class ClusteringCoperceptionManager(CoperceptionManager):
         
         # 检查是否有该车辆的网格选择结果
         if vehicle_id in self.grid_selection and self.grid_selection[vehicle_id]:
-            print(f"Vehicle {vehicle_id} grid selection: {self.grid_selection[vehicle_id]}")
+            # print(f"Vehicle {vehicle_id} grid selection: {self.grid_selection[vehicle_id]}")
             selected_grids = self.grid_selection[vehicle_id]
             grid_data = lidar.get_local_points_by_grid_ids(selected_grids)
             return grid_data
@@ -44,14 +44,14 @@ class ClusteringCoperceptionManager(CoperceptionManager):
             return lidar.data
         else:
         # 如果没有选择结果，则返回空数据
-            print(f"Vehicle {vehicle_id} has no grid selection. {self.grid_selection.keys()}")
+            # print(f"Vehicle {vehicle_id} has no grid selection. {self.grid_selection.keys()}")
             return None
     
     def get_coperception_cavs_dict(self):
         if self.communicate_inside_cluster:
             data_inside_cluster = {}
             vms = self.v2x_manager.get_cluster_member_vms()['members']
-            print(f"Cluster members: {vms.keys()}")
+            # print(f"Cluster members: {vms.keys()}")
             for vid, vm in vms.items():
                 if vid == self.vehicle_id:
                     continue

@@ -259,7 +259,7 @@ class VehicleManager(object):
 
         # object detection
         objects = self.perception_manager.detect(self.ego_pos)
-        
+
         if self.isTrafficVehicle:
             return
 

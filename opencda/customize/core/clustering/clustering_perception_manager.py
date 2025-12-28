@@ -165,6 +165,9 @@ class ClusteringPerceptionManager(PerceptionManager):
         ego_in_cluster = False
         did_cp = False
 
+        # receive cluster members data
+        self.collect_cluster_members_data(is_ego=self.is_ego)
+
         if not self.doing_cp:
             # print("Perception skipped this tick.")
             pass
@@ -186,10 +189,6 @@ class ClusteringPerceptionManager(PerceptionManager):
                     self_data = self.collect_self_data(is_ego=self.is_ego)
                     self_data_size = self_data[self.id]['lidar_np'].nbytes
                     logger.debug(f"head {self.id}, collect ego data size: {self_data_size}")
-                    # receive cluster members data
-                    members_data = self.collect_cluster_members_data(is_ego=self.is_ego)
-                    if members_data:
-                        self.cp_data.update(members_data)
 
                     data = OrderedDict()
                     data.update(self.cp_data)
@@ -213,7 +212,8 @@ class ClusteringPerceptionManager(PerceptionManager):
 
                     # collect cluster members data for the next cp
                     self.co_manager.clear_uploaded_and_uploading()
-                    members_data = self.collect_cluster_members_data(is_ego=self.is_ego)
+                    self.collect_cluster_members_data(is_ego=self.is_ego)
+                    
             else:
                 #For other vehicles, 1. get results from cluster head 2. communicate with vehicles outside the cluster
                 #Note that only ego vehicle need the real results.
@@ -267,6 +267,7 @@ class ClusteringPerceptionManager(PerceptionManager):
             self.gt_box_tensor_fusion = gt_box_tensor
             self.ml_manager.submit_results(predict_box_tensor, pred_score, gt_box_tensor, with_stats=True)
             ClusteringPerceptionManager.ego_did_cp = False
+            ClusteringPerceptionManager.clear() # 不及时清理会导致精度下降
 
         if self.lidar_visualize:
             o3d_pointcloud_encode(self.lidar.data, self.lidar.o3d_pointcloud)
@@ -280,8 +281,6 @@ class ClusteringPerceptionManager(PerceptionManager):
             {},
             take_screenshot=True)  
 
-        ClusteringPerceptionManager.clear()
-
 
     def collect_self_data(self, is_ego=True):
         return self.co_manager.prepare_and_transform_data_from_managers(
@@ -294,8 +293,15 @@ class ClusteringPerceptionManager(PerceptionManager):
         )
     
     def collect_cluster_members_data(self, is_ego=False):
-        return self.co_manager.communicate(
+        members_data = self.co_manager.communicate(
             ego_lidar_pose=ClusteringPerceptionManager.ego_lidar_pose,
             use_ego_vehicles=True,
             is_ego=is_ego
         )
+        if members_data:
+            self.cp_data.update(members_data)
+    
+    def receive_cluster_members_data(self):
+        members_data = self.co_manager.communicate_via_network(try_to_send=False)
+        if members_data:
+            self.cp_data.update(members_data)
