@@ -61,8 +61,9 @@ class V2XManager(object):
     """
 
     instance_nums = 0
+    enable_scheduler = False
 
-    def __init__(self, cav_world, config_yaml, vid, vehicle_id=None):
+    def __init__(self, cav_world, config_yaml, vid):
         # if disabled, no cooperation will be operated
         self.cda_enabled = config_yaml['enabled']
         self.communication_range = config_yaml['communication_range']
@@ -95,7 +96,7 @@ class V2XManager(object):
         # used to exclude the cav self during searching
         self.ego_data = deque(maxlen=100)
         self.vid = vid
-        self.vehicle_id = vehicle_id
+        self.vehicle_id = vid
         # check if lag or noise needed to be added during communication
         self.loc_noise = 0.0
         self.yaw_noise = 0.0
@@ -117,6 +118,7 @@ class V2XManager(object):
         if self.cav_world.network_enabled and config_yaml['network']['enabled']:
             self.scheduler = build_scheduler(config_yaml['network']['scheduler'], cav_world, config_yaml['network'])
             self.scheduler_type = (config_yaml['network']['scheduler'])
+            V2XManager.enable_scheduler = True
 
         self.computing_capability = STANDARD_CAPABILITY * uniform(0.4, 1)
         self.communication_quality = STANDARD_CAPABILITY * uniform(0.6, 1)
@@ -150,10 +152,14 @@ class V2XManager(object):
 
         if self.beacon_tick():
             self.search()
+            ret = True
+        else:
+            ret = False
 
         # the ego pos in platooning_plugin is used for self-localization,
         # so we shouldn't add noise or lag.
         self.platooning_plugin.update_info(ego_pos, ego_spd)
+        return ret
 
     def get_ego_pos(self):
         """
@@ -224,6 +230,12 @@ class V2XManager(object):
             self.ego_image[-1 - int(abs(self.lag))]
         return image
 
+    def update_rgb(self):
+        pass
+
+    def run_step(self):
+        self.update_rgb()
+
     def search(self):
         """
         Search the CAVs nearby.
@@ -249,7 +261,9 @@ class V2XManager(object):
             else:
                 self.cav_nearby.pop(vid, None)
 
-
+    @staticmethod
+    def run_algorithm():
+        pass
 
     def set_buffer(self, source_id=None, objects=None):#, results=None):
         if source_id:

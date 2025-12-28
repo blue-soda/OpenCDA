@@ -2,7 +2,7 @@ enable_network:
   network:
     enabled: true
     # scheduler: default
-    scheduler: wcgc
+    scheduler: cluster
     # 5Mhz LTE:
     # subchannel_bandwidth: 0.180 #MHz
     # subchannel_num: 25

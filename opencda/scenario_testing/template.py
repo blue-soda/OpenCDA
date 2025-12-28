@@ -127,10 +127,6 @@ def run(debug=True):
     if debug:
         debug_helper = scenario_manager.world.debug 
 
-    from opencda.customize.core.clustering.clustering_game_manager import \
-        CoalitionGame, PotentialGame
-    coalition_game = CoalitionGame(cav_world)
-
     while True:
         scenario_manager.tick()
         transform = spectator_vehicle.get_transform()
@@ -152,20 +148,15 @@ def run(debug=True):
                 continue
 
             single_cav.update_data()
-            # single_cav.update_info()
             if debug:
                 draw_string(debug_helper, single_cav)
 
         for traffic_cav in traffic_cav_list:
             traffic_cav.update_data()
-            # traffic_cav.update_info()
             check_is_out_sight(transform, traffic_cav)
 
             if debug:
                 draw_string(debug_helper, traffic_cav)
-        
-        if 'cluster' in applications:
-            update_cluster(all_cavs)
 
         for cav in all_cavs:
             cav.update_info(update_data=False)
@@ -174,9 +165,10 @@ def run(debug=True):
             for cav in all_cavs:
                 cav.submit_cp_results()
 
-        for single_cav in single_cav_list:               
-            control = single_cav.run_step()
-            single_cav.vehicle.apply_control(control)
+        for cav in all_cavs:               
+            control = cav.run_step()
+            if control:
+                cav.vehicle.apply_control(control)
 
         for rsu in rsu_list:
             rsu.update_info()
@@ -184,10 +176,6 @@ def run(debug=True):
 
         if 'network' in applications:
             cav_world.network_manager.advance_time_slot()
-
-        coalitions = coalition_game.run()
-        potential_game = PotentialGame(cav_world, coalitions)
-        strategies = potential_game.run()
 
 def stop(opt):
     global cav_world, scenario_manager, eval_manager
@@ -231,11 +219,3 @@ def check_is_out_sight(transform, cav):
     elif not cav.is_ok and not is_out_of_sight:
         cav.is_ok = True
         logger.debug(f"bg_vehicle {cav.vehicle.id} is back.")
-
-def update_cluster(all_cavs):
-    for cav in all_cavs:
-        cav.leave_join_create_cluster()
-    for cav in all_cavs:
-        cav.elect_leader()    
-    for cav in all_cavs:
-        cav.sync_update_cluster_state()                        

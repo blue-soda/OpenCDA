@@ -29,9 +29,10 @@ class NetworkManager:
         self.subchannel_bandwidth = config.get("subchannel_bandwidth", 0.180) * 1e6  #Hz
         # self.max_interference = config.get("max_interference", 0.2)
         self.min_sinr_threshold = config.get("min_sinr_threshold", 3) #dB
-        self.time_slot = config.get("time_slot", 0.05)
+        self.time_slot = config.get("time_slot", 0.05) / 5.0
         self.use_ns3 = config.get("use_ns3", False)
         self.current_time_slot = 0
+        self.world_tick = False
 
         # Allocation state
         self.active_allocations = defaultdict(set)  # {subchannel: {(src_id, tgt_id, end_time_slot)}}
@@ -68,19 +69,24 @@ class NetworkManager:
     def add_vehicles(self, vehicles):
         self.all_vehicles.extend(vehicles)
 
+    def tick(self):
+        self.world_tick = True
+
     def send_msg_to_ns3(self):
         """Send messages to ns-3 if needed."""
         try:
             self.bridge.send_vehicles_num(self.max_vehicle_num)  # Initial vehicle count
             while self.bridge.is_simulation_running():
-                while len(self.communication_requests) == 0:
-                    time.sleep(self.time_slot)
-                # self.bridge.send_vehicles_num(len(self.all_vehicles))
-                vehicle_data = collect_vehicle_data(self.all_vehicles)
-                self.bridge.send_vehicles_position(vehicle_data)
-                self.bridge.send_transfer_requests(self.communication_requests[:])
-                self.communication_requests = []
-                time.sleep(self.time_slot)
+                if self.world_tick:
+                    self.world_tick = False
+                    vehicle_data = collect_vehicle_data(self.all_vehicles)
+                    self.bridge.send_vehicles_position(vehicle_data)
+                    if len(self.communication_requests) == 0:
+                        time.sleep(self.time_slot / 5.0)
+                        continue
+                    self.bridge.send_transfer_requests(self.communication_requests[:])
+                    self.communication_requests = []
+                time.sleep(self.time_slot / 5.0)
                 
         except KeyboardInterrupt:
             logger.info("Simulation interrupted by user")
@@ -109,6 +115,7 @@ class NetworkManager:
         """
         Wrapper for resource allocation and communication handling.
         """
+        # print(f"Communicate from {source.vehicle_id} to {target.vehicle_id} with volume {volume} on subchannel {subchannel_start} for {subchannel_num} subchannels, use ns-3: {self.use_ns3}.")
         if(self.use_ns3):
             return self.communicate_through_ns3(source, target, volume, subchannel_start, subchannel_num)
         elif(subchannel_start >= 0 and subchannel_start + subchannel_num <= self.subchannel_num):
@@ -132,7 +139,7 @@ class NetworkManager:
         return True
     
     def send_cams_via_ns3(self, src_id, tgt_id, volume: float, subchannel_start: int = -1, subchannel_num: int = 0):
-        use_default_subchannel = subchannel_start == -1 or subchannel_num == 0
+        use_default_subchannel = subchannel_start < 0 or subchannel_num <= 0
         if use_default_subchannel:
             self.communication_requests.append({
                 "source": src_id,
@@ -422,6 +429,7 @@ class NetworkManager:
 
         # Finalize and reset statistics for the current slot
         self.finalize_slot()
+        self.tick()
 
 
 class ResourceConflictError(Exception):

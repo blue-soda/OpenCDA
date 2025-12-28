@@ -153,12 +153,12 @@ class CarlaNs3Bridge:
         delay = receive_timestamp - send_timestamp
         logger.info(
             f"NS-3 Info: Vehicle {receiver_id} received {packet_size} bytes from {sender_id}, "
-            f"delay: {delay}ms (send: {send_timestamp}, receive: {receive_timestamp})"
+            f"delay: {delay}ms (send_timestamp: {send_timestamp}, receive_timestamp: {receive_timestamp})"
         )
-        print(
-            f"NS-3 Info: Vehicle {receiver_id} received {packet_size} bytes from {sender_id}, "
-            f"delay: {delay}ms (send: {send_timestamp}, receive: {receive_timestamp})"
-        )
+        # print(
+        #     f"NS-3 Info: Vehicle {receiver_id} received {packet_size} bytes from {sender_id}, "
+        #     f"delay: {delay}ms (send: {send_timestamp}, receive: {receive_timestamp})"
+        # )
 
         # 消息合并逻辑
         if receiver_id not in self.received_cams:
@@ -182,9 +182,9 @@ class CarlaNs3Bridge:
                     logger.info(
                         f"Combined message for {receiver_id}->{sender_id}, total size: {existing_msg['packet_size']} bytes"
                     )
-                    print(
-                        f"Combined message for {receiver_id}->{sender_id}, total size: {existing_msg['packet_size']} bytes"
-                    )
+                    # print(
+                    #     f"Combined message for {receiver_id}->{sender_id}, total size: {existing_msg['packet_size']} bytes"
+                    # )
 
     def _start_receiver(self):
         """Start threads to receive messages from ns-3"""

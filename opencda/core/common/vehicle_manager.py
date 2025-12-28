@@ -90,8 +90,8 @@ class VehicleManager(object):
             ):
 
         # an unique uuid for this vehicle
-        self.vid = str(uuid.uuid1())
         self.vehicle = vehicle
+        self.vid = vehicle.id
         self.carla_map = carla_map
         self.cav_world = cav_world
         self.application = application
@@ -102,7 +102,6 @@ class VehicleManager(object):
         behavior_config = config_yaml['behavior']
         control_config = config_yaml['controller']
         v2x_config = config_yaml['v2x']
-        cluster_config = config_yaml['cluster']
 
         self.isTrafficVehicle = 'traffic' in application
         self.enableNetwork = 'network' in application
@@ -112,13 +111,14 @@ class VehicleManager(object):
 
         # v2x module
         if self.enableCluster:
-            self.v2x_manager = ClusteringV2XManager(cav_world, v2x_config, self.vid, self.vehicle.id, cluster_config)
+            self.v2x_manager = ClusteringV2XManager(cav_world, v2x_config, self.vid)
         else:
-            self.v2x_manager = V2XManager(cav_world, v2x_config, self.vid, self.vehicle.id)
+            self.v2x_manager = V2XManager(cav_world, v2x_config, self.vid)
             if self.enableNetwork and v2x_config['network']['scheduler'] == 'clusterbased':
                 v2x_config['network']['scheduler'] = 'roundrobin'
                 print('Warning: do not use cluster_based scheduler when clustering is not active. scheduler param has been changed to roundrobin automately.')
                 logger.warning('do not use cluster_based scheduler when clustering is not active. scheduler param has been changed to roundrobin automately.')
+        self.v2x_manager.set_enable_scheduler(self.enableNetwork)
 
         if self.enableNetwork and v2x_config['network'].get('use_ns3', False):
             cav_world.network_manager.add_vehicles([self.vehicle])
@@ -172,7 +172,7 @@ class VehicleManager(object):
                 cav_world=cav_world,
                 data_dump=data_dumping,
                 enable_network=self.enableNetwork,
-                cluster_config=cluster_config)
+                )
         else:
             self.perception_manager = PerceptionManager(
                 v2x_manager=self.v2x_manager,
@@ -230,9 +230,6 @@ class VehicleManager(object):
             start_location, end_location, clean, end_reset)
 
     def update_data(self):
-        # if not self.is_ok:
-        #     return
-
         # localization
         self.localizer.localize()
 
@@ -241,11 +238,9 @@ class VehicleManager(object):
         self.ego_dir = self.localizer.get_ego_dir()
         self.ego_lidar = self.perception_manager.lidar
         self.ego_image = self.perception_manager.rgb_camera
-
         # update ego position and speed to v2x manager,
         # and then v2x manager will search the nearby cavs
-        self.v2x_manager.update_info(self.ego_pos, self.ego_spd, self.ego_lidar, self.ego_image, self.ego_dir)
-
+        self.v2x_tick = self.v2x_manager.update_info(self.ego_pos, self.ego_spd, self.ego_lidar, self.ego_image, self.ego_dir)
 
     def update_info(self, update_data=True):
         """
@@ -259,6 +254,12 @@ class VehicleManager(object):
         if update_data:
             self.update_data()
         
+        if self.vid == self.cav_world.ego_id and self.v2x_tick:
+            self.run_algorithm()
+
+        # object detection
+        objects = self.perception_manager.detect(self.ego_pos)
+        
         if self.isTrafficVehicle:
             return
 
@@ -267,9 +268,6 @@ class VehicleManager(object):
 
         # pass position and speed info to controller
         self.controller.update_info(self.ego_pos, self.ego_spd)
-
-        # object detection
-        objects = self.perception_manager.detect(self.ego_pos)
         
         if not objects['is_skipped']:
             # this is required by safety manager
@@ -283,13 +281,13 @@ class VehicleManager(object):
 
             self.agent.update_information(self.ego_pos, self.ego_spd, objects)
 
-
     def run_step(self, target_speed=None):
         """
         Execute one step of navigation.
         """
+        self.v2x_manager.run_step()
         if 'traffic' in self.application:
-            return
+            return None
         # visualize the bev map if needed
         self.map_manager.run_step()
         target_speed, target_pos = self.agent.run_step(target_speed, self.cav_world.ego_id)
@@ -324,26 +322,8 @@ class VehicleManager(object):
                  Below is clustering related 
     -----------------------------------------------------------
     """
-
-    def leave_join_create_cluster(self):
-        if not self.enableCluster:
-            return
-        self.v2x_manager.leave_join_create_cluster()
-
-    def elect_leader(self):
-        if not self.enableCluster:
-            return
-        self.v2x_manager.elect_leader()
-
-    def sync_update_cluster_state(self):
-        if not self.enableCluster:
-            return
-        self.v2x_manager.sync_update_cluster_state()
-        if self.v2x_manager.is_cluster_head() and self.v2x_manager.scheduler is not None and self.v2x_manager.scheduler_type == 'clusterbased':
-            self.v2x_manager.scheduler.update_scheduler(self.v2x_manager.get_cluster_member_vms())
-
     def submit_cp_results(self):
-        # print(f"submit: {self.vehicle.id}")
-        if not self.enableCluster:
-            return
         self.perception_manager.submit_cp_results()
+
+    def run_algorithm(self):
+        self.v2x_manager.run_algorithm()

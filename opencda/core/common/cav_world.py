@@ -107,11 +107,6 @@ class CavWorld(object):
         vehicle_manager : opencda object
             The vehicle manager class.
         """
-        # self._vehicle_manager_dict.update(
-        #     {vehicle_manager.vid: vehicle_manager})
-        # if not isTrafficVehicle:
-        #     self._evaluate_vehicle_manager_dict.update(
-        #     {vehicle_manager.vid: vehicle_manager})
         vid = vehicle_manager.vehicle.id
         self.vehicle_id_set.add(vid)
         self._vehicle_manager_dict.update(

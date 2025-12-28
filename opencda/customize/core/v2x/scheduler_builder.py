@@ -23,8 +23,8 @@ def build_scheduler(scheduler_name, cav_world, config={}):
         return RoundRobinScheduler(cav_world, config)
     elif scheduler_name == 'greedy':
         return InterferenceAwareScheduler(cav_world, config)
-    elif scheduler_name == 'wcgc':
-        return WCGCScheduler(cav_world, config)
+    elif scheduler_name == 'cluster':
+        return ClusteringScheduler(cav_world, config)
     else:
         raise ValueError(f"Unknown scheduler name: {scheduler_name}")
 

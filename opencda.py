@@ -78,15 +78,11 @@ def main():
         os.path.dirname(os.path.realpath(__file__)),
         'opencda/scenario_testing/config_yaml/enable_network.yaml')
 
-    cluster_yaml = os.path.join(
-        os.path.dirname(os.path.realpath(__file__)),
-        'opencda/scenario_testing/config_yaml/enable_cluster.yaml')
     # load the default yaml file and the scenario yaml file as dictionaries
     default_dict = OmegaConf.load(default_yaml)
     scene_dict = OmegaConf.load(config_yaml)
     open_scenario_dict = OmegaConf.load(open_scenario_yaml)
     network_dict = OmegaConf.load(network_yaml)
-    cluster_dict = OmegaConf.load(cluster_yaml)
 
     network_dict['enable_network']['network']['enabled'] = opt.network
 
@@ -96,7 +92,7 @@ def main():
     # merge the dictionaries
     scene_dict = OmegaConf.merge(default_dict, scene_dict, open_scenario_dict)
     # import the testing script
-    experiment_dict = OmegaConf.merge(coperception_dict, enable_prediction_dict, network_dict, cluster_dict)
+    experiment_dict = OmegaConf.merge(coperception_dict, enable_prediction_dict, network_dict)
     # add network_dict here
 
     testing_scenario = importlib.import_module(
@@ -111,11 +107,7 @@ def main():
 
     logger.debug(experiment_dict)
     scenario_params = scene_dict
-    # from opencda.constants import Profile
-    # experiment_profile = Profile.PREDICTION_OPENCOOD_V2X #PREDICTION_OPENCOOD_CAV
-    # for profile in experiment_profile.profiles():
-    #     scenario_params = OmegaConf.merge(scenario_params, experiment_dict[profile])
-    scenario_params = OmegaConf.merge(scenario_params, experiment_dict['enable_cluster'])
+
     if opt.apply_cp:
         scenario_params = OmegaConf.merge(scenario_params, experiment_dict['enable_coperception'])
     if opt.network:

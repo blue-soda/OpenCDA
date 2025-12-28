@@ -1,3 +1,4 @@
+from unittest.mock import Base
 from collections import OrderedDict
 from pympler.asizeof import asizeof
 from opencda.log.logger_config import logger
@@ -17,7 +18,8 @@ class CoperceptionManager:
         self.all_cavs = {}
         self.uploading_data = None
         self.uploading_data_size = {}
-        self.timeout_slots = 3 # number of time slots to wait before re-uploading data from a cav
+        self.timeout_slots = 4 # number of time slots to wait before re-uploading data from a cav
+        self.re_upload_when_timeout = False
 
     def get_coperception_cavs_dict(self) -> dict:
         # dict of {vid: {'vehicle_manager': vm, 'v2x_manager': v2x_manager}}
@@ -38,12 +40,12 @@ class CoperceptionManager:
         return self.communicate_via_network()
     
     def communicate_via_network(self):
-        # print("Coperception via network...")
         self.send_cams_via_network()
         return self.receive_cams_via_network()
 
     def send_cams_via_network(self):
         current_time_slot = self.network_manager.current_time_slot
+        print(f"{self.vid} Collecting data from {list(self.all_cavs.keys())} CAVs.")
         for cav_id, vm_dict in self.all_cavs.items():
             if cav_id in self.uploaded_cavs:
                 continue
@@ -56,14 +58,19 @@ class CoperceptionManager:
             cav_v2x_manager = vm_dict['v2x_manager']
             if cav_id not in self.uploading_data_size:
                 cav_data = self.uploading_data.get(cav_id, None)
+                if cav_data is None:
+                    continue
                 # data_size = asizeof(cav_data) 
-                data_size = cav_data[cav_id]['lidar_np'].nbytes
+                data_size = cav_data['lidar_np'].nbytes
                 self.uploading_data_size[cav_id] = data_size
                 self.v2x_manager.scheduler.record_data_size_infos({(cav_id, self.v2x_manager.vehicle_id) : data_size}) # let scheduler know the data size 
                 print(f"cav {cav_id} is uploading its data to {self.vid} for the FIRST time, size: {data_size} bytes at {self.network_manager.current_time_slot}.")
             else:
+                if not self.re_upload_when_timeout:
+                    continue
                 data_size = self.uploading_data_size[cav_id]
                 print(f"cav {cav_id} is uploading its data to {self.vid} AGAIN, size: {data_size} bytes at {self.network_manager.current_time_slot}.")
+            # print(f"cav {cav_id} data size: {data_size} bytes.")
             self.v2x_manager.scheduler.schedule(cav_v2x_manager, self.v2x_manager, data_size)
 
     def receive_cams_via_network(self):
@@ -86,7 +93,8 @@ class CoperceptionManager:
             print(f"cav {sender_id} data upload to {receiver_id} succeeded. Received size: {packet_size} bytes, expected size: {data_size} bytes.")
             delay_infos = self.network_manager.pop_received_cams(receiver_id, sender_id)
             print(f"cav {sender_id} communication delay info: {delay_infos}")
-            self.v2x_manager.scheduler.record_communication_delay_infos(delay_infos)
+            if delay_infos:
+                self.v2x_manager.scheduler.record_communication_delay_infos(delay_infos)
             data = self.uploading_data.get(sender_id, None)
             if data:
                 self.uploaded_cavs[sender_id] = self.network_manager.current_time_slot
@@ -96,7 +104,6 @@ class CoperceptionManager:
                 logger.warning(f"cav {sender_id} data not found in uploading_data of {self.vid}.")
                 
         return received_data
-
 
     def all_data_uploaded(self, percent=0.6):
         uploaded_num = len(self.uploaded_cavs)
@@ -120,7 +127,7 @@ class CoperceptionManager:
         cav_data[cav_id]['params'].update(t_matrix)
         return cav_data
     
-    def get_data_from_lidar(self, lidar):
+    def get_data_from_lidar(self, lidar, vehicle_id=None):
         return lidar.data # 这一步获取了点云数据, 可以改为lidar.get_local_points_by_grid_ids([])按照网格划分获取点云数据
     
     def prepare_data(self, cav_id, camera, lidar, pos, localizer, agent, is_ego, use_ego_vehicles=False):
@@ -136,7 +143,7 @@ class CoperceptionManager:
         data[cav_id]['params'].update(camera_data)
         data[cav_id]['params'].update(ego_data)
         data[cav_id]['params'].update(lidar_pose_data)
-        data[cav_id].update({'lidar_np': self.get_data_from_lidar(lidar)})
+        data[cav_id].update({'lidar_np': self.get_data_from_lidar(lidar, vehicle_id=cav_id)})
         # get base_data_dict
         if is_ego:
             self.ego_data_dict = data[cav_id]['params']
@@ -181,13 +188,13 @@ class CoperceptionManager:
         )
         return nearby_data
     
-    def prepare_and_transform_data_from_dict(self, data: dict, is_ego=False, ego_lidar_pose=None, use_ego_vehicles=False):
+    def prepare_and_transform_data_from_dict(self, cav_dict: dict, is_ego=False, ego_lidar_pose=None, use_ego_vehicles=False):
         transformed_data = {}
-        for vid, nearby_data_dict in data.items():
-            if not nearby_data_dict:
+        for vid, nearby_cav_dict in cav_dict.items():
+            if not nearby_cav_dict:
                 continue
-            nearby_vm = nearby_data_dict['vehicle_manager']
-            nearby_v2x_manager = nearby_data_dict['v2x_manager']
+            nearby_vm = nearby_cav_dict['vehicle_manager']
+            nearby_v2x_manager = nearby_cav_dict['v2x_manager']
             nearby_data = self.prepare_and_transform_data_from_managers(
                 v2x_manager=nearby_v2x_manager,
                 localizer=nearby_vm.localizer,
@@ -196,6 +203,9 @@ class CoperceptionManager:
                 ego_lidar_pose=ego_lidar_pose,
                 use_ego_vehicles=use_ego_vehicles
             )
+            if nearby_data[vid]['lidar_np'] is None:
+                print(f"Vehicle {vid} has no lidar data to upload.")
+                continue
             transformed_data[vid] = nearby_data[vid]
         return transformed_data
     
