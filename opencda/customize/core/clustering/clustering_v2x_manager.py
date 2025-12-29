@@ -14,7 +14,8 @@ from opencda.customize.core.clustering.algorithm.coalition_game import Coalition
 class ClusteringV2XManager(V2XManager):
     cluster_algorithm = None
     clusters = None
-    cnt = 0
+    CLUSTER_INTERVAL = 4
+    cnt = CLUSTER_INTERVAL
     def __init__(self, cav_world, config_yaml, vid):
         super(ClusteringV2XManager, self).__init__(cav_world, config_yaml, vid)
         self.cp_model = 'default_model'
@@ -30,9 +31,10 @@ class ClusteringV2XManager(V2XManager):
 
     def run_algorithm(self):
         self.cluster_algorithm.initialize()
-        if self.cnt < 3:
+        self.cnt += 1
+        if self.cnt >= self.CLUSTER_INTERVAL:
             self.clusters = self.cluster_algorithm.run()
-            self.cnt += 1
+            self.cnt = 0
         if self.enable_scheduler and hasattr(self.scheduler, 'is_cluster_based') and self.scheduler.is_cluster_based:
             self.scheduler.set_clusters(self.clusters)
             self.scheduler.run()
@@ -72,7 +74,7 @@ class ClusteringV2XManager(V2XManager):
     
     def get_cluster_member_vms(self):
         """获取簇成员Vehicle_Manager实例列表"""
-        print(f"self.cluster_state: {self.cluster_state}")
+        # print(f"self.cluster_state: {self.cluster_state}")
         # Resolve cluster head
         cluster_head_id = self.cluster_state.get('head_id', None)
         cluster_head_vm = self.cav_world.get_vehicle_manager(cluster_head_id) if cluster_head_id is not None else None

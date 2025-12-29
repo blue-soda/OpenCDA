@@ -45,6 +45,7 @@ class ClusteringCoperceptionManager(CoperceptionManager):
         else:
         # 如果没有选择结果，则返回空数据
             # print(f"Vehicle {vehicle_id} has no grid selection. {self.grid_selection.keys()}")
+            logger.warning(f"Vehicle {vehicle_id} has no grid selection. {self.grid_selection.keys()}")
             return None
     
     def get_coperception_cavs_dict(self):
@@ -55,6 +56,8 @@ class ClusteringCoperceptionManager(CoperceptionManager):
             for vid, vm in vms.items():
                 if vid == self.vehicle_id:
                     continue
+                # if vid not in self.grid_selection:
+                #     continue
                 v2x_manager = vm.v2x_manager
                 data_inside_cluster.update({vid: {'v2x_manager': v2x_manager, 'vehicle_manager': vm}})
                 # print(f"cluster member vid: {vid}")

@@ -15,7 +15,7 @@ def get_interference_contribution(source_vm, target_vm):
     distance = calculate_distance(source_vm, target_vm)
     channel_gain = calculate_channel_gain(distance)
     tx_power = source_vm.tx_power
-    tx_power_w = 10 ** (source_vm.tx_power / 10) / 1000  # dBm转W
+    tx_power_w = 10 ** (tx_power / 10) / 1000  # dBm转W
     return tx_power_w * channel_gain
 
 def calculate_distance(source_vm, target_vm):

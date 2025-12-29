@@ -89,7 +89,7 @@ class CarlaNs3Bridge:
 
                         incomplete_data += chunk
                         # 按换行符分割消息（NS-3需在每条JSON后加\n）
-                        while b"\n\r" in incomplete_data:
+                        while b"\r\n" in incomplete_data:
                             msg_bytes, incomplete_data = incomplete_data.split(b"\n", 1)
                             if not msg_bytes:
                                 continue
@@ -152,7 +152,7 @@ class CarlaNs3Bridge:
         # 打印日志
         delay = receive_timestamp - send_timestamp
         logger.info(
-            f"NS-3 Info: Vehicle {receiver_id} received {packet_size} bytes from {sender_id}, "
+            f"NS-3 Info: Vehicle {receiver_id} received msg from {sender_id} with {packet_size} bytes, "
             f"delay: {delay}ms (send_timestamp: {send_timestamp}, receive_timestamp: {receive_timestamp})"
         )
         # print(
@@ -181,7 +181,7 @@ class CarlaNs3Bridge:
                     existing_msg["receive_timestamp"] = receive_timestamp
                     self.received_cams[receiver_id][sender_id] = existing_msg
                     logger.info(
-                        f"Combined message for {sender_id}->{receiver_id}, total size: {existing_msg['packet_size']} bytes"
+                        f"Combined message for {sender_id}->{receiver_id}, total size: {existing_msg['packet_size']} bytes, total delay: { receive_timestamp - existing_send_ts}ms"
                     )
                     # print(
                     #     f"Combined message for {receiver_id}->{sender_id}, total size: {existing_msg['packet_size']} bytes"

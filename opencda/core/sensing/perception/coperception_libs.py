@@ -6,6 +6,8 @@ from opencda.core.sensing.perception.obstacle_vehicle import \
     ObstacleVehicle
 import opencda.core.sensing.perception.sensor_transformation as st
 from opencood.utils.transformation_utils import x1_to_x2
+from opencood.utils import box_utils
+from opencood.data_utils.datasets import GT_RANGE
 
 
 class CoperceptionLibs:
@@ -44,7 +46,7 @@ class CoperceptionLibs:
         }
 
 
-    def load_vehicles(self, ego_id, ego_pos, lidar):
+    def load_vehicles(self, ego_id, ego_pos, lidar, ego_vehicle_ids=None):
         def dist_to_ego(actor):
             return actor.get_location().distance(ego_pos.location)
 
@@ -52,7 +54,10 @@ class CoperceptionLibs:
         vehicle_list = world.get_actors().filter("*vehicle*")
         
         gt_box_range = 120 #meters, 真值框范围
-        vehicle_list = [v for v in vehicle_list if dist_to_ego(v) < gt_box_range and v.id != ego_id]
+        if ego_vehicle_ids:
+            vehicle_list = [v for v in vehicle_list if dist_to_ego(v) < gt_box_range and v.id not in ego_vehicle_ids]
+        else:
+            vehicle_list = [v for v in vehicle_list if dist_to_ego(v) < gt_box_range and v.id != ego_id]
         vehicle_dict = {}
         if lidar:
             for v in vehicle_list:

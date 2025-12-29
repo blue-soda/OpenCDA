@@ -60,6 +60,7 @@ class Vehicle_Grid(Vehicle):
         global global_vehicles, global_vms, global_ego_id
         global_ego_id = cav_world.ego_id
         vehicle_manager_dict = cav_world.get_vehicle_managers()
+        print('vehicle_manager_dict:', vehicle_manager_dict.keys())
         global_vms = {vid: vm.v2x_manager for vid, vm in vehicle_manager_dict.items() if vm.is_ok}
         for vid, vm in vehicle_manager_dict.items():
             if not vm.is_ok or vid in global_vehicles:

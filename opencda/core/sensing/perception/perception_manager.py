@@ -619,7 +619,8 @@ class PerceptionManager:
         self.carla_world = carla_world if carla_world is not None \
             else self.vehicle.get_world()
         self._map = self.carla_world.get_map()
-        self.id = infra_id if infra_id is not None else vehicle.id
+        # self.vid = infra_id if infra_id is not None else vehicle.id
+        self.vid = v2x_manager.vid
         self.enable_network = enable_network
         print("enable_network:", self.enable_network)
 
@@ -683,7 +684,7 @@ class PerceptionManager:
                                      config_yaml['lidar'],
                                      self.global_position)
             if self.lidar_visualize:
-                self.o3d_vis = o3d_visualizer_init(self.id)
+                self.o3d_vis = o3d_visualizer_init(self.vid)
         else:
             self.lidar = None
             self.o3d_vis = None
@@ -725,7 +726,7 @@ class PerceptionManager:
         )
 
         self.co_manager = CoperceptionManager(
-            vid=self.id,
+            vid=self.vid,
             v2x_manager=self.v2x_manager,
             coperception_libs=self.coperception_libs,
             enable_network=self.enable_network,
@@ -801,7 +802,7 @@ class PerceptionManager:
         self.cav_world.update_global_ego_id(self.vehicle.id)
         ego_id = self.cav_world.ego_id
 
-        if self.id != ego_id:
+        if self.vid != ego_id:
             objects = self.deactivate_mode(objects)
             return objects
 
@@ -811,7 +812,7 @@ class PerceptionManager:
         data = OrderedDict()
 
         ego_data = self.co_manager.prepare_data(
-            cav_id=self.id,
+            cav_id=self.vid,
             camera=self.rgb_camera,
             lidar=self.lidar,
             pos=self.ego_pos,
@@ -820,7 +821,7 @@ class PerceptionManager:
             is_ego=True
         )
         ego_data = self.co_manager.calculate_transformation(
-            cav_id=self.id,
+            cav_id=self.vid,
             cav_data=ego_data,
         )
         data.update(ego_data)
@@ -918,7 +919,7 @@ class PerceptionManager:
                 rgb_image = cv2.resize(rgb_image, (0, 0), fx=0.4, fy=0.4)
                 cv2.imshow(
                     '%s-th camera of actor %d, perception activated' %
-                    (str(i), self.id), rgb_image)
+                    (str(i), self.vid), rgb_image)
             cv2.waitKey(1)
 
         if self.lidar_visualize:
@@ -960,7 +961,7 @@ class PerceptionManager:
             thresh = 50 if not self.data_dump else 120
 
         vehicle_list = [v for v in vehicle_list if self.dist(v) < thresh and
-                        v.id != self.id]
+                        v.id != self.vid]
 
         # use semantic lidar to filter out vehicles out of the range
         if self.data_dump:
@@ -1008,7 +1009,7 @@ class PerceptionManager:
                 # show image using cv2
                 cv2.imshow(
                     '%s camera of actor %d, perception deactivated' %
-                    (names[i], self.id), rgb_image)
+                    (names[i], self.vid), rgb_image)
                 cv2.waitKey(1)
 
         if self.lidar_visualize:
@@ -1118,7 +1119,7 @@ class PerceptionManager:
         world = self.carla_world
         vehicle_list = world.get_actors().filter("*vehicle*")
         vehicle_list = [v for v in vehicle_list if self.dist(v) < 50 and
-                        v.id != self.id]
+                        v.id != self.vid]
 
         # todo: consider the minimum distance to be safer in next version
         for v in vehicle_list:
@@ -1164,7 +1165,7 @@ class PerceptionManager:
         world = self.carla_world
         vehicle_list = world.get_actors().filter("*vehicle*")
         vehicle_list = [v for v in vehicle_list if self.dist(v) < 50 and
-                        v.id != self.id]
+                        v.id != self.vid]
 
         # todo: consider the minimum distance to be safer in next version
         for v in vehicle_list:

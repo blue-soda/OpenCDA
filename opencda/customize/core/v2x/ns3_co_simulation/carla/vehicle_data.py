@@ -2,7 +2,7 @@ from typing import List
 import carla
 from ..common.vehicle_data_logger import vehicle_data_logger
 
-def collect_vehicle_data(vehicles: List[carla.Vehicle]) -> List[dict]:
+def collect_vehicle_data(vehicles: List[carla.Vehicle], cav_world) -> List[dict]:
     """Collect position and velocity data for all vehicles
     
     Args:
@@ -32,9 +32,10 @@ def collect_vehicle_data(vehicles: List[carla.Vehicle]) -> List[dict]:
         heading = round(transform.rotation.yaw, 2)
         speed = round((velocity.x**2 + velocity.y**2 + velocity.z**2)**0.5, 2)
 
+        carla_id = cav_world.get_vid(vehicle.id)
         vehicle_data.append({
             "id": index,
-            "carla_id": vehicle.id,
+            "carla_id": carla_id,
             "position": position,
             "velocity": velocity_data,
             "heading": heading,

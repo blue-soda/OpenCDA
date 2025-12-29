@@ -154,7 +154,6 @@ def run(debug=True):
         for traffic_cav in traffic_cav_list:
             traffic_cav.update_data()
             check_is_out_sight(transform, traffic_cav)
-
             if debug:
                 draw_string(debug_helper, traffic_cav)
 
@@ -194,6 +193,7 @@ def stop(opt):
 
 
 def draw_string(debug_helper, cav):
+    global cav_world
     vehicle_location = cav.vehicle.get_transform().location
     color = cav.v2x_manager.rgb
 
@@ -203,19 +203,21 @@ def draw_string(debug_helper, cav):
         cluster_head = ""
 
     debug_helper.draw_string(vehicle_location + carla.Location(z=2.5),
-        f"{cav.vehicle.id}, {cluster_head}",
+        # f"{cav.vehicle.id}, {cluster_head}",
+        f"{cav_world.get_vid(cav.vehicle.id)}, {cluster_head}",
         life_time=0.1, persistent_lines=True, draw_shadow=False,
         color=carla.Color(*color))
     
 
 def check_is_out_sight(transform, cav):
+    global cav_world
     is_out_of_sight = LocalizationManager.is_vehicle_out_of_sight( \
         cav.vehicle.get_transform().location, transform.location)
     
     if cav.is_ok and is_out_of_sight:
         cav.is_ok = False
-        logger.debug(f"bg_vehicle {cav.vehicle.id} is out of range.")
+        logger.debug(f"bg_vehicle {cav_world.get_vid(cav.vehicle.id)} is out of range.")
 
     elif not cav.is_ok and not is_out_of_sight:
         cav.is_ok = True
-        logger.debug(f"bg_vehicle {cav.vehicle.id} is back.")
+        logger.debug(f"bg_vehicle {cav_world.get_vid(cav.vehicle.id)} is back.")

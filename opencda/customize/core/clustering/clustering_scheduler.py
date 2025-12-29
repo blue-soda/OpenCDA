@@ -29,6 +29,9 @@ class ClusteringScheduler(Scheduler):
     def set_strategies(self, strategies):
         self.channel_allocation.update(strategies)
 
+    def clear_strategies(self):
+        self.channel_allocation.clear()
+
     @staticmethod
     def run():
         ClusteringScheduler.resource_allocation_algorithm.run()

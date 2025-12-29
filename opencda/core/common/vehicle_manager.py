@@ -77,7 +77,7 @@ class VehicleManager(object):
     data_dumper : opencda object
         Used for dumping sensor data.
     """
-
+    global_id = 1
     def __init__(
             self,
             vehicle,
@@ -91,7 +91,9 @@ class VehicleManager(object):
 
         # an unique uuid for this vehicle
         self.vehicle = vehicle
-        self.vid = vehicle.id
+        # self.vid = vehicle.id
+        self.vid = VehicleManager.global_id
+        VehicleManager.global_id += 1
         self.carla_map = carla_map
         self.cav_world = cav_world
         self.application = application
@@ -139,7 +141,9 @@ class VehicleManager(object):
             # safety manager
             self.safety_manager = SafetyManager(vehicle=vehicle,
                                                 params=config_yaml['safety_manager'])
-            cav_world.update_global_ego_id(self.vehicle.id)
+            # cav_world.update_global_ego_id(self.vehicle.id)
+            self.cav_world.update_global_ego_id(self.vid)
+
             # behavior agent
             if self.enablePlatooning:
                 platoon_config = config_yaml['platoon']
@@ -186,7 +190,8 @@ class VehicleManager(object):
             
         if data_dumping:
             self.data_dumper = DataDumper(self.perception_manager,
-                                          vehicle.id,
+                                        #   vehicle.id,
+                                          self.vid,
                                           save_time=current_time)
         else:
             self.data_dumper = None
@@ -248,8 +253,8 @@ class VehicleManager(object):
         retrieve surrounding info an ego position.
         """
         # print(f"update_start:{self.vehicle.id}")
-        if not self.is_ok:
-            return
+        # if not self.is_ok:
+        #     return
         
         if update_data:
             self.update_data()

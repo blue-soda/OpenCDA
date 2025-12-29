@@ -79,7 +79,7 @@ class NetworkManager:
             while self.bridge.is_simulation_running():
                 if self.world_tick:
                     self.world_tick = False
-                    vehicle_data = collect_vehicle_data(self.all_vehicles)
+                    vehicle_data = collect_vehicle_data(self.all_vehicles, self.cav_world)
                     self.bridge.send_vehicles_position(vehicle_data)
                     if len(self.communication_requests) == 0:
                         time.sleep(self.time_slot / 5.0)

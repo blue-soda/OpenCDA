@@ -22,6 +22,7 @@ class PotentialGame(ClusterResourceAllocationAlgorithm):
         self.compute_grids_ch_sens()
 
     def run(self):
+        self.clear_resource_allocation_strategy()
         ret = self.channel_game()
         self.update_resource_allocation_strategy()
         return ret
@@ -34,7 +35,6 @@ class PotentialGame(ClusterResourceAllocationAlgorithm):
                 vehicle_dict[hid].v2x_manager.scheduler.set_strategies(schedule)
                 grids_selection = {mid: grid_ids}
                 vehicle_dict[hid].perception_manager.co_manager.set_grid_selection(grids_selection)
-
 
     def calculate_max_grids_per_rb(self, sinr=None):
         return common.calculate_max_grids_per_rb(sinr, self.p.bandwidth_per_channel, self.p.T_ddl, self.clusters[0].grid_bits)
@@ -215,7 +215,7 @@ class PotentialGame(ClusterResourceAllocationAlgorithm):
         """
         h = cluster.head_id
         # B_h = self.p.N_max  # 或者单独设一个 B_h
-        B_h = 2
+        B_h = 1
         schedule = []
 
         # ========= Step 0: 准备候选 grids =========
@@ -244,12 +244,18 @@ class PotentialGame(ClusterResourceAllocationAlgorithm):
 
         # ========= Step 1: 第一轮（exclusive grid） =========
         # 按 member 能提供的“未上传 grid 数”排序
+        cur_h_links = self.strategies.get(h, None)
         member_grid_map = {}
         for m in cluster.members:
             if m == h:
                 continue
             grids_m = common.global_vehicles[m].sens_grids & candidate_grids
-            if grids_m:
+            if cur_h_links is not None:
+                for (mid, sc, t, grids) in cur_h_links:
+                    if mid == m:
+                        grids_m -= set(grids) # 已经调度的网格都不算
+                        break
+            if grids_m and len(grids_m) > 0:
                 member_grid_map[m] = grids_m
 
         member_grid_score_map = {} # 记录每个member对每个grid的score
@@ -344,7 +350,7 @@ class PotentialGame(ClusterResourceAllocationAlgorithm):
                     noise_power
                 )
 
-                logger.info(f"Cluster head {h} existing link from {mid_old} SINR: {sinr} signal_power: {signal_power} interf: {interf}")
+                logger.info(f"Cluster head {h}: existing link from {mid_old} SINR: {sinr} signal_power: {signal_power} interf: {interf}")
                 if sinr < sinr_min_multiplex:
                     logger.info(f"Cluster head {h} cannot reuse RB {(k, 0)} due to insufficient SINR on existing link from {mid_old}")
                     continue
@@ -352,7 +358,7 @@ class PotentialGame(ClusterResourceAllocationAlgorithm):
                 max_grids_possible = math.floor(
                     calculate_available_data_rate(self.p.bandwidth_per_channel, sinr) * self.p.T_ddl / cluster.grid_bits
                 )
-                logger.info(f"Cluster head {h} existing link from {mid_old} max_grids_possible: {max_grids_possible}")
+                logger.info(f"Cluster head {h}: existing link from {mid_old} max_grids_possible: {max_grids_possible}")
 
                 # ---- Step 2.2：选择对外簇最友好的 member, 检查是否会干扰原链路 ----
                 best_m = None
@@ -371,7 +377,7 @@ class PotentialGame(ClusterResourceAllocationAlgorithm):
                         continue
 
                     # 若接收方是当前簇头，不必判冲突
-                    if hid == h:
+                    if hid_old == h:
                         continue
 
                     # 原链路所需 SINR
@@ -464,5 +470,7 @@ class PotentialGame(ClusterResourceAllocationAlgorithm):
             if not updated:
                 break
         logger.info(f"Channel game converged in {it+1} iterations.")
-        logger.info(self.strategies)
+        for h in self.strategies:
+            for m, k, t, grids in self.strategies[h]:
+                logger.info(f"Cluster head {h} member {m} on RB {k, t} grids: {len(grids)}")
         return self.strategies

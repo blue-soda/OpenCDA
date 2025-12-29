@@ -46,6 +46,7 @@ class CavWorld(object):
                  world_params=None):
 
         self.vehicle_id_set = set()
+        self._vid_dict = {}
         self._vehicle_manager_dict = {}
         self._platooning_dict = {}
         self._rsu_manager_dict = {}
@@ -107,7 +108,9 @@ class CavWorld(object):
         vehicle_manager : opencda object
             The vehicle manager class.
         """
-        vid = vehicle_manager.vehicle.id
+        # vid = vehicle_manager.vehicle.id
+        vid = vehicle_manager.vid
+        self._vid_dict.update({vehicle_manager.vehicle.id: vid})
         self.vehicle_id_set.add(vid)
         self._vehicle_manager_dict.update(
             {vid: vehicle_manager})
@@ -117,6 +120,9 @@ class CavWorld(object):
 
         self.update_global_ego_id()
 
+    def get_vid(self, carla_id):
+        return self._vid_dict[carla_id]
+    
     def update_platooning(self, platooning_manger):
         """
         Add created platooning.

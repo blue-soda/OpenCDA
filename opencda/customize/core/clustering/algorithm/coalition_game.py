@@ -13,7 +13,11 @@ class CoalitionGame(ClusteringAlgorithm):
 
     def initialize_vehicles(self):
         common.Vehicle_Grid.initialize(self.cav_world)
-        self.coalitions = [Coalition({vid}) for vid in common.global_vehicles.keys()]
+        new_coliations = []
+        for vid in common.global_vehicles.keys():
+            if self.find_coalition(vid) is None:
+                new_coliations.append(Coalition({vid}))
+        self.coalitions.extend(new_coliations)
         self.max_grids_per_rb = common.calculate_max_grids_per_rb(None, self.p.bandwidth_per_channel, self.p.T_ddl, self.coalitions[0].grid_bits)
         
     def stability_cost(self, vid, coalition):   
@@ -107,6 +111,9 @@ class CoalitionGame(ClusteringAlgorithm):
                 current.remove_member(vid)
                 if current.size() == 0:
                     self.coalitions.remove(current)
+            if vm.is_ok and vid not in common.global_vehicles:
+                logger.info(f"vehicle {vid} join the map.")
+                self.initialize_vehicles()
     
     def update_cluster_states(self):
         for coalition in self.coalitions:
@@ -118,6 +125,11 @@ class CoalitionGame(ClusteringAlgorithm):
                 member_v2x = common.global_vms[member_id]
                 member_v2x.cluster_state['head_id'] = head_id
                 member_v2x.cluster_state['member_ids'] = set(coalition.members)
+
+        # vehicle_manager_dict = self.cav_world.get_vehicle_managers()
+        # head_ids = set([c.head_id for c in self.coalitions])
+        # for vid, vm in vehicle_manager_dict.items():
+        #     vm.perception_manager.co_manager.ego_vehicle_ids = head_ids
 
     def ego_coalition_be_first(self):
         ego_id = self.cav_world.ego_id

@@ -37,3 +37,7 @@ class ClusterResourceAllocationAlgorithm:
         self.clusters = clusters
     def update_resource_allocation_strategy(self):
         pass
+    def clear_resource_allocation_strategy(self):
+        vehicle_dict = self.cav_world.get_vehicle_managers()
+        for vid, vehicle_manager in vehicle_dict.items():
+            vehicle_manager.v2x_manager.scheduler.clear_strategies()
