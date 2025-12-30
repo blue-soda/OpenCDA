@@ -157,7 +157,7 @@ class OpenCOODManager(object):
         return all_predict_boxes, all_predict_scores, all_gt_boxes
     
     @staticmethod
-    def naive_late_fusion(pred_box_tensors, pred_scores, gt_box_tensors):
+    def naive_late_fusion(pred_box_tensors, pred_scores, gt_box_tensors, iou_threshold=0.15):
         # If no predicted boxes are provided, return None for all outputs
         if len(pred_box_tensors) == 0 or len(gt_box_tensors) == 0:
             return None, None, None
@@ -182,7 +182,7 @@ class OpenCOODManager(object):
             raise ValueError(f"all_predict_scores should have shape [N], got {all_predict_scores.shape}")
 
         # Apply Non-Maximum Suppression (NMS) to remove duplicate boxes
-        keep_indices = ops.nms(boxes_for_nms, all_predict_scores, iou_threshold=0.5)
+        keep_indices = ops.nms(boxes_for_nms, all_predict_scores, iou_threshold=iou_threshold)
         
         # Filter the predicted boxes and scores based on NMS results
         filtered_predict_boxes = all_predict_boxes[keep_indices]  # Shape: [K, 8, 3]
@@ -198,7 +198,7 @@ class OpenCOODManager(object):
         gt_scores = torch.ones(gt_boxes_for_nms.shape[0], device=gt_boxes_for_nms.device)  # Shape: [M]
         
         # Apply NMS to remove duplicate ground truth boxes
-        gt_keep_indices = ops.nms(gt_boxes_for_nms, gt_scores, iou_threshold=0.5)
+        gt_keep_indices = ops.nms(gt_boxes_for_nms, gt_scores, iou_threshold=iou_threshold)
         
         # Filter the ground truth boxes based on NMS results
         filtered_gt_boxes = all_gt_boxes[gt_keep_indices]  # Shape: [L, 8, 3]
