@@ -59,6 +59,7 @@ class SimilarityAlgorithm(ClusteringAlgorithm):
             vm.cluster_state['member_ids'] = vehicle.cluster_state['member_ids']
             if vehicle.is_cluster_head():
                 self.clusters.append(SimpleCluster(vm.cluster_state['member_ids']))
+        super().update_cluster_states()
 
 class Vehicle_T(Vehicle_Grid):
     params = None

@@ -65,6 +65,11 @@ class OpenCOODManager(object):
         if not with_stats:
             return
         
+        self.counter += 1
+
+        if self.counter <= 3:
+            return
+    
         logger.debug('submit_results')
         eval_utils.caluclate_tp_fp(pred_box_tensor,
                                     pred_score,
@@ -83,6 +88,7 @@ class OpenCOODManager(object):
                                     0.7)
         
     def inference(self, batch_data, with_stats=True, fusion_method='default'):
+
         if fusion_method == 'default':
             fusion_method = self.fusion_method
 
@@ -109,10 +115,9 @@ class OpenCOODManager(object):
                                       'fusion is supported.')
 
         # skip the first 60 ticks for calculating the average precision
-        if self.counter > 5: #and self.counter % 2 == 0:
+        if with_stats: #and self.counter % 2 == 0:
             logger.debug(f"Aggregating the current stats into final results: {self.counter}")
             self.submit_results(pred_box_tensor, pred_score, gt_box_tensor, with_stats)
-        self.counter += 1
         return pred_box_tensor, pred_score, gt_box_tensor
 
     def evaluate_final_average_precision(self):

@@ -90,7 +90,7 @@ class Cluster(SimpleCluster):
         self.members = set(members)
         self.req_grids = self.get_req_grids()
         self.sens_grids = self.get_sens_grids()
-        self.head_id = min(self.members)
+        self.head_id = self.elect_head()
         self.grid_bits = self.compute_grid_bits()
         self.high_density_grids = self.get_high_density_grids()
 

@@ -9,7 +9,8 @@ from sys import getsizeof as asizeof
 import weakref
 
 from opencda.customize.core.clustering.algorithm.coalition_game import CoalitionGame \
-    as ClusteringAlgorithm
+    as CoalitionGame
+from opencda.customize.core.clustering.algorithm.naive_cluster import NaiveCluster
 
 class ClusteringV2XManager(V2XManager):
     cluster_algorithm = None
@@ -27,7 +28,8 @@ class ClusteringV2XManager(V2XManager):
             'member_ids': set(),           # 簇成员ID集合
         }
         if ClusteringV2XManager.cluster_algorithm is None:
-            ClusteringV2XManager.cluster_algorithm = ClusteringAlgorithm(self.cav_world)
+            ClusteringV2XManager.cluster_algorithm = CoalitionGame(self.cav_world)
+            # ClusteringV2XManager.cluster_algorithm = NaiveCluster(self.cav_world, all_in_one=False)
 
     def run_algorithm(self):
         self.cluster_algorithm.initialize()

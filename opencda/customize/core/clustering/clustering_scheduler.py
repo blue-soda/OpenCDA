@@ -14,18 +14,30 @@ import numpy as np
 from opencda.customize.core.v2x.utils import *
 
 from opencda.customize.core.clustering.algorithm.potential_game import PotentialGame \
-    as ResourceAllocationAlgorithm
+    as PotentialGame
+from opencda.customize.core.clustering.algorithm.pcs import PCS
+from opencda.customize.core.clustering.algorithm.naive_ra import NaiveRA
 
 class ClusteringScheduler(Scheduler):
     resource_allocation_algorithm = None
     def __init__(self, cav_world, config={}):
         super().__init__(cav_world, config)
         self.is_cluster_based = True
+        self.use_default_subchannel = False
         self.channel_allocation: Dict[Tuple[int, int], int] = {}  # {(source, target): 子信道}
 
         if ClusteringScheduler.resource_allocation_algorithm is None:
-            ClusteringScheduler.resource_allocation_algorithm = ResourceAllocationAlgorithm(cav_world)
+            ClusteringScheduler.resource_allocation_algorithm = PotentialGame(cav_world)
+            # ClusteringScheduler.resource_allocation_algorithm = PCS(cav_world)
+            # ClusteringScheduler.resource_allocation_algorithm = NaiveRA(cav_world)
 
+
+    def get_subchannel_allocation(self, link: Tuple[int, int]):
+        if link in self.channel_allocation:
+            return True, self.channel_allocation[link]
+        else:
+            return self.use_default_subchannel, -1
+    
     def set_strategies(self, strategies):
         self.channel_allocation.update(strategies)
 
@@ -44,12 +56,10 @@ class ClusteringScheduler(Scheduler):
         """执行分簇博弈子信道分配"""
         link = (source.vehicle_id, target.vehicle_id)
         print(f"Schedule {link} with volume {volume}")
-        ch = -1
-        if link not in self.channel_allocation or self.channel_allocation[link] == -1:
+        success, ch = self.get_subchannel_allocation(link)
+        if not success:
             print(f"Link {link} not in channel_allocation or has no allocation, allocation: {self.channel_allocation}")
             return False
-        else:
-            ch = self.channel_allocation[link]
         print(f"Link {link} allocated to subchannel {ch}")
         success = self.network_manager.communicate(
             source, target, volume,

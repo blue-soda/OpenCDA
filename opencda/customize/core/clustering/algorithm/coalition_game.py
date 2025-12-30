@@ -9,7 +9,7 @@ class CoalitionGame(ClusteringAlgorithm):
     def __init__(self, cav_world):
         super().__init__(cav_world)
         self.p = common.Params()
-        self.coalitions = []
+        self.coalitions = self.clusters
 
     def initialize_vehicles(self):
         common.Vehicle_Grid.initialize(self.cav_world)
@@ -88,10 +88,8 @@ class CoalitionGame(ClusteringAlgorithm):
         coalition.add_member(vid)
         return ret
     
-    def run(self, max_iter=20):
-        ret = self.coalition_formation(max_iter)
-        self.update_cluster_states()
-        return ret
+    def main(self, max_iter=20):
+        self.coalition_formation(max_iter)
 
     def find_coalition(self, vid):
         for coalition in self.coalitions:
@@ -116,15 +114,7 @@ class CoalitionGame(ClusteringAlgorithm):
                 self.initialize_vehicles()
     
     def update_cluster_states(self):
-        for coalition in self.coalitions:
-            head_id = coalition.head_id
-            for member_id in coalition.members:
-                if member_id not in common.global_vms:
-                    logger.info(f"Vehicle {member_id} not in global_vms.")
-                    continue
-                member_v2x = common.global_vms[member_id]
-                member_v2x.cluster_state['head_id'] = head_id
-                member_v2x.cluster_state['member_ids'] = set(coalition.members)
+        super().update_cluster_states()
 
         # vehicle_manager_dict = self.cav_world.get_vehicle_managers()
         # head_ids = set([c.head_id for c in self.coalitions])

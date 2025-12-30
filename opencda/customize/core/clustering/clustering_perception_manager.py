@@ -198,6 +198,7 @@ class ClusteringPerceptionManager(PerceptionManager):
                     data = OrderedDict()
                     data.update(self.cp_data)
                     data.update(self_data)
+                    del self_data
                     self.cp_data.clear()
 
                     if self.enable_network:
@@ -254,19 +255,23 @@ class ClusteringPerceptionManager(PerceptionManager):
 
     def submit_cp_results(self):
         # submit cp results for ego vehicle after late fusion, called after all vehicles run_step
-        if not self.is_ego or not self.apply_late_fusion:
+        if not self.is_ego or not self.apply_late_fusion or not ClusteringPerceptionManager.ego_did_cp:
             return
 
+        print("submit cp results")
         ego_predict_box_tensors_list = [ClusteringPerceptionManager.ego_predict_box_tensors[vid] for vid in ClusteringPerceptionManager.ego_predict_box_tensors.keys()]
         ego_predict_scores_list = [ClusteringPerceptionManager.ego_predict_scores[vid] for vid in ClusteringPerceptionManager.ego_predict_scores.keys()]
         ego_gt_box_tensors_list = [ClusteringPerceptionManager.ego_gt_box_tensors[vid] for vid in ClusteringPerceptionManager.ego_gt_box_tensors.keys()]
 
+        ClusteringPerceptionManager.ego_did_cp = False
+        ClusteringPerceptionManager.clear() # 不及时清理会导致精度下降, 甚至爆显存
+        
         predict_box_tensor, pred_score, gt_box_tensor = self.ml_manager.naive_late_fusion(
                                                         ego_predict_box_tensors_list, 
                                                         ego_predict_scores_list, 
                                                         ego_gt_box_tensors_list)
         
-        if predict_box_tensor is not None and gt_box_tensor is not None and ClusteringPerceptionManager.ego_did_cp:
+        if predict_box_tensor is not None and gt_box_tensor is not None:
             print("late fusion input: ")
             for tensor in ego_predict_box_tensors_list:
                 print(tensor.shape)
@@ -277,8 +282,6 @@ class ClusteringPerceptionManager(PerceptionManager):
             self.predict_box_tensor_fusion = predict_box_tensor
             self.gt_box_tensor_fusion = gt_box_tensor
             self.ml_manager.submit_results(predict_box_tensor, pred_score, gt_box_tensor, with_stats=True)
-            ClusteringPerceptionManager.ego_did_cp = False
-            ClusteringPerceptionManager.clear() # 不及时清理会导致精度下降, 甚至爆显存
 
         if self.lidar_visualize:
             o3d_pointcloud_encode(self.lidar.data, self.lidar.o3d_pointcloud)

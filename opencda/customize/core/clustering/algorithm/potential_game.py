@@ -21,6 +21,9 @@ class PotentialGame(ClusterResourceAllocationAlgorithm):
         logger.info(f"max_grids_per_rb: {self.max_grids_per_rb}")
         self.compute_grids_ch_sens()
 
+    def main(self):
+        self.channel_game()
+        
     def run(self):
         self.clear_resource_allocation_strategy()
         ret = self.channel_game()

@@ -4,12 +4,14 @@ from pympler.asizeof import asizeof
 from opencda.log.logger_config import logger
 import numpy as np
 import torch
+import gc
 from opencood.utils import box_utils
 import opencood.data_utils.datasets
 
 class CoperceptionManager:
     def __init__(self, vid, v2x_manager, coperception_libs, enable_network=False, network_manager=None):
         self.vid = vid
+        self.vehicle_id = vid
         self.v2x_manager = v2x_manager
         self.coperception_libs = coperception_libs
         self.ego_data_dict = None
@@ -17,6 +19,7 @@ class CoperceptionManager:
 
         self.enable_network = enable_network
         self.network_manager = network_manager
+        
         self.uploaded_cavs = {}
         self.uploading_cavs = {}
         self.all_cavs = {}
@@ -25,9 +28,13 @@ class CoperceptionManager:
         self.cavs_num = 0
         self.uploading_data = None
         self.uploading_data_size = {}
+
         self.timeout_slots = 4 # number of time slots to wait before re-uploading data from a cav
         self.re_upload_when_timeout = False
         self.ego_vehicle_ids = set() # vehicles which should not be gt boxes
+
+        self.grid_selection = {} # dict of {vid: [grid_ids]}
+        self.enable_grid = False
 
     def get_coperception_cavs_dict(self) -> dict:
         # dict of {vid: {'vehicle_manager': vm, 'v2x_manager': v2x_manager}}
@@ -47,9 +54,14 @@ class CoperceptionManager:
             self.uploading_data = data
         if not self.enable_network:
             self.uploading_data = None
+            self.clear_uploaded_and_uploading()
             return data
         return self.communicate_via_network()
     
+
+    ################################
+    # Network Related Functions
+    ################################
     def communicate_via_network(self, try_to_send=True):
         if try_to_send:
             self.send_cams_via_network()
@@ -117,7 +129,7 @@ class CoperceptionManager:
             print(f"cav {sender_id} communication delay info: {delay_infos}")
             if delay_infos:
                 self.v2x_manager.scheduler.record_communication_delay_infos(delay_infos)
-            data = self.uploading_data.get(sender_id, None)
+            data = self.uploading_data.pop(sender_id, None)
             if data:
                 self.uploaded_cavs[sender_id] = self.network_manager.current_time_slot
                 received_data[sender_id] = data
@@ -145,13 +157,17 @@ class CoperceptionManager:
         self.uploading_data_size = {}
         self.cavs_timeout = {}
         self.cavs_need_to_upload = {}
-        
+        # gc.collect()
+        torch.cuda.empty_cache()
+
+    ################################
+    # Data Collection Related Functions
+    ################################
     def get_self_bbx(self):
         # vehicle_dict = self.coperception_libs.get_vehicle_bbx_dict(self.ego_vehicle)
         # transformation_matrix = self.coperception_libs.load_transformation_matrix_from_pose(self.ego_data_dict['lidar_pose'], )
         # boxes, _ = self.convert_vehicle_bbx_to_late_fusion(vehicle_dict, transformation_matrix)
         # print(f"self boxes: {boxes}")
-
         pass
 
     def calculate_transformation(self, cav_id, cav_data, ego_pose=None):
@@ -161,9 +177,6 @@ class CoperceptionManager:
             t_matrix = self.coperception_libs.load_transformation_matrix_from_pose(ego_pose, cav_data[cav_id]['params']['lidar_pose'])
         cav_data[cav_id]['params'].update(t_matrix)
         return cav_data
-    
-    def get_data_from_lidar(self, lidar, vehicle_id=None):
-        return lidar.data # 这一步获取了点云数据, 可以改为lidar.get_local_points_by_grid_ids([])按照网格划分获取点云数据
     
     def prepare_data(self, cav_id, camera, lidar, pos, localizer, agent, is_ego, use_ego_vehicles=False):
         data = {cav_id: OrderedDict()}
@@ -254,3 +267,23 @@ class CoperceptionManager:
         if target_v2x_manager is not None:
             target_v2x_manager.set_buffer(source_id=self.vid)
             target_v2x_manager.set_buffer(objects=objects)
+
+    ################################
+    # Grid Lidar Related Functions
+    ################################
+    def set_grid_selection(self, grid_selection):
+        self.grid_selection.update(grid_selection)
+    
+    def clear_grid_selection(self):
+        self.grid_selection.clear()
+        
+    def get_data_from_lidar(self, lidar, vehicle_id=None):
+        if not self.enable_grid or vehicle_id is None or vehicle_id == self.vehicle_id: #默认返回全部点云数据
+            return lidar.data
+        elif vehicle_id in self.grid_selection and self.grid_selection[vehicle_id]: #根据网格划分获取点云数据
+            selected_grids = self.grid_selection[vehicle_id]
+            grid_data = lidar.get_local_points_by_grid_ids(selected_grids)
+            return grid_data
+        else: #返回空数据
+            logger.warning(f"Vehicle {vehicle_id} has no grid selection. {self.grid_selection.keys()}")
+            return None
