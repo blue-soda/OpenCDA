@@ -36,7 +36,7 @@ carla_traffic_manager:
   #  x_min, x_max, y_min, y_max, x_step, y_step, vehicle_num, (vehicle_manager_num)
   range:
     # - [-11, 12, 100, 200, 3.5, 15, 15]
-    - [-11, 12, 100, 250, 3.5, 15, 30, 16]
+    - [-11, 12, 100, 250, 3.5, 15, 40, 18]
 
 
 # define scenario. In this scenario, a 4-vehicle platoon already exists.
