@@ -271,8 +271,10 @@ class ClusteringPerceptionManager(PerceptionManager):
 
         ClusteringPerceptionManager.ego_did_cp = False
         
-        target_ids = [cluster.head_id for cluster in self.v2x_manager.all_clusters]
-        # print("all clusters: ", self.v2x_manager.all_clusters)
+        target_ids = []
+        for cluster in self.v2x_manager.all_clusters:
+            target_ids.extend(cluster.members)
+
         print("target_ids: ", target_ids)
         print("ego_gt_box_ids: ", ClusteringPerceptionManager.ego_gt_box_ids)
         for idx, box_id in enumerate(ClusteringPerceptionManager.ego_gt_box_ids):

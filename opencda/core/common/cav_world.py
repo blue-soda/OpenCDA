@@ -121,7 +121,10 @@ class CavWorld(object):
         self.update_global_ego_id()
 
     def get_vid(self, carla_id):
-        return self._vid_dict[carla_id]
+        if carla_id in self._vid_dict:
+            return self._vid_dict[carla_id]
+        else:
+            return None
     
     def update_platooning(self, platooning_manger):
         """

@@ -66,6 +66,8 @@ class CoperceptionLibs:
             object_vehicle = ObstacleVehicle(None, None, vehicle, lidar_sensor, self.cav_world.sumo2carla_ids)
             carla_id = vehicle.id
             vid = self.cav_world.get_vid(carla_id)
+            if vid is None:
+                vid = carla_id
             vehicle_dict.update({vid: self.load_vehicle_bbx(object_vehicle)})
 
         data = {

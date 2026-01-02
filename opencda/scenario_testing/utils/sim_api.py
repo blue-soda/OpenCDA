@@ -574,7 +574,7 @@ class ScenarioManager:
 
         return rsu_list
 
-    def spawn_vehicles_by_list(self, tm, traffic_config, bg_list):
+    def spawn_vehicles_by_list(self, tm, traffic_config):
         """
         Spawn the traffic vehicles by the given list.
 
@@ -594,7 +594,7 @@ class ScenarioManager:
         bg_list : list
             Update traffic list.
         """
-
+        bg_list = []
         blueprint_library = self.world.get_blueprint_library()
         if not self.use_multi_class_bp:
             ego_vehicle_random_list = car_blueprint_filter(blueprint_library,
@@ -650,7 +650,7 @@ class ScenarioManager:
 
         return bg_list
 
-    def spawn_vehicle_by_range(self, tm, traffic_config, bg_list):
+    def spawn_vehicle_by_range(self, tm, traffic_config, application=[]):
         """
         Spawn the traffic vehicles by the given range.
 
@@ -670,6 +670,7 @@ class ScenarioManager:
         bg_list : list
             Update traffic list.
         """
+        bg_list = []
         blueprint_library = self.world.get_blueprint_library()
         if not self.use_multi_class_bp:
             ego_vehicle_random_list = car_blueprint_filter(blueprint_library,
@@ -687,9 +688,12 @@ class ScenarioManager:
         spawn_ranges = traffic_config['range']
         spawn_set = set()
         spawn_num = 0
+        vehicle_managers_num = 0
 
         for spawn_range in spawn_ranges:
             spawn_num += spawn_range[6]
+            if len(spawn_range) > 7:
+                vehicle_managers_num += spawn_range[7]
             x_min, x_max, y_min, y_max = \
                 math.floor(spawn_range[0]), math.ceil(spawn_range[1]), \
                 math.floor(spawn_range[2]), math.ceil(spawn_range[3])
@@ -763,9 +767,23 @@ class ScenarioManager:
             bg_list.append(vehicle)
             count += 1
 
-        return bg_list
+        if vehicle_managers_num > 0:
+            print(f"Create {vehicle_managers_num} vehicle managers for traffic.")
+            def uniform_slice(lst, M):
+                N = len(lst)
+                if M <= 0:
+                    return []
+                if M >= N:
+                    return lst[:]
+                step = (N - 1) / (M - 1)
+                indices = [round(i * step) for i in range(M)]
+                return [lst[i] for i in indices]
+            bg_vm_list = self.create_vehicle_manager_for_traffic(uniform_slice(bg_list, vehicle_managers_num), application=application)
+            return bg_list, bg_vm_list
+        else:
+            return bg_list, []
 
-    def create_traffic_carla(self):
+    def create_traffic_carla(self, application=[]):
         """
         Create traffic flow.
 
@@ -789,18 +807,16 @@ class ScenarioManager:
             traffic_config['global_speed_perc'])
 
         bg_list = []
+        bg_vm_list = []
 
         if isinstance(traffic_config['vehicle_list'], list) or \
                 isinstance(traffic_config['vehicle_list'], ListConfig):
-            bg_list = self.spawn_vehicles_by_list(tm,
-                                                  traffic_config,
-                                                  bg_list)
-
+            bg_list = self.spawn_vehicles_by_list(tm, traffic_config)
         else:
-            bg_list = self.spawn_vehicle_by_range(tm, traffic_config, bg_list)
+            bg_list, bg_vm_list = self.spawn_vehicle_by_range(tm, traffic_config, application=application)
 
-        print('CARLA traffic flow generated.')
-        return tm, bg_list
+        print(f'CARLA traffic flow generated, with {len(bg_list)} vehicles and {len(bg_vm_list)} vms')
+        return tm, bg_list, bg_vm_list
 
     def create_vehicle_manager_for_traffic(self, traffic_vehicles, application=['traffic', 'coperception', 'cluster']):
         traffic_cav_list = []

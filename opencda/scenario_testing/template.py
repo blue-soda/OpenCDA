@@ -90,16 +90,12 @@ def init(opt, scenario_params):
         scenario_manager.create_vehicle_manager(application=applications+['single'], data_dump=data_dump)
 
     # create background traffic in carla
-    traffic_manager, bg_veh_list = \
-        scenario_manager.create_traffic_carla()
+    traffic_manager, bg_veh_list, traffic_cav_list = \
+        scenario_manager.create_traffic_carla(application=applications+['traffic'])
     
     if 'rsu' in applications:
         rsu_list = \
             scenario_manager.create_rsu_manager(data_dump=data_dump)
-
-    if 'cluster' in applications:
-        traffic_cav_list = \
-            scenario_manager.create_vehicle_manager_for_traffic(bg_veh_list, application=applications+['traffic'])
 
     if 'platoon' in applications:
         # create platoon members
@@ -133,7 +129,7 @@ def run(debug=True):
         spectator.set_transform(carla.Transform(
             transform.location +
             carla.Location(
-                z=70),
+                z=90),
             carla.Rotation(
                 pitch=-
                 90)))

@@ -174,7 +174,7 @@ carla_traffic_manager:
   random: false # whether to random select vehicles' color and model
   vehicle_list: []  # define in each scenario. If set to ~, then the vehicles be spawned in a certain range
   # Used only when vehicle_list is ~
-  # x_min, x_max, y_min, y_max, x_step, y_step, vehicle_num
+  # x_min, x_max, y_min, y_max, x_step, y_step, vehicle_num, (vehicle_manager_num)
   range: []
 
 # define the platoon basic characteristics
