@@ -418,6 +418,7 @@ class PCS(ClusterResourceAllocationAlgorithm):
             sender_q, receiver_q = k
             sender_vm = vehicle_dict[sender_q]
             receiver_vm = vehicle_dict[receiver_q]
+            receiver_vm.perception_manager.apply_late_fusion = False
             receiver_vm.perception_manager.co_manager.set_grid_selection({sender_q: self.grid_selection[receiver_q][sender_q]})
             receiver_vm.v2x_manager.scheduler.set_strategies({k: v})
             receiver_vm.v2x_manager.cluster_state['head_id'] = receiver_q

@@ -115,7 +115,6 @@ class CoalitionGame(ClusteringAlgorithm):
     
     def update_cluster_states(self):
         super().update_cluster_states()
-
         # vehicle_manager_dict = self.cav_world.get_vehicle_managers()
         # head_ids = set([c.head_id for c in self.coalitions])
         # for vid, vm in vehicle_manager_dict.items():

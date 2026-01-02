@@ -17,6 +17,7 @@ class ClusteringV2XManager(V2XManager):
     clusters = None
     CLUSTER_INTERVAL = 4
     cnt = CLUSTER_INTERVAL
+    all_clusters = []
     def __init__(self, cav_world, config_yaml, vid):
         super(ClusteringV2XManager, self).__init__(cav_world, config_yaml, vid)
         self.cp_model = 'default_model'

@@ -370,7 +370,7 @@ class EarlyFusionDataset(basedataset.BaseDataset):
 
         return output_dict
 
-    def post_process(self, data_dict, output_dict):
+    def post_process(self, data_dict, output_dict, return_object_ids=False):
         """
         Process the outputs of the model to 2D/3D bounding box.
 
@@ -391,6 +391,9 @@ class EarlyFusionDataset(basedataset.BaseDataset):
         """
         pred_box_tensor, pred_score = \
             self.post_processor.post_process(data_dict, output_dict)
-        gt_box_tensor = self.post_processor.generate_gt_bbx(data_dict)
-
-        return pred_box_tensor, pred_score, gt_box_tensor
+        if not return_object_ids:
+            gt_box_tensor = self.post_processor.generate_gt_bbx(data_dict)
+            return pred_box_tensor, pred_score, gt_box_tensor
+        else:
+            gt_box_tensor, gt_object_ids = self.post_processor.generate_gt_bbx(data_dict, return_ids=True)
+            return pred_box_tensor, pred_score, gt_box_tensor, gt_object_ids

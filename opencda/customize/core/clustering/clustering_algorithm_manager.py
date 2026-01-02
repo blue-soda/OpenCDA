@@ -26,6 +26,7 @@ class ClusteringAlgorithm:
                 member_v2x = common.global_vms[member_id]
                 member_v2x.cluster_state['head_id'] = head_id
                 member_v2x.cluster_state['member_ids'] = set(cluster.members)
+        common.global_vms.get(self.cav_world.ego_id).all_clusters = self.clusters
 
     def initialize_vehicles(self):
         pass

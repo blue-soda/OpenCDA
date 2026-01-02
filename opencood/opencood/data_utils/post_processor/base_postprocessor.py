@@ -42,7 +42,7 @@ class BasePostprocessor(object):
     def generate_label(self, *argv):
         return None
 
-    def generate_gt_bbx(self, data_dict):
+    def generate_gt_bbx(self, data_dict, return_ids=False):
         """
         The base postprocessor will generate 3d groundtruth bounding box.
 
@@ -50,6 +50,8 @@ class BasePostprocessor(object):
         ----------
         data_dict : dict
             The dictionary containing the origin input data of model.
+        return_ids : bool
+            Whether to return the object ids.
 
         Returns
         -------
@@ -87,13 +89,21 @@ class BasePostprocessor(object):
         gt_box3d_selected_indices = \
             [object_id_list.index(x) for x in set(object_id_list)]
         gt_box3d_tensor = gt_box3d_list[gt_box3d_selected_indices]
+        
+        # get the corresponding object ids for the filtered boxes
+        gt_object_ids = [object_id_list[i] for i in gt_box3d_selected_indices]
 
         # filter the gt_box to make sure all bbx are in the range
         mask = \
             box_utils.get_mask_for_boxes_within_range_torch(gt_box3d_tensor)
         gt_box3d_tensor = gt_box3d_tensor[mask, :, :]
 
-        return gt_box3d_tensor
+        gt_object_ids = [gt_object_ids[i] for i in range(len(gt_object_ids)) if mask[i]]
+
+        if return_ids:
+            return gt_box3d_tensor, gt_object_ids
+        else:
+            return gt_box3d_tensor
 
     def generate_object_center(self,
                                cav_contents,
@@ -145,3 +155,4 @@ class BasePostprocessor(object):
             object_ids.append(object_id)
 
         return object_np, mask, object_ids
+

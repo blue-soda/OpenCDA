@@ -20,7 +20,7 @@ from opencda.core.sensing.perception.obstacle_vehicle import \
     is_vehicle_cococlass, ObstacleVehicle
 from opencda.core.sensing.perception.static_obstacle import StaticObstacle
 
-from opencood.visualization.vis_utils import bbx2oabb, bbx2aabb
+from opencood.visualization.vis_utils import bbx2oabb, bbx2aabb, bbx2lineset_expand
 
 VIRIDIS = np.array(cm.get_cmap('plasma').colors)
 VID_RANGE = np.linspace(0.0, 1.0, VIRIDIS.shape[0])
@@ -166,16 +166,30 @@ def o3d_visualizer_show_coperception(vis, count, point_cloud, predict_bbx_tensor
     if count == 2:
         vis.add_geometry(point_cloud)
 
-    if predict_bbx_tensor is not None:
-        oabbs_pred = bbx2oabb(predict_bbx_tensor, color=(1, 0, 0))
-        for p in oabbs_pred:
-            vis.add_geometry(p)
+    opt = vis.get_render_option()
 
+    opt.line_width = 2.0        # 全局线宽
     if show_gt:
         if gt_box_tensor is not None:
-            oabbs_gt = bbx2oabb(gt_box_tensor, color=(0, 1, 0))
+            # oabbs_gt = bbx2oabb(gt_box_tensor, color=(0, 1, 0))
+            oabbs_gt = bbx2lineset_expand(
+                gt_box_tensor,
+                color=(0, 1, 0),
+                expand=0.10
+            )
             for g in oabbs_gt:
                 vis.add_geometry(g)
+
+    opt.line_width = 1.0       # 全局线宽
+    if predict_bbx_tensor is not None:
+        # oabbs_pred = bbx2oabb(predict_bbx_tensor, color=(1, 0, 0))
+        oabbs_pred = bbx2lineset_expand(
+            predict_bbx_tensor,
+            color=(1, 0, 0),
+            expand=0.0
+        )
+        for p in oabbs_pred:
+            vis.add_geometry(p)
 
     vis.update_geometry(point_cloud)
 

@@ -37,13 +37,15 @@ class CoperceptionLibs:
         veh_pos = object_vehicle.get_transform()
         veh_bbx = object_vehicle.bounding_box
         veh_speed = get_speed(object_vehicle)
-        return {
+        bbx = {
             "location": [veh_pos.location.x, veh_pos.location.y, veh_pos.location.z],
             "center": [veh_bbx.location.x, veh_bbx.location.y, veh_bbx.location.z],
             "angle": [veh_pos.rotation.roll, veh_pos.rotation.yaw, veh_pos.rotation.pitch],
             "extent": [veh_bbx.extent.x, veh_bbx.extent.y, veh_bbx.extent.z],
             "speed": veh_speed
         }
+        # print("bbx: ", bbx)
+        return bbx
 
 
     def load_vehicles(self, ego_id, ego_pos, lidar, ego_vehicle_ids=None):
@@ -59,14 +61,13 @@ class CoperceptionLibs:
         else:
             vehicle_list = [v for v in vehicle_list if dist_to_ego(v) < gt_box_range and v.id != ego_id]
         vehicle_dict = {}
-        if lidar:
-            for v in vehicle_list:
-                object_vehicle = ObstacleVehicle(None, None, v, lidar.sensor, self.cav_world.sumo2carla_ids)
-                vehicle_dict.update({object_vehicle.carla_id: self.load_vehicle_bbx(object_vehicle)})
-        else:
-            for v in vehicle_list:
-                object_vehicle = ObstacleVehicle(None, None, v, None, self.cav_world.sumo2carla_ids)
-                vehicle_dict.update({object_vehicle.carla_id: self.load_vehicle_bbx(object_vehicle)})
+        lidar_sensor = lidar.sensor if lidar else None
+        for vehicle in vehicle_list:
+            object_vehicle = ObstacleVehicle(None, None, vehicle, lidar_sensor, self.cav_world.sumo2carla_ids)
+            carla_id = vehicle.id
+            vid = self.cav_world.get_vid(carla_id)
+            vehicle_dict.update({vid: self.load_vehicle_bbx(object_vehicle)})
+
         data = {
             'vehicles': vehicle_dict
         }

@@ -37,8 +37,10 @@ def voc_ap(rec, prec):
         ap += ((mrec[i] - mrec[i - 1]) * mpre[i])
     return ap, mrec, mpre
 
-
 def caluclate_tp_fp(det_boxes, det_score, gt_boxes, result_stat, iou_thresh):
+    return calculate_tp_fp(det_boxes, det_score, gt_boxes, result_stat, iou_thresh)
+
+def calculate_tp_fp(det_boxes, det_score, gt_boxes, result_stat, iou_thresh):
     """
     Calculate the true positive and false positive numbers of the current
     frames.
@@ -55,6 +57,10 @@ def caluclate_tp_fp(det_boxes, det_score, gt_boxes, result_stat, iou_thresh):
         A dictionary contains fp, tp and gt number.
     iou_thresh : float
         The iou thresh.
+    gt_object_ids : list, optional
+        Ground truth object IDs with shape (M)
+    target_ids : list, optional
+        List of object IDs to be marked as detected
     """
     # fp, tp and gt in the current frame
     fp = []

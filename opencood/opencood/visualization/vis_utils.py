@@ -68,6 +68,36 @@ def bbx2linset(bbx_corner, order='hwl', color=(0, 1, 0)):
 
     return bbx_linset
 
+def bbx2lineset_expand(bbx_corner, color=(1, 0, 0), expand=0.0):
+    if not isinstance(bbx_corner, np.ndarray):
+        bbx_corner = common_utils.torch_tensor_to_numpy(bbx_corner)
+
+    if len(bbx_corner.shape) == 2:
+        bbx_corner = box_utils.boxes_to_corners_3d(bbx_corner)
+
+    lines = [
+        [0,1],[1,2],[2,3],[3,0],
+        [4,5],[5,6],[6,7],[7,4],
+        [0,4],[1,5],[2,6],[3,7]
+    ]
+
+    line_sets = []
+    for i in range(bbx_corner.shape[0]):
+        pts = bbx_corner[i].copy()
+        pts[:, :1] = -pts[:, :1]
+
+        if expand > 0:
+            center = pts.mean(axis=0)
+            pts = center + (pts - center) * (1.0 + expand)
+
+        ls = o3d.geometry.LineSet()
+        ls.points = o3d.utility.Vector3dVector(pts)
+        ls.lines = o3d.utility.Vector2iVector(lines)
+        ls.colors = o3d.utility.Vector3dVector([color for _ in lines])
+        line_sets.append(ls)
+
+    return line_sets
+
 
 def bbx2oabb(bbx_corner, order='hwl', color=(0, 0, 1)):
     """

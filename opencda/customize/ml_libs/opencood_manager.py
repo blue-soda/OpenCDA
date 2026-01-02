@@ -67,48 +67,57 @@ class OpenCOODManager(object):
         
         self.counter += 1
 
-        if self.counter <= 3:
+        if self.counter <= 5:
             return
     
         logger.debug('submit_results')
-        eval_utils.caluclate_tp_fp(pred_box_tensor,
+        eval_utils.calculate_tp_fp(pred_box_tensor,
                                     pred_score,
                                     gt_box_tensor,
                                     self.result_stat,
                                     0.3)
-        eval_utils.caluclate_tp_fp(pred_box_tensor,
+        eval_utils.calculate_tp_fp(pred_box_tensor,
                                     pred_score,
                                     gt_box_tensor,
                                     self.result_stat,
                                     0.5)
-        eval_utils.caluclate_tp_fp(pred_box_tensor,
+        eval_utils.calculate_tp_fp(pred_box_tensor,
                                     pred_score,
                                     gt_box_tensor,
                                     self.result_stat,
                                     0.7)
         
-    def inference(self, batch_data, with_stats=True, fusion_method='default'):
+    def inference(self, batch_data, with_stats=True, fusion_method='default', return_object_ids=False, target_ids=None):
 
         if fusion_method == 'default':
             fusion_method = self.fusion_method
 
         if fusion_method == 'late':
-            pred_box_tensor, pred_score, gt_box_tensor = \
+            # pred_box_tensor, pred_score, gt_box_tensor = \
+            ret = \
                 inference_utils.inference_late_fusion(batch_data,
                                                       self.model,
                                                       self.opencood_dataset,
+                                                      return_output=False,
+                                                      return_object_ids=return_object_ids,
                                                       )
         elif fusion_method == 'early':
-            pred_box_tensor, pred_score, gt_box_tensor = \
+            # pred_box_tensor, pred_score, gt_box_tensor = \
+            ret = \
                 inference_utils.inference_early_fusion(batch_data,
                                                        self.model,
                                                        self.opencood_dataset,
+                                                       return_output=False,
+                                                       return_object_ids=return_object_ids,
                                                        )
         elif fusion_method.startswith('intermediate'): # intermediate would be different models
-            pred_box_tensor, pred_score, gt_box_tensor = \
+            # pred_box_tensor, pred_score, gt_box_tensor = \
+            ret = \
                 inference_utils.inference_intermediate_fusion(batch_data,
                                                               self.model,
                                                               self.opencood_dataset,
+                                                              return_output=False,
+                                                              return_object_ids=return_object_ids,
                                                             )
         else:
             raise NotImplementedError('Only early, late and intermediate'
@@ -117,8 +126,9 @@ class OpenCOODManager(object):
         # skip the first 60 ticks for calculating the average precision
         if with_stats: #and self.counter % 2 == 0:
             logger.debug(f"Aggregating the current stats into final results: {self.counter}")
+            pred_box_tensor, pred_score, gt_box_tensor = ret[0:3]
             self.submit_results(pred_box_tensor, pred_score, gt_box_tensor, with_stats)
-        return pred_box_tensor, pred_score, gt_box_tensor
+        return ret
 
     def evaluate_final_average_precision(self):
         print(f'cp counter: {self.counter}')
@@ -162,17 +172,27 @@ class OpenCOODManager(object):
         return all_predict_boxes, all_predict_scores, all_gt_boxes
     
     @staticmethod
-    def naive_late_fusion(pred_box_tensors, pred_scores, gt_box_tensors, iou_threshold=0.15):
+    def naive_late_fusion(pred_box_tensors, pred_scores=None, iou_threshold=0.15):
         # If no predicted boxes are provided, return None for all outputs
-        if len(pred_box_tensors) == 0 or len(gt_box_tensors) == 0:
+        if len(pred_box_tensors) == 0:
             return None, None, None
-        
+
         # Concatenate all predicted boxes, scores, and ground truth boxes
         all_predict_boxes = torch.cat(pred_box_tensors, dim=0)  # Shape: [N, 8, 3]
-        all_predict_scores = torch.cat(pred_scores, dim=0)       # Shape: [N]
-        all_gt_boxes = torch.cat(gt_box_tensors, dim=0)         # Shape: [M, 8, 3]
-        
-        # ====================== 处理预测框 ======================
+        if pred_scores is None:
+            all_predict_scores = torch.ones(all_predict_boxes.shape[0], device=all_predict_boxes.device)  # Shape: [N]
+        else:
+            # 检查并转换 pred_scores 中的元素
+            processed_scores = []
+            for score in pred_scores:
+                if not isinstance(score, torch.Tensor):
+                    # 将非张量元素转换为张量
+                    score = torch.tensor(score, dtype=torch.float32).to(all_predict_boxes.device)
+                if score.dim() == 0:  # 如果是零维张量（标量）
+                    score = score.unsqueeze(0)  # 添加一个维度变为 [1]
+                processed_scores.append(score)
+            all_predict_scores = torch.cat(processed_scores, dim=0)       # Shape: [N]
+
         # Extract the 2D bounding box coordinates for NMS (ignore the z-axis)
         min_coords, _ = torch.min(all_predict_boxes[:, :, :2], dim=1)  # Shape: [N, 2]
         max_coords, _ = torch.max(all_predict_boxes[:, :, :2], dim=1)  # Shape: [N, 2]
@@ -192,32 +212,8 @@ class OpenCOODManager(object):
         # Filter the predicted boxes and scores based on NMS results
         filtered_predict_boxes = all_predict_boxes[keep_indices]  # Shape: [K, 8, 3]
         filtered_predict_scores = all_predict_scores[keep_indices]  # Shape: [K]
-        
-        # ====================== 处理真值框 ======================
-        # Extract the 2D bounding box coordinates for NMS (ignore the z-axis)
-        gt_min_coords, _ = torch.min(all_gt_boxes[:, :, :2], dim=1)  # Shape: [M, 2]
-        gt_max_coords, _ = torch.max(all_gt_boxes[:, :, :2], dim=1)  # Shape: [M, 2]
-        gt_boxes_for_nms = torch.cat([gt_min_coords, gt_max_coords], dim=1)  # Shape: [M, 4]
-    
-        # Create dummy scores for NMS (all 1.0, since ground truth boxes are equally valid)
-        gt_scores = torch.ones(gt_boxes_for_nms.shape[0], device=gt_boxes_for_nms.device)  # Shape: [M]
-        
-        # Apply NMS to remove duplicate ground truth boxes
-        gt_keep_indices = ops.nms(gt_boxes_for_nms, gt_scores, iou_threshold=iou_threshold)
-        
-        # Filter the ground truth boxes based on NMS results
-        filtered_gt_boxes = all_gt_boxes[gt_keep_indices]  # Shape: [L, 8, 3]
 
-        
-        # debug:
-        logger.debug(f"all_predict_boxes, {all_predict_boxes.shape}")
-        logger.debug(f"all_predict_scores, {all_predict_scores.shape}",)        
-        logger.debug(f"all_gt_boxes, {all_gt_boxes.shape}") 
-        logger.debug(f"filtered_predict_boxes, {filtered_predict_boxes.shape}")
-        logger.debug(f"filtered_predict_scores, {filtered_predict_scores.shape}")        
-        logger.debug(f"filtered_gt_boxes, {filtered_gt_boxes.shape}")   
-
-        return filtered_predict_boxes, filtered_predict_scores, filtered_gt_boxes
+        return filtered_predict_boxes, filtered_predict_scores
 
 
 

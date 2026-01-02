@@ -12,7 +12,7 @@ import torch
 from opencood.utils.common_utils import torch_tensor_to_numpy
 
 
-def inference_late_fusion(batch_data, model, dataset, return_output=False):
+def inference_late_fusion(batch_data, model, dataset, return_output=False, return_object_ids=False):
     """
     Model inference for late fusion.
 
@@ -35,15 +35,13 @@ def inference_late_fusion(batch_data, model, dataset, return_output=False):
         # print(cav_id, cav_content.keys())
         output_dict[cav_id] = model(cav_content)
 
-    pred_box_tensor, pred_score, gt_box_tensor = \
-        dataset.post_process(batch_data,
-                             output_dict)
+    post_process_result = dataset.post_process(batch_data, output_dict, return_object_ids=return_object_ids)
+    ret = list(post_process_result)
     if return_output:
-        return pred_box_tensor, pred_score, gt_box_tensor, output_dict
-    return pred_box_tensor, pred_score, gt_box_tensor
+        ret.append(output_dict)
 
 
-def inference_early_fusion(batch_data, model, dataset, return_output=False):
+def inference_early_fusion(batch_data, model, dataset, return_output=False, return_object_ids=False):
     """
     Model inference for early fusion.
 
@@ -65,13 +63,12 @@ def inference_early_fusion(batch_data, model, dataset, return_output=False):
 
     output_dict['ego'] = model(cav_content)
 
-    pred_box_tensor, pred_score, gt_box_tensor = \
-        dataset.post_process(batch_data,
-                             output_dict)
-
+    post_process_result = dataset.post_process(batch_data, output_dict, return_object_ids=return_object_ids)
+    ret = list(post_process_result)
     if return_output:
-        return pred_box_tensor, pred_score, gt_box_tensor, output_dict
-    return pred_box_tensor, pred_score, gt_box_tensor
+        ret.append(output_dict)
+
+    return tuple(ret)
 
 
 def inference_intermediate_fusion(batch_data, model, dataset, return_output=False):
