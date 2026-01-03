@@ -86,7 +86,7 @@ class SimpleCluster:
 
 POINT_BIT = 128  # 每个点的比特数(XYZ+intensity, 4 * 4 * 8)
 class Cluster(SimpleCluster):
-    election_function = lambda members: min(members)
+    election_function = staticmethod(lambda members: min(members))
 
     @staticmethod
     def set_election_function(election_function):

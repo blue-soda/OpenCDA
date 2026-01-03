@@ -17,6 +17,8 @@ from opencda.customize.core.clustering.algorithm.potential_game import Potential
     as PotentialGame
 from opencda.customize.core.clustering.algorithm.pcs import PCS
 from opencda.customize.core.clustering.algorithm.naive_ra import NaiveRA
+from opencda.customize.core.clustering.algorithm.mws import MWS
+from opencda.customize.core.clustering.algorithm.random import RandomRA
 
 class ClusteringScheduler(Scheduler):
     resource_allocation_algorithm = None
@@ -29,6 +31,8 @@ class ClusteringScheduler(Scheduler):
         if ClusteringScheduler.resource_allocation_algorithm is None:
             ClusteringScheduler.resource_allocation_algorithm = PotentialGame(cav_world)
             # ClusteringScheduler.resource_allocation_algorithm = PCS(cav_world)
+            # ClusteringScheduler.resource_allocation_algorithm = MWS(cav_world)
+            # ClusteringScheduler.resource_allocation_algorithm = RandomRA(cav_world)
             # ClusteringScheduler.resource_allocation_algorithm = NaiveRA(cav_world)
 
 

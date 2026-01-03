@@ -23,7 +23,7 @@ class PCS(ClusterResourceAllocationAlgorithm):
         self.grid_mAP_cache: Dict[str, float] = {}  # 网格mAP缓存：grid_id -> mAP值（预计算）
         self.blind_spots_cache: Dict[int, Dict[int, Set[str]]] = {}  # 车辆盲 spot 缓存：vid -> 盲spot_id -> 网格集合
 
-    def _get_vehicle_blind_spots(self, vid: int) -> Dict[int, Set[str]]:
+    def _get_vehicle_blind_spots(self, vid: int, min_division: int=6) -> Dict[int, Set[str]]:
         """
         获取车辆的盲 spot 集合（盲spot_id -> 对应的网格集合）
         盲spot定义：req_grids（需求范围）与high_density_grids（非盲spot区域）的差集
@@ -46,7 +46,7 @@ class PCS(ClusterResourceAllocationAlgorithm):
         size = len(blind_spot_grids)
         while unassigned_grids:
             start_grid = unassigned_grids.pop()
-            adjacent_grids = self._find_adjacent_grids(start_grid, unassigned_grids, size)
+            adjacent_grids = self._find_adjacent_grids(start_grid, unassigned_grids, size, min_division=min_division)
             blind_spot = {start_grid} | adjacent_grids
             blind_spots[spot_id] = blind_spot
             unassigned_grids -= adjacent_grids
@@ -66,15 +66,14 @@ class PCS(ClusterResourceAllocationAlgorithm):
                 adjacent.add(f"{x + i}_{y + j}")
         return adjacent
 
-    def _find_adjacent_grids(self, grid_id: str, candidate_grids: Set[str], size: int) -> Set[str]:
+    def _find_adjacent_grids(self, grid_id: str, candidate_grids: Set[str], size: int, min_division: int = 6) -> Set[str]:
         """
         查找相邻网格（适配'x_y'二维格式）
-        相邻定义：上下左右四个方向（x±1,y）或（x,y±1）
         """
         adjacent = set([grid_id])
         candidate = set([grid_id])
         flag = True
-        while flag and len(adjacent) <= size // 6:
+        while flag and len(adjacent) <= size // min_division:
             flag = False
             cur_candidate = candidate.copy()
             candidate.clear()
@@ -88,7 +87,7 @@ class PCS(ClusterResourceAllocationAlgorithm):
         return adjacent
 
 
-    def _generate_potential_links(self):
+    def _generate_potential_links(self, min_division: int=6, min_overlap: int=20):
         """
         生成所有潜在链路（发送方vid, 接收方vid, 盲spot_id）
         链路生成条件：
@@ -98,7 +97,7 @@ class PCS(ClusterResourceAllocationAlgorithm):
         vehicle_vids = common.global_vehicles.keys()
         for receiver_vid in vehicle_vids:
             # 获取接收方的盲spot
-            receiver_blind_spots = self._get_vehicle_blind_spots(receiver_vid)
+            receiver_blind_spots = self._get_vehicle_blind_spots(receiver_vid, min_division)
             if not receiver_blind_spots:
                 continue
             
@@ -118,7 +117,8 @@ class PCS(ClusterResourceAllocationAlgorithm):
                 # 检查发送方感知范围是否覆盖接收方盲spot
                 for spot_id, spot_grids in receiver_blind_spots.items():
                     overlap_grids = spot_grids & sender.sens_grids
-                    if overlap_grids and len(overlap_grids) > len(spot_grids) * 0.5:  # 存在覆盖的网格，生成链路
+                    print(f"sender_vid: {sender_vid}, receiver_vid: {receiver_vid}, spot_id: {spot_id}, overlap_grids: {len(overlap_grids)}")
+                    if overlap_grids and len(overlap_grids) > min_overlap:  # 存在覆盖的网格，生成链路
                         link = (sender_vid, receiver_vid, spot_id)
                         self.all_links.append(link)
         
