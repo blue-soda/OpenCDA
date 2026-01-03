@@ -224,7 +224,7 @@ class LidarSensor:
         # 网格相关参数
         self.enable_grids = config_yaml.get('enable_grids', True)
         self.lidar_range = float(config_yaml['range'])
-        self.required_perception_range = self.lidar_range * 2
+        self.required_perception_range = self.lidar_range * 3
 
         self.grid_size = config_yaml.get('grid_size', 10.0)
         self.perception_grids = self._generate_perception_grids()  # {grid_id: shapely.box}

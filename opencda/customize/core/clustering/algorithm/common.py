@@ -86,11 +86,17 @@ class SimpleCluster:
 
 POINT_BIT = 128  # 每个点的比特数(XYZ+intensity, 4 * 4 * 8)
 class Cluster(SimpleCluster):
+    election_function = lambda members: min(members)
+
+    @staticmethod
+    def set_election_function(election_function):
+        Cluster.election_function = election_function
+
     def __init__(self, members):
-        self.members = set(members)
+        self.members = set(members) #id
+        self.head_id = self.elect_head()
         self.req_grids = self.get_req_grids()
         self.sens_grids = self.get_sens_grids()
-        self.head_id = self.elect_head()
         self.grid_bits = self.compute_grid_bits()
         self.high_density_grids = self.get_high_density_grids()
 
@@ -133,11 +139,8 @@ class Cluster(SimpleCluster):
             self.elect_head()
 
     def elect_head(self):
-        self.head_id = min(self.members)
+        self.head_id = self.election_function(self.members)
         return self.head_id
-    
-class Coalition(Cluster):
-    pass
 
 class Params:
     def __init__(self,

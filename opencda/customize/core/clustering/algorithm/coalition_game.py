@@ -13,13 +13,57 @@ class CoalitionGame(ClusteringAlgorithm):
 
     def initialize_vehicles(self):
         common.Vehicle_Grid.initialize(self.cav_world)
+        common.Cluster.set_election_function(self.election)
         new_coliations = []
         for vid in common.global_vehicles.keys():
             if self.find_coalition(vid) is None:
-                new_coliations.append(Coalition({vid}))
+                new_coliations.append(Cluster({vid}))
         self.coalitions.extend(new_coliations)
         self.max_grids_per_rb = common.calculate_max_grids_per_rb(None, self.p.bandwidth_per_channel, self.p.T_ddl, self.coalitions[0].grid_bits)
         
+    def election(self, members):
+        from opencda.core.common.misc import compute_distance
+        global global_vehicles
+        """选择位置最靠近所有成员中心的车辆作为簇头"""
+        if not members:
+            return None
+            
+        # 计算所有成员的位置中心
+        sum_x = 0.0
+        sum_y = 0.0
+        sum_z = 0.0
+        member_count = len(members)
+        
+        # 收集所有成员的位置
+        positions = {}
+        for vid in members:
+            vehicle = global_vehicles[vid]
+            location = vehicle.get_position().location
+            positions[vid] = location
+            sum_x += location.x
+            sum_y += location.y
+            sum_z += location.z
+        
+        # 计算中心位置
+        center_x = sum_x / member_count
+        center_y = sum_y / member_count
+        center_z = sum_z / member_count
+        
+        # 创建中心位置对象（模拟carla.Location的结构）
+        center_location = type('Location', (), {'x': center_x, 'y': center_y, 'z': center_z})
+        
+        # 计算每个成员到中心的距离，找到最近的
+        min_distance = float('inf')
+        closest_vid = None
+        
+        for vid, location in positions.items():
+            distance = compute_distance(location, center_location)
+            if distance < min_distance:
+                min_distance = distance
+                closest_vid = vid
+        
+        return closest_vid
+    
     def stability_cost(self, vid, coalition):   
         """计算车辆与联盟的稳定性成本，为与联盟内所有成员的时空相似性的负平均值"""
         if len(coalition.members) == 0:
