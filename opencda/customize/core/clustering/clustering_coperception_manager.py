@@ -6,7 +6,7 @@ class ClusteringCoperceptionManager(CoperceptionManager):
     def __init__(self, vid, v2x_manager, coperception_libs, enable_network=False, network_manager=None):
         super().__init__(vid, v2x_manager, coperception_libs, enable_network, network_manager)
         self.communicate_inside_cluster = True
-        self.enable_grid = True
+        self.enable_grid = enable_network
         
     def set_communicate_inside_cluster(self):
         self.communicate_inside_cluster = True

@@ -202,7 +202,7 @@ class ScenarioManager:
         else:
             self.world = self.client.get_world()
 
-        if not self.world:
+        if not hasattr(self, 'world') or not self.world:
             sys.exit('World loading failed')
 
         self.origin_settings = self.world.get_settings()
@@ -712,6 +712,7 @@ class ScenarioManager:
         count = 0
         spawn_list = list(spawn_set)
         shuffle(spawn_list)
+        # spawn_list.sort(key=lambda x: (int(x[0] / 5), int(x[1] / 5)))
 
         while count < spawn_num:
             if len(spawn_list) == 0:

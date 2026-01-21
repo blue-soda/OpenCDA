@@ -12,8 +12,8 @@ class RandomRA(PCS):
 
         # 初始化：生成链路并计算效用
         self._generate_potential_links(min_division=1, min_overlap=50)
-        self._precompute_grid_mAP()
-        self._calculate_link_utilities()
+        # self._precompute_grid_mAP()
+        # self._calculate_link_utilities()
 
         # 1. 构建冲突图
         self._build_conflict_graph()
@@ -72,7 +72,12 @@ class RandomRA(PCS):
         
         # 4. 更新资源分配策略到车辆
         print("Random resource strategy:", self.resource_strategy)
-        print("Random grid selection:", self.grid_selection)
+        logger.info(f"Random resource strategy: {self.resource_strategy}")
+        logger.info(f"Random available_subchannels: {available_subchannels}")
+        for receiver_q, sender_grids_dict in self.grid_selection.items():
+            for sender_q, spot_grids in sender_grids_dict.items():
+                print(f"receiver_q: {receiver_q}, sender_q: {sender_q}, spot_grids: {len(spot_grids)}")
+                logger.info(f"receiver_q: {receiver_q}, sender_q: {sender_q}, spot_grids: {len(spot_grids)}")
 
         # 5. 清除缓存
         self.blind_spots_cache.clear()

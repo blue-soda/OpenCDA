@@ -19,7 +19,7 @@ class CoalitionGame(ClusteringAlgorithm):
             if self.find_coalition(vid) is None:
                 new_coliations.append(Cluster({vid}))
         self.coalitions.extend(new_coliations)
-        self.max_grids_per_rb = common.calculate_max_grids_per_rb(None, self.p.bandwidth_per_channel, self.p.T_ddl, self.coalitions[0].grid_bits)
+        # self.max_grids_per_rb = common.calculate_max_grids_per_rb(None, self.p.bandwidth_per_channel, self.p.T_ddl, self.coalitions[0].grid_bits)
         
     def election(self, members):
         from opencda.core.common.misc import compute_distance
@@ -65,49 +65,71 @@ class CoalitionGame(ClusteringAlgorithm):
         return closest_vid
     
     def stability_cost(self, vid, coalition):   
-        """计算车辆与联盟的稳定性成本，为与联盟内所有成员的时空相似性的负平均值"""
+        """计算车辆与联盟的稳定性成本，基于预测位置的稳定性系数"""
         if len(coalition.members) == 0:
             return 0.0
             
-        ego_vehicle = common.global_vehicles.get(vid)
-        if not ego_vehicle:
+        # 预测车辆在T_min_stab时间后的位置
+        pred_pos = self.predict_vehicle_position(vid, coalition)
+        if pred_pos is None:
             return 0.0
-            
-        ego_data = ego_vehicle.summary_state()
-        total_distance = 0.0
-        count = 0
         
-        for member_id in coalition.members:
-            if member_id == vid:  # 不计算与自身的相似性
-                continue
-                
-            neighbor_vehicle = common.global_vehicles.get(member_id)
-            if not neighbor_vehicle:
-                continue
-                
-            neighbor_data = neighbor_vehicle.summary_state()
-            distance = compute_spatiotemporal_distance(ego_data, neighbor_data)
-            total_distance += distance
-            count += 1
-        
-        if count == 0:
+        # 计算预测位置的感知覆盖G_i^pred
+        pred_sens_grids = self.compute_predicted_sens_grids(vid, pred_pos)
+        if not pred_sens_grids:
             return 0.0
-            
-        average_distance = total_distance / count
-        return average_distance
+        
+        # 计算交集G_i^int = G_i^pred ∩ G_S^req
+        coalition_req_grids = coalition.req_grids
+        int_grids = pred_sens_grids & coalition_req_grids
+        
+        # 计算稳定性系数β_i = |G_i^int| / |G_i^pred|
+        beta_i = len(int_grids) / len(pred_sens_grids)
+        
+        # 返回稳定性系数作为稳定性成本（值越大表示稳定性越高）
+        return beta_i
     
-    def comm_cost(self, grid_num):
-        max_grids = self.max_grids_per_rb
+    def predict_vehicle_position(self, vid, coalition):
+        """预测车辆在T_min_stab时间后的位置"""
+        # 获取车辆当前位置和速度
+        pos = common.get_vehicle_position(vid)
+        vel = common.get_vehicle_velocity(vid)
+        if pos is None or vel is None:
+            return None
         
-        if grid_num >= max_grids:
-            return 1000.0
+        # 计算联盟平均位置和速度
+        mean_pos, mean_vel = common.compute_coalition_mean(coalition)
+        if mean_pos is None or mean_vel is None:
+            return None
         
-        proximity = grid_num / max_grids
-        base_cost = 1
-        penalty = base_cost * (proximity **2) / (1 - proximity)
+        # 计算位移和速度偏差
+        delta_pos = [pos[i] - mean_pos[i] for i in range(3)]
+        delta_vel = [vel[i] - mean_vel[i] for i in range(3)]
         
-        total_cost = penalty
-        return total_cost
+        # 预测位置
+        pred_pos = [pos[i] + delta_vel[i] * self.p.T_min_stab for i in range(3)]
+        return pred_pos
+    
+    def compute_predicted_sens_grids(self, vid, pred_pos):
+        """根据预测位置计算车辆的感知覆盖网格"""        
+        vehicle_manager_dict = self.cav_world.get_vehicle_managers()
+        vm = vehicle_manager_dict.get(vid)
+        if not vm or not vm.is_ok:
+            return set()
+        
+        lidar = vm.perception_manager.lidar
+        grid_size = lidar.grid_size
+        lidar_range = lidar.lidar_range
+        
+        grid_coords = lidar.generate_perception_grid_coords(grid_size, lidar_range, int(pred_pos[0]), int(pred_pos[1]))
+        
+        # 生成感知网格
+        pred_sens_grids = set()
+        for x, y in grid_coords:
+                grid_id = lidar.get_point_grid_id((x, y))
+                pred_sens_grids.add(grid_id)
+        
+        return pred_sens_grids
 
     def marginal_contribution(self, coalition, vid):
         if vid in coalition.members:
@@ -116,13 +138,15 @@ class CoalitionGame(ClusteringAlgorithm):
         if vid not in common.global_vehicles:
             logger.info(f"vehicle {vid} not in global_vehicles.")
             return 0.0
-        new_grids = common.global_vehicles[vid].sens_grids - coalition.high_density_grids
-        new_grids = new_grids & coalition.req_grids
-        grid_gain = common.avg_grids_score(vid, new_grids)
+        # valuable_grids = common.global_vehicles[vid].sens_grids - coalition.high_density_grids
+        # new_grids = valuable_grids & coalition.req_grids
+        valuable_grids = common.global_vehicles[vid].sens_grids
+        valuable_grids = valuable_grids & coalition.sens_grids
+        grid_gain = common.avg_grids_score(vid, valuable_grids)
         stab_diff = self.stability_cost(vid, coalition)
-        comm_diff = self.comm_cost(len(new_grids))
-        # print(f"marginal_contribution: grid_gain={grid_gain}, stab_diff={stab_diff}, comm_diff={comm_diff}")
-        return grid_gain - self.p.alpha * stab_diff - self.p.beta * comm_diff
+        gain = grid_gain * stab_diff
+        print(f"marginal_contribution: {grid_gain} * {stab_diff} = {gain}")
+        return gain
     
     def current_contribution(self, coalition, vid):
         if vid not in coalition.members:
@@ -191,7 +215,7 @@ class CoalitionGame(ClusteringAlgorithm):
                 for c in self.coalitions:
                     if c is current:
                         continue
-                    if c.size() >= self.p.N_max: #TODO: bad if-statement
+                    if c.size() >= self.p.N_max:
                         # print(f"Vehicle {vid} cannot join coalition {c.members} due to size limit.")
                         continue
                     delta = self.marginal_contribution(c, vid)

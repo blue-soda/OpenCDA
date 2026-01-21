@@ -76,6 +76,24 @@ class Vehicle_Grid(Vehicle):
             grid_density_dict = vm.perception_manager.lidar.grid_density_dict
             global_vehicles[vid] = Vehicle_Grid(vid, position, speed, direction, sens_grids, req_grids, high_density_grids, grid_size, rho_th, grid_density_dict)
         return global_vehicles, global_vms
+    
+def get_vehicle_position(vid):
+    """获取车辆的位置向量（x, y, z）"""
+    vehicle = global_vehicles.get(vid)
+    if not vehicle:
+        return None
+    location = vehicle.get_position().location
+    return [location.x, location.y, location.z]
+
+def get_vehicle_velocity(vid):
+    """获取车辆的速度向量（vx, vy, vz）"""
+    vehicle = global_vehicles.get(vid)
+    if not vehicle:
+        return None
+    speed = vehicle.get_speed()
+    direction = vehicle.get_direction()
+    return [speed * d for d in direction]
+    
 ###########################
 # Coalition class(Grid based)
 ###########################
@@ -142,39 +160,53 @@ class Cluster(SimpleCluster):
         self.head_id = self.election_function(self.members)
         return self.head_id
 
+def compute_coalition_mean(coalition):
+    """计算联盟的平均位置和平均速度"""
+    if len(coalition.members) == 0:
+        return None, None
+    
+    # 计算平均位置
+    sum_x, sum_y, sum_z = 0.0, 0.0, 0.0
+    # 计算平均速度
+    sum_vx, sum_vy, sum_vz = 0.0, 0.0, 0.0
+    
+    count = 0
+    for vid in coalition.members:
+        pos = get_vehicle_position(vid)
+        vel = get_vehicle_velocity(vid)
+        if pos is not None and vel is not None:
+            sum_x += pos[0]
+            sum_y += pos[1]
+            sum_z += pos[2]
+            sum_vx += vel[0]
+            sum_vy += vel[1]
+            sum_vz += vel[2]
+            count += 1
+    
+    if count == 0:
+        return None, None
+    
+    mean_pos = [sum_x/count, sum_y/count, sum_z/count]
+    mean_vel = [sum_vx/count, sum_vy/count, sum_vz/count]
+    
+    return mean_pos, mean_vel
+    
 class Params:
     def __init__(self,
-                 rho_th=2.0,
-                 kappa=1.0,
-                 gamma=0.5,
-                 q_max=1.0,
-                 s=0.1,
-                 alpha=0.15,
-                 beta=0.10,
-                 delta_v_max=15.0,
-                 N_max=4,
                  T_ddl=0.1,
-                 ita=1.1,
-                 fp_penalty=0.01,
-                 bandwidth_all = 72, # MHz
+                 bandwidth_all = 40,
                  num_channels=10,
-                 num_time_slots=2
+                 num_time_slots=1,
+                 T_min_stab=1.0,
+                 N_max=4,
+                 ita=1.1
                  ):
-        self.rho_th = rho_th
-        self.kappa = kappa
-        self.gamma = gamma
-        self.q_max = q_max
-        self.s = s
-        self.alpha = alpha
-        self.beta = beta
-        self.delta_v_max = delta_v_max
+        # 协作集合划分参数
         self.N_max = N_max
-        self.T_ddl = T_ddl
         self.ita = ita
-        self.fp_penalty = fp_penalty # 误检惩罚项
-        # 阈值化参数
-        self.bar_lambda = 1 - math.exp(-self.rho_th / self.kappa)
-        self.bar_p = 1 - math.exp(-self.bar_lambda)
+        # 时间参数
+        self.T_min_stab = T_min_stab # 最小稳定时间窗口（秒）
+        self.T_ddl = T_ddl # 调度周期（秒）
         # 信道参数
         self.num_channels = num_channels      # 子信道数量 K
         self.num_time_slots = num_time_slots    # 时隙数量 T
@@ -235,6 +267,11 @@ def compute_spatiotemporal_distance(ego_data, neighbor_data):
     # print(f"distance: {distance:.3f}, distance_term: {distance_term:.3f}, velocity_diff: {velocity_diff:.3f}, speed_term: {speed_term:.3f}, similarity: {similarity:.3f}")
     return similarity
 
+def visualize_sens_grids(vid):
+    vehicle = global_vehicles[vid]
+    visualize_grid_set(vehicle.sens_grids, title=f"{vehicle.id}'s Sens Grids", rho_th=vehicle.rho_th, 
+                       grid_density_dict=vehicle.grid_density_dict, show_coordinates=True)
+    
 def visualize_grid_set(grid_set, title="Grid Visualization", rho_th=None, 
                        grid_density_dict=None, show_coordinates=False):
     """

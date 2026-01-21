@@ -15,5 +15,5 @@ class NaiveRA(ClusterResourceAllocationAlgorithm):
         for vid, vm in vehicle_dict.items():
             vm.v2x_manager.scheduler.use_default_subchannel = True
             vm.perception_manager.co_manager.enable_grid = False
-            vm.perception_manager.apply_late_fusion = False
+            # vm.perception_manager.apply_late_fusion = False
 

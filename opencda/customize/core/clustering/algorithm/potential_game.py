@@ -9,10 +9,9 @@ class PotentialGame(ClusterResourceAllocationAlgorithm):
         # need Vehicle_Grid as input
         self.p = Params()
         self.strategies = {}  # {head_id: (member_id, subchannel_k, time_slot_t, [grid_ids])}
-        self.d_s_cache = {}  # (cluster_head_id, member_id) -> delay
-        self.channel_cache_index = defaultdict(set)  # subchannel_id -> set of cache keys
         self.grids_uploading = set()
         self.grids_ch_sens = set()
+        self.grids_density = {}
     
     def set_clusters(self, clusters):
         super().set_clusters(clusters)
@@ -38,59 +37,24 @@ class PotentialGame(ClusterResourceAllocationAlgorithm):
                 vehicle_dict[hid].v2x_manager.scheduler.set_strategies(schedule)
                 grids_selection = {mid: grid_ids}
                 vehicle_dict[hid].perception_manager.co_manager.set_grid_selection(grids_selection)
+                vehicle_dict[mid].perception_manager.do_not_skip_any_cav = True
 
     def calculate_max_grids_per_rb(self, sinr=None):
         return common.calculate_max_grids_per_rb(sinr, self.p.bandwidth_per_channel, self.p.T_ddl, self.clusters[0].grid_bits)
 
-    @staticmethod
-    def extract_used_channels(schedule):
-        return set(sc for (_, sc, _, _) in schedule)
-
-    def invalidate_channel_cache(self, affected_channels):
-        for sc in affected_channels:
-            keys = self.channel_cache_index.get(sc, set())
-            for key in keys:
-                self.d_s_cache.pop(key, None)
-            self.channel_cache_index.pop(sc, None)
-
-    def grid_late_utility(self, grid_id, participating_clusters, in_J_eff=False):
+    def grid_utility_density(self, density, rho_th):
+        return common.density_score(density, rho_th)
+    
+    def grid_late_utility(self, participating_clusters_density_dict):
         # 计算某网格由参与簇集合提供晚期融合的总效用
-        n = len(participating_clusters)
-        if n == 0:
+        if not participating_clusters_density_dict:
             return 0.0
-
-        # soft-winner 补充项
-        if in_J_eff:
-            U_soft = (1.0 - self.p.bar_p)
-        else:
-            U_soft = 1.0
-        U_soft = U_soft * (1 - (1 - self.p.bar_p) ** n) * \
-            sum([self.p.bar_mu(self.compute_delay(cluster, grid_id=grid_id)) for cluster in participating_clusters]) / n
-        
-        # pairwise 替代项
-        U_pairwise = 0.0
-        if in_J_eff:
-            for k, l in combinations(participating_clusters, 2):
-                mu_k = self.p.bar_mu(self.compute_delay(k, grid_id=grid_id))
-                mu_l = self.p.bar_mu(self.compute_delay(l, grid_id=grid_id))
-                win_prob = norm.cdf((mu_k - mu_l) / math.sqrt(self.p.s * (mu_k + mu_l)))
-                U_pairwise += win_prob * (mu_k - mu_l)
-        
-        U_Fp = n * self.p.fp_penalty
-        # print(f"U_soft: {U_soft}, U_pairwise: {U_pairwise}, U_Fp: {U_Fp}")
-        return U_soft + U_pairwise - U_Fp
+        U_late = max([self.grid_utility_density(density, common.global_vehicles[hid].rho_th) for hid, density in participating_clusters_density_dict.items()])
+        return U_late
     
-    def member_early_utility(self, cluster, member_id):
+    def grid_early_utility(self, density, hid=1):
         # 计算某网格由参与簇集合提供早期融合的总效用
-        d_s = self.compute_delay(cluster, member_id=member_id)
-        U_early = self.p.bar_lambda * self.p.bar_mu(d_s)
-        return U_early
-    
-    def grid_early_utility(self, cluster, grid_id):
-        # 计算某网格由参与簇集合提供早期融合的总效用
-        d_s = self.compute_delay(cluster, grid_id=grid_id)
-        U_early = self.p.bar_lambda * self.p.bar_mu(d_s)
-        return U_early
+        return self.grid_utility_density(density, common.global_vehicles[hid].rho_th)
         
     def get_certain_strategy(self, hid, mid=None, grid_id=None):
         for (mid, sc, t, grids) in self.strategies[hid]:
@@ -105,12 +69,8 @@ class PotentialGame(ClusterResourceAllocationAlgorithm):
         if mid is None or grid_id is None or subchannel_id == -1: # 此前未传输过
             return self.p.T_ddl
         cache_key = (hid, mid, subchannel_id)
-        if cache_key in self.d_s_cache:
-            return self.d_s_cache[cache_key]
         data_rate = self.compute_data_rate(cluster, mid, subchannel_id)
         d_s = self.transmission_delay(data_rate, cluster, grids_num)
-        self.d_s_cache[cache_key] = d_s
-        self.channel_cache_index[subchannel_id].add(cache_key)
         print(f"data_rate: {data_rate}, grids_num: {grids_num}, d_s: {d_s}")
         return d_s
 
@@ -153,13 +113,22 @@ class PotentialGame(ClusterResourceAllocationAlgorithm):
         grid_bits = cluster.grid_bits * grids_num
         return grid_bits / max(data_rate, 1e-9)
     
+    def compute_grids_density(self, cluster):
+        hid = cluster.head_id
+        links = self.strategies.get(hid, None)
+        grids_density = common.global_vehicles[hid].grid_density_dict.copy()
+        for (mid, sc, t, grids) in links:
+            for grid_id in grids:
+                grids_density[grid_id] = grids_density.get(grid_id, 0.0) + common.global_vehicles[mid].grid_density_dict.get(grid_id, 0.0)
+        return grids_density
+    
     def get_participating_clusters(self, grid_id):
-        participating_clusters = []
+        participating_clusters = {}
         for cluster in self.clusters:
-            for (_, _, _, grids) in self.strategies.get(cluster.head_id, []):
-                if grid_id in grids:
-                    participating_clusters.append(cluster)
-                    break
+            grid_density_dict = self.compute_grids_density(cluster)
+            if grid_id in grid_density_dict:
+                participating_clusters[cluster.head_id] = grid_density_dict[grid_id]
+                break
         return participating_clusters
     
     def bits_to_sinr(self, bits):
@@ -167,47 +136,48 @@ class PotentialGame(ClusterResourceAllocationAlgorithm):
         sinr = 2 ** (data_rate / self.p.bandwidth_per_channel) - 1
         return sinr
 
-    def compute_grids_uploading(self):
-        self.grids_uploading = set()
-        for hid, links in self.strategies.items():
-            grids_density = defaultdict(int)
+    def update_grids_density(self, update_self_density=True):
+        if update_self_density:
+            for cluster in self.clusters:
+                hid = cluster.head_id
+                self.grids_density[hid] = common.global_vehicles[hid].grid_density_dict
+
+        for hid, links in self.strategies.items():        
+            grids_density_hid = defaultdict(int)
             for (mid, sc, t, grids) in links:
                 for grid_id in grids:
-                    grids_density[grid_id] += common.global_vehicles[mid].grid_density_dict.get(grid_id, 0.0)
-            for grid_id in grids_density.keys():
-                grids_density[grid_id] += common.global_vehicles[hid].grid_density_dict.get(grid_id, 0.0)
-
-            grids = set([grid_id for grid_id, density in grids_density.items() if density >= common.global_vehicles[hid].rho_th])
-            self.grids_uploading |= grids
+                    grids_density_hid[grid_id] += common.global_vehicles[mid].grid_density_dict.get(grid_id, 0.0)
     
     def compute_grids_uploading_inside_cluster(self, cluster):
-        hid = cluster.head_id
-        links = self.strategies.get(hid, None)
-        grids_density = common.global_vehicles[hid].grid_density_dict.copy()
-        for (mid, sc, t, grids) in links:
-            for grid_id in grids:
-                density = grids_density.get(grid_id, 0.0)
-                grids_density[grid_id] = density + common.global_vehicles[mid].grid_density_dict.get(grid_id, 0.0)
-        grids = set([grid_id for grid_id, density in grids_density.items() if density >= common.global_vehicles[hid].rho_th])
+        grids_density = self.compute_grids_density(cluster)
+        grids = set([grid_id for grid_id, density in grids_density.items() if density >= common.global_vehicles[cluster.head_id].rho_th])
         return grids
     
     def compute_grids_ch_sens(self):
         self.grids_ch_sens = set()
         for cluster in self.clusters:
             head_id = cluster.head_id
-            # self.grids_ch_sens |= common.global_vehicles[head_id].sens_grids
             self.grids_ch_sens |= common.global_vehicles[head_id].high_density_grids
 
-    def grid_score(self, cluster, grid_id):
+    def grid_score(self, cluster, grid_id, member_grid_density):
         participating_clusters = self.get_participating_clusters(grid_id)
-        late_score_upload = self.grid_late_utility(grid_id, participating_clusters, in_J_eff=True)
-        # print("late_score_upload", late_score_upload)
-        late_score_not_upload = self.grid_late_utility(grid_id, participating_clusters, in_J_eff=False)
-        # print("late_score_not_upload", late_score_not_upload)
-        early_score = self.grid_early_utility(cluster, grid_id)
-        # print("early_score", early_score)
-        gain = early_score + late_score_upload - late_score_not_upload
-        # print("gain", gain)
+        late_score = self.grid_late_utility(participating_clusters)
+
+        current_density = 0.0
+        early_score = 0.0
+        if cluster.head_id in participating_clusters:
+            current_density = participating_clusters[cluster.head_id]
+            early_score = self.grid_early_utility(current_density, cluster.head_id)
+
+        current_density += member_grid_density
+        early_score_if_upload = self.grid_early_utility(current_density, cluster.head_id)
+
+        print("early_score", early_score)
+        print("late_score", late_score)
+        print("member_grid_density", member_grid_density)
+        print("early_score_if_upload", early_score_if_upload)
+        gain = max(late_score, early_score_if_upload) - max(late_score, early_score)
+        print("gain", gain)
         return gain
 
     def best_response(self, cluster, strategies, global_rb_used):
@@ -246,7 +216,6 @@ class PotentialGame(ClusterResourceAllocationAlgorithm):
             return []
 
         # ========= Step 1: 第一轮（exclusive grid） =========
-        # 按 member 能提供的“未上传 grid 数”排序
         cur_h_links = self.strategies.get(h, None)
         member_grid_map = {}
         for m in cluster.members:
@@ -265,7 +234,8 @@ class PotentialGame(ClusterResourceAllocationAlgorithm):
         for m, grids_m in member_grid_map.items():
             member_grid_score_map[m] = {}
             for grid in grids_m:
-                member_grid_score_map[m][grid] = self.grid_score(cluster, grid)
+                member_grid_density = common.global_vehicles[m].grid_density_dict.get(grid, 0.0)
+                member_grid_score_map[m][grid] = self.grid_score(cluster, grid, member_grid_density)
 
         members_sorted = sorted(
             member_grid_map.keys(),
@@ -297,6 +267,7 @@ class PotentialGame(ClusterResourceAllocationAlgorithm):
                     reverse=True
                 )
                 grids = member_grids_sorted[:self.max_grids_per_rb]
+                # grids = common.global_vehicles[m].sens_grids
                 if not grids:
                     continue
 
@@ -310,6 +281,37 @@ class PotentialGame(ClusterResourceAllocationAlgorithm):
                     candidate_grids.discard(g)
                 break
 
+        # # ========= Step 2: 第二轮（自身已分配 RB 修改） =========
+        # for (mid, k, t, grids) in cur_h_links:
+        #     if used_rbs >= B_h:
+        #         break
+        #     self.strategies[h].remove((mid, k, t, grids))
+        #     score_assigned = sum([self.grid_score(cluster, grid, common.global_vehicles[mid].grid_density_dict.get(grid, 0.0)) for grid in grids])
+        #     replaced = False
+        #     print(f"cur_h_links: Cluster head {h} member {mid} assigned score: {score_assigned}")
+        #     logger.info(f"cur_h_links: Cluster head {h} member {mid} assigned score: {score_assigned}")
+        #     for m in members_sorted:
+        #         score_new = sum([self.grid_score(cluster, grid, common.global_vehicles[m].grid_density_dict.get(grid, 0.0)) for grid in member_grid_map[m]])
+        #         print(f"cur_h_links: Cluster head {h} member {m} new score: {score_new}")
+        #         logger.info(f"cur_h_links: Cluster head {h} member {m} new score: {score_new}")
+        #         if score_new > score_assigned:
+        #             replaced = True
+        #             upload_grids = member_grid_map[m][:self.max_grids_per_rb]
+        #             schedule.append((m, k, t, upload_grids))
+        #             self.grids_uploading |= set(upload_grids)
+        #             global_rb_used[(k, 0)] += 1
+        #             used_rbs += 1
+        #             print(f"cur_h_links: Cluster head {h}: member {m} take place of member {mid}, with score {score_new} > {score_assigned}")
+        #             logger.info(f"cur_h_links: Cluster head {h}: member {m} take place of member {mid}, with score {score_new} > {score_assigned}")
+        #             # 更新占用
+        #             for g in grids:
+        #                 candidate_grids.discard(g)
+        #             break
+        #     if not replaced:
+        #         self.strategies[h].append((mid, k, t, grids))
+                
+
+                     
         # ========= Step 2: 第二轮（受保护 RB 复用） =========
         multiplex_bits = 0.10 * self.max_grids_per_rb
         sinr_min_multiplex = self.bits_to_sinr(multiplex_bits)
@@ -460,11 +462,6 @@ class PotentialGame(ClusterResourceAllocationAlgorithm):
                 h = cluster.head_id
                 new_schedule = self.best_response(cluster, self.strategies, global_rb_used)
                 if len(new_schedule) > 0:
-                     # 计算受影响子信道, 清除延迟缓存
-                    # old_channels = self.extract_used_channels(self.strategies[h])
-                    # new_channels = self.extract_used_channels(new_schedule)
-                    # affected_channels = old_channels | new_channels
-                    # self.invalidate_channel_cache(affected_channels)
                     self.strategies[h] += new_schedule
                     logger.info(f"Cluster head {h} strategy updated.")
                     updated = True
@@ -475,5 +472,5 @@ class PotentialGame(ClusterResourceAllocationAlgorithm):
         logger.info(f"Channel game converged in {it+1} iterations.")
         for h in self.strategies:
             for m, k, t, grids in self.strategies[h]:
-                logger.info(f"Cluster head {h} member {m} on RB {k, t} grids: {len(grids)}")
+                logger.info(f"strategy: Cluster head {h} member {m} on RB {k, t} grids: {len(grids)}")
         return self.strategies

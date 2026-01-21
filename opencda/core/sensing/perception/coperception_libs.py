@@ -55,7 +55,8 @@ class CoperceptionLibs:
         world = self.carla_world
         vehicle_list = world.get_actors().filter("*vehicle*")
         
-        gt_box_range = 120 #meters, 真值框范围
+        # gt_box_range = 120 #meters, 真值框范围
+        gt_box_range = 100
         if ego_vehicle_ids:
             vehicle_list = [v for v in vehicle_list if dist_to_ego(v) < gt_box_range and v.id not in ego_vehicle_ids]
         else:

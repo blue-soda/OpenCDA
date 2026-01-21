@@ -25,7 +25,7 @@ from opencda.core.sensing.perception.static_obstacle import TrafficLight
 from opencda.core.sensing.perception.o3d_lidar_libs import \
     o3d_visualizer_init, o3d_pointcloud_encode, o3d_visualizer_show, \
     o3d_camera_lidar_fusion, o3d_visualizer_show_coperception, o3d_predict_bbox_to_object
-
+from opencda.log.logger_config import logger
 from opencda.core.sensing.perception.coperception_libs import CoperceptionLibs
 from collections import OrderedDict, defaultdict
 
@@ -238,7 +238,8 @@ class LidarSensor:
         # grid_id -> 点云密度（点/平方米）
         self.grid_density_dict = {}
         # 点云密度阈值
-        self.density_threshold = 2.0 # config_yaml['points_per_second'] * self.world_slot_seconds / (self.lidar_range * self.lidar_range * 3.14) * 2.0
+        # self.density_threshold = 2.0 # config_yaml['points_per_second'] * self.world_slot_seconds / (self.lidar_range * self.lidar_range * 3.14) * 2.0
+        self.density_threshold = config_yaml.get('density_threshold', 2.0)
         print("Density threshold set to:", self.density_threshold)
         #config_yaml.get('density_threshold', 5.0)
     
@@ -294,29 +295,37 @@ class LidarSensor:
                 self.update_grid_density_dict()
         
             self.points_buffer = []
-
+    
+    @staticmethod
+    def generate_perception_grid_coords(grid_size, half_range, sensor_x, sensor_y):
+        grid_coords = set()
+        half_range = int(half_range)
+        sensor_x = int(sensor_x)
+        sensor_y = int(sensor_y)
+        grid_size = int(grid_size)
+        start_x = int((sensor_x - half_range) // grid_size) * grid_size
+        end_x = int((sensor_x + half_range) // grid_size) * grid_size
+        start_y = int((sensor_y - half_range) // grid_size) * grid_size
+        end_y = int((sensor_y + half_range) // grid_size) * grid_size
+        for x in range(start_x, end_x + grid_size, grid_size):
+            for y in range(start_y, end_y + grid_size, grid_size):
+                grid_coords.add((x, y))
+        return grid_coords
+    
     def _generate_perception_grids(self):
         """生成统一Grid ID的感知网格（全局坐标系对齐）"""
-        grids = {}
-        grid_size = int(self.grid_size)
-        half_range = int(self.required_perception_range)
-
         # 计算Lidar在全局坐标系中的初始位置
         sensor_transform = self.sensor.get_transform()
         sensor_x = int(sensor_transform.location.x)
         sensor_y = int(sensor_transform.location.y)
 
-        # 生成覆盖感知范围的网格（全局坐标系）
-        start_x = int((sensor_x - half_range) // grid_size) * grid_size
-        end_x = int((sensor_x + half_range) // grid_size) * grid_size
-        start_y = int((sensor_y - half_range) // grid_size) * grid_size
-        end_y = int((sensor_y + half_range) // grid_size) * grid_size
+        grid_coords = self.generate_perception_grid_coords(self.grid_size, self.required_perception_range, sensor_x, sensor_y)
 
-        for x in range(start_x, end_x + grid_size, grid_size):
-            for y in range(start_y, end_y + grid_size, grid_size):
-                grid_id = self.get_point_grid_id((x, y))
-                grid_box = box(x, y, x + grid_size, y + grid_size)
-                grids[grid_id] = grid_box
+        grids = {}
+        for x, y in grid_coords:
+            grid_id = self.get_point_grid_id((x, y))
+            grid_box = box(x, y, x + self.grid_size, y + self.grid_size)
+            grids[grid_id] = grid_box
 
         self.req_grids = set(grids.keys())
         return grids
@@ -345,6 +354,11 @@ class LidarSensor:
                 self.grid_local_points[grid_id].append(local_p)
                 self.sens_grids.add(grid_id)
 
+    def get_all_points(self):
+        print(f"all points shape: {self.data.shape}")
+        logger.debug(f"all points shape: {self.data.shape}")
+        return self.data
+    
     def get_local_points_by_grid_ids(self, grid_id_list):
         """
         获取指定Grid ID列表的所有本地坐标点云，合并为一个数组返回
@@ -357,8 +371,8 @@ class LidarSensor:
         grids_num = 0
         for grid_id in grid_id_list:
             # 跳过不存在的Grid ID
-            # if grid_id not in self.grid_local_points or len(self.grid_local_points[grid_id]) < 5:
-            if grid_id not in self.high_density_grids:
+            if grid_id not in self.grid_local_points:
+            # if grid_id not in self.high_density_grids:
                 continue
             # 追加当前网格的本地坐标点云
             merged_points.extend(self.grid_local_points[grid_id])
@@ -372,6 +386,8 @@ class LidarSensor:
         ret = np.array(merged_points, dtype=np.float32)
         print(f"vehicle {self.vid} returns points with shape: {ret.shape} from {grids_num} grids")
         print(f"all points shape: {self.data.shape}")
+        logger.debug(f"vehicle {self.vid} returns points with shape: {ret.shape} from {grids_num} grids")
+        logger.debug(f"all points shape: {self.data.shape}")
         return ret
     
     def update_grid_density_dict(self):
@@ -678,6 +694,8 @@ class PerceptionManager:
 
         # we only spawn the LiDAR when perception module is activated or lidar
         # visualization is needed
+        self.o3d_vis = None
+        self.lidar = None
         if 'lidar' in config_yaml:
             self.lidar = LidarSensor(vehicle,
                                      self.carla_world,
@@ -685,9 +703,6 @@ class PerceptionManager:
                                      self.global_position)
             if self.lidar_visualize:
                 self.o3d_vis = o3d_visualizer_init(self.vid)
-        else:
-            self.lidar = None
-            self.o3d_vis = None
 
         if self.activate:
             if self.coperception:

@@ -39,6 +39,7 @@ class NetworkManager:
         
         # Enhanced statistics tracking
         self.current_slot = {
+            'try_volume': 0.0,
             'total_volume': 0.0,
             'intra_cluster': {'upload': 0.0, 'download': 0.0},
             'inter_cluster': 0.0,
@@ -154,6 +155,7 @@ class NetworkManager:
                 "sc_start": subchannel_start,
                 "sc_num": subchannel_num
             })
+        self._update_communication_stats(volume, "try")
             
     def get_all_received_cams(self):
         return self.bridge.received_cams.copy()
@@ -188,8 +190,10 @@ class NetworkManager:
     def analyze_ns3_result(self, cam):
         delay = cam.get('receive_timestamp', -1) - cam.get('send_timestamp', -1)
         self._record_transmission_latency(delay)  #ms
+        volume = cam.get('packet_size', -1)
+        self._update_communication_stats(volume, "upload")
         # print(f"CAM from {cam.get('sender_id')} to {cam.get('receiver_id')} delay: {delay} ms")
-        logger.info(f"CAM from {cam.get('sender_id')} to {cam.get('receiver_id')} delay: {delay} ms")
+        logger.info(f"CAM from {cam.get('sender_id')} to {cam.get('receiver_id')} delay: {delay} ms, volume: {volume} bytes")
         return { (cam.get('sender_id'), cam.get('receiver_id')): delay}
 
     def analyze_ns3_results(self, cams):
@@ -291,6 +295,10 @@ class NetworkManager:
                       'inter' - inter-cluster communication
                       'control' - control signaling overhead
         """
+        if comm_type == "try":
+            self.current_slot['try_volume'] += volume
+            return
+        
         self.current_slot['total_volume'] += volume
         
         if comm_type == "upload":
@@ -338,6 +346,7 @@ class NetworkManager:
     def _reset_current_slot(self):
         """Reset all counters for new time slot"""
         self.current_slot = {
+            'try_volume': 0.0,
             'total_volume': 0.0,
             'intra_cluster': {'upload': 0.0, 'download': 0.0},
             'inter_cluster': 0.0,
@@ -382,8 +391,11 @@ class NetworkManager:
             'control': np.array([s['control_overhead'] for s in self.history]),
             't_latency': np.array([latency_value for s in self.history for latency_value in s['t_latency']]),
             'p_latency': np.array([latency_value for s in self.history for latency_value in s['p_latency']]),
-            'utilization': np.array([s['utilization'] for s in self.history])
+            'utilization': np.array([s['utilization'] for s in self.history]),
+            'try_volume': np.array([s['try_volume'] for s in self.history])
         }
+
+        print("history_try_volume: ", hist_arrays['try_volume'])
         
         # Calculate traffic distribution percentages
         total_vol = hist_arrays['throughput'].sum()
@@ -394,14 +406,15 @@ class NetworkManager:
                 'intra_upload_pct(%)': 100 * hist_arrays['intra_upload'].sum() / total_vol,
                 'intra_download_pct(%)': 100 * hist_arrays['intra_download'].sum() / total_vol,
                 'inter_cluster_pct(%)': 100 * hist_arrays['inter_cluster'].sum() / total_vol,
-                'control_pct(%)': 100 * hist_arrays['control'].sum() / total_vol
+                'control_pct(%)': 100 * hist_arrays['control'].sum() / total_vol,
+                'try_volume': hist_arrays['try_volume'].sum()
             }
         else:
             dist = {k: 0.0 for k in ['intra_upload_pct(%)', 'intra_download_pct(%)', 
-                                    'inter_cluster_pct(%)', 'control_pct(%)']}
+                                    'inter_cluster_pct(%)', 'control_pct(%)', 'try_volume']}
         
         return {
-            'current': self.current_slot,
+            # 'current': self.current_slot,
             'traffic_distribution': dist,
             'historical': {
                 'total_slots': len(self.history),
@@ -411,6 +424,7 @@ class NetworkManager:
                 'avg_utilization': float(np.mean(hist_arrays['utilization'])),
                 'total_volume_bytes': float(hist_arrays['throughput'].sum()),
                 'max_throughput': float(np.max(hist_arrays['throughput'])),
+                'avg_try_volume': float(np.mean(hist_arrays['try_volume'])),
                 # 'throughput_trend': hist_arrays['throughput'].tolist()  # Full history
             },
         }

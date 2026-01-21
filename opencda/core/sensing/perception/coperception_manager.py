@@ -116,19 +116,20 @@ class CoperceptionManager:
             data_size = self.uploading_data_size.get(sender_id, None)
             if not data_size:
                 continue
+            delay_infos = self.network_manager.pop_received_cams(receiver_id, sender_id)
             if packet_size < data_size * 0.80:
                 self.uploading_data_size[sender_id] -= packet_size
                 # self.network_manager.pop_received_cams(self.vid)
+                delay_infos = self.network_manager.pop_received_cams(receiver_id, sender_id)
                 print(f"cav {sender_id} data upload to {receiver_id} incomplete. Received size: {packet_size} bytes, expected size: {data_size} bytes.")
                 logger.info(f"cav {sender_id} data upload to {receiver_id} incomplete. Received size: {packet_size} bytes, expected size: {data_size} bytes.")
                 continue
             
             print(f"cav {sender_id} data upload to {receiver_id} succeeded. Received size: {packet_size} bytes, expected size: {data_size} bytes, cost time: {self.network_manager.current_time_slot - self.uploading_cavs[sender_id]}.")
             logger.info(f"cav {sender_id} data upload to {receiver_id} succeeded. Received size: {packet_size} bytes, expected size: {data_size} bytes, cost time: {self.network_manager.current_time_slot - self.uploading_cavs[sender_id]}.")
-            delay_infos = self.network_manager.pop_received_cams(receiver_id, sender_id)
             print(f"cav {sender_id} communication delay info: {delay_infos}")
-            if delay_infos:
-                self.v2x_manager.scheduler.record_communication_delay_infos(delay_infos)
+            # if delay_infos:
+            #     self.v2x_manager.scheduler.record_communication_delay_infos(delay_infos)
             data = self.uploading_data.pop(sender_id, None)
             if data:
                 self.uploaded_cavs[sender_id] = self.network_manager.current_time_slot
@@ -279,11 +280,12 @@ class CoperceptionManager:
         
     def get_data_from_lidar(self, lidar, vehicle_id=None):
         if not self.enable_grid or vehicle_id is None or vehicle_id == self.vehicle_id: #默认返回全部点云数据
-            return lidar.data
+            return lidar.get_all_points()
         elif vehicle_id in self.grid_selection and self.grid_selection[vehicle_id]: #根据网格划分获取点云数据
             selected_grids = self.grid_selection[vehicle_id]
             grid_data = lidar.get_local_points_by_grid_ids(selected_grids)
             return grid_data
+            # return lidar.data
         else: #返回空数据
             logger.warning(f"Vehicle {vehicle_id} has no grid selection. {self.grid_selection.keys()}")
             return None

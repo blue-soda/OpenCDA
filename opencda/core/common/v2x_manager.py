@@ -118,7 +118,6 @@ class V2XManager(object):
         if self.cav_world.network_enabled and config_yaml['network']['enabled']:
             self.scheduler = build_scheduler(config_yaml['network']['scheduler'], cav_world, config_yaml['network'])
             self.scheduler_type = (config_yaml['network']['scheduler'])
-            V2XManager.enable_scheduler = True
 
         self.computing_capability = STANDARD_CAPABILITY * uniform(0.4, 1)
         self.communication_quality = STANDARD_CAPABILITY * uniform(0.6, 1)
@@ -128,6 +127,10 @@ class V2XManager(object):
 
         V2XManager.instance_nums += 1
         print(f'{V2XManager.instance_nums} vehicles initialized')
+
+    @staticmethod
+    def set_enable_scheduler(enable_scheduler):
+        V2XManager.enable_scheduler = enable_scheduler
 
     def beacon_tick(self):
         if self.beacon_frequency <= 0:

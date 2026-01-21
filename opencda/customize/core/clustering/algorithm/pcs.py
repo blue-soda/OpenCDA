@@ -20,10 +20,10 @@ class PCS(ClusterResourceAllocationAlgorithm):
         self.link_conflicts: Dict[Tuple[int, int, int], Dict[str, Set[Tuple[int, int, int]]]] = {}  # 链路冲突缓存
         self.resource_strategy: Dict[Tuple[int, int], int] = {}  # 最终调度策略：(发送方vid, 接收方vid) -> 子信道起始索引
         self.grid_selection: Dict[int, Dict[int, Set[str]]] = {}  # 网格选择：接收方vid -> 发送方vid -> 需要接收的网格ID集合
-        self.grid_mAP_cache: Dict[str, float] = {}  # 网格mAP缓存：grid_id -> mAP值（预计算）
+        self.grid_mAP_cache: Dict[int, Dict[int, float]] = {}  # 网格mAP缓存：vid -> grid_id -> mAP值（预计算）
         self.blind_spots_cache: Dict[int, Dict[int, Set[str]]] = {}  # 车辆盲 spot 缓存：vid -> 盲spot_id -> 网格集合
 
-    def _get_vehicle_blind_spots(self, vid: int, min_division: int=6) -> Dict[int, Set[str]]:
+    def _get_vehicle_blind_spots(self, vid: int, min_division: int=1) -> Dict[int, Set[str]]:
         """
         获取车辆的盲 spot 集合（盲spot_id -> 对应的网格集合）
         盲spot定义：req_grids（需求范围）与high_density_grids（非盲spot区域）的差集
@@ -66,7 +66,7 @@ class PCS(ClusterResourceAllocationAlgorithm):
                 adjacent.add(f"{x + i}_{y + j}")
         return adjacent
 
-    def _find_adjacent_grids(self, grid_id: str, candidate_grids: Set[str], size: int, min_division: int = 6) -> Set[str]:
+    def _find_adjacent_grids(self, grid_id: str, candidate_grids: Set[str], size: int, min_division: int = 1) -> Set[str]:
         """
         查找相邻网格（适配'x_y'二维格式）
         """
@@ -87,7 +87,7 @@ class PCS(ClusterResourceAllocationAlgorithm):
         return adjacent
 
 
-    def _generate_potential_links(self, min_division: int=6, min_overlap: int=20):
+    def _generate_potential_links(self, min_division: int=1, min_overlap: int=20):
         """
         生成所有潜在链路（发送方vid, 接收方vid, 盲spot_id）
         链路生成条件：
@@ -117,7 +117,7 @@ class PCS(ClusterResourceAllocationAlgorithm):
                 # 检查发送方感知范围是否覆盖接收方盲spot
                 for spot_id, spot_grids in receiver_blind_spots.items():
                     overlap_grids = spot_grids & sender.sens_grids
-                    print(f"sender_vid: {sender_vid}, receiver_vid: {receiver_vid}, spot_id: {spot_id}, overlap_grids: {len(overlap_grids)}")
+                    # print(f"sender_vid: {sender_vid}, receiver_vid: {receiver_vid}, spot_id: {spot_id}, overlap_grids: {len(overlap_grids)}")
                     if overlap_grids and len(overlap_grids) > min_overlap:  # 存在覆盖的网格，生成链路
                         link = (sender_vid, receiver_vid, spot_id)
                         self.all_links.append(link)
@@ -155,7 +155,7 @@ class PCS(ClusterResourceAllocationAlgorithm):
             lidar_x = vehicle_position.x  # LiDAR全局x坐标（浮点数）
             lidar_y = vehicle_position.y  # LiDAR全局y坐标（浮点数）
             grid_size = vehicle.grid_size  # 网格尺寸（如0.8m，与生成网格时一致）
-            
+            self.grid_mAP_cache[vid] = {}
             for grid_id in vehicle.sens_grids:
                 if grid_id in self.grid_mAP_cache:
                     continue
@@ -191,7 +191,7 @@ class PCS(ClusterResourceAllocationAlgorithm):
                 else:
                     mAP = 0.1  # 超出常规感知范围：最低感知精度
                 
-                self.grid_mAP_cache[grid_id] = mAP
+                self.grid_mAP_cache[vid][grid_id] = mAP
 
     def _calculate_link_utilities(self):
         """
@@ -213,7 +213,7 @@ class PCS(ClusterResourceAllocationAlgorithm):
             total_mAP = 0.0
             valid_grids = 0
             for grid_id in spot_grids:
-                mAP = self.grid_mAP_cache.get(grid_id, 0.0)
+                mAP = self.grid_mAP_cache[sender_vid].get(grid_id, 0.0)
                 total_mAP += mAP
                 valid_grids += 1
             
@@ -403,7 +403,11 @@ class PCS(ClusterResourceAllocationAlgorithm):
         
         # 4. 更新资源分配策略到车辆
         print("PCS resource strategy:", self.resource_strategy)
-        print("PCS grid selection:", self.grid_selection)
+        logger.info(f"PCS resource strategy: {self.resource_strategy}")
+        for receiver_q, sender_grids_dict in self.grid_selection.items():
+            for sender_q, spot_grids in sender_grids_dict.items():
+                print(f"receiver_q: {receiver_q}, sender_q: {sender_q}, spot_grids: {len(spot_grids)}")
+                logger.info(f"receiver_q: {receiver_q}, sender_q: {sender_q}, spot_grids: {len(spot_grids)}")
 
         # 5. 清除缓存
         self.blind_spots_cache.clear()
@@ -419,6 +423,7 @@ class PCS(ClusterResourceAllocationAlgorithm):
             sender_vm = vehicle_dict[sender_q]
             receiver_vm = vehicle_dict[receiver_q]
             receiver_vm.perception_manager.apply_late_fusion = False
+            receiver_vm.perception_manager.do_not_skip_any_cav = True
             receiver_vm.perception_manager.co_manager.set_grid_selection({sender_q: self.grid_selection[receiver_q][sender_q]})
             receiver_vm.v2x_manager.scheduler.set_strategies({k: v})
             receiver_vm.v2x_manager.cluster_state['head_id'] = receiver_q

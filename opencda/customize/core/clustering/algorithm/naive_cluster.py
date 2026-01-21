@@ -20,3 +20,6 @@ class NaiveCluster(ClusteringAlgorithm):
         else:
             self.clusters = [Cluster([vid]) for vid in common.global_vehicles.keys()] # 每个车辆单独成簇
     
+    def main(self):
+        # common.visualize_sens_grids(1)
+        pass

@@ -1,10 +1,50 @@
 from opencda.customize.core.clustering.algorithm.common import *
+import opencda.customize.core.clustering.algorithm.common as common
 from opencda.log.logger_config import logger
 from opencda.customize.core.clustering.algorithm.pcs import PCS
 
 class MWS(PCS):
     def __init__(self, cav_world, lambda_subchannels = 10):
         super().__init__(cav_world, lambda_subchannels)
+
+    def _precompute_grid_mAP(self):
+        for vid, vehicle in common.global_vehicles.items():
+            for grid_id, density in vehicle.grid_density_dict.items():
+                score = common.density_score(density, vehicle.rho_th)
+                if vid not in self.grid_mAP_cache:
+                    self.grid_mAP_cache[vid] = {}
+                self.grid_mAP_cache[vid][grid_id] = score
+
+    def _calculate_link_utilities(self):
+        """
+        计算链路效用（权重）：盲spot内所有网格的平均mAP（论文公式1）
+        """
+        for link in self.all_links:
+            sender_vid, receiver_vid, spot_id = link
+            receiver = common.global_vehicles.get(receiver_vid)
+            if not receiver:
+                continue
+            
+            # 获取该链路对应的盲spot网格
+            receiver_blind_spots = self._get_vehicle_blind_spots(receiver_vid)
+            spot_grids = receiver_blind_spots.get(spot_id, set())
+            if not spot_grids:
+                continue
+            
+            # 计算网格平均mAP
+            total_mAP = 0.0
+            valid_grids = 0
+            for grid_id in spot_grids:
+                mAP = self.grid_mAP_cache[sender_vid].get(grid_id, 0.0)
+                total_mAP += mAP
+                valid_grids += 1
+            
+            if valid_grids == 0:
+                link_weight = 0.0
+            else:
+                link_weight = total_mAP / valid_grids
+            
+            self.link_utilities[link] = link_weight
 
     def main(self):
         """执行贪心算法调度（重写父类方法）"""
@@ -25,14 +65,6 @@ class MWS(PCS):
         available_subchannels = set(range(self.lambda_subchannels))
         
         for link in sorted_links:
-            # 检查链路是否与已选链路有A类冲突
-            has_a_conflict = False
-            for selected_link in selected_links:
-                if link in self.link_conflicts[selected_link]["A"] or selected_link in self.link_conflicts[link]["A"]:
-                    has_a_conflict = True
-                    break
-            if has_a_conflict:
-                continue
             
             # 计算链路所需子信道数量
             required_subchannels = self._get_link_required_subchannels(link)
@@ -70,7 +102,13 @@ class MWS(PCS):
         
         # 4. 更新资源分配策略到车辆
         print("MWS resource strategy:", self.resource_strategy)
-        print("MWS grid selection:", self.grid_selection)
+        logger.info(f"MWS resource strategy: {self.resource_strategy}")
+        logger.info(f"MWS available_subchannels: {available_subchannels}")
+        
+        for receiver_q, sender_grids_dict in self.grid_selection.items():
+            for sender_q, spot_grids in sender_grids_dict.items():
+                print(f"receiver_q: {receiver_q}, sender_q: {sender_q}, spot_grids: {len(spot_grids)}")
+                logger.info(f"receiver_q: {receiver_q}, sender_q: {sender_q}, spot_grids: {len(spot_grids)}")
 
         # 5. 清除缓存
         self.blind_spots_cache.clear()

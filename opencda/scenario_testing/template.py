@@ -36,7 +36,7 @@ def run_scenario(opt, scenario_params, application=[], filename="-", town=None, 
 
     try:
         init(opt, scenario_params)
-        run()
+        run(debug=opt.debug)
     finally:
         stop(opt)
 
@@ -129,7 +129,7 @@ def run(debug=True):
         spectator.set_transform(carla.Transform(
             transform.location +
             carla.Location(
-                z=90),
+                z=180),
             carla.Rotation(
                 pitch=-
                 90)))

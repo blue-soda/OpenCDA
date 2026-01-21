@@ -8,7 +8,7 @@ from opencda.core.common.cav_world \
 from opencda.customize.core.clustering.clustering_coperception_manager import ClusteringCoperceptionManager
 from opencda.core.sensing.perception.o3d_lidar_libs import \
     o3d_visualizer_init, o3d_pointcloud_encode, o3d_visualizer_show, \
-    o3d_camera_lidar_fusion, o3d_visualizer_show_coperception, o3d_predict_bbox_to_object
+    o3d_camera_lidar_fusion, o3d_visualizer_show_coperception, o3d_predict_bbox_to_object, capture_spectator_view
 from pympler.asizeof import asizeof
 from opencda.core.sensing.perception.coperception_libs import CoperceptionLibs
 from opencda.log.logger_config import logger
@@ -41,8 +41,13 @@ class ClusteringPerceptionManager(PerceptionManager):
         
         self.apply_late_fusion = True
         self.record_all_cavs = False       
+        self.do_not_skip_any_cav = False
+
+        self.screenshot_scenario_and_lidar_count = 10
         self.set_enable_grids(True) 
         self.do_cp_every_tick = True
+
+        self.vid_to_screen_shot = {}#{6, 11, 17}
 
     #TODO: if self.record_all_cavs: do late fusion for all cavs in the cluster, not only ego.
     @staticmethod
@@ -98,20 +103,28 @@ class ClusteringPerceptionManager(PerceptionManager):
         self.count += 1
 
         # plot the opencood inference results
-        if tick and self.lidar_visualize and self.is_ego and not self.apply_late_fusion:
-            # print("LiDAR visualization.")
+        screenshot_lidar_with_transparent_bg = self.count == self.screenshot_scenario_and_lidar_count
+        if tick and ((self.lidar_visualize and self.is_ego and not self.apply_late_fusion) or (self.vid in self.vid_to_screen_shot and screenshot_lidar_with_transparent_bg)):
+            print(f"LiDAR visualization {self.vid}, {self.count}.")
             while self.lidar.data is None:
                 continue
             o3d_pointcloud_encode(self.lidar.data, self.lidar.o3d_pointcloud)
+            if not self.o3d_vis:
+                self.o3d_vis = o3d_visualizer_init(self.vid)
             o3d_visualizer_show_coperception(
-                self.o3d_vis,
-                self.count,
-                self.lidar.o3d_pointcloud,
-                self.predict_box_tensor,
-                self.gt_box_tensor,
-                True, 
-                objects,
-                take_screenshot=True)    
+                vis=self.o3d_vis,
+                count=self.count,
+                point_cloud=self.lidar.o3d_pointcloud,
+                predict_bbx_tensor=self.predict_box_tensor,
+                gt_box_tensor=self.gt_box_tensor,
+                show_predict=self.is_ego, 
+                show_gt=self.is_ego and not screenshot_lidar_with_transparent_bg, 
+                objects=objects,
+                take_screenshot=True,
+                transparent_bg=screenshot_lidar_with_transparent_bg,
+                vid=self.vid)    
+            if screenshot_lidar_with_transparent_bg:
+                capture_spectator_view(self.carla_world)
             
         return objects
 
@@ -188,7 +201,7 @@ class ClusteringPerceptionManager(PerceptionManager):
                 if ego_id in self.v2x_manager.cluster_state['member_ids']:
                     ego_in_cluster = True
                     logger.debug(f"ego is in cluster {self.vid}")
-                if not self.record_all_cavs and not self.is_ego and not ego_in_cluster and not self.apply_late_fusion:
+                if not self.do_not_skip_any_cav and not self.record_all_cavs and not self.is_ego and not ego_in_cluster and not self.apply_late_fusion:
                     logger.debug(f"ego is not in cluster {self.vid}, skipped")
                     return objects
 
@@ -229,14 +242,14 @@ class ClusteringPerceptionManager(PerceptionManager):
             else:
                 #For other vehicles, 1. get results from cluster head 2. communicate with vehicles outside the cluster
                 #Note that only ego vehicle need the real results.
-                if self.is_ego: 
+                if self.is_ego or self.do_not_skip_any_cav: 
                     # reset tick
                     self.doing_cp = False
                     logger.debug(f'coperception: {self.v2x_manager.vehicle_id}')
                     # output_dict_all = {}
                     ego_data = self.collect_self_data(is_ego=self.is_ego)
 
-                    objects_self = self.inference(ego_data, objects, with_submit=(not self.apply_late_fusion), with_update=True)  #detect objects on its own
+                    objects_self = self.inference(ego_data, objects, with_submit=(not self.apply_late_fusion and self.is_ego), with_update=(self.apply_late_fusion or self.is_ego))  #detect objects on its own
                     self.objects = objects_self
                     logger.debug(f"{self.vid}: {len(objects_self['vehicles'])} vehicles and {len(objects_self['traffic_lights'])} traffic_lights detected from self")
 
@@ -308,15 +321,20 @@ class ClusteringPerceptionManager(PerceptionManager):
 
         if self.lidar_visualize:
             o3d_pointcloud_encode(self.lidar.data, self.lidar.o3d_pointcloud)
+            transparent_bg = self.count == self.screenshot_scenario_and_lidar_count
             o3d_visualizer_show_coperception(
-            self.o3d_vis,
-            self.count,
-            self.lidar.o3d_pointcloud,
-            self.predict_box_tensor_fusion,
-            self.gt_box_tensor_fusion,
-            True, 
-            {},
-            take_screenshot=True)  
+                vis=self.o3d_vis,
+                count=self.count,
+                point_cloud=self.lidar.o3d_pointcloud,
+                predict_bbx_tensor=self.predict_box_tensor,
+                gt_box_tensor=self.gt_box_tensor,
+                show_predict=True, 
+                show_gt=not transparent_bg, 
+                objects={},
+                take_screenshot=True,
+                transparent_bg=transparent_bg)    
+            if transparent_bg:
+                capture_spectator_view(self.carla_world)
 
     def collect_self_data(self, is_ego=True):
         return self.co_manager.prepare_and_transform_data_from_managers(

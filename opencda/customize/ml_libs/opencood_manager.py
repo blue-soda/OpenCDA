@@ -88,40 +88,41 @@ class OpenCOODManager(object):
                                     0.7)
         
     def inference(self, batch_data, with_stats=True, fusion_method='default', return_object_ids=False, target_ids=None):
-
         if fusion_method == 'default':
             fusion_method = self.fusion_method
+            
+        with torch.no_grad():
 
-        if fusion_method == 'late':
-            # pred_box_tensor, pred_score, gt_box_tensor = \
-            ret = \
-                inference_utils.inference_late_fusion(batch_data,
-                                                      self.model,
-                                                      self.opencood_dataset,
-                                                      return_output=False,
-                                                      return_object_ids=return_object_ids,
-                                                      )
-        elif fusion_method == 'early':
-            # pred_box_tensor, pred_score, gt_box_tensor = \
-            ret = \
-                inference_utils.inference_early_fusion(batch_data,
-                                                       self.model,
-                                                       self.opencood_dataset,
-                                                       return_output=False,
-                                                       return_object_ids=return_object_ids,
-                                                       )
-        elif fusion_method.startswith('intermediate'): # intermediate would be different models
-            # pred_box_tensor, pred_score, gt_box_tensor = \
-            ret = \
-                inference_utils.inference_intermediate_fusion(batch_data,
-                                                              self.model,
-                                                              self.opencood_dataset,
-                                                              return_output=False,
-                                                              return_object_ids=return_object_ids,
-                                                            )
-        else:
-            raise NotImplementedError('Only early, late and intermediate'
-                                      'fusion is supported.')
+            if fusion_method == 'late':
+                # pred_box_tensor, pred_score, gt_box_tensor = \
+                ret = \
+                    inference_utils.inference_late_fusion(batch_data,
+                                                        self.model,
+                                                        self.opencood_dataset,
+                                                        return_output=False,
+                                                        return_object_ids=return_object_ids,
+                                                        )
+            elif fusion_method == 'early':
+                # pred_box_tensor, pred_score, gt_box_tensor = \
+                ret = \
+                    inference_utils.inference_early_fusion(batch_data,
+                                                        self.model,
+                                                        self.opencood_dataset,
+                                                        return_output=False,
+                                                        return_object_ids=return_object_ids,
+                                                        )
+            elif fusion_method.startswith('intermediate'): # intermediate would be different models
+                # pred_box_tensor, pred_score, gt_box_tensor = \
+                ret = \
+                    inference_utils.inference_intermediate_fusion(batch_data,
+                                                                self.model,
+                                                                self.opencood_dataset,
+                                                                return_output=False,
+                                                                return_object_ids=return_object_ids,
+                                                                )
+            else:
+                raise NotImplementedError('Only early, late and intermediate'
+                                        'fusion is supported.')
 
         # skip the first 60 ticks for calculating the average precision
         if with_stats: #and self.counter % 2 == 0:

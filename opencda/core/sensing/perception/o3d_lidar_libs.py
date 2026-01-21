@@ -15,6 +15,8 @@ import numpy as np
 from matplotlib import cm
 from scipy.stats import mode
 
+from PIL import Image
+
 import opencda.core.sensing.perception.sensor_transformation as st
 from opencda.core.sensing.perception.obstacle_vehicle import \
     is_vehicle_cococlass, ObstacleVehicle
@@ -68,10 +70,12 @@ def o3d_pointcloud_encode(raw_data, point_cloud):
     # Isolate the intensity and compute a color for it
     intensity = raw_data[:, -1]
     intensity_col = 1.0 - np.log(intensity) / np.log(np.exp(-0.004 * 100))
-    int_color = np.c_[
-        np.interp(intensity_col, VID_RANGE, VIRIDIS[:, 0]),
-        np.interp(intensity_col, VID_RANGE, VIRIDIS[:, 1]),
-        np.interp(intensity_col, VID_RANGE, VIRIDIS[:, 2])]
+    # int_color = np.c_[
+    #     np.interp(intensity_col, VID_RANGE, VIRIDIS[:, 0]),
+    #     np.interp(intensity_col, VID_RANGE, VIRIDIS[:, 1]),
+    #     np.interp(intensity_col, VID_RANGE, VIRIDIS[:, 2])]
+    N = raw_data.shape[0]
+    int_color = np.tile([1.0, 1.0, 0.0], (N, 1))  # 黄色
 
     # Isolate the 3D data
     points = np.array(raw_data[:, :-1], copy=True)
@@ -160,18 +164,127 @@ def o3d_visualizer_show(vis, count, point_cloud, objects):
             aabb = object_.o3d_bbx
             vis.remove_geometry(aabb)
 
+def make_background_transparent(image_path, output_path, bg_color=(255, 0, 255)):
+    """
+    将指定背景色替换为透明。
+    bg_color: RGB tuple in [0, 255]
+    """
+    img = Image.open(image_path).convert("RGBA")
+    data = np.array(img)
+    
+    # 创建透明 mask：匹配背景色的像素设为透明
+    red, green, blue = data[:, :, 0], data[:, :, 1], data[:, :, 2]
+    mask = (red == bg_color[0]) & (green == bg_color[1]) & (blue == bg_color[2])
+    
+    data[mask] = [0, 0, 0, 0]  # RGBA = transparent
+    
+    img_transparent = Image.fromarray(data, 'RGBA')
+    abs_output_path = os.path.join(BASE_DIR, output_path)
+    if os.path.exists(abs_output_path):
+        os.remove(abs_output_path)
+        print(f"[INFO] Removed existing file: {abs_output_path}")
+    else:
+        print(f"[INFO] File not found: {abs_output_path}")
+    img_transparent.save(abs_output_path)
+    del img_transparent 
 
-def o3d_visualizer_show_coperception(vis, count, point_cloud, predict_bbx_tensor, gt_box_tensor, show_gt, objects, take_screenshot=False):
-   
-    if count == 2:
-        vis.add_geometry(point_cloud)
+import os
+_spectator_camera = None
+BASE_DIR = os.getcwd()
+def init_spectator_camera(world, image_size, fov):
+    import carla
+    global _spectator_camera
+    if _spectator_camera is not None:
+        return _spectator_camera
 
-    opt = vis.get_render_option()
+    bp = world.get_blueprint_library().find('sensor.camera.rgb')
+    bp.set_attribute('image_size_x', str(image_size[0]))
+    bp.set_attribute('image_size_y', str(image_size[1]))
+    bp.set_attribute('fov', str(fov))
+    
+    # 初始位置随便设（会被 update 覆盖）
+    transform = carla.Transform(carla.Location(z=100))  # 远离场景
+    _spectator_camera = world.spawn_actor(bp, transform)
+    return _spectator_camera
 
-    opt.line_width = 2.0        # 全局线宽
+def capture_spectator_view(world, filename="./visualize_spectator_view.png", image_size=(3840, 2160), fov=90):
+    """
+    Capture an image from the current spectator's viewpoint in CARLA.
+
+    Parameters:
+    - world: carla.World instance
+    - filename: output image path (PNG)
+    - image_size: (width, height) in pixels
+    - fov: field of view in degrees
+
+    Returns:
+    - True if successful, False otherwise
+    """
+    # Get current spectator transform
+    camera = init_spectator_camera(world, image_size=image_size, fov=fov)
+    spectator = world.get_spectator()
+    spec_transform = spectator.get_transform()
+    camera.set_transform(spec_transform)
+
+    # Variable to store image
+    image_data = None
+
+    def save_image(image):
+        nonlocal image_data
+        image_data = image
+
+    # Listen for one frame
+    camera.listen(save_image)
+
+    # Tick the world to trigger sensor update
+    world.tick()
+    time.sleep(0.1)  # Ensure image is captured
+
+    success = False
+    if image_data is not None:
+        # Convert CARLA image to numpy array (BGRA -> RGB)
+        array = np.frombuffer(image_data.raw_data, dtype=np.uint8)
+        array = np.reshape(array, (image_data.height, image_data.width, 4))  # BGRA
+        rgb_array = array[:, :, [2, 1, 0]]  # BGR to RGB (ignore alpha)
+
+        # Save as PNG
+        img = Image.fromarray(rgb_array)
+        abs_filename = os.path.join(BASE_DIR, filename)
+        if os.path.exists(abs_filename):
+            os.remove(abs_filename)
+            print(f"[INFO] Removed existing file: {abs_filename}")
+        img.save(abs_filename)
+        print(f"[INFO] Spectator view saved to {abs_filename}")
+        success = True
+        del img 
+    else:
+        print("[ERROR] Failed to capture image from spectator view.")
+
+    # # Clean up
+    # camera.stop()
+    # camera.destroy()
+    # 停止监听（避免内存泄漏）
+    camera.stop()
+    return success
+
+def o3d_visualizer_show_coperception(vis, count, point_cloud, predict_bbx_tensor, gt_box_tensor, show_predict, show_gt, objects, take_screenshot=False, transparent_bg=False, vid=None):
+    opt = vis.get_render_option()   
+
+    if transparent_bg:
+        opt = vis.get_render_option()
+        opt.background_color = (1.0, 0.0, 1.0)  # 亮粉色 (R=1, G=0, B=1)
+        opt.point_size = 2.0
+    else:
+        opt = vis.get_render_option()
+        opt.background_color = (0.0, 0.0, 0.0)  # 黑色 (R=0, G=0, B=0)
+        opt.point_size = 1.0
+
+    # if count == 2:
+    vis.add_geometry(point_cloud)
+
+    # opt.line_width = 2.0        # 全局线宽
     if show_gt:
         if gt_box_tensor is not None:
-            # oabbs_gt = bbx2oabb(gt_box_tensor, color=(0, 1, 0))
             oabbs_gt = bbx2lineset_expand(
                 gt_box_tensor,
                 color=(0, 1, 0),
@@ -180,16 +293,16 @@ def o3d_visualizer_show_coperception(vis, count, point_cloud, predict_bbx_tensor
             for g in oabbs_gt:
                 vis.add_geometry(g)
 
-    opt.line_width = 1.0       # 全局线宽
-    if predict_bbx_tensor is not None:
-        # oabbs_pred = bbx2oabb(predict_bbx_tensor, color=(1, 0, 0))
-        oabbs_pred = bbx2lineset_expand(
-            predict_bbx_tensor,
-            color=(1, 0, 0),
-            expand=0.0
-        )
-        for p in oabbs_pred:
-            vis.add_geometry(p)
+    # opt.line_width = 1.0       # 全局线宽
+    if show_predict:
+        if predict_bbx_tensor is not None:
+            oabbs_pred = bbx2lineset_expand(
+                predict_bbx_tensor,
+                color=(1, 0, 0),
+                expand=0.0
+            )
+            for p in oabbs_pred:
+                vis.add_geometry(p)
 
     vis.update_geometry(point_cloud)
 
@@ -205,9 +318,15 @@ def o3d_visualizer_show_coperception(vis, count, point_cloud, predict_bbx_tensor
     # # This can fix Open3D jittering issues:
     time.sleep(0.001)
 
-    if take_screenshot and count == 20:
+    if take_screenshot:  # and count == 2:
         path = './visualize.png'
         vis.capture_screen_image(path)
+        if transparent_bg:
+            final_path = './visualize_transparent.png'
+            if vid:
+                final_path = f'./visualize_transparent_{vid}.png'
+            make_background_transparent(path, final_path, bg_color=(255, 0, 255))
+            print(f"[INFO] Transparent image saved to {final_path}")
 
     for key, object_list in objects.items():
         if key != 'vehicles':
@@ -216,10 +335,11 @@ def o3d_visualizer_show_coperception(vis, count, point_cloud, predict_bbx_tensor
             aabb = o.o3d_bbx
             vis.remove_geometry(aabb)
 
-    if predict_bbx_tensor is not None:
-        # remove the prediction bbx drawing
-        for p in oabbs_pred:
-            vis.remove_geometry(p)
+    if show_predict:
+        if predict_bbx_tensor is not None:
+            # remove the prediction bbx drawing
+            for p in oabbs_pred:
+                vis.remove_geometry(p)
 
     if show_gt:
         if gt_box_tensor is not None:

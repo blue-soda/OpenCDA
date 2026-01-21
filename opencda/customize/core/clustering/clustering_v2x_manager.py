@@ -29,8 +29,8 @@ class ClusteringV2XManager(V2XManager):
             'member_ids': set(),           # 簇成员ID集合
         }
         if ClusteringV2XManager.cluster_algorithm is None:
-            ClusteringV2XManager.cluster_algorithm = CoalitionGame(self.cav_world)
-            # ClusteringV2XManager.cluster_algorithm = NaiveCluster(self.cav_world, all_in_one=False)
+            # ClusteringV2XManager.cluster_algorithm = CoalitionGame(self.cav_world)
+            ClusteringV2XManager.cluster_algorithm = NaiveCluster(self.cav_world, all_in_one=False)
 
     def run_algorithm(self):
         self.cluster_algorithm.initialize()
@@ -41,10 +41,11 @@ class ClusteringV2XManager(V2XManager):
         if self.enable_scheduler and hasattr(self.scheduler, 'is_cluster_based') and self.scheduler.is_cluster_based:
             self.scheduler.set_clusters(self.clusters)
             self.scheduler.run()
-
+        
     @staticmethod
     def set_enable_scheduler(enable_scheduler):
         ClusteringV2XManager.enable_scheduler = enable_scheduler
+
     # ------------------------------
     # 信标数据结构
     # ------------------------------
