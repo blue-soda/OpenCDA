@@ -29,8 +29,8 @@ class ClusteringV2XManager(V2XManager):
             'member_ids': set(),           # 簇成员ID集合
         }
         if ClusteringV2XManager.cluster_algorithm is None:
-            # ClusteringV2XManager.cluster_algorithm = CoalitionGame(self.cav_world)
-            ClusteringV2XManager.cluster_algorithm = NaiveCluster(self.cav_world, all_in_one=False)
+            ClusteringV2XManager.cluster_algorithm = CoalitionGame(self.cav_world)
+            # ClusteringV2XManager.cluster_algorithm = NaiveCluster(self.cav_world, all_in_one=False)
 
     def run_algorithm(self):
         self.cluster_algorithm.initialize()

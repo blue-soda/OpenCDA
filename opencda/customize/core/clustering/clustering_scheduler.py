@@ -30,10 +30,10 @@ class ClusteringScheduler(Scheduler):
         self.channel_allocation: Dict[Tuple[int, int], int] = {}  # {(source, target): 子信道}
 
         if ClusteringScheduler.resource_allocation_algorithm is None:
-            # ClusteringScheduler.resource_allocation_algorithm = PotentialGame(cav_world)
+            ClusteringScheduler.resource_allocation_algorithm = PotentialGame(cav_world)
             # ClusteringScheduler.resource_allocation_algorithm = PCS(cav_world)
             # ClusteringScheduler.resource_allocation_algorithm = MWS(cav_world)
-            ClusteringScheduler.resource_allocation_algorithm = RandomRA(cav_world)
+            # ClusteringScheduler.resource_allocation_algorithm = RandomRA(cav_world)
             # ClusteringScheduler.resource_allocation_algorithm = NaiveRA(cav_world)
 
     def get_subchannel_allocation(self, link: Tuple[int, int]):

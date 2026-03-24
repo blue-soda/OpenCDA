@@ -253,7 +253,7 @@ class CarlaNs3Bridge:
 
     def send_transfer_requests(self, requests: List[Dict[str, int]]):
         """
-        requests: [{"source":s_id, "target":t_id, "size":nbytes, ("sc_start": subchannel_start, "sc_num": subchannel_num) }, {...}, ...]
+        requests: [{"source":s_id, "target":t_id, "size":nbytes, "pkt_id": pkt_id, "sc_start": subchannel_start, "sc_num": subchannel_num }, {...}, ...]
         """
         self.send_something_to_ns3(msg_type = "transfer_requests", data = requests)
 

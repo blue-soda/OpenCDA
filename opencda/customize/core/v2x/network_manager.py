@@ -33,6 +33,7 @@ class NetworkManager:
         self.use_ns3 = config.get("use_ns3", False)
         self.current_time_slot = 0
         self.world_tick = False
+        self.pkt_id = 1
 
         # Allocation state
         self.active_allocations = defaultdict(set)  # {subchannel: {(src_id, tgt_id, end_time_slot)}}
@@ -146,6 +147,7 @@ class NetworkManager:
                 "source": src_id,
                 "target": tgt_id,
                 "size": volume, # bytes
+                "pkt_id": self.pkt_id,
             })
         else:
             self.communication_requests.append({
@@ -153,8 +155,10 @@ class NetworkManager:
                 "target": tgt_id,
                 "size": volume, # bytes
                 "sc_start": subchannel_start,
-                "sc_num": subchannel_num
+                "sc_num": subchannel_num,
+                "pkt_id": self.pkt_id,
             })
+        self.pkt_id += 1
         self._update_communication_stats(volume, "try")
             
     def get_all_received_cams(self):
@@ -377,6 +381,9 @@ class NetworkManager:
             - historical: Aggregated statistics over all slots
             - traffic_distribution: Percentage breakdown by type
         """
+
+        print(f"{self.pkt_id} pkts sent.")
+        
         self.current_slot['utilization'] = self._calculate_utilization()
 
         if not self.history:
