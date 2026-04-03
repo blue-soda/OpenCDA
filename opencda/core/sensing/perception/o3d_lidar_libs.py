@@ -22,7 +22,17 @@ from opencda.core.sensing.perception.obstacle_vehicle import \
     is_vehicle_cococlass, ObstacleVehicle
 from opencda.core.sensing.perception.static_obstacle import StaticObstacle
 
-from opencood.visualization.vis_utils import bbx2oabb, bbx2aabb, bbx2lineset_expand
+# Try to import opencood visualization utils, provide fallbacks if not available
+try:
+    from opencood.visualization.vis_utils import bbx2oabb, bbx2aabb, bbx2lineset_expand
+except ImportError:
+    # Provide dummy fallbacks when opencood is not available
+    def bbx2oabb(*args, **kwargs):
+        return []
+    def bbx2aabb(*args, **kwargs):
+        return []
+    def bbx2lineset_expand(*args, **kwargs):
+        return []
 
 VIRIDIS = np.array(cm.get_cmap('plasma').colors)
 VID_RANGE = np.linspace(0.0, 1.0, VIRIDIS.shape[0])
@@ -207,7 +217,7 @@ def init_spectator_camera(world, image_size, fov):
     _spectator_camera = world.spawn_actor(bp, transform)
     return _spectator_camera
 
-def capture_spectator_view(world, filename="./visualize_spectator_view.png", image_size=(3840, 2160), fov=90):
+def capture_spectator_view(world, filename="visualization_output/visualize_spectator_view.png", image_size=(3840, 2160), fov=90):
     """
     Capture an image from the current spectator's viewpoint in CARLA.
 
@@ -319,12 +329,12 @@ def o3d_visualizer_show_coperception(vis, count, point_cloud, predict_bbx_tensor
     time.sleep(0.001)
 
     if take_screenshot:  # and count == 2:
-        path = './visualize.png'
+        path = 'visualization_output/visualize.png'
         vis.capture_screen_image(path)
         if transparent_bg:
-            final_path = './visualize_transparent.png'
+            final_path = 'visualization_output/visualize_transparent.png'
             if vid:
-                final_path = f'./visualize_transparent_{vid}.png'
+                final_path = f'visualization_output/visualize_transparent_{vid}.png'
             make_background_transparent(path, final_path, bg_color=(255, 0, 255))
             print(f"[INFO] Transparent image saved to {final_path}")
 

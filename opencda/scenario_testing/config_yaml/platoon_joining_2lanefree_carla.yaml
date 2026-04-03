@@ -4,6 +4,9 @@ description: |-
   Content: This is the scenario testing configuration file for platooning joining and cooperative merge
            at the customized 2lanefree simple version.
 
+# Configuration path for networking and clustering
+config_path: "opencda/scenario_testing/config_yaml/networking_clustering.yaml"
+
 # First define the basic parameters of the vehicles
 vehicle_base:
   sensing:

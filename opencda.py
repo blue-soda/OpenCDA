@@ -10,6 +10,31 @@ import argparse
 import importlib
 import os
 import sys
+
+# Remove problematic paths that shadow the properly installed opencood
+# The broken opencood at airv2x-perception causes import errors
+_paths_to_remove = [
+    r'c:\workspace\airv2x-perception',
+    r'c:\workspace\pycarlanet',
+]
+for _p in _paths_to_remove:
+    if _p in sys.path:
+        sys.path.remove(_p)
+
+# Ensure the properly installed opencood/opencood is found
+# The pip-installed opencood has opencood modules at c:\workspace\opencda\opencda\opencood
+# But C:\Workspace\OpenCDA\opencda (same path, case differences) is a broken namespace
+# Add the proper nested path first so it takes precedence
+_proper_opencood_path = r'C:\Workspace\OpenCDA\opencda\opencda'
+if os.path.exists(_proper_opencood_path):
+    # Remove the broken CWD opencood path and add the proper nested path
+    _cwd_opencood = r'C:\Workspace\OpenCDA\opencda'
+    if _cwd_opencood in sys.path:
+        sys.path.remove(_cwd_opencood)
+    # Insert at front to take precedence
+    if _proper_opencood_path not in sys.path:
+        sys.path.insert(0, _proper_opencood_path)
+
 from omegaconf import OmegaConf
 
 from opencda.version import __version__
@@ -45,6 +70,9 @@ def arg_parse():
     parser.add_argument("--debug",
                         action='store_true',
                         help='whether to enable debug mode.')
+    parser.add_argument("--uav",
+                        action='store_true',
+                        help='whether to enable UAV.')
     # parse the arguments and return the result
     opt = parser.parse_args()
     return opt
@@ -81,6 +109,10 @@ def main():
         os.path.dirname(os.path.realpath(__file__)),
         'opencda/scenario_testing/config_yaml/enable_network.yaml')
 
+    uav_yaml = os.path.join(
+        os.path.dirname(os.path.realpath(__file__)),
+        'opencda/scenario_testing/config_yaml/enable_uav.yaml')
+
     # load the default yaml file and the scenario yaml file as dictionaries
     default_dict = OmegaConf.load(default_yaml)
     scene_dict = OmegaConf.load(config_yaml)
@@ -92,10 +124,11 @@ def main():
     # coperception & prediction
     coperception_dict = OmegaConf.load(coperception_yaml)
     enable_prediction_dict = OmegaConf.load(prediction_yaml)
+    uav_dict = OmegaConf.load(uav_yaml)
     # merge the dictionaries
     scene_dict = OmegaConf.merge(default_dict, scene_dict, open_scenario_dict)
     # import the testing script
-    experiment_dict = OmegaConf.merge(coperception_dict, enable_prediction_dict, network_dict)
+    experiment_dict = OmegaConf.merge(coperception_dict, enable_prediction_dict, network_dict, uav_dict)
     # add network_dict here
 
     testing_scenario = importlib.import_module(
@@ -118,7 +151,9 @@ def main():
         scenario_params['vehicle_base']['v2x'].update(network_dict['enable_network'])
         scenario_params['traffic_vehicle_base']['v2x'].update(network_dict['enable_network'])
     if opt.prediction:
-        scenario_params = OmegaConf.merge(scenario_params, experiment_dict['enable_prediction'])    
+        scenario_params = OmegaConf.merge(scenario_params, experiment_dict['enable_prediction'])
+    if opt.uav:
+        scenario_params = OmegaConf.merge(scenario_params, uav_dict)
 
     scenario_params['vehicle_base']['sensing']['perception']['coperception'] = opt.apply_cp
     scenario_params['vehicle_base']['sensing']['perception']['activate'] = opt.apply_ml

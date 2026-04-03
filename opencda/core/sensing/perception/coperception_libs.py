@@ -5,9 +5,16 @@ from opencda.core.common.misc import get_speed
 from opencda.core.sensing.perception.obstacle_vehicle import \
     ObstacleVehicle
 import opencda.core.sensing.perception.sensor_transformation as st
-from opencood.utils.transformation_utils import x1_to_x2
-from opencood.utils import box_utils
-from opencood.data_utils.datasets import GT_RANGE
+
+# Lazy import opencood modules - only needed when cooperative perception is active
+try:
+    from opencood.utils.transformation_utils import x1_to_x2
+    from opencood.utils import box_utils
+    from opencood.data_utils.datasets import GT_RANGE
+except ImportError:
+    x1_to_x2 = None
+    box_utils = None
+    GT_RANGE = None
 
 
 class CoperceptionLibs:

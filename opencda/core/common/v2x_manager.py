@@ -19,7 +19,7 @@ from opencda.core.common.misc import compute_distance
 from pympler.asizeof import asizeof
 
 from opencda.core.common.cav_world import CavWorld
-from opencda.customize.core.v2x.scheduler_builder import build_scheduler
+from opencda.core.networking.scheduler_builder import build_scheduler
 
 
 STANDARD_CAPABILITY = 1

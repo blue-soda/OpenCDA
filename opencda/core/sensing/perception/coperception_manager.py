@@ -5,8 +5,14 @@ from opencda.log.logger_config import logger
 import numpy as np
 import torch
 import gc
-from opencood.utils import box_utils
-import opencood.data_utils.datasets
+
+# Lazy import to avoid hard dependency on opencood
+try:
+    from opencood.utils import box_utils
+    import opencood.data_utils.datasets
+except ImportError:
+    box_utils = None
+    opencood = None
 
 class CoperceptionManager:
     def __init__(self, vid, v2x_manager, coperception_libs, enable_network=False, network_manager=None):

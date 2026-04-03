@@ -23,7 +23,7 @@ applications = []
 
 file_name = "-"
 cav_world, scenario_manager, eval_manager = None, None, None
-single_cav_list, traffic_cav_list, rsu_list, platoon_list = [], [], [], []
+single_cav_list, traffic_cav_list, rsu_list, platoon_list, uav_list = [], [], [], [], []
 town_name, xodr_path_name, sumo_cfg_name = None, None, None
 
 def run_scenario(opt, scenario_params, application=[], filename="-", town=None, xdor_path=None, sumo_cfg=None):
@@ -42,7 +42,7 @@ def run_scenario(opt, scenario_params, application=[], filename="-", town=None, 
 
 
 def init(opt, scenario_params):
-    global cav_world, scenario_manager, eval_manager, applications, single_cav_list, traffic_cav_list, rsu_list, town_name, xodr_path_name, sumo_cfg_name
+    global cav_world, scenario_manager, eval_manager, applications, single_cav_list, traffic_cav_list, rsu_list, uav_list, town_name, xodr_path_name, sumo_cfg_name
     scenario_params = add_current_time(scenario_params)
     # add params
     coperception_params, network_params = None, None
@@ -52,6 +52,8 @@ def init(opt, scenario_params):
     if opt.network and 'network' in scenario_params:
         applications.append('network')
         network_params = scenario_params['network']
+    if hasattr(opt, 'uav') and opt.uav and 'uav_list' in scenario_params:
+        applications.append('uav')
     data_dump = 'data_dump' in applications
 
     # create CAV world
@@ -89,6 +91,10 @@ def init(opt, scenario_params):
     single_cav_list = \
         scenario_manager.create_vehicle_manager(application=applications+['single'], data_dump=data_dump)
 
+    # Tick world to initialize sensors (need enough ticks for lidar rotation)
+    for _ in range(10):
+        scenario_manager.tick()
+
     # create background traffic in carla
     traffic_manager, bg_veh_list, traffic_cav_list = \
         scenario_manager.create_traffic_carla(application=applications+['traffic'])
@@ -102,7 +108,36 @@ def init(opt, scenario_params):
         platoon_list = \
             scenario_manager.create_platoon_manager(
                 data_dump=data_dump)
-        
+
+    # create UAV if enabled
+    if 'uav' in applications:
+        from opencda.core.common.uav_manager import UAVManager
+        uav_base_config = scenario_params.get('uav_base', {})
+        uav_list_config = scenario_params.get('uav_list', [])
+
+        for uav_config in uav_list_config:
+            mode = uav_config.get('mode', 'tracking')
+            spawn_pos = uav_config.get('spawn_position', [0, 0, 0.3, 0, 0, 0])
+            spawn_loc = carla.Location(x=spawn_pos[0], y=spawn_pos[1], z=spawn_pos[2])
+
+            target_vehicle = None
+            destination = None
+
+            if mode == 'tracking':
+                target_id = uav_config.get('target', 0)
+                if target_id < len(single_cav_list):
+                    target_vehicle = single_cav_list[target_id].vehicle
+            elif mode == 'navigation':
+                dest = uav_config.get('destination', [0, 0, 60])
+                destination = carla.Location(x=dest[0], y=dest[1], z=dest[2])
+
+            uav_manager = UAVManager(uav_config, uav_base_config, scenario_manager.world,
+                                     cav_world, target_vehicle, destination)
+            uav_vid = 900 + len(uav_list)
+            uav_manager.spawn_drone(spawn_loc, vid=uav_vid)
+            uav_manager.takeoff()
+            uav_list.append(uav_manager)
+
     # create evaluation manager
     eval_manager = \
         EvaluationManager(scenario_manager.cav_world,
@@ -111,7 +146,7 @@ def init(opt, scenario_params):
         
 
 def run(debug=True):
-    global scenario_manager, applications, single_cav_list, traffic_cav_list, platoon_list, rsu_list
+    global scenario_manager, applications, single_cav_list, traffic_cav_list, platoon_list, rsu_list, uav_list
 
     all_cavs = single_cav_list + traffic_cav_list
     spectator = scenario_manager.world.get_spectator()
@@ -169,11 +204,15 @@ def run(debug=True):
             rsu.update_info()
             rsu.run_step()
 
+        for uav in uav_list:
+            uav.update_info()
+            uav.run_step()
+
         if 'network' in applications:
             cav_world.network_manager.advance_time_slot()
 
 def stop(opt):
-    global cav_world, scenario_manager, eval_manager
+    global cav_world, scenario_manager, eval_manager, uav_list
     try:
         if eval_manager:
             eval_manager.evaluate()
@@ -182,7 +221,10 @@ def stop(opt):
 
         if opt.record and scenario_manager:
             scenario_manager.client.stop_recorder()
-    
+
+        for uav in uav_list:
+            uav.destroy()
+
     finally:
         if scenario_manager:
             scenario_manager.close()

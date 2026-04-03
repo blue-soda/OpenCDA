@@ -18,7 +18,8 @@ from opencda.core.common.cav_world import CavWorld
 import opencda.core.sensing.perception.sensor_transformation as st
 from opencda.core.common.misc import \
     cal_distance_angle, get_speed, get_speed_sumo
-from opencda.core.sensing.perception.coperception_manager import CoperceptionManager
+# Lazy import to avoid hard dependency on opencood
+CoperceptionManager = None
 from opencda.core.sensing.perception.obstacle_vehicle import \
     ObstacleVehicle
 from opencda.core.sensing.perception.static_obstacle import TrafficLight
@@ -26,7 +27,8 @@ from opencda.core.sensing.perception.o3d_lidar_libs import \
     o3d_visualizer_init, o3d_pointcloud_encode, o3d_visualizer_show, \
     o3d_camera_lidar_fusion, o3d_visualizer_show_coperception, o3d_predict_bbox_to_object
 from opencda.log.logger_config import logger
-from opencda.core.sensing.perception.coperception_libs import CoperceptionLibs
+# Lazy import - only loaded when needed
+CoperceptionLibs = None
 from collections import OrderedDict, defaultdict
 
 from shapely.geometry import box, Point
@@ -94,7 +96,12 @@ class CameraSensor:
 
         pitch = 0
         carla_location = carla.Location(x=0, y=0, z=0)
-        x, y, z, yaw = relative_position
+
+        # Support both [x, y, z, yaw] and [x, y, z, yaw, pitch] formats
+        if len(relative_position) == 5:
+            x, y, z, yaw, pitch = relative_position
+        else:
+            x, y, z, yaw = relative_position
 
         # this is for rsu. It utilizes global position instead of relative
         # position to the vehicle
@@ -103,7 +110,8 @@ class CameraSensor:
                 x=global_position[0],
                 y=global_position[1],
                 z=global_position[2])
-            pitch = -35
+            if len(relative_position) != 5:
+                pitch = -35
 
         carla_location = carla.Location(x=carla_location.x + x,
                                         y=carla_location.y + y,
@@ -188,12 +196,20 @@ class LidarSensor:
                 config_yaml['noise_stddev']))
 
         # spawn sensor
+        # Support both [x, y, z] and [x, y, z, roll, pitch, yaw] formats for global_position
         if global_position is None:
             spawn_point = carla.Transform(carla.Location(x=-0.5, z=1.9))
         else:
-            spawn_point = carla.Transform(carla.Location(x=global_position[0],
-                                                         y=global_position[1],
-                                                         z=global_position[2]))
+            if len(global_position) >= 6:
+                # [x, y, z, roll, pitch, yaw]
+                spawn_point = carla.Transform(
+                    carla.Location(x=global_position[0], y=global_position[1], z=global_position[2]),
+                    carla.Rotation(roll=global_position[3], pitch=global_position[4], yaw=global_position[5])
+                )
+            else:
+                spawn_point = carla.Transform(carla.Location(x=global_position[0],
+                                                             y=global_position[1],
+                                                             z=global_position[2]))
         if vehicle is not None:
             self.sensor = world.spawn_actor(
                 blueprint, spawn_point, attach_to=vehicle)
@@ -355,7 +371,7 @@ class LidarSensor:
                 self.sens_grids.add(grid_id)
 
     def get_all_points(self):
-        print(f"all points shape: {self.data.shape}")
+        # print(f"all points shape: {self.data.shape}")
         logger.debug(f"all points shape: {self.data.shape}")
         return self.data
     
@@ -667,11 +683,12 @@ class PerceptionManager:
             sys.exit("When you dump data, please deactivate the "
                      "detection function for precise label.")
 
+        # Override activate based on ml_manager availability
         if self.activate and not ml_manager:
-            sys.exit(
-                'If you activate the perception module, '
-                'then apply_ml must be set to true in '
-                'the argument parser to load the detection DL model.')
+            logger.warning('Perception activate=true in config but --apply_ml not set. '
+                          'Switching to deactivate mode.')
+            self.activate = False
+
         self.ml_manager = ml_manager
 
         # we only spawn the camera when perception module is activated or
@@ -731,22 +748,29 @@ class PerceptionManager:
             if 'traffic_light_thresh' in config_yaml else 50
 
         # coperception libs
-        self.coperception_libs = CoperceptionLibs(
-            lidar=self.lidar,
-            rgb_camera=self.rgb_camera,
-            localization_manager=self.localization_manager,
-            behavior_agent=self.behavior_agent,
-            carla_world=self.carla_world,
-            cav_world=self.cav_world
-        )
-
-        self.co_manager = CoperceptionManager(
-            vid=self.vid,
-            v2x_manager=self.v2x_manager,
-            coperception_libs=self.coperception_libs,
-            enable_network=self.enable_network,
-            network_manager=CavWorld.network_manager if self.enable_network else None,
-        )
+        self.co_manager = None
+        self.coperception_libs = None
+        if self.coperception or self.enable_network:
+            try:
+                from opencda.core.sensing.perception.coperception_libs import CoperceptionLibs
+                from opencda.core.sensing.perception.coperception_manager import CoperceptionManager
+                self.coperception_libs = CoperceptionLibs(
+                    lidar=self.lidar,
+                    rgb_camera=self.rgb_camera,
+                    localization_manager=self.localization_manager,
+                    behavior_agent=self.behavior_agent,
+                    carla_world=self.carla_world,
+                    cav_world=self.cav_world
+                )
+                self.co_manager = CoperceptionManager(
+                    vid=self.vid,
+                    v2x_manager=self.v2x_manager,
+                    coperception_libs=self.coperception_libs,
+                    enable_network=self.enable_network,
+                    network_manager=CavWorld.network_manager if self.enable_network else None,
+                )
+            except ImportError as e:
+                logger.warning(f"Failed to import CoperceptionManager: {e}. Coperception disabled.")
 
     def set_enable_grids(self, enable):
         if self.lidar is not None:
@@ -858,14 +882,15 @@ class PerceptionManager:
 
         # plot the opencood inference results
         if self.lidar_visualize:
-            while self.lidar.data is None:
-                continue
-            o3d_pointcloud_encode(self.lidar.data, self.lidar.o3d_pointcloud)
-            o3d_visualizer_show(
-                self.o3d_vis,
-                self.count,
-                self.lidar.o3d_pointcloud,
-                objects)
+            if self.lidar.data is None:
+                logger.debug(f"Lidar data is None for vehicle {self.vid}, skipping visualization")
+            else:
+                o3d_pointcloud_encode(self.lidar.data, self.lidar.o3d_pointcloud)
+                o3d_visualizer_show(
+                    self.o3d_vis,
+                    self.count,
+                    self.lidar.o3d_pointcloud,
+                    objects)
         objects = self.retrieve_traffic_lights(objects)
         self.objects = objects
         return objects
@@ -906,6 +931,9 @@ class PerceptionManager:
 
         for (i, rgb_camera) in enumerate(self.rgb_camera):
             # lidar projection
+            if self.lidar.data is None:
+                rgb_draw_images.append(np.array(rgb_camera.image))
+                continue
             rgb_image, projected_lidar = st.project_lidar_to_camera(
                 self.lidar.sensor,
                 rgb_camera.sensor, self.lidar.data, np.array(
@@ -938,14 +966,15 @@ class PerceptionManager:
             cv2.waitKey(1)
 
         if self.lidar_visualize:
-            while self.lidar.data is None:
-                continue
-            o3d_pointcloud_encode(self.lidar.data, self.lidar.o3d_pointcloud)
-            o3d_visualizer_show(
-                self.o3d_vis,
-                self.count,
-                self.lidar.o3d_pointcloud,
-                objects)
+            if self.lidar.data is None:
+                logger.debug(f"Lidar data is None for vehicle {self.vid}, skipping visualization")
+            else:
+                o3d_pointcloud_encode(self.lidar.data, self.lidar.o3d_pointcloud)
+                o3d_visualizer_show(
+                    self.o3d_vis,
+                    self.count,
+                    self.lidar.o3d_pointcloud,
+                    objects)
         # add traffic light
         objects = self.retrieve_traffic_lights(objects)
         self.objects = objects
@@ -1028,15 +1057,16 @@ class PerceptionManager:
                 cv2.waitKey(1)
 
         if self.lidar_visualize:
-            while self.lidar.data is None:
-                continue
-            o3d_pointcloud_encode(self.lidar.data, self.lidar.o3d_pointcloud)
-            # render the raw lidar
-            o3d_visualizer_show(
-                self.o3d_vis,
-                self.count,
-                self.lidar.o3d_pointcloud,
-                objects)
+            if self.lidar.data is None:
+                logger.debug(f"Lidar data is None for vehicle {self.vid}, skipping visualization")
+            else:
+                o3d_pointcloud_encode(self.lidar.data, self.lidar.o3d_pointcloud)
+                # render the raw lidar
+                o3d_visualizer_show(
+                    self.o3d_vis,
+                    self.count,
+                    self.lidar.o3d_pointcloud,
+                    objects)
 
         # add traffic light
         objects = self.retrieve_traffic_lights(objects)

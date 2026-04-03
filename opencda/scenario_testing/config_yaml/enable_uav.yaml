@@ -1,0 +1,48 @@
+# UAV Base Configuration (similar to vehicle_base)
+uav_base:
+  # Flight parameters
+  takeoff_height: 60
+  hover_offset: 60
+  speed: 6
+  update_interval: 0.033
+
+  # V2X communication
+  v2x:
+    enabled: false
+    communication_range: 150
+
+  # Sensor configuration
+  sensing:
+    perception:
+      activate: false
+      perception_frequency: 10
+      camera:
+        visualize: 1
+        num: 1
+        positions:
+          - [0, 0, -1, 90, -90]
+      lidar:
+        visualize: true
+        channels: 32
+        range: 120
+        points_per_second: 100000
+        rotation_frequency: 10
+        upper_fov: 10.0
+        lower_fov: -30.0
+        dropoff_general_rate: 0.0
+        dropoff_intensity_limit: 1.0
+        dropoff_zero_intensity: 0.0
+        noise_stddev: 0.0
+    localization:
+      activate: false
+      dt: 0.05
+      gnss:
+        noise_alt_stddev: 0.001
+        noise_lat_stddev: 1.0e-6
+        noise_lon_stddev: 1.0e-6
+        heading_direction_stddev: 0.1
+        speed_stddev: 0.2
+      debug_helper:
+        show_animation: false
+        x_scale: 10.0
+        y_scale: 10.0

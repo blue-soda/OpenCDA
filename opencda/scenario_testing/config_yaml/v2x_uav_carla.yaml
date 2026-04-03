@@ -1,0 +1,90 @@
+# V2X UAV CARLA Scenario
+# Run with: python opencda.py -t v2x_uav_carla --uav
+
+description: |-
+  V2X scenario with UAV tracking
+
+# Define settings for multi-class blueprint spawning
+blueprint:
+  use_multi_class_bp: false
+  bp_meta_path: "opencda/assets/blueprint_meta/bbx_stats_0911.json"
+  bp_class_sample_prob:
+    car: 0.5
+    truck: 0.1
+    bus: 0.1
+    bicycle: 0.1
+    motorcycle: 0.1
+
+# define the background traffic control by carla
+carla_traffic_manager:
+  sync_mode: true
+  global_distance: 5
+  global_speed_perc: -10
+  set_osm_mode: true
+  auto_lane_change: true
+  random: true
+  ignore_lights_percentage: 100
+  vehicle_list: ~
+  range:
+    - [-50, 40, -100, 100, 3.5, 15, 10, 3] #town03
+
+# define scenario
+scenario:
+  single_cav_list:
+    -
+      spawn_position: [8.00, -30.31, 0.3, 0, -90, 0] #town03
+      destination: [8.00, -50, 1.0]
+      behavior:
+        local_planner:
+          debug_trajectory: false
+          debug: false
+      sensing:
+        perception:
+          lidar:
+            visualize: false  # disable lidar visualization to avoid deadlock
+
+# UAV configuration
+uav_base:
+  takeoff_height: 60
+  hover_offset: 20  # Height above target vehicle
+  speed: 6  # Movement speed in m/s
+  update_interval: 0.033
+  sensing:
+    localization:
+      activate: false
+    perception:
+      activate: false  # Set true if ML perception needed
+      camera:
+        visualize: false
+        num: 0
+        positions: []
+      lidar:
+        visualize: false
+        upper_fov: 45
+        lower_fov: -45
+        channels: 64
+        range: 100
+        points_per_second: 600000
+        rotation_frequency: 20
+        dropoff_general_rate: 0.0
+        dropoff_intensity_limit: 100.0
+        dropoff_zero_intensity: 0.0
+        noise_stddev: 0.0
+        # LiDAR position relative to drone center: [x, y, z, roll, pitch, yaw]
+        # pitch=-90 means looking straight down (nadir view)
+        global_position: [0, 0, 0, 0, -90, 0]
+
+uav_list:
+  - mode: "tracking"
+    spawn_position: [3.00, -30.31, 8, 0, 0, 0]
+    target: 1
+
+# coperception parameters
+coperception:
+  models:
+    early: 'opencood/logs/pointpillar_early_fusion'
+    intermediate_v2xvit: 'opencood/logs/pointpillar_v2xvit_fusion'
+    intermediate_attentive: 'opencood/logs/pointpillar_attentive_fusion'
+    intermediate_cobevt: 'opencood/logs/pointpillar_cobevt_fusion'
+    late: 'opencood/logs/pointpillar_late_fusion'
+  fusion_method: 'early'
