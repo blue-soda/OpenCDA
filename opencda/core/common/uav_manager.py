@@ -11,6 +11,8 @@ from opencda.log.logger_config import logger
 from opencda.core.sensing.perception.perception_manager import PerceptionManager
 from opencda.core.sensing.localization.localization_manager import LocalizationManager
 from opencda.core.common.v2x_manager import V2XManager
+from opencda.core.clustering.managers.clustering_v2x_manager import ClusteringV2XManager
+from opencda.core.clustering.managers.clustering_perception_manager import ClusteringPerceptionManager
 
 # Try to import airsim, but make it optional
 try:
@@ -52,12 +54,18 @@ def convert_airsim_to_carla(airsim_vector):
 class UAVManager:
     """Manages UAV in OpenCDA using AirSim or CARLA native control"""
 
-    def __init__(self, uav_config, base_config, world, cav_world, target_vehicle=None, destination=None):
+    def __init__(self, uav_config, base_config, world, cav_world, target_vehicle=None, destination=None, application=None):
         self.world = world
         self.cav_world = cav_world
         self.mode = uav_config.get('mode', 'static')
         self.target_vehicle = target_vehicle
         self.destination = destination
+
+        # Application flags (for clustering support)
+        self.application = application if application else []
+        self.enableCluster = 'cluster' in self.application
+        self.enableCoperception = 'coperception' in self.application
+        self.enableNetwork = 'network' in self.application
 
         # Target ID for tracking mode (vehicle IDs start from 1)
         self.target_id = uav_config.get('target', 0)
@@ -141,8 +149,11 @@ class UAVManager:
         # marker_transform = carla.Transform(carla.Location(x=0, y=0, z=-2))
         # self.visual_marker = self.world.spawn_actor(marker_bp, marker_transform, attach_to=self.drone_actor)
 
-        # Initialize V2X manager
-        self.v2x_manager = V2XManager(self.cav_world, self.v2x_config, vid)
+        # Initialize V2X manager (use ClusteringV2XManager if clustering is enabled)
+        if self.enableCluster:
+            self.v2x_manager = ClusteringV2XManager(self.cav_world, self.v2x_config, vid)
+        else:
+            self.v2x_manager = V2XManager(self.cav_world, self.v2x_config, vid)
 
         # Register UAV in cav_world so vehicles can find it via V2X
         self.vid = vid
@@ -167,16 +178,32 @@ class UAVManager:
                 # [x, y, z, roll, pitch, yaw]
                 perception_config['global_position'] = [0, 0, 0, 0, -90, 0]
 
-        self.perception_manager = PerceptionManager(
-            v2x_manager=self.v2x_manager,
-            localization_manager=self.localizer,
-            behavior_agent=None,
-            vehicle=self.drone_actor,
-            config_yaml=perception_config,
-            cav_world=self.cav_world,
-            data_dump=False,
-            carla_world=self.world
-        )
+        if self.enableCluster:
+            if not self.enableCoperception:
+                logger.error("UAV clustering requires coperception to be enabled. Set apply_cp=true when using clustering.")
+            self.perception_manager = ClusteringPerceptionManager(
+                v2x_manager=self.v2x_manager,
+                localization_manager=self.localizer,
+                behavior_agent=None,
+                vehicle=self.drone_actor,
+                config_yaml=perception_config,
+                cav_world=self.cav_world,
+                data_dump=False,
+                carla_world=self.world,
+                enable_network=self.enableNetwork
+            )
+        else:
+            self.perception_manager = PerceptionManager(
+                v2x_manager=self.v2x_manager,
+                localization_manager=self.localizer,
+                behavior_agent=None,
+                vehicle=self.drone_actor,
+                config_yaml=perception_config,
+                cav_world=self.cav_world,
+                data_dump=False,
+                carla_world=self.world,
+                enable_network=self.enableNetwork
+            )
 
         # Set AirSim pose
         if self.airsim_connected:

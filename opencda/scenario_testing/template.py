@@ -133,7 +133,7 @@ def init(opt, scenario_params):
                 destination = carla.Location(x=dest[0], y=dest[1], z=dest[2])
 
             uav_manager = UAVManager(uav_config, uav_base_config, scenario_manager.world,
-                                     cav_world, target_vehicle, destination)
+                                     cav_world, target_vehicle, destination, application=applications)
             uav_vid = 900 + len(uav_list)
             uav_manager.spawn_drone(spawn_loc, vid=uav_vid)
             uav_manager.takeoff()
