@@ -11,28 +11,19 @@ OpenCDA is a co-simulation framework for Cooperative Driving Automation (CDA) re
 
 ## Architecture
 
-### OpenCDA Structure (Updated 2026-03-31)
+### OpenCDA Structure
 - `opencda/core/`: Core autonomous driving modules
   - `sensing/`: Perception (camera, LiDAR), localization, prediction
   - `plan/`: Behavior planning, local planning, global route planning
   - `actuation/`: Vehicle control
-  - `common/`: Vehicle manager, V2X manager, RSU manager, CAV world, **ConfigManager**
-  - `clustering/`: **Vehicle clustering and resource allocation (refactored)**
-    - `base/`: Abstract base classes for algorithms
-    - `algorithms/`: Clustering and resource allocation implementations
-    - `managers/`: Clustering managers
-    - `utils/`: Utility functions (grid operations, vehicle queries, metrics)
-  - `networking/`: **V2X network simulation (refactored from customize/v2x)**
-    - `resource_allocation/`: Resource allocation logic
-    - `ns3_integration/`: NS3 co-simulation bridge
-    - `statistics/`: Communication statistics
+  - `common/`: Vehicle manager, V2X manager, RSU manager, UAV manager, CAV world
+  - `clustering/`: Vehicle clustering and resource allocation
+  - `networking/`: V2X network simulation
   - `map/`: HD map management
   - `safety/`: Safety monitoring
 - `opencda/application/`: CDA applications (platooning, cooperative perception)
 - `opencda/scenario_testing/`: Test scenarios and configuration files
 - `opencda/co_simulation/`: CARLA-SUMO and AirSim-CARLA co-simulation
-- **`opencda/customize/`**: Legacy extended modules (being migrated to core/)
-  - `ml_libs/`: Machine learning utilities
 
 ### OpenCOOD Structure
 - `opencood/opencood/`: Core cooperative detection framework
@@ -50,8 +41,8 @@ OpenCDA is a co-simulation framework for Cooperative Driving Automation (CDA) re
 # Run a scenario test (from repository root)
 python opencda/scenario_testing/platoon_joining_2lanefree_carla.py
 
-# Run with OpenScenario format
-python opencda/scenario_testing/openscenario_carla.py
+# Run with UAV enabled (AirSim-CARLA co-simulation)
+python opencda.py -t v2x_uav_carla --apply_cp --apply_ml --debug --uav
 
 # Configuration files are in opencda/scenario_testing/config_yaml/
 # default.yaml serves as the base template
@@ -70,42 +61,79 @@ python opencood/tools/train.py --model_dir <checkpoint_folder>
 
 # Run inference
 python opencood/tools/inference.py --model_dir <checkpoint_folder> --fusion_method <early|late|intermediate>
-
-# Visualize data sequences
-cd opencood
-python opencood/visualization/vis_data_sequence.py --color_mode intensity
 ```
 
-## Configuration System
+## UAV / AirSim-CARLA Co-Simulation
 
-### OpenCDA (Updated 2026-03-31)
-- **Centralized configuration** via `ConfigManager` in `opencda/core/common/config_manager.py`
-- Configuration files in `opencda/scenario_testing/config_yaml/`
-  - `default.yaml` - Base template for scenarios
-  - `networking_clustering.yaml` - V2X network and clustering configuration
-- Type-safe configuration with dataclasses
-- No hardcoded parameters
+### Architecture
+The UAV system uses AirSim to control drone flight with CARLA for visualization:
+- **AirSim**: Controls actual drone physics and flight
+- **CARLA**: Visualizes drone position (updates from AirSim state)
 
-**Usage:**
+Reference: [keshuw95/airsim_carla_co-simulation](https://github.com/keshuw95/airsim_carla_co-simulation)
+
+### Coordinate Conversion (CARLA ENU ↔ AirSim NED)
 ```python
-from opencda.core.common.config_manager import ConfigManager
+# CARLA → AirSim
+x_airsim = carla_location.y
+y_airsim = -carla_location.x
+z_airsim = -(carla_location.z + hover_offset)  # NED z is positive DOWN
 
-config = ConfigManager.from_yaml('path/to/config.yaml')
-print(config.v2x_network.subchannel_num)  # 10
-print(config.clustering.algorithm)         # "coalition_game"
+# AirSim → CARLA
+carla.x = -airsim.y_val
+carla.y = airsim.x_val
+carla.z = -airsim.z_val
 ```
 
-**Legacy:** YAML files still support override pattern where other configs override `default.yaml` parameters
+### Yaw Conversion
+```python
+airsim_drone_yaw = vehicle_yaw - 90  # For tracking mode
+```
 
-### OpenCOOD
-- Model configs in `opencood/hypes_yaml/` define backbone, fusion strategy, training parameters
-- Each trained model saves its config in the checkpoint folder as `config.yaml`
+### UAV Modes
+- **static**: Drone stays at spawn position
+- **tracking**: Drone follows a target vehicle (uses `target` ID from config, vehicle IDs start at 1)
+- **navigation**: Drone moves to a destination waypoint
+
+### UAV Configuration
+```yaml
+uav_base:
+  takeoff_height: 60
+  hover_offset: 20   # Height above target vehicle
+  speed: 6           # Movement speed m/s
+  update_interval: 0.033
+  sensing:
+    perception:
+      activate: false
+      lidar:
+        upper_fov: 45.0
+        lower_fov: -45.0
+        channels: 64
+        range: 150
+        global_position: [0, 0, 0, 0, -90, 0]  # pitch=-90 for downward view
+
+uav_list:
+  - mode: "tracking"
+    spawn_position: [3.00, -30.31, 60, 0, 0, 0]  # x, y, z, roll, pitch, yaw
+    target: 1  # Vehicle ID to track (starts from 1)
+
+  - mode: "navigation"
+    spawn_position: [0, 0, 60, 0, 0, 0]
+    destination: [100.0, -50.0, 60]  # Target waypoint
+```
+
+### LiDAR FOV for UAV
+For downward-facing observation from UAV:
+- `upper_fov: 45.0` and `lower_fov: -45.0` gives 90° total FOV
+- With `pitch: -90` in `global_position`, LiDAR points downward
+- This creates a cone-shaped scan of the ground below
 
 ## Key Concepts
 
 ### OpenCDA
 - **CAV (Connected Automated Vehicle)**: Vehicles with V2X communication and automation
 - **RSU (Roadside Unit)**: Infrastructure sensors for cooperative perception
+- **UAV (Unmanned Aerial Vehicle)**: Drone for aerial surveillance, controlled via AirSim
 - **V2X Manager**: Handles vehicle-to-everything communication
 - **Platooning**: Cooperative longitudinal control for vehicle convoys
 - **Cooperative Perception**: Sharing sensor data between CAVs and RSUs
@@ -116,10 +144,20 @@ print(config.clustering.algorithm)         # "coalition_game"
 - **Compression**: Feature compression for bandwidth-efficient V2X communication
 - **Noisy Setting**: Simulates localization errors and communication delays for realistic testing
 
+## Configuration System
+
+### OpenCDA
+- Configuration files in `opencda/scenario_testing/config_yaml/`
+  - `default.yaml` - Base template for scenarios
+  - `enable_uav.yaml` - UAV base configuration
+  - `v2x_uav_carla.yaml` - UAV scenario configuration
+- YAML configs support merge/override pattern
+
 ## Dependencies
 
 ### OpenCDA
 - CARLA simulator (0.9.12 supported, check for latest compatibility)
+- AirSim (for UAV support)
 - Python 3.7+
 - Key packages: open3d, opencv-python, shapely, omegaconf, yolov5
 
@@ -127,67 +165,6 @@ print(config.clustering.algorithm)         # "coalition_game"
 - PyTorch
 - Spconv (1.2.1 or 2.x)
 - Key packages: open3d, opencv-python, numba, einops, timm
-
-## Custom Extensions (opencda/customize/)
-
-This repository contains significant extensions to the original OpenCDA framework focused on clustering-based cooperative perception and V2X resource allocation.
-
-### Clustering Algorithms (`customize/core/clustering/`)
-Implements 10+ vehicle clustering and resource allocation algorithms:
-- **Coalition Game Theory**: `coalition_game.py` - game-theoretic cluster formation
-- **Potential Game**: `potential_game.py` (475 lines) - channel allocation via potential games
-- **PCS Algorithm**: `pcs.py` (439 lines) - priority-based clustering
-- **MWS**: `mws.py` - maximum weighted sum approach
-- **Naive/Random**: Baseline clustering methods
-- **Graph-based**: `weighted_conflict_graph_coloring_algorithm.py`, `spatio_temporal_similarity_algorithm.py`
-
-Key managers:
-- `ClusteringV2XManager`: Extends V2XManager with cluster head election and member management
-- `ClusteringPerceptionManager`: Handles cluster-based cooperative perception
-- `ClusteringScheduler`: Resource scheduling within clusters
-
-### V2X Network Simulation (`customize/core/v2x/`)
-- **NS3 Co-simulation**: Bridge between CARLA and NS3 network simulator
-  - `ns3_co_simulation/bridge/`: CARLA-NS3 communication bridge
-  - `ns3_co_simulation/carla/`: CARLA connector and vehicle data handling
-- **Network Manager**: `network_manager.py` (462 lines) - handles V2X communication with realistic network models
-- **Scheduler**: `scheduler.py` - resource allocation scheduling (channel, time slots)
-
-### Refactoring Improvements (2026-03-31)
-
-✅ **Completed Improvements**:
-
-1. **Eliminated global variables**:
-   - Created `ClusteringContext` for dependency injection
-   - Replaced `common.global_vehicles` with context-based access
-   - Each algorithm instance has isolated state
-
-2. **Configuration-driven architecture**:
-   - All parameters moved to YAML files
-   - `ConfigManager` provides type-safe configuration access
-   - No hardcoded network or clustering parameters
-
-3. **Modular structure**:
-   - Clustering algorithms separated into `algorithms/clustering/` and `algorithms/resource_allocation/`
-   - Base classes: `ClusteringAlgorithm`, `ResourceAllocationAlgorithm`, `Cluster`
-   - Utility functions extracted: grid operations, vehicle queries, metrics
-
-4. **Import path updates**:
-   - Core files updated to use new paths
-   - `opencda.customize.core.clustering` → `opencda.core.clustering`
-   - `opencda.customize.core.v2x` → `opencda.core.networking`
-
-🔄 **In Progress**:
-- Algorithm migration to new base classes
-- Manager refactoring to remove static variables
-- Code style unification
-
-⏳ **Pending**:
-- Perception module splitting (sensors, grid, visualization)
-- Networking module decomposition (allocator, bridge, stats)
-- Complete import path migration
-
-See `REFACTORING_HISTORY.md` for detailed migration guide.
 
 ## Important Notes
 

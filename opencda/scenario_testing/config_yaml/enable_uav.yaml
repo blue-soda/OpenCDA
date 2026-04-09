@@ -23,12 +23,12 @@ uav_base:
           - [0, 0, -1, 90, -90]
       lidar:
         visualize: true
-        channels: 32
-        range: 120
-        points_per_second: 100000
-        rotation_frequency: 10
-        upper_fov: 10.0
-        lower_fov: -30.0
+        channels: 64
+        range: 150
+        points_per_second: 600000
+        rotation_frequency: 20
+        upper_fov: 45.0
+        lower_fov: -45.0
         dropoff_general_rate: 0.0
         dropoff_intensity_limit: 1.0
         dropoff_zero_intensity: 0.0

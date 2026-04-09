@@ -125,8 +125,9 @@ def init(opt, scenario_params):
 
             if mode == 'tracking':
                 target_id = uav_config.get('target', 0)
-                if target_id < len(single_cav_list):
-                    target_vehicle = single_cav_list[target_id].vehicle
+                # target_id starts from 1, single_cav_list is 0-indexed
+                if 0 < target_id <= len(single_cav_list):
+                    target_vehicle = single_cav_list[target_id - 1].vehicle
             elif mode == 'navigation':
                 dest = uav_config.get('destination', [0, 0, 60])
                 destination = carla.Location(x=dest[0], y=dest[1], z=dest[2])

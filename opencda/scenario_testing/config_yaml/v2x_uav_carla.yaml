@@ -75,10 +75,19 @@ uav_base:
         global_position: [0, 0, 0, 0, -90, 0]
 
 uav_list:
-  - mode: "tracking"
-    spawn_position: [3.00, -30.31, 8, 0, 0, 0]
-    target: 1
+  # # Static mode - UAV stays at spawn position
+  # - mode: "static"
+  #   spawn_position: [3.00, -30.31, 10, 0, 0, 0]
 
+  # Tracking mode - UAV follows target vehicle (ID starts from 1)
+  - mode: "tracking"
+    spawn_position: [3.00, -30.31, 10, 0, 0, 0]
+    target: 1  # Vehicle ID to track
+
+  # # Navigation mode - UAV moves to target point
+  # - mode: "navigation"
+  #   spawn_position: [3.00, -30.31, 10, 0, 0, 0]
+  #   destination: [8.00, -60, 1.0]  # x, y, z target
 # coperception parameters
 coperception:
   models:
