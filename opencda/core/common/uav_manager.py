@@ -113,6 +113,9 @@ class UAVManager:
         # Agent is None for UAV (required for CoperceptionManager compatibility)
         self.agent = None
 
+        # Vehicle alias for cav_world compatibility (points to drone_actor)
+        self.vehicle = None
+
         logger.info(f"UAVManager initialized in {self.mode} mode")
 
     def spawn_drone(self, spawn_location, vid=999):
@@ -125,6 +128,7 @@ class UAVManager:
 
         drone_transform = carla.Transform(spawn_location, carla.Rotation(pitch=0, yaw=0, roll=0))
         self.drone_actor = self.world.spawn_actor(drone_bp, drone_transform)
+        self.vehicle = self.drone_actor  # Alias for cav_world compatibility
 
         # Save spawn altitude for tracking/navigation modes
         self.spawn_z = spawn_location.z
@@ -142,7 +146,7 @@ class UAVManager:
 
         # Register UAV in cav_world so vehicles can find it via V2X
         self.vid = vid
-        self.cav_world.update_vehicle_manager(self, is_traffic_vehicle=False)
+        self.cav_world.update_vehicle_manager(self, isTrafficVehicle=False)
 
         # Initialize localization manager
         localization_config = self.sensing_config.get('localization', {'activate': False})
@@ -239,12 +243,14 @@ class UAVManager:
             )
 
             # Draw the box with rotation
+            # CARLA 0.9.11 signature: draw_box(box, rotation, thickness, color, life_time, persistent_lines)
             self.world.debug.draw_box(
                 bounding_box,
                 drone_transform.rotation,
+                0.1,  # thickness
                 self.bounding_box_color,
-                life_time=self.update_interval + 0.1,
-                persistent_lines=True
+                self.update_interval + 0.1,
+                True  # persistent_lines
             )
         except Exception as e:
             logger.debug(f"Failed to draw bounding box: {e}")
