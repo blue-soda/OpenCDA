@@ -110,6 +110,9 @@ class UAVManager:
         # Current target position for navigation/tracking (updated each step)
         self.current_target_pos = None
 
+        # Agent is None for UAV (required for CoperceptionManager compatibility)
+        self.agent = None
+
         logger.info(f"UAVManager initialized in {self.mode} mode")
 
     def spawn_drone(self, spawn_location, vid=999):
@@ -136,6 +139,10 @@ class UAVManager:
 
         # Initialize V2X manager
         self.v2x_manager = V2XManager(self.cav_world, self.v2x_config, vid)
+
+        # Register UAV in cav_world so vehicles can find it via V2X
+        self.vid = vid
+        self.cav_world.update_vehicle_manager(self, is_traffic_vehicle=False)
 
         # Initialize localization manager
         localization_config = self.sensing_config.get('localization', {'activate': False})
@@ -199,9 +206,18 @@ class UAVManager:
         # Draw bounding box to visualize drone position
         self._draw_bounding_box()
 
+        # Update V2X communication (share position and sensor data with nearby vehicles)
+        if self.localizer:
+            self.localizer.localize()
+            ego_pos = self.localizer.get_ego_pos()
+            ego_spd = self.localizer.get_ego_spd()
+            ego_lidar = self.perception_manager.lidar if self.perception_manager else None
+            ego_image = self.perception_manager.rgb_camera if self.perception_manager else None
+            ego_dir = self.localizer.get_ego_dir()
+            self.v2x_tick = self.v2x_manager.update_info(ego_pos, ego_spd, ego_lidar, ego_image, ego_dir)
+
         # Update perception
         if self.localizer and self.perception_manager:
-            self.localizer.localize()
             ego_pos = self.localizer.get_ego_pos()
             self.perception_manager.detect(ego_pos)
 

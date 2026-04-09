@@ -8,7 +8,7 @@ uav_base:
 
   # V2X communication
   v2x:
-    enabled: false
+    enabled: true
     communication_range: 150
 
   # Sensor configuration
