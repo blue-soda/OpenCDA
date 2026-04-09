@@ -74,6 +74,10 @@ class EvaluationManager(object):
         """
         lprint(log_file, "***********Kinematics Module***********")
         for vid, vm in self.cav_world.get_evaluate_vehicle_managers().items():
+            # Skip UAVs (they don't have an agent)
+            if hasattr(vm, 'drone_actor') and vm.drone_actor is not None:
+                lprint(log_file, f'Skipping UAV {vid} in kinematics evaluation')
+                continue
             actor_id = vm.vehicle.id
             lprint(log_file, 'Actor ID: %d' % actor_id)
 
