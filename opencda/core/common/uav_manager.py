@@ -215,6 +215,8 @@ class UAVManager:
             ego_image = self.perception_manager.rgb_camera if self.perception_manager else None
             ego_dir = self.localizer.get_ego_dir()
             self.v2x_tick = self.v2x_manager.update_info(ego_pos, ego_spd, ego_lidar, ego_image, ego_dir)
+            logger.debug(f"UAV {self.vid} V2X update: pos=({ego_pos.location.x:.1f}, {ego_pos.location.y:.1f}, {ego_pos.location.z:.1f}), "
+                        f"nearby_cavs={len(self.v2x_manager.cav_nearby)}")
 
         # Update perception
         if self.localizer and self.perception_manager:

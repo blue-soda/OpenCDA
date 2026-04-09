@@ -261,6 +261,10 @@ class V2XManager(object):
                     'vehicle_manager': vm,
                     'v2x_manager': vm.v2x_manager
                 }})
+                # Check if discovered CAV is a UAV
+                is_uav = hasattr(vm, 'drone_actor') and vm.drone_actor is not None
+                logger.info(f"V2X [{self.vid}] discovered {'UAV' if is_uav else 'vehicle'} {vid} "
+                           f"at distance {distance:.1f}m")
             else:
                 self.cav_nearby.pop(vid, None)
 
