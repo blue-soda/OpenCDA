@@ -57,17 +57,23 @@ class OpenCOODManager(object):
         self.result_stat = {0.3: {'tp': [], 'fp': [], 'gt': 0},
                             0.5: {'tp': [], 'fp': [], 'gt': 0},
                             0.7: {'tp': [], 'fp': [], 'gt': 0}}
+        # In clustered CP runs, final AP should be recorded only from the
+        # explicit late-fusion submission path, not every intermediate model
+        # inference happening elsewhere in the pipeline.
+        self.allow_stats_submission = False
 
     def to_device(self, data):
         return train_utils.to_device(data, self.device)
 
-    def submit_results(self, pred_box_tensor, pred_score, gt_box_tensor, with_stats=True):
+    def submit_results(self, pred_box_tensor, pred_score, gt_box_tensor, with_stats=True, force=False):
         if not with_stats:
+            return
+        if not force and not self.allow_stats_submission:
             return
         
         self.counter += 1
 
-        if self.counter <= 5:
+        if not force and self.counter <= 5:
             return
     
         logger.debug('submit_results')
@@ -128,7 +134,7 @@ class OpenCOODManager(object):
         if with_stats: #and self.counter % 2 == 0:
             logger.debug(f"Aggregating the current stats into final results: {self.counter}")
             pred_box_tensor, pred_score, gt_box_tensor = ret[0:3]
-            self.submit_results(pred_box_tensor, pred_score, gt_box_tensor, with_stats)
+            self.submit_results(pred_box_tensor, pred_score, gt_box_tensor, with_stats, force=False)
         return ret
 
     def evaluate_final_average_precision(self):

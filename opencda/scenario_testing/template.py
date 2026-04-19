@@ -52,6 +52,11 @@ def init(opt, scenario_params):
     if opt.network and 'network' in scenario_params:
         applications.append('network')
         network_params = scenario_params['network']
+        # The networked CP scenario relies on clustering-aware V2X/perception
+        # managers; without this flag VehicleManager falls back to the plain
+        # PerceptionManager path and CP results are never submitted.
+        if network_params.get('scheduler') == 'cluster' and 'cluster' not in applications:
+            applications.append('cluster')
     if hasattr(opt, 'uav') and opt.uav and 'uav_list' in scenario_params:
         applications.append('uav')
     data_dump = 'data_dump' in applications
@@ -147,6 +152,12 @@ def init(opt, scenario_params):
         
 
 def run(debug=True):
+    global scenario_manager
+    while True:
+        _tick_once(debug=debug)
+
+
+def _tick_once(debug=True):
     global scenario_manager, applications, single_cav_list, traffic_cav_list, platoon_list, rsu_list, uav_list
 
     all_cavs = single_cav_list + traffic_cav_list
@@ -157,64 +168,107 @@ def run(debug=True):
         spectator_vehicle = single_cav_list[0].vehicle
 
     if debug:
-        debug_helper = scenario_manager.world.debug 
+        debug_helper = scenario_manager.world.debug
 
-    while True:
-        scenario_manager.tick()
-        transform = spectator_vehicle.get_transform()
-        spectator.set_transform(carla.Transform(
-            transform.location +
-            carla.Location(
-                z=180),
-            carla.Rotation(
-                pitch=-
-                90)))
+    scenario_manager.tick()
+    transform = spectator_vehicle.get_transform()
+    spectator.set_transform(carla.Transform(
+        transform.location +
+        carla.Location(
+            z=180),
+        carla.Rotation(
+            pitch=-
+            90)))
 
-        for platoon in platoon_list:
-            platoon.update_information()
-            platoon.run_step()
+    for platoon in platoon_list:
+        platoon.update_information()
+        platoon.run_step()
 
-        for i, single_cav in enumerate(single_cav_list):
-            if single_cav.v2x_manager.in_platoon():
-                single_cav_list.pop(i)
-                continue
+    for i, single_cav in enumerate(single_cav_list):
+        if single_cav.v2x_manager.in_platoon():
+            single_cav_list.pop(i)
+            continue
 
-            single_cav.update_data()
-            if debug:
-                draw_string(debug_helper, single_cav)
+        single_cav.update_data()
+        if debug:
+            draw_string(debug_helper, single_cav)
 
-        for traffic_cav in traffic_cav_list:
-            traffic_cav.update_data()
-            check_is_out_sight(transform, traffic_cav)
-            if debug:
-                draw_string(debug_helper, traffic_cav)
+    for traffic_cav in traffic_cav_list:
+        traffic_cav.update_data()
+        check_is_out_sight(transform, traffic_cav)
+        if debug:
+            draw_string(debug_helper, traffic_cav)
 
+    for cav in all_cavs:
+        cav.update_info(update_data=False)
+
+    if 'coperception' in applications:
         for cav in all_cavs:
-            cav.update_info(update_data=False)
-
-        if 'cluster' in applications:
-            for cav in all_cavs:
+            if hasattr(cav.perception_manager, 'submit_cp_results'):
                 cav.submit_cp_results()
 
-        for cav in all_cavs:               
-            control = cav.run_step()
-            if control:
-                cav.vehicle.apply_control(control)
+    for cav in all_cavs:
+        control = cav.run_step()
+        if control:
+            cav.vehicle.apply_control(control)
 
-        for rsu in rsu_list:
-            rsu.update_info()
-            rsu.run_step()
+    for rsu in rsu_list:
+        rsu.update_info()
+        rsu.run_step()
 
-        for uav in uav_list:
-            uav.update_info()
-            uav.run_step()
+    for uav in uav_list:
+        uav.update_info()
+        uav.run_step()
 
-        if 'network' in applications:
-            cav_world.network_manager.advance_time_slot()
+    if 'network' in applications:
+        cav_world.network_manager.advance_time_slot()
+
+
+def _run_final_drain(debug=False):
+    global cav_world, applications, single_cav_list, traffic_cav_list
+
+    if 'network' not in applications or 'coperception' not in applications or cav_world is None:
+        return
+    if CavWorld.network_manager is None:
+        return
+
+    final_drain_slots = int(CavWorld.network_manager.config.get('final_drain_slots', 0))
+    if final_drain_slots <= 0:
+        return
+
+    all_cavs = single_cav_list + traffic_cav_list
+    drainable = [
+        cav for cav in all_cavs
+        if hasattr(cav.perception_manager, 'enable_final_drain')
+    ]
+    if not drainable:
+        return
+
+    for cav in drainable:
+        cav.perception_manager.enable_final_drain(True)
+
+    try:
+        for drain_slot in range(1, final_drain_slots + 1):
+            pending = [
+                cav.vid for cav in drainable
+                if cav.perception_manager.has_pending_final_drain()
+            ]
+            if not pending:
+                logger.info(f"FINAL_DRAIN done before slot {drain_slot}, no pending uploads.")
+                break
+            logger.info(
+                f"FINAL_DRAIN slot={drain_slot}/{final_drain_slots} "
+                f"pending_heads={pending} time_slot={CavWorld.network_manager.current_time_slot}"
+            )
+            _tick_once(debug=debug)
+    finally:
+        for cav in drainable:
+            cav.perception_manager.enable_final_drain(False)
 
 def stop(opt):
     global cav_world, scenario_manager, eval_manager, uav_list
     try:
+        _run_final_drain(debug=getattr(opt, 'debug', False))
         if eval_manager:
             eval_manager.evaluate()
         if 'coperception' in applications and cav_world:
@@ -236,7 +290,7 @@ def draw_string(debug_helper, cav):
     vehicle_location = cav.vehicle.get_transform().location
     color = cav.v2x_manager.rgb
 
-    if 'cluster' in applications:
+    if 'coperception' in applications and hasattr(cav.v2x_manager, 'cluster_state'):
         cluster_head = str(cav.v2x_manager.cluster_state['head_id'])
     else:
         cluster_head = ""

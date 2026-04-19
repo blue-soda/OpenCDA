@@ -30,11 +30,11 @@ class ClusteringScheduler(Scheduler):
         self.channel_allocation: Dict[Tuple[int, int], int] = {}  # {(source, target): 子信道}
 
         if ClusteringScheduler.resource_allocation_algorithm is None:
-            ClusteringScheduler.resource_allocation_algorithm = PotentialGame(cav_world)
+            # ClusteringScheduler.resource_allocation_algorithm = PotentialGame(cav_world)
             # ClusteringScheduler.resource_allocation_algorithm = PCS(cav_world)
             # ClusteringScheduler.resource_allocation_algorithm = MWS(cav_world)
             # ClusteringScheduler.resource_allocation_algorithm = RandomRA(cav_world)
-            # ClusteringScheduler.resource_allocation_algorithm = NaiveRA(cav_world)
+            ClusteringScheduler.resource_allocation_algorithm = NaiveRA(cav_world)
 
     def get_subchannel_allocation(self, link: Tuple[int, int]):
         if link in self.channel_allocation:
@@ -48,6 +48,12 @@ class ClusteringScheduler(Scheduler):
     def clear_strategies(self):
         self.channel_allocation.clear()
 
+    def _get_naive_subchannel(self, source_id: int) -> int:
+        subchannel_num = self.network_manager.subchannel_num
+        if subchannel_num <= 0:
+            return -1
+        return (4 - source_id) % subchannel_num
+
     @staticmethod
     def run():
         ClusteringScheduler.resource_allocation_algorithm.run()
@@ -60,8 +66,23 @@ class ClusteringScheduler(Scheduler):
         """执行分簇博弈子信道分配"""
         link = (source.vehicle_id, target.vehicle_id)
         success, ch = self.get_subchannel_allocation(link)
+        if (not success and self.network_manager.use_ns3 and
+                isinstance(ClusteringScheduler.resource_allocation_algorithm, NaiveRA)):
+            ch = self._get_naive_subchannel(source.vehicle_id)
+            if ch >= 0:
+                logger.info(f"[DEBUG] NaiveRA inline schedule link={link}, volume={volume}, subchannel={ch}")
+                success = True
         if not success:
+            if self.network_manager.use_ns3:
+                # Fall back to NS3 default scheduling only when no explicit allocation exists.
+                logger.info(f"[DEBUG] NS3 schedule fallback to default subchannel for link={link}, volume={volume}")
+                return self.network_manager.communicate(
+                    source, target, volume,
+                    subchannel_start=-1, subchannel_num=0
+                )
             return False
+
+        logger.info(f"[DEBUG] schedule link={link}, volume={volume}, subchannel={ch}, use_ns3={self.network_manager.use_ns3}")
         success = self.network_manager.communicate(
             source, target, volume,
             subchannel_start=ch, subchannel_num=1

@@ -43,12 +43,46 @@ class ClusteringV2XManager(V2XManager):
             ClusteringV2XManager.cluster_algorithm = CoalitionGame(self.cav_world)
             # ClusteringV2XManager.cluster_algorithm = NaiveCluster(self.cav_world, all_in_one=False)
 
+    def _sync_cluster_states(self, clusters):
+        clusters = list(clusters or [])
+        ClusteringV2XManager.all_clusters = clusters
+        self.all_clusters = clusters
+
+        vehicle_manager_dict = self.cav_world.get_vehicle_managers()
+        for _, vm in vehicle_manager_dict.items():
+            v2x_manager = getattr(vm, 'v2x_manager', None)
+            if v2x_manager and hasattr(v2x_manager, 'cluster_state'):
+                v2x_manager.cluster_state['head_id'] = None
+                v2x_manager.cluster_state['member_ids'] = set()
+
+        for cluster in clusters:
+            head_id = getattr(cluster, 'head_id', None)
+            members = set(getattr(cluster, 'members', set()))
+            for member_id in members:
+                vm = vehicle_manager_dict.get(member_id)
+                if vm is None or not hasattr(vm, 'v2x_manager'):
+                    continue
+                vm.v2x_manager.cluster_state['head_id'] = head_id
+                vm.v2x_manager.cluster_state['member_ids'] = members.copy()
+
+        if clusters:
+            logger.info(
+                "CLUSTER_SYNC %s",
+                [(getattr(cluster, 'head_id', None), sorted(list(getattr(cluster, 'members', set()))))
+                 for cluster in clusters]
+            )
+        else:
+            logger.info("CLUSTER_SYNC []")
+
     def run_algorithm(self):
         self.cluster_algorithm.initialize()
         self.cnt += 1
         if self.cnt >= self.cluster_interval:
             self.clusters = self.cluster_algorithm.run()
+            self._sync_cluster_states(self.clusters)
             self.cnt = 0
+        elif self.clusters is None and ClusteringV2XManager.all_clusters:
+            self.clusters = list(ClusteringV2XManager.all_clusters)
         if self.enable_scheduler and hasattr(self.scheduler, 'is_cluster_based') and self.scheduler.is_cluster_based:
             self.scheduler.set_clusters(self.clusters)
             self.scheduler.run()

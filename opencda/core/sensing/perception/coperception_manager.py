@@ -36,11 +36,18 @@ class CoperceptionManager:
         self.uploading_data_size = {}
 
         self.timeout_slots = 4 # number of time slots to wait before re-uploading data from a cav
-        self.re_upload_when_timeout = False
+        self.re_upload_when_timeout = False # Don't re-upload on timeout - rely on NS3 sidelink retransmission
         self.ego_vehicle_ids = set() # vehicles which should not be gt boxes
 
         self.grid_selection = {} # dict of {vid: [grid_ids]}
         self.enable_grid = False
+
+    def _reset_round_state_for_new_upload(self):
+        """Reset per-round upload trackers before preparing a fresh CP batch."""
+        self.uploaded_cavs = {}
+        self.uploading_cavs = {}
+        self.uploading_data_size = {}
+        self.cavs_timeout = {}
 
     def get_coperception_cavs_dict(self) -> dict:
         # dict of {vid: {'vehicle_manager': vm, 'v2x_manager': v2x_manager}}
@@ -50,14 +57,24 @@ class CoperceptionManager:
         data = {}
         if self.uploading_data:
             data = self.uploading_data
+            logger.info(f"communicate: using existing uploading_data with keys {list(self.uploading_data.keys())}")
         else:
+            # A new CP batch is starting. Previous rounds may already have
+            # completed asynchronously through NS3 after the last perception tick,
+            # so stale uploaded_cavs/uploading_data_size state must be cleared here.
+            self._reset_round_state_for_new_upload()
             self.all_cavs = self.get_coperception_cavs_dict()
             self.cavs_num = len(self.all_cavs)
+            # NOTE: use .copy() so that popping from uploading_data does NOT affect
+            # cavs_need_to_upload (which is a reference to the same nested objects).
+            # Without .copy(), pops from uploading_data would also remove entries from
+            # cavs_need_to_upload, causing subsequent CP cycles to lose CAVs.
             self.cavs_need_to_upload = self.all_cavs.copy()
             self.cavs_timeout = {}
             logger.info(f"CoperceptionManager {self.vid} preparing data from {list(self.all_cavs.keys())} CAVs.")
             data = self.prepare_and_transform_data_from_dict(self.all_cavs, is_ego, ego_lidar_pose, use_ego_vehicles)
             self.uploading_data = data
+            logger.info(f"communicate: set uploading_data with keys {list(self.uploading_data.keys())}")
         if not self.enable_network:
             self.uploading_data = None
             self.clear_uploaded_and_uploading()
@@ -75,22 +92,17 @@ class CoperceptionManager:
 
     def send_cams_via_network(self):
         current_time_slot = self.network_manager.current_time_slot
-        print(f"{self.vid} Collecting data from {list(self.cavs_need_to_upload.keys())} CAVs.")
+        # Compute set of CAVs that still need to send (not yet in uploaded_cavs)
+        pending = [cid for cid in self.cavs_need_to_upload if cid not in self.uploaded_cavs]
+        if pending:
+            print(f"{self.vid} Collecting data from {pending} CAVs (of total {list(self.cavs_need_to_upload.keys())}).")
         for cav_id, vm_dict in self.cavs_need_to_upload.items():
             if cav_id in self.uploaded_cavs:
                 continue
-            if cav_id in self.uploading_cavs:
-                if self.uploading_cavs[cav_id] > current_time_slot - self.timeout_slots:
-                    continue
-                else:
-                    if cav_id in self.cavs_timeout:
-                        self.cavs_timeout[cav_id] += 1
-                    else:
-                        self.cavs_timeout[cav_id] = 1
-                    print(f"cav {cav_id} timeout, current_time_slot: {current_time_slot}, start_slot: {self.uploading_cavs[cav_id]}")
-                    logger.info(f"cav {cav_id} timeout, current_time_slot: {current_time_slot}, start_slot: {self.uploading_cavs[cav_id]}")
-            self.uploading_cavs[cav_id] = current_time_slot
             cav_v2x_manager = vm_dict['v2x_manager']
+
+            # Fresh payloads for a new CP round must not be blocked by stale
+            # in-flight state from the previous round.
             if cav_id not in self.uploading_data_size:
                 cav_data = self.uploading_data.get(cav_id, None)
                 if cav_data is None:
@@ -98,16 +110,46 @@ class CoperceptionManager:
                 # data_size = asizeof(cav_data) 
                 data_size = cav_data['lidar_np'].nbytes
                 self.uploading_data_size[cav_id] = data_size
+                self.uploading_cavs[cav_id] = current_time_slot
+                self.cavs_timeout.pop(cav_id, None)
                 self.v2x_manager.scheduler.record_data_size_infos({(cav_id, self.v2x_manager.vehicle_id) : data_size}) # let scheduler know the data size 
                 print(f"cav {cav_id} is uploading its data to {self.vid} for the FIRST time, size: {data_size} bytes at {self.network_manager.current_time_slot}.")
                 logger.info(f"cav {cav_id} is uploading its data to {self.vid} for the FIRST time, size: {data_size} bytes at {self.network_manager.current_time_slot}.")
-            else:
-                if not self.re_upload_when_timeout or self.cavs_timeout[cav_id] > 1:
-                    continue
-                data_size = self.uploading_data_size[cav_id]
-                print(f"cav {cav_id} is uploading its data to {self.vid} AGAIN, size: {data_size} bytes at {self.network_manager.current_time_slot}.")
-                logger.info(f"cav {cav_id} is uploading its data to {self.vid} AGAIN, size: {data_size} bytes at {self.network_manager.current_time_slot}.")
-            # print(f"cav {cav_id} data size: {data_size} bytes.")
+                self.v2x_manager.scheduler.schedule(cav_v2x_manager, self.v2x_manager, data_size)
+                continue
+
+            data_size = self.uploading_data_size[cav_id]
+            start_slot = self.uploading_cavs.get(cav_id)
+            if start_slot is None:
+                self.uploading_cavs[cav_id] = current_time_slot
+                logger.warning(
+                    f"cav {cav_id} missing upload start slot in round state; "
+                    f"reinitializing at slot {current_time_slot}."
+                )
+                self.v2x_manager.scheduler.schedule(cav_v2x_manager, self.v2x_manager, data_size)
+                continue
+
+            if start_slot > current_time_slot - self.timeout_slots:
+                continue
+
+            timeout_count = self.cavs_timeout.get(cav_id, 0) + 1
+            self.cavs_timeout[cav_id] = timeout_count
+            # NOTE: With NS3 sidelink retransmission, data WILL arrive even if the
+            # initial transmission takes longer than timeout_slots. This "timeout"
+            #告警 only indicates the NS3 retransmission window is still open.
+            # Do NOT interpret this as upload failure - NS3 sidelink ensures delivery.
+            print(f"[NS3-retransmit] cav {cav_id} still in-flight, "
+                  f"current_time_slot: {current_time_slot}, start_slot: {start_slot}, "
+                  f"waiting for sidelink retransmission (not a failure).")
+            logger.info(f"[NS3-retransmit] cav {cav_id} still in-flight, "
+                        f"current_time_slot: {current_time_slot}, start_slot: {start_slot}.")
+
+            if not self.re_upload_when_timeout or timeout_count > 1:
+                continue
+
+            self.uploading_cavs[cav_id] = current_time_slot
+            print(f"cav {cav_id} is uploading its data to {self.vid} AGAIN, size: {data_size} bytes at {self.network_manager.current_time_slot}.")
+            logger.info(f"cav {cav_id} is uploading its data to {self.vid} AGAIN, size: {data_size} bytes at {self.network_manager.current_time_slot}.")
             self.v2x_manager.scheduler.schedule(cav_v2x_manager, self.v2x_manager, data_size)
 
     def receive_cams_via_network(self):
@@ -115,6 +157,9 @@ class CoperceptionManager:
         cams = self.network_manager.get_received_cams(self.vid)
         logger.info(f"{self.vid} received {len(cams)} CAMS from network.")
         received_data = {}
+
+        # First, peek at the cams to understand the current state (don't pop yet)
+        # This allows fragments to be combined before we decide to pop
         for cam in cams.values():
             sender_id = cam.get('sender_id')
             receiver_id = cam.get('receiver_id')
@@ -122,20 +167,47 @@ class CoperceptionManager:
             data_size = self.uploading_data_size.get(sender_id, None)
             if not data_size:
                 continue
+
+            # For NS3 communication: NS3's sidelink retransmission ensures data delivery.
+            # We should only pop from received_cams when we're sure we have complete data.
+            use_ns3 = self.network_manager.use_ns3
+
+            if use_ns3:
+                # NS3 mode: only accept when packet_size matches expected data_size
+                if packet_size >= data_size:
+                    # Complete data received - now pop from received_cams
+                    delay_infos = self.network_manager.pop_received_cams(receiver_id, sender_id)
+                    logger.info(f"cav {sender_id} data upload to {receiver_id} succeeded (NS3 mode). Received size: {packet_size} bytes, expected size: {data_size} bytes, cost time: {self.network_manager.current_time_slot - self.uploading_cavs[sender_id]}.")
+                    logger.info(f"cav {sender_id} communication delay info: {delay_infos}")
+                    logger.info(f"cav {sender_id} uploading_data keys before pop: {list(self.uploading_data.keys()) if self.uploading_data else None}")
+                    data = self.uploading_data.pop(sender_id, None)
+                    logger.info(f"cav {sender_id} pop result: {data is not None}, data type: {type(data)}")
+                    if data:
+                        self.uploaded_cavs[sender_id] = self.network_manager.current_time_slot
+                        self.uploading_cavs.pop(sender_id, None)
+                        self.cavs_timeout.pop(sender_id, None)
+                        received_data[sender_id] = data
+                        print(f"cav {sender_id} has uploaded its data to {self.vid} via network at {self.network_manager.current_time_slot}.")
+                    else:
+                        logger.warning(f"cav {sender_id} data not found in uploading_data of {self.vid}. uploading_data={self.uploading_data}")
+                    continue
+                else:
+                    # Incomplete - don't pop yet, wait for NS3 retransmission
+                    print(f"cav {sender_id} data upload to {receiver_id} incomplete (NS3 mode). Received size: {packet_size} bytes, expected size: {data_size} bytes.")
+                    logger.info(f"cav {sender_id} data upload to {receiver_id} incomplete (NS3 mode). Received size: {packet_size} bytes, expected size: {data_size} bytes.")
+                    continue
+
+            # Non-NS3 mode: pop first, then process
             delay_infos = self.network_manager.pop_received_cams(receiver_id, sender_id)
             if packet_size < data_size * 0.80:
                 self.uploading_data_size[sender_id] -= packet_size
-                # self.network_manager.pop_received_cams(self.vid)
-                delay_infos = self.network_manager.pop_received_cams(receiver_id, sender_id)
                 print(f"cav {sender_id} data upload to {receiver_id} incomplete. Received size: {packet_size} bytes, expected size: {data_size} bytes.")
                 logger.info(f"cav {sender_id} data upload to {receiver_id} incomplete. Received size: {packet_size} bytes, expected size: {data_size} bytes.")
                 continue
-            
+
             print(f"cav {sender_id} data upload to {receiver_id} succeeded. Received size: {packet_size} bytes, expected size: {data_size} bytes, cost time: {self.network_manager.current_time_slot - self.uploading_cavs[sender_id]}.")
             logger.info(f"cav {sender_id} data upload to {receiver_id} succeeded. Received size: {packet_size} bytes, expected size: {data_size} bytes, cost time: {self.network_manager.current_time_slot - self.uploading_cavs[sender_id]}.")
             print(f"cav {sender_id} communication delay info: {delay_infos}")
-            # if delay_infos:
-            #     self.v2x_manager.scheduler.record_communication_delay_infos(delay_infos)
             data = self.uploading_data.pop(sender_id, None)
             if data:
                 self.uploaded_cavs[sender_id] = self.network_manager.current_time_slot
@@ -143,27 +215,37 @@ class CoperceptionManager:
                 print(f"cav {sender_id} has uploaded its data to {self.vid} via network at {self.network_manager.current_time_slot}.")
             else:
                 logger.warning(f"cav {sender_id} data not found in uploading_data of {self.vid}.")
-                
+
         return received_data
 
     def all_data_uploaded(self, percent=0.6):
-        uploaded_num = len(self.uploaded_cavs) + len(self.cavs_timeout)
+        uploaded_num = len(self.uploaded_cavs)
         all_cavs_num = self.cavs_num
         if all_cavs_num == 0 or self.enable_network is False:
             print(f"{self.vid} all_data_uploaded, all_cavs_num: {all_cavs_num}, return True")
             return True
         ok = (uploaded_num / all_cavs_num) >= percent
-        logger.info(f"{self.vid} Coperception data uploaded: {uploaded_num}/{all_cavs_num} ({uploaded_num / all_cavs_num:.2%}), return {ok}, timeout: {self.cavs_timeout.keys()}")
-        print(f"{self.vid} Coperception data uploaded: {uploaded_num}/{all_cavs_num} ({uploaded_num / all_cavs_num:.2%}), return {ok}, timeout: {self.cavs_timeout.keys()}")
+        logger.info(
+            f"{self.vid} Coperception data uploaded: {uploaded_num}/{all_cavs_num} "
+            f"({uploaded_num / all_cavs_num:.2%}), return {ok}, "
+            f"timeout_waiting: {list(self.cavs_timeout.keys())}"
+        )
+        print(
+            f"{self.vid} Coperception data uploaded: {uploaded_num}/{all_cavs_num} "
+            f"({uploaded_num / all_cavs_num:.2%}), return {ok}, "
+            f"timeout_waiting: {list(self.cavs_timeout.keys())}"
+        )
         return ok
 
     def clear_uploaded_and_uploading(self):
-        self.uploaded_cavs = {}
-        self.uploading_cavs = {}
+        self._reset_round_state_for_new_upload()
         self.uploading_data = None
-        self.uploading_data_size = {}
-        self.cavs_timeout = {}
         self.cavs_need_to_upload = {}
+        # NOTE: all_cavs must also be cleared so that the next communicate() call
+        # re-initializes it from get_coperception_cavs_dict(). If all_cavs retains
+        # a reference to the (now-empty) cav_nearby dict, subsequent CP cycles
+        # will have cavs_num=0 and send_cams_via_network() will skip all CAVs.
+        self.all_cavs = {}
         # gc.collect()
         torch.cuda.empty_cache()
 

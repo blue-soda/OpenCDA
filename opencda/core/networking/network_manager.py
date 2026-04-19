@@ -25,6 +25,7 @@ class NetworkManager:
 
     def __init__(self, cav_world, config):
         self.cav_world = cav_world
+        self.config = config  # Store full config for later use
         self.subchannel_num = config.get("subchannel_num", 10)
         self.subchannel_bandwidth = config.get("subchannel_bandwidth", 0.180) * 1e6  #Hz
         # self.max_interference = config.get("max_interference", 0.2)
@@ -35,9 +36,14 @@ class NetworkManager:
         self.world_tick = False
         self.pkt_id = 1
 
+        # Time synchronization state
+        self.fixed_delta_seconds = cav_world.fixed_delta_seconds if hasattr(cav_world, 'fixed_delta_seconds') else 0.05
+        self.current_sim_time = 0.0  # Current CARLA simulation time in seconds
+        self.tick_count = 0  # Number of ticks processed
+
         # Allocation state
         self.active_allocations = defaultdict(set)  # {subchannel: {(src_id, tgt_id, end_time_slot)}}
-        
+
         # Enhanced statistics tracking
         self.current_slot = {
             'try_volume': 0.0,
@@ -50,7 +56,7 @@ class NetworkManager:
             'p_latency': [],
             'utilization': 0.0  # Will be calculated when slot ends
         }
-        
+
         # History stores complete snapshots of each time slot
         self.history = []  # List of slot records
 
@@ -72,24 +78,49 @@ class NetworkManager:
         self.all_vehicles.extend(vehicles)
 
     def tick(self):
+        """Called when CARLA world ticks. Updates simulation time and signals sender."""
+        self.tick_count += 1
+        self.current_sim_time = self.tick_count * self.fixed_delta_seconds
         self.world_tick = True
 
     def send_msg_to_ns3(self):
-        """Send messages to ns-3 if needed."""
+        """Send messages to ns-3 if needed.
+
+        This method runs in a separate thread and communicates with NS3.
+        It uses time synchronization to ensure NS3 and CARLA stay in sync.
+        """
         try:
             self.bridge.send_vehicles_num(self.max_vehicle_num)  # Initial vehicle count
+            logger.info("NS3 sender thread started, waiting for world ticks")
             while self.bridge.is_simulation_running():
                 if self.world_tick:
                     self.world_tick = False
+
+                    # Synchronize with NS3 before sending data
+                    sync_result = self.bridge.sync_with_ns3(self.current_sim_time)
+                    if not sync_result:
+                        # NS3 is not responding - don't send on a dead socket.
+                        # Setting connected=False triggers reconnection on next tick.
+                        # Sending on a dead socket would cause TCP errors that could
+                        # propagate to bridge.stop() and close the CARLA-NS3 connection,
+                        # which terminates the entire co-simulation prematurely.
+                        logger.warning(f"Sync failed at time {self.current_sim_time:.4f}s, not sending data (NS3 may be terminated)")
+                        self.bridge.connected = False
+                        # Trigger reconnection attempt so the next sync can succeed
+                        self.bridge.ensure_connection()
+                        time.sleep(self.time_slot / 5.0)
+                        continue
+
                     vehicle_data = collect_vehicle_data(self.all_vehicles, self.cav_world)
                     self.bridge.send_vehicles_position(vehicle_data)
+
                     if len(self.communication_requests) == 0:
                         time.sleep(self.time_slot / 5.0)
                         continue
                     self.bridge.send_transfer_requests(self.communication_requests[:])
                     self.communication_requests = []
                 time.sleep(self.time_slot / 5.0)
-                
+
         except KeyboardInterrupt:
             logger.info("Simulation interrupted by user")
 
@@ -100,23 +131,47 @@ class NetworkManager:
                 logger.error(f"Error during cleanup: {e}")
         logger.info("Simulation ended")
 
+    def get_current_sim_time(self):
+        """Get the current CARLA simulation time in seconds."""
+        return self.current_sim_time
+
     def init_ns3(self):
         """Initialize ns-3 module if needed."""
         if not self.use_ns3:
             return
-        
+
         self.bridge = CarlaNs3Bridge()
         self.bridge.start()
+
+        # Configure time synchronization from config
+        enable_sync = self.config.get('enable_time_sync', True)
+        # Very short sync timeouts misclassify normal NS3 startup / burst-delivery
+        # latency as bridge failure and can tear down the co-simulation early.
+        sync_timeout = max(self.config.get('sync_timeout', 10.0), 8.0)
+        self.bridge.enable_time_sync(enable_sync)
+        self.bridge.sync_timeout = sync_timeout
+        logger.info(f"NS3 time sync enabled={enable_sync}, timeout={sync_timeout}s")
 
         if not self.sender_thread:
             self.sender_thread = threading.Thread(target=self.send_msg_to_ns3)
             self.sender_thread.daemon = True
             self.sender_thread.start()
 
+    def enable_time_sync(self, enable: bool = True):
+        """Enable or disable time synchronization with NS3.
+
+        Args:
+            enable: True to enable sync (default), False to disable
+        """
+        if self.bridge:
+            self.bridge.enable_time_sync(enable)
+        logger.info(f"Time synchronization {'enabled' if enable else 'disabled'}")
+
     def communicate(self, source, target, volume: float, subchannel_start: int = -1, subchannel_num: int = 0) -> bool:
         """
         Wrapper for resource allocation and communication handling.
         """
+        logger.info(f"[DEBUG] communicate: {source.vehicle_id} -> {target.vehicle_id}, volume={volume}, subchannel_start={subchannel_start}, subchannel_num={subchannel_num}, use_ns3={self.use_ns3}")
         # print(f"Communicate from {source.vehicle_id} to {target.vehicle_id} with volume {volume} on subchannel {subchannel_start} for {subchannel_num} subchannels, use ns-3: {self.use_ns3}.")
         if(self.use_ns3):
             return self.communicate_through_ns3(source, target, volume, subchannel_start, subchannel_num)
@@ -129,9 +184,10 @@ class NetworkManager:
         """
         Handle communication via ns-3 bridge.
         """
+        logger.info(f"[DEBUG] communicate_through_ns3: {source.vehicle_id} -> {target.vehicle_id}, volume={volume}, subchannel_start={subchannel_start}, subchannel_num={subchannel_num}, use_ns3={self.use_ns3}")
         if self.bridge is None:
             raise RuntimeError("ns-3 bridge not initialized.")
-        
+
         while volume > self.max_packet_size:
             self.send_cams_via_ns3(source.vehicle_id, target.vehicle_id, self.max_packet_size, subchannel_start, subchannel_num)
             volume -= self.max_packet_size
@@ -141,6 +197,7 @@ class NetworkManager:
         return True
     
     def send_cams_via_ns3(self, src_id, tgt_id, volume: float, subchannel_start: int = -1, subchannel_num: int = 0):
+        logger.info(f"[DEBUG] send_cams_via_ns3: src={src_id}, tgt={tgt_id}, volume={volume}")
         use_default_subchannel = subchannel_start < 0 or subchannel_num <= 0
         if use_default_subchannel:
             self.communication_requests.append({
@@ -160,6 +217,7 @@ class NetworkManager:
             })
         self.pkt_id += 1
         self._update_communication_stats(volume, "try")
+        logger.info(f"[DEBUG] send_cams_via_ns3: communication_requests now has {len(self.communication_requests)} items")
             
     def get_all_received_cams(self):
         return self.bridge.received_cams.copy()
@@ -190,6 +248,13 @@ class NetworkManager:
                 return self.analyze_ns3_result(cam)
             else:
                 return {}
+
+    def peek_received_cams(self, receiver_id, sender_id):
+        """Peek at received cam without removing it. For NS3 fragmented reception."""
+        cams = self.bridge.received_cams.get(receiver_id, None)
+        if cams:
+            return cams.get(sender_id, None)
+        return None
 
     def analyze_ns3_result(self, cam):
         delay = cam.get('receive_timestamp', -1) - cam.get('send_timestamp', -1)

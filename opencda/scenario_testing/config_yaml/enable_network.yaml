@@ -8,9 +8,11 @@ enable_network:
     # subchannel_num: 25
     # 100Mhz:
     subchannel_bandwidth: 4 #MHz
-    subchannel_num: 10 
+    subchannel_num: 10
     min_sinr_threshold: 3 #dB
     time_slot: 0.10 #second, decided by world.fixed_delta_seconds in default.yaml
     M: 5
     conflict_distance: 70 #meter
     use_ns3: true
+    sync_timeout: 8.0  # seconds - avoid false sync timeouts during multi-batch NS3 delivery
+    final_drain_slots: 20  # stop() tail drain budget for the last in-flight CP upload round
