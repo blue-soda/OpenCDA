@@ -259,7 +259,9 @@ class VehicleManager(object):
         if update_data:
             self.update_data()
         
-        if self.vid == self.cav_world.ego_id and self.v2x_tick:
+        if (self.vid == self.cav_world.ego_id and
+                self.v2x_tick and
+                not getattr(self.cav_world, 'freeze_cluster_updates', False)):
             self.run_algorithm()
 
         # object detection

@@ -224,6 +224,52 @@ def _tick_once(debug=True):
         cav_world.network_manager.advance_time_slot()
 
 
+def _tick_final_drain(debug=True):
+    global scenario_manager, applications, single_cav_list, traffic_cav_list
+
+    all_cavs = single_cav_list + traffic_cav_list
+    if not all_cavs:
+        return
+
+    spectator = scenario_manager.world.get_spectator()
+    spectator_vehicle = single_cav_list[0].vehicle if single_cav_list else all_cavs[0].vehicle
+
+    if debug:
+        debug_helper = scenario_manager.world.debug
+
+    scenario_manager.tick()
+    transform = spectator_vehicle.get_transform()
+    spectator.set_transform(carla.Transform(
+        transform.location + carla.Location(z=180),
+        carla.Rotation(pitch=-90)))
+
+    for i, single_cav in enumerate(single_cav_list):
+        if single_cav.v2x_manager.in_platoon():
+            single_cav_list.pop(i)
+            continue
+
+        single_cav.update_data()
+        if debug:
+            draw_string(debug_helper, single_cav)
+
+    for traffic_cav in traffic_cav_list:
+        traffic_cav.update_data()
+        check_is_out_sight(transform, traffic_cav)
+        if debug:
+            draw_string(debug_helper, traffic_cav)
+
+    for cav in all_cavs:
+        cav.update_info(update_data=False)
+
+    if 'coperception' in applications:
+        for cav in all_cavs:
+            if hasattr(cav.perception_manager, 'submit_cp_results'):
+                cav.submit_cp_results()
+
+    if 'network' in applications:
+        cav_world.network_manager.advance_time_slot()
+
+
 def _run_final_drain(debug=False):
     global cav_world, applications, single_cav_list, traffic_cav_list
 
@@ -244,6 +290,9 @@ def _run_final_drain(debug=False):
     if not drainable:
         return
 
+    previous_freeze = getattr(cav_world, 'freeze_cluster_updates', False)
+    cav_world.freeze_cluster_updates = True
+
     for cav in drainable:
         cav.perception_manager.enable_final_drain(True)
 
@@ -260,8 +309,9 @@ def _run_final_drain(debug=False):
                 f"FINAL_DRAIN slot={drain_slot}/{final_drain_slots} "
                 f"pending_heads={pending} time_slot={CavWorld.network_manager.current_time_slot}"
             )
-            _tick_once(debug=debug)
+            _tick_final_drain(debug=debug)
     finally:
+        cav_world.freeze_cluster_updates = previous_freeze
         for cav in drainable:
             cav.perception_manager.enable_final_drain(False)
 

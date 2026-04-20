@@ -48,19 +48,30 @@ class CarlaNs3Bridge:
 
     def _connect(self, quiet: bool = False) -> bool:
         """Connect to ns-3 server."""
-        if self.socket:
-            self.socket.close()
+        with self.lock:
+            sock = None
+            if self.socket:
+                try:
+                    self.socket.close()
+                except Exception:
+                    pass
+                self.socket = None
 
-        try:
-            self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            self.socket.connect((self.ns3_host, self.ns3_send_port))
-            self.connected = True
-            return True
-        except Exception as e:
-            if not quiet:
-                logger.error(f"Error connecting to NS-3 bridge: {e}")
-            self.connected = False
-            return False
+            try:
+                sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                sock.connect((self.ns3_host, self.ns3_send_port))
+                self.socket = sock
+                self.connected = True
+                return True
+            except Exception as e:
+                if not quiet:
+                    logger.error(f"Error connecting to NS-3 bridge: {e}")
+                self.connected = False
+                try:
+                    sock.close()
+                except Exception:
+                    pass
+                return False
 
     def _reconnect_loop(self):
         """Try to reconnect periodically."""
@@ -343,7 +354,11 @@ class CarlaNs3Bridge:
             logger.info(
                 f"[DEBUG] send_something_to_ns3: sending type={msg_type}, msg_len={len(message)}, connected={self.connected}"
             )
-            self.socket.sendall((message + "\n\r").encode("utf-8"))
+            with self.lock:
+                if self.socket is None:
+                    self.connected = False
+                    return False
+                self.socket.sendall((message + "\n\r").encode("utf-8"))
             return True
         except Exception as e:
             logger.error(f"Error sending vehicle states: {e}")
@@ -353,12 +368,13 @@ class CarlaNs3Bridge:
     def stop(self):
         """Stop the bridge."""
         self.running = False
-        if self.socket:
-            try:
-                self.socket.close()
-            except Exception:
-                pass
-            self.socket = None
+        with self.lock:
+            if self.socket:
+                try:
+                    self.socket.close()
+                except Exception:
+                    pass
+                self.socket = None
         if self.receiver_socket:
             try:
                 self.receiver_socket.close()

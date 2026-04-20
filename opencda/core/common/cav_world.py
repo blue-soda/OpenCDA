@@ -74,6 +74,7 @@ class CavWorld(object):
         self.frequency = int(1 / self.fixed_delta_seconds)
 
         self.network_enabled = False
+        self.freeze_cluster_updates = False
         # print(network_params)
         if network_params:
             self.network_enabled = network_params['enabled']

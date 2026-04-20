@@ -1,4 +1,4 @@
-
+﻿
 ## NS3 Co-Simulation Debugging
 
 ### Startup Order
@@ -455,139 +455,399 @@ while (running) {
 | CP 多轮 uploaded_cavs 重置 | `coperception_manager.py` clear_uploaded_and_uploading | ✅ 已在 HEAD |
 | CP all_data_uploaded 统计 | `coperception_manager.py` all_data_uploaded | ✅ 已在 HEAD |
 
-## 8. 2026-04-20 �����޸���¼
 
-### 8.1 ���������������û��ͬ���� `cluster_state`
+# CARLA + NS3 联合仿真排查记录
 
-��������
-- OpenCDA ��־���Ѿ��ܿ��������໥���֡�
-- �� CP �����־������ `head_id=None`��`members=[]`��`remote_ids=[]`��`with_stats=False`��
-- ��˵�����ⲻ�ڡ��ھӷ��֡������ڡ�������û���������� CP ʹ�õ�״̬����
+## 0. 关键代码与日志路径
 
-�ؼ������ļ���
-- `C:\Workspace\OpenCDA\opencda\core\clustering\managers\clustering_v2x_manager.py`
-- `C:\Workspace\OpenCDA\opencda\core\clustering\base\clustering_algorithm.py`
-- `C:\Workspace\OpenCDA\opencda\core\clustering\algorithms\clustering\coalition_game.py`
+### OpenCDA / CARLA 侧
 
-����
-- `ClusteringV2XManager.run_algorithm()` ����þ����㷨���õ� cluster �б���
-- �����߼�û�пɿ��ذѱ��� cluster �����д��ÿ̨���� `v2x_manager.cluster_state`��
-- `all_clusters` Ҳû���������¾�����ͬ��ˢ�¡�
-
-�޸���
-- �� `clustering_v2x_manager.py` ������ `_sync_cluster_states()`��
-- ÿ���� cluster ���������
-  - ������г��ɵ� `cluster_state`
-  - �� `head_id/member_ids` ��д��ÿ����Ա��
-  - ˢ�� `ClusteringV2XManager.all_clusters`
-  - ��ӡ `CLUSTER_SYNC [...]` ��־
-
-�޸���֤�ݣ�
-- `C:\Workspace\OpenCDA\opencda\log\opencda_20260420_004345.log`
-- ��־�ȳ��� `CLUSTER_SYNC [(1, [1])]`
-- ����ȶ���Ϊ `CLUSTER_SYNC [(1, [1, 2, 3, 4])]`
-
-### 8.2 �������������У�NS3 ���� OpenCDA ������ `127.0.0.1`
-
-��������
-- OpenCDA ������ `5556`���� `5557` ��һֱֻ�У�
-  - `Listening for NS-3 connections on localhost:5557`
-  - `Still waiting for NS-3 connection...`
-- ͬʱͬ���̲߳��ϣ�
-  - ���� `sync_request`
-  - �ȴ� `sync_ack`
-  - ���ʱ
-
-�ؼ������ļ���
+- `C:\Workspace\OpenCDA\opencda\core\clustering\managers\clustering_scheduler.py`
+  - CARLA 侧对子信道的分配入口。
+- `C:\Workspace\OpenCDA\opencda\core\networking\network_manager.py`
+  - OpenCDA 与 NS3 的交互入口，负责拼装和发送 `transfer_requests`。
 - `C:\Workspace\OpenCDA\opencda\core\networking\ns3_co_simulation\bridge\carla_ns3_bridge.py`
-- `C:\Workspace\OpenCDA\opencda\core\networking\ns3_co_simulation\config\settings.py`
-- `\\wsl.localhost\Ubuntu\home\sakakibara\Workspace\carla-ns3-co-simulation\ns3\vanet\main.cc`
-
-����
-- ֮ǰ�ù��� WSL/Windows NAT ��ַ�Ǿ�ֵ��
-- 2026-04-20 ��̨�����ϣ�WSL ���� Windows �����˿�ʵ��ֻ��ͨ�� `127.0.0.1` �ɹ���
-- ������ʹ�þ� `172.26.*` ��ַ��NS3 �޷����� OpenCDA����� `sync_ack` ��������������ʱ��һֱͣ�� 0 �롣
-
-��֤��ʽ��
-- �� Windows ��ʱ�������ز��Զ˿ڡ�
-- �� WSL �ֱ���� `127.0.0.1`��`172.26.160.1`��`10.255.255.254`��
-- ʵ��ֻ�� `127.0.0.1` ����ͨ��
-
-�޸���
-- ���� NS3 ʱ��ʽʹ�ã�
-  - `--carlaHost=127.0.0.1`
-- �޸��� OpenCDA ��־���֣�
-  - `Connected to NS-3 at ('127.0.0.1', ...)`
-  - `sync_with_ns3: sync successful`
-
-### 8.3 ������ʵ���������Զ�˵����Ѿ����� ego ���
-
-�ؼ���־�ļ���
-- OpenCDA��`C:\Workspace\OpenCDA\opencda\log\opencda_20260420_004345.log`
-- NS3��`\\wsl.localhost\Ubuntu\home\sakakibara\Workspace\carla-ns3-co-simulation\log_run_20260420_004323_localhost.txt`
-
-ͳ�ƽ����
-- OpenCDA �����ϴ��ִΣ�3 ��
-- NS3 �յ� `transfer_requests`��3 ��
-- NS3 �յ��ķ�Ƭ����������72 ��
-- ��һ�������ϴ��ɹ���Ա��3 ��
-  - `2 -> 1`
-  - `3 -> 1`
-  - `4 -> 1`
-- ����ʹ��Эͬ�����������ִΣ�1 ��
-  - `CP_EVAL_FRAME ego=1 head_id=1 slot=24 remote_ids=[3, 4, 2] use_remote=True`
-- ������Эͬ���ݼ���ͳ�Ƶ��ύ��1 ��
-  - `CP_SUBMIT_FRAME ego=1 slot=24 remote_ids=[3, 4, 2] with_stats=True`
-
-���� AP��
-- IOU 0.3 = 0.89
-- IOU 0.5 = 0.89
-- IOU 0.7 = 0.75
-
-���ۣ�
-- ������һ�� ego �����ȷʹ���˳�Ա `2/3/4` �ϴ���Զ�˵��ơ�
-- ��û���κ�һ�� CP ������������Эͬ���ݡ�����жϣ��ѱ����������Ʒ���
-
-### 8.4 `timeout_slots = 4` �Ա�������ֻ��Ϊ����ʱ deadline / �澯��ֵ
-
-�ؼ������ļ���
+  - CARLA / OpenCDA 到 NS3 的 socket 桥接。
 - `C:\Workspace\OpenCDA\opencda\core\sensing\perception\coperception_manager.py`
+  - 点云上传、超时、接收完成判断逻辑。
+- `C:\Workspace\OpenCDA\opencda\core\clustering\managers\clustering_perception_manager.py`
+  - 协同感知主循环，决定何时发起上传、何时做融合。
+- `C:\Workspace\OpenCDA\opencda\scenario_testing\template.py`
+  - 仿真总流程控制；本轮新增了 `final_drain` 收尾阶段。
+- `C:\Workspace\OpenCDA\opencda\scenario_testing\config_yaml\enable_network.yaml`
+  - 网络联仿配置；本轮新增 `final_drain_slots`。
 
-��ǰ������
+### NS3 侧
+
+- `\\wsl.localhost\Ubuntu\home\sakakibara\Workspace\carla-ns3-co-simulation\ns3\vanet\main.cc`
+  - 联仿主入口，负责 `vehicles_num`、`vehicles_position`、`transfer_requests`、`sync_request`。
+- `\\wsl.localhost\Ubuntu\home\sakakibara\Workspace\carla-ns3-co-simulation\ns3\vanet\cam-application.cc`
+  - CAM/点云发送节奏控制；之前已加入首帧发送延迟。
+- `\\wsl.localhost\Ubuntu\home\sakakibara\Workspace\carla-ns3-co-simulation\ns3\src\nr-spectrum-phy.cc`
+  - PSCCH/PSSCH 接收解码；`RxSlPscch()` 是本次丢包定位核心。
+- `\\wsl.localhost\Ubuntu\home\sakakibara\Workspace\carla-ns3-co-simulation\ns3\src\nr-sl-ue-mac-scheduler-fixed-mcs.cc`
+  - 候选资源过滤与 grant 分配。
+- `\\wsl.localhost\Ubuntu\home\sakakibara\Workspace\carla-ns3-co-simulation\ns3\src\nr-sl-ue-mac-scheduler-manual.cc`
+  - 手动调度器；当前逻辑子信道到物理资源的映射落在这里。
+
+### 关键日志
+
+- OpenCDA 日志目录：
+  - `C:\Workspace\OpenCDA\opencda\log\`
+- NS3 日志目录：
+  - `\\wsl.localhost\Ubuntu\home\sakakibara\Workspace\carla-ns3-co-simulation\`
+
+## 1. 最初问题现象
+
+- CARLA 端已经发起点云上传请求。
+- NS3 端收到了请求，也确实执行了发送。
+- 但接收端只能完整收到其中一部分，另一部分会卡住或只收到前半段。
+- OpenCDA 统计里经常只有前几个时隙有通信量，后续时隙几乎没有新的有效上传。
+- 协同感知 AP 明显偏低，和“远端点云没有稳定进入 ego 检测”一致。
+
+## 2. 无线链路主问题的根因
+
+### 2.1 不是简单的 PSSCH 子信道冲突
+
+- 复现时，CARLA 侧不同发送方看到的 `scStart` 可以不同，表面上 PSSCH 不重叠。
+- 但即使 PSSCH 不重叠，仍然会出现一条流卡住，说明问题不只在数据子信道编号。
+
+### 2.2 真正卡在 PSCCH 接收淘汰
+
+关键文件：
+
+- `\\wsl.localhost\Ubuntu\home\sakakibara\Workspace\carla-ns3-co-simulation\ns3\src\nr-spectrum-phy.cc`
+
+关键函数：
+
+- `RxSlPscch()`
+
+定位结论：
+
+- 接收侧会用 `rbDecodedBitmap` 记录已经成功解码的 PSCCH 控制资源。
+- 第二个 PSCCH 如果命中这段已占用 RB，会被判定为 `decoded_overlap`。
+- 一旦 SCI1 被淘汰，对应 PSSCH 的后续解码流程也会断掉。
+
+因此真正导致“看起来发了但没完整收到”的，不是单纯的误码，而是接收侧根据 PSCCH 资源冲突主动放弃了解码。
+
+### 2.3 这是调度语义缺失，不只是 PHY 特性
+
+- `decoded_overlap` 本身更像 PHY 接收模型的保护性特性，不是凭空出错。
+- 真正的问题是：调度器和上层接口允许了一组“接收侧根本不能并发处理”的资源组合进入发送阶段。
+- 之前 CARLA 传来的 `sc_start/sc_num` 被过于直接地当成物理子信道写入，破坏了 NS3 原本候选资源里“slot + PSCCH + PSSCH”的合法绑定关系。
+
+## 3. 无线链路修复方向与结果
+
+### 3.1 逻辑子信道不再直接等于物理起点
+
+最终修法不是继续放宽 `RxSlPscch()`，而是改变语义：
+
+- CARLA 侧继续看到多个“逻辑子信道”。
+- 但这些逻辑子信道不再表示“直接指定物理 PSSCH 起点”。
+- NS3 先根据自己的候选资源过滤规则，得到当前 slot 上的合法资源集合。
+- 然后把 CARLA 传来的逻辑编号解释为“合法候选资源中的第 k 个”。
+
+这样保留下来的就是一整套合法无线资源，而不是单独覆写一个 PSSCH 起点。
+
+### 3.2 为什么“之前也是 10 个子信道”却还会冲突
+
+关键不在数字 10，而在语义。
+
+修改前：
+
+- `10` 更接近“10 个可以任意覆写的物理起点编号”。
+- 会导致 PSCCH 约束被绕开。
+
+修改后：
+
+- `10` 表示“NS3 在当前约束下筛出来的 10 个合法逻辑候选编号”。
+- 因此数字没变，但冲突消失了。
+
+### 3.3 联调验证结论
+
+已验证过的真实联调结果表明：
+
+- OpenCDA 可以发起多轮上传。
+- NS3 可以稳定收到并执行对应发送。
+- 至少已有多轮 `CP_EVAL_FRAME ... use_remote=True` 和 `CP_SUBMIT_FRAME ... with_stats=True`，说明远端点云确实进入了 ego 检测。
+
+## 4. OpenCDA 侧残留逻辑问题
+
+### 4.1 `timeout_slots = 4` 不是“4 个 slot 内必须传完”
+
+当前参数仍然在：
+
 - `timeout_slots = 4`
 - `re_upload_when_timeout = False`
 
-���ֲ�ã�
-- ��һ����·���ƴӷ���ȫ����ɣ�Լ���� 20~21 �� slot��
+含义应解释为：
 
-���壺
-- �ӡ�100ms deadline���Ƕȿ��������ϴ��ǳ�ʱ�ġ�
-- ���ӡ���·�ɿ��ԡ��Ƕȿ��������Ƕ�ʧ�����ǡ������ܵ���������������
+- 它更像“实时 deadline / 告警阈值”。
+- 超过 4 个 slot 代表这轮上传已经不满足 100ms 实时要求。
+- 但不等于数据一定丢失，更不等于链路已经失败。
 
-��˱��ֲ��õĲ�������ǣ�
-- ���� `timeout_slots = 4` ����
-- ���������� `final_drain_slots = 20`
-- `timeout_slots` ������ʾʵʱ deadline / �澯��ֵ
-- `final_drain_slots` ֻ�� episode ��β�׶���Ч�����ڵȴ����һ����;�ϴ��������
+本轮实测中，三路点云完整上传可能要 20 到 30 个 slot，这说明：
 
-### 8.5 ���� `final_drain_slots = 20`
+- 从协同感知实时性标准看，它确实超时。
+- 从链路完整性看，它仍然可能最终成功。
 
-�ؼ������ļ���
+### 4.2 之前的统计容易误导
+
+- `history_try_volume` 前几个 slot 非零、后续接近零，不一定表示“后续一直失败”。
+- 很多时候是后续根本没有新的 `transfer_requests` 被发出来。
+- `avg_throughput` 被摊平到整个 episode，也会让一次 burst 上传看起来吞吐很低。
+
+### 4.3 需要区分三类状态
+
+- “实时 deadline 内完成”
+- “deadline 外最终完成”
+- “最终未完成”
+
+否则：
+
+- AP 低时无法区分是无线丢包、上层没再发、还是只是统计口径问题。
+
+## 5. 2026-04-18 本轮之前的工程性修复
+
+### 5.1 NS3 Socket 接收线程可退出
+
+关键文件：
+
+- `\\wsl.localhost\Ubuntu\home\sakakibara\Workspace\carla-ns3-co-simulation\ns3\vanet\main.cc`
+
+问题：
+
+- 接收线程里阻塞式 `recv()` 会导致 NS3 在 CARLA 断开或主线程退出后卡死。
+
+修复：
+
+- 改成 `select()` + 超时轮询。
+- 让接收线程能周期性检查 `running`，避免在联仿后期永久阻塞。
+
+### 5.2 OpenCDA 同步失败后不应长期假死
+
+关键文件：
+
+- `C:\Workspace\OpenCDA\opencda\core\networking\network_manager.py`
+- `C:\Workspace\OpenCDA\opencda\core\networking\ns3_co_simulation\bridge\carla_ns3_bridge.py`
+
+修复方向：
+
+- 对 `sync_request / sync_ack` 的失败做重试和连接恢复。
+- 启动联调时优先清理旧进程，避免端口和桥接状态残留。
+
+### 5.3 CP 聚类结果必须真正回写到运行态
+
+关键文件：
+
+- `C:\Workspace\OpenCDA\opencda\core\clustering\managers\clustering_v2x_manager.py`
+- `C:\Workspace\OpenCDA\opencda\core\clustering\base\clustering_algorithm.py`
+- `C:\Workspace\OpenCDA\opencda\core\clustering\managers\clustering_perception_manager.py`
+
+问题：
+
+- 聚类算法已经算出了 cluster，但运行态没有同步回 `cluster_state`。
+- 结果就是日志里能发现邻居，但 CP 长期表现为 `head_id=None` 或 `members=[]`。
+
+修复后：
+
+- `CLUSTER_SYNC` 会真正驱动 CP 使用新的 cluster head / members。
+- 远端上传和融合逻辑终于和聚类结果一致。
+
+## 6. 2026-04-20 本轮修复记录
+
+### 6.1 聚类结果已算出，但没有同步回 `cluster_state`
+
+问题现象：
+
+- OpenCDA 日志里已经能看到车辆相互发现。
+- 但 CP 相关日志长期是 `head_id=None`、`members=[]`、`remote_ids=[]`、`with_stats=False`。
+- 这说明问题不在“邻居发现”，而在“聚类结果没有真正进入 CP 使用状态”。
+
+处理结果：
+
+- 已修正聚类结果向运行态同步的链路。
+- 日志里已经能看到类似 `CLUSTER_SYNC [(1, [1, 2, 3, 4])]` 的记录。
+- 随后也出现了 `CP_EVAL_FRAME ... use_remote=True` 和 `CP_SUBMIT_FRAME ... with_stats=True`。
+
+### 6.2 本机这轮联调中，NS3 回连 OpenCDA 必须走 `127.0.0.1`
+
+现象：
+
+- 之前文档里写过 WSL NAT 地址。
+- 但本机本轮实际联调里，NS3 用 NAT 地址回连 OpenCDA 不稳定。
+- 实测只有 `127.0.0.1` 稳定。
+
+当前实际启动方式应固定为：
+
+- NS3 启动参数显式加 `--carlaHost=127.0.0.1`
+- OpenCDA 继续用 `conda run -n opencda python opencda.py -t v2x_uav_carla --apply_ml --apply_cp --debug --network`
+
+### 6.3 本轮真实联调结果：远端点云已经进入 ego 检测
+
+关键日志：
+
+- OpenCDA：`C:\Workspace\OpenCDA\opencda\log\opencda_20260420_015115.log`
+- NS3：`\\wsl.localhost\Ubuntu\home\sakakibara\Workspace\carla-ns3-co-simulation\log_run_20260420_015051_finaldrain.txt`
+
+已确认日志特征：
+
+- 存在多次 `send_transfer_requests: sending 24 requests`
+- 存在多次远端上传完成日志
+- 存在多次 `CP_EVAL_FRAME ego=1 ... use_remote=True`
+- 存在多次 `CP_SUBMIT_FRAME ego=1 ... with_stats=True`
+
+这说明：
+
+- “没有任何一轮 CP 真正用了完整协同数据”这个判断已经被推翻。
+- 至少已有不止一轮远端点云真正进入 ego 检测和评估提交通道。
+
+### 6.4 `timeout_slots = 4` 仍保留，但只作为运行时 deadline / 告警阈值
+
+关键文件：
+
+- `C:\Workspace\OpenCDA\opencda\core\sensing\perception\coperception_manager.py`
+
+当前设计：
+
+- 保留 `timeout_slots = 4`
+- 不把它改成 20
+
+原因：
+
+- 4 个 slot 对应大约 100ms，仍然可作为协同感知实时性阈值。
+- 如果直接把它改大，会模糊“是否满足实时要求”的判断。
+
+所以本轮的设计是：
+
+- `timeout_slots` 继续表示实时 deadline / 告警阈值。
+- 另增独立的收尾等待参数，不和 deadline 混用。
+
+### 6.5 新增 `final_drain_slots = 20`
+
+关键文件：
+
 - `C:\Workspace\OpenCDA\opencda\scenario_testing\template.py`
 - `C:\Workspace\OpenCDA\opencda\core\clustering\managers\clustering_perception_manager.py`
 - `C:\Workspace\OpenCDA\opencda\scenario_testing\config_yaml\enable_network.yaml`
 
-ʵ��˼·��
-- �� `stop()` ���ʽ����ǰ����һ�������޵���β�ſս׶Ρ�
-- ����׶β��ٷ����µ��ϴ��ִΣ�ֻ���պ��ƽ���ǰ�Ѿ���;�ĵ��Ʒ�Ƭ��
-- �������ƽ� `20` �� slot��
+实现思路：
 
-ʵ��ϸ�ڣ�
-- `template.py` ������ `_run_final_drain()`��
-- `clustering_perception_manager.py` ������ `final_drain_mode`��`enable_final_drain()`��`has_pending_final_drain()`��
-- ������ final drain ʱ��
-  - cluster head ֻ���� `receive_cluster_members_data()`
-  - ���ٵ��ûᴥ�����ϴ��� `collect_cluster_members_data()`
-  - ��ǰ����;�ϴ�������β��������ɣ��Կɲ������һ�� CP ����
+- 在 episode 正式结束前，增加一个有上限的收尾排空阶段。
+- 这个阶段不再开启新的上传轮次，只推进当前仍在途的上传。
+- 最多额外推进 `20` 个 slot。
 
-��һ����Ŀ�Ĳ��Ǹı����������ڵ� 100ms deadline�����Ǳ��⡰���һ���Ѿ����������������˳�����������û�Ե�β�ֽ������
+目的：
+
+- 避免“最后一轮上传已经发出，但程序先退出，导致评估没吃到尾轮结果”。
+
+### 6.6 本轮 `final_drain` 联调结果
+
+在 `opencda_20260420_015115.log` 中已经看到：
+
+- `FINAL_DRAIN slot=1/20 pending_heads=[2] time_slot=70`
+
+这说明：
+
+- `final_drain` 机制已经被真正触发，不是死代码。
+
+但同一轮日志尾部随后出现：
+
+- `Sync timeout after 8.0s for CARLA time 3.2000s`
+- `Sync failed at time 3.5000s, not sending data (NS3 may be terminated)`
+- 桥接重连和新的 `cam_received` 残留消息
+
+因此当前结论是：
+
+- `final_drain` 代码路径已经生效。
+- 但这轮联调在收尾阶段又遇到了 NS3 / 桥接层的不稳定退出。
+- 还不能把这轮视为“final_drain 已经完整验证成功”。
+
+## 7. 当前结论
+
+可以明确确认的结论：
+
+- 无线链路主丢包问题已经定位到 PSCCH 资源冲突与错误的资源语义。
+- 逻辑子信道到合法物理资源的映射方案已经落地，之前那类并发上传丢失问题已不再是主矛盾。
+- OpenCDA 已经存在真实轮次把远端点云用于 ego 检测与统计提交。
+- `timeout_slots = 4` 仍应保留为实时性阈值，而不是简单拉大。
+- `final_drain_slots = 20` 已经实现并被实际触发，但还需要一轮完整、无同步中断的联调来确认最终效果。
+
+## 8. 接下来如何继续排查
+
+建议执行顺序：
+
+1. 每次联调前先清理所有残留进程，只保留一个 CARLA 实例。
+2. 固定使用 `--carlaHost=127.0.0.1` 启动 NS3。
+3. 重新跑一轮完整联调，重点搜索：
+   - `FINAL_DRAIN`
+   - `Sync timeout`
+   - `Sync failed`
+   - `CP_EVAL_FRAME`
+   - `CP_SUBMIT_FRAME`
+   - `Average Precision`
+4. 如果 `FINAL_DRAIN` 期间仍出现桥接断开，继续定位：
+   - NS3 是否先于 OpenCDA 退出
+   - `sync_request / sync_ack` 是否在收尾阶段卡死
+   - 是否存在旧 socket 或残留 `cam_received` 影响重连
+5. 只有在一轮日志同时满足以下条件时，才算 `final_drain` 验证完成：
+   - `FINAL_DRAIN` 正常跑完或提前 drain 成功
+   - 没有新的 `Sync timeout / Sync failed`
+   - 最后一轮在途上传在收尾窗口内完成
+   - 收尾后仍能看到最终评估输出
+
+## 9. 2026-04-20 Mirrored 环境复测结论
+
+### 9.1 `localhost` 是否可用，取决于 WSL 网络模式
+
+- 在 WSL 处于 Mirrored 模式时：
+  - OpenCDA 到 NS3 的 `localhost:5556`
+  - NS3 回连 OpenCDA 的 `127.0.0.1:5557`
+  都可以正常使用。
+- 在 WSL 退回 NAT 模式时：
+  - `5556` 方向可能仍能通过 localhost 转发工作
+  - 但 `5557` 回连会失败，NS3 日志会出现：
+    - `Connecting to Carla on port 5557...`
+    - `connect failed: Connection refused`
+    - `send_to_carla_fd is not connected`
+- 因此文档里原先“固定使用 `127.0.0.1`”这个结论，只对 Mirrored 模式成立；如果 WSL 退回 NAT，需要重新按当时网络环境决定回连地址。
+
+### 9.2 本轮 `final_drain` 已成功验证
+
+本轮成功联调日志：
+
+- OpenCDA：
+  - `C:\Workspace\OpenCDA\opencda\log\opencda_20260420_093048.log`
+- NS3：
+  - `\\wsl.localhost\Ubuntu\home\sakakibara\Workspace\carla-ns3-co-simulation\log_run_20260420_093043_finaldrain_mirrored_clean.txt`
+
+关键观察：
+
+- NS3 已成功回连 OpenCDA：
+  - `Connected to Carla on port 5557.`
+- OpenCDA 已产生真实上传：
+  - `send_transfer_requests: sending 24 requests`
+- 第一轮 cluster head 为 `1`，成功完成一轮带远端点云的 CP：
+  - `CP_EVAL_FRAME ego=1 head_id=1 slot=36 remote_ids=[3, 4, 2] use_remote=True`
+  - `CP_SUBMIT_FRAME ego=1 slot=36 remote_ids=[3, 4, 2] with_stats=True`
+- 后续 cluster head 切换为 `2` 后，尾轮上传进入 `final_drain`：
+  - `FINAL_DRAIN slot=1/20 pending_heads=[2] time_slot=70`
+  - ...
+  - `FINAL_DRAIN done before slot 11, no pending uploads.`
+- `final_drain` 期间，原本未完成的尾轮上传被继续推进：
+  - `cav 3 data upload to 2 succeeded ... cost time: 16.`
+  - `cav 1 data upload to 2 succeeded ... cost time: 16.`
+  - 当时 `2 Coperception data uploaded: 2/3 (66.67%), return True`
+- 整轮没有再出现此前那种 `FINAL_DRAIN` 一触发就连续 `Sync timeout / Sync failed` 的失败模式。
+
+最终结果：
+
+- `The Average Precision at IOU 0.3 is 0.89`
+- `The Average Precision at IOU 0.5 is 0.89`
+- `The Average Precision at IOU 0.7 is 0.76`
+
+结论：
+
+- `final_drain_slots = 20` 的实现已经在真实联调中证明有效。
+- 它确实能把 episode 尾部仍在途的上传继续推进到完成或部分完成，再进入最终评估。
+- 当前 `final_drain` 不再是未验证特性，可以视为已完成验证。
