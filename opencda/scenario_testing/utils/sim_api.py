@@ -186,19 +186,30 @@ class ScenarioManager:
 
         self.client = \
             carla.Client('localhost', simulation_config['client_port'])
-        self.client.set_timeout(10.0)
+        client_timeout = simulation_config.get('client_timeout', 10.0)
+        self.client.set_timeout(client_timeout)
 
         if xodr_path:
             self.world = load_customized_world(xodr_path, self.client)
         elif town:
+            current_map_name = ""
             try:
-                self.world = self.client.load_world(town)
-            except RuntimeError as e:
-                print(
-                    f"{bcolors.FAIL} %s is not found in your CARLA repo! "
-                    f"Please download all town maps to your CARLA "
-                    f"repo!{bcolors.ENDC}" % town)
-                print(f"{bcolors.FAIL} Error: {e} {bcolors.ENDC}")
+                current_map_name = self.client.get_world().get_map().name
+            except RuntimeError:
+                current_map_name = ""
+
+            if current_map_name.endswith("/%s" % town) or \
+                    current_map_name == town:
+                self.world = self.client.get_world()
+            else:
+                try:
+                    self.world = self.client.load_world(town)
+                except RuntimeError as e:
+                    print(
+                        f"{bcolors.FAIL} Failed to load {town} from CARLA. "
+                        f"If the map is already active, launch CARLA directly "
+                        f"with that town or raise client_timeout.{bcolors.ENDC}")
+                    print(f"{bcolors.FAIL} Error: {e} {bcolors.ENDC}")
         else:
             self.world = self.client.get_world()
 

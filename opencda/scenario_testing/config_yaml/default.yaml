@@ -7,6 +7,7 @@ description: |-
 world:
   sync_mode: true
   client_port: 2000
+  client_timeout: 60.0
   fixed_delta_seconds: 0.05  #seconds
   seed: 11 # seed for numpy and random
   weather:

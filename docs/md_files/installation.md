@@ -82,17 +82,22 @@ pip install -r requirements.txt
 ```
 
 After dependencies are installed, we need to install the CARLA python library into opencda conda environment.
-You can do this by running this script:
+The recommended path is to run the repository setup script, which also installs the matching ML stack and runs environment diagnostics:
 ```sh
 export CARLA_HOME=/path/to/your/CARLA_ROOT
 export CARLA_VERSION=0.9.11 #or 0.9.12 depends on your CARLA
-. setup.sh
+bash setup.sh
 ```
 If everything works correctly, you will see a cache folder is created in your OpenCDA root dir, and the terminal shows
 "Successful Setup!". To double check the carla package is correctly installed, run the following command and 
 there should be no error.
 ```sh
 python -c "import carla" # check whether carla is installed correctly.
+```
+If you need to re-check an existing environment later, run:
+```sh
+python scripts/diagnose_opencda_env.py
+python scripts/diagnose_opencda_env.py --auto-fix
 ```
 <strong>Note: If you are using Python other than 3.7 and CARLA < 0.9.11 then you have to change the setup.sh to your
 carla version's egg file or manually installed carla to your conda environment.</strong>
@@ -185,4 +190,3 @@ docker run -it --rm \
   -v $HOME/.Xauthority:/root/.Xauthority \
   --name opencda_container opencda_docker /bin/bash
 ```
-
