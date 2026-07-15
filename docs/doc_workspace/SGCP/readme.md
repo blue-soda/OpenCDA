@@ -16,6 +16,7 @@
 - `potential_game_conditions.md`：PPS potential game / constrained best-response 的成立条件、代码偏差和论文写作边界。
 - `paper_revision_plan.md`：面向论文正文和 rebuttal 的修订计划，记录具体表述替换、审稿意见回应和风险边界。
 - `related_work_novelty_revision.md`：related work 与 novelty 的重写建议，重点回应 decentralized CP baseline 和 coalition-game 相似性质疑。
+- `parameter_calibration_revision.md`：`f(rho)`、`rho_th`、`N_max`、`T_min^stab` 的参数标定与论文写作依据。
 - `../environment.md`：全局环境文档，统一维护 Conda 环境、数据路径、CARLA 路径、启动命令和通用工具入口；运行实验前优先查看这里。
 
 ## 维护约定

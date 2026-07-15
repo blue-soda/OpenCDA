@@ -2242,3 +2242,32 @@ docs/doc_workspace/SGCP/related_work_novelty_revision.md
 - 强调 SGCP 面向 RSU-free dense urban CP 的组合贡献：grid-level perception utility、LiDAR density calibration、motion/stability-aware coalition control、硬 `N_max` 容量约束、PPS 子信道可行调度和 inter-cluster late fusion。
 - Related work 增补 V2V-only / decentralized CP、learned communication selection、RSU-centric scheduling 和其他领域 coalition formation 的边界。
 - Rebuttal 中承认 coalition formation 在其他领域已有应用，但说明 SGCP 的 utility、deadline、payload、subchannel 和 hierarchical fusion 约束不同。
+
+## 2026-07-16 - Parameter and utility calibration revision
+
+### 目的
+
+推进 P4：
+
+- 补充 `f(rho)` 标定过程和曲线。
+- 补充 `T_min^stab`、`N_max`、`rho_th` 参数选择依据。
+
+### 复核材料
+
+- `f_rho_calibration.md`
+- `results.md` 中 `T_min^stab`、`N_max`、`rho_th` sweep。
+- Reviewer 3/4 对 density calibration、500 ms stability window 和 detector/sensor 泛化的意见。
+
+### 输出
+
+新增：
+
+```text
+docs/doc_workspace/SGCP/parameter_calibration_revision.md
+```
+
+核心口径：
+
+- `rho_th=2.0`：位于当前非零 grid density p90/p95 之间，是 AP/payload 折中点，不是通用常数。
+- `N_max=4`：容量/fragmentation 折中；默认下无 singleton，但仍有 99.15 次满簇候选跳过/frame，说明容量约束实际生效。
+- `T_min^stab=500 ms`：当前 41 帧 sweep 对 100-1000 ms 不敏感，不能写为最优，只能写为覆盖五个 10 Hz 感知周期的 conservative hysteresis default；需要更动态场景支撑强结论。

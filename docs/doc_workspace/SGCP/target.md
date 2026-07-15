@@ -83,8 +83,8 @@
 
 - [x] 重写 related work 的 decentralized CP 和 coalition game 对比。已新增 `related_work_novelty_revision.md`，给出 V2V-only CP、RSU-centric CP、learned communication selection、其他领域 coalition formation 的对比段落和 `main.tex` 插入建议。
 - [x] 增强 novelty：突出感知效用驱动、稳定性约束、分层 fusion、分布式资源调度的组合贡献。已在 `related_work_novelty_revision.md` 中形成 introduction contribution 和 rebuttal 可用文本。
-- [ ] 补充 `f(rho)` 标定过程和曲线。
-- [ ] 补充 `T_min^stab`、`N_max`、`rho_th` 参数选择依据。
+- [x] 补充 `f(rho)` 标定过程和曲线。已新增 `parameter_calibration_revision.md`，整合 density calibration 命令、788,020 个 CAV-grid 样本统计、`rho_th` sweep 和论文/rebuttal 写法。
+- [x] 补充 `T_min^stab`、`N_max`、`rho_th` 参数选择依据。已新增 `parameter_calibration_revision.md`；明确 `rho_th=2.0` 是 AP/payload 折中，`N_max=4` 是容量/fragmentation 折中，`T_min^stab=500 ms` 只能写为保守默认而非当前证据下的最优值。
 - [ ] 补充 FullPerception baseline 的实现细节和公平性讨论。
 - [ ] 补充实时性实验，包括毫秒级耗时分解。
 - [x] 修正 “topology change 才触发” 与 “每个周期重复” 的表述矛盾。已新增 `paper_revision_plan.md`，明确每周期更新 beacon/density/PPS，cluster membership 仅在 topology/stability trigger 或 periodic guard 触发时更新，并给出 `main.tex` 替换建议。
