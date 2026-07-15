@@ -43,6 +43,22 @@
 | constrained early only | 0.36 | 0.34 | 0.17 | TBD | 11 | All cluster heads, no inter-cluster late fusion |
 | late fusion only | 0.91 | 0.85 | 0.51 | TBD | N/A | OpenCOOD full 20-CAV late checkpoint; reference only, not a strict same-checkpoint SGCP ablation |
 
+## Baseline 公平性说明
+
+详细口径见 `baseline_fairness.md`。当前结果应按以下层级解释：
+
+| Layer | Method | Current Result | Main Fair Baseline? | Notes |
+| --- | --- | --- | --- | --- |
+| Upper reference | Full 20-CAV early fusion | 0.85 / 0.83 / 0.48 | No | 全点云共享，无 SGCP 通信约束 |
+| Upper reference | Full 20-CAV late checkpoint | 0.91 / 0.85 / 0.51 | No | 使用独立 late checkpoint，不能直接作为同 checkpoint 消融 |
+| Upper reference | FullPerception-RSU | TBD | No | 集中式/RSU-assisted reference；`v2xp_cluster_carla` 当前未启用 RSU |
+| SGCP main | SGCP constrained + inter-cluster late fusion | 0.77 / 0.73 / 0.35 | Yes | 当前完整 SGCP 离线主口径 |
+| Same pipeline ablation | Random scheduler | 0.44 / 0.39 / 0.17 | Yes | 同 SGCP clustering + late-fusion path，替换 PPS |
+| Same pipeline ablation | MWS scheduler | 0.31 / 0.26 / 0.11 | Pending | 需要复核 MWS baseline 定义 |
+| Reference only | Singleton full late-fusion reference | 0.82 / 0.76 / 0.37 | No | late-fuse 全部 20 CAV，当前未计 detection-box exchange overhead |
+
+论文写作建议：FullPerception-RSU 和 full 20-CAV early/late fusion 只能作为 upper/reference，不应放入“同通信预算公平主对比”结论。公平主对比应使用同数据、同 backbone、同 AP 口径，并尽量匹配通信预算或显式报告 payload。
+
 ## 参数敏感性
 
 ### Stability Window

@@ -1502,3 +1502,36 @@ conda run -n opencda python -m opencda.tools.offline_inference --dataset-root D:
 - `0.5/1.0 MHz` 逐步恢复成员上传，selected grids、payload 和 AP 同步上升。
 - `20/40/80 MHz` 在当前 dump 上完全重合，说明常规带宽已超过该场景 PPS 可用候选网格需求。
 - 论文写作建议：把 0.1/0.5/1.0 MHz 定位为 stress test，用于证明带宽约束实现有效；把 5/10/20 子信道实验作为常规网络资源敏感性主结果。
+
+## 2026-07-15 - baseline 公平性口径整理
+
+### 目的
+
+- 推进 P2 “补充公平 baseline”。
+- 先明确 FullPerception-RSU、FullPerception-Decentralized、full early/late reference 和 SGCP same-pipeline ablation 的层级，避免论文主表中混用不公平 baseline。
+
+### 文档更新
+
+- 新增 `docs/doc_workspace/SGCP/baseline_fairness.md`。
+- 在 `results.md` 增加 “Baseline 公平性说明” 小节。
+- 在 `target.md` 标记完成：
+  - 明确 FullPerception-RSU 设置，作为 centralized/RSU-assisted upper reference。
+  - 在 `results.md` 中单独记录 baseline 公平性说明。
+
+### 当前结论
+
+| Method | Layer | 是否作为公平主对比 | 说明 |
+| --- | --- | --- | --- |
+| Full 20-CAV early fusion | Upper reference | No | 全点云共享，无 SGCP 通信约束 |
+| Full 20-CAV late checkpoint | Upper reference | No | 独立 late checkpoint，不是同 checkpoint 消融 |
+| FullPerception-RSU | Upper reference | No | 集中式/RSU-assisted reference；当前 `v2xp_cluster_carla` 未启用 RSU |
+| SGCP constrained + inter-cluster late fusion | Main method | Yes | 当前完整 SGCP 离线主口径 |
+| Random scheduler | Same pipeline ablation | Yes | 同 SGCP clustering + late-fusion path，替换 PPS |
+| MWS scheduler | Same pipeline ablation | Pending | 需要复核 MWS 论文 baseline 定义 |
+| Singleton full late-fusion reference | Reference only | No | late-fuse 全部 20 CAV，当前未计 detection-box exchange overhead |
+
+### 下一步
+
+- 实现或整理 FullPerception-Decentralized / same-budget CAV-only selective-sharing baseline。
+- 候选：nearest/top-k density/communication-aware top-k，匹配 SGCP 的 payload、source CAV 数或 selected-grid 数。
+- 对 singleton reference 估算 prediction-level detection box exchange overhead，避免误写为零通信 baseline。

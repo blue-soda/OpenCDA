@@ -88,6 +88,7 @@ SGCP 工作与仓库中以下部分关系最紧密：
 - 已新增 `--num-channels` / `--bandwidth-mhz` 离线参数，并完成网络资源敏感性第一版：5/10/20 子信道 AP@0.5 分别为 0.53/0.73/0.73，平均上传 payload 分别为 60,225/109,415/139,300 bytes/source，平均 selected grids 分别为 45.58/87.32/117.18。
 - 已完成 PPS 带宽参数第一轮复核：`bandwidth_per_channel` 已进入 `PotentialGame` 的 max-grid、SINR 和 data-rate 计算；20/40/80 MHz 当前结果一致，是因为本 dump 的调度不由带宽上限主导，主要受子信道数量、每簇头 `B_h=1` RB 和候选网格集合约束。
 - 已完成低带宽瓶颈触发实验：0.1/0.5/1.0 MHz 下 AP@0.5 分别为 0.22/0.50/0.61，平均 selected grids 分别为 0.00/4.32/9.66，证明带宽约束可观测生效。
+- 已新增 `baseline_fairness.md`，明确 FullPerception-RSU 是 centralized/RSU-assisted upper reference，不作为同通信预算公平主对比；full 20-CAV early/late fusion 也只作为 upper/reference。
 - 已确认当前可运行环境版本快照，并记录到 `docs/doc_workspace/environment.md`：OpenCDA HEAD `fcc29fdc9ee9a9fe694c12e1fb6792b4d41bccac`，Python 3.7.10，CARLA Python API 0.9.11，PyTorch 1.10.0+cu113，Open3D 0.10.0.0，ns-3 wrapper `ns-3-dev-v2x-v1.1-dirty`。
 - 已修复在线 CARLA-NS3 时间流速不一致问题：`NetworkManager.time_slot` 不再将 `world.fixed_delta_seconds` 除以 5，`current_sim_time`、`current_time_slot` 与 CARLA tick 统一推进。
 - 已修复在线 NS3 初始化顺序：sender 线程等待车辆注册后先发送真实车辆数和第一帧 `vehicles_position`，再进入 `sync_request/sync_ack` 循环。
@@ -105,6 +106,7 @@ SGCP 工作与仓库中以下部分关系最紧密：
 - 当前 `T_min_stab=0` 消融未显示差异，说明当前 41 帧 dump 不足以证明稳定窗口贡献；需要更长序列或更强相对运动/topology change 场景。
 - `T_min^stab=100-1000 ms` 参数实验同样未显示差异；当前只能作为“短序列无敏感性”的工程记录，不能作为论文中参数选择依据。
 - singleton-cluster 结果会 late-fuse 全部 20 个 CAV 的检测框，但当前只统计点云 payload，不能直接作为零通信公平 baseline；需要补检测框交换开销或实现距离/随机固定簇对比。
+- FullPerception-Decentralized 尚未实现 same-budget CAV-only selective-sharing baseline；当前 `random/mws` 只能覆盖 scheduler ablation，不能完全替代该 baseline。
 - `N_max` 参数实验显示非单调趋势；进入论文前需要补更长序列/不同密度场景，并计入 inter-cluster 检测框交换开销。
 - `rho_th` 参数实验已显示通信-精度折中，但完整 `f(rho)` 标定曲线仍未复现；论文需要补密度采样协议、拟合过程和跨场景/探测器泛化。
 - CAV 数量规模实验目前只是固定场景子集实验；论文级“密度扩展”仍需重新导出不同 CAV/背景车密度的 CARLA 场景。

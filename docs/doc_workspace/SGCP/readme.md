@@ -8,6 +8,7 @@
 - `target.md`：任务清单，按写作修订、补充实验、机制完善和工程落地拆分。
 - `log.md`：实验日志，按日期追加运行命令、配置、现象、结果和下一步。
 - `results.md`：核心实验结果记录，用于沉淀可进入论文或 rebuttal 的表格、图和结论。
+- `baseline_fairness.md`：baseline 公平性说明，区分 upper reference、same-pipeline ablation 和同通信约束主对比。
 - `../environment.md`：全局环境文档，统一维护 Conda 环境、数据路径、CARLA 路径、启动命令和通用工具入口；运行实验前优先查看这里。
 
 ## 维护约定
