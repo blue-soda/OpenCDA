@@ -54,6 +54,9 @@ def parse_args():
                                  'all-cluster-heads'],
                         default='ego-cluster-head',
                         help='Receiver for constrained perception. all-cluster-heads evaluates every cluster head per frame.')
+    parser.add_argument('--sgcp-inter-cluster-late-fusion',
+                        action='store_true',
+                        help='Late-fuse predictions from all SGCP cluster heads into the requested ego pose and submit one AP sample per frame.')
     return parser.parse_args()
 
 
@@ -115,6 +118,19 @@ def apply_sgcp_constraint(frame, protocol, ego_cav_id, resource_allocation,
     return constrained_items
 
 
+def run_opencood_inference(manager, frame, ego_lidar_pose):
+    reformat_data_dict = manager.opencood_dataset.get_item_test(
+        frame,
+        ego_lidar_pose)
+    output_dict = manager.opencood_dataset.collate_batch_test(
+        [reformat_data_dict])
+    batch_data = manager.to_device(output_dict)
+    return manager.inference(
+        batch_data,
+        with_stats=False,
+        return_object_ids=True)
+
+
 def main():
     args = parse_args()
     dataset = OPV2VFrameDataset(args.dataset_root)
@@ -157,23 +173,73 @@ def main():
                 protocol,
                 args.ego_cav_id,
                 args.resource_allocation,
-                args.sgcp_receiver_policy)
+                'all-cluster-heads' if args.sgcp_inter_cluster_late_fusion
+                else args.sgcp_receiver_policy)
+        if args.sgcp_inter_cluster_late_fusion:
+            original_ego = next(cav for cav in frame.values() if cav['ego'])
+            target_ego_lidar_pose = original_ego['params']['lidar_pose']
+            pred_tensors = []
+            pred_scores = []
+            gt_tensors = []
+            for receiver_index, (eval_frame, sgcp_metadata) in enumerate(
+                    frame_items,
+                    start=1):
+                ret = run_opencood_inference(
+                    manager,
+                    eval_frame,
+                    target_ego_lidar_pose)
+                pred_box_tensor, pred_score, gt_box_tensor = ret[0:3]
+                if pred_box_tensor is not None and pred_score is not None:
+                    pred_tensors.append(pred_box_tensor)
+                    pred_scores.append(pred_score)
+                if gt_box_tensor is not None:
+                    gt_tensors.append(gt_box_tensor)
+                if sgcp_metadata is not None:
+                    sgcp_summaries.append(sgcp_metadata)
+                print('frame=%s/%s late_source=%s/%s scenario=%s '
+                      'timestamp=%s receiver=%s cavs=%s pred_boxes=%s '
+                      'gt_boxes=%s comm_bytes=%s' % (
+                          index,
+                          len(frames),
+                          receiver_index,
+                          len(frame_items),
+                          scenario_id,
+                          timestamp,
+                          sgcp_metadata['receiver_id'],
+                          list(eval_frame.keys()),
+                          0 if pred_box_tensor is None else
+                          pred_box_tensor.shape[0],
+                          0 if gt_box_tensor is None else
+                          gt_box_tensor.shape[0],
+                          sgcp_metadata['communication_bytes']))
+
+            fused_pred, fused_score = manager.naive_late_fusion(
+                pred_tensors,
+                pred_scores)
+            fused_gt, _ = manager.naive_late_fusion(gt_tensors, None)
+            print('sgcp_late_fusion frame=%s/%s scenario=%s timestamp=%s '
+                  'sources=%s fused_pred_boxes=%s fused_gt_boxes=%s' % (
+                      index,
+                      len(frames),
+                      scenario_id,
+                      timestamp,
+                      len(frame_items),
+                      0 if fused_pred is None else fused_pred.shape[0],
+                      0 if fused_gt is None else fused_gt.shape[0]))
+            manager.submit_results(
+                fused_pred,
+                fused_score,
+                fused_gt,
+                with_stats=True,
+                force=True)
+            continue
         for receiver_index, (eval_frame, sgcp_metadata) in enumerate(
                 frame_items,
                 start=1):
             ego = next(cav for cav in eval_frame.values() if cav['ego'])
             ego_lidar_pose = ego['params']['lidar_pose']
 
-            reformat_data_dict = manager.opencood_dataset.get_item_test(
-                eval_frame,
-                ego_lidar_pose)
-            output_dict = manager.opencood_dataset.collate_batch_test(
-                [reformat_data_dict])
-            batch_data = manager.to_device(output_dict)
-            ret = manager.inference(
-                batch_data,
-                with_stats=False,
-                return_object_ids=True)
+            ret = run_opencood_inference(manager, eval_frame, ego_lidar_pose)
 
             pred_box_tensor, pred_score, gt_box_tensor = ret[0:3]
             pred_count = (

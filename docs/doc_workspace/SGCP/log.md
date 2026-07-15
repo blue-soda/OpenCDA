@@ -735,3 +735,72 @@ conda run -n opencda python -m opencda.tools.offline_inference --dataset-root D:
 - `all-cluster-heads` 口径比 `ego-cluster-head` 更接近全局 SGCP 评估，但仍只包含 intra-cluster grid-constrained early fusion。
 - 当前未加入 inter-cluster late fusion，因此 AP 低于全 20 CAV early fusion baseline 是预期现象。
 - 后续可直接用同一入口跑 `--resource-allocation random/mws/pcs`，形成 “w/o PPS / greedy / random” 对比。
+
+## 2026-07-15 - SGCP inter-cluster late fusion 离线评估
+
+### 目的
+
+- 修正此前 constrained 评估漏掉 inter-cluster late fusion 的问题。
+- 对齐仓库中 `ClusteringPerceptionManager.submit_cp_results()` 的 simple late fusion/NMS 机制：所有簇头先完成簇内 constrained early fusion，再将预测框统一到 ego pose 后做跨簇晚期融合。
+
+### 代码更新
+
+- `opencda.tools.offline_inference`
+  - 新增 `--sgcp-inter-cluster-late-fusion`。
+  - 该模式会强制使用所有 cluster head 作为 late-fusion source。
+  - 每个 cluster head 的 constrained frame 统一传入 `ego_cav_id` 的 `lidar_pose`，保证预测框坐标系一致。
+  - 使用 `OpenCOODManager.naive_late_fusion()` 对预测框和 GT 框做 NMS 合并，并每帧提交一次 AP。
+
+### 验证
+
+语法检查：
+
+```powershell
+conda run -n opencda python -m py_compile opencda\tools\offline_inference.py
+```
+
+单帧 smoke test：
+
+```powershell
+conda run -n opencda python -m opencda.tools.offline_inference --dataset-root D:\Data\Carla --scenario-id 2026_07_15_01_26_56 --timestamp 000060 --ego-cav-id 1 --sgcp-constrained --resource-allocation potential_game --sgcp-inter-cluster-late-fusion
+```
+
+结果：`000060` 帧融合 6 个 cluster head，late-fusion 后 `fused_pred_boxes=51`、`fused_gt_boxes=69`。
+
+3 帧实验：
+
+```powershell
+conda run -n opencda python -m opencda.tools.offline_inference --dataset-root D:\Data\Carla --scenario-id 2026_07_15_01_26_56 --ego-cav-id 1 --sgcp-constrained --resource-allocation potential_game --sgcp-inter-cluster-late-fusion --max-frames 3
+```
+
+结果：
+
+- AP@0.3：0.66
+- AP@0.5：0.63
+- AP@0.7：0.26
+- avg_comm_bytes/source：93,939.56
+- total_comm_bytes：1,690,912
+- avg_source_cavs/source：2.67
+
+全量 41 帧实验：
+
+```powershell
+conda run -n opencda python -m opencda.tools.offline_inference --dataset-root D:\Data\Carla --scenario-id 2026_07_15_01_26_56 --ego-cav-id 1 --sgcp-constrained --resource-allocation potential_game --sgcp-inter-cluster-late-fusion --max-frames 0
+```
+
+结果：
+
+- frames：41
+- cluster-head sources/frame：6
+- AP@0.3：0.77
+- AP@0.5：0.73
+- AP@0.7：0.35
+- avg_comm_bytes/source：109,415.48
+- total_comm_bytes：26,916,208
+- avg_source_cavs/source：2.67
+
+### 观察
+
+- 加入 inter-cluster late fusion 后，AP 从 head-wise/intra-cluster-only 的 0.36/0.34/0.17 提升到 0.77/0.73/0.35，接近 full early fusion baseline 的 0.85/0.83/0.48。
+- 这说明此前低结果主要来自评估链路缺少跨簇晚期融合，而不是 SGCP 机制本身失效。
+- 当前仍未接入 NS3 真实传输成功率/时延；通信开销为根据 grid-selected point cloud 统计的 payload bytes。
