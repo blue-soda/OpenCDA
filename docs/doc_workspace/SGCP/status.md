@@ -91,7 +91,8 @@ SGCP 工作与仓库中以下部分关系最紧密：
 - 已新增 `baseline_fairness.md`，明确 FullPerception-RSU 是 centralized/RSU-assisted upper reference，不作为同通信预算公平主对比；full 20-CAV early/late fusion 也只作为 upper/reference。
 - 已新增 same-budget CAV-only selective-sharing baseline：`nearest`、`density`、`communication_aware` 三种成员选择，复用 SGCP clustering + inter-cluster late fusion，默认每簇头 2 个成员、87 个 grid budget；41 帧结果分别为 AP@0.3/0.5/0.7 = 0.76/0.73/0.37、0.77/0.74/0.39、0.78/0.75/0.40。
 - 已新增 `topology_trigger.md`，定义 SGCP topology change trigger 的邻居变化、相对运动、链路质量、utility 下降、hard failure 和 periodic guard 条件，并明确 `NO_CHANGE/LOCAL_REPAIR/RECLUSTER` 三类输出。
-- 已将 topology trigger 统计接入 `opencda.tools.offline_replay`：支持 summary 输出和 `--print-topology-events` 逐 transition 明细；当前 41 帧 dump 中 40 个 transition 均触发相对速度风险、12 个伴随邻居集合变化、11 个实际 reconfiguration 均被 trigger 覆盖。
+- 已将 topology trigger 统计接入 `opencda.tools.offline_replay`：支持 summary 输出和 `--print-topology-events` 逐 transition 明细；当前支持 `dump` 与 `pose_delta` 两种速度源，默认使用相邻帧位置差分速度。
+- 已完成 topology trigger 速度源复核：`ego_speed` 来自 `get_speed(vehicle)`，默认单位是 km/h；`pose_delta` threshold 3/4 m/s 可覆盖 11 次实际 reconfiguration，5 m/s 会漏掉 2 次。
 - 已确认当前可运行环境版本快照，并记录到 `docs/doc_workspace/environment.md`：OpenCDA HEAD `fcc29fdc9ee9a9fe694c12e1fb6792b4d41bccac`，Python 3.7.10，CARLA Python API 0.9.11，PyTorch 1.10.0+cu113，Open3D 0.10.0.0，ns-3 wrapper `ns-3-dev-v2x-v1.1-dirty`。
 - 已修复在线 CARLA-NS3 时间流速不一致问题：`NetworkManager.time_slot` 不再将 `world.fixed_delta_seconds` 除以 5，`current_sim_time`、`current_time_slot` 与 CARLA tick 统一推进。
 - 已修复在线 NS3 初始化顺序：sender 线程等待车辆注册后先发送真实车辆数和第一帧 `vehicles_position`，再进入 `sync_request/sync_ack` 循环。
@@ -116,4 +117,4 @@ SGCP 工作与仓库中以下部分关系最紧密：
 - 网络资源实验已证明子信道数量影响 PPS 结果；低带宽 stress test 已触发带宽瓶颈。论文中应谨慎区分“常规带宽下该 dump 已饱和”和“极低带宽下吞吐约束有效”。
 - Dump 中速度字段目前使用 `ego_speed`；后续如需更严格动态稳定性，应确认单位并评估是否改为相邻帧差分速度。
 - 在线 CARLA-NS3 修复尚未在真实 CARLA 图形仿真中长时间回归；当前已通过离线 NS3 socket/sync smoke test 和本地时间基准单元断言。
-- Topology trigger 已接入离线 replay 统计，但尚未接入在线 `ClusteringV2XManager` gate；相对速度触发阈值仍需确认 dump 中 `ego_speed` 的单位/尺度。
+- Topology trigger 已接入离线 replay 统计，但尚未接入在线 `ClusteringV2XManager` gate；单独 relative-speed trigger 仍偏敏感，在线 gate 应结合 neighbor-set change、utility drop 和 `T_min_stab` 滞回。

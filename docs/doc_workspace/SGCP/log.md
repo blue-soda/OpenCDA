@@ -1654,3 +1654,48 @@ conda run -n opencda python -m opencda.tools.offline_replay --dataset-root D:\Da
 - `relative_speed_risk` 在默认阈值下每个 transition 都触发，说明该信号过敏或 dump 中 `ego_speed` 单位/尺度需要复核。
 - `neighbor_set_change` 只出现在 12/40 个 transition，其中部分与实际 reconfiguration 重合；它更适合作为强触发信号。
 - 下一步若要接入在线 gate，应先改用相邻帧 pose 差分速度或确认 `ego_speed` 单位，再设置 `beta_min/epsilon_u` 滞回，否则会退化成每帧触发。
+
+## 2026-07-15 - topology trigger 速度源复核
+
+### 目的
+
+- 复核上一轮 `relative_speed_risk` 每个 transition 都触发的原因。
+- 避免在线 gate 直接使用单位不清的速度阈值。
+
+### 代码更新
+
+- `opencda.tools.offline_replay`
+  - 新增 `--trigger-speed-source pose_delta|dump`。
+  - 默认速度源改为 `pose_delta`，用相邻帧位置差和 `--trigger-frame-interval-sec` 计算速度，默认帧间隔 0.1 s。
+  - 保留 `dump` 速度源，用于复现原始 `ego_speed` 行为。
+  - `--trigger-relative-speed-threshold` 对 `pose_delta` 使用 m/s，对 `dump` 使用 km/h。
+
+### 单位确认
+
+- `opencda.core.common.misc.get_speed(vehicle, meters=False)` 默认返回 km/h。
+- `DataDumper` 写入的 `ego_speed` 使用默认 `get_speed(veh)`，因此 dump 中 `ego_speed` 是 km/h。
+- 在线 `V2XManager` 注释也标注 ego speed 为 km/h。
+
+### 41 帧阈值扫
+
+命令模板：
+
+```powershell
+conda run -n opencda python -m opencda.tools.offline_replay --dataset-root D:\Data\Carla --scenario-id 2026_07_15_01_26_56 --ego-cav-id 1 --max-frames 0 --summary-only --trigger-speed-source pose_delta --trigger-relative-speed-threshold <m/s>
+```
+
+| Speed Source | Threshold | Triggered | Actual Reconfig. | Matched | Reconfig. Without Trigger | Trigger Without Reconfig. |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| `pose_delta` | 3 m/s | 40 | 11 | 11 | 0 | 29 |
+| `pose_delta` | 4 m/s | 40 | 11 | 11 | 0 | 29 |
+| `pose_delta` | 5 m/s | 37 | 11 | 9 | 2 | 28 |
+
+### 观察
+
+- `pose_delta` 解决了 km/h/m/s 混用问题，但 relative-speed trigger 仍然不是一个足够精确的单独 gate。
+- 3/4 m/s 能覆盖全部实际 reconfiguration，但误触发仍多；5 m/s 会漏掉 2 次实际 reconfiguration。
+- 在线 `ClusteringV2XManager` 不应只用 relative speed 决定是否重构，应组合：
+  - hard failure/head-member unreachable 立即触发；
+  - neighbor-set change 作为强触发；
+  - relative speed 作为风险提示；
+  - utility drop 和 `T_min_stab` 滞回决定是否真正进入 `RECLUSTER`。

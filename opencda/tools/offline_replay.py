@@ -63,10 +63,16 @@ def parse_args():
                         help='Override SGCP resource allocation channel count.')
     parser.add_argument('--bandwidth-mhz', type=float, default=None,
                         help='Override SGCP total bandwidth in MHz.')
+    parser.add_argument('--trigger-speed-source', default='pose_delta',
+                        choices=['pose_delta', 'dump'],
+                        help='Speed source for offline relative-speed trigger.')
+    parser.add_argument('--trigger-frame-interval-sec', type=float,
+                        default=0.1,
+                        help='Frame interval in seconds for pose_delta speed.')
     parser.add_argument('--trigger-relative-speed-threshold', type=float,
                         default=5.0,
-                        help='Relative speed threshold in dumped ego_speed '
-                             'units for offline topology trigger statistics.')
+                        help='Relative speed threshold. Unit is m/s for '
+                             'pose_delta and km/h for dump ego_speed.')
     parser.add_argument('--print-topology-events', action='store_true',
                         help='Print per-transition topology trigger details.')
     return parser.parse_args()
@@ -228,18 +234,35 @@ def cluster_head_unreachable(cluster, topology_state):
     return False
 
 
-def cluster_relative_speed_risk(cluster, topology_state, speed_threshold):
+def cluster_relative_speed_risk(cluster, topology_state, speed_threshold,
+                                speed_key='trigger_speed'):
     if speed_threshold is None or speed_threshold <= 0:
         return False
     vehicles = topology_state['vehicles']
     member_ids = [int(member_id) for member_id in cluster['members']
-                  if int(member_id) in vehicles]
+                  if int(member_id) in vehicles and
+                  speed_key in vehicles[int(member_id)]]
     for index, vehicle_id in enumerate(member_ids):
-        speed = vehicles[vehicle_id]['speed']
+        speed = vehicles[vehicle_id][speed_key]
         for other_id in member_ids[index + 1:]:
-            if abs(speed - vehicles[other_id]['speed']) >= speed_threshold:
+            if abs(speed - vehicles[other_id][speed_key]) >= speed_threshold:
                 return True
     return False
+
+
+def add_pose_delta_speeds(previous_topology, current_topology,
+                          frame_interval_sec):
+    if frame_interval_sec is None or frame_interval_sec <= 0:
+        return
+    previous_vehicles = previous_topology['vehicles']
+    for vehicle_id, current_state in current_topology['vehicles'].items():
+        previous_state = previous_vehicles.get(vehicle_id)
+        if previous_state is None:
+            continue
+        distance = distance_xy(
+            previous_state['position_xy'],
+            current_state['position_xy'])
+        current_state['pose_delta_speed'] = distance / frame_interval_sec
 
 
 def replay_frame(dataset, scenario_id, timestamp, ego_cav_id, protocol,
@@ -342,9 +365,15 @@ def vehicle_to_head(clusters):
 
 
 def evaluate_topology_trigger(previous_result, current_result,
-                              relative_speed_threshold=5.0):
+                              relative_speed_threshold=5.0,
+                              speed_source='pose_delta',
+                              frame_interval_sec=0.1):
     previous_topology = previous_result['topology_state']
     current_topology = current_result['topology_state']
+    add_pose_delta_speeds(
+        previous_topology,
+        current_topology,
+        frame_interval_sec)
     previous_vehicle_ids = set(previous_topology['vehicles'].keys())
     current_vehicle_ids = set(current_topology['vehicles'].keys())
     trigger_types = set()
@@ -369,11 +398,13 @@ def evaluate_topology_trigger(previous_result, current_result,
             trigger_types.add('hard_failure')
             break
 
+    speed_key = 'pose_delta_speed' if speed_source == 'pose_delta' else 'speed'
     for cluster in current_result['clusters']:
         if cluster_relative_speed_risk(
                 cluster,
                 current_topology,
-                relative_speed_threshold):
+                relative_speed_threshold,
+                speed_key=speed_key):
             trigger_types.add('relative_speed_risk')
             break
 
@@ -388,18 +419,23 @@ def evaluate_topology_trigger(previous_result, current_result,
         'timestamp': current_result['timestamp'],
         'triggered': bool(trigger_types),
         'trigger_types': sorted(trigger_types),
+        'speed_source': speed_source,
         'actual_reconfiguration': bool(changed_vehicle_ids),
         'vehicle_head_changes': len(changed_vehicle_ids),
     }
 
 
-def summarize_topology_triggers(results, relative_speed_threshold=5.0):
+def summarize_topology_triggers(results, relative_speed_threshold=5.0,
+                                speed_source='pose_delta',
+                                frame_interval_sec=0.1):
     events = []
     for previous_result, current_result in zip(results, results[1:]):
         events.append(evaluate_topology_trigger(
             previous_result,
             current_result,
-            relative_speed_threshold=relative_speed_threshold))
+            relative_speed_threshold=relative_speed_threshold,
+            speed_source=speed_source,
+            frame_interval_sec=frame_interval_sec))
 
     trigger_type_counts = {}
     for event in events:
@@ -432,7 +468,9 @@ def summarize_topology_triggers(results, relative_speed_threshold=5.0):
     }
 
 
-def summarize_replay(results, relative_speed_threshold=5.0):
+def summarize_replay(results, relative_speed_threshold=5.0,
+                     speed_source='pose_delta',
+                     frame_interval_sec=0.1):
     if not results:
         return {}
 
@@ -502,7 +540,9 @@ def summarize_replay(results, relative_speed_threshold=5.0):
             float(frame_count)),
         'topology_triggers': summarize_topology_triggers(
             results,
-            relative_speed_threshold=relative_speed_threshold),
+            relative_speed_threshold=relative_speed_threshold,
+            speed_source=speed_source,
+            frame_interval_sec=frame_interval_sec),
     }
 
 
@@ -615,7 +655,9 @@ def main():
     if len(results) > 1 or args.summary_only:
         summary = summarize_replay(
             results,
-            relative_speed_threshold=args.trigger_relative_speed_threshold)
+            relative_speed_threshold=args.trigger_relative_speed_threshold,
+            speed_source=args.trigger_speed_source,
+            frame_interval_sec=args.trigger_frame_interval_sec)
         print_summary(summary)
         if args.print_topology_events:
             print_topology_events(summary)

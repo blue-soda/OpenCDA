@@ -42,6 +42,8 @@
 
 这些值不是论文最终参数，只是工程起点。进入论文前应通过更长动态序列做敏感性验证。
 
+离线 replay 中的速度源建议优先使用相邻帧 pose 差分速度，而不是 dump 的 `ego_speed`。当前 dump 中 `ego_speed` 来自 `get_speed(vehicle)`，默认单位为 km/h；若与 m/s 阈值混用，会导致 relative-speed trigger 过敏。
+
 ## 触发结果
 
 Trigger module 不直接输出最终 cluster，而输出重构级别：
