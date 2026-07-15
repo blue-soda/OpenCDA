@@ -59,7 +59,7 @@
 ## P3：完善机制设计
 
 - [x] 定义 topology change trigger，包括邻居变化、相对速度、链路质量或 utility 下降阈值。已新增 `topology_trigger.md` 机制规格；后续需接入代码统计。
-- [ ] 将 topology trigger 接入离线 replay，输出每帧 trigger type、是否触发 reconfiguration、vehicle-head change 的对应关系。
+- [x] 将 topology trigger 接入离线 replay，输出每帧 trigger type、是否触发 reconfiguration、vehicle-head change 的对应关系。已在 `opencda.tools.offline_replay` 中新增 summary 和 `--print-topology-events`。
 - [ ] 将 topology trigger gate 接入在线 `ClusteringV2XManager`，避免无事件时每周期重构 cluster。
 - [ ] 设计 cluster 已满时的处理策略：保留、替换、等待、split/merge 或 leader-level late fusion 补偿。
 - [ ] 明确是否支持 cluster merge/split，并说明与 `N_max` 的关系。

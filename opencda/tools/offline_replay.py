@@ -63,6 +63,12 @@ def parse_args():
                         help='Override SGCP resource allocation channel count.')
     parser.add_argument('--bandwidth-mhz', type=float, default=None,
                         help='Override SGCP total bandwidth in MHz.')
+    parser.add_argument('--trigger-relative-speed-threshold', type=float,
+                        default=5.0,
+                        help='Relative speed threshold in dumped ego_speed '
+                             'units for offline topology trigger statistics.')
+    parser.add_argument('--print-topology-events', action='store_true',
+                        help='Print per-transition topology trigger details.')
     return parser.parse_args()
 
 
@@ -157,6 +163,85 @@ def apply_resource_overrides(resource_allocator, world, num_channels=None,
             resource_allocator.p.num_channels)
 
 
+def transform_xy(transform):
+    return (float(transform.location.x), float(transform.location.y))
+
+
+def distance_xy(a_xy, b_xy):
+    dx = a_xy[0] - b_xy[0]
+    dy = a_xy[1] - b_xy[1]
+    return (dx * dx + dy * dy) ** 0.5
+
+
+def collect_topology_state(world):
+    vehicle_states = {}
+    vms = world.get_vehicle_managers()
+    communication_range = 0.0
+    for vehicle_id, vm in vms.items():
+        pos = transform_xy(vm.v2x_manager.get_ego_pos())
+        speed = float(vm.v2x_manager.get_ego_speed())
+        communication_range = max(
+            communication_range,
+            float(getattr(vm.v2x_manager, 'communication_range', 0.0)))
+        vehicle_states[int(vehicle_id)] = {
+            'position_xy': pos,
+            'speed': speed,
+        }
+
+    neighbor_sets = {}
+    vehicle_ids = sorted(vehicle_states.keys())
+    for vehicle_id in vehicle_ids:
+        neighbors = set()
+        for other_id in vehicle_ids:
+            if other_id == vehicle_id:
+                continue
+            distance = distance_xy(
+                vehicle_states[vehicle_id]['position_xy'],
+                vehicle_states[other_id]['position_xy'])
+            if communication_range <= 0.0 or distance <= communication_range:
+                neighbors.add(other_id)
+        neighbor_sets[vehicle_id] = sorted(neighbors)
+
+    return {
+        'communication_range': communication_range,
+        'vehicles': vehicle_states,
+        'neighbor_sets': neighbor_sets,
+    }
+
+
+def cluster_head_unreachable(cluster, topology_state):
+    vehicles = topology_state['vehicles']
+    communication_range = topology_state['communication_range']
+    if communication_range <= 0.0:
+        return False
+    head_id = int(cluster['head_id'])
+    if head_id not in vehicles:
+        return True
+    head_xy = vehicles[head_id]['position_xy']
+    for member_id in cluster['members']:
+        member_id = int(member_id)
+        if member_id not in vehicles:
+            return True
+        if distance_xy(head_xy, vehicles[member_id]['position_xy']) > \
+                communication_range:
+            return True
+    return False
+
+
+def cluster_relative_speed_risk(cluster, topology_state, speed_threshold):
+    if speed_threshold is None or speed_threshold <= 0:
+        return False
+    vehicles = topology_state['vehicles']
+    member_ids = [int(member_id) for member_id in cluster['members']
+                  if int(member_id) in vehicles]
+    for index, vehicle_id in enumerate(member_ids):
+        speed = vehicles[vehicle_id]['speed']
+        for other_id in member_ids[index + 1:]:
+            if abs(speed - vehicles[other_id]['speed']) >= speed_threshold:
+                return True
+    return False
+
+
 def replay_frame(dataset, scenario_id, timestamp, ego_cav_id, protocol,
                  resource_allocation=None, t_min_stab=None,
                  clustering='coalition_game', n_max=None, rho_th=None,
@@ -187,6 +272,7 @@ def replay_frame(dataset, scenario_id, timestamp, ego_cav_id, protocol,
         clustering_algorithm.p.N_max = n_max
     clusters = clustering_algorithm.run()
     apply_cluster_state(world, clusters)
+    topology_state = collect_topology_state(world)
     ra_start_time = time.time()
     ra_name = get_resource_allocation_name(protocol, resource_allocation)
     resource_allocator = build_resource_allocator(ra_name, world)
@@ -239,6 +325,7 @@ def replay_frame(dataset, scenario_id, timestamp, ego_cav_id, protocol,
         'channel_allocation_sample': sorted(
             channel_allocation.items())[:10],
         'clusters': cluster_summary,
+        'topology_state': topology_state,
     }
 
 
@@ -254,7 +341,98 @@ def vehicle_to_head(clusters):
     return mapping
 
 
-def summarize_replay(results):
+def evaluate_topology_trigger(previous_result, current_result,
+                              relative_speed_threshold=5.0):
+    previous_topology = previous_result['topology_state']
+    current_topology = current_result['topology_state']
+    previous_vehicle_ids = set(previous_topology['vehicles'].keys())
+    current_vehicle_ids = set(current_topology['vehicles'].keys())
+    trigger_types = set()
+
+    if previous_vehicle_ids != current_vehicle_ids:
+        trigger_types.add('cav_set_change')
+        trigger_types.add('hard_failure')
+
+    shared_vehicle_ids = previous_vehicle_ids & current_vehicle_ids
+    for vehicle_id in shared_vehicle_ids:
+        previous_neighbors = set(
+            previous_topology['neighbor_sets'].get(vehicle_id, []))
+        current_neighbors = set(
+            current_topology['neighbor_sets'].get(vehicle_id, []))
+        if previous_neighbors != current_neighbors:
+            trigger_types.add('neighbor_set_change')
+            break
+
+    for cluster in current_result['clusters']:
+        if cluster_head_unreachable(cluster, current_topology):
+            trigger_types.add('head_member_unreachable')
+            trigger_types.add('hard_failure')
+            break
+
+    for cluster in current_result['clusters']:
+        if cluster_relative_speed_risk(
+                cluster,
+                current_topology,
+                relative_speed_threshold):
+            trigger_types.add('relative_speed_risk')
+            break
+
+    previous_mapping = vehicle_to_head(previous_result['clusters'])
+    current_mapping = vehicle_to_head(current_result['clusters'])
+    changed_vehicle_ids = []
+    for vehicle_id, head_id in current_mapping.items():
+        if previous_mapping.get(vehicle_id) != head_id:
+            changed_vehicle_ids.append(vehicle_id)
+
+    return {
+        'timestamp': current_result['timestamp'],
+        'triggered': bool(trigger_types),
+        'trigger_types': sorted(trigger_types),
+        'actual_reconfiguration': bool(changed_vehicle_ids),
+        'vehicle_head_changes': len(changed_vehicle_ids),
+    }
+
+
+def summarize_topology_triggers(results, relative_speed_threshold=5.0):
+    events = []
+    for previous_result, current_result in zip(results, results[1:]):
+        events.append(evaluate_topology_trigger(
+            previous_result,
+            current_result,
+            relative_speed_threshold=relative_speed_threshold))
+
+    trigger_type_counts = {}
+    for event in events:
+        for trigger_type in event['trigger_types']:
+            trigger_type_counts[trigger_type] = (
+                trigger_type_counts.get(trigger_type, 0) + 1)
+
+    triggered_events = sum(1 for event in events if event['triggered'])
+    actual_reconfiguration_events = sum(
+        1 for event in events if event['actual_reconfiguration'])
+    trigger_and_reconfig_events = sum(
+        1 for event in events
+        if event['triggered'] and event['actual_reconfiguration'])
+    reconfig_without_trigger_events = sum(
+        1 for event in events
+        if not event['triggered'] and event['actual_reconfiguration'])
+    trigger_without_reconfig_events = sum(
+        1 for event in events
+        if event['triggered'] and not event['actual_reconfiguration'])
+
+    return {
+        'transition_count': len(events),
+        'triggered_events': triggered_events,
+        'actual_reconfiguration_events': actual_reconfiguration_events,
+        'trigger_and_reconfig_events': trigger_and_reconfig_events,
+        'reconfig_without_trigger_events': reconfig_without_trigger_events,
+        'trigger_without_reconfig_events': trigger_without_reconfig_events,
+        'trigger_type_counts': trigger_type_counts,
+        'events': events,
+    }
+
+
+def summarize_replay(results, relative_speed_threshold=5.0):
     if not results:
         return {}
 
@@ -322,6 +500,9 @@ def summarize_replay(results):
         'avg_resource_allocation_ms': (
             sum(item['resource_allocation_ms'] for item in results) /
             float(frame_count)),
+        'topology_triggers': summarize_topology_triggers(
+            results,
+            relative_speed_threshold=relative_speed_threshold),
     }
 
 
@@ -366,6 +547,32 @@ def print_summary(summary):
     print('summary runtime_ms avg_total=%.2f avg_ra=%.2f' % (
         summary['avg_elapsed_ms'],
         summary['avg_resource_allocation_ms']))
+    topology_summary = summary.get('topology_triggers', {})
+    print('summary topology_triggers transitions=%s triggered=%s '
+          'actual_reconfig=%s matched=%s reconfig_without_trigger=%s '
+          'trigger_without_reconfig=%s' % (
+              topology_summary.get('transition_count', 0),
+              topology_summary.get('triggered_events', 0),
+              topology_summary.get('actual_reconfiguration_events', 0),
+              topology_summary.get('trigger_and_reconfig_events', 0),
+              topology_summary.get('reconfig_without_trigger_events', 0),
+              topology_summary.get('trigger_without_reconfig_events', 0)))
+    print('summary topology_trigger_types=%s' % (
+        topology_summary.get('trigger_type_counts', {}),))
+
+
+def print_topology_events(summary):
+    topology_summary = summary.get('topology_triggers', {})
+    for index, event in enumerate(topology_summary.get('events', []),
+                                  start=1):
+        print('topology_event=%s timestamp=%s triggered=%s types=%s '
+              'actual_reconfig=%s vehicle_head_changes=%s' % (
+                  index,
+                  event['timestamp'],
+                  event['triggered'],
+                  event['trigger_types'],
+                  event['actual_reconfiguration'],
+                  event['vehicle_head_changes']))
 
 
 def main():
@@ -406,7 +613,12 @@ def main():
             print_frame_result(index, len(frames), sid, result)
 
     if len(results) > 1 or args.summary_only:
-        print_summary(summarize_replay(results))
+        summary = summarize_replay(
+            results,
+            relative_speed_threshold=args.trigger_relative_speed_threshold)
+        print_summary(summary)
+        if args.print_topology_events:
+            print_topology_events(summary)
 
 
 if __name__ == '__main__':

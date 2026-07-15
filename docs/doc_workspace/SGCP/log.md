@@ -1603,3 +1603,54 @@ Trigger 输出分为 `NO_CHANGE`、`LOCAL_REPAIR`、`RECLUSTER`。建议每个�
 
 - 先在 `opencda.tools.offline_replay` 中实现 trigger 统计，验证当前 41 帧 dump 中 trigger 与 reconfiguration 的对应关系。
 - 再考虑接入在线 `ClusteringV2XManager`，实现无事件时跳过 coalition formation。
+
+## 2026-07-15 - topology trigger 离线 replay 统计接入
+
+### 目的
+
+- 推进 P3 “将 topology trigger 接入离线 replay，输出每帧 trigger type、是否触发 reconfiguration、vehicle-head change 的对应关系”。
+- 先用 dump 数据做统计，不改变在线 CARLA clustering 行为。
+
+### 代码更新
+
+- `opencda.tools.offline_replay`
+  - 每帧保存 CAV 位置、速度、通信半径和邻居集合。
+  - 相邻帧比较 topology trigger：`neighbor_set_change`、`relative_speed_risk`、`head_member_unreachable`、`cav_set_change/hard_failure`。
+  - Summary 输出 trigger/reconfiguration 对齐统计。
+  - 新增 `--print-topology-events` 输出逐 transition 明细。
+  - 新增 `--trigger-relative-speed-threshold` 调整相对速度风险阈值；阈值单位使用 dump 中 `ego_speed` 的原始单位。
+
+### Smoke test
+
+命令：
+
+```powershell
+conda run -n opencda python -m opencda.tools.offline_replay --dataset-root D:\Data\Carla --scenario-id 2026_07_15_01_26_56 --ego-cav-id 1 --max-frames 3 --summary-only --print-topology-events
+```
+
+结果：
+
+| Frames | Transitions | Triggered | Actual Reconfig. | Matched | Trigger Types |
+| ---: | ---: | ---: | ---: | ---: | --- |
+| 3 | 2 | 2 | 1 | 1 | `relative_speed_risk`: 2 |
+
+### 41 帧完整统计
+
+命令：
+
+```powershell
+conda run -n opencda python -m opencda.tools.offline_replay --dataset-root D:\Data\Carla --scenario-id 2026_07_15_01_26_56 --ego-cav-id 1 --max-frames 0 --summary-only --print-topology-events
+```
+
+结果：
+
+| Frames | Transitions | Triggered | Actual Reconfig. | Matched | Reconfig. Without Trigger | Trigger Without Reconfig. | Trigger Types |
+| ---: | ---: | ---: | ---: | ---: | ---: | ---: | --- |
+| 41 | 40 | 40 | 11 | 11 | 0 | 29 | `relative_speed_risk`: 40; `neighbor_set_change`: 12 |
+
+### 观察
+
+- 当前 trigger 覆盖了全部实际 reconfiguration，没有出现 “reconfig without trigger”。
+- `relative_speed_risk` 在默认阈值下每个 transition 都触发，说明该信号过敏或 dump 中 `ego_speed` 单位/尺度需要复核。
+- `neighbor_set_change` 只出现在 12/40 个 transition，其中部分与实际 reconfiguration 重合；它更适合作为强触发信号。
+- 下一步若要接入在线 gate，应先改用相邻帧 pose 差分速度或确认 `ego_speed` 单位，再设置 `beta_min/epsilon_u` 滞回，否则会退化成每帧触发。
