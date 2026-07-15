@@ -92,6 +92,24 @@
 | 15 | 0.69 | 0.66 | 0.34 | 130304.62 | 26712448 | 205 | 5.00 | 18 | 71 | More clusters and reconfiguration |
 | 20 | 0.77 | 0.73 | 0.35 | 109415.48 | 26916208 | 246 | 6.00 | 11 | 76 | Full current dump |
 
+### Network Resource
+
+实验口径：`D:\Data\Carla\2026_07_15_01_26_56`，41 帧，20 CAV，`potential_game`，SGCP inter-cluster late fusion。`--num-channels` 覆盖 PPS 子信道数量；`--bandwidth-mhz` 覆盖 PPS 总带宽。当前离线口径不启动 NS3，通信开销记录为实际上传点云 payload。
+
+| Num. Channels | Bandwidth (MHz) | AP@0.3 | AP@0.5 | AP@0.7 | Avg. Upload (bytes/source) | Total Upload (bytes) | Avg. Source CAVs | Avg. Clusters | Reconfig. Count | Notes |
+| ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | --- |
+| 5 | 40 | 0.56 | 0.53 | 0.27 | 60225.24 | 14815408 | 1.83 | 6.00 | 11 | Fewer channels, PPS admits fewer members per cluster head |
+| 10 | 40 | 0.77 | 0.73 | 0.35 | 109415.48 | 26916208 | 2.67 | 6.00 | 11 | Current default |
+| 20 | 40 | 0.77 | 0.73 | 0.38 | 139299.64 | 34267712 | 3.33 | 6.00 | 11 | More channels increase payload and AP@0.7 |
+
+| Num. Channels | Bandwidth (MHz) | AP@0.3 | AP@0.5 | AP@0.7 | Avg. Upload (bytes/source) | Total Upload (bytes) | Avg. Source CAVs | Avg. Clusters | Reconfig. Count | Notes |
+| ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | --- |
+| 10 | 20 | 0.77 | 0.73 | 0.35 | 109415.48 | 26916208 | 2.67 | 6.00 | 11 | Same as default in current offline PPS path |
+| 10 | 40 | 0.77 | 0.73 | 0.35 | 109415.48 | 26916208 | 2.67 | 6.00 | 11 | Current default |
+| 10 | 80 | 0.77 | 0.73 | 0.35 | 109415.48 | 26916208 | 2.67 | 6.00 | 11 | Same as default in current offline PPS path |
+
+观察：子信道数量会改变 PPS 选择的簇内上传成员数，并直接影响通信-精度折中。单独改变总带宽目前没有造成差异，说明现有离线 `PotentialGame` 路径主要受离散子信道数量约束；论文级网络资源实验前需要复核 `bandwidth_all/bandwidth_per_channel` 是否完整进入吞吐和可传输点数模型。
+
 ## `f(rho)` 标定结果
 
 当前已完成 `rho_th` 阈值敏感性实验，但尚未复现完整 `f(rho)` 标定曲线。后续需要补充：

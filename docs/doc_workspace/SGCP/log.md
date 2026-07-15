@@ -1371,3 +1371,78 @@ conda run -n opencda python -m opencda.tools.offline_inference --dataset-root D:
 - AP 随参与 CAV 数量增加而明显提升，说明 SGCP late-fusion 口径确实受协同覆盖范围影响。
 - 15 CAV 的 reconfiguration events 高于 20 CAV，提示子集选择会改变局部拓扑和 coalition search 路径；该现象不能简单解释为 CAV 越多越不稳定。
 - 该结果适合作为离线规模敏感性第一版；论文级密度扩展仍需要重新导出不同车流密度/背景车密度场景。
+
+## 2026-07-15 - 网络资源参数敏感性实验
+
+### 目的
+
+- 推进 P1 “网络资源扩展：不同带宽或子信道数量”。
+- 在离线 SGCP replay/inference 路径中加入网络资源覆盖参数，验证 PPS 对子信道数量和总带宽的敏感性。
+
+### 代码更新
+
+- `opencda.tools.offline_replay`
+  - 新增 `--num-channels`，覆盖 `world.network_manager.subchannel_num` 和 PPS `Params.num_channels`。
+  - 新增 `--bandwidth-mhz`，覆盖 PPS `Params.bandwidth_all` 并重算 `bandwidth_per_channel`。
+- `opencda.tools.offline_inference`
+  - 新增相同参数，使 AP 评估与 replay 共享同一网络资源设置。
+
+### 验证
+
+语法检查：
+
+```powershell
+$env:PYTHONDONTWRITEBYTECODE='1'; conda run -n opencda python -m py_compile opencda\tools\offline_replay.py opencda\tools\offline_inference.py
+```
+
+3 帧 smoke test：
+
+```powershell
+conda run -n opencda python -m opencda.tools.offline_replay --dataset-root D:\Data\Carla --scenario-id 2026_07_15_01_26_56 --ego-cav-id 1 --resource-allocation potential_game --num-channels 5 --max-frames 3 --summary-only
+conda run -n opencda python -m opencda.tools.offline_replay --dataset-root D:\Data\Carla --scenario-id 2026_07_15_01_26_56 --ego-cav-id 1 --resource-allocation potential_game --bandwidth-mhz 20 --max-frames 3 --summary-only
+conda run -n opencda python -m opencda.tools.offline_inference --dataset-root D:\Data\Carla --scenario-id 2026_07_15_01_26_56 --ego-cav-id 1 --sgcp-constrained --resource-allocation potential_game --sgcp-inter-cluster-late-fusion --num-channels 5 --max-frames 1
+```
+
+三组均可完成。
+
+### 41 帧 replay 汇总
+
+命令模板：
+
+```powershell
+conda run -n opencda python -m opencda.tools.offline_replay --dataset-root D:\Data\Carla --scenario-id 2026_07_15_01_26_56 --ego-cav-id 1 --resource-allocation potential_game --num-channels <N> --max-frames 0 --summary-only
+conda run -n opencda python -m opencda.tools.offline_replay --dataset-root D:\Data\Carla --scenario-id 2026_07_15_01_26_56 --ego-cav-id 1 --resource-allocation potential_game --bandwidth-mhz <MHz> --max-frames 0 --summary-only
+```
+
+| Setting | Avg. Clusters | Avg. Cluster Size | Avg. Isolated CAVs | Reconfig. Events | Vehicle-Head Changes | Avg. Cluster Lifetime (frames) | Avg. Runtime (ms) | Avg. RA Runtime (ms) |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| `num_channels=5` | 6.00 | 3.33 | 0.00 | 11 | 76 | 6.65 | 90.10 | 27.35 |
+| `num_channels=10` | 6.00 | 3.33 | 0.00 | 11 | 76 | 6.65 | 99.99 | 37.39 |
+| `num_channels=20` | 6.00 | 3.33 | 0.00 | 11 | 76 | 6.65 | 104.57 | 42.35 |
+| `bandwidth_mhz=20` | 6.00 | 3.33 | 0.00 | 11 | 76 | 6.65 | 103.88 | 40.25 |
+| `bandwidth_mhz=40` | 6.00 | 3.33 | 0.00 | 11 | 76 | 6.65 | 99.99 | 37.39 |
+| `bandwidth_mhz=80` | 6.00 | 3.33 | 0.00 | 11 | 76 | 6.65 | 101.11 | 38.93 |
+
+### 41 帧 AP 评估
+
+命令模板：
+
+```powershell
+conda run -n opencda python -m opencda.tools.offline_inference --dataset-root D:\Data\Carla --scenario-id 2026_07_15_01_26_56 --ego-cav-id 1 --sgcp-constrained --resource-allocation potential_game --sgcp-inter-cluster-late-fusion --num-channels <N> --max-frames 0
+conda run -n opencda python -m opencda.tools.offline_inference --dataset-root D:\Data\Carla --scenario-id 2026_07_15_01_26_56 --ego-cav-id 1 --sgcp-constrained --resource-allocation potential_game --sgcp-inter-cluster-late-fusion --bandwidth-mhz <MHz> --max-frames 0
+```
+
+| Setting | Frames | Cluster-Head Sources | AP@0.3 | AP@0.5 | AP@0.7 | Avg. Upload (bytes/source) | Total Upload (bytes) | Avg. Source CAVs |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| `num_channels=5` | 41 | 246 | 0.56 | 0.53 | 0.27 | 60225.24 | 14815408 | 1.83 |
+| `num_channels=10` | 41 | 246 | 0.77 | 0.73 | 0.35 | 109415.48 | 26916208 | 2.67 |
+| `num_channels=20` | 41 | 246 | 0.77 | 0.73 | 0.38 | 139299.64 | 34267712 | 3.33 |
+| `bandwidth_mhz=20` | 41 | 246 | 0.77 | 0.73 | 0.35 | 109415.48 | 26916208 | 2.67 |
+| `bandwidth_mhz=40` | 41 | 246 | 0.77 | 0.73 | 0.35 | 109415.48 | 26916208 | 2.67 |
+| `bandwidth_mhz=80` | 41 | 246 | 0.77 | 0.73 | 0.35 | 109415.48 | 26916208 | 2.67 |
+
+### 观察
+
+- 子信道数量明显影响 PPS 选择的簇内上传成员数：5 个子信道时平均 source CAV 只有 1.83，AP 下降；20 个子信道时平均 source CAV 达到 3.33，payload 增加且 AP@0.7 提升到 0.38。
+- replay 中 cluster/reconfiguration 指标不随网络资源变化，因为 coalition formation 与 PPS 调度解耦；网络资源主要影响每个 cluster head 能接收哪些成员点云。
+- 单独改变 `bandwidth_mhz=20/40/80` 当前没有改变 AP 或 payload，说明离线 `PotentialGame` 路径主要由离散子信道数量控制。后续需要回查 `bandwidth_all/bandwidth_per_channel` 是否在每个候选 member 的吞吐约束中完整生效。

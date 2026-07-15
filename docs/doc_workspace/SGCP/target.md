@@ -43,7 +43,7 @@
 - [x] 参数实验：`N_max` = 2/3/4/5/6。已完成第一版离线 replay + inter-cluster late-fusion AP；后续需补更长序列/密度场景并计入检测框交换开销。
 - [x] 参数实验：`rho_th` 多组阈值。已完成 `0.5/1.0/2.0/3.0/4.0` 第一版离线 replay + inter-cluster late-fusion AP；后续需补完整 `f(rho)` 标定曲线和跨场景泛化。
 - [x] 密度扩展：不同 CAV 数量或不同背景车密度。已完成同一 dump 下 5/10/15/20 CAV 子集规模敏感性第一版；后续需重新导出真实不同交通密度/背景车密度场景。
-- [ ] 网络资源扩展：不同带宽或子信道数量。
+- [x] 网络资源扩展：不同带宽或子信道数量。已完成 `num_channels=5/10/20` 与 `bandwidth_mhz=20/40/80` 第一版离线 replay + inter-cluster late-fusion AP；后续需复核带宽参数在 PPS 吞吐模型中的作用。
 
 ## P2：补充公平 baseline
 
@@ -62,6 +62,7 @@
 - [ ] 明确 `f(rho)` 的标定协议和 detector/sensor-specific metadata 机制。
 - [ ] 重新检查 potential game exact potential 的成立条件。
 - [ ] 估算 density/utility/control message 的控制开销，并决定是否纳入通信开销指标。
+- [ ] 复核 PPS 中 `bandwidth_all/bandwidth_per_channel` 的吞吐约束实现，解释为何 `bandwidth_mhz=20/40/80` 在当前离线实验中结果一致。
 
 ## P4：论文写作修订
 

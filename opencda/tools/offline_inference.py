@@ -74,6 +74,10 @@ def parse_args():
                         help='Use the first N CAVs in numeric order, keeping ego included.')
     parser.add_argument('--cav-ids', default=None,
                         help='Comma-separated CAV ids to evaluate, e.g. 1,2,3.')
+    parser.add_argument('--num-channels', type=int, default=None,
+                        help='Override SGCP resource allocation channel count.')
+    parser.add_argument('--bandwidth-mhz', type=float, default=None,
+                        help='Override SGCP total bandwidth in MHz.')
     return parser.parse_args()
 
 
@@ -143,10 +147,31 @@ def extract_lidar_density_threshold(protocol):
         return 2.0
 
 
+def apply_resource_overrides(resource_allocator, world, num_channels=None,
+                             bandwidth_mhz=None):
+    if num_channels is not None:
+        if num_channels <= 0:
+            raise ValueError('--num-channels must be positive')
+        world.network_manager.subchannel_num = int(num_channels)
+    if not hasattr(resource_allocator, 'p'):
+        return
+    if num_channels is not None:
+        resource_allocator.p.num_channels = int(num_channels)
+    if bandwidth_mhz is not None:
+        if bandwidth_mhz <= 0:
+            raise ValueError('--bandwidth-mhz must be positive')
+        resource_allocator.p.bandwidth_all = float(bandwidth_mhz) * (10 ** 6)
+    if num_channels is not None or bandwidth_mhz is not None:
+        resource_allocator.p.bandwidth_per_channel = (
+            resource_allocator.p.bandwidth_all /
+            resource_allocator.p.num_channels)
+
+
 def apply_sgcp_constraint(frame, protocol, ego_cav_id, resource_allocation,
                           receiver_policy, t_min_stab=None,
                           clustering='coalition_game', n_max=None,
-                          rho_th=None):
+                          rho_th=None, num_channels=None,
+                          bandwidth_mhz=None):
     clear_sgcp_globals()
     world = OfflineCavWorld(
         frame,
@@ -168,6 +193,11 @@ def apply_sgcp_constraint(frame, protocol, ego_cav_id, resource_allocation,
     clusters = clustering_algorithm.run()
     apply_cluster_state(world, clusters)
     allocator = build_resource_allocator(resource_allocation, world)
+    apply_resource_overrides(
+        allocator,
+        world,
+        num_channels=num_channels,
+        bandwidth_mhz=bandwidth_mhz)
     allocator.set_clusters(clusters)
     allocator.run()
     if receiver_policy == 'all-cluster-heads':
@@ -195,6 +225,13 @@ def apply_sgcp_constraint(frame, protocol, ego_cav_id, resource_allocation,
         metadata['rho_th'] = (
             extract_lidar_density_threshold(protocol)
             if rho_th is None else rho_th)
+        metadata['num_channels'] = (
+            getattr(allocator.p, 'num_channels', None)
+            if hasattr(allocator, 'p')
+            else world.network_manager.subchannel_num)
+        metadata['bandwidth_mhz'] = (
+            getattr(allocator.p, 'bandwidth_all', 0.0) / (10 ** 6)
+            if hasattr(allocator, 'p') else None)
         constrained_items.append((constrained_frame, metadata))
     return constrained_items
 
@@ -271,7 +308,9 @@ def main():
                 args.t_min_stab,
                 args.clustering,
                 args.n_max,
-                args.rho_th)
+                args.rho_th,
+                args.num_channels,
+                args.bandwidth_mhz)
         if args.sgcp_inter_cluster_late_fusion:
             original_ego = next(cav for cav in frame.values() if cav['ego'])
             target_ego_lidar_pose = original_ego['params']['lidar_pose']

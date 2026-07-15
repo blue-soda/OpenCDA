@@ -59,6 +59,10 @@ def parse_args():
                         help='Use the first N CAVs in numeric order, keeping ego included.')
     parser.add_argument('--cav-ids', default=None,
                         help='Comma-separated CAV ids to replay, e.g. 1,2,3.')
+    parser.add_argument('--num-channels', type=int, default=None,
+                        help='Override SGCP resource allocation channel count.')
+    parser.add_argument('--bandwidth-mhz', type=float, default=None,
+                        help='Override SGCP total bandwidth in MHz.')
     return parser.parse_args()
 
 
@@ -133,10 +137,30 @@ def extract_lidar_density_threshold(protocol):
         return 2.0
 
 
+def apply_resource_overrides(resource_allocator, world, num_channels=None,
+                             bandwidth_mhz=None):
+    if num_channels is not None:
+        if num_channels <= 0:
+            raise ValueError('--num-channels must be positive')
+        world.network_manager.subchannel_num = int(num_channels)
+    if not hasattr(resource_allocator, 'p'):
+        return
+    if num_channels is not None:
+        resource_allocator.p.num_channels = int(num_channels)
+    if bandwidth_mhz is not None:
+        if bandwidth_mhz <= 0:
+            raise ValueError('--bandwidth-mhz must be positive')
+        resource_allocator.p.bandwidth_all = float(bandwidth_mhz) * (10 ** 6)
+    if num_channels is not None or bandwidth_mhz is not None:
+        resource_allocator.p.bandwidth_per_channel = (
+            resource_allocator.p.bandwidth_all /
+            resource_allocator.p.num_channels)
+
+
 def replay_frame(dataset, scenario_id, timestamp, ego_cav_id, protocol,
                  resource_allocation=None, t_min_stab=None,
                  clustering='coalition_game', n_max=None, rho_th=None,
-                 cav_ids=None):
+                 cav_ids=None, num_channels=None, bandwidth_mhz=None):
     frame = dataset.load_frame(
         scenario_id,
         timestamp,
@@ -166,6 +190,11 @@ def replay_frame(dataset, scenario_id, timestamp, ego_cav_id, protocol,
     ra_start_time = time.time()
     ra_name = get_resource_allocation_name(protocol, resource_allocation)
     resource_allocator = build_resource_allocator(ra_name, world)
+    apply_resource_overrides(
+        resource_allocator,
+        world,
+        num_channels=num_channels,
+        bandwidth_mhz=bandwidth_mhz)
     resource_allocator.set_clusters(clusters)
     resource_allocator.run()
     ra_elapsed_ms = (time.time() - ra_start_time) * 1000.0
@@ -199,6 +228,13 @@ def replay_frame(dataset, scenario_id, timestamp, ego_cav_id, protocol,
         'n_max': common.Params().N_max if n_max is None else n_max,
         'rho_th': (extract_lidar_density_threshold(protocol)
                    if rho_th is None else rho_th),
+        'num_channels': (
+            getattr(resource_allocator.p, 'num_channels', None)
+            if hasattr(resource_allocator, 'p')
+            else world.network_manager.subchannel_num),
+        'bandwidth_mhz': (
+            getattr(resource_allocator.p, 'bandwidth_all', 0.0) / (10 ** 6)
+            if hasattr(resource_allocator, 'p') else None),
         'channel_allocation_count': len(channel_allocation),
         'channel_allocation_sample': sorted(
             channel_allocation.items())[:10],
@@ -362,7 +398,9 @@ def main():
                 sid,
                 ego_cav_id=args.ego_cav_id,
                 cav_count=args.cav_count,
-                cav_ids=args.cav_ids))
+                cav_ids=args.cav_ids),
+            num_channels=args.num_channels,
+            bandwidth_mhz=args.bandwidth_mhz)
         results.append(result)
         if not args.summary_only:
             print_frame_result(index, len(frames), sid, result)
