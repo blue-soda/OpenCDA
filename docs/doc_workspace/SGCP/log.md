@@ -1227,3 +1227,74 @@ conda run -n opencda python -m opencda.tools.offline_inference --dataset-root D:
 - 当前 41 帧 dump 中，`T_min^stab` 从 100 ms 到 1000 ms 的 replay 和 AP 指标完全一致。
 - 这进一步确认当前短序列不足以支撑稳定窗口参数选择。论文若要回应审稿意见，需要补更长序列、更高相对速度或更频繁 topology change 的场景。
 - 运行时差异处于 Python 执行和机器负载噪声范围内，不宜作为论文结论。
+
+## 2026-07-15 - `rho_th` 参数敏感性实验
+
+### 目的
+
+- 推进 P1 参数实验：`rho_th` 多组阈值。
+- 验证点云密度阈值对 PPS grid selection、通信开销和 inter-cluster late-fusion AP 的影响。
+
+### 代码更新
+
+- `opencda.core.common.offline_replay.OfflineCavWorld`
+  - 新增 `density_threshold` 覆盖入口，在构建 `OfflineLidarGrid` 前覆盖 lidar config。
+- `opencda.tools.offline_replay`
+  - 新增 `--rho-th`，覆盖离线 replay 中的 lidar `density_threshold` / `Vehicle_Grid.rho_th`。
+- `opencda.tools.offline_inference`
+  - 新增 `--rho-th`，SGCP constrained / inter-cluster late-fusion AP 评估使用同一阈值。
+
+### 验证
+
+语法检查：
+
+```powershell
+$env:PYTHONDONTWRITEBYTECODE='1'; conda run -n opencda python -m py_compile opencda\core\common\offline_replay.py opencda\tools\offline_replay.py opencda\tools\offline_inference.py
+```
+
+3 帧 smoke test：
+
+```powershell
+conda run -n opencda python -m opencda.tools.offline_replay --dataset-root D:\Data\Carla --scenario-id 2026_07_15_01_26_56 --ego-cav-id 1 --resource-allocation potential_game --rho-th 1.0 --max-frames 3 --summary-only
+conda run -n opencda python -m opencda.tools.offline_replay --dataset-root D:\Data\Carla --scenario-id 2026_07_15_01_26_56 --ego-cav-id 1 --resource-allocation potential_game --rho-th 4.0 --max-frames 3 --summary-only
+```
+
+两组均可完成 3 帧 replay。
+
+### 41 帧 replay 汇总
+
+命令模板：
+
+```powershell
+conda run -n opencda python -m opencda.tools.offline_replay --dataset-root D:\Data\Carla --scenario-id 2026_07_15_01_26_56 --ego-cav-id 1 --resource-allocation potential_game --rho-th <rho> --max-frames 0 --summary-only
+```
+
+| `rho_th` | Avg. Clusters | Avg. Cluster Size | Avg. Isolated CAVs | Reconfig. Events | Vehicle-Head Changes | Avg. Cluster Lifetime (frames) | Avg. Runtime (ms) | Avg. RA Runtime (ms) |
+| ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| 0.5 | 6.12 | 3.28 | 0.00 | 10 | 60 | 7.61 | 97.74 | 33.10 |
+| 1.0 | 6.00 | 3.33 | 0.00 | 9 | 64 | 7.45 | 96.22 | 35.24 |
+| 2.0 | 6.00 | 3.33 | 0.00 | 11 | 76 | 6.65 | 99.99 | 37.39 |
+| 3.0 | 6.00 | 3.33 | 0.00 | 11 | 76 | 6.65 | 98.87 | 38.51 |
+| 4.0 | 6.00 | 3.33 | 0.00 | 11 | 76 | 6.65 | 103.24 | 40.26 |
+
+### 41 帧 AP 评估
+
+命令模板：
+
+```powershell
+conda run -n opencda python -m opencda.tools.offline_inference --dataset-root D:\Data\Carla --scenario-id 2026_07_15_01_26_56 --ego-cav-id 1 --sgcp-constrained --resource-allocation potential_game --sgcp-inter-cluster-late-fusion --rho-th <rho> --max-frames 0
+```
+
+| `rho_th` | Frames | Cluster-Head Sources | AP@0.3 | AP@0.5 | AP@0.7 | Avg. Upload (bytes/source) | Total Upload (bytes) | Avg. Source CAVs |
+| ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| 0.5 | 41 | 251 | 0.74 | 0.69 | 0.34 | 86658.74 | 21751344 | 3.27 |
+| 1.0 | 41 | 246 | 0.75 | 0.71 | 0.33 | 96968.13 | 23854160 | 2.67 |
+| 2.0 | 41 | 246 | 0.77 | 0.73 | 0.35 | 109415.48 | 26916208 | 2.67 |
+| 3.0 | 41 | 246 | 0.77 | 0.73 | 0.37 | 113689.69 | 27967664 | 2.67 |
+| 4.0 | 41 | 246 | 0.77 | 0.74 | 0.37 | 115754.73 | 28475664 | 2.67 |
+
+### 观察
+
+- 低阈值 `rho_th=0.5/1.0` 明显降低点云 payload，但 AP 也下降。
+- 默认 `rho_th=2.0` 是当前通信-精度折中点；`rho_th=3.0/4.0` 能提升 AP@0.7，但需要更多上传点云。
+- 当前结果可以支撑“阈值影响通信-精度折中”的实验描述，但还不能替代完整 `f(rho)` 标定曲线；论文仍需补密度采样、拟合曲线和 detector/scene 泛化。

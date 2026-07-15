@@ -233,13 +233,17 @@ class OfflineVehicleManager(object):
 
 
 class OfflineCavWorld(object):
-    def __init__(self, frame, ego_id=None, protocol=None):
+    def __init__(self, frame, ego_id=None, protocol=None,
+                 density_threshold=None):
         self.frame = frame
         self.protocol = protocol or {}
         self.ego_id = int(ego_id) if ego_id is not None else self._find_ego_id()
         self.network_manager = OfflineNetworkManager(
             extract_network_config(self.protocol))
         lidar_config = extract_vehicle_lidar_config(self.protocol)
+        if density_threshold is not None:
+            lidar_config = copy.deepcopy(lidar_config)
+            lidar_config['density_threshold'] = density_threshold
         self._vehicle_managers = OrderedDict()
         for vehicle_id, cav_content in frame.items():
             scheduler = OfflineScheduler(self.network_manager)

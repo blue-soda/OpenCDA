@@ -53,6 +53,8 @@ def parse_args():
                         help='Override CoalitionGame Params.T_min_stab in seconds. Use 0 for no stability window.')
     parser.add_argument('--n-max', type=int, default=None,
                         help='Override CoalitionGame Params.N_max.')
+    parser.add_argument('--rho-th', type=float, default=None,
+                        help='Override lidar density_threshold / rho_th.')
     return parser.parse_args()
 
 
@@ -86,9 +88,18 @@ def get_resource_allocation_name(protocol, override=None):
         return 'potential_game'
 
 
+def extract_lidar_density_threshold(protocol):
+    try:
+        return float(
+            protocol['vehicle_base']['sensing']['perception']['lidar'].get(
+                'density_threshold', 2.0))
+    except (AttributeError, KeyError, TypeError):
+        return 2.0
+
+
 def replay_frame(dataset, scenario_id, timestamp, ego_cav_id, protocol,
                  resource_allocation=None, t_min_stab=None,
-                 clustering='coalition_game', n_max=None):
+                 clustering='coalition_game', n_max=None, rho_th=None):
     frame = dataset.load_frame(
         scenario_id,
         timestamp,
@@ -97,7 +108,8 @@ def replay_frame(dataset, scenario_id, timestamp, ego_cav_id, protocol,
     world = OfflineCavWorld(
         frame,
         ego_id=ego_cav_id,
-        protocol=protocol)
+        protocol=protocol,
+        density_threshold=rho_th)
     start_time = time.time()
     if clustering == 'coalition_game':
         clustering_algorithm = CoalitionGame(world)
@@ -147,6 +159,8 @@ def replay_frame(dataset, scenario_id, timestamp, ego_cav_id, protocol,
         't_min_stab': (
             common.Params().T_min_stab if t_min_stab is None else t_min_stab),
         'n_max': common.Params().N_max if n_max is None else n_max,
+        'rho_th': (extract_lidar_density_threshold(protocol)
+                   if rho_th is None else rho_th),
         'channel_allocation_count': len(channel_allocation),
         'channel_allocation_sample': sorted(
             channel_allocation.items())[:10],
@@ -303,7 +317,8 @@ def main():
             resource_allocation=args.resource_allocation,
             t_min_stab=args.t_min_stab,
             clustering=args.clustering,
-            n_max=args.n_max)
+            n_max=args.n_max,
+            rho_th=args.rho_th)
         results.append(result)
         if not args.summary_only:
             print_frame_result(index, len(frames), sid, result)

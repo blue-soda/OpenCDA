@@ -68,6 +68,8 @@ def parse_args():
                         help='Override CoalitionGame Params.T_min_stab in seconds. Use 0 for no stability window.')
     parser.add_argument('--n-max', type=int, default=None,
                         help='Override CoalitionGame Params.N_max.')
+    parser.add_argument('--rho-th', type=float, default=None,
+                        help='Override lidar density_threshold / rho_th.')
     return parser.parse_args()
 
 
@@ -96,14 +98,25 @@ def load_protocol(dataset, scenario_id):
         return yaml.load(stream, Loader=yaml.Loader)
 
 
+def extract_lidar_density_threshold(protocol):
+    try:
+        return float(
+            protocol['vehicle_base']['sensing']['perception']['lidar'].get(
+                'density_threshold', 2.0))
+    except (AttributeError, KeyError, TypeError):
+        return 2.0
+
+
 def apply_sgcp_constraint(frame, protocol, ego_cav_id, resource_allocation,
                           receiver_policy, t_min_stab=None,
-                          clustering='coalition_game', n_max=None):
+                          clustering='coalition_game', n_max=None,
+                          rho_th=None):
     clear_sgcp_globals()
     world = OfflineCavWorld(
         frame,
         ego_id=ego_cav_id,
-        protocol=protocol)
+        protocol=protocol,
+        density_threshold=rho_th)
     if clustering == 'coalition_game':
         clustering_algorithm = CoalitionGame(world)
     elif clustering == 'singleton':
@@ -143,6 +156,9 @@ def apply_sgcp_constraint(frame, protocol, ego_cav_id, resource_allocation,
             common.Params().T_min_stab if t_min_stab is None else t_min_stab)
         metadata['n_max'] = (
             common.Params().N_max if n_max is None else n_max)
+        metadata['rho_th'] = (
+            extract_lidar_density_threshold(protocol)
+            if rho_th is None else rho_th)
         constrained_items.append((constrained_frame, metadata))
     return constrained_items
 
@@ -212,7 +228,8 @@ def main():
                 else args.sgcp_receiver_policy,
                 args.t_min_stab,
                 args.clustering,
-                args.n_max)
+                args.n_max,
+                args.rho_th)
         if args.sgcp_inter_cluster_late_fusion:
             original_ego = next(cav for cav in frame.values() if cav['ego'])
             target_ego_lidar_pose = original_ego['params']['lidar_pose']
