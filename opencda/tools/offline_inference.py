@@ -128,7 +128,7 @@ def run_opencood_inference(manager, frame, ego_lidar_pose):
     return manager.inference(
         batch_data,
         with_stats=False,
-        return_object_ids=True)
+        return_object_ids=manager.fusion_method != 'late')
 
 
 def main():

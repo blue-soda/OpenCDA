@@ -884,3 +884,53 @@ conda run -n opencda python -m opencda.tools.offline_inference --dataset-root D:
 - `potential_game` 在同一 late-fusion 口径下为 0.77/0.73/0.35，总 payload 26,916,208 bytes。
 - `random` 与 `mws` 的总 payload 约 9.7-9.9 MB，仅为 `potential_game` 的约 36%-37%，但 AP 明显下降，初步支持 PPS/博弈调度带来感知收益。
 - 当前 `mws` 低于 `random`，提示 MWS baseline 的效用函数、链路生成阈值或论文 baseline 对应关系需要进一步复核，暂不应直接作为最终论文结论。
+
+## 2026-07-15 - late-only OpenCOOD baseline
+
+### 目的
+
+- 推进 P1 “完整 SGCP vs 仅 late fusion” 消融的第一版参考结果。
+- 先验证现有 OpenCOOD late fusion checkpoint 能否在导出的 `v2xp_cluster_carla` 数据上离线评估。
+
+### 代码修复
+
+- `opencood.tools.inference_utils.inference_late_fusion`
+  - 修复 late fusion 推理函数构造结果后未 `return` 的问题。
+  - 对 late dataset 兼容不带 `return_object_ids` 的 `post_process()` 签名。
+- `opencda.tools.offline_inference`
+  - 当 `fusion_method == 'late'` 时不请求 `return_object_ids`，避免 late dataset 签名不兼容。
+
+### 验证
+
+语法检查：
+
+```powershell
+conda run -n opencda python -m py_compile opencda\tools\offline_inference.py opencood\opencood\tools\inference_utils.py
+```
+
+单帧 smoke test：
+
+```powershell
+conda run -n opencda python -m opencda.tools.offline_inference --dataset-root D:\Data\Carla --scenario-id 2026_07_15_01_26_56 --timestamp 000060 --ego-cav-id 1 --fusion-method late
+```
+
+结果：`000060` 帧 full 20-CAV late fusion 输出 `pred_boxes=70`、`gt_boxes=71`。
+
+全量 41 帧：
+
+```powershell
+conda run -n opencda python -m opencda.tools.offline_inference --dataset-root D:\Data\Carla --scenario-id 2026_07_15_01_26_56 --ego-cav-id 1 --fusion-method late --max-frames 0
+```
+
+结果：
+
+- frames：41
+- CAVs/frame：20
+- AP@0.3：0.91
+- AP@0.5：0.85
+- AP@0.7：0.51
+
+### 观察
+
+- late-only full 20-CAV checkpoint 高于 full early fusion baseline 的 0.85/0.83/0.48，也高于当前 SGCP constrained late-fusion 的 0.77/0.73/0.35。
+- 该结果使用 OpenCOOD late checkpoint，并非“同一 checkpoint 只切换融合机制”的严格 SGCP 消融；进入论文表格前应标注为 full late fusion reference，或重新设计同等通信约束下的 late-only SGCP 口径。

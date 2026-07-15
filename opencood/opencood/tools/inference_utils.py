@@ -35,10 +35,18 @@ def inference_late_fusion(batch_data, model, dataset, return_output=False, retur
         # print(cav_id, cav_content.keys())
         output_dict[cav_id] = model(cav_content)
 
-    post_process_result = dataset.post_process(batch_data, output_dict, return_object_ids=return_object_ids)
+    if return_object_ids:
+        post_process_result = dataset.post_process(
+            batch_data,
+            output_dict,
+            return_object_ids=return_object_ids)
+    else:
+        post_process_result = dataset.post_process(batch_data, output_dict)
     ret = list(post_process_result)
     if return_output:
         ret.append(output_dict)
+
+    return tuple(ret)
 
 
 def inference_early_fusion(batch_data, model, dataset, return_output=False, return_object_ids=False):

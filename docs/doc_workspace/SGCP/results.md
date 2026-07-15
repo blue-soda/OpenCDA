@@ -34,12 +34,14 @@
 
 | Variant | mAP@0.3 | mAP@0.5 | mAP@0.7 | Comm. Overhead (Mbps) | Reconfig. Count | Notes |
 | --- | ---: | ---: | ---: | ---: | ---: | --- |
-| SGCP full | TBD | TBD | TBD | TBD | TBD | Full method |
+| SGCP full | 0.77 | 0.73 | 0.35 | TBD | 11 | Offline constrained intra-cluster early fusion + inter-cluster late fusion, `potential_game` |
 | w/o stability window | TBD | TBD | TBD | TBD | TBD | Test contribution of `T_min^stab` |
 | w/o coalition formation | TBD | TBD | TBD | TBD | TBD | Distance/random cluster |
-| w/o PPS | TBD | TBD | TBD | TBD | TBD | Random/greedy scheduling |
-| early fusion only | TBD | TBD | TBD | TBD | TBD | No inter-cluster late fusion |
-| late fusion only | TBD | TBD | TBD | TBD | TBD | No intra-cluster point cloud upload |
+| w/o PPS - random | 0.44 | 0.39 | 0.17 | TBD | 11 | Random scheduling, same SGCP late-fusion evaluation path |
+| w/o PPS - MWS | 0.31 | 0.26 | 0.11 | TBD | 11 | Greedy scheduling, needs baseline-definition review |
+| early fusion only | 0.85 | 0.83 | 0.48 | TBD | N/A | Full 20-CAV early fusion, no SGCP communication constraint |
+| constrained early only | 0.36 | 0.34 | 0.17 | TBD | 11 | All cluster heads, no inter-cluster late fusion |
+| late fusion only | 0.91 | 0.85 | 0.51 | TBD | N/A | OpenCOOD full 20-CAV late checkpoint; reference only, not a strict same-checkpoint SGCP ablation |
 
 ## 参数敏感性
 
@@ -98,6 +100,7 @@
 | Dataset Path | Fusion | Frames | Ego CAV | AP@0.3 | AP@0.5 | AP@0.7 | Notes |
 | --- | --- | ---: | ---: | ---: | ---: | ---: | --- |
 | `D:\Data\Carla\2026_07_15_01_26_56` | Early | 41 | 1 | 0.85 | 0.83 | 0.48 | No NS3, no online CARLA sensor stream |
+| `D:\Data\Carla\2026_07_15_01_26_56` | Late | 41 | 1 | 0.91 | 0.85 | 0.51 | Full 20-CAV OpenCOOD late model; reference only |
 
 ## SGCP 约束感知评估
 
