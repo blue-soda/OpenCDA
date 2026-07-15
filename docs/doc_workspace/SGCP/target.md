@@ -63,7 +63,7 @@
 - [ ] 重新检查 potential game exact potential 的成立条件。
 - [ ] 估算 density/utility/control message 的控制开销，并决定是否纳入通信开销指标。
 - [x] 复核 PPS 中 `bandwidth_all/bandwidth_per_channel` 的吞吐约束实现，解释为何 `bandwidth_mhz=20/40/80` 在当前离线实验中结果一致。结论：参数已进入 `PotentialGame` max-grid/SINR/data-rate 计算，但当前 dump 不由带宽上限主导。
-- [ ] 构造能触发带宽瓶颈的 SGCP 场景或参数组：更低带宽、更大 grid payload、更高点云密度或更多候选上传网格。
+- [x] 构造能触发带宽瓶颈的 SGCP 场景或参数组：已完成 `bandwidth_mhz=0.1/0.5/1.0` stress test，selected grids 和 AP 随带宽恢复而上升。
 
 ## P4：论文写作修订
 

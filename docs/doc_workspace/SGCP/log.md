@@ -1453,3 +1453,52 @@ conda run -n opencda python -m opencda.tools.offline_inference --dataset-root D:
 - `bandwidth_per_channel` 进入 `calculate_max_grids_per_rb()`、`compute_data_rate()` 和 `bits_to_sinr()`。
 - 本轮新增 inference summary 字段 `avg_selected_grids`，确认 5/10/20 子信道分别为 45.58/87.32/117.18，而 20/40/80 MHz 均为 87.32。
 - 因此当前现象不是参数没有传入，而是该 dump 的 PPS 选择不由带宽上限主导。后续如需论文中展示带宽敏感性，需要尝试更低带宽、更大 grid payload、更高点云密度或更多候选上传网格的场景。
+
+## 2026-07-15 - 低带宽瓶颈触发实验
+
+### 目的
+
+- 推进 P3 “构造能触发带宽瓶颈的 SGCP 场景或参数组”。
+- 在不重新导出 CARLA 数据的前提下，使用极低 `bandwidth_mhz` 压力测试确认 `PotentialGame` 的带宽吞吐约束是否可观测生效。
+
+### 3 帧 smoke test
+
+命令：
+
+```powershell
+conda run -n opencda python -m opencda.tools.offline_inference --dataset-root D:\Data\Carla --scenario-id 2026_07_15_01_26_56 --ego-cav-id 1 --sgcp-constrained --resource-allocation potential_game --sgcp-inter-cluster-late-fusion --bandwidth-mhz 0.1 --max-frames 3
+conda run -n opencda python -m opencda.tools.offline_inference --dataset-root D:\Data\Carla --scenario-id 2026_07_15_01_26_56 --ego-cav-id 1 --sgcp-constrained --resource-allocation potential_game --sgcp-inter-cluster-late-fusion --bandwidth-mhz 0.5 --max-frames 3
+conda run -n opencda python -m opencda.tools.offline_inference --dataset-root D:\Data\Carla --scenario-id 2026_07_15_01_26_56 --ego-cav-id 1 --sgcp-constrained --resource-allocation potential_game --sgcp-inter-cluster-late-fusion --bandwidth-mhz 1.0 --max-frames 3
+```
+
+结果：
+
+| Bandwidth (MHz) | AP@0.3 | AP@0.5 | AP@0.7 | Avg. Upload (bytes/source) | Avg. Source CAVs | Avg. Selected Grids |
+| ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| 0.1 | 0.27 | 0.23 | 0.10 | 0.00 | 1.00 | 0.00 |
+| 0.5 | 0.54 | 0.49 | 0.21 | 34426.67 | 2.39 | 4.17 |
+| 1.0 | 0.63 | 0.55 | 0.23 | 59624.00 | 2.56 | 9.33 |
+
+### 41 帧 AP 评估
+
+命令模板：
+
+```powershell
+conda run -n opencda python -m opencda.tools.offline_inference --dataset-root D:\Data\Carla --scenario-id 2026_07_15_01_26_56 --ego-cav-id 1 --sgcp-constrained --resource-allocation potential_game --sgcp-inter-cluster-late-fusion --bandwidth-mhz <MHz> --max-frames 0
+```
+
+| Bandwidth (MHz) | Frames | Cluster-Head Sources | AP@0.3 | AP@0.5 | AP@0.7 | Avg. Upload (bytes/source) | Total Upload (bytes) | Avg. Source CAVs | Avg. Selected Grids |
+| ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| 0.1 | 41 | 246 | 0.26 | 0.22 | 0.09 | 0.00 | 0 | 1.00 | 0.00 |
+| 0.5 | 41 | 246 | 0.56 | 0.50 | 0.23 | 39694.05 | 9764736 | 2.44 | 4.32 |
+| 1.0 | 41 | 246 | 0.66 | 0.61 | 0.31 | 75639.67 | 18607360 | 2.61 | 9.66 |
+| 20.0 | 41 | 246 | 0.77 | 0.73 | 0.35 | 109415.48 | 26916208 | 2.67 | 87.32 |
+| 40.0 | 41 | 246 | 0.77 | 0.73 | 0.35 | 109415.48 | 26916208 | 2.67 | 87.32 |
+| 80.0 | 41 | 246 | 0.77 | 0.73 | 0.35 | 109415.48 | 26916208 | 2.67 | 87.32 |
+
+### 观察
+
+- `bandwidth_mhz=0.1` 时所有 cluster head 均无成员点云上传，退化为 inter-cluster late fusion of cluster heads。
+- `0.5/1.0 MHz` 逐步恢复成员上传，selected grids、payload 和 AP 同步上升。
+- `20/40/80 MHz` 在当前 dump 上完全重合，说明常规带宽已超过该场景 PPS 可用候选网格需求。
+- 论文写作建议：把 0.1/0.5/1.0 MHz 定位为 stress test，用于证明带宽约束实现有效；把 5/10/20 子信道实验作为常规网络资源敏感性主结果。
