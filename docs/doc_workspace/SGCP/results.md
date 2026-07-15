@@ -118,6 +118,18 @@ conda run -n opencda python -m opencda.tools.offline_inference --dataset-root D:
 | 5 | 0.75 | 0.71 | 0.32 | 102582.76 | 25235360 | 3.33 | 6.00 | 8 | 10.70 | Same cluster count as `N_max=6`; different from default due to coalition search path |
 | 6 | 0.75 | 0.71 | 0.32 | 102582.76 | 25235360 | 3.33 | 6.00 | 8 | 10.70 | Same result as `N_max=5` on current 20-CAV dump |
 
+Capacity statistics for the same `N_max` sweep:
+
+| `N_max` | Avg. Full Clusters | Max Full Clusters | Full Candidate Skips | Avg. Skips / Frame | Avg. Singleton Cluster Ratio | Avg. Small-Cluster Ratio |
+| ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| 2 | 9.71 | 10 | 12534 | 305.71 | 0.053 | 1.000 |
+| 3 | 6.00 | 6 | 7894 | 192.54 | 0.146 | 0.206 |
+| 4 | 3.12 | 4 | 4065 | 99.15 | 0.000 | 0.187 |
+| 5 | 1.00 | 1 | 1142 | 27.85 | 0.000 | 0.317 |
+| 6 | 0.00 | 0 | 0 | 0.00 | 0.000 | 0.317 |
+
+Observation: the default `N_max=4` creates no singleton clusters in this dump, but still has 3.12 full clusters per frame and 99.15 capacity-skipped candidate joins per frame. This supports the mechanism claim that `N_max` is an active hard capacity constraint; blocked vehicles are retained in feasible coalitions or small clusters and still enter inter-cluster late fusion.
+
 ### Density Threshold
 
 实验口径：`D:\Data\Carla\2026_07_15_01_26_56`，41 帧，20 CAV，`potential_game`，SGCP inter-cluster late fusion。`rho_th` 覆盖 lidar `density_threshold`，影响 high-density grid 判定、`Vehicle_Grid.rho_th`、cluster grid bits 和 PPS grid selection。

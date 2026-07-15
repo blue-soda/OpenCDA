@@ -294,6 +294,7 @@ def replay_frame(dataset, scenario_id, timestamp, ego_cav_id, protocol,
     if n_max is not None and hasattr(clustering_algorithm, 'p'):
         clustering_algorithm.p.N_max = n_max
     clusters = clustering_algorithm.run()
+    capacity_stats = getattr(clustering_algorithm, 'capacity_stats', {})
     apply_cluster_state(world, clusters)
     topology_state = collect_topology_state(world)
     ra_start_time = time.time()
@@ -348,6 +349,18 @@ def replay_frame(dataset, scenario_id, timestamp, ego_cav_id, protocol,
         'channel_allocation_sample': sorted(
             channel_allocation.items())[:10],
         'clusters': cluster_summary,
+        'capacity_stats': {
+            'full_candidate_skips': int(
+                capacity_stats.get('full_candidate_skips', 0)),
+            'full_clusters': sum(
+                1 for cluster in cluster_summary
+                if cluster['size'] >= (
+                    common.Params().N_max if n_max is None else n_max)),
+            'singleton_clusters': sum(
+                1 for cluster in cluster_summary if cluster['size'] == 1),
+            'small_clusters': sum(
+                1 for cluster in cluster_summary if cluster['size'] <= 2),
+        },
         'topology_state': topology_state,
     }
 
@@ -483,6 +496,22 @@ def summarize_replay(results, relative_speed_threshold=5.0,
         sum(1 for cluster in item['clusters'] if cluster['size'] == 1)
         for item in results
     ]
+    full_cluster_counts = [
+        item.get('capacity_stats', {}).get('full_clusters', 0)
+        for item in results
+    ]
+    singleton_cluster_counts = [
+        item.get('capacity_stats', {}).get('singleton_clusters', 0)
+        for item in results
+    ]
+    small_cluster_counts = [
+        item.get('capacity_stats', {}).get('small_clusters', 0)
+        for item in results
+    ]
+    full_candidate_skips = [
+        item.get('capacity_stats', {}).get('full_candidate_skips', 0)
+        for item in results
+    ]
 
     reconfiguration_events = 0
     vehicle_head_changes = 0
@@ -528,6 +557,22 @@ def summarize_replay(results, relative_speed_threshold=5.0,
         'avg_isolated_cavs': (
             sum(isolated_counts) / float(frame_count)),
         'max_isolated_cavs': max(isolated_counts),
+        'avg_full_clusters': (
+            sum(full_cluster_counts) / float(frame_count)),
+        'max_full_clusters': max(full_cluster_counts),
+        'total_full_candidate_skips': sum(full_candidate_skips),
+        'avg_full_candidate_skips': (
+            sum(full_candidate_skips) / float(frame_count)),
+        'avg_singleton_cluster_ratio': (
+            sum(
+                singleton_cluster_counts[index] /
+                float(results[index]['cluster_count'] or 1)
+                for index in range(frame_count)) / float(frame_count)),
+        'avg_small_cluster_ratio': (
+            sum(
+                small_cluster_counts[index] /
+                float(results[index]['cluster_count'] or 1)
+                for index in range(frame_count)) / float(frame_count)),
         'reconfiguration_events': reconfiguration_events,
         'vehicle_head_changes': vehicle_head_changes,
         'avg_cluster_lifetime_frames': avg_lifetime,
@@ -584,6 +629,15 @@ def print_summary(summary):
         summary['avg_cluster_lifetime_frames'],
         summary['min_cluster_lifetime_frames'],
         summary['max_cluster_lifetime_frames']))
+    print('summary capacity avg_full_clusters=%.2f max_full_clusters=%s '
+          'full_candidate_skips_total=%s avg_full_candidate_skips=%.2f '
+          'avg_singleton_cluster_ratio=%.3f avg_small_cluster_ratio=%.3f' % (
+              summary['avg_full_clusters'],
+              summary['max_full_clusters'],
+              summary['total_full_candidate_skips'],
+              summary['avg_full_candidate_skips'],
+              summary['avg_singleton_cluster_ratio'],
+              summary['avg_small_cluster_ratio']))
     print('summary runtime_ms avg_total=%.2f avg_ra=%.2f' % (
         summary['avg_elapsed_ms'],
         summary['avg_resource_allocation_ms']))

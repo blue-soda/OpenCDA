@@ -2033,3 +2033,30 @@ conda run -n opencda python -m opencda.tools.offline_inference --dataset-root D:
 | Communication-aware NS3 RLC-complete aware | 11 | 0.68 | 0.63 | 0.27 | 7,796,560 | 118,129.70 | 2.80 | 80.85 |
 
 结论：NS3 link-quality cost 已能进入 same-budget selective baseline。受限 5 子信道链路质量会使 baseline 避开不可达链路，通信量略降，但短 11 帧窗口 AP 也下降。论文叙事应强调这是网络可行性约束下的公平 baseline，而不是只按感知密度贪心的上界。
+
+## 2026-07-16 - Cluster capacity statistics for `N_max`
+
+### 代码修正
+
+- `CoalitionGame` 新增 `capacity_stats.full_candidate_skips`，统计 coalition formation 中因 `c.size() >= N_max` 被跳过的候选 coalition 次数。
+- `opencda.tools.offline_replay` summary 新增容量统计：`avg_full_clusters`、`max_full_clusters`、`full_candidate_skips_total`、`avg_full_candidate_skips`、`avg_singleton_cluster_ratio`、`avg_small_cluster_ratio`。
+
+### 命令
+
+```powershell
+conda run -n opencda python -m opencda.tools.offline_replay --dataset-root D:\Data\Carla --scenario-id 2026_07_15_01_26_56 --ego-cav-id 1 --resource-allocation potential_game --n-max <2|3|4|5|6> --max-frames 0 --summary-only
+```
+
+日志路径：`docs\doc_workspace\SGCP\artifacts\capacity_stats_nmax\nmax_<N>.log`
+
+### 结果
+
+| `N_max` | Avg. Clusters | Avg. Size | Avg. Full Clusters | Max Full Clusters | Full Candidate Skips | Avg. Skips / Frame | Avg. Singleton Ratio | Avg. Small-Cluster Ratio | Reconfig. | Head Changes |
+| ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| 2 | 10.29 | 1.95 | 9.71 | 10 | 12534 | 305.71 | 0.053 | 1.000 | 16 | 59 |
+| 3 | 7.59 | 2.65 | 6.00 | 6 | 7894 | 192.54 | 0.146 | 0.206 | 9 | 62 |
+| 4 | 6.00 | 3.33 | 3.12 | 4 | 4065 | 99.15 | 0.000 | 0.187 | 11 | 76 |
+| 5 | 6.00 | 3.33 | 1.00 | 1 | 1142 | 27.85 | 0.000 | 0.317 | 8 | 15 |
+| 6 | 6.00 | 3.33 | 0.00 | 0 | 0 | 0.00 | 0.000 | 0.317 | 8 | 15 |
+
+结论：`N_max` 是实际生效的硬约束。`N_max=2/3` 时容量压力很强，导致大量候选加入被跳过，并产生更高 singleton/small-cluster 比例；默认 `N_max=4` 没有 singleton，但平均每帧仍有约 3.12 个满簇和 99.15 次满簇候选跳过，说明机制确实在处理“周围 cluster 已满”情况；`N_max=6` 下当前 20-CAV dump 不再受容量约束。论文中可据此说明：车辆不会被丢弃，而是保留在当前 coalition 或以小簇形式通过 inter-cluster late fusion 补偿。

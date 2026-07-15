@@ -95,6 +95,7 @@ SGCP 工作与仓库中以下部分关系最紧密：
 - 已完成 topology trigger 速度源复核：`ego_speed` 来自 `get_speed(vehicle)`，默认单位是 km/h；`pose_delta` threshold 3/4 m/s 可覆盖 11 次实际 reconfiguration，5 m/s 会漏掉 2 次。
 - 已将 topology trigger gate 接入在线 `ClusteringV2XManager` first version：默认关闭；打开后按 hard failure、邻居集合变化和 periodic guard 决定是否重跑 `CoalitionGame`，否则沿用上一轮 cluster。
 - 已新增 `cluster_capacity_policy.md`，明确 cluster 已满时采用硬 `N_max`、保留当前 cluster、加入未满更优 cluster、singleton fallback 和 inter-cluster late fusion 补偿；merge/split 不作为独立无限制原语。
+- 已将 cluster capacity 统计接入 `opencda.tools.offline_replay`：默认 `N_max=4` 的 41 帧 dump 中，平均每帧 3.12 个满簇、99.15 次满簇候选跳过、singleton cluster ratio 为 0、small-cluster ratio 为 0.187；`N_max=2/3/5/6` sweep 已写入 `results.md`。
 - 已完成 SGCP 11 帧离线 NS3 request-level replay：154 条 SGCP intra-cluster request，CAM callback delivery ratio 0.558442，request with any RLC RX event ratio 0.974026。后者仅表示 request_id 至少出现一个 RLC RX 片段/事件，不代表完整 request delivery。
 - 已确认当前可运行环境版本快照，并记录到 `docs/doc_workspace/environment.md`：OpenCDA HEAD `fcc29fdc9ee9a9fe694c12e1fb6792b4d41bccac`，Python 3.7.10，CARLA Python API 0.9.11，PyTorch 1.10.0+cu113，Open3D 0.10.0.0，ns-3 wrapper `ns-3-dev-v2x-v1.1-dirty`。
 - 已修复在线 CARLA-NS3 时间流速不一致问题：`NetworkManager.time_slot` 不再将 `world.fixed_delta_seconds` 除以 5，`current_sim_time`、`current_time_slot` 与 CARLA tick 统一推进。
@@ -129,5 +130,5 @@ SGCP 工作与仓库中以下部分关系最紧密：
 - 在线 CARLA-NS3 修复尚未在真实 CARLA 图形仿真中长时间回归；当前已通过离线 NS3 socket/sync smoke test 和本地时间基准单元断言。
 - Topology trigger 已接入离线 replay 统计，但尚未接入在线 `ClusteringV2XManager` gate；单独 relative-speed trigger 仍偏敏感，在线 gate 应结合 neighbor-set change、utility drop 和 `T_min_stab` 滞回。
 - 在线 topology trigger gate 尚未在真实 CARLA 图形仿真中回归；当前仅完成代码接入和静态编译检查。
-- Cluster capacity 策略目前是机制规格；尚未统计满簇跳过次数，也未实现 optional replacement repair。
+- Cluster capacity 策略已有离线统计支撑；optional replacement repair 尚未实现，进入论文前可明确为 future/optional enhancement。
 - SGCP potential_game NS3 replay 已确认“PPS 已调度且无冲突的 request 全部成功”，且低暴露子信道场景能正确拒绝超出带宽窗口的 request；NS3 delivery/PDR 已先接入 selective-sharing baseline。下一步是把该 link-quality 反馈进一步接入 SGCP PPS 本身或 OpenCOOD mAP 的端到端丢包裁剪。

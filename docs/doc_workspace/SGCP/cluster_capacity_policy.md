@@ -74,6 +74,6 @@
 
 ## 待实现
 
-- 在离线 replay 中统计每帧满簇数量、因满簇被跳过的候选 move 数。
+- 已在离线 replay 中统计每帧满簇数量、因满簇被跳过的候选 move 数，以及 singleton/small-cluster 比例。当前 41 帧 dump 中，默认 `N_max=4` 平均每帧 3.12 个满簇、99.15 次满簇候选跳过、singleton cluster ratio 为 0、small-cluster ratio 为 0.187。
 - 如需增强机制，增加默认关闭的 replacement repair。
 - 将 singleton/small cluster 的 detection-box exchange overhead 纳入通信统计。

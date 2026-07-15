@@ -13,6 +13,9 @@ class CoalitionGame(ClusteringAlgorithm):
         self.cav_world = cav_world  # 保持向后兼容
         self.p = common.Params()
         self.coalitions = self.clusters
+        self.capacity_stats = {
+            'full_candidate_skips': 0,
+        }
 
     def initialize(self):
         """Initialize the clustering algorithm."""
@@ -205,6 +208,9 @@ class CoalitionGame(ClusteringAlgorithm):
     def coalition_formation(self, max_iter=20):
         self.check_is_ok()
         self.ego_coalition_be_first()
+        self.capacity_stats = {
+            'full_candidate_skips': 0,
+        }
         for _ in range(max_iter):
             logger.info("--- Coalition Formation Iteration %d ---", _+1)
             updated = False
@@ -222,6 +228,7 @@ class CoalitionGame(ClusteringAlgorithm):
                     if c is current:
                         continue
                     if c.size() >= self.p.N_max:
+                        self.capacity_stats['full_candidate_skips'] += 1
                         # print(f"Vehicle {vid} cannot join coalition {c.members} due to size limit.")
                         continue
                     delta = self.marginal_contribution(c, vid)

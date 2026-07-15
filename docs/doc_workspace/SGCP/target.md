@@ -72,7 +72,7 @@
 - [x] 设计 cluster 已满时的处理策略：保留、替换、等待、split/merge 或 leader-level late fusion 补偿。已新增 `cluster_capacity_policy.md`，当前主策略为硬 `N_max` + 保留/未满簇迁移/singleton fallback/inter-cluster late fusion 补偿。
 - [x] 明确是否支持 cluster merge/split，并说明与 `N_max` 的关系。当前口径：不允许超过 `N_max` 的 merge；split/merge 通过 topology trigger + coalition reformation 间接发生。
 - [x] 补充成员加入后的边际贡献重算流程。当前迭代会在后续车辆/后续轮次基于更新后的 coalition state 重算贡献，并用 `ita` 抑制振荡。
-- [ ] 在离线 replay 中统计满簇数量、因 `N_max` 跳过的候选 move 数和 singleton/small-cluster 补偿比例。
+- [x] 在离线 replay 中统计满簇数量、因 `N_max` 跳过的候选 move 数和 singleton/small-cluster 补偿比例。默认 `N_max=4` 下 41 帧平均每帧 3.12 个满簇、99.15 次满簇候选跳过、singleton ratio 0、small-cluster ratio 0.187。
 - [ ] 明确 `f(rho)` 的标定协议和 detector/sensor-specific metadata 机制。
 - [ ] 重新检查 potential game exact potential 的成立条件。
 - [ ] 估算 density/utility/control message 的控制开销，并决定是否纳入通信开销指标。
