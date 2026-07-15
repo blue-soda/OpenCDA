@@ -320,6 +320,7 @@ def main():
     try:
         first_vehicle_data = None
         upload_plan_rows = []
+        next_pkt_id = 1
         for index, timestamp in enumerate(timestamps):
             if lgcp_uploads is None:
                 vehicle_data, requests, clusters, ra_name, skipped_unscheduled = \
@@ -350,6 +351,10 @@ def main():
                 cluster_count = 0
                 request_mode = 'lgcp'
                 skipped_unscheduled = 0
+
+            for request in requests:
+                request['pkt_id'] = next_pkt_id
+                next_pkt_id += 1
 
             append_upload_plan_rows(
                 upload_plan_rows,

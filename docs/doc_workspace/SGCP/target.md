@@ -7,6 +7,7 @@
 
 - [x] 最高优先级：排查并修复 NS3 manual subchannel 链路，使 OpenCDA 指定的 `sc_start/sc_num` 真实落到 NS3 NR sidelink 发送行为。已完成 4 类 probe：非冲突成功、最高合法子信道 9 成功、同子信道冲突触发 PHY decode failure、越界子信道 10 被拒绝且无 RLC/CAM 发送。
 - [x] 将 SGCP `offline_ns3_replay` 的资源分配口径对齐为配置默认 `potential_game`，并默认只发送 PPS 已分配 `sc_start/sc_num` 的 request。已完成 11 帧 fixed replay：110 scheduled request 全部 CAM/RLC 成功，44 条未调度需求被跳过。
+- [x] 修复 NS3 暴露子信道窗口语义：OpenCDA/bridge 按 `targetSubchannels` 校验 `sc_start/sc_num`，超出范围的 request 在 CAM/RLC 创建前拒绝；manual scheduler 对确定越界命令 drop+pop，避免无效队头阻塞后续合法请求。
 - [x] 定位 SGCP 当前实现入口、配置文件和运行命令。
 - [x] 建立 `v2xp_cluster_carla` 数据集导出、导入能力，用离线数据替代 CARLA 在线运行。
 - [ ] 当前优先：确认论文现有结果对应的代码版本、配置、随机种子和日志路径。
@@ -58,7 +59,8 @@
 - [x] 补充 communication-aware selective-sharing baseline，加入距离/链路质量/payload cost，而不只按 density 排序。当前 first version 使用 `density_sum / (1 + distance / 100)`；后续可替换为 NS3/link-quality cost。
 - [ ] 将 communication-aware selective-sharing baseline 的距离 proxy 替换或扩展为 NS3/link-quality cost。
 - [x] 使用 NS3 request-level trace 对 SGCP 离线上传请求做链路层统计。旧 all-member replay 为 CAM callback delivery ratio = 0.558442；修复后 potential_game scheduled replay 为 110/110 CAM delivery、RLC RX 2970/2970、PHY failures 0。
-- [ ] 继续补充 RLC request completion 口径：按 request_id 对比 TX/RX segment 数、DROP 事件和 application callback，给出 partial reception、complete application delivery、PHY diagnostics 三层指标。
+- [x] 继续补充 RLC request completion 口径：按 request_id 对比 TX/RX segment 数、DROP 事件和 application callback，给出 partial reception、complete application delivery、PHY diagnostics 三层指标。已新增 `rlc_complete_requests`、`rlc_partial_requests`、`rlc_no_rx_requests`，并通过 10/5 子信道回归验证。
+- [x] 构造 NS3 受限暴露带宽回归：`targetSubchannels=5` 下 110 个 scheduled request 中 `sc_start=0..4` 的 55 个 complete，`sc_start=5..9` 的 55 个 no_tx/no_rx，`MANUAL_CMD_REJECT=55`。
 - [ ] 将 NS3 request-level delivery/PDR 接入 SGCP PPS 或 selective-sharing baseline 的 link-quality cost。
 
 ## P3：完善机制设计

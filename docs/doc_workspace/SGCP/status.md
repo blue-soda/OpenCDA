@@ -105,11 +105,13 @@ SGCP 工作与仓库中以下部分关系最紧密：
 - 已完成 `opencda.tools.ns3_link_probe` 四类链路回归：`success`、`edge_success(sc_start=9)` 均全量 CAM delivery；`conflict` 中两请求均落到 physicalStart=0，并产生 `PSCCH_DECODE_FAIL reason=decoded_overlap`，仅 1/2 CAM delivery；`out_of_band(sc_start=10)` 产生一次 `MANUAL_CMD_REJECT reason=out_of_band totalSubCh=10`，无 RLC TX/RX/CAM。
 - 已将 `opencda.tools.offline_ns3_replay` 的 SGCP 资源分配从硬编码 `NaiveRA` 对齐为配置默认 `potential_game`，并默认跳过没有 `sc_start/sc_num` 的未调度需求，防止绕过 OpenCDA PPS 进入 NS3 默认调度。
 - 已完成修复后 SGCP potential_game 11 帧 NS3 replay：110 条 PPS scheduled request、44 条 skipped unscheduled demand、CAM delivery 110/110、RLC RX 2970/2970、PHY failures 0、manual reject 0。
+- 已补齐 NS3 request-level 三层统计：application callback、RLC request completion/partial/no_tx、PHY decode diagnostics。`offline_ns3_replay` 现使用全局唯一 `pkt_id`，避免 RLC 延迟事件跨帧错配。
+- 已完成 NS3 暴露带宽/子信道窗口回归：`targetSubchannels=10` 时 110/110 PPS request application/RLC complete；`targetSubchannels=5` 时 `sc_start=0..4` 的 55 条全部 complete，`sc_start=5..9` 的 55 条全部在 bridge 层 `MANUAL_CMD_REJECT reason=bridge_out_of_band`，无 CAM/RLC/PHY 污染。
 
 ## 当前阻塞项
 
 - 尚未确认论文中表格结果对应的原始日志、随机种子和复现实验配置。
-- 当前 OpenCDA 与 ns-3 工作区均存在未提交/dirty 状态；NS3 manual subchannel 修复已通过 probe，但仍需要分别在 OpenCDA 仓库和 co-simulation 仓库提交。
+- 当前 OpenCDA 与 ns-3 工作区均存在未提交/dirty 状态；NS3 exposed-subchannel 修复与 request-level 统计已通过离线回归，但仍需要分别在 OpenCDA 仓库和 co-simulation 仓库提交。
 - 离线 SGCP 回放已完成到“多帧 clustering + `potential_game` 资源分配 + 稳定性/运行时指标 + OpenCOOD 约束感知 mAP”层。
 - 论文 SGCP 的 PPS/博弈调度当前按配置默认 `potential_game` 执行；已完成 `RandomRA/MWS` 初版对比，但 MWS 结果低于 random，需要结合论文文本复核 baseline 定义与效用函数。
 - 早期 `ego-cluster-head` 与 `all-cluster-heads` constrained 评估只包含 intra-cluster early fusion；论文完整 SGCP 结果应优先采用 inter-cluster late fusion 口径。
@@ -127,4 +129,4 @@ SGCP 工作与仓库中以下部分关系最紧密：
 - Topology trigger 已接入离线 replay 统计，但尚未接入在线 `ClusteringV2XManager` gate；单独 relative-speed trigger 仍偏敏感，在线 gate 应结合 neighbor-set change、utility drop 和 `T_min_stab` 滞回。
 - 在线 topology trigger gate 尚未在真实 CARLA 图形仿真中回归；当前仅完成代码接入和静态编译检查。
 - Cluster capacity 策略目前是机制规格；尚未统计满簇跳过次数，也未实现 optional replacement repair。
-- SGCP potential_game NS3 replay 已确认“PPS 已调度且无冲突的 request 全部成功”；下一步需要构造拥塞/冲突/低带宽场景，把 NS3 delivery/PDR 反馈到 SGCP PPS 或 OpenCOOD mAP 评估中。
+- SGCP potential_game NS3 replay 已确认“PPS 已调度且无冲突的 request 全部成功”，且低暴露子信道场景能正确拒绝超出带宽窗口的 request；下一步是把 NS3 delivery/PDR 反馈到 SGCP PPS 或 OpenCOOD mAP 评估中。

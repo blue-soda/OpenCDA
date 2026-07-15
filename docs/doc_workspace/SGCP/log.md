@@ -1972,3 +1972,34 @@ conda run -n opencda python -m opencda.tools.ns3_log_eval --ns3-stdout docs\doc_
 Trace 计数：`MANUAL_RESOURCE_APPLY=2970`、`MANUAL_CMD_REJECT=0`、`PSCCH_DECODE_FAIL=0`、`PSSCH_DECODE_FAIL=0`。Upload plan 中 `sc_start=0..9` 各出现 11 次。
 
 结论：修复后的 NS3 + SGCP potential_game replay 已经验证，在当前 11 帧 dump 中，PPS 已调度且无冲突的通信需求均能完整到达 application callback。旧 154-request 结果应标注为 legacy all-member diagnostic，因为它包含未调度需求并可能绕过 PPS。
+
+## 2026-07-16 - NS3 request-level completion and exposed subchannel bounds
+
+### 代码修正
+
+- `opencda.tools.offline_ns3_replay` 改为全局递增 `pkt_id`，避免每帧从 1 重新编号导致 RLC 延迟事件与同名 request 跨帧错配。
+- `opencda.tools.ns3_log_eval` / `lgcp_ns3_log_eval` 新增 request-level RLC completion 口径：`rlc_complete_requests`、`rlc_partial_requests`、`rlc_no_rx_requests`，并在 RLC 事件中优先使用全局唯一 `request_id` 对齐 upload plan。
+- NS3 bridge 在 `ProcessData_TransferRequests` 前置校验 `sc_start/sc_num`，超出 OpenCDA 暴露的 `targetSubchannels` 范围时直接输出 `MANUAL_CMD_REJECT reason=bridge_out_of_band` 并跳过 CAM/RLC 创建。
+- NS3 manual scheduler 对进入 MAC 的确定越界命令执行 drop+pop，防止无效队头阻塞后续合法请求；`no_exact_resource` 仍保留为等待后续资源的语义。
+
+### 10-subchannel normal replay
+
+```powershell
+wsl -d Ubuntu-22.04 -u sakakibara -- bash -lc "cd ~/workspace/carla-ns3-co-simulation/ns-3-dev && timeout 120s stdbuf -oL -eL ./ns3 run 'scratch/vanet/main.cc --simTime=3.0 --enableTimeSync=true --carlaHost=auto --targetSubchannels=10'"
+conda run -n opencda python -m opencda.tools.offline_ns3_replay --dataset-root D:\Data\Carla --scenario-id 2026_07_15_01_26_56 --ego-cav-id 1 --max-frames 11 --drain-seconds 2.0 --sync-timeout 20 --upload-plan-output docs\doc_workspace\SGCP\artifacts\sgcp_ns3_pg_11f_target10_globalpkt\upload_plan.csv
+conda run -n opencda python -m opencda.tools.ns3_log_eval --ns3-stdout docs\doc_workspace\SGCP\artifacts\sgcp_ns3_pg_11f_target10_globalpkt\ns3_stdout.log --upload-plan docs\doc_workspace\SGCP\artifacts\sgcp_ns3_pg_11f_target10_globalpkt\upload_plan.csv --output-dir docs\doc_workspace\SGCP\artifacts\sgcp_ns3_pg_11f_target10_globalpkt\eval --max-frames 11
+```
+
+结果：110/110 application callback，RLC complete 110/110，PHY decode failures 0，`MANUAL_CMD_REJECT=0`。`sc_start=0..9` 各 11 条均成功。
+
+### 5-subchannel exposed-bandwidth replay
+
+```powershell
+wsl -d Ubuntu-22.04 -u sakakibara -- bash -lc "cd ~/workspace/carla-ns3-co-simulation/ns-3-dev && timeout 120s stdbuf -oL -eL ./ns3 run 'scratch/vanet/main.cc --simTime=3.0 --enableTimeSync=true --carlaHost=auto --targetSubchannels=5'"
+conda run -n opencda python -m opencda.tools.offline_ns3_replay --dataset-root D:\Data\Carla --scenario-id 2026_07_15_01_26_56 --ego-cav-id 1 --max-frames 11 --drain-seconds 2.0 --sync-timeout 20 --upload-plan-output docs\doc_workspace\SGCP\artifacts\sgcp_ns3_pg_11f_target5_exposedfixed\upload_plan.csv
+conda run -n opencda python -m opencda.tools.ns3_log_eval --ns3-stdout docs\doc_workspace\SGCP\artifacts\sgcp_ns3_pg_11f_target5_exposedfixed\ns3_stdout.log --upload-plan docs\doc_workspace\SGCP\artifacts\sgcp_ns3_pg_11f_target5_exposedfixed\upload_plan.csv --output-dir docs\doc_workspace\SGCP\artifacts\sgcp_ns3_pg_11f_target5_exposedfixed\eval --max-frames 11
+```
+
+结果：110 planned requests 中，`sc_start=0..4` 共 55 条全部 complete，`sc_start=5..9` 共 55 条全部 no_tx；application callback 55/110，RLC complete 55/110，partial 0，PHY decode failures 0，`MANUAL_CMD_REJECT=55`，`MANUAL_RESOURCE_APPLY=1485`。
+
+结论：当前 NS3 与 OpenCDA 的手动子信道接口已区分三层指标：application callback 表示应用层完整可见交付；RLC complete 表示 request 的 RLC TX/RX segment 数闭合；PHY decode diagnostics 用于解释冲突/信道失败。正常带宽内、无冲突的 SGCP PPS 请求可完整收发；超出 OpenCDA 暴露子信道范围的请求在 bridge 层被拒绝，不进入 CAM/RLC，也不会污染后续合法请求。

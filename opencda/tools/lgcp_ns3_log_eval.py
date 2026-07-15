@@ -433,11 +433,20 @@ def enrich_rlc_records(rlc_records, plan_rows, timestamps):
         (int(row['frame_index']), int(row.get('pkt_id') or row['frame_pkt_id'])): row
         for row in plan_rows
     }
+    pkt_counts = Counter(int(row.get('pkt_id') or row['frame_pkt_id'])
+                         for row in plan_rows)
+    plan_by_unique_pkt = {
+        int(row.get('pkt_id') or row['frame_pkt_id']): row
+        for row in plan_rows
+        if pkt_counts[int(row.get('pkt_id') or row['frame_pkt_id'])] == 1
+    }
     enriched = []
     for record in rlc_records:
         output = dict(record)
         plan = plan_by_frame_pkt.get(
             (int(record['frame_index']), int(record['request_id'])))
+        if plan is None:
+            plan = plan_by_unique_pkt.get(int(record['request_id']))
         if plan is None:
             output.update({
                 'timestamp': timestamps[record['frame_index']]
@@ -451,6 +460,7 @@ def enrich_rlc_records(rlc_records, plan_rows, timestamps):
         else:
             output.update({
                 'timestamp': plan['timestamp'],
+                'frame_index': plan['frame_index'],
                 'area_id': plan['area_id'],
                 'upload_type': plan.get('upload_type', ''),
                 'plan_index': plan['plan_index'],
@@ -466,18 +476,82 @@ def aggregate_rlc(rlc_records, plan_rows):
     event_counts = Counter(row['event'] for row in rlc_records)
     matched_counts = Counter(row['event'] for row in rlc_records
                              if int(row.get('matched', 0)))
-    any_tx_requests = {
-        (row['frame_index'], row['request_id'])
-        for row in rlc_records if row['event'] == 'TX'
-    }
-    any_rx_requests = {
-        (row['frame_index'], row['request_id'])
-        for row in rlc_records if row['event'] == 'RX'
-    }
-    any_drop_requests = {
-        (row['frame_index'], row['request_id'])
-        for row in rlc_records if row['event'] == 'DROP'
-    }
+    by_request = {}
+    for row in plan_rows:
+        request_id = int(row.get('pkt_id') or row['frame_pkt_id'])
+        key = (int(row['frame_index']), request_id)
+        by_request[key] = {
+            'frame_index': row['frame_index'],
+            'timestamp': row.get('timestamp', ''),
+            'request_id': request_id,
+            'source_node': row['source_node'],
+            'target_node': row['target_node'],
+            'area_id': row.get('area_id', ''),
+            'upload_type': row.get('upload_type', ''),
+            'plan_index': row.get('plan_index', ''),
+            'planned_bytes': row.get('bytes', 0),
+            'tx_events': 0,
+            'rx_events': 0,
+            'drop_events': 0,
+            'tx_bytes': 0,
+            'rx_bytes': 0,
+            'drop_bytes': 0,
+            'matched': 1,
+        }
+
+    for row in rlc_records:
+        key = (int(row['frame_index']), int(row['request_id']))
+        item = by_request.setdefault(key, {
+            'frame_index': row['frame_index'],
+            'timestamp': row.get('timestamp', ''),
+            'request_id': row['request_id'],
+            'source_node': row['source_node'],
+            'target_node': row['target_node'],
+            'area_id': row.get('area_id', ''),
+            'upload_type': row.get('upload_type', ''),
+            'plan_index': row.get('plan_index', ''),
+            'planned_bytes': '',
+            'tx_events': 0,
+            'rx_events': 0,
+            'drop_events': 0,
+            'tx_bytes': 0,
+            'rx_bytes': 0,
+            'drop_bytes': 0,
+            'matched': row.get('matched', 0),
+        })
+        size = int(row.get('size') or 0)
+        if row['event'] == 'TX':
+            item['tx_events'] += 1
+            item['tx_bytes'] += size
+        elif row['event'] == 'RX':
+            item['rx_events'] += 1
+            item['rx_bytes'] += size
+        elif row['event'] == 'DROP':
+            item['drop_events'] += 1
+            item['drop_bytes'] += size
+
+    request_rows = sorted(by_request.values(),
+                          key=lambda item: (int(item['frame_index']),
+                                            int(item['request_id'])))
+    for item in request_rows:
+        item['has_rlc_tx'] = int(item['tx_events'] > 0)
+        item['has_rlc_rx'] = int(item['rx_events'] > 0)
+        item['has_rlc_drop'] = int(item['drop_events'] > 0)
+        item['rlc_complete'] = int(
+            item['tx_events'] > 0 and
+            item['rx_events'] >= item['tx_events'] and
+            item['drop_events'] == 0)
+        item['rlc_partial'] = int(
+            item['rx_events'] > 0 and not item['rlc_complete'])
+        item['rlc_no_rx'] = int(
+            item['tx_events'] > 0 and item['rx_events'] == 0)
+
+    any_tx_requests = [row for row in request_rows if row['has_rlc_tx']]
+    any_rx_requests = [row for row in request_rows if row['has_rlc_rx']]
+    any_drop_requests = [row for row in request_rows if row['has_rlc_drop']]
+    complete_requests = [row for row in request_rows if row['rlc_complete']]
+    partial_requests = [row for row in request_rows if row['rlc_partial']]
+    no_rx_requests = [row for row in request_rows if row['rlc_no_rx']]
     summary = [{
         'planned_requests': planned_total,
         'rlc_tx_events': event_counts['TX'],
@@ -489,37 +563,18 @@ def aggregate_rlc(rlc_records, plan_rows):
         'requests_with_any_rlc_tx': len(any_tx_requests),
         'requests_with_any_rlc_rx': len(any_rx_requests),
         'requests_with_any_rlc_drop': len(any_drop_requests),
+        'rlc_complete_requests': len(complete_requests),
+        'rlc_partial_requests': len(partial_requests),
+        'rlc_no_rx_requests': len(no_rx_requests),
         'request_any_rlc_rx_ratio': len(any_rx_requests) / planned_total
         if planned_total else 0.0,
-        'note': 'RLC request counts mean at least one segment/event for a request_id; use cam_received for complete application-visible delivery',
+        'request_rlc_complete_ratio': len(complete_requests) / planned_total
+        if planned_total else 0.0,
+        'request_rlc_partial_ratio': len(partial_requests) / planned_total
+        if planned_total else 0.0,
+        'note': 'RLC complete means RX segment/event count covers TX segment/event count for the request_id and no RLC DROP was observed; cam_received remains the application-visible completion signal',
     }]
-
-    by_request = {}
-    for row in rlc_records:
-        key = (row['frame_index'], row['request_id'])
-        item = by_request.setdefault(key, {
-            'frame_index': row['frame_index'],
-            'timestamp': row.get('timestamp', ''),
-            'request_id': row['request_id'],
-            'source_node': row['source_node'],
-            'target_node': row['target_node'],
-            'area_id': row.get('area_id', ''),
-            'upload_type': row.get('upload_type', ''),
-            'plan_index': row.get('plan_index', ''),
-            'tx_events': 0,
-            'rx_events': 0,
-            'drop_events': 0,
-            'matched': row.get('matched', 0),
-        })
-        if row['event'] == 'TX':
-            item['tx_events'] += 1
-        elif row['event'] == 'RX':
-            item['rx_events'] += 1
-        elif row['event'] == 'DROP':
-            item['drop_events'] += 1
-    return summary, sorted(by_request.values(),
-                           key=lambda item: (int(item['frame_index']),
-                                             int(item['request_id'])))
+    return summary, request_rows
 
 
 def write_csv(path, rows):
