@@ -18,14 +18,15 @@ import yaml
 from opencda.core.clustering.algorithms.clustering.coalition_game import (
     CoalitionGame,
 )
-from opencda.core.clustering.algorithms.resource_allocation.naive_ra import (
-    NaiveRA,
+from opencda.core.clustering.algorithms.resource_allocation import (
+    build_resource_allocator,
 )
 from opencda.core.common.offline_dataset import OPV2VFrameDataset
 from opencda.core.common.offline_replay import (
     OfflineCavWorld,
     clear_sgcp_globals,
 )
+from opencda.tools.offline_replay import get_resource_allocation_name
 from opencda.core.networking.ns3_co_simulation.bridge.carla_ns3_bridge import (
     CarlaNs3Bridge,
 )
@@ -66,6 +67,14 @@ def parse_args():
     parser.add_argument('--rsu-node-id', type=int, default=None,
                         help='Positive integer node id used for RSU targets in '
                              'LGCP plan. Defaults to max CAV id + 1.')
+    parser.add_argument('--resource-allocation', default=None,
+                        help='SGCP resource allocation algorithm for replay. '
+                             'Defaults to data_protocol resource_allocation.algorithm '
+                             'or potential_game.')
+    parser.add_argument('--include-unscheduled', action='store_true',
+                        help='Also send SGCP member->head requests without an '
+                             'assigned subchannel. By default these are skipped '
+                             'so NS3 cannot fall back to autonomous scheduling.')
     parser.add_argument('--dry-run', action='store_true',
                         help='Build and print replay requests without opening '
                              'NS3 sockets.')
@@ -140,8 +149,18 @@ def pose_to_vehicle_state(index, vehicle_id, cav_content):
     }
 
 
+def collect_channel_allocation(world):
+    channel_allocation = {}
+    for vehicle_manager in world.get_vehicle_managers().values():
+        scheduler = vehicle_manager.v2x_manager.scheduler
+        if scheduler is not None:
+            channel_allocation.update(scheduler.channel_allocation)
+    return channel_allocation
+
+
 def build_world_and_requests(dataset, scenario_id, timestamp, ego_cav_id,
-                             protocol, packet_size):
+                             protocol, packet_size, resource_allocation=None,
+                             include_unscheduled=False):
     frame = dataset.load_frame(
         scenario_id,
         timestamp,
@@ -154,14 +173,15 @@ def build_world_and_requests(dataset, scenario_id, timestamp, ego_cav_id,
     clear_sgcp_globals()
     world = OfflineCavWorld(frame, ego_id=ego_cav_id, protocol=protocol)
     clusters = CoalitionGame(world).run()
-    resource_allocator = NaiveRA(world)
+    ra_name = get_resource_allocation_name(protocol, resource_allocation)
+    resource_allocator = build_resource_allocator(ra_name, world)
     resource_allocator.set_clusters(clusters)
     resource_allocator.run()
 
-    first_vm = next(iter(world.get_vehicle_managers().values()))
-    channel_allocation = dict(first_vm.v2x_manager.scheduler.channel_allocation)
+    channel_allocation = collect_channel_allocation(world)
     requests = []
     pkt_id = 1
+    skipped_unscheduled = 0
     for cluster in clusters:
         head_id = int(cluster.head_id)
         for member_id in sorted(cluster.members):
@@ -178,10 +198,13 @@ def build_world_and_requests(dataset, scenario_id, timestamp, ego_cav_id,
             if channel is not None:
                 request['sc_start'] = int(channel)
                 request['sc_num'] = 1
+            elif not include_unscheduled:
+                skipped_unscheduled += 1
+                continue
             requests.append(request)
             pkt_id += 1
 
-    return vehicle_data, requests, clusters
+    return vehicle_data, requests, clusters, ra_name, skipped_unscheduled
 
 
 def resolve_rsu_node_id(dataset, scenario_id, override=None):
@@ -237,6 +260,8 @@ def append_upload_plan_rows(rows, timestamp, requests, mode):
             'bytes': request['size'],
             'upload_type': request.get('upload_type', mode),
             'pkt_id': request.get('pkt_id', ''),
+            'sc_start': request.get('sc_start', ''),
+            'sc_num': request.get('sc_num', ''),
         })
 
 
@@ -254,6 +279,8 @@ def write_upload_plan(path, rows):
         'bytes',
         'upload_type',
         'pkt_id',
+        'sc_start',
+        'sc_num',
     ]
     with open(path, 'w', newline='') as stream:
         writer = csv.DictWriter(stream, fieldnames=fieldnames)
@@ -295,15 +322,18 @@ def main():
         upload_plan_rows = []
         for index, timestamp in enumerate(timestamps):
             if lgcp_uploads is None:
-                vehicle_data, requests, clusters = build_world_and_requests(
+                vehicle_data, requests, clusters, ra_name, skipped_unscheduled = \
+                    build_world_and_requests(
                     dataset,
                     scenario_id,
                     timestamp,
                     args.ego_cav_id,
                     protocol,
-                    args.packet_size)
+                    args.packet_size,
+                    resource_allocation=args.resource_allocation,
+                    include_unscheduled=args.include_unscheduled)
                 cluster_count = len(clusters)
-                request_mode = 'sgcp'
+                request_mode = 'sgcp_%s' % ra_name
             else:
                 frame = dataset.load_frame(
                     scenario_id,
@@ -319,6 +349,7 @@ def main():
                     rsu_node_id)
                 cluster_count = 0
                 request_mode = 'lgcp'
+                skipped_unscheduled = 0
 
             append_upload_plan_rows(
                 upload_plan_rows,
@@ -328,14 +359,18 @@ def main():
 
             if args.dry_run:
                 print('frame=%s/%s timestamp=%s mode=%s vehicles=%s '
-                      'requests=%s bytes=%s dry_run=true' % (
+                      'requests=%s bytes=%s scheduled=%s skipped_unscheduled=%s '
+                      'dry_run=true' % (
                           index + 1,
                           len(timestamps),
                           timestamp,
                           request_mode,
                           len(vehicle_data),
                           len(requests),
-                          sum(item['size'] for item in requests)))
+                          sum(item['size'] for item in requests),
+                          sum(1 for item in requests
+                              if 'sc_start' in item and 'sc_num' in item),
+                          skipped_unscheduled))
                 continue
 
             if first_vehicle_data is None:
@@ -352,7 +387,8 @@ def main():
                 bridge.send_transfer_requests(requests)
 
             print('frame=%s/%s timestamp=%s sim_time=%.3f mode=%s vehicles=%s '
-                  'clusters=%s requests=%s bytes=%s' % (
+                  'clusters=%s requests=%s scheduled=%s '
+                  'skipped_unscheduled=%s bytes=%s' % (
                       index + 1,
                       len(timestamps),
                       timestamp,
@@ -361,6 +397,9 @@ def main():
                       len(vehicle_data),
                       cluster_count,
                       len(requests),
+                      sum(1 for item in requests
+                          if 'sc_start' in item and 'sc_num' in item),
+                      skipped_unscheduled,
                       sum(item['size'] for item in requests)))
 
         final_time = (len(timestamps) - 1) * frame_interval + args.drain_seconds

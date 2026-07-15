@@ -1927,3 +1927,48 @@ conda run -n opencda python -m opencda.tools.ns3_link_probe --case out_of_band -
 - out_of_band：`MANUAL_CMD_REJECT reason=out_of_band src=1 dst=2 scStart=10 scSize=1 totalSubCh=10`，无 RLC TX/RX 和 application callback。
 
 结论：当前 NS3 manual subchannel 行为已满足 SGCP 后续实验的基础要求：带宽范围内且无冲突的通信需求可成功收发；合法边界子信道可用；冲突子信道会通过 PHY decode failure 表现为丢包；超出带宽范围的请求不会被错误映射或随机发送。
+
+## 2026-07-16 - SGCP potential_game NS3 replay after subchannel fix
+
+### 代码修正
+
+- `opencda.tools.offline_ns3_replay` 不再硬编码 `NaiveRA`，改为使用 `build_resource_allocator()` 和 `data_protocol.yaml` / `--resource-allocation` 指定的算法，默认 `potential_game`。
+- SGCP replay 默认只发送已分配 `sc_start/sc_num` 的 request；未调度 member-to-head demand 计入 `skipped_unscheduled`，不再交给 NS3 默认调度路径。
+- `upload_plan.csv` 新增 `sc_start`、`sc_num` 字段，便于追踪 PPS 输出到 NS3 physical resource 的映射。
+
+### Dry-run
+
+```powershell
+conda run -n opencda python -m opencda.tools.offline_ns3_replay --dataset-root D:\Data\Carla --scenario-id 2026_07_15_01_26_56 --ego-cav-id 1 --max-frames 3 --dry-run --upload-plan-output docs\doc_workspace\SGCP\artifacts\sgcp_ns3_pg_3f_upload_plan.csv
+```
+
+结果：3 帧均为 `mode=sgcp_potential_game`，每帧 10 条 scheduled request、4 条 skipped unscheduled demand。NaiveRA 对照仍为每帧 14/14 scheduled。
+
+### 11-frame NS3 replay
+
+```powershell
+wsl -d Ubuntu-22.04 -u sakakibara -- bash -lc "cd ~/workspace/carla-ns3-co-simulation/ns-3-dev && timeout 90s stdbuf -oL -eL ./ns3 run 'scratch/vanet/main.cc --simTime=2.0 --enableTimeSync=true --carlaHost=auto --targetSubchannels=10'"
+conda run -n opencda python -m opencda.tools.offline_ns3_replay --dataset-root D:\Data\Carla --scenario-id 2026_07_15_01_26_56 --ego-cav-id 1 --max-frames 11 --drain-seconds 1.0 --sync-timeout 20 --upload-plan-output docs\doc_workspace\SGCP\artifacts\sgcp_ns3_pg_11f_fixed\upload_plan.csv
+conda run -n opencda python -m opencda.tools.ns3_log_eval --ns3-stdout docs\doc_workspace\SGCP\artifacts\sgcp_ns3_pg_11f_fixed\ns3_stdout.log --upload-plan docs\doc_workspace\SGCP\artifacts\sgcp_ns3_pg_11f_fixed\upload_plan.csv --output-dir docs\doc_workspace\SGCP\artifacts\sgcp_ns3_pg_11f_fixed\eval --max-frames 11
+```
+
+结果：
+
+| Metric | Value |
+| --- | ---: |
+| Frames | 11 |
+| Scheduled requests | 110 |
+| Skipped unscheduled demand | 44 |
+| Planned bytes | 1,100,000 |
+| CAM received | 110 |
+| CAM delivery ratio | 1.000000 |
+| Avg. delay | 23.909 ms |
+| P95 delay | 24.000 ms |
+| PHY decode failures | 0 |
+| RLC TX events | 2,970 |
+| RLC RX events | 2,970 |
+| Request any RLC RX ratio | 1.000000 |
+
+Trace 计数：`MANUAL_RESOURCE_APPLY=2970`、`MANUAL_CMD_REJECT=0`、`PSCCH_DECODE_FAIL=0`、`PSSCH_DECODE_FAIL=0`。Upload plan 中 `sc_start=0..9` 各出现 11 次。
+
+结论：修复后的 NS3 + SGCP potential_game replay 已经验证，在当前 11 帧 dump 中，PPS 已调度且无冲突的通信需求均能完整到达 application callback。旧 154-request 结果应标注为 legacy all-member diagnostic，因为它包含未调度需求并可能绕过 PPS。

@@ -103,6 +103,8 @@ SGCP 工作与仓库中以下部分关系最紧密：
 - 已完成 3 帧离线 NS3 smoke test：帧时间 0.000/0.100/0.200 s，20 车、6 个 cluster、每帧 14 条 intra-cluster upload request，NS3 返回多条 `cam_received`。
 - 已修复 NS3 manual subchannel 链路：NS3 默认按 OpenCDA 10 个子信道配置可用资源，manual scheduler 严格匹配 `physicalStart == sc_start` 和 `physicalLen == sc_num`，不再对越界子信道取模 wrap；长 JSON socket payload 改为累积解析；RLC command size 修正，避免最后残片落入默认随机调度。
 - 已完成 `opencda.tools.ns3_link_probe` 四类链路回归：`success`、`edge_success(sc_start=9)` 均全量 CAM delivery；`conflict` 中两请求均落到 physicalStart=0，并产生 `PSCCH_DECODE_FAIL reason=decoded_overlap`，仅 1/2 CAM delivery；`out_of_band(sc_start=10)` 产生一次 `MANUAL_CMD_REJECT reason=out_of_band totalSubCh=10`，无 RLC TX/RX/CAM。
+- 已将 `opencda.tools.offline_ns3_replay` 的 SGCP 资源分配从硬编码 `NaiveRA` 对齐为配置默认 `potential_game`，并默认跳过没有 `sc_start/sc_num` 的未调度需求，防止绕过 OpenCDA PPS 进入 NS3 默认调度。
+- 已完成修复后 SGCP potential_game 11 帧 NS3 replay：110 条 PPS scheduled request、44 条 skipped unscheduled demand、CAM delivery 110/110、RLC RX 2970/2970、PHY failures 0、manual reject 0。
 
 ## 当前阻塞项
 
@@ -125,4 +127,4 @@ SGCP 工作与仓库中以下部分关系最紧密：
 - Topology trigger 已接入离线 replay 统计，但尚未接入在线 `ClusteringV2XManager` gate；单独 relative-speed trigger 仍偏敏感，在线 gate 应结合 neighbor-set change、utility drop 和 `T_min_stab` 滞回。
 - 在线 topology trigger gate 尚未在真实 CARLA 图形仿真中回归；当前仅完成代码接入和静态编译检查。
 - Cluster capacity 策略目前是机制规格；尚未统计满簇跳过次数，也未实现 optional replacement repair。
-- SGCP NS3 replay 已得到链路层统计，但尚未把 RLC/PDR 结果反馈到 SGCP PPS 或 OpenCOOD mAP 评估中。
+- SGCP potential_game NS3 replay 已确认“PPS 已调度且无冲突的 request 全部成功”；下一步需要构造拥塞/冲突/低带宽场景，把 NS3 delivery/PDR 反馈到 SGCP PPS 或 OpenCOOD mAP 评估中。
