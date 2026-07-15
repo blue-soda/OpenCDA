@@ -184,12 +184,35 @@ Observation: the default `N_max=4` creates no singleton clusters in this dump, b
 
 ## `f(rho)` 标定结果
 
-当前已完成 `rho_th` 阈值敏感性实验，但尚未复现完整 `f(rho)` 标定曲线。后续需要补充：
+当前已新增 `opencda.tools.sgcp_density_calibration`，可从 dump 数据重建与 SGCP replay 相同的 LiDAR grid density，并输出 `f(rho)` 标定 CSV。详细协议见 `f_rho_calibration.md`。
 
-- 点云密度采样方式。
-- mAP 与 `rho` 的拟合曲线。
-- `rho_th = 2.0 points/m^2` 的选择依据。
-- 不同 detector 或不同场景下的泛化结果。
+命令：
+
+```powershell
+conda run -n opencda python -m opencda.tools.sgcp_density_calibration --dataset-root D:\Data\Carla --scenario-id 2026_07_15_01_26_56 --ego-cav-id 1 --max-frames 0 --thresholds "0.5,1.0,2.0,3.0,4.0" --output-dir docs\doc_workspace\SGCP\artifacts\density_calibration_41f
+```
+
+数据：`D:\Data\Carla\2026_07_15_01_26_56`，41 帧，20 CAV，788,020 个 CAV-grid density samples。
+
+| Metric | Value |
+| --- | ---: |
+| Nonzero grid ratio | 0.059794 |
+| Mean density, all grids | 0.050816 |
+| P99 density, all grids | 0.830000 |
+| Mean density, nonzero grids | 0.849855 |
+| P90 density, nonzero grids | 1.400000 |
+| P95 density, nonzero grids | 3.600000 |
+| P99 density, nonzero grids | 13.255600 |
+
+| `rho_th` | High-Density Grids | Ratio / All Grids | Ratio / Nonzero Grids | Mean `f(rho)` |
+| ---: | ---: | ---: | ---: | ---: |
+| 0.5 | 11,232 | 0.014253 | 0.238375 | 0.383800 |
+| 1.0 | 6,481 | 0.008224 | 0.137545 | 0.275282 |
+| 2.0 | 3,383 | 0.004293 | 0.071797 | 0.124640 |
+| 3.0 | 2,587 | 0.003283 | 0.054904 | 0.051639 |
+| 4.0 | 2,192 | 0.002782 | 0.046521 | 0.021290 |
+
+观察：默认 `rho_th=2.0` 位于当前非零网格 density 的 p90 和 p95 之间，筛出约 7.18% 非零网格作为 high-density candidates。结合前述 `rho_th` AP/payload sweep，`rho_th=2.0` 可作为当前 detector / LiDAR / 10 m grid 设置下的经验折中点；不能写成跨场景通用常数。后续仍需补不同场景和 detector metadata 泛化。
 
 ## SGCP 离线 NS3 Request-Level 统计
 

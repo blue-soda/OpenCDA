@@ -11,6 +11,7 @@
 - `baseline_fairness.md`：baseline 公平性说明，区分 upper reference、same-pipeline ablation 和同通信约束主对比。
 - `topology_trigger.md`：拓扑变化触发 cluster 重构的机制规格，说明触发条件、滞回策略和在线/离线接入位置。
 - `cluster_capacity_policy.md`：cluster 已满、`N_max`、merge/split 和成员边际贡献重算的机制说明。
+- `f_rho_calibration.md`：`f(rho)` 点云密度效用函数的标定协议、当前统计和论文写作口径。
 - `../environment.md`：全局环境文档，统一维护 Conda 环境、数据路径、CARLA 路径、启动命令和通用工具入口；运行实验前优先查看这里。
 
 ## 维护约定

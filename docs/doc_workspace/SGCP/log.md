@@ -2060,3 +2060,39 @@ conda run -n opencda python -m opencda.tools.offline_replay --dataset-root D:\Da
 | 6 | 6.00 | 3.33 | 0.00 | 0 | 0 | 0.00 | 0.000 | 0.317 | 8 | 15 |
 
 结论：`N_max` 是实际生效的硬约束。`N_max=2/3` 时容量压力很强，导致大量候选加入被跳过，并产生更高 singleton/small-cluster 比例；默认 `N_max=4` 没有 singleton，但平均每帧仍有约 3.12 个满簇和 99.15 次满簇候选跳过，说明机制确实在处理“周围 cluster 已满”情况；`N_max=6` 下当前 20-CAV dump 不再受容量约束。论文中可据此说明：车辆不会被丢弃，而是保留在当前 coalition 或以小簇形式通过 inter-cluster late fusion 补偿。
+
+## 2026-07-16 - `f(rho)` density calibration
+
+### 代码与文档
+
+- 新增 `opencda.tools.sgcp_density_calibration`，从 OPV2V/CARLA dump 重建与 SGCP replay 相同的 `OfflineLidarGrid`，输出全局、逐帧、阈值和曲线级 density 统计。
+- 新增 `f_rho_calibration.md`，记录 `f(rho)=sigmoid(rho-rho_th)` 的标定协议、当前 41 帧结果、论文可写口径和仍需泛化的边界。
+
+### 命令
+
+```powershell
+conda run -n opencda python -m py_compile opencda\tools\sgcp_density_calibration.py
+conda run -n opencda python -m opencda.tools.sgcp_density_calibration --dataset-root D:\Data\Carla --scenario-id 2026_07_15_01_26_56 --ego-cav-id 1 --max-frames 0 --thresholds "0.5,1.0,2.0,3.0,4.0" --output-dir docs\doc_workspace\SGCP\artifacts\density_calibration_41f
+```
+
+日志 / artifact 路径：
+
+- `docs\doc_workspace\SGCP\artifacts\density_calibration_41f\global_density_summary.csv`
+- `docs\doc_workspace\SGCP\artifacts\density_calibration_41f\frame_density_summary.csv`
+- `docs\doc_workspace\SGCP\artifacts\density_calibration_41f\threshold_summary.csv`
+- `docs\doc_workspace\SGCP\artifacts\density_calibration_41f\f_rho_curve.csv`
+- `docs\doc_workspace\SGCP\artifacts\density_calibration_41f\run_notes.md`
+
+### 结果
+
+全局 density 分布：41 帧、20 CAV，共 788,020 个 CAV-grid 样本。非零 grid 47,119 个，占 0.059794；全量 density mean=0.050816，p99=0.830000，max=34.410000；非零 density mean=0.849855，p90=1.400000，p95=3.600000，p99=13.255600。
+
+| `rho_th` | High-Density Grids | Ratio / All Grids | Ratio / Nonzero Grids | Mean `f(rho)` |
+| ---: | ---: | ---: | ---: | ---: |
+| 0.5 | 11,232 | 0.014253 | 0.238375 | 0.383800 |
+| 1.0 | 6,481 | 0.008224 | 0.137545 | 0.275282 |
+| 2.0 | 3,383 | 0.004293 | 0.071797 | 0.124640 |
+| 3.0 | 2,587 | 0.003283 | 0.054904 | 0.051639 |
+| 4.0 | 2,192 | 0.002782 | 0.046521 | 0.021290 |
+
+结论：默认 `rho_th=2.0` 位于当前非零网格 density 的 p90 和 p95 之间，筛出约 7.18% 非零网格作为 high-density candidates。结合此前 `rho_th` AP/payload sweep，可将其解释为当前 detector / LiDAR / 10 m grid 设置下的经验折中点，而不是跨场景通用常数。后续论文级版本仍应补不同场景或 detector metadata 下的泛化。

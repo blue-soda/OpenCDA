@@ -1,0 +1,2 @@
+grid_count,nonzero_grid_count,nonzero_grid_ratio,density_mean_all,density_p95_all,density_p99_all,density_max_all,density_mean_nonzero,density_p50_nonzero,density_p75_nonzero,density_p90_nonzero,density_p95_nonzero,density_p99_nonzero,density_max_nonzero
+788020,47119,0.059794,0.050816,0.030000,0.830000,34.410000,0.849855,0.130000,0.460000,1.400000,3.600000,13.255600,34.410000
