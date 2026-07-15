@@ -1852,11 +1852,24 @@ conda run -n opencda python -m opencda.tools.ns3_log_eval --ns3-stdout docs\doc_
 | PHY decode failures | 0 |
 | RLC TX events | 4,158 |
 | RLC RX events | 2,512 |
-| Unique RLC RX requests | 150 |
-| RLC request RX ratio | 0.974026 |
+| Requests with any RLC RX event | 150 |
+| Any RLC RX ratio | 0.974026 |
 
 ### 观察
 
 - SGCP 离线 replay 已能生成和 NS3 request-level trace 对齐的 upload plan。
-- application `cam_received` ratio 明显低于 RLC request RX ratio；论文中应明确这两个口径代表不同层级。
+- application `cam_received` ratio 明显低于 any-RLC-RX ratio；论文中应明确这两个口径代表不同层级。
+- Any-RLC-RX 仅表示某个 request_id 至少出现一个 RLC RX 片段/事件，不表示完整 request 已被应用层接收；完整应用可见交付仍以 `cam_received` 为准。
 - 当前结果还没有反馈到 OpenCOOD mAP；下一步需要把 request delivery/PDR 接入 SGCP PPS 或 constrained inference 的传输过滤。
+
+## 2026-07-16 - NS3 RLC 指标口径修正
+
+复核 `cam-application.cc` 后确认：`cam_received` 在 CAM header 被应用层 receiver 解析后触发，代表完整 CAM/UDP packet 到达应用回调；RLC RX trace 则可能是一条 request 的某个片段/事件。因此此前文档中的 `RLC request RX ratio = 0.974026` 容易被误读为完整 request delivery。
+
+已将评估脚本字段改为：
+
+- `requests_with_any_rlc_rx`：至少出现一个 RLC RX 片段/事件的 request 数，当前为 150/154。
+- `request_any_rlc_rx_ratio`：上述 partial RLC reception 比例，当前为 0.974026。
+- `cam_received` / `bridge_observed_delivery_ratio`：完整应用回调交付，当前为 86/154 = 0.558442。
+
+后续论文写作必须区分 application callback、RLC partial reception、RLC request completion 和 PHY decode diagnostics。下一步需要补 request completion 口径，按 request_id 统计 TX/RX segment 完整性和 DROP 事件，再决定如何将链路结果接入 SGCP PPS 或 mAP 过滤。

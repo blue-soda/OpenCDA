@@ -177,13 +177,13 @@ conda run -n opencda python -m opencda.tools.offline_ns3_replay --dataset-root D
 conda run -n opencda python -m opencda.tools.ns3_log_eval --ns3-stdout docs\doc_workspace\SGCP\artifacts\sgcp_ns3_11f_stdout.log --upload-plan docs\doc_workspace\SGCP\artifacts\sgcp_ns3_11f_upload_plan.csv --output-dir docs\doc_workspace\SGCP\artifacts\sgcp_ns3_11f_eval --max-frames 11
 ```
 
-说明：该实验使用 SGCP 离线 cluster 内上传请求驱动 NS3，不启动 CARLA。每帧 6 个 cluster、14 条 intra-cluster transfer request，每条 10,000 bytes。`cam_received` 是 application callback 口径，RLC unique request RX 更接近链路层 request delivery 口径。
+说明：该实验使用 SGCP 离线 cluster 内上传请求驱动 NS3，不启动 CARLA。每帧 6 个 cluster、14 条 intra-cluster transfer request，每条 10,000 bytes。`cam_received` 是 application callback 口径，表示完整 CAM/UDP packet 已进入应用回调；RLC request 统计表示同一 request_id 至少出现一个 RLC RX 片段/事件，不能直接等同于完整 request delivery。
 
-| Frames | Planned Requests | Planned Bytes | CAM Received | CAM Delivery Ratio | Avg. Delay (ms) | P95 Delay (ms) | RLC TX Events | RLC RX Events | Unique RLC RX Requests | RLC Request RX Ratio |
+| Frames | Planned Requests | Planned Bytes | CAM Received | CAM Delivery Ratio | Avg. Delay (ms) | P95 Delay (ms) | RLC TX Events | RLC RX Events | Requests With Any RLC RX | Any RLC RX Ratio |
 | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
 | 11 | 154 | 1,540,000 | 86 | 0.558442 | 26.756 | 28.000 | 4,158 | 2,512 | 150 | 0.974026 |
 
-观察：application callback delivery ratio 明显低于 RLC request RX ratio，和 LGCP 侧观察一致。因此后续论文叙事中应区分 bridge-observed application callback、RLC request delivery、PHY decode diagnostics，不能用单一 `cam_received` 比例代表全部链路可靠性。
+观察：application callback delivery ratio 明显低于 any-RLC-RX ratio，和 LGCP 侧观察一致。因此后续论文叙事中应区分 bridge-observed application callback、RLC partial reception、RLC request completion、PHY decode diagnostics，不能用单一 `cam_received` 比例代表全部链路可靠性，也不能把 any-RLC-RX 解释为完整 request delivery。
 
 ## 实时性结果
 

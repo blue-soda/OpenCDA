@@ -260,11 +260,11 @@ rlc_by_request.csv
 - application `cam_received`：`31`
 - RLC TX events：`1131`
 - RLC RX events：`252`
-- unique RLC RX requests：`164`
-- RLC request RX ratio：`0.242604`
+- requests with any RLC RX event：`164`
+- request any RLC RX ratio：`0.242604`
 
 注意：
 
-- application callback 统计低于 RLC RX 统计，不能直接替代链路层 delivery ratio。
+- application callback 统计低于 any-RLC-RX 统计，不能直接替代链路层诊断指标；any-RLC-RX 也只表示至少一个 RLC 片段/事件到达，不能直接等同于完整 request delivery。
 - 当前 PSCCH / PSSCH decode diagnostics 仍是 aggregate PHY 事件，尚未逐条绑定 `request_id`。
 - 若后续研究要解释 HARQ、subchannel collision 或 PHY decode failure，需要继续把 `request_id` 透传到 PHY TB / HARQ trace。

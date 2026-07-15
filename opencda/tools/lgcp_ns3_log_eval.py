@@ -466,6 +466,18 @@ def aggregate_rlc(rlc_records, plan_rows):
     event_counts = Counter(row['event'] for row in rlc_records)
     matched_counts = Counter(row['event'] for row in rlc_records
                              if int(row.get('matched', 0)))
+    any_tx_requests = {
+        (row['frame_index'], row['request_id'])
+        for row in rlc_records if row['event'] == 'TX'
+    }
+    any_rx_requests = {
+        (row['frame_index'], row['request_id'])
+        for row in rlc_records if row['event'] == 'RX'
+    }
+    any_drop_requests = {
+        (row['frame_index'], row['request_id'])
+        for row in rlc_records if row['event'] == 'DROP'
+    }
     summary = [{
         'planned_requests': planned_total,
         'rlc_tx_events': event_counts['TX'],
@@ -474,23 +486,12 @@ def aggregate_rlc(rlc_records, plan_rows):
         'matched_rlc_tx_events': matched_counts['TX'],
         'matched_rlc_rx_events': matched_counts['RX'],
         'matched_rlc_drop_events': matched_counts['DROP'],
-        'unique_tx_requests': len({
-            (row['frame_index'], row['request_id'])
-            for row in rlc_records if row['event'] == 'TX'
-        }),
-        'unique_rx_requests': len({
-            (row['frame_index'], row['request_id'])
-            for row in rlc_records if row['event'] == 'RX'
-        }),
-        'unique_drop_requests': len({
-            (row['frame_index'], row['request_id'])
-            for row in rlc_records if row['event'] == 'DROP'
-        }),
-        'rlc_request_rx_ratio': len({
-            (row['frame_index'], row['request_id'])
-            for row in rlc_records if row['event'] == 'RX'
-        }) / planned_total if planned_total else 0.0,
-        'note': 'RLC events are matched by frame_index and request_id; TX may contain multiple segments per request',
+        'requests_with_any_rlc_tx': len(any_tx_requests),
+        'requests_with_any_rlc_rx': len(any_rx_requests),
+        'requests_with_any_rlc_drop': len(any_drop_requests),
+        'request_any_rlc_rx_ratio': len(any_rx_requests) / planned_total
+        if planned_total else 0.0,
+        'note': 'RLC request counts mean at least one segment/event for a request_id; use cam_received for complete application-visible delivery',
     }]
 
     by_request = {}

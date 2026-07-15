@@ -95,7 +95,7 @@ SGCP 工作与仓库中以下部分关系最紧密：
 - 已完成 topology trigger 速度源复核：`ego_speed` 来自 `get_speed(vehicle)`，默认单位是 km/h；`pose_delta` threshold 3/4 m/s 可覆盖 11 次实际 reconfiguration，5 m/s 会漏掉 2 次。
 - 已将 topology trigger gate 接入在线 `ClusteringV2XManager` first version：默认关闭；打开后按 hard failure、邻居集合变化和 periodic guard 决定是否重跑 `CoalitionGame`，否则沿用上一轮 cluster。
 - 已新增 `cluster_capacity_policy.md`，明确 cluster 已满时采用硬 `N_max`、保留当前 cluster、加入未满更优 cluster、singleton fallback 和 inter-cluster late fusion 补偿；merge/split 不作为独立无限制原语。
-- 已完成 SGCP 11 帧离线 NS3 request-level replay：154 条 SGCP intra-cluster request，CAM callback delivery ratio 0.558442，RLC unique request RX ratio 0.974026。
+- 已完成 SGCP 11 帧离线 NS3 request-level replay：154 条 SGCP intra-cluster request，CAM callback delivery ratio 0.558442，request with any RLC RX event ratio 0.974026。后者仅表示 request_id 至少出现一个 RLC RX 片段/事件，不代表完整 request delivery。
 - 已确认当前可运行环境版本快照，并记录到 `docs/doc_workspace/environment.md`：OpenCDA HEAD `fcc29fdc9ee9a9fe694c12e1fb6792b4d41bccac`，Python 3.7.10，CARLA Python API 0.9.11，PyTorch 1.10.0+cu113，Open3D 0.10.0.0，ns-3 wrapper `ns-3-dev-v2x-v1.1-dirty`。
 - 已修复在线 CARLA-NS3 时间流速不一致问题：`NetworkManager.time_slot` 不再将 `world.fixed_delta_seconds` 除以 5，`current_sim_time`、`current_time_slot` 与 CARLA tick 统一推进。
 - 已修复在线 NS3 初始化顺序：sender 线程等待车辆注册后先发送真实车辆数和第一帧 `vehicles_position`，再进入 `sync_request/sync_ack` 循环。
