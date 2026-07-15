@@ -35,7 +35,7 @@
 ## P1：补充关键实验
 
 - [x] 消融：完整 SGCP vs 无稳定窗口。已完成 `T_min_stab=0` 第一版离线 replay + late-fusion AP；当前 41 帧 dump 与默认结果一致，后续需补更动态场景。
-- [ ] 消融：完整 SGCP vs 无 coalition formation，仅距离/随机聚类。
+- [x] 消融：完整 SGCP vs 无 coalition formation，仅距离/随机聚类。已完成 singleton-cluster 第一版参考；后续需补距离/随机固定簇并计入 prediction-level late-fusion 开销。
 - [x] 消融：完整 SGCP vs 无 PPS，仅随机/greedy 调度。已完成 `random` 与 `mws` 第一版离线 late-fusion 结果，后续需复核 MWS 论文口径。
 - [x] 消融：完整 SGCP vs 仅 early fusion。已记录 full 20-CAV early baseline 与 constrained early-only/all-head 口径。
 - [x] 消融：完整 SGCP vs 仅 late fusion。已完成 full 20-CAV OpenCOOD late checkpoint 第一版参考，后续需设计严格同通信约束 late-only SGCP 口径。

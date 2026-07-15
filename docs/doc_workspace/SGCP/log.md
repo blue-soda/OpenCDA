@@ -1015,3 +1015,87 @@ conda run -n opencda python -m opencda.tools.offline_inference --dataset-root D:
 - 当前 41 帧 dump 上，`T_min_stab=0` 与默认 `T_min_stab=1.0` 的 cluster/reconfiguration/mAP/communication 指标完全一致。
 - 这说明该短片段和当前速度/轨迹条件不足以体现稳定窗口收益；论文中如需支撑稳定窗口，应补更长序列、更高相对速度或更频繁 topology change 的场景。
 - `T_min_stab=0` 的离线运行时更低，但当前耗时数据受 Python/日志/机器负载影响，仅作为工程参考。
+
+## 2026-07-15 - w/o coalition formation singleton 消融
+
+### 目的
+
+- 推进 P1 “完整 SGCP vs 无 coalition formation，仅距离/随机聚类” 消融。
+- 先建立最简单无 coalition 参考：每辆 CAV 单独成簇，所有 singleton cluster head 的检测结果执行 inter-cluster late fusion。
+
+### 代码更新
+
+- `opencda.core.clustering.algorithms.clustering.naive_cluster`
+  - 补齐显式 `common/Cluster` 导入。
+  - 保存 `self.cav_world`，适配离线 replay。
+  - 新增 `run()`，使其满足 `ClusteringAlgorithm` 抽象接口。
+- `opencda.tools.offline_replay`
+  - 新增 `--clustering coalition_game|singleton|all_in_one`。
+- `opencda.tools.offline_inference`
+  - 新增 `--clustering coalition_game|singleton|all_in_one`。
+  - 对 singleton late-fusion source 中的空 pillar 输入做明确跳过，避免单车空点云导致 PointPillar scatter 崩溃。
+
+### 验证
+
+语法检查：
+
+```powershell
+$env:PYTHONDONTWRITEBYTECODE='1'; conda run -n opencda python -m py_compile opencda\tools\offline_inference.py opencda\tools\offline_replay.py opencda\core\clustering\algorithms\clustering\naive_cluster.py
+```
+
+3 帧 replay smoke test：
+
+```powershell
+conda run -n opencda python -m opencda.tools.offline_replay --dataset-root D:\Data\Carla --scenario-id 2026_07_15_01_26_56 --ego-cav-id 1 --clustering singleton --resource-allocation potential_game --max-frames 3 --summary-only
+```
+
+结果：
+
+- frames：3
+- avg_clusters：20.00
+- avg_cluster_size：1.00
+- avg_isolated_cavs：20.00
+- reconfiguration_events：0
+- vehicle_head_changes：0
+- avg_cluster_lifetime_frames：3.00
+
+41 帧 replay 汇总：
+
+```powershell
+conda run -n opencda python -m opencda.tools.offline_replay --dataset-root D:\Data\Carla --scenario-id 2026_07_15_01_26_56 --ego-cav-id 1 --clustering singleton --resource-allocation potential_game --max-frames 0 --summary-only
+```
+
+结果：
+
+- frames：41
+- avg_clusters：20.00
+- avg_cluster_size：1.00
+- avg_isolated_cavs：20.00
+- reconfiguration_events：0
+- vehicle_head_changes：0
+- avg_cluster_lifetime_frames：41.00
+- avg_total_runtime：4.52 ms
+- avg_ra_runtime：3.92 ms
+
+41 帧 AP 评估：
+
+```powershell
+conda run -n opencda python -m opencda.tools.offline_inference --dataset-root D:\Data\Carla --scenario-id 2026_07_15_01_26_56 --ego-cav-id 1 --sgcp-constrained --clustering singleton --resource-allocation potential_game --sgcp-inter-cluster-late-fusion --max-frames 0
+```
+
+结果：
+
+- frames：41
+- singleton sources/frame：20
+- AP@0.3：0.82
+- AP@0.5：0.76
+- AP@0.7：0.37
+- avg_comm_bytes/source：0.00
+- total_comm_bytes：0
+- avg_source_cavs/source：1.00
+
+### 观察
+
+- singleton baseline AP 高于当前 SGCP full 口径的 0.77/0.73/0.35，原因是它 late-fuse 了全部 20 个 CAV 的单车检测结果。
+- 当前通信统计只计算 intra-cluster point-cloud upload payload；singleton 没有点云上传，所以显示为 0，但 prediction-level late-fusion box/score 交换开销尚未计入。
+- 因此该结果应暂记为 “singleton-cluster full late-fusion reference”，不能直接声称为零通信的公平 baseline。后续要么计入检测框交换开销，要么实现距离/随机固定簇 baseline 与 SGCP 使用相同的 cluster-head exchange 口径。

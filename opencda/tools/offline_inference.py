@@ -20,6 +20,9 @@ from opencda.core.common.offline_replay import (
 from opencda.core.clustering.algorithms.clustering.coalition_game import (
     CoalitionGame,
 )
+from opencda.core.clustering.algorithms.clustering.naive_cluster import (
+    NaiveCluster,
+)
 from opencda.core.clustering.utils import common
 from opencda.core.clustering.algorithms.resource_allocation import (
     build_resource_allocator,
@@ -50,6 +53,9 @@ def parse_args():
                         help='Run SGCP clustering/resource allocation and evaluate the constrained uploaded frame.')
     parser.add_argument('--resource-allocation', default='potential_game',
                         help='SGCP resource allocation algorithm for constrained inference.')
+    parser.add_argument('--clustering', default='coalition_game',
+                        choices=['coalition_game', 'singleton', 'all_in_one'],
+                        help='Clustering algorithm for SGCP constrained inference.')
     parser.add_argument('--sgcp-receiver-policy',
                         choices=['ego', 'ego-cluster-head',
                                  'all-cluster-heads'],
@@ -89,14 +95,22 @@ def load_protocol(dataset, scenario_id):
 
 
 def apply_sgcp_constraint(frame, protocol, ego_cav_id, resource_allocation,
-                          receiver_policy, t_min_stab=None):
+                          receiver_policy, t_min_stab=None,
+                          clustering='coalition_game'):
     clear_sgcp_globals()
     world = OfflineCavWorld(
         frame,
         ego_id=ego_cav_id,
         protocol=protocol)
-    clustering_algorithm = CoalitionGame(world)
-    if t_min_stab is not None:
+    if clustering == 'coalition_game':
+        clustering_algorithm = CoalitionGame(world)
+    elif clustering == 'singleton':
+        clustering_algorithm = NaiveCluster(world, all_in_one=False)
+    elif clustering == 'all_in_one':
+        clustering_algorithm = NaiveCluster(world, all_in_one=True)
+    else:
+        raise ValueError('Unknown clustering algorithm: %s' % clustering)
+    if t_min_stab is not None and hasattr(clustering_algorithm, 'p'):
         clustering_algorithm.p.T_min_stab = t_min_stab
     clusters = clustering_algorithm.run()
     apply_cluster_state(world, clusters)
@@ -119,6 +133,7 @@ def apply_sgcp_constraint(frame, protocol, ego_cav_id, resource_allocation,
             receiver_id)
         metadata['cluster_count'] = len(clusters)
         metadata['resource_allocation'] = resource_allocation
+        metadata['clustering'] = clustering
         metadata['receiver_policy'] = receiver_policy
         metadata['t_min_stab'] = (
             common.Params().T_min_stab if t_min_stab is None else t_min_stab)
@@ -137,6 +152,12 @@ def run_opencood_inference(manager, frame, ego_lidar_pose):
         batch_data,
         with_stats=False,
         return_object_ids=manager.fusion_method != 'late')
+
+
+def is_empty_pillar_error(error):
+    return (
+        isinstance(error, RuntimeError) and
+        'input.numel() == 0' in str(error))
 
 
 def main():
@@ -183,7 +204,8 @@ def main():
                 args.resource_allocation,
                 'all-cluster-heads' if args.sgcp_inter_cluster_late_fusion
                 else args.sgcp_receiver_policy,
-                args.t_min_stab)
+                args.t_min_stab,
+                args.clustering)
         if args.sgcp_inter_cluster_late_fusion:
             original_ego = next(cav for cav in frame.values() if cav['ego'])
             target_ego_lidar_pose = original_ego['params']['lidar_pose']
@@ -193,10 +215,30 @@ def main():
             for receiver_index, (eval_frame, sgcp_metadata) in enumerate(
                     frame_items,
                     start=1):
-                ret = run_opencood_inference(
-                    manager,
-                    eval_frame,
-                    target_ego_lidar_pose)
+                try:
+                    ret = run_opencood_inference(
+                        manager,
+                        eval_frame,
+                        target_ego_lidar_pose)
+                except RuntimeError as error:
+                    if not is_empty_pillar_error(error):
+                        raise
+                    if sgcp_metadata is not None:
+                        sgcp_summaries.append(sgcp_metadata)
+                    print('frame=%s/%s late_source=%s/%s scenario=%s '
+                          'timestamp=%s receiver=%s cavs=%s skipped=%s '
+                          'comm_bytes=%s' % (
+                              index,
+                              len(frames),
+                              receiver_index,
+                              len(frame_items),
+                              scenario_id,
+                              timestamp,
+                              sgcp_metadata['receiver_id'],
+                              list(eval_frame.keys()),
+                              'empty_pillars',
+                              sgcp_metadata['communication_bytes']))
+                    continue
                 pred_box_tensor, pred_score, gt_box_tensor = ret[0:3]
                 if pred_box_tensor is not None and pred_score is not None:
                     pred_tensors.append(pred_box_tensor)
