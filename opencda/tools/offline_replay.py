@@ -51,6 +51,8 @@ def parse_args():
                         help='Clustering algorithm: coalition_game, singleton, all_in_one.')
     parser.add_argument('--t-min-stab', type=float, default=None,
                         help='Override CoalitionGame Params.T_min_stab in seconds. Use 0 for no stability window.')
+    parser.add_argument('--n-max', type=int, default=None,
+                        help='Override CoalitionGame Params.N_max.')
     return parser.parse_args()
 
 
@@ -86,7 +88,7 @@ def get_resource_allocation_name(protocol, override=None):
 
 def replay_frame(dataset, scenario_id, timestamp, ego_cav_id, protocol,
                  resource_allocation=None, t_min_stab=None,
-                 clustering='coalition_game'):
+                 clustering='coalition_game', n_max=None):
     frame = dataset.load_frame(
         scenario_id,
         timestamp,
@@ -107,6 +109,8 @@ def replay_frame(dataset, scenario_id, timestamp, ego_cav_id, protocol,
         raise ValueError('Unknown clustering algorithm: %s' % clustering)
     if t_min_stab is not None and hasattr(clustering_algorithm, 'p'):
         clustering_algorithm.p.T_min_stab = t_min_stab
+    if n_max is not None and hasattr(clustering_algorithm, 'p'):
+        clustering_algorithm.p.N_max = n_max
     clusters = clustering_algorithm.run()
     apply_cluster_state(world, clusters)
     ra_start_time = time.time()
@@ -142,6 +146,7 @@ def replay_frame(dataset, scenario_id, timestamp, ego_cav_id, protocol,
         'clustering': clustering,
         't_min_stab': (
             common.Params().T_min_stab if t_min_stab is None else t_min_stab),
+        'n_max': common.Params().N_max if n_max is None else n_max,
         'channel_allocation_count': len(channel_allocation),
         'channel_allocation_sample': sorted(
             channel_allocation.items())[:10],
@@ -297,7 +302,8 @@ def main():
             protocol,
             resource_allocation=args.resource_allocation,
             t_min_stab=args.t_min_stab,
-            clustering=args.clustering)
+            clustering=args.clustering,
+            n_max=args.n_max)
         results.append(result)
         if not args.summary_only:
             print_frame_result(index, len(frames), sid, result)

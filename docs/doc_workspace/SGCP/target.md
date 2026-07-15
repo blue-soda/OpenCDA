@@ -40,7 +40,7 @@
 - [x] 消融：完整 SGCP vs 仅 early fusion。已记录 full 20-CAV early baseline 与 constrained early-only/all-head 口径。
 - [x] 消融：完整 SGCP vs 仅 late fusion。已完成 full 20-CAV OpenCOOD late checkpoint 第一版参考，后续需设计严格同通信约束 late-only SGCP 口径。
 - [ ] 参数实验：`T_min^stab` = 100/300/500/700/1000 ms。
-- [ ] 参数实验：`N_max` = 2/3/4/5/6。
+- [x] 参数实验：`N_max` = 2/3/4/5/6。已完成第一版离线 replay + inter-cluster late-fusion AP；后续需补更长序列/密度场景并计入检测框交换开销。
 - [ ] 参数实验：`rho_th` 多组阈值。
 - [ ] 密度扩展：不同 CAV 数量或不同背景车密度。
 - [ ] 网络资源扩展：不同带宽或子信道数量。

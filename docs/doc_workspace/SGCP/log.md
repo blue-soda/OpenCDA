@@ -1099,3 +1099,81 @@ conda run -n opencda python -m opencda.tools.offline_inference --dataset-root D:
 - singleton baseline AP 高于当前 SGCP full 口径的 0.77/0.73/0.35，原因是它 late-fuse 了全部 20 个 CAV 的单车检测结果。
 - 当前通信统计只计算 intra-cluster point-cloud upload payload；singleton 没有点云上传，所以显示为 0，但 prediction-level late-fusion box/score 交换开销尚未计入。
 - 因此该结果应暂记为 “singleton-cluster full late-fusion reference”，不能直接声称为零通信的公平 baseline。后续要么计入检测框交换开销，要么实现距离/随机固定簇 baseline 与 SGCP 使用相同的 cluster-head exchange 口径。
+
+## 2026-07-15 - `N_max` 参数敏感性实验
+
+### 目的
+
+- 推进 P1 参数实验：`N_max = 2/3/4/5/6`。
+- 检查最大簇大小约束对 cluster fragmentation、reconfiguration、communication payload 和 AP 的影响。
+
+### 代码更新
+
+- `opencda.tools.offline_replay`
+  - 新增 `--n-max`，可覆盖 `CoalitionGame.Params.N_max`。
+- `opencda.tools.offline_inference`
+  - 新增 `--n-max`，SGCP constrained / inter-cluster late-fusion 评估可使用同一参数。
+
+### 验证
+
+语法检查：
+
+```powershell
+$env:PYTHONDONTWRITEBYTECODE='1'; conda run -n opencda python -m py_compile opencda\tools\offline_inference.py opencda\tools\offline_replay.py
+```
+
+3 帧 smoke test：
+
+```powershell
+conda run -n opencda python -m opencda.tools.offline_replay --dataset-root D:\Data\Carla --scenario-id 2026_07_15_01_26_56 --ego-cav-id 1 --resource-allocation potential_game --n-max 2 --max-frames 3 --summary-only
+```
+
+结果：
+
+- frames：3
+- avg_clusters：11.00
+- avg_cluster_size：1.82
+- avg_isolated_cavs：2.00
+- reconfiguration_events：0
+- vehicle_head_changes：0
+- avg_total_runtime：53.27 ms
+- avg_ra_runtime：15.23 ms
+
+### 41 帧 replay 汇总
+
+命令模板：
+
+```powershell
+conda run -n opencda python -m opencda.tools.offline_replay --dataset-root D:\Data\Carla --scenario-id 2026_07_15_01_26_56 --ego-cav-id 1 --resource-allocation potential_game --n-max <N> --max-frames 0 --summary-only
+```
+
+| `N_max` | Avg. Clusters | Avg. Cluster Size | Avg. Isolated CAVs | Reconfig. Events | Vehicle-Head Changes | Avg. Cluster Lifetime (frames) | Avg. Runtime (ms) | Avg. RA Runtime (ms) |
+| ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| 2 | 10.29 | 1.95 | 0.59 | 16 | 59 | 7.28 | 54.39 | 22.51 |
+| 3 | 7.59 | 2.65 | 1.17 | 9 | 62 | 7.59 | 87.94 | 38.31 |
+| 4 | 6.00 | 3.33 | 0.00 | 11 | 76 | 6.65 | 285.82 | 111.85 |
+| 5 | 6.00 | 3.33 | 0.00 | 8 | 15 | 10.70 | 110.09 | 38.20 |
+| 6 | 6.00 | 3.33 | 0.00 | 8 | 15 | 10.70 | 112.02 | 38.72 |
+
+### 41 帧 AP 评估
+
+命令模板：
+
+```powershell
+conda run -n opencda python -m opencda.tools.offline_inference --dataset-root D:\Data\Carla --scenario-id 2026_07_15_01_26_56 --ego-cav-id 1 --sgcp-constrained --resource-allocation potential_game --sgcp-inter-cluster-late-fusion --n-max <N> --max-frames 0
+```
+
+| `N_max` | Frames | Cluster-Head Sources | AP@0.3 | AP@0.5 | AP@0.7 | Avg. Upload (bytes/source) | Total Upload (bytes) | Avg. Source CAVs |
+| ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| 2 | 41 | 422 | 0.79 | 0.74 | 0.37 | 62198.64 | 26247824 | 1.94 |
+| 3 | 41 | 311 | 0.75 | 0.71 | 0.34 | 82226.47 | 25572432 | 2.32 |
+| 4 | 41 | 246 | 0.77 | 0.73 | 0.35 | 109415.48 | 26916208 | 2.67 |
+| 5 | 41 | 246 | 0.75 | 0.71 | 0.32 | 102582.76 | 25235360 | 2.67 |
+| 6 | 41 | 246 | 0.75 | 0.71 | 0.32 | 102582.76 | 25235360 | 2.67 |
+
+### 观察
+
+- `N_max=2` 在当前 dump 中 AP 最高，但它产生更多 cluster head source，属于更强 inter-cluster late fusion 覆盖，不能简单解释为“更小簇一定更好”。
+- `N_max=4` 接近论文默认候选，AP 与通信开销处于中间位置；`N_max=5/6` 的聚类结构和 AP 完全一致，说明当前 20-CAV 片段中有效簇大小没有继续增大。
+- `N_max=3` 反而低于 2/4，提示 coalition search 路径、head 选择和当前 detector 输出之间存在非单调关系；论文写作中应避免把参数敏感性描述成单调趋势。
+- 当前 communication payload 只统计 intra-cluster 点云 upload；inter-cluster late-fusion 的检测框交换开销仍需补计。

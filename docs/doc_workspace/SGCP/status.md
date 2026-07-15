@@ -81,6 +81,7 @@ SGCP 工作与仓库中以下部分关系最紧密：
 - 已修复 OpenCOOD late fusion 离线推理路径，并完成 41 帧 full 20-CAV late fusion reference：AP@0.3/0.5/0.7 = 0.91/0.85/0.51。
 - 已新增 `--t-min-stab` 离线参数，并完成 w/o stability window 第一版消融：`T_min_stab=0` 时 41 帧 AP@0.3/0.5/0.7 = 0.77/0.73/0.35，重配置 11 次、vehicle-head change 76 次、平均 cluster lifetime 6.65 帧，与默认 `T_min_stab=1.0` 一致。
 - 已新增 `--clustering` 离线参数，并完成 w/o coalition formation 的 singleton 第一版参考：20 个单车簇、0 次重配置、AP@0.3/0.5/0.7 = 0.82/0.76/0.37；当前通信统计未计入 prediction-level late-fusion 开销。
+- 已新增 `--n-max` 离线参数，并完成 `N_max=2/3/4/5/6` 参数敏感性第一版：AP@0.5 分别为 0.74/0.71/0.73/0.71/0.71；`N_max=2` 当前 AP 最高但 cluster-head source 更多，`N_max=5/6` 在当前 dump 上结果完全一致。
 - 已确认当前可运行环境版本快照，并记录到 `docs/doc_workspace/environment.md`：OpenCDA HEAD `fcc29fdc9ee9a9fe694c12e1fb6792b4d41bccac`，Python 3.7.10，CARLA Python API 0.9.11，PyTorch 1.10.0+cu113，Open3D 0.10.0.0，ns-3 wrapper `ns-3-dev-v2x-v1.1-dirty`。
 - 已修复在线 CARLA-NS3 时间流速不一致问题：`NetworkManager.time_slot` 不再将 `world.fixed_delta_seconds` 除以 5，`current_sim_time`、`current_time_slot` 与 CARLA tick 统一推进。
 - 已修复在线 NS3 初始化顺序：sender 线程等待车辆注册后先发送真实车辆数和第一帧 `vehicles_position`，再进入 `sync_request/sync_ack` 循环。
@@ -97,5 +98,6 @@ SGCP 工作与仓库中以下部分关系最紧密：
 - full 20-CAV late fusion reference 使用独立 OpenCOOD late checkpoint，不能直接等同于严格同通信约束的 SGCP late-only 消融。
 - 当前 `T_min_stab=0` 消融未显示差异，说明当前 41 帧 dump 不足以证明稳定窗口贡献；需要更长序列或更强相对运动/topology change 场景。
 - singleton-cluster 结果会 late-fuse 全部 20 个 CAV 的检测框，但当前只统计点云 payload，不能直接作为零通信公平 baseline；需要补检测框交换开销或实现距离/随机固定簇对比。
+- `N_max` 参数实验显示非单调趋势；进入论文前需要补更长序列/不同密度场景，并计入 inter-cluster 检测框交换开销。
 - Dump 中速度字段目前使用 `ego_speed`；后续如需更严格动态稳定性，应确认单位并评估是否改为相邻帧差分速度。
 - 在线 CARLA-NS3 修复尚未在真实 CARLA 图形仿真中长时间回归；当前已通过离线 NS3 socket/sync smoke test 和本地时间基准单元断言。
