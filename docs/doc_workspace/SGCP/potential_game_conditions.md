@@ -84,3 +84,27 @@ u_i(a_i', a_-i) - u_i(a_i, a_-i)
 ## 当前结论
 
 当前代码可以支撑 “potential-guided PPS / constrained best-response scheduling” 和 “finite empirical convergence”。它尚不能无条件支撑 “完整 exact potential game 已严格实现并证明”。论文中应把 exact potential 的成立条件写成受限假设，或者将强表述改为 potential-guided heuristic，以免审稿人抓住理论和代码之间的缝隙。
+
+## 已接入的经验收敛诊断
+
+`PotentialGame` 当前已记录每帧 PPS convergence statistics，并由 `opencda.tools.offline_replay` 汇总输出：
+
+```text
+summary pps_convergence avg_iterations=3.00 max_iterations=3 converged_frames=41 avg_cluster_updates=10.00 avg_scheduled_links=10.00 avg_selected_grids=523.90 avg_used_rbs=10.00 avg_reused_rbs=0.00 max_rb_occupancy=1
+```
+
+当前 41 帧 dump 的结果：
+
+| Metric | Value |
+| --- | ---: |
+| Frames converged before `max_iter=20` | 41 / 41 |
+| Avg. iterations | 3.00 |
+| Max iterations | 3 |
+| Avg. cluster updates / frame | 10.00 |
+| Avg. scheduled links / frame | 10.00 |
+| Avg. selected grids / frame | 523.90 |
+| Avg. used RBs / frame | 10.00 |
+| Avg. reused RBs / frame | 0.00 |
+| Max RB occupancy | 1 |
+
+解释：该结果支持 “finite empirical convergence” 和 “当前默认场景下 PPS 使用 10 个 non-conflicting RB 完成调度”。它仍不是 exact-potential 的数学证明；若论文写作需要严格证明，应继续补显式 `Phi` 和每次 accepted move 的 `Delta Phi` 记录。

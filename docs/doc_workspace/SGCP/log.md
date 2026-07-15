@@ -2161,3 +2161,25 @@ docs/doc_workspace/SGCP/potential_game_conditions.md
 ```
 
 结论：当前代码可以支撑 “potential-guided constrained best-response scheduling” 和 “finite empirical convergence”。若论文继续使用 exact potential game，需要明确限定条件：固定 cluster membership、固定候选 grid、additive grid utility、资源/SINR 作为 hard action constraints，且局部 utility 定义为全局 grid utility 的边际变化。更强的 exact-potential 声称需要补显式 `Phi` 计算、action replacement 和 `Delta Phi >= 0` 日志。
+
+## 2026-07-16 - PPS convergence diagnostics
+
+### 代码修正
+
+- `PotentialGame` 新增 `convergence_stats`，记录 `iterations`、`cluster_updates`、`scheduled_links`、`selected_grids`、`used_rbs`、`reused_rbs`、`max_rb_occupancy` 和 `converged`。
+- `opencda.tools.offline_replay` summary 新增 `summary pps_convergence ...`。
+
+### 命令
+
+```powershell
+conda run -n opencda python -m py_compile opencda\core\clustering\algorithms\resource_allocation\potential_game.py opencda\tools\offline_replay.py
+conda run -n opencda python -m opencda.tools.offline_replay --dataset-root D:\Data\Carla --scenario-id 2026_07_15_01_26_56 --ego-cav-id 1 --resource-allocation potential_game --max-frames 0 --summary-only
+```
+
+### 结果
+
+```text
+summary pps_convergence avg_iterations=3.00 max_iterations=3 converged_frames=41 avg_cluster_updates=10.00 avg_scheduled_links=10.00 avg_selected_grids=523.90 avg_used_rbs=10.00 avg_reused_rbs=0.00 max_rb_occupancy=1
+```
+
+结论：当前默认 20-CAV / 10-subchannel dump 中，PPS 41/41 帧都在 `max_iter=20` 前收敛，平均 3 轮停止。每帧平均 10 条 scheduled links、使用 10 个 RB，未触发 RB 复用，最大 RB occupancy=1。这支持 “finite empirical convergence” 与 “10-subchannel NS3 replay 无冲突” 的实验叙事，但仍不是 exact potential 的数学证明。

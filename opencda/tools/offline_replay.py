@@ -377,6 +377,7 @@ def replay_frame(dataset, scenario_id, timestamp, ego_cav_id, protocol,
         bandwidth_mhz=bandwidth_mhz)
     resource_allocator.set_clusters(clusters)
     resource_allocator.run()
+    pps_stats = getattr(resource_allocator, 'convergence_stats', {})
     control_overhead = estimate_control_overhead(world, clusters)
     ra_elapsed_ms = (time.time() - ra_start_time) * 1000.0
     elapsed_ms = (time.time() - start_time) * 1000.0
@@ -419,6 +420,16 @@ def replay_frame(dataset, scenario_id, timestamp, ego_cav_id, protocol,
         'channel_allocation_count': len(channel_allocation),
         'channel_allocation_sample': sorted(
             channel_allocation.items())[:10],
+        'pps_stats': {
+            'iterations': int(pps_stats.get('iterations', 0)),
+            'cluster_updates': int(pps_stats.get('cluster_updates', 0)),
+            'scheduled_links': int(pps_stats.get('scheduled_links', 0)),
+            'selected_grids': int(pps_stats.get('selected_grids', 0)),
+            'used_rbs': int(pps_stats.get('used_rbs', 0)),
+            'reused_rbs': int(pps_stats.get('reused_rbs', 0)),
+            'max_rb_occupancy': int(pps_stats.get('max_rb_occupancy', 0)),
+            'converged': bool(pps_stats.get('converged', False)),
+        },
         'clusters': cluster_summary,
         'capacity_stats': {
             'full_candidate_skips': int(
@@ -599,6 +610,23 @@ def summarize_replay(results, relative_speed_threshold=5.0,
         control_sums[key] = sum(
             item.get('control_overhead', {}).get(key, 0)
             for item in results)
+    pps_keys = [
+        'iterations',
+        'cluster_updates',
+        'scheduled_links',
+        'selected_grids',
+        'used_rbs',
+        'reused_rbs',
+        'max_rb_occupancy',
+    ]
+    pps_sums = {}
+    for key in pps_keys:
+        pps_sums[key] = sum(
+            item.get('pps_stats', {}).get(key, 0)
+            for item in results)
+    pps_converged_frames = sum(
+        1 for item in results
+        if item.get('pps_stats', {}).get('converged', False))
 
     reconfiguration_events = 0
     vehicle_head_changes = 0
@@ -688,6 +716,24 @@ def summarize_replay(results, relative_speed_threshold=5.0,
             'avg_selected_grids_per_frame': (
                 control_sums['selected_grid_count'] / float(frame_count)),
         },
+        'pps_stats': {
+            'avg_iterations': pps_sums['iterations'] / float(frame_count),
+            'max_iterations': max(
+                item.get('pps_stats', {}).get('iterations', 0)
+                for item in results),
+            'avg_cluster_updates': (
+                pps_sums['cluster_updates'] / float(frame_count)),
+            'avg_scheduled_links': (
+                pps_sums['scheduled_links'] / float(frame_count)),
+            'avg_selected_grids': (
+                pps_sums['selected_grids'] / float(frame_count)),
+            'avg_used_rbs': pps_sums['used_rbs'] / float(frame_count),
+            'avg_reused_rbs': pps_sums['reused_rbs'] / float(frame_count),
+            'max_rb_occupancy': max(
+                item.get('pps_stats', {}).get('max_rb_occupancy', 0)
+                for item in results),
+            'converged_frames': pps_converged_frames,
+        },
         'topology_triggers': summarize_topology_triggers(
             results,
             relative_speed_threshold=relative_speed_threshold,
@@ -746,6 +792,20 @@ def print_summary(summary):
     print('summary runtime_ms avg_total=%.2f avg_ra=%.2f' % (
         summary['avg_elapsed_ms'],
         summary['avg_resource_allocation_ms']))
+    pps_stats = summary.get('pps_stats', {})
+    print('summary pps_convergence avg_iterations=%.2f '
+          'max_iterations=%s converged_frames=%s avg_cluster_updates=%.2f '
+          'avg_scheduled_links=%.2f avg_selected_grids=%.2f '
+          'avg_used_rbs=%.2f avg_reused_rbs=%.2f max_rb_occupancy=%s' % (
+              pps_stats.get('avg_iterations', 0.0),
+              pps_stats.get('max_iterations', 0),
+              pps_stats.get('converged_frames', 0),
+              pps_stats.get('avg_cluster_updates', 0.0),
+              pps_stats.get('avg_scheduled_links', 0.0),
+              pps_stats.get('avg_selected_grids', 0.0),
+              pps_stats.get('avg_used_rbs', 0.0),
+              pps_stats.get('avg_reused_rbs', 0.0),
+              pps_stats.get('max_rb_occupancy', 0)))
     control = summary.get('control_overhead', {})
     print('summary control_overhead total_bytes=%s avg_bytes_per_frame=%.2f '
           'beacon_bytes=%s density_metadata_bytes=%s '

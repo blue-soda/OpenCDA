@@ -234,6 +234,32 @@ conda run -n opencda python -m opencda.tools.offline_replay --dataset-root D:\Da
 
 观察：对应的 SGCP inter-cluster late-fusion 点云 payload 为 26,916,208 bytes；控制面估算为 payload 的约 0.70%。论文中应将控制信令作为单独轻量 overhead 报告，不应混入点云 payload，也不应忽略。
 
+## PPS Convergence Diagnostics
+
+当前 `opencda.tools.offline_replay` summary 会输出 `PotentialGame` / PPS 经验收敛统计。该统计用于支撑 “potential-guided constrained best-response scheduling” 的有限收敛叙述；它不是完整 exact-potential 证明。
+
+命令：
+
+```powershell
+conda run -n opencda python -m opencda.tools.offline_replay --dataset-root D:\Data\Carla --scenario-id 2026_07_15_01_26_56 --ego-cav-id 1 --resource-allocation potential_game --max-frames 0 --summary-only
+```
+
+结果：
+
+| Metric | Value |
+| --- | ---: |
+| Frames converged before `max_iter=20` | 41 / 41 |
+| Avg. iterations | 3.00 |
+| Max iterations | 3 |
+| Avg. cluster updates / frame | 10.00 |
+| Avg. scheduled links / frame | 10.00 |
+| Avg. selected grids / frame | 523.90 |
+| Avg. used RBs / frame | 10.00 |
+| Avg. reused RBs / frame | 0.00 |
+| Max RB occupancy | 1 |
+
+观察：当前默认 20-CAV / 10-subchannel dump 中，PPS 每帧 3 轮内停止，41/41 帧均在 `max_iter=20` 前收敛；10 条 scheduled links 使用 10 个不同 RB，因此没有触发 RB 复用。该结果也解释了修复后的 NS3 10-subchannel replay 为什么能做到 110/110 request complete：OpenCDA 侧 PPS 本身输出的是无冲突 manual subchannel allocation。
+
 ## SGCP 离线 NS3 Request-Level 统计
 
 ### Potential-game scheduled requests after manual subchannel fix

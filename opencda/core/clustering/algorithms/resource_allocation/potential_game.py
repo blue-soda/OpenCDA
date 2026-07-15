@@ -64,6 +64,7 @@ class PotentialGame(ResourceAllocationAlgorithm):
         self.grids_uploading = set()
         self.grids_ch_sens = set()
         self.grids_density = {}
+        self.convergence_stats = {}
     
     def set_clusters(self, clusters):
         super().set_clusters(clusters)
@@ -509,6 +510,7 @@ class PotentialGame(ResourceAllocationAlgorithm):
     def channel_game(self, max_iter=20):
         self.strategies = {cluster.head_id: [] for cluster in self.clusters}
         global_rb_used = defaultdict(int) # (k_chan, t_slot) -> used_count
+        total_cluster_updates = 0
         for it in range(max_iter):
             updated = False
             for cluster in self.clusters:
@@ -518,12 +520,32 @@ class PotentialGame(ResourceAllocationAlgorithm):
                     self.strategies[h] += new_schedule
                     logger.info(f"Cluster head {h} strategy updated.")
                     updated = True
+                    total_cluster_updates += 1
                 else:
                     logger.info(f"Cluster head {h} strategy unchanged.")
             if not updated:
                 break
         logger.info(f"Channel game converged in {it+1} iterations.")
+        link_count = 0
+        selected_grid_count = 0
+        rb_occupancy = defaultdict(int)
         for h in self.strategies:
             for m, k, t, grids in self.strategies[h]:
+                link_count += 1
+                selected_grid_count += len(grids)
+                rb_occupancy[(k, t)] += 1
                 logger.info(f"strategy: Cluster head {h} member {m} on RB {k, t} grids: {len(grids)}")
+        self.convergence_stats = {
+            'iterations': it + 1,
+            'cluster_updates': total_cluster_updates,
+            'scheduled_links': link_count,
+            'selected_grids': selected_grid_count,
+            'used_rbs': len(rb_occupancy),
+            'reused_rbs': sum(
+                1 for occupancy in rb_occupancy.values()
+                if occupancy > 1),
+            'max_rb_occupancy': (
+                max(rb_occupancy.values()) if rb_occupancy else 0),
+            'converged': it + 1 < max_iter,
+        }
         return self.strategies
