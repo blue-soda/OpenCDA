@@ -69,6 +69,13 @@ Trigger module 不直接输出最终 cluster，而输出重构级别：
 
 该设计可以修正文稿中 “topology change 才触发” 与 “每个周期重复” 的表述矛盾：每个周期执行状态观测和资源调度，但 cluster 结构只在触发条件满足时更新。
 
+当前 first version 已以默认关闭方式接入 `ClusteringV2XManager`：
+
+- 配置项：`clustering.enable_topology_trigger_gate`，默认 `false`，保证现有实验行为不变。
+- 配置项：`clustering.topology_periodic_guard`，默认 `0`，表示不启用保底重构窗口。
+- 已实现 trigger：初始状态、邻居集合变化、head/member 不可达、periodic guard。
+- 暂未作为在线 gate 使用的 trigger：relative-speed risk、utility drop、NS3 link-quality drop。原因是当前离线统计显示单独 relative-speed trigger 偏敏感，utility/link-quality 还需要更多状态缓存。
+
 ## 离线接入位置
 
 建议在 `opencda.tools.offline_replay` 中先实现统计版本：

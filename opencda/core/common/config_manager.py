@@ -38,6 +38,8 @@ class ClusteringConfig:
     cluster_interval: int = 4
     enable_scheduler: bool = True
     max_cluster_size: int = 10
+    enable_topology_trigger_gate: bool = False
+    topology_periodic_guard: int = 0
 
 
 @dataclass

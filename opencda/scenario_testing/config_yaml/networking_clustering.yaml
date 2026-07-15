@@ -23,6 +23,8 @@ clustering:
   cluster_interval: 4
   enable_scheduler: true
   max_cluster_size: 10
+  enable_topology_trigger_gate: false
+  topology_periodic_guard: 0
 
 resource_allocation:
   algorithm: "potential_game"  # Options: potential_game, pcs, mws, random

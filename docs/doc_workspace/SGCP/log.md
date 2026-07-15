@@ -1699,3 +1699,53 @@ conda run -n opencda python -m opencda.tools.offline_replay --dataset-root D:\Da
   - neighbor-set change 作为强触发；
   - relative speed 作为风险提示；
   - utility drop 和 `T_min_stab` 滞回决定是否真正进入 `RECLUSTER`。
+
+## 2026-07-15 - 在线 topology trigger gate first version
+
+### 目的
+
+- 推进 P3 “将 topology trigger gate 接入在线 `ClusteringV2XManager`”。
+- 先做默认关闭的安全接入，不改变当前默认 CARLA/离线实验行为。
+
+### 代码更新
+
+- `opencda.core.common.config_manager.ClusteringConfig`
+  - 新增 `enable_topology_trigger_gate: bool = False`。
+  - 新增 `topology_periodic_guard: int = 0`。
+- `opencda/scenario_testing/config_yaml/networking_clustering.yaml`
+  - 显式记录 `enable_topology_trigger_gate: false`。
+  - 显式记录 `topology_periodic_guard: 0`。
+- `opencda.core.clustering.managers.clustering_v2x_manager.ClusteringV2XManager`
+  - 新增 class-level accepted topology signature。
+  - 新增邻居集合 signature 计算。
+  - 新增 head/member reachability failure 检查。
+  - 周期到达时先调用 `_should_recluster()`；若无 topology change，则跳过 `CoalitionGame.run()` 并沿用上一轮 cluster。
+  - 日志输出 `CLUSTER_TRIGGER recluster/skip reason=...`。
+
+### 当前 gate 口径
+
+| Trigger | 当前在线 gate | 说明 |
+| --- | --- | --- |
+| Initial state | Yes | 首次必须运行 clustering |
+| Neighbor-set change | Yes | 通信范围内邻居集合变化时重构 |
+| Head/member unreachable | Yes | 当前 cluster 内 head-member 不可达时重构 |
+| Periodic guard | Yes | `topology_periodic_guard > 0` 时启用 |
+| Relative-speed risk | No | 离线统计显示单独使用偏敏感 |
+| Utility drop | No | 待补上一次 accepted utility 缓存 |
+| NS3 link-quality drop | No | 待接入 NS3/offline NS3 link-quality |
+
+### 验证
+
+命令：
+
+```powershell
+conda run -n opencda python -m py_compile opencda\core\common\config_manager.py opencda\core\clustering\managers\clustering_v2x_manager.py
+```
+
+结果：通过。
+
+### 下一步
+
+- 在真实 CARLA 在线仿真中打开 `enable_topology_trigger_gate: true` 做回归。
+- 记录 `CLUSTER_TRIGGER` 日志、reconfiguration 次数、感知 AP/稳定性变化。
+- 后续再把 utility drop 和 NS3 link-quality drop 加入 gate。

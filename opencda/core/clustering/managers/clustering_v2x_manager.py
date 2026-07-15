@@ -17,6 +17,8 @@ class ClusteringV2XManager(V2XManager):
     cluster_algorithm = None
     clusters = None
     all_clusters = []
+    accepted_topology_signature = None
+    skipped_topology_checks = 0
 
     def __init__(self, cav_world, config_yaml, vid):
         super(ClusteringV2XManager, self).__init__(cav_world, config_yaml, vid)
@@ -30,6 +32,10 @@ class ClusteringV2XManager(V2XManager):
             clustering_config = ClusteringConfig()
 
         self.cluster_interval = clustering_config.cluster_interval
+        self.enable_topology_trigger_gate = (
+            clustering_config.enable_topology_trigger_gate)
+        self.topology_periodic_guard = (
+            clustering_config.topology_periodic_guard)
         self.cnt = self.cluster_interval
 
         # ------------------------------
@@ -42,6 +48,100 @@ class ClusteringV2XManager(V2XManager):
         if ClusteringV2XManager.cluster_algorithm is None:
             ClusteringV2XManager.cluster_algorithm = CoalitionGame(self.cav_world)
             # ClusteringV2XManager.cluster_algorithm = NaiveCluster(self.cav_world, all_in_one=False)
+
+    @staticmethod
+    def _location_xy(transform):
+        return (transform.location.x, transform.location.y)
+
+    @staticmethod
+    def _distance_xy(a_xy, b_xy):
+        dx = a_xy[0] - b_xy[0]
+        dy = a_xy[1] - b_xy[1]
+        return math.sqrt(dx * dx + dy * dy)
+
+    def _topology_signature(self):
+        vehicle_manager_dict = self.cav_world.get_vehicle_managers()
+        vehicle_positions = {}
+        communication_ranges = {}
+        for vid, vm in vehicle_manager_dict.items():
+            v2x_manager = getattr(vm, 'v2x_manager', None)
+            if v2x_manager is None:
+                continue
+            ego_pos = v2x_manager.get_ego_pos()
+            if ego_pos is None:
+                continue
+            vehicle_positions[vid] = self._location_xy(ego_pos)
+            communication_ranges[vid] = getattr(
+                v2x_manager,
+                'communication_range',
+                self.communication_range)
+
+        neighbor_items = []
+        for vid in sorted(vehicle_positions.keys()):
+            neighbors = []
+            for other_id in sorted(vehicle_positions.keys()):
+                if other_id == vid:
+                    continue
+                distance = self._distance_xy(
+                    vehicle_positions[vid],
+                    vehicle_positions[other_id])
+                if distance <= communication_ranges.get(
+                        vid,
+                        self.communication_range):
+                    neighbors.append(other_id)
+            neighbor_items.append((vid, tuple(neighbors)))
+        return tuple(neighbor_items)
+
+    def _has_head_member_failure(self):
+        vehicle_manager_dict = self.cav_world.get_vehicle_managers()
+        for cluster in ClusteringV2XManager.all_clusters or []:
+            head_id = getattr(cluster, 'head_id', None)
+            head_vm = vehicle_manager_dict.get(head_id)
+            if head_vm is None or not hasattr(head_vm, 'v2x_manager'):
+                return True
+            head_pos = head_vm.v2x_manager.get_ego_pos()
+            if head_pos is None:
+                return True
+            for member_id in getattr(cluster, 'members', set()):
+                member_vm = vehicle_manager_dict.get(member_id)
+                if member_vm is None or not hasattr(member_vm, 'v2x_manager'):
+                    return True
+                member_pos = member_vm.v2x_manager.get_ego_pos()
+                if member_pos is None:
+                    return True
+                distance = compute_distance(
+                    head_pos.location,
+                    member_pos.location)
+                communication_range = getattr(
+                    head_vm.v2x_manager,
+                    'communication_range',
+                    self.communication_range)
+                if distance > communication_range:
+                    return True
+        return False
+
+    def _should_recluster(self):
+        if not self.enable_topology_trigger_gate:
+            return True, 'periodic'
+        if self.clusters is None and not ClusteringV2XManager.all_clusters:
+            return True, 'initial'
+
+        topology_signature = self._topology_signature()
+        accepted_signature = ClusteringV2XManager.accepted_topology_signature
+        if accepted_signature is None:
+            ClusteringV2XManager.accepted_topology_signature = topology_signature
+            return True, 'initial_topology'
+        if topology_signature != accepted_signature:
+            return True, 'neighbor_set_change'
+        if self._has_head_member_failure():
+            return True, 'head_member_unreachable'
+
+        guard = int(self.topology_periodic_guard or 0)
+        if guard > 0 and \
+                ClusteringV2XManager.skipped_topology_checks >= guard:
+            return True, 'periodic_guard'
+
+        return False, 'no_topology_change'
 
     def _sync_cluster_states(self, clusters):
         clusters = list(clusters or [])
@@ -78,8 +178,19 @@ class ClusteringV2XManager(V2XManager):
         self.cluster_algorithm.initialize()
         self.cnt += 1
         if self.cnt >= self.cluster_interval:
-            self.clusters = self.cluster_algorithm.run()
-            self._sync_cluster_states(self.clusters)
+            should_recluster, reason = self._should_recluster()
+            if should_recluster:
+                self.clusters = self.cluster_algorithm.run()
+                self._sync_cluster_states(self.clusters)
+                ClusteringV2XManager.accepted_topology_signature = \
+                    self._topology_signature()
+                ClusteringV2XManager.skipped_topology_checks = 0
+                logger.info("CLUSTER_TRIGGER recluster reason=%s", reason)
+            else:
+                ClusteringV2XManager.skipped_topology_checks += 1
+                logger.info("CLUSTER_TRIGGER skip reason=%s", reason)
+                if self.clusters is None and ClusteringV2XManager.all_clusters:
+                    self.clusters = list(ClusteringV2XManager.all_clusters)
             self.cnt = 0
         elif self.clusters is None and ClusteringV2XManager.all_clusters:
             self.clusters = list(ClusteringV2XManager.all_clusters)
