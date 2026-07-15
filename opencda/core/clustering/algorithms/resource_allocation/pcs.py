@@ -2,7 +2,9 @@ from typing import Dict, List, Tuple, Set, Optional
 import math
 from opencda.core.clustering.base import *
 from opencda.core.clustering import utils
+from opencda.core.clustering.utils import common
 from opencda.core.clustering.utils import *
+from opencda.core.networking.utils import calculate_distance
 from opencda.log.logger_config import logger
 
 class PCS(ResourceAllocationAlgorithm):
@@ -13,6 +15,7 @@ class PCS(ResourceAllocationAlgorithm):
         :param lambda_subchannels: 逻辑子信道数量（默认25）
         """
         super().__init__(cav_world)
+        self.cav_world = cav_world
         self.lambda_subchannels = lambda_subchannels  # 逻辑子信道总数
         self.interference_range = 100  # 干扰范围（单位：米）
         self.link_utilities: Dict[Tuple[int, int, int], float] = {}  # 链路效用：(发送方vid, 接收方vid, 盲spot_id) -> 权重
@@ -409,6 +412,13 @@ class PCS(ResourceAllocationAlgorithm):
         self.blind_spots_cache.clear()
         self.grid_mAP_cache.clear()
 
+    def run(self):
+        """Execute PCS-style resource allocation and write strategies back."""
+        self.clear_resource_allocation_strategy()
+        self.main()
+        self.update_resource_allocation_strategy()
+        return True
+
     def update_resource_allocation_strategy(self):
         """更新调度策略到车辆（重写父类API）"""
         vehicle_dict = self.cav_world.get_vehicle_managers()
@@ -429,8 +439,10 @@ class PCS(ResourceAllocationAlgorithm):
 
     def clear_resource_allocation_strategy(self):
         """清空调度策略（重写父类方法）"""
-        super().clear_resource_allocation_strategy()
+        self.all_links.clear()
+        self.link_utilities.clear()
         self.resource_strategy.clear()
         self.grid_selection.clear()
         self.link_conflicts.clear()
-        # 保留链路和效用数据，便于重新调度
+        self.blind_spots_cache.clear()
+        self.grid_mAP_cache.clear()

@@ -76,6 +76,8 @@ SGCP 工作与仓库中以下部分关系最紧密：
 - 已完成 41 帧 SGCP constrained early-fusion 评估：AP@0.3/0.5/0.7 = 0.35/0.35/0.21，平均上传 106,790.63 bytes/frame，平均 2.98 个 source CAV/frame。
 - 已新增 `all-cluster-heads` 约束评估口径，并完成 41 帧全量实验：246 个簇头样本，AP@0.3/0.5/0.7 = 0.36/0.34/0.17，平均上传 109,415.48 bytes/sample，平均 2.67 个 source CAV/sample。
 - 已新增 SGCP inter-cluster late fusion 离线评估，并完成 41 帧全量实验：每帧融合 6 个 cluster head，AP@0.3/0.5/0.7 = 0.77/0.73/0.35，平均上传 109,415.48 bytes/source，总 payload 26,916,208 bytes。
+- 已完成 w/o PPS 第一版调度消融：`random` late-fusion 41 帧 AP@0.3/0.5/0.7 = 0.44/0.39/0.17，总 payload 9,725,376 bytes；`mws` late-fusion 41 帧 AP@0.3/0.5/0.7 = 0.31/0.26/0.11，总 payload 9,910,032 bytes。
+- 已修复 `PCS/MWS/RandomRA` 离线执行接口：补齐 `PCS.run()`、`self.cav_world` 和缺失导入，使 baseline scheduler 可通过统一 resource allocation builder 运行。
 - 已确认当前可运行环境版本快照，并记录到 `docs/doc_workspace/environment.md`：OpenCDA HEAD `fcc29fdc9ee9a9fe694c12e1fb6792b4d41bccac`，Python 3.7.10，CARLA Python API 0.9.11，PyTorch 1.10.0+cu113，Open3D 0.10.0.0，ns-3 wrapper `ns-3-dev-v2x-v1.1-dirty`。
 - 已修复在线 CARLA-NS3 时间流速不一致问题：`NetworkManager.time_slot` 不再将 `world.fixed_delta_seconds` 除以 5，`current_sim_time`、`current_time_slot` 与 CARLA tick 统一推进。
 - 已修复在线 NS3 初始化顺序：sender 线程等待车辆注册后先发送真实车辆数和第一帧 `vehicles_position`，再进入 `sync_request/sync_ack` 循环。
@@ -87,7 +89,7 @@ SGCP 工作与仓库中以下部分关系最紧密：
 - 尚未确认论文中表格结果对应的原始日志、随机种子和复现实验配置。
 - 当前 OpenCDA 与 ns-3 工作区均存在未提交/dirty 状态；论文级复现需要保存 patch 或形成干净 commit/tag。
 - 离线 SGCP 回放已完成到“多帧 clustering + `potential_game` 资源分配 + 稳定性/运行时指标 + OpenCOOD 约束感知 mAP”层。
-- 论文 SGCP 的 PPS/博弈调度当前按配置默认 `potential_game` 执行；仍需结合论文文本确认是否需要额外对比 `PCS/MWS/RandomRA/NaiveRA`。
+- 论文 SGCP 的 PPS/博弈调度当前按配置默认 `potential_game` 执行；已完成 `RandomRA/MWS` 初版对比，但 MWS 结果低于 random，需要结合论文文本复核 baseline 定义与效用函数。
 - 早期 `ego-cluster-head` 与 `all-cluster-heads` constrained 评估只包含 intra-cluster early fusion；论文完整 SGCP 结果应优先采用 inter-cluster late fusion 口径。
 - Dump 中速度字段目前使用 `ego_speed`；后续如需更严格动态稳定性，应确认单位并评估是否改为相邻帧差分速度。
 - 在线 CARLA-NS3 修复尚未在真实 CARLA 图形仿真中长时间回归；当前已通过离线 NS3 socket/sync smoke test 和本地时间基准单元断言。

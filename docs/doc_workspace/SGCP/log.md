@@ -804,3 +804,83 @@ conda run -n opencda python -m opencda.tools.offline_inference --dataset-root D:
 - 加入 inter-cluster late fusion 后，AP 从 head-wise/intra-cluster-only 的 0.36/0.34/0.17 提升到 0.77/0.73/0.35，接近 full early fusion baseline 的 0.85/0.83/0.48。
 - 这说明此前低结果主要来自评估链路缺少跨簇晚期融合，而不是 SGCP 机制本身失效。
 - 当前仍未接入 NS3 真实传输成功率/时延；通信开销为根据 grid-selected point cloud 统计的 payload bytes。
+
+## 2026-07-15 - w/o PPS random/MWS 调度消融
+
+### 目的
+
+- 推进 P1 “完整 SGCP vs 无 PPS，仅随机/greedy 调度” 消融。
+- 使用已修正的 SGCP inter-cluster late fusion 口径，对比 `potential_game`、`random`、`mws` 三种资源分配算法。
+
+### 代码修复
+
+- `opencda.core.clustering.algorithms.resource_allocation.pcs`
+  - 补齐抽象接口 `run()`，使 `PCS/MWS/RandomRA` 可通过统一 builder 实例化和执行。
+  - 显式保存 `self.cav_world`，供策略写回阶段使用。
+  - 显式导入 `common` 与 `calculate_distance`，修复离线入口下的 NameError。
+- `opencda.core.clustering.algorithms.resource_allocation.mws`
+  - 显式导入 `common`，修复离线入口下的 NameError。
+
+### 验证
+
+语法检查：
+
+```powershell
+conda run -n opencda python -m py_compile opencda\core\clustering\algorithms\resource_allocation\pcs.py opencda\core\clustering\algorithms\resource_allocation\mws.py opencda\core\clustering\algorithms\resource_allocation\random_ra.py
+```
+
+RandomRA 单帧 smoke test：
+
+```powershell
+conda run -n opencda python -m opencda.tools.offline_inference --dataset-root D:\Data\Carla --scenario-id 2026_07_15_01_26_56 --timestamp 000060 --ego-cav-id 1 --sgcp-constrained --resource-allocation random --sgcp-inter-cluster-late-fusion
+```
+
+结果：`000060` 帧融合 6 个 cluster head，late-fusion 后 `fused_pred_boxes=36`、`fused_gt_boxes=57`。
+
+MWS 单帧 smoke test：
+
+```powershell
+conda run -n opencda python -m opencda.tools.offline_inference --dataset-root D:\Data\Carla --scenario-id 2026_07_15_01_26_56 --timestamp 000060 --ego-cav-id 1 --sgcp-constrained --resource-allocation mws --sgcp-inter-cluster-late-fusion
+```
+
+结果：`000060` 帧融合 6 个 cluster head，late-fusion 后 `fused_pred_boxes=37`、`fused_gt_boxes=54`。
+
+RandomRA 全量 41 帧：
+
+```powershell
+conda run -n opencda python -m opencda.tools.offline_inference --dataset-root D:\Data\Carla --scenario-id 2026_07_15_01_26_56 --ego-cav-id 1 --sgcp-constrained --resource-allocation random --sgcp-inter-cluster-late-fusion --max-frames 0
+```
+
+结果：
+
+- frames：41
+- cluster-head sources/frame：6
+- AP@0.3：0.44
+- AP@0.5：0.39
+- AP@0.7：0.17
+- avg_comm_bytes/source：39,534.05
+- total_comm_bytes：9,725,376
+- avg_source_cavs/source：1.51
+
+MWS 全量 41 帧：
+
+```powershell
+conda run -n opencda python -m opencda.tools.offline_inference --dataset-root D:\Data\Carla --scenario-id 2026_07_15_01_26_56 --ego-cav-id 1 --sgcp-constrained --resource-allocation mws --sgcp-inter-cluster-late-fusion --max-frames 0
+```
+
+结果：
+
+- frames：41
+- cluster-head sources/frame：6
+- AP@0.3：0.31
+- AP@0.5：0.26
+- AP@0.7：0.11
+- avg_comm_bytes/source：40,284.68
+- total_comm_bytes：9,910,032
+- avg_source_cavs/source：1.50
+
+### 观察
+
+- `potential_game` 在同一 late-fusion 口径下为 0.77/0.73/0.35，总 payload 26,916,208 bytes。
+- `random` 与 `mws` 的总 payload 约 9.7-9.9 MB，仅为 `potential_game` 的约 36%-37%，但 AP 明显下降，初步支持 PPS/博弈调度带来感知收益。
+- 当前 `mws` 低于 `random`，提示 MWS baseline 的效用函数、链路生成阈值或论文 baseline 对应关系需要进一步复核，暂不应直接作为最终论文结论。

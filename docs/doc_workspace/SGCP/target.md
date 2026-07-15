@@ -36,7 +36,7 @@
 
 - [ ] 消融：完整 SGCP vs 无稳定窗口。
 - [ ] 消融：完整 SGCP vs 无 coalition formation，仅距离/随机聚类。
-- [ ] 消融：完整 SGCP vs 无 PPS，仅随机/greedy 调度。
+- [x] 消融：完整 SGCP vs 无 PPS，仅随机/greedy 调度。已完成 `random` 与 `mws` 第一版离线 late-fusion 结果，后续需复核 MWS 论文口径。
 - [ ] 消融：完整 SGCP vs 仅 early fusion。
 - [ ] 消融：完整 SGCP vs 仅 late fusion。
 - [ ] 参数实验：`T_min^stab` = 100/300/500/700/1000 ms。
