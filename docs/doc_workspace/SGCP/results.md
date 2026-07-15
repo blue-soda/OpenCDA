@@ -214,6 +214,26 @@ conda run -n opencda python -m opencda.tools.sgcp_density_calibration --dataset-
 
 观察：默认 `rho_th=2.0` 位于当前非零网格 density 的 p90 和 p95 之间，筛出约 7.18% 非零网格作为 high-density candidates。结合前述 `rho_th` AP/payload sweep，`rho_th=2.0` 可作为当前 detector / LiDAR / 10 m grid 设置下的经验折中点；不能写成跨场景通用常数。后续仍需补不同场景和 detector metadata 泛化。
 
+## Control Overhead
+
+详细估算口径见 `control_overhead.md`。当前 `opencda.tools.offline_replay` summary 会输出 SGCP 控制面开销，包括 beacon、density metadata、cluster membership 和 PPS schedule command。
+
+命令：
+
+```powershell
+conda run -n opencda python -m opencda.tools.offline_replay --dataset-root D:\Data\Carla --scenario-id 2026_07_15_01_26_56 --ego-cav-id 1 --resource-allocation potential_game --max-frames 0 --summary-only
+```
+
+| Component | Total Bytes | Avg. Bytes / Frame |
+| --- | ---: | ---: |
+| Beacon | 52,480 | 1,280.00 |
+| Density metadata | 40,184 | 980.10 |
+| Cluster control | 3,608 | 88.00 |
+| PPS schedule | 90,840 | 2,215.61 |
+| Total control | 187,112 | 4,563.71 |
+
+观察：对应的 SGCP inter-cluster late-fusion 点云 payload 为 26,916,208 bytes；控制面估算为 payload 的约 0.70%。论文中应将控制信令作为单独轻量 overhead 报告，不应混入点云 payload，也不应忽略。
+
 ## SGCP 离线 NS3 Request-Level 统计
 
 ### Potential-game scheduled requests after manual subchannel fix

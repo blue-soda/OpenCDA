@@ -2096,3 +2096,35 @@ conda run -n opencda python -m opencda.tools.sgcp_density_calibration --dataset-
 | 4.0 | 2,192 | 0.002782 | 0.046521 | 0.021290 |
 
 结论：默认 `rho_th=2.0` 位于当前非零网格 density 的 p90 和 p95 之间，筛出约 7.18% 非零网格作为 high-density candidates。结合此前 `rho_th` AP/payload sweep，可将其解释为当前 detector / LiDAR / 10 m grid 设置下的经验折中点，而不是跨场景通用常数。后续论文级版本仍应补不同场景或 detector metadata 下的泛化。
+
+## 2026-07-16 - SGCP control overhead accounting
+
+### 代码与文档
+
+- `opencda.tools.offline_replay` 新增 `estimate_control_overhead()`，在 summary 中输出 SGCP 控制面开销。
+- 新增 `control_overhead.md`，记录 beacon、density metadata、cluster membership 和 PPS schedule 的估算假设。
+
+### 命令
+
+```powershell
+conda run -n opencda python -m py_compile opencda\tools\offline_replay.py
+conda run -n opencda python -m opencda.tools.offline_replay --dataset-root D:\Data\Carla --scenario-id 2026_07_15_01_26_56 --ego-cav-id 1 --resource-allocation potential_game --max-frames 0 --summary-only
+```
+
+### 结果
+
+输出：
+
+```text
+summary control_overhead total_bytes=187112 avg_bytes_per_frame=4563.71 beacon_bytes=52480 density_metadata_bytes=40184 cluster_control_bytes=3608 pps_schedule_bytes=90840 avg_high_density_grids=82.51 avg_scheduled_links=10.00 avg_selected_grids=523.90
+```
+
+| Component | Total Bytes | Avg. Bytes / Frame |
+| --- | ---: | ---: |
+| Beacon | 52,480 | 1,280.00 |
+| Density metadata | 40,184 | 980.10 |
+| Cluster control | 3,608 | 88.00 |
+| PPS schedule | 90,840 | 2,215.61 |
+| Total control | 187,112 | 4,563.71 |
+
+结论：当前 41 帧 SGCP inter-cluster late-fusion 点云 payload 为 26,916,208 bytes，控制面估算约为 0.70%。论文中应区分 perception payload 和 control metadata；控制信令不是主导通信开销，但需要作为轻量 overhead 单独报告。

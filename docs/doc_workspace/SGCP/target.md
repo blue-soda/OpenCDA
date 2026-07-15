@@ -75,7 +75,7 @@
 - [x] 在离线 replay 中统计满簇数量、因 `N_max` 跳过的候选 move 数和 singleton/small-cluster 补偿比例。默认 `N_max=4` 下 41 帧平均每帧 3.12 个满簇、99.15 次满簇候选跳过、singleton ratio 0、small-cluster ratio 0.187。
 - [x] 明确 `f(rho)` 的标定协议和 detector/sensor-specific metadata 机制。已新增 `opencda.tools.sgcp_density_calibration` 与 `f_rho_calibration.md`，当前 41 帧 dump 中默认 `rho_th=2.0` 位于非零 density p90/p95 之间，并筛出约 7.18% 非零网格；后续需补跨场景/探测器泛化。
 - [ ] 重新检查 potential game exact potential 的成立条件。
-- [ ] 估算 density/utility/control message 的控制开销，并决定是否纳入通信开销指标。
+- [x] 估算 density/utility/control message 的控制开销，并决定是否纳入通信开销指标。已接入 `opencda.tools.offline_replay` 并新增 `control_overhead.md`；当前 41 帧默认 SGCP 控制面约 187,112 bytes，平均 4,563.71 bytes/frame，约为点云 payload 的 0.70%，论文中应单独报告而不是混入 perception payload。
 - [x] 复核 PPS 中 `bandwidth_all/bandwidth_per_channel` 的吞吐约束实现，解释为何 `bandwidth_mhz=20/40/80` 在当前离线实验中结果一致。结论：参数已进入 `PotentialGame` max-grid/SINR/data-rate 计算，但当前 dump 不由带宽上限主导。
 - [x] 构造能触发带宽瓶颈的 SGCP 场景或参数组：已完成 `bandwidth_mhz=0.1/0.5/1.0` stress test，selected grids 和 AP 随带宽恢复而上升。
 

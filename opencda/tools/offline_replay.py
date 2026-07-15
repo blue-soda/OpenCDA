@@ -169,6 +169,76 @@ def apply_resource_overrides(resource_allocator, world, num_channels=None,
             resource_allocator.p.num_channels)
 
 
+def estimate_control_overhead(world, clusters):
+    """
+    Estimate per-frame SGCP control-plane bytes.
+
+    This is a lightweight accounting model for paper/rebuttal discussion. It
+    intentionally separates compact SGCP control metadata from perception
+    payload bytes reported by offline_inference.
+    """
+    vehicle_managers = world.get_vehicle_managers()
+
+    # Beacon: id, pose, velocity, heading, timestamp, and message framing.
+    beacon_bytes_per_cav = 64
+
+    # Density metadata: compact header plus one (grid_id, quantized density)
+    # tuple for each high-density grid advertised by the CAV.
+    density_header_bytes_per_cav = 16
+    density_grid_entry_bytes = 8
+
+    # Cluster and PPS control: head id, member id, version/slot metadata, and
+    # compact grid id lists. These are command-plane records, not point clouds.
+    cluster_header_bytes = 8
+    cluster_member_bytes = 2
+    schedule_link_header_bytes = 12
+    schedule_grid_entry_bytes = 4
+
+    cav_count = len(vehicle_managers)
+    beacon_bytes = cav_count * beacon_bytes_per_cav
+
+    high_density_grid_count = 0
+    for vm in vehicle_managers.values():
+        high_density_grid_count += len(
+            vm.perception_manager.lidar.high_density_grids)
+    density_metadata_bytes = (
+        cav_count * density_header_bytes_per_cav +
+        high_density_grid_count * density_grid_entry_bytes)
+
+    cluster_control_bytes = 0
+    for cluster in clusters:
+        cluster_control_bytes += (
+            cluster_header_bytes +
+            len(cluster.members) * cluster_member_bytes)
+
+    scheduled_link_count = 0
+    selected_grid_count = 0
+    for vm in vehicle_managers.values():
+        grid_selection = vm.perception_manager.co_manager.grid_selection
+        for grid_ids in grid_selection.values():
+            scheduled_link_count += 1
+            selected_grid_count += len(grid_ids)
+
+    pps_schedule_bytes = (
+        scheduled_link_count * schedule_link_header_bytes +
+        selected_grid_count * schedule_grid_entry_bytes)
+
+    total_control_bytes = (
+        beacon_bytes + density_metadata_bytes + cluster_control_bytes +
+        pps_schedule_bytes)
+
+    return {
+        'beacon_bytes': int(beacon_bytes),
+        'density_metadata_bytes': int(density_metadata_bytes),
+        'cluster_control_bytes': int(cluster_control_bytes),
+        'pps_schedule_bytes': int(pps_schedule_bytes),
+        'total_control_bytes': int(total_control_bytes),
+        'high_density_grid_count': int(high_density_grid_count),
+        'scheduled_link_count': int(scheduled_link_count),
+        'selected_grid_count': int(selected_grid_count),
+    }
+
+
 def transform_xy(transform):
     return (float(transform.location.x), float(transform.location.y))
 
@@ -307,6 +377,7 @@ def replay_frame(dataset, scenario_id, timestamp, ego_cav_id, protocol,
         bandwidth_mhz=bandwidth_mhz)
     resource_allocator.set_clusters(clusters)
     resource_allocator.run()
+    control_overhead = estimate_control_overhead(world, clusters)
     ra_elapsed_ms = (time.time() - ra_start_time) * 1000.0
     elapsed_ms = (time.time() - start_time) * 1000.0
     channel_allocation = {}
@@ -361,6 +432,7 @@ def replay_frame(dataset, scenario_id, timestamp, ego_cav_id, protocol,
             'small_clusters': sum(
                 1 for cluster in cluster_summary if cluster['size'] <= 2),
         },
+        'control_overhead': control_overhead,
         'topology_state': topology_state,
     }
 
@@ -512,6 +584,21 @@ def summarize_replay(results, relative_speed_threshold=5.0,
         item.get('capacity_stats', {}).get('full_candidate_skips', 0)
         for item in results
     ]
+    control_keys = [
+        'beacon_bytes',
+        'density_metadata_bytes',
+        'cluster_control_bytes',
+        'pps_schedule_bytes',
+        'total_control_bytes',
+        'high_density_grid_count',
+        'scheduled_link_count',
+        'selected_grid_count',
+    ]
+    control_sums = {}
+    for key in control_keys:
+        control_sums[key] = sum(
+            item.get('control_overhead', {}).get(key, 0)
+            for item in results)
 
     reconfiguration_events = 0
     vehicle_head_changes = 0
@@ -583,6 +670,24 @@ def summarize_replay(results, relative_speed_threshold=5.0,
         'avg_resource_allocation_ms': (
             sum(item['resource_allocation_ms'] for item in results) /
             float(frame_count)),
+        'control_overhead': {
+            'total_control_bytes': control_sums['total_control_bytes'],
+            'avg_control_bytes_per_frame': (
+                control_sums['total_control_bytes'] / float(frame_count)),
+            'beacon_bytes': control_sums['beacon_bytes'],
+            'density_metadata_bytes': control_sums[
+                'density_metadata_bytes'],
+            'cluster_control_bytes': control_sums[
+                'cluster_control_bytes'],
+            'pps_schedule_bytes': control_sums['pps_schedule_bytes'],
+            'avg_high_density_grids_per_frame': (
+                control_sums['high_density_grid_count'] /
+                float(frame_count)),
+            'avg_scheduled_links_per_frame': (
+                control_sums['scheduled_link_count'] / float(frame_count)),
+            'avg_selected_grids_per_frame': (
+                control_sums['selected_grid_count'] / float(frame_count)),
+        },
         'topology_triggers': summarize_topology_triggers(
             results,
             relative_speed_threshold=relative_speed_threshold,
@@ -641,6 +746,21 @@ def print_summary(summary):
     print('summary runtime_ms avg_total=%.2f avg_ra=%.2f' % (
         summary['avg_elapsed_ms'],
         summary['avg_resource_allocation_ms']))
+    control = summary.get('control_overhead', {})
+    print('summary control_overhead total_bytes=%s avg_bytes_per_frame=%.2f '
+          'beacon_bytes=%s density_metadata_bytes=%s '
+          'cluster_control_bytes=%s pps_schedule_bytes=%s '
+          'avg_high_density_grids=%.2f avg_scheduled_links=%.2f '
+          'avg_selected_grids=%.2f' % (
+              control.get('total_control_bytes', 0),
+              control.get('avg_control_bytes_per_frame', 0.0),
+              control.get('beacon_bytes', 0),
+              control.get('density_metadata_bytes', 0),
+              control.get('cluster_control_bytes', 0),
+              control.get('pps_schedule_bytes', 0),
+              control.get('avg_high_density_grids_per_frame', 0.0),
+              control.get('avg_scheduled_links_per_frame', 0.0),
+              control.get('avg_selected_grids_per_frame', 0.0)))
     topology_summary = summary.get('topology_triggers', {})
     print('summary topology_triggers transitions=%s triggered=%s '
           'actual_reconfig=%s matched=%s reconfig_without_trigger=%s '
