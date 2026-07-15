@@ -2271,3 +2271,30 @@ docs/doc_workspace/SGCP/parameter_calibration_revision.md
 - `rho_th=2.0`：位于当前非零 grid density p90/p95 之间，是 AP/payload 折中点，不是通用常数。
 - `N_max=4`：容量/fragmentation 折中；默认下无 singleton，但仍有 99.15 次满簇候选跳过/frame，说明容量约束实际生效。
 - `T_min^stab=500 ms`：当前 41 帧 sweep 对 100-1000 ms 不敏感，不能写为最优，只能写为覆盖五个 10 Hz 感知周期的 conservative hysteresis default；需要更动态场景支撑强结论。
+
+## 2026-07-16 - FullPerception baseline revision
+
+### 目的
+
+推进 P4 “补充 FullPerception baseline 的实现细节和公平性讨论”，把审稿意见中对 FullPerception 设置不清的质疑转成论文正文和 rebuttal 可用文本。
+
+### 复核材料
+
+- `baseline_fairness.md`
+- `results.md` 中 full early/late reference、SGCP 主结果和 same-budget selective-sharing baseline。
+- 当前 `v2xp_cluster_carla` dump：`D:\Data\Carla\2026_07_15_01_26_56`，20 CAV，41 帧，无 RSU 目录。
+
+### 输出
+
+新增：
+
+```text
+docs/doc_workspace/SGCP/fullperception_baseline_revision.md
+```
+
+核心口径：
+
+- `FullPerception-RSU` 与 full 20-CAV early/late fusion 只能作为 centralized/infrastructure-assisted upper reference，不作为同通信预算公平主对比。
+- `FullPerception-Decentralized` 应具体化为 same-budget CAV-only selective sharing，匹配数据、backbone、cluster-head late-fusion path 和 grid budget。
+- 当前 strong V2V baseline 包括 nearest、density、communication-aware selective sharing；其中 communication-aware 41 帧 AP@0.3/0.5/0.7 = 0.78/0.75/0.40，payload 高于 SGCP。
+- 论文叙事应避免宣称 SGCP 在该短 dump 上 AP 全面领先，转而强调 SGCP 的 cluster stability、PPS channel feasibility、NS3 request-level 可验证传输和可解释控制开销。
