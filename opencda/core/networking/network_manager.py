@@ -30,7 +30,11 @@ class NetworkManager:
         self.subchannel_bandwidth = config.get("subchannel_bandwidth", 0.180) * 1e6  #Hz
         # self.max_interference = config.get("max_interference", 0.2)
         self.min_sinr_threshold = config.get("min_sinr_threshold", 3) #dB
-        self.time_slot = config.get("time_slot", 0.05) / 5.0
+        # One NetworkManager slot is one CARLA synchronous tick. CavWorld
+        # injects world.fixed_delta_seconds into config["time_slot"], so do
+        # not rescale it here; otherwise CARLA, local scheduling, and NS3 sync
+        # drift into different time bases.
+        self.time_slot = config.get("time_slot", 0.05)
         self.use_ns3 = config.get("use_ns3", False)
         self.current_time_slot = 0
         self.world_tick = False
@@ -67,6 +71,7 @@ class NetworkManager:
         self.all_vehicles = []
         self.max_vehicle_num = 30
         self.max_packet_size = 10000 # 64000 # bytes, UDP packet size
+        self._ns3_initialized = False
         if self.use_ns3:
             self.init_ns3()
         self.data_event = None
@@ -76,6 +81,21 @@ class NetworkManager:
 
     def add_vehicles(self, vehicles):
         self.all_vehicles.extend(vehicles)
+
+    def _wait_for_ns3_vehicle_initialization(self):
+        """Send the first vehicle frame before time synchronization starts."""
+        while self.bridge.is_simulation_running():
+            if self.all_vehicles:
+                vehicle_data = collect_vehicle_data(self.all_vehicles, self.cav_world)
+                self.bridge.send_vehicles_num(len(vehicle_data))
+                self.bridge.send_vehicles_position(vehicle_data)
+                self._ns3_initialized = True
+                logger.info(
+                    "NS3 initialized with %s vehicles before first sync",
+                    len(vehicle_data))
+                return True
+            time.sleep(min(self.time_slot, 0.01))
+        return False
 
     def tick(self):
         """Called when CARLA world ticks. Updates simulation time and signals sender."""
@@ -90,7 +110,9 @@ class NetworkManager:
         It uses time synchronization to ensure NS3 and CARLA stay in sync.
         """
         try:
-            self.bridge.send_vehicles_num(self.max_vehicle_num)  # Initial vehicle count
+            if not self._wait_for_ns3_vehicle_initialization():
+                logger.warning("NS3 sender stopped before vehicles were registered")
+                return
             logger.info("NS3 sender thread started, waiting for world ticks")
             while self.bridge.is_simulation_running():
                 if self.world_tick:
@@ -108,18 +130,18 @@ class NetworkManager:
                         self.bridge.connected = False
                         # Trigger reconnection attempt so the next sync can succeed
                         self.bridge.ensure_connection()
-                        time.sleep(self.time_slot / 5.0)
+                        time.sleep(min(self.time_slot, 0.01))
                         continue
 
                     vehicle_data = collect_vehicle_data(self.all_vehicles, self.cav_world)
                     self.bridge.send_vehicles_position(vehicle_data)
 
                     if len(self.communication_requests) == 0:
-                        time.sleep(self.time_slot / 5.0)
+                        time.sleep(min(self.time_slot, 0.01))
                         continue
                     self.bridge.send_transfer_requests(self.communication_requests[:])
                     self.communication_requests = []
-                time.sleep(self.time_slot / 5.0)
+                time.sleep(min(self.time_slot, 0.01))
 
         except KeyboardInterrupt:
             logger.info("Simulation interrupted by user")
@@ -503,6 +525,11 @@ class NetworkManager:
 
     def advance_time_slot(self):
         """Progress network state while preserving statistics."""
+        # Archive the slot that just completed before advancing the logical
+        # slot index. This keeps history.slot_index aligned with the CARLA
+        # tick that produced the statistics.
+        self.finalize_slot()
+
         # Clean up expired allocations
         for subchannel in list(self.active_allocations.keys()):
             self.active_allocations[subchannel] = {
@@ -514,9 +541,6 @@ class NetworkManager:
 
         # Update current time slot
         self.current_time_slot += 1
-
-        # Finalize and reset statistics for the current slot
-        self.finalize_slot()
         self.tick()
 
 

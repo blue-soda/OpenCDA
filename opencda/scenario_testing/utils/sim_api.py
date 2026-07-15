@@ -832,6 +832,7 @@ class ScenarioManager:
 
     def create_vehicle_manager_for_traffic(self, traffic_vehicles, application=['traffic', 'coperception', 'cluster']):
         traffic_cav_list = []
+        data_dumping = 'data_dump' in application
         platoon_base = OmegaConf.create({'platoon': self.scenario_params.get('platoon_base',{})})
         cluster_base = OmegaConf.create({'cluster': self.scenario_params.get('cluster',{})})
         cav_config = OmegaConf.merge(self.scenario_params['traffic_vehicle_base'],
@@ -844,7 +845,7 @@ class ScenarioManager:
                 application=application,
                 carla_map=self.carla_map, cav_world=self.cav_world,
                 current_time=self.scenario_params['current_time'],
-                data_dumping=False)
+                data_dumping=data_dumping)
             
             self.world.tick()
 

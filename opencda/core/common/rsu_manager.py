@@ -95,6 +95,11 @@ class RSUManager(object):
                                           save_time=current_time)
         else:
             self.data_dumper = None
+        self.objects = {
+            'vehicles': [],
+            'traffic_lights': [],
+            'is_skipped': False
+        }
 
         cav_world.update_rsu_manager(self)
 
@@ -110,7 +115,7 @@ class RSUManager(object):
         ego_spd = self.localizer.get_ego_spd()
 
         # object detection todo: pass it to other CAVs for V2X percetion
-        objects = self.perception_manager.detect(ego_pos)
+        self.objects = self.perception_manager.detect(ego_pos)
 
     def run_step(self):
         """
@@ -119,12 +124,20 @@ class RSUManager(object):
         # dump data
         if self.data_dumper:
             self.data_dumper.run_step(self.perception_manager,
-                                      self.localizer,
-                                      None)
+                                       self.localizer,
+                                       None)
+
+    def get_objects(self):
+        """
+        Return the latest perceived objects from the RSU.
+        """
+        return self.objects
 
     def destroy(self):
         """
         Destroy the actor vehicle
         """
-        self.perception_manager.destroy()
-        self.localizer.destroy()
+        if self.perception_manager:
+            self.perception_manager.destroy()
+        if self.localizer:
+            self.localizer.destroy()

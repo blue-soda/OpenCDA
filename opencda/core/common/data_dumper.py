@@ -62,11 +62,9 @@ class DataDumper(object):
         self.vehicle_id = vehicle_id
 
         current_path = os.path.dirname(os.path.realpath(__file__))
-        self.save_parent_folder = \
-            os.path.join(current_path,
-                         '../../../data_dumping',
-                         save_time,
-                         str(self.vehicle_id))
+        self.save_parent_folder = os.path.join(
+            self.get_save_root(save_time),
+            str(self.vehicle_id))
 
         if not os.path.exists(self.save_parent_folder):
             os.makedirs(self.save_parent_folder)
@@ -101,7 +99,7 @@ class DataDumper(object):
             return
 
         self.save_rgb_image(self.count)
-        # self.save_lidar_points()
+        self.save_lidar_points(self.count)
         self.save_yaml_file(perception_manager,
                             localization_manager,
                             behavior_agent,
@@ -121,12 +119,13 @@ class DataDumper(object):
             cv2.imwrite(os.path.join(self.save_parent_folder, image_name),
                         image)
 
-    def save_lidar_points(self):
+    def save_lidar_points(self, count):
         """
         Save 3D lidar points to disk.
         """
         point_cloud = self.lidar.data
-        frame = self.lidar.frame
+        if point_cloud is None:
+            return
 
         point_xyz = point_cloud[:, :-1]
         point_intensity = point_cloud[:, -1]
@@ -141,7 +140,7 @@ class DataDumper(object):
         o3d_pcd.colors = o3d.utility.Vector3dVector(point_intensity)
 
         # write to pcd file
-        pcd_name = '%06d' % frame + '.pcd'
+        pcd_name = '%06d' % count + '.pcd'
         o3d.io.write_point_cloud(os.path.join(self.save_parent_folder,
                                               pcd_name),
                                  pointcloud=o3d_pcd,
@@ -312,3 +311,11 @@ class DataDumper(object):
 
         assert len(matrix.shape) == 2
         return matrix.tolist()
+
+    @staticmethod
+    def get_save_root(save_time):
+        data_dump_root = os.environ.get('OPENCDA_DATA_DUMP_ROOT', r'D:\Data\Carla')
+        if data_dump_root:
+            return os.path.join(data_dump_root, save_time)
+        current_path = os.path.dirname(os.path.realpath(__file__))
+        return os.path.join(current_path, '../../../data_dumping', save_time)

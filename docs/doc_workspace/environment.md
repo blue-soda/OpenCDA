@@ -16,6 +16,28 @@ conda activate opencda
 conda run -n opencda python <script-or-module>
 ```
 
+当前环境快照（2026-07-15）：
+
+- Python：`3.7.10`
+- pip：`21.1.2`
+- CARLA Python API：`0.9.11`（`conda list` 显示为 `carla 0.9.11 dev_0 <develop>`）
+- PyTorch：`1.10.0+cu113`
+- torchvision：`0.11.1+cu113`
+- NumPy：`1.21.6`
+- Open3D：`0.10.0.0`
+- OmegaConf：`2.3.0`
+- PyYAML：`6.0.1`
+- scikit-learn：`0.24.2`
+- spconv：`spconv-cu113 2.3.6`
+- OpenCV：`opencv-python 4.5.2.52`
+
+可复查命令：
+
+```powershell
+conda run -n opencda python --version
+conda list -n opencda | Select-String -Pattern "^(python|carla|torch|torchvision|numpy|pyyaml|omegaconf|open3d|opencv|scikit-learn|spconv)\\s"
+```
+
 ## 路径约定
 
 数据集根目录：
@@ -36,6 +58,14 @@ CARLA 启动路径：
 C:\Programs\Carla\WindowsNoEditor\CarlaUE4.exe
 ```
 
+当前 CARLA 程序目录快照（2026-07-15）：
+
+- `CarlaUE4.exe` 路径：`C:\Programs\Carla\WindowsNoEditor\CarlaUE4.exe`
+- `CarlaUE4.exe` 修改时间：`2026-07-14 23:37:41`
+- `CarlaUE4.exe` 文件大小：`188,928 bytes`
+- Windows 文件属性未提供 `FileVersion/ProductVersion`。
+- 版本口径以 Python API `carla 0.9.11` 为准；若论文需要 simulator binary 的精确 release，应人工确认 CARLA 包来源或压缩包名称。
+
 ## 仓库入口
 
 - OpenCDA 主入口：`opencda.py`
@@ -46,6 +76,12 @@ C:\Programs\Carla\WindowsNoEditor\CarlaUE4.exe
 - V2X/NS3 联动相关模块：`opencda/core/networking/`
 - OpenCOOD 感知模型与融合框架：`opencood/`
 - 通用离线推理入口：`opencda.tools.offline_inference`
+
+当前代码版本快照（2026-07-15）：
+
+- OpenCDA 仓库 HEAD：`fcc29fdc9ee9a9fe694c12e1fb6792b4d41bccac`
+- 当前工作区包含未提交改动；复现实验时应记录 `git status --short` 或保存 patch。
+- OpenCOOD 位于本仓库 `opencood/` 子目录，随同 OpenCDA 仓库 HEAD 固定。
 
 ## 基本实验命令
 
@@ -91,6 +127,20 @@ Windows 侧同一路径：
 
 ```powershell
 C:\Workspace\carla-ns3-co-simulation\ns3\vanet\main.cc
+```
+
+当前 ns-3 / V2X 代码快照（2026-07-15）：
+
+- co-simulation 仓库 HEAD：`10ab54cee04b04bce7f638249ddae1619fb11bf1`
+- `ns-3-dev` HEAD：`c90c13b8310a813cf4eaf67a2c90df497bbd1965`
+- ns-3 wrapper version：`ns-3-dev-v2x-v1.1-dirty`
+- `ns-3-dev` 当前存在 dirty/generated 状态，包括若干 `src/lte/model/*.cc` type-change 标记和 `NrDlMacStats.txt`、`NrUlMacStats.txt`。
+
+可复查命令：
+
+```powershell
+wsl -d Ubuntu-22.04 -u sakakibara -- bash -lc "cd ~/workspace/carla-ns3-co-simulation && git rev-parse HEAD && git status --short"
+wsl -d Ubuntu-22.04 -u sakakibara -- bash -lc "cd ~/workspace/carla-ns3-co-simulation/ns-3-dev && git rev-parse HEAD && git describe --tags --always --dirty && ./ns3 show version"
 ```
 
 编译 ns-3 / NR V2X：
@@ -140,3 +190,19 @@ conda run -n opencda python -m opencda.tools.offline_inference --dataset-root D:
 ```powershell
 conda run -n opencda python -m opencda.tools.offline_inference --dataset-root D:\Data\Carla --scenario-id 2026_07_15_01_26_56 --ego-cav-id 1 --max-frames 0
 ```
+
+离线 NS3 同步 smoke test：
+
+1. 先启动 ns-3：
+
+```powershell
+wsl -d Ubuntu-22.04 -u sakakibara -- bash -lc "cd ~/workspace/carla-ns3-co-simulation/ns-3-dev && ./ns3 run 'scratch/vanet/main.cc --simTime=3.0 --enableTimeSync=true --carlaHost=auto'"
+```
+
+2. 另开一个 PowerShell 运行离线回放到 NS3：
+
+```powershell
+conda run -n opencda python -m opencda.tools.offline_ns3_replay --dataset-root D:\Data\Carla --scenario-id 2026_07_15_01_26_56 --ego-cav-id 1 --max-frames 3 --drain-seconds 0.3
+```
+
+该工具不启动 CARLA，只从 dump 数据重建车辆位姿和 SGCP cluster 内上传请求，并按数据集帧间隔向 NS3 发送 `vehicles_position`、`sync_request`、`transfer_requests`。

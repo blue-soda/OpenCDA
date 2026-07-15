@@ -150,6 +150,18 @@ class CavWorld(object):
         """
         self._rsu_manager_dict.update({rsu_manager.rid: rsu_manager})
 
+    def get_rsu_managers(self):
+        """
+        Return RSU manager dictionary.
+        """
+        return self._rsu_manager_dict
+
+    def get_rsu_manager(self, rsu_id):
+        """
+        Return a single RSU manager by id.
+        """
+        return self._rsu_manager_dict[rsu_id]
+
     def update_sumo_vehicles(self, sumo2carla_ids):
         """
         Update the sumo carla mapping dict. This is only called
@@ -213,7 +225,7 @@ class CavWorld(object):
         for vehicle_manager in self._vehicle_manager_dict.values():
             vehicle_manager.destroy()
         for rsu_manager in self._rsu_manager_dict.values():
-            rsu_manager.destory()
+            rsu_manager.destroy()
 
     # def __del__(self):
     #     try:

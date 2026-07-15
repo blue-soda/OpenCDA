@@ -177,6 +177,8 @@ class CarlaNs3Bridge:
                     except socket.timeout:
                         continue
                     except socket.error as e:
+                        if not self.running:
+                            break
                         logger.error(f"Socket error: {e}")
                         print(f"Socket error: {e}")
                         self._close_client_socket()

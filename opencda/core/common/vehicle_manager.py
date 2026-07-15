@@ -293,18 +293,20 @@ class VehicleManager(object):
         Execute one step of navigation.
         """
         self.v2x_manager.run_step()
+
+        # dump data before returning for traffic CAV managers as they do not
+        # run behavior planning/control.
+        if self.data_dumper:
+            self.data_dumper.run_step(self.perception_manager,
+                                      self.localizer,
+                                      self.agent)
+
         if 'traffic' in self.application:
             return None
         # visualize the bev map if needed
         self.map_manager.run_step()
         target_speed, target_pos = self.agent.run_step(target_speed, self.cav_world.ego_id)
         control = self.controller.run_step(target_speed, target_pos)
-
-        # dump data
-        if self.data_dumper:
-            self.data_dumper.run_step(self.perception_manager,
-                                      self.localizer,
-                                      self.agent)
 
         return control
 

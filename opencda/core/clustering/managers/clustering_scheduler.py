@@ -13,12 +13,8 @@ from random import uniform
 import numpy as np
 from opencda.core.networking.utils import *
 
-from opencda.core.clustering.algorithms.resource_allocation.potential_game import PotentialGame \
-    as PotentialGame
-from opencda.core.clustering.algorithms.resource_allocation.pcs import PCS
-from opencda.core.clustering.algorithms.resource_allocation.naive_ra import NaiveRA
-from opencda.core.clustering.algorithms.resource_allocation.mws import MWS
-from opencda.core.clustering.algorithms.resource_allocation.random_ra import RandomRA
+from opencda.core.clustering.algorithms.resource_allocation.builder import \
+    build_resource_allocator
 
 class ClusteringScheduler(Scheduler):
     resource_allocation_algorithm = None
@@ -30,11 +26,12 @@ class ClusteringScheduler(Scheduler):
         self.channel_allocation: Dict[Tuple[int, int], int] = {}  # {(source, target): 子信道}
 
         if ClusteringScheduler.resource_allocation_algorithm is None:
-            # ClusteringScheduler.resource_allocation_algorithm = PotentialGame(cav_world)
-            # ClusteringScheduler.resource_allocation_algorithm = PCS(cav_world)
-            # ClusteringScheduler.resource_allocation_algorithm = MWS(cav_world)
-            # ClusteringScheduler.resource_allocation_algorithm = RandomRA(cav_world)
-            ClusteringScheduler.resource_allocation_algorithm = NaiveRA(cav_world)
+            ra_name = config.get('resource_allocation_algorithm',
+                                 config.get('resource_allocation', {}).get(
+                                     'algorithm', 'potential_game'))
+            ClusteringScheduler.resource_allocation_algorithm = \
+                build_resource_allocator(ra_name, cav_world)
+            logger.info("ClusteringScheduler resource allocation=%s", ra_name)
 
     def get_subchannel_allocation(self, link: Tuple[int, int]):
         if link in self.channel_allocation:

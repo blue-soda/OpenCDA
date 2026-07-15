@@ -1,0 +1,90 @@
+description: |-
+  Copyright 2021 <UCLA Mobility Lab>
+  Author: Runsheng Xu <rxx3386@ucla.edu>
+  Content: This is the scenario testing configuration file for single vehicle perception/localization/behavior/control
+           testing in high speed in the customized 2lanefree simple version.
+
+
+# Define settings for multi-class blueprint spawning
+# Comment out this chunk of code or set use_multi_class_bp to be False if you don't want to spawn multi-class actors
+blueprint:
+  use_multi_class_bp: false
+  bp_meta_path: "opencda/assets/blueprint_meta/bbx_stats_0911.json" # Define the path for loading the blueprint metadata for defining the class of each blueprint
+  # Define blueprint type sample probabilities
+  bp_class_sample_prob:
+    car: 0.5
+    truck: 0.1
+    bus: 0.1
+    bicycle: 0.1
+    motorcycle: 0.1
+
+
+# define the background traffic control by carla
+carla_traffic_manager:
+  sync_mode: true # has to be same as the world setting
+  global_distance: 5 # the minimum distance in meters that vehicles have to keep with the rest
+  # Sets the difference the vehicle's intended speed and its current speed limit.
+  #  Carla default speed is 30 km/h, so -100 represents 60 km/h,
+  # and 20 represents 24 km/h
+  global_speed_perc: -10
+  set_osm_mode: true # Enables or disables the OSM mode.
+  auto_lane_change: true
+  random: true # whether to random select vehicles' color and model
+  ignore_lights_percentage: 100 # whether set the traffic ignore traffic lights
+  vehicle_list: ~  # a number or a list
+  # Used only when vehicle_list is a number.
+  #  x_min, x_max, y_min, y_max, x_step, y_step, vehicle_num, (vehicle_manager_num)
+  range:
+    # - [-11, 12, 100, 200, 3.5, 15, 15]
+    # - [-50, 50, 100, 300, 3.5, 15, 59, 19] 
+    # - [-5, 12, 165, 200, 3.5, 15, 7] #town06
+    - [-50, 40, -100, 100, 3.5, 15, 99, 19] #town03
+    # - [-50, 40, -100, 100, 3.5, 15, 99] #town03
+    # - [-180, -80, -60, 60, 3.5, 15, 40] #town05
+    
+
+
+# define scenario. In this scenario, a 4-vehicle platoon already exists.
+scenario:
+#  rsu_list:
+#    - <<: *rsu_base
+#      spawn_position: [12.00, 192.31, 3.0]
+#      id: -1
+
+  single_cav_list:
+    - 
+      # spawn_position: [12.00, 192.31, 0.3, 0, -90, 0] #town06
+      # destination: [37.12, 150.2, 1.0]
+      # spawn_position: [8.00, 180.31, 0.3, 0, -90, 0] #town06
+      # destination: [8.00, 168.2, 1.0]
+      spawn_position: [8.00, -30.31, 0.3, 0, -90, 0] #town03
+      destination: [8.00, -41, 1.0]
+      # spawn_position: [-132, -20, 0.3, 0, 90, 0] #town05
+      # destination: [-132, 0, 1.0]      
+      behavior:
+        local_planner:
+          debug_trajectory: false
+          debug: false
+    # - <<: *vehicle_base
+    #   spawn_position: [-5.51, 160.24, 0.3, 0, 90, 0]
+    #   destination: [-2.43, 263, 0.3]
+    #   v2x:
+    #     <<: *base_v2x
+    #     communication_range: 70
+    #   behavior:
+    #     <<: *base_behavior
+    #     local_planner:
+    #       <<: *base_local_planner
+    #       debug_trajectory: false
+    #       debug: false
+
+# these are parameters supporting cooperative perception
+# models are pending to be added with all the models supported in the intermediate fusion
+coperception:
+  models:
+    early: 'opencood/logs/pointpillar_early_fusion'
+    intermediate_v2xvit: 'opencood/logs/pointpillar_v2xvit_fusion'
+    intermediate_attentive: 'opencood/logs/pointpillar_attentive_fusion'
+    intermediate_cobevt: 'opencood/logs/pointpillar_cobevt_fusion'
+    late: 'opencood/logs/pointpillar_late_fusion'
+  fusion_method: 'early'

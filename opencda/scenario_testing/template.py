@@ -16,6 +16,7 @@ from opencda.scenario_testing.utils.yaml_utils import add_current_time, save_yam
 from opencda.core.sensing.localization.localization_manager import LocalizationManager
 from opencda.log.logger_config import logger
 import os
+from opencda.core.common.data_dumper import DataDumper
 
 #cluster, rsu, platoon, data_dump, traffic
 applications = []
@@ -60,6 +61,11 @@ def init(opt, scenario_params):
     if hasattr(opt, 'uav') and opt.uav and 'uav_list' in scenario_params:
         applications.append('uav')
     data_dump = 'data_dump' in applications
+    if data_dump:
+        dump_root = DataDumper.get_save_root(scenario_params['current_time'])
+        if not os.path.exists(dump_root):
+            os.makedirs(dump_root)
+        save_yaml(scenario_params, os.path.join(dump_root, 'data_protocol.yaml'))
 
     # create CAV world
     cav_world = CavWorld(apply_ml=opt.apply_ml, 
@@ -329,6 +335,8 @@ def stop(opt):
 
         for uav in uav_list:
             uav.destroy()
+        for rsu in rsu_list:
+            rsu.destroy()
 
     finally:
         if scenario_manager:

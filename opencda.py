@@ -40,6 +40,25 @@ from omegaconf import OmegaConf
 from opencda.version import __version__
 from opencda.log.logger_config import logger
 
+def restore_carla_rendering(client_port, timeout=5.0):
+    """
+    Re-enable CARLA rendering before a scenario starts.
+    Scenario shutdown may intentionally leave CARLA in no-rendering mode.
+    """
+    try:
+        import carla
+        client = carla.Client('localhost', client_port)
+        client.set_timeout(timeout)
+        world = client.get_world()
+        settings = world.get_settings()
+        if settings.no_rendering_mode:
+            settings.no_rendering_mode = False
+            world.apply_settings(settings)
+            print("CARLA rendering restored.")
+    except Exception as e:
+        logger.warning(f"Unable to restore CARLA rendering before scenario start: {e}")
+
+
 def arg_parse():
     # create an argument parser
     parser = argparse.ArgumentParser(description="OpenCDA scenario runner.")
@@ -73,6 +92,9 @@ def arg_parse():
     parser.add_argument("--uav",
                         action='store_true',
                         help='whether to enable UAV.')
+    parser.add_argument("--dump",
+                        action='store_true',
+                        help='whether to dump OPV2V-style sensor data instead of running online ML inference.')
     # parse the arguments and return the result
     opt = parser.parse_args()
     return opt
@@ -157,6 +179,11 @@ def main():
 
     scenario_params['vehicle_base']['sensing']['perception']['coperception'] = opt.apply_cp
     scenario_params['vehicle_base']['sensing']['perception']['activate'] = opt.apply_ml
+    if opt.dump:
+        scenario_params['vehicle_base']['sensing']['perception']['coperception'] = False
+        scenario_params['vehicle_base']['sensing']['perception']['activate'] = False
+        scenario_params['traffic_vehicle_base']['sensing']['perception']['coperception'] = False
+        scenario_params['traffic_vehicle_base']['sensing']['perception']['activate'] = False
 
     #ignore deprecated warning 
     import warnings
@@ -165,6 +192,7 @@ def main():
     warnings.filterwarnings("ignore", category=ShapelyDeprecationWarning)
     warnings.filterwarnings("ignore", category=UserWarning, message="nn.init.xavier_uniform is now deprecated in favor of nn.init.xavier_uniform_.")
     logger.debug(scenario_params)
+    restore_carla_rendering(scenario_params['world']['client_port'])
     scenario_runner(opt, scenario_params)
 
 

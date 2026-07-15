@@ -651,8 +651,15 @@ class PerceptionManager:
         self.carla_world = carla_world if carla_world is not None \
             else self.vehicle.get_world()
         self._map = self.carla_world.get_map()
-        # self.vid = infra_id if infra_id is not None else vehicle.id
-        self.vid = v2x_manager.vid
+        self.is_infrastructure = vehicle is None
+        if infra_id is not None:
+            self.vid = infra_id
+        elif v2x_manager is not None:
+            self.vid = v2x_manager.vid
+        elif vehicle is not None:
+            self.vid = vehicle.id
+        else:
+            raise ValueError("PerceptionManager requires infra_id, v2x_manager, or vehicle.")
         self.enable_network = enable_network
         print("enable_network:", self.enable_network)
 
@@ -750,7 +757,7 @@ class PerceptionManager:
         # coperception libs
         self.co_manager = None
         self.coperception_libs = None
-        if self.coperception or self.enable_network:
+        if (self.coperception or self.enable_network) and self.v2x_manager is not None:
             try:
                 from opencda.core.sensing.perception.coperception_libs import CoperceptionLibs
                 from opencda.core.sensing.perception.coperception_manager import CoperceptionManager
@@ -999,7 +1006,9 @@ class PerceptionManager:
         world = self.carla_world
 
         vehicle_list = world.get_actors().filter("*vehicle*")
-        if self.coperception:
+        if self.is_infrastructure and self.lidar is not None:
+            thresh = self.lidar.lidar_range
+        elif self.coperception:
             thresh = 120
         else:
             thresh = 50 if not self.data_dump else 120

@@ -179,6 +179,9 @@ def make_background_transparent(image_path, output_path, bg_color=(255, 0, 255))
     将指定背景色替换为透明。
     bg_color: RGB tuple in [0, 255]
     """
+    if not os.path.exists(image_path):
+        print(f"[WARNING] Screenshot file not found: {image_path}")
+        return
     img = Image.open(image_path).convert("RGBA")
     data = np.array(img)
     
@@ -190,6 +193,7 @@ def make_background_transparent(image_path, output_path, bg_color=(255, 0, 255))
     
     img_transparent = Image.fromarray(data, 'RGBA')
     abs_output_path = os.path.join(BASE_DIR, output_path)
+    os.makedirs(os.path.dirname(abs_output_path), exist_ok=True)
     if os.path.exists(abs_output_path):
         os.remove(abs_output_path)
         print(f"[INFO] Removed existing file: {abs_output_path}")
@@ -330,6 +334,7 @@ def o3d_visualizer_show_coperception(vis, count, point_cloud, predict_bbx_tensor
 
     if take_screenshot:  # and count == 2:
         path = 'visualization_output/visualize.png'
+        os.makedirs(os.path.dirname(path), exist_ok=True)
         vis.capture_screen_image(path)
         if transparent_bg:
             final_path = 'visualization_output/visualize_transparent.png'
