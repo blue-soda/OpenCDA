@@ -29,7 +29,7 @@ SGCP 工作与仓库中以下部分关系最紧密：
 - FullPerception baseline 设置不清楚：无 RSU 场景下是否使用虚拟 RSU、全局信息或集中调度，需要明确。
 - `f(rho)` 感知效用函数标定过程过短，缺少拟合方式、数据采样方式、复现流程和误差说明。
 - `T_min^stab = 500 ms`、`N_max = 4`、`rho_th = 2.0` 等关键参数缺少依据。
-- topology change trigger 的定义模糊，可能影响动态场景稳定性。
+- topology change trigger 已形成机制规格，但尚未接入在线/离线代码统计。
 - 100 ms 协作周期内的实时性论证过于简略。
 
 ### 需要补充实验
@@ -90,6 +90,7 @@ SGCP 工作与仓库中以下部分关系最紧密：
 - 已完成低带宽瓶颈触发实验：0.1/0.5/1.0 MHz 下 AP@0.5 分别为 0.22/0.50/0.61，平均 selected grids 分别为 0.00/4.32/9.66，证明带宽约束可观测生效。
 - 已新增 `baseline_fairness.md`，明确 FullPerception-RSU 是 centralized/RSU-assisted upper reference，不作为同通信预算公平主对比；full 20-CAV early/late fusion 也只作为 upper/reference。
 - 已新增 same-budget CAV-only selective-sharing baseline：`nearest`、`density`、`communication_aware` 三种成员选择，复用 SGCP clustering + inter-cluster late fusion，默认每簇头 2 个成员、87 个 grid budget；41 帧结果分别为 AP@0.3/0.5/0.7 = 0.76/0.73/0.37、0.77/0.74/0.39、0.78/0.75/0.40。
+- 已新增 `topology_trigger.md`，定义 SGCP topology change trigger 的邻居变化、相对运动、链路质量、utility 下降、hard failure 和 periodic guard 条件，并明确 `NO_CHANGE/LOCAL_REPAIR/RECLUSTER` 三类输出。
 - 已确认当前可运行环境版本快照，并记录到 `docs/doc_workspace/environment.md`：OpenCDA HEAD `fcc29fdc9ee9a9fe694c12e1fb6792b4d41bccac`，Python 3.7.10，CARLA Python API 0.9.11，PyTorch 1.10.0+cu113，Open3D 0.10.0.0，ns-3 wrapper `ns-3-dev-v2x-v1.1-dirty`。
 - 已修复在线 CARLA-NS3 时间流速不一致问题：`NetworkManager.time_slot` 不再将 `world.fixed_delta_seconds` 除以 5，`current_sim_time`、`current_time_slot` 与 CARLA tick 统一推进。
 - 已修复在线 NS3 初始化顺序：sender 线程等待车辆注册后先发送真实车辆数和第一帧 `vehicles_position`，再进入 `sync_request/sync_ack` 循环。
@@ -114,3 +115,4 @@ SGCP 工作与仓库中以下部分关系最紧密：
 - 网络资源实验已证明子信道数量影响 PPS 结果；低带宽 stress test 已触发带宽瓶颈。论文中应谨慎区分“常规带宽下该 dump 已饱和”和“极低带宽下吞吐约束有效”。
 - Dump 中速度字段目前使用 `ego_speed`；后续如需更严格动态稳定性，应确认单位并评估是否改为相邻帧差分速度。
 - 在线 CARLA-NS3 修复尚未在真实 CARLA 图形仿真中长时间回归；当前已通过离线 NS3 socket/sync smoke test 和本地时间基准单元断言。
+- Topology trigger 目前是机制规格，尚未接入 `ClusteringV2XManager` 或离线 replay 的逐帧 trigger 统计。

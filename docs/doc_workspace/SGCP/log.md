@@ -1572,3 +1572,34 @@ conda run -n opencda python -m opencda.tools.offline_inference --dataset-root D:
 - `communication_aware` 是当前最强的 CAV-only selective-sharing baseline，在 AP@0.5/AP@0.7 上高于 SGCP，但 payload 也更高。
 - 这说明 SGCP 论文不能只对比 weak/random baseline；必须把 same-budget selective baseline 纳入公平性讨论。
 - 当前 baseline 仍是离线 first version：它复用 SGCP clustering，但没有建模 PPS channel feasibility、干扰、稳定窗口、拓扑变化控制开销。
+
+## 2026-07-15 - topology change trigger 机制定义
+
+### 目的
+
+- 推进 P3 “定义 topology change trigger，包括邻居变化、相对速度、链路质量或 utility 下降阈值”。
+- 修正文稿中 “topology change 才触发” 与 “每个周期重复” 的潜在矛盾。
+
+### 文档更新
+
+- 新增 `docs/doc_workspace/SGCP/topology_trigger.md`。
+- 在 `target.md` 中将 topology trigger 机制定义标记为完成，并新增代码接入任务。
+- 在 `status.md` 中记录该机制当前仍是规格，尚未接入在线/离线统计。
+
+### 当前机制口径
+
+Trigger 条件包括：
+
+- 邻居集合变化：CAV 进入/离开通信范围，或当前 head/member 不再可达。
+- 相对运动风险：预测稳定性低于 `beta_min`。
+- 链路质量下降：SINR、data rate、PDR 或 NS3 link-quality 低于阈值。
+- Utility 下降：当前 coalition utility 相比上次 accepted state 下降超过阈值。
+- Hard failure：head 丢失、成员车辆消失或链路断开。
+- Periodic guard：超过最大保鲜周期后强制重评估。
+
+Trigger 输出分为 `NO_CHANGE`、`LOCAL_REPAIR`、`RECLUSTER`。建议每个周期都更新 beacon 和 PPS 输入，但只有触发条件满足时才更新 cluster membership。
+
+### 下一步
+
+- 先在 `opencda.tools.offline_replay` 中实现 trigger 统计，验证当前 41 帧 dump 中 trigger 与 reconfiguration 的对应关系。
+- 再考虑接入在线 `ClusteringV2XManager`，实现无事件时跳过 coalition formation。
