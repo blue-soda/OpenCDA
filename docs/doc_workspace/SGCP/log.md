@@ -1298,3 +1298,76 @@ conda run -n opencda python -m opencda.tools.offline_inference --dataset-root D:
 - 低阈值 `rho_th=0.5/1.0` 明显降低点云 payload，但 AP 也下降。
 - 默认 `rho_th=2.0` 是当前通信-精度折中点；`rho_th=3.0/4.0` 能提升 AP@0.7，但需要更多上传点云。
 - 当前结果可以支撑“阈值影响通信-精度折中”的实验描述，但还不能替代完整 `f(rho)` 标定曲线；论文仍需补密度采样、拟合曲线和 detector/scene 泛化。
+
+## 2026-07-15 - CAV 数量规模敏感性实验
+
+### 目的
+
+- 推进 P1 “密度扩展：不同 CAV 数量或不同背景车密度”。
+- 在无需重新启动 CARLA 的前提下，先用同一 20-CAV dump 的 CAV 子集验证 SGCP 离线链路对不同协同车辆数量的敏感性。
+
+### 代码更新
+
+- `opencda.tools.offline_replay`
+  - 新增 `--cav-count`：按数值顺序选择前 N 个 CAV，并确保指定 ego 在子集中。
+  - 新增 `--cav-ids`：手动指定 CAV id 列表，例如 `1,2,3`。
+- `opencda.tools.offline_inference`
+  - 新增同样的 `--cav-count` / `--cav-ids`，用于 OpenCOOD AP 评估。
+
+### 边界说明
+
+- 本实验固定使用 `D:\Data\Carla\2026_07_15_01_26_56`，只改变参与协同的 CAV 子集。
+- 它不是重新生成的不同背景车密度或交通密度场景，不能直接替代论文中“不同车流密度”的完整实验。
+
+### 验证
+
+语法检查：
+
+```powershell
+$env:PYTHONDONTWRITEBYTECODE='1'; conda run -n opencda python -m py_compile opencda\tools\offline_replay.py opencda\tools\offline_inference.py
+```
+
+3 帧 smoke test：
+
+```powershell
+conda run -n opencda python -m opencda.tools.offline_replay --dataset-root D:\Data\Carla --scenario-id 2026_07_15_01_26_56 --ego-cav-id 1 --resource-allocation potential_game --cav-count 5 --max-frames 3 --summary-only
+conda run -n opencda python -m opencda.tools.offline_replay --dataset-root D:\Data\Carla --scenario-id 2026_07_15_01_26_56 --ego-cav-id 1 --resource-allocation potential_game --cav-count 10 --max-frames 3 --summary-only
+```
+
+两组均可完成 replay。
+
+### 41 帧 replay 汇总
+
+命令模板：
+
+```powershell
+conda run -n opencda python -m opencda.tools.offline_replay --dataset-root D:\Data\Carla --scenario-id 2026_07_15_01_26_56 --ego-cav-id 1 --resource-allocation potential_game --cav-count <N> --max-frames 0 --summary-only
+```
+
+| CAV Count | Avg. Clusters | Avg. Cluster Size | Avg. Isolated CAVs | Reconfig. Events | Vehicle-Head Changes | Avg. Cluster Lifetime (frames) | Avg. Runtime (ms) | Avg. RA Runtime (ms) |
+| ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| 5 | 2.00 | 2.50 | 0.37 | 6 | 24 | 5.86 | 9.91 | 4.34 |
+| 10 | 3.00 | 3.33 | 0.00 | 3 | 14 | 11.18 | 37.47 | 17.96 |
+| 15 | 5.00 | 3.00 | 0.20 | 18 | 71 | 3.47 | 68.66 | 29.76 |
+| 20 | 6.00 | 3.33 | 0.00 | 11 | 76 | 6.65 | 99.99 | 37.39 |
+
+### 41 帧 AP 评估
+
+命令模板：
+
+```powershell
+conda run -n opencda python -m opencda.tools.offline_inference --dataset-root D:\Data\Carla --scenario-id 2026_07_15_01_26_56 --ego-cav-id 1 --sgcp-constrained --resource-allocation potential_game --sgcp-inter-cluster-late-fusion --cav-count <N> --max-frames 0
+```
+
+| CAV Count | Frames | Cluster-Head Sources | AP@0.3 | AP@0.5 | AP@0.7 | Avg. Upload (bytes/source) | Total Upload (bytes) | Avg. Source CAVs |
+| ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| 5 | 41 | 82 | 0.33 | 0.32 | 0.18 | 113670.63 | 9320992 | 2.50 |
+| 10 | 41 | 123 | 0.63 | 0.59 | 0.31 | 165169.30 | 20315824 | 3.33 |
+| 15 | 41 | 205 | 0.69 | 0.66 | 0.34 | 130304.62 | 26712448 | 3.00 |
+| 20 | 41 | 246 | 0.77 | 0.73 | 0.35 | 109415.48 | 26916208 | 2.67 |
+
+### 观察
+
+- AP 随参与 CAV 数量增加而明显提升，说明 SGCP late-fusion 口径确实受协同覆盖范围影响。
+- 15 CAV 的 reconfiguration events 高于 20 CAV，提示子集选择会改变局部拓扑和 coalition search 路径；该现象不能简单解释为 CAV 越多越不稳定。
+- 该结果适合作为离线规模敏感性第一版；论文级密度扩展仍需要重新导出不同车流密度/背景车密度场景。

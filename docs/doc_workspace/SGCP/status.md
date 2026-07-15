@@ -84,6 +84,7 @@ SGCP 工作与仓库中以下部分关系最紧密：
 - 已新增 `--clustering` 离线参数，并完成 w/o coalition formation 的 singleton 第一版参考：20 个单车簇、0 次重配置、AP@0.3/0.5/0.7 = 0.82/0.76/0.37；当前通信统计未计入 prediction-level late-fusion 开销。
 - 已新增 `--n-max` 离线参数，并完成 `N_max=2/3/4/5/6` 参数敏感性第一版：AP@0.5 分别为 0.74/0.71/0.73/0.71/0.71；`N_max=2` 当前 AP 最高但 cluster-head source 更多，`N_max=5/6` 在当前 dump 上结果完全一致。
 - 已新增 `--rho-th` 离线参数，并完成 `rho_th=0.5/1.0/2.0/3.0/4.0` 参数敏感性第一版：低阈值降低 payload 但 AP 下降，高阈值提升 AP@0.7 到 0.37 且增加 payload；当前默认 `2.0` 是通信-精度折中点。
+- 已新增 `--cav-count` / `--cav-ids` 离线参数，并完成 5/10/15/20 CAV 子集规模敏感性第一版：AP@0.5 分别为 0.32/0.59/0.66/0.73；该实验是同一 dump 的协同车辆子集，不等同真实交通密度重采样。
 - 已确认当前可运行环境版本快照，并记录到 `docs/doc_workspace/environment.md`：OpenCDA HEAD `fcc29fdc9ee9a9fe694c12e1fb6792b4d41bccac`，Python 3.7.10，CARLA Python API 0.9.11，PyTorch 1.10.0+cu113，Open3D 0.10.0.0，ns-3 wrapper `ns-3-dev-v2x-v1.1-dirty`。
 - 已修复在线 CARLA-NS3 时间流速不一致问题：`NetworkManager.time_slot` 不再将 `world.fixed_delta_seconds` 除以 5，`current_sim_time`、`current_time_slot` 与 CARLA tick 统一推进。
 - 已修复在线 NS3 初始化顺序：sender 线程等待车辆注册后先发送真实车辆数和第一帧 `vehicles_position`，再进入 `sync_request/sync_ack` 循环。
@@ -103,5 +104,6 @@ SGCP 工作与仓库中以下部分关系最紧密：
 - singleton-cluster 结果会 late-fuse 全部 20 个 CAV 的检测框，但当前只统计点云 payload，不能直接作为零通信公平 baseline；需要补检测框交换开销或实现距离/随机固定簇对比。
 - `N_max` 参数实验显示非单调趋势；进入论文前需要补更长序列/不同密度场景，并计入 inter-cluster 检测框交换开销。
 - `rho_th` 参数实验已显示通信-精度折中，但完整 `f(rho)` 标定曲线仍未复现；论文需要补密度采样协议、拟合过程和跨场景/探测器泛化。
+- CAV 数量规模实验目前只是固定场景子集实验；论文级“密度扩展”仍需重新导出不同 CAV/背景车密度的 CARLA 场景。
 - Dump 中速度字段目前使用 `ego_speed`；后续如需更严格动态稳定性，应确认单位并评估是否改为相邻帧差分速度。
 - 在线 CARLA-NS3 修复尚未在真实 CARLA 图形仿真中长时间回归；当前已通过离线 NS3 socket/sync smoke test 和本地时间基准单元断言。

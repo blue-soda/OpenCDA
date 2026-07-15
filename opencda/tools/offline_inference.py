@@ -70,6 +70,10 @@ def parse_args():
                         help='Override CoalitionGame Params.N_max.')
     parser.add_argument('--rho-th', type=float, default=None,
                         help='Override lidar density_threshold / rho_th.')
+    parser.add_argument('--cav-count', type=int, default=None,
+                        help='Use the first N CAVs in numeric order, keeping ego included.')
+    parser.add_argument('--cav-ids', default=None,
+                        help='Comma-separated CAV ids to evaluate, e.g. 1,2,3.')
     return parser.parse_args()
 
 
@@ -96,6 +100,38 @@ def load_protocol(dataset, scenario_id):
         return {}
     with open(protocol_path, 'r') as stream:
         return yaml.load(stream, Loader=yaml.Loader)
+
+
+def cav_sort_key(cav_id):
+    try:
+        return (0, int(cav_id))
+    except ValueError:
+        return (1, str(cav_id))
+
+
+def select_cav_ids(dataset, scenario_id, ego_cav_id=None, cav_count=None,
+                   cav_ids=None):
+    scenario_cav_ids = sorted(
+        dataset.scenarios[scenario_id]['cav_ids'],
+        key=cav_sort_key)
+    if cav_ids:
+        selected = [item.strip() for item in cav_ids.split(',')
+                    if item.strip()]
+    elif cav_count is not None:
+        if cav_count <= 0:
+            raise ValueError('--cav-count must be positive')
+        selected = scenario_cav_ids[:cav_count]
+    else:
+        return None
+
+    if ego_cav_id is not None:
+        ego_id = str(ego_cav_id)
+        if ego_id not in selected:
+            selected = [ego_id] + [item for item in selected
+                                   if item != ego_id]
+            if cav_count is not None:
+                selected = selected[:cav_count]
+    return selected
 
 
 def extract_lidar_density_threshold(protocol):
@@ -215,7 +251,13 @@ def main():
         frame = dataset.load_frame(
             scenario_id,
             timestamp,
-            ego_cav_id=args.ego_cav_id)
+            ego_cav_id=args.ego_cav_id,
+            cav_ids=select_cav_ids(
+                dataset,
+                scenario_id,
+                ego_cav_id=args.ego_cav_id,
+                cav_count=args.cav_count,
+                cav_ids=args.cav_ids))
         frame_items = [(frame, None)]
         if args.sgcp_constrained:
             protocol = load_protocol(dataset, scenario_id)

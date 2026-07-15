@@ -55,6 +55,10 @@ def parse_args():
                         help='Override CoalitionGame Params.N_max.')
     parser.add_argument('--rho-th', type=float, default=None,
                         help='Override lidar density_threshold / rho_th.')
+    parser.add_argument('--cav-count', type=int, default=None,
+                        help='Use the first N CAVs in numeric order, keeping ego included.')
+    parser.add_argument('--cav-ids', default=None,
+                        help='Comma-separated CAV ids to replay, e.g. 1,2,3.')
     return parser.parse_args()
 
 
@@ -79,6 +83,38 @@ def select_frames(dataset, scenario_id, timestamp, max_frames, start_index):
     return [(scenario_id, frame_timestamp) for frame_timestamp in selected]
 
 
+def cav_sort_key(cav_id):
+    try:
+        return (0, int(cav_id))
+    except ValueError:
+        return (1, str(cav_id))
+
+
+def select_cav_ids(dataset, scenario_id, ego_cav_id=None, cav_count=None,
+                   cav_ids=None):
+    scenario_cav_ids = sorted(
+        dataset.scenarios[scenario_id]['cav_ids'],
+        key=cav_sort_key)
+    if cav_ids:
+        selected = [item.strip() for item in cav_ids.split(',')
+                    if item.strip()]
+    elif cav_count is not None:
+        if cav_count <= 0:
+            raise ValueError('--cav-count must be positive')
+        selected = scenario_cav_ids[:cav_count]
+    else:
+        return None
+
+    if ego_cav_id is not None:
+        ego_id = str(ego_cav_id)
+        if ego_id not in selected:
+            selected = [ego_id] + [item for item in selected
+                                   if item != ego_id]
+            if cav_count is not None:
+                selected = selected[:cav_count]
+    return selected
+
+
 def get_resource_allocation_name(protocol, override=None):
     if override:
         return override
@@ -99,11 +135,13 @@ def extract_lidar_density_threshold(protocol):
 
 def replay_frame(dataset, scenario_id, timestamp, ego_cav_id, protocol,
                  resource_allocation=None, t_min_stab=None,
-                 clustering='coalition_game', n_max=None, rho_th=None):
+                 clustering='coalition_game', n_max=None, rho_th=None,
+                 cav_ids=None):
     frame = dataset.load_frame(
         scenario_id,
         timestamp,
-        ego_cav_id=ego_cav_id)
+        ego_cav_id=ego_cav_id,
+        cav_ids=cav_ids)
     clear_sgcp_globals()
     world = OfflineCavWorld(
         frame,
@@ -318,7 +356,13 @@ def main():
             t_min_stab=args.t_min_stab,
             clustering=args.clustering,
             n_max=args.n_max,
-            rho_th=args.rho_th)
+            rho_th=args.rho_th,
+            cav_ids=select_cav_ids(
+                dataset,
+                sid,
+                ego_cav_id=args.ego_cav_id,
+                cav_count=args.cav_count,
+                cav_ids=args.cav_ids))
         results.append(result)
         if not args.summary_only:
             print_frame_result(index, len(frames), sid, result)
