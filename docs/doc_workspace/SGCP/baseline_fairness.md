@@ -23,6 +23,8 @@ SGCP 的核心设定是去中心化 CAV 协同感知：车辆先形成 coalition
 | SGCP main | SGCP constrained + inter-cluster late fusion | AP@0.3/0.5/0.7 = 0.77/0.73/0.35 | 是 | 当前完整 SGCP 离线主口径 |
 | Same pipeline ablation | Random scheduler | AP@0.3/0.5/0.7 = 0.44/0.39/0.17 | 是 | 同 SGCP clustering + late-fusion 口径，替换 PPS |
 | Same pipeline ablation | MWS scheduler | AP@0.3/0.5/0.7 = 0.31/0.26/0.11 | 暂定 | 需要复核 MWS 定义和效用函数 |
+| Same-budget selective baseline | Nearest grid sharing | AP@0.3/0.5/0.7 = 0.76/0.73/0.37 | 是 | 每簇头最多 2 个成员、87 个 grid budget |
+| Same-budget selective baseline | Density grid sharing | AP@0.3/0.5/0.7 = 0.77/0.74/0.39 | 是 | 当前强 baseline，payload 高于 SGCP |
 | Reference only | Singleton-cluster full late-fusion reference | AP@0.3/0.5/0.7 = 0.82/0.76/0.37 | 否 | late-fuse 全部 20 CAV，当前未计 prediction exchange overhead |
 
 ## FullPerception-RSU 口径
@@ -47,7 +49,7 @@ FullPerception-Decentralized 如果作为公平 baseline，不能等同于 full 
 - 每帧使用与 SGCP 相同或显式匹配的通信预算，例如相同 selected-grid 上限、相同 source CAV 数、相同 total upload bytes，或相同子信道/带宽约束。
 - 可作为 “same-budget full-perception attempt”，但需要实现具体调度策略，例如 nearest-neighbor sharing、top-k density sharing、communication-aware top-k sharing。
 
-当前仓库中最接近该层级的是 `random` / `mws` scheduler ablation；它们共享 SGCP cluster/head-wise evaluation path，但并不等同 FullPerception-Decentralized。后续建议新增一个 communication-aware selective-sharing baseline。
+当前已实现 nearest/density selective-sharing first version：它们共享 SGCP cluster/head-wise evaluation path，不使用 PPS，按固定 grid budget 进行 CAV-only V2V sharing。后续仍建议新增 communication-aware selective-sharing baseline，将距离、链路质量或 payload cost 纳入选择。
 
 ## 建议进入论文的表述
 
@@ -58,6 +60,6 @@ FullPerception-Decentralized 如果作为公平 baseline，不能等同于 full 
 ## 后续任务
 
 - 为 FullPerception-RSU 决定实现路线：真实 RSU dump、虚拟 RSU 聚合，或只作为 upper reference 不复现。
-- 为 FullPerception-Decentralized 实现至少一个 same-budget CAV-only selective-sharing baseline。
+- 为 FullPerception-Decentralized 补充 communication-aware selective-sharing baseline。
 - 为 singleton full late-fusion reference 估算 prediction-level box exchange overhead。
 - 在 `results.md` 的主结果表旁保留 baseline fairness 说明，避免审稿回复中被理解为不公平对比。

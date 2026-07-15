@@ -4,6 +4,7 @@ Run OpenCOOD inference from an OPV2V-style data dump.
 """
 
 import argparse
+import math
 import os
 
 from omegaconf import OmegaConf
@@ -78,6 +79,13 @@ def parse_args():
                         help='Override SGCP resource allocation channel count.')
     parser.add_argument('--bandwidth-mhz', type=float, default=None,
                         help='Override SGCP total bandwidth in MHz.')
+    parser.add_argument('--selective-sharing-baseline', default=None,
+                        choices=['nearest', 'density'],
+                        help='Run a CAV-only selective-sharing baseline instead of SGCP PPS.')
+    parser.add_argument('--selective-member-budget', type=int, default=2,
+                        help='Maximum uploaded non-head members per receiver for selective baseline.')
+    parser.add_argument('--selective-grid-budget', type=int, default=87,
+                        help='Maximum selected grids per receiver for selective baseline.')
     return parser.parse_args()
 
 
@@ -236,6 +244,155 @@ def apply_sgcp_constraint(frame, protocol, ego_cav_id, resource_allocation,
     return constrained_items
 
 
+def vehicle_distance(vm_a, vm_b):
+    pos_a = vm_a.v2x_manager.get_ego_pos().location
+    pos_b = vm_b.v2x_manager.get_ego_pos().location
+    return math.sqrt(
+        (pos_a.x - pos_b.x) ** 2 +
+        (pos_a.y - pos_b.y) ** 2)
+
+
+def candidate_grids_for_sender(head_vm, sender_vm):
+    head_lidar = head_vm.perception_manager.lidar
+    sender_lidar = sender_vm.perception_manager.lidar
+    weak_head_grids = head_lidar.req_grids - head_lidar.high_density_grids
+    candidates = sender_lidar.sens_grids & weak_head_grids
+    if not candidates:
+        candidates = sender_lidar.sens_grids
+    return candidates
+
+
+def select_baseline_members(world, cluster, baseline_name, member_budget):
+    head_id = int(cluster.head_id)
+    head_vm = world.get_vehicle_manager(head_id)
+    members = [
+        int(member_id) for member_id in sorted(cluster.members)
+        if int(member_id) != head_id
+    ]
+    if member_budget <= 0 or not members:
+        return []
+
+    if baseline_name == 'nearest':
+        scored = [
+            (vehicle_distance(head_vm, world.get_vehicle_manager(member_id)),
+             member_id)
+            for member_id in members
+        ]
+        return [member_id for _, member_id in sorted(scored)[:member_budget]]
+
+    if baseline_name == 'density':
+        scored = []
+        for member_id in members:
+            sender_vm = world.get_vehicle_manager(member_id)
+            candidate_grids = candidate_grids_for_sender(head_vm, sender_vm)
+            density_sum = sum(
+                sender_vm.perception_manager.lidar.get_grid_density(grid_id)
+                for grid_id in candidate_grids)
+            scored.append((-density_sum, member_id))
+        return [member_id for _, member_id in sorted(scored)[:member_budget]]
+
+    raise ValueError('Unknown selective baseline: %s' % baseline_name)
+
+
+def assign_selective_grid_selection(world, cluster, baseline_name,
+                                    member_budget, grid_budget):
+    head_id = int(cluster.head_id)
+    head_vm = world.get_vehicle_manager(head_id)
+    selected_members = select_baseline_members(
+        world,
+        cluster,
+        baseline_name,
+        member_budget)
+    if grid_budget <= 0 or not selected_members:
+        return
+
+    per_member_budget = max(
+        1,
+        int(math.ceil(grid_budget / float(len(selected_members)))))
+    grid_selection = {}
+    remaining = int(grid_budget)
+    for member_id in selected_members:
+        if remaining <= 0:
+            break
+        sender_vm = world.get_vehicle_manager(member_id)
+        candidate_grids = candidate_grids_for_sender(head_vm, sender_vm)
+        grids = sorted(
+            candidate_grids,
+            key=lambda grid_id: sender_vm.perception_manager.lidar.
+            get_grid_density(grid_id),
+            reverse=True)
+        selected = grids[:min(per_member_budget, remaining)]
+        if selected:
+            grid_selection[member_id] = selected
+            remaining -= len(selected)
+    head_vm.perception_manager.co_manager.set_grid_selection(grid_selection)
+
+
+def apply_selective_sharing_baseline(frame, protocol, ego_cav_id,
+                                     baseline_name, receiver_policy,
+                                     member_budget, grid_budget,
+                                     t_min_stab=None, clustering='coalition_game',
+                                     n_max=None, rho_th=None):
+    clear_sgcp_globals()
+    world = OfflineCavWorld(
+        frame,
+        ego_id=ego_cav_id,
+        protocol=protocol,
+        density_threshold=rho_th)
+    if clustering == 'coalition_game':
+        clustering_algorithm = CoalitionGame(world)
+    elif clustering == 'singleton':
+        clustering_algorithm = NaiveCluster(world, all_in_one=False)
+    elif clustering == 'all_in_one':
+        clustering_algorithm = NaiveCluster(world, all_in_one=True)
+    else:
+        raise ValueError('Unknown clustering algorithm: %s' % clustering)
+    if t_min_stab is not None and hasattr(clustering_algorithm, 'p'):
+        clustering_algorithm.p.T_min_stab = t_min_stab
+    if n_max is not None and hasattr(clustering_algorithm, 'p'):
+        clustering_algorithm.p.N_max = n_max
+    clusters = clustering_algorithm.run()
+    apply_cluster_state(world, clusters)
+    for cluster in clusters:
+        assign_selective_grid_selection(
+            world,
+            cluster,
+            baseline_name,
+            member_budget,
+            grid_budget)
+
+    if receiver_policy == 'all-cluster-heads':
+        receiver_ids = sorted(int(cluster.head_id) for cluster in clusters)
+    else:
+        receiver_ids = [select_sgcp_receiver_id(
+            world,
+            ego_cav_id=ego_cav_id,
+            receiver_policy=receiver_policy)]
+
+    constrained_items = []
+    for receiver_id in receiver_ids:
+        constrained_frame, metadata = build_constrained_frame(
+            frame,
+            world,
+            receiver_id)
+        metadata['cluster_count'] = len(clusters)
+        metadata['resource_allocation'] = (
+            'selective_%s' % baseline_name)
+        metadata['clustering'] = clustering
+        metadata['receiver_policy'] = receiver_policy
+        metadata['t_min_stab'] = (
+            common.Params().T_min_stab if t_min_stab is None else t_min_stab)
+        metadata['n_max'] = (
+            common.Params().N_max if n_max is None else n_max)
+        metadata['rho_th'] = (
+            extract_lidar_density_threshold(protocol)
+            if rho_th is None else rho_th)
+        metadata['selective_member_budget'] = member_budget
+        metadata['selective_grid_budget'] = grid_budget
+        constrained_items.append((constrained_frame, metadata))
+    return constrained_items
+
+
 def run_opencood_inference(manager, frame, ego_lidar_pose):
     reformat_data_dict = manager.opencood_dataset.get_item_test(
         frame,
@@ -296,7 +453,22 @@ def main():
                 cav_count=args.cav_count,
                 cav_ids=args.cav_ids))
         frame_items = [(frame, None)]
-        if args.sgcp_constrained:
+        if args.selective_sharing_baseline is not None:
+            protocol = load_protocol(dataset, scenario_id)
+            frame_items = apply_selective_sharing_baseline(
+                frame,
+                protocol,
+                args.ego_cav_id,
+                args.selective_sharing_baseline,
+                'all-cluster-heads' if args.sgcp_inter_cluster_late_fusion
+                else args.sgcp_receiver_policy,
+                args.selective_member_budget,
+                args.selective_grid_budget,
+                args.t_min_stab,
+                args.clustering,
+                args.n_max,
+                args.rho_th)
+        elif args.sgcp_constrained:
             protocol = load_protocol(dataset, scenario_id)
             frame_items = apply_sgcp_constraint(
                 frame,

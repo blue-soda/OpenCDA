@@ -55,9 +55,29 @@
 | SGCP main | SGCP constrained + inter-cluster late fusion | 0.77 / 0.73 / 0.35 | Yes | 当前完整 SGCP 离线主口径 |
 | Same pipeline ablation | Random scheduler | 0.44 / 0.39 / 0.17 | Yes | 同 SGCP clustering + late-fusion path，替换 PPS |
 | Same pipeline ablation | MWS scheduler | 0.31 / 0.26 / 0.11 | Pending | 需要复核 MWS baseline 定义 |
+| Same-budget selective baseline | Nearest top-k grid sharing | 0.76 / 0.73 / 0.37 | Yes | CAV-only, same clustering + late-fusion path, grid budget 87 |
+| Same-budget selective baseline | Density top-k grid sharing | 0.77 / 0.74 / 0.39 | Yes | Strong baseline; slightly higher AP@0.7 with higher payload |
 | Reference only | Singleton full late-fusion reference | 0.82 / 0.76 / 0.37 | No | late-fuse 全部 20 CAV，当前未计 detection-box exchange overhead |
 
 论文写作建议：FullPerception-RSU 和 full 20-CAV early/late fusion 只能作为 upper/reference，不应放入“同通信预算公平主对比”结论。公平主对比应使用同数据、同 backbone、同 AP 口径，并尽量匹配通信预算或显式报告 payload。
+
+### Same-Budget CAV-Only Selective Sharing
+
+实验口径：`D:\Data\Carla\2026_07_15_01_26_56`，41 帧，20 CAV。复用 SGCP coalition formation 和 inter-cluster late fusion 评价口径，但不使用 PPS；每个 cluster head 最多选择 2 个非 head 成员，总 grid budget 为 87，接近 SGCP 默认 `avg_selected_grids=87.32`。
+
+命令模板：
+
+```powershell
+conda run -n opencda python -m opencda.tools.offline_inference --dataset-root D:\Data\Carla --scenario-id 2026_07_15_01_26_56 --ego-cav-id 1 --selective-sharing-baseline nearest --sgcp-inter-cluster-late-fusion --selective-member-budget 2 --selective-grid-budget 87 --max-frames 0
+```
+
+| Baseline | AP@0.3 | AP@0.5 | AP@0.7 | Avg. Upload (bytes/source) | Total Upload (bytes) | Avg. Source CAVs | Avg. Selected Grids | Notes |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | --- |
+| SGCP `potential_game` | 0.77 | 0.73 | 0.35 | 109415.48 | 26916208 | 2.67 | 87.32 | Main method |
+| Selective nearest | 0.76 | 0.73 | 0.37 | 113930.21 | 28026832 | 2.81 | 81.38 | CAV-only nearest member selection |
+| Selective density | 0.77 | 0.74 | 0.39 | 124286.05 | 30574368 | 2.81 | 81.38 | Strong baseline; higher payload and AP@0.7 |
+
+观察：density selective-sharing 是当前最强公平 baseline，AP@0.7 高于 SGCP，但 payload 也高于 SGCP。论文中不能声称 SGCP 在该 dump 上全面优于所有 selective-sharing baseline；更稳妥的结论是 SGCP 提供了 coalition stability、PPS channel feasibility 和动态/网络约束建模，而单帧 density top-k 在当前短序列上是强竞争 baseline。
 
 ## 参数敏感性
 

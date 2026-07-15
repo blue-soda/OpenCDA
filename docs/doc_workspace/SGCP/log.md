@@ -1535,3 +1535,38 @@ conda run -n opencda python -m opencda.tools.offline_inference --dataset-root D:
 - 实现或整理 FullPerception-Decentralized / same-budget CAV-only selective-sharing baseline。
 - 候选：nearest/top-k density/communication-aware top-k，匹配 SGCP 的 payload、source CAV 数或 selected-grid 数。
 - 对 singleton reference 估算 prediction-level detection box exchange overhead，避免误写为零通信 baseline。
+
+## 2026-07-15 - same-budget CAV-only selective-sharing baseline
+
+### 目的
+
+- 推进 P2 “实现 same-budget CAV-only selective-sharing baseline”。
+- 在不使用 PPS 的前提下，复用 SGCP coalition formation 和 inter-cluster late fusion 评价口径，构造可比的 decentralized V2V baseline。
+
+### 代码更新
+
+- `opencda.tools.offline_inference`
+  - 新增 `--selective-sharing-baseline nearest|density`。
+  - 新增 `--selective-member-budget`，默认每个 cluster head 最多接收 2 个非 head 成员。
+  - 新增 `--selective-grid-budget`，默认每个 cluster head 总 grid budget 为 87，贴近 SGCP 默认 `avg_selected_grids=87.32`。
+
+### 命令
+
+```powershell
+conda run -n opencda python -m opencda.tools.offline_inference --dataset-root D:\Data\Carla --scenario-id 2026_07_15_01_26_56 --ego-cav-id 1 --selective-sharing-baseline nearest --sgcp-inter-cluster-late-fusion --selective-member-budget 2 --selective-grid-budget 87 --max-frames 0
+conda run -n opencda python -m opencda.tools.offline_inference --dataset-root D:\Data\Carla --scenario-id 2026_07_15_01_26_56 --ego-cav-id 1 --selective-sharing-baseline density --sgcp-inter-cluster-late-fusion --selective-member-budget 2 --selective-grid-budget 87 --max-frames 0
+```
+
+### 结果
+
+| Method | AP@0.3 | AP@0.5 | AP@0.7 | Avg. Upload (bytes/source) | Total Upload (bytes) | Avg. Source CAVs | Avg. Selected Grids |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| SGCP `potential_game` | 0.77 | 0.73 | 0.35 | 109415.48 | 26916208 | 2.67 | 87.32 |
+| Selective nearest | 0.76 | 0.73 | 0.37 | 113930.21 | 28026832 | 2.81 | 81.38 |
+| Selective density | 0.77 | 0.74 | 0.39 | 124286.05 | 30574368 | 2.81 | 81.38 |
+
+### 观察
+
+- `density` 是当前最强的 CAV-only selective-sharing baseline，在 AP@0.7 上高于 SGCP，但 payload 也更高。
+- 这说明 SGCP 论文不能只对比 weak/random baseline；必须把 same-budget selective baseline 纳入公平性讨论。
+- 当前 baseline 仍是离线 first version：它复用 SGCP clustering，但没有建模 PPS channel feasibility、干扰、稳定窗口、拓扑变化控制开销。

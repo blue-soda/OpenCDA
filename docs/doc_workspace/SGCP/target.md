@@ -48,11 +48,12 @@
 ## P2：补充公平 baseline
 
 - [x] 明确 FullPerception-RSU 设置，作为集中式参考或 upper reference。已新增 `baseline_fairness.md`，不将其作为同通信预算公平主对比。
-- [ ] 实现或整理 FullPerception-Decentralized 设置，只使用与 SGCP 相同的 V2V 信息。
-- [ ] 搜索并选择至少一个 V2V-only/decentralized collaborative perception baseline。
-- [ ] 统一 backbone、场景、通信资源、评价指标和 late fusion 设置。
+- [x] 实现或整理 FullPerception-Decentralized 设置，只使用与 SGCP 相同的 V2V 信息。已完成 same-budget CAV-only selective-sharing first version。
+- [x] 搜索并选择至少一个 V2V-only/decentralized collaborative perception baseline。已实现 `nearest` / `density` selective-sharing baseline。
+- [x] 统一 backbone、场景、通信资源、评价指标和 late fusion 设置。当前 selective baseline 复用同一 dump、OpenCOOD early checkpoint、SGCP clustering 和 inter-cluster late fusion 评价口径，并匹配 grid budget。
 - [x] 在 `results.md` 中单独记录 baseline 公平性说明。
-- [ ] 实现 same-budget CAV-only selective-sharing baseline，例如 nearest/top-k density/communication-aware top-k，匹配 SGCP 的 payload 或 source CAV 数。
+- [x] 实现 same-budget CAV-only selective-sharing baseline，例如 nearest/top-k density/communication-aware top-k，匹配 SGCP 的 payload 或 source CAV 数。已完成 nearest/density grid-budget baseline；density baseline 为当前强竞争 baseline。
+- [ ] 补充 communication-aware selective-sharing baseline，加入距离/链路质量/payload cost，而不只按 density 排序。
 
 ## P3：完善机制设计
 
