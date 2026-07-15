@@ -1432,17 +1432,24 @@ conda run -n opencda python -m opencda.tools.offline_inference --dataset-root D:
 conda run -n opencda python -m opencda.tools.offline_inference --dataset-root D:\Data\Carla --scenario-id 2026_07_15_01_26_56 --ego-cav-id 1 --sgcp-constrained --resource-allocation potential_game --sgcp-inter-cluster-late-fusion --bandwidth-mhz <MHz> --max-frames 0
 ```
 
-| Setting | Frames | Cluster-Head Sources | AP@0.3 | AP@0.5 | AP@0.7 | Avg. Upload (bytes/source) | Total Upload (bytes) | Avg. Source CAVs |
-| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| `num_channels=5` | 41 | 246 | 0.56 | 0.53 | 0.27 | 60225.24 | 14815408 | 1.83 |
-| `num_channels=10` | 41 | 246 | 0.77 | 0.73 | 0.35 | 109415.48 | 26916208 | 2.67 |
-| `num_channels=20` | 41 | 246 | 0.77 | 0.73 | 0.38 | 139299.64 | 34267712 | 3.33 |
-| `bandwidth_mhz=20` | 41 | 246 | 0.77 | 0.73 | 0.35 | 109415.48 | 26916208 | 2.67 |
-| `bandwidth_mhz=40` | 41 | 246 | 0.77 | 0.73 | 0.35 | 109415.48 | 26916208 | 2.67 |
-| `bandwidth_mhz=80` | 41 | 246 | 0.77 | 0.73 | 0.35 | 109415.48 | 26916208 | 2.67 |
+| Setting | Frames | Cluster-Head Sources | AP@0.3 | AP@0.5 | AP@0.7 | Avg. Upload (bytes/source) | Total Upload (bytes) | Avg. Source CAVs | Avg. Selected Grids |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| `num_channels=5` | 41 | 246 | 0.56 | 0.53 | 0.27 | 60225.24 | 14815408 | 1.83 | 45.58 |
+| `num_channels=10` | 41 | 246 | 0.77 | 0.73 | 0.35 | 109415.48 | 26916208 | 2.67 | 87.32 |
+| `num_channels=20` | 41 | 246 | 0.77 | 0.73 | 0.38 | 139299.64 | 34267712 | 3.33 | 117.18 |
+| `bandwidth_mhz=20` | 41 | 246 | 0.77 | 0.73 | 0.35 | 109415.48 | 26916208 | 2.67 | 87.32 |
+| `bandwidth_mhz=40` | 41 | 246 | 0.77 | 0.73 | 0.35 | 109415.48 | 26916208 | 2.67 | 87.32 |
+| `bandwidth_mhz=80` | 41 | 246 | 0.77 | 0.73 | 0.35 | 109415.48 | 26916208 | 2.67 | 87.32 |
 
 ### 观察
 
 - 子信道数量明显影响 PPS 选择的簇内上传成员数：5 个子信道时平均 source CAV 只有 1.83，AP 下降；20 个子信道时平均 source CAV 达到 3.33，payload 增加且 AP@0.7 提升到 0.38。
 - replay 中 cluster/reconfiguration 指标不随网络资源变化，因为 coalition formation 与 PPS 调度解耦；网络资源主要影响每个 cluster head 能接收哪些成员点云。
-- 单独改变 `bandwidth_mhz=20/40/80` 当前没有改变 AP 或 payload，说明离线 `PotentialGame` 路径主要由离散子信道数量控制。后续需要回查 `bandwidth_all/bandwidth_per_channel` 是否在每个候选 member 的吞吐约束中完整生效。
+- 单独改变 `bandwidth_mhz=20/40/80` 当前没有改变 AP、payload 或 selected grids。代码复核显示 `bandwidth_per_channel` 已进入 `PotentialGame.calculate_max_grids_per_rb()` 和 SINR/吞吐计算，但当前 41 帧 dump 下实际调度未受该上限约束，主要受离散子信道数量、每簇头 `B_h=1` RB 和候选成员/网格集合约束。
+
+### 机制复核补充
+
+- `opencda.core.clustering.algorithms.resource_allocation.potential_game.PotentialGame` 中，`bandwidth_all` 会被换算为 `bandwidth_per_channel = bandwidth_all / num_channels`。
+- `bandwidth_per_channel` 进入 `calculate_max_grids_per_rb()`、`compute_data_rate()` 和 `bits_to_sinr()`。
+- 本轮新增 inference summary 字段 `avg_selected_grids`，确认 5/10/20 子信道分别为 45.58/87.32/117.18，而 20/40/80 MHz 均为 87.32。
+- 因此当前现象不是参数没有传入，而是该 dump 的 PPS 选择不由带宽上限主导。后续如需论文中展示带宽敏感性，需要尝试更低带宽、更大 grid payload、更高点云密度或更多候选上传网格的场景。

@@ -441,12 +441,17 @@ def main():
             avg_sources = sum(len(item['source_cav_ids'])
                               for item in sgcp_summaries) / \
                 float(len(sgcp_summaries))
+            avg_selected_grids = sum(
+                sum(item.get('selected_grid_counts', {}).values())
+                for item in sgcp_summaries) / float(len(sgcp_summaries))
             print('sgcp_summary frames=%s avg_comm_bytes=%.2f '
-                  'total_comm_bytes=%s avg_source_cavs=%.2f' % (
+                  'total_comm_bytes=%s avg_source_cavs=%.2f '
+                  'avg_selected_grids=%.2f' % (
                       len(sgcp_summaries),
                       avg_comm,
                       total_comm,
-                      avg_sources))
+                      avg_sources,
+                      avg_selected_grids))
 
 
 if __name__ == '__main__':
