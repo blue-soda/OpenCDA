@@ -101,11 +101,13 @@ SGCP 工作与仓库中以下部分关系最紧密：
 - 已修复在线 NS3 初始化顺序：sender 线程等待车辆注册后先发送真实车辆数和第一帧 `vehicles_position`，再进入 `sync_request/sync_ack` 循环。
 - 已新增 `opencda.tools.offline_ns3_replay`，可不启动 CARLA，直接从 dump 数据驱动 NS3 同步和传输请求。
 - 已完成 3 帧离线 NS3 smoke test：帧时间 0.000/0.100/0.200 s，20 车、6 个 cluster、每帧 14 条 intra-cluster upload request，NS3 返回多条 `cam_received`。
+- 已修复 NS3 manual subchannel 链路：NS3 默认按 OpenCDA 10 个子信道配置可用资源，manual scheduler 严格匹配 `physicalStart == sc_start` 和 `physicalLen == sc_num`，不再对越界子信道取模 wrap；长 JSON socket payload 改为累积解析；RLC command size 修正，避免最后残片落入默认随机调度。
+- 已完成 `opencda.tools.ns3_link_probe` 四类链路回归：`success`、`edge_success(sc_start=9)` 均全量 CAM delivery；`conflict` 中两请求均落到 physicalStart=0，并产生 `PSCCH_DECODE_FAIL reason=decoded_overlap`，仅 1/2 CAM delivery；`out_of_band(sc_start=10)` 产生一次 `MANUAL_CMD_REJECT reason=out_of_band totalSubCh=10`，无 RLC TX/RX/CAM。
 
 ## 当前阻塞项
 
 - 尚未确认论文中表格结果对应的原始日志、随机种子和复现实验配置。
-- 当前 OpenCDA 与 ns-3 工作区均存在未提交/dirty 状态；论文级复现需要保存 patch 或形成干净 commit/tag。
+- 当前 OpenCDA 与 ns-3 工作区均存在未提交/dirty 状态；NS3 manual subchannel 修复已通过 probe，但仍需要分别在 OpenCDA 仓库和 co-simulation 仓库提交。
 - 离线 SGCP 回放已完成到“多帧 clustering + `potential_game` 资源分配 + 稳定性/运行时指标 + OpenCOOD 约束感知 mAP”层。
 - 论文 SGCP 的 PPS/博弈调度当前按配置默认 `potential_game` 执行；已完成 `RandomRA/MWS` 初版对比，但 MWS 结果低于 random，需要结合论文文本复核 baseline 定义与效用函数。
 - 早期 `ego-cluster-head` 与 `all-cluster-heads` constrained 评估只包含 intra-cluster early fusion；论文完整 SGCP 结果应优先采用 inter-cluster late fusion 口径。

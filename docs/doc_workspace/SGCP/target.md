@@ -1,10 +1,11 @@
 # SGCP 任务清单
 
-更新时间：2026-07-15
+更新时间：2026-07-16
 最终目标：解决所有C:\Workspace\icdcs-paper\SGCP中的审稿意见。
 
 ## P0：先建立可复现实验基线
 
+- [x] 最高优先级：排查并修复 NS3 manual subchannel 链路，使 OpenCDA 指定的 `sc_start/sc_num` 真实落到 NS3 NR sidelink 发送行为。已完成 4 类 probe：非冲突成功、最高合法子信道 9 成功、同子信道冲突触发 PHY decode failure、越界子信道 10 被拒绝且无 RLC/CAM 发送。
 - [x] 定位 SGCP 当前实现入口、配置文件和运行命令。
 - [x] 建立 `v2xp_cluster_carla` 数据集导出、导入能力，用离线数据替代 CARLA 在线运行。
 - [ ] 当前优先：确认论文现有结果对应的代码版本、配置、随机种子和日志路径。

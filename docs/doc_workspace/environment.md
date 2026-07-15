@@ -152,13 +152,13 @@ wsl -d Ubuntu-22.04 -u sakakibara -- bash -lc "cd ~/workspace/carla-ns3-co-simul
 执行 `ns3/vanet/main.cc`：
 
 ```powershell
-wsl -d Ubuntu-22.04 -u sakakibara -- bash -lc "cd ~/workspace/carla-ns3-co-simulation/ns-3-dev && ./ns3 run 'scratch/vanet/main.cc --simTime=100.0'"
+wsl -d Ubuntu-22.04 -u sakakibara -- bash -lc "cd ~/workspace/carla-ns3-co-simulation/ns-3-dev && ./ns3 run 'scratch/vanet/main.cc --simTime=100.0 --targetSubchannels=10'"
 ```
 
 短时 smoke test 可禁用同步模式，但仍需要先由 bridge/CARLA 向 ns-3 的 `5556` 端口发送第一帧车辆数据：
 
 ```powershell
-wsl -d Ubuntu-22.04 -u sakakibara -- bash -lc "cd ~/workspace/carla-ns3-co-simulation/ns-3-dev && ./ns3 run 'scratch/vanet/main.cc --simTime=1.0 --enableTimeSync=false --carlaHost=127.0.0.1'"
+wsl -d Ubuntu-22.04 -u sakakibara -- bash -lc "cd ~/workspace/carla-ns3-co-simulation/ns-3-dev && ./ns3 run 'scratch/vanet/main.cc --simTime=1.0 --enableTimeSync=false --carlaHost=127.0.0.1 --targetSubchannels=10'"
 ```
 
 注意：当前 ns-3 wrapper 的参数格式不使用 README 中的第二个 `--` 分隔符；应写成 `./ns3 run 'scratch/vanet/main.cc --simTime=...'`。
@@ -196,7 +196,7 @@ conda run -n opencda python -m opencda.tools.offline_inference --dataset-root D:
 1. 先启动 ns-3：
 
 ```powershell
-wsl -d Ubuntu-22.04 -u sakakibara -- bash -lc "cd ~/workspace/carla-ns3-co-simulation/ns-3-dev && ./ns3 run 'scratch/vanet/main.cc --simTime=3.0 --enableTimeSync=true --carlaHost=auto'"
+wsl -d Ubuntu-22.04 -u sakakibara -- bash -lc "cd ~/workspace/carla-ns3-co-simulation/ns-3-dev && ./ns3 run 'scratch/vanet/main.cc --simTime=3.0 --enableTimeSync=true --carlaHost=auto --targetSubchannels=10'"
 ```
 
 2. 另开一个 PowerShell 运行离线回放到 NS3：
@@ -206,6 +206,14 @@ conda run -n opencda python -m opencda.tools.offline_ns3_replay --dataset-root D
 ```
 
 该工具不启动 CARLA，只从 dump 数据重建车辆位姿和 SGCP cluster 内上传请求，并按数据集帧间隔向 NS3 发送 `vehicles_position`、`sync_request`、`transfer_requests`。
+
+NS3 manual subchannel 回归探针：
+
+```powershell
+conda run -n opencda python -m opencda.tools.ns3_link_probe --case success --packet-size 400 --drain-seconds 1.0 --sync-timeout 20
+```
+
+当前已验证：`success`、`edge_success` 可完整到达 application callback；`conflict` 会触发 `PSCCH_DECODE_FAIL reason=decoded_overlap`；`out_of_band` 会触发 `MANUAL_CMD_REJECT reason=out_of_band` 且无 RLC/CAM 发送。
 
 ## NS3 Request-Level Trace 约定
 

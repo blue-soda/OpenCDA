@@ -1873,3 +1873,57 @@ conda run -n opencda python -m opencda.tools.ns3_log_eval --ns3-stdout docs\doc_
 - `cam_received` / `bridge_observed_delivery_ratio`：完整应用回调交付，当前为 86/154 = 0.558442。
 
 后续论文写作必须区分 application callback、RLC partial reception、RLC request completion 和 PHY decode diagnostics。下一步需要补 request completion 口径，按 request_id 统计 TX/RX segment 完整性和 DROP 事件，再决定如何将链路结果接入 SGCP PPS 或 mAP 过滤。
+
+## 2026-07-16 - NS3 manual subchannel bug fix and validation
+
+目标：将“OpenCDA 指定的子信道真实落到 NS3 侧发送行为”列为最高优先级，先修通信仿真正确性，再继续推进 SGCP 论文任务。
+
+### 修复内容
+
+- `ns3/vanet/main.cc`
+  - 新增 `--targetSubchannels`、`--slSubchannelSize`、`--slBandwidthIn100kHz` 参数。
+  - 默认 `--targetSubchannels=10`，与 OpenCDA `networking_clustering.yaml` 的 `subchannel_num: 10` 对齐。
+  - 修复 socket receive buffer：长 JSON payload 由覆盖改为累积，避免 `transfer_requests` 被分片时丢前半段。
+- `ns3/src/nr-sl-ue-mac-scheduler-manual.cc/.h`
+  - manual scheduler 不再把 `sc_start` 当作“第 N 个候选资源”并取模 wrap。
+  - 改为严格匹配 `physicalStart == sc_start` 且 `physicalLen == sc_num`。
+  - 越界命令保留在队列中并拒绝分配，阻止 RLC buffer 被默认调度器随机发送；同一无效命令只记录一次 reject。
+- `ns3/vanet/cam-application.cc`
+  - 修正 manual command 的 `maxDataSize`，覆盖 NR SL RLC 实际分片总量，避免最后 4 bytes 残片回落到默认随机调度。
+- `opencda.tools.ns3_link_probe`
+  - 新增不依赖 CARLA 的确定性链路探针，用于构造 success / edge_success / conflict / out_of_band 四类请求。
+
+### 测试命令
+
+NS3：
+
+```powershell
+wsl -d Ubuntu-22.04 -u sakakibara -- bash -lc "cd ~/workspace/carla-ns3-co-simulation/ns-3-dev && timeout 45s stdbuf -oL -eL ./ns3 run 'scratch/vanet/main.cc --simTime=1.0 --enableTimeSync=true --carlaHost=auto --targetSubchannels=10'"
+```
+
+Probe：
+
+```powershell
+conda run -n opencda python -m opencda.tools.ns3_link_probe --case success --packet-size 400 --drain-seconds 1.0 --sync-timeout 20 --upload-plan-output docs\doc_workspace\SGCP\artifacts\ns3_link_probe_success\upload_plan.csv
+conda run -n opencda python -m opencda.tools.ns3_link_probe --case edge_success --packet-size 400 --drain-seconds 1.0 --sync-timeout 20 --upload-plan-output docs\doc_workspace\SGCP\artifacts\ns3_link_probe_edge_success\upload_plan.csv
+conda run -n opencda python -m opencda.tools.ns3_link_probe --case conflict --packet-size 400 --drain-seconds 1.0 --sync-timeout 20 --upload-plan-output docs\doc_workspace\SGCP\artifacts\ns3_link_probe_conflict\upload_plan.csv
+conda run -n opencda python -m opencda.tools.ns3_link_probe --case out_of_band --packet-size 400 --drain-seconds 1.0 --sync-timeout 20 --upload-plan-output docs\doc_workspace\SGCP\artifacts\ns3_link_probe_out_of_band\upload_plan.csv
+```
+
+### 验证结果
+
+| Case | Requested SC | Manual Apply | Reject | PHY Fail | RLC TX | RLC RX | CAM callback | Conclusion |
+| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | --- |
+| success | 0 and 1 | 6 | 0 | 0 | 6 | 6 | 2 | 非冲突子信道全部成功收发 |
+| edge_success | 9 | 3 | 0 | 0 | 3 | 3 | 1 | 最高合法子信道 9 可用 |
+| conflict | 0 and 0 | 6 | 0 | 6 PSCCH | 6 | 3 | 1 | 同时同子信道冲突导致部分失败 |
+| out_of_band | 10 | 0 | 1 | 0 | 0 | 0 | 0 | 超出 0-9 范围被拒绝且不偷跑 |
+
+关键 trace：
+
+- success：`requestedStart=0 physicalStart=0`、`requestedStart=1 physicalStart=1`，无 `PSCCH_DECODE_FAIL/PSSCH_DECODE_FAIL`，2 条 `cam_received`。
+- edge_success：`requestedStart=9 physicalStart=9`，1 条 `cam_received`。
+- conflict：两个请求均为 `requestedStart=0 physicalStart=0`，NS3 输出 `PSCCH_DECODE_FAIL reason=decoded_overlap`，仅 request 1 完整到达应用层。
+- out_of_band：`MANUAL_CMD_REJECT reason=out_of_band src=1 dst=2 scStart=10 scSize=1 totalSubCh=10`，无 RLC TX/RX 和 application callback。
+
+结论：当前 NS3 manual subchannel 行为已满足 SGCP 后续实验的基础要求：带宽范围内且无冲突的通信需求可成功收发；合法边界子信道可用；冲突子信道会通过 PHY decode failure 表现为丢包；超出带宽范围的请求不会被错误映射或随机发送。
