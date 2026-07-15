@@ -62,9 +62,10 @@
 - [x] 将 topology trigger 接入离线 replay，输出每帧 trigger type、是否触发 reconfiguration、vehicle-head change 的对应关系。已在 `opencda.tools.offline_replay` 中新增 summary 和 `--print-topology-events`。
 - [x] 将 topology trigger gate 接入在线 `ClusteringV2XManager`，避免无事件时每周期重构 cluster。已完成默认关闭 first version；后续需真实 CARLA 回归。
 - [ ] 在真实 CARLA 在线仿真中打开 `enable_topology_trigger_gate`，回归 cluster trigger 日志、reconfiguration 次数和感知结果。
-- [ ] 设计 cluster 已满时的处理策略：保留、替换、等待、split/merge 或 leader-level late fusion 补偿。
-- [ ] 明确是否支持 cluster merge/split，并说明与 `N_max` 的关系。
-- [ ] 补充成员加入后的边际贡献重算流程。
+- [x] 设计 cluster 已满时的处理策略：保留、替换、等待、split/merge 或 leader-level late fusion 补偿。已新增 `cluster_capacity_policy.md`，当前主策略为硬 `N_max` + 保留/未满簇迁移/singleton fallback/inter-cluster late fusion 补偿。
+- [x] 明确是否支持 cluster merge/split，并说明与 `N_max` 的关系。当前口径：不允许超过 `N_max` 的 merge；split/merge 通过 topology trigger + coalition reformation 间接发生。
+- [x] 补充成员加入后的边际贡献重算流程。当前迭代会在后续车辆/后续轮次基于更新后的 coalition state 重算贡献，并用 `ita` 抑制振荡。
+- [ ] 在离线 replay 中统计满簇数量、因 `N_max` 跳过的候选 move 数和 singleton/small-cluster 补偿比例。
 - [ ] 明确 `f(rho)` 的标定协议和 detector/sensor-specific metadata 机制。
 - [ ] 重新检查 potential game exact potential 的成立条件。
 - [ ] 估算 density/utility/control message 的控制开销，并决定是否纳入通信开销指标。

@@ -1749,3 +1749,41 @@ conda run -n opencda python -m py_compile opencda\core\common\config_manager.py 
 - 在真实 CARLA 在线仿真中打开 `enable_topology_trigger_gate: true` 做回归。
 - 记录 `CLUSTER_TRIGGER` 日志、reconfiguration 次数、感知 AP/稳定性变化。
 - 后续再把 utility drop 和 NS3 link-quality drop 加入 gate。
+
+## 2026-07-15 - cluster capacity / merge-split 机制说明
+
+### 目的
+
+- 推进 P3 “设计 cluster 已满时的处理策略”。
+- 推进 P3 “明确是否支持 cluster merge/split，并说明与 `N_max` 的关系”。
+- 推进 P3 “补充成员加入后的边际贡献重算流程”。
+
+### 代码观察
+
+- `CoalitionGame.coalition_formation()` 中，当候选 cluster `c.size() >= self.p.N_max` 时直接跳过。
+- 当前实现不会临时超过 `N_max`。
+- 当前实现不会主动 replacement、等待队列、split 或 merge。
+- 若车辆无法加入更优未满 cluster，则保留当前 cluster；如果它本来是 singleton，则继续作为 singleton。
+
+### 文档更新
+
+- 新增 `docs/doc_workspace/SGCP/cluster_capacity_policy.md`。
+- 在 `readme.md` 中加入该文档说明。
+- 在 `target.md` 中将 cluster 已满策略、merge/split 关系、成员加入后边际贡献重算三项标记完成。
+
+### 当前机制口径
+
+| Issue | Current Position |
+| --- | --- |
+| Cluster full | `N_max` 是硬上限，默认不允许加入满簇 |
+| Vehicle blocked by full cluster | 保留当前 cluster 或 singleton fallback |
+| Replacement | 可作为 optional local repair，但当前不声称已实现 |
+| Merge | 只允许通过 coalition move 形成 `size <= N_max` 的结果 |
+| Split | 通过 topology trigger + re-cluster 间接发生 |
+| Marginal contribution recompute | 每轮迭代基于更新后的 coalition state 重新计算，`ita` 抑制振荡 |
+| Compensation | singleton/small cluster 仍可通过 inter-cluster late fusion 输出检测结果 |
+
+### 下一步
+
+- 在离线 replay 中统计满簇数量、因 `N_max` 跳过的候选 move 数。
+- 若论文需要更强机制，再实现默认关闭的 replacement repair，并补消融。
