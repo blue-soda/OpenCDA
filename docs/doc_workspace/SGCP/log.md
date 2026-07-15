@@ -2183,3 +2183,33 @@ summary pps_convergence avg_iterations=3.00 max_iterations=3 converged_frames=41
 ```
 
 结论：当前默认 20-CAV / 10-subchannel dump 中，PPS 41/41 帧都在 `max_iter=20` 前收敛，平均 3 轮停止。每帧平均 10 条 scheduled links、使用 10 个 RB，未触发 RB 复用，最大 RB occupancy=1。这支持 “finite empirical convergence” 与 “10-subchannel NS3 replay 无冲突” 的实验叙事，但仍不是 exact potential 的数学证明。
+
+## 2026-07-16 - Paper revision plan for topology-trigger wording
+
+### 目的
+
+推进 P4 “修正 topology change 才触发 与 每个周期重复 的表述矛盾”，并把已经完成的机制/实验工作转成论文正文和 rebuttal 可直接使用的修订计划。
+
+### 复核位置
+
+论文源文件：`C:\Workspace\icdcs-paper\SGCP\main.tex`
+
+冲突位置：
+
+- 系统周期描述附近：cluster formation 被描述为 topology change 才触发。
+- Formation Algorithm 段：又写 procedure repeats every cycle `T_c`。
+- Conclusion 段：对两个 game-theoretic algorithms 的收敛保证表述偏强。
+
+### 输出
+
+新增：
+
+```text
+docs/doc_workspace/SGCP/paper_revision_plan.md
+```
+
+核心统一口径：
+
+> 每个 100 ms cooperation cycle 更新 beacon、density metadata、PPS scheduling 和 perception fusion；cluster membership / leader election 仅在 topology/stability trigger 或 periodic guard 触发时更新。
+
+文档同时给出 `main.tex` 替换建议、rebuttal 答法、实时性补充口径、`f(rho)` 标定口径、baseline fairness 风险边界和 game-theoretic convergence 的保守改写建议。

@@ -87,4 +87,4 @@
 - [ ] 补充 `T_min^stab`、`N_max`、`rho_th` 参数选择依据。
 - [ ] 补充 FullPerception baseline 的实现细节和公平性讨论。
 - [ ] 补充实时性实验，包括毫秒级耗时分解。
-- [ ] 修正 “topology change 才触发” 与 “每个周期重复” 的表述矛盾。
+- [x] 修正 “topology change 才触发” 与 “每个周期重复” 的表述矛盾。已新增 `paper_revision_plan.md`，明确每周期更新 beacon/density/PPS，cluster membership 仅在 topology/stability trigger 或 periodic guard 触发时更新，并给出 `main.tex` 替换建议。

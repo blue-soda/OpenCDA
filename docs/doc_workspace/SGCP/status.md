@@ -100,6 +100,7 @@ SGCP 工作与仓库中以下部分关系最紧密：
 - 已将 SGCP control overhead 估算接入 `opencda.tools.offline_replay`，并新增 `control_overhead.md`。当前 41 帧默认 SGCP 的控制面总开销为 187,112 bytes，平均 4,563.71 bytes/frame，约为 inter-cluster late-fusion 点云 payload 的 0.70%。
 - 已新增 `potential_game_conditions.md`，复核 PPS exact potential 成立条件。当前代码更准确的口径是 potential-guided constrained best-response scheduling；若论文继续使用 exact potential game，需要限定固定 cluster、固定候选 grid、硬 feasibility constraints，并补显式势函数/monotonicity 证明。
 - 已将 PPS convergence diagnostics 接入 `PotentialGame` 与 `offline_replay`：当前 41 帧默认 SGCP 中 41/41 帧均在 `max_iter=20` 前收敛，平均 3.00 iterations、10.00 scheduled links/frame、523.90 selected grids/frame，最大 RB occupancy 为 1。
+- 已新增 `paper_revision_plan.md`，把 topology trigger 表述矛盾、实时性、`f(rho)` 标定、baseline fairness 和 game-theoretic convergence 转成 `main.tex` 级别替换建议；其中 topology trigger 矛盾的 P4 写作项已完成。
 - 已完成 SGCP 11 帧离线 NS3 request-level replay：154 条 SGCP intra-cluster request，CAM callback delivery ratio 0.558442，request with any RLC RX event ratio 0.974026。后者仅表示 request_id 至少出现一个 RLC RX 片段/事件，不代表完整 request delivery。
 - 已确认当前可运行环境版本快照，并记录到 `docs/doc_workspace/environment.md`：OpenCDA HEAD `fcc29fdc9ee9a9fe694c12e1fb6792b4d41bccac`，Python 3.7.10，CARLA Python API 0.9.11，PyTorch 1.10.0+cu113，Open3D 0.10.0.0，ns-3 wrapper `ns-3-dev-v2x-v1.1-dirty`。
 - 已修复在线 CARLA-NS3 时间流速不一致问题：`NetworkManager.time_slot` 不再将 `world.fixed_delta_seconds` 除以 5，`current_sim_time`、`current_time_slot` 与 CARLA tick 统一推进。

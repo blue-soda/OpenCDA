@@ -14,6 +14,7 @@
 - `f_rho_calibration.md`：`f(rho)` 点云密度效用函数的标定协议、当前统计和论文写作口径。
 - `control_overhead.md`：SGCP beacon、density metadata、cluster control 和 PPS schedule 控制开销估算口径。
 - `potential_game_conditions.md`：PPS potential game / constrained best-response 的成立条件、代码偏差和论文写作边界。
+- `paper_revision_plan.md`：面向论文正文和 rebuttal 的修订计划，记录具体表述替换、审稿意见回应和风险边界。
 - `../environment.md`：全局环境文档，统一维护 Conda 环境、数据路径、CARLA 路径、启动命令和通用工具入口；运行实验前优先查看这里。
 
 ## 维护约定
