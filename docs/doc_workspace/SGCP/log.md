@@ -2128,3 +2128,36 @@ summary control_overhead total_bytes=187112 avg_bytes_per_frame=4563.71 beacon_b
 | Total control | 187,112 | 4,563.71 |
 
 结论：当前 41 帧 SGCP inter-cluster late-fusion 点云 payload 为 26,916,208 bytes，控制面估算约为 0.70%。论文中应区分 perception payload 和 control metadata；控制信令不是主导通信开销，但需要作为轻量 overhead 单独报告。
+
+## 2026-07-16 - PPS potential game condition review
+
+### 目的
+
+推进 P3 “重新检查 potential game exact potential 的成立条件”，避免论文中过强声称与当前代码实现不一致。
+
+### 代码复核
+
+复核文件：
+
+```text
+opencda/core/clustering/algorithms/resource_allocation/potential_game.py
+opencda/core/clustering/utils/common.py
+```
+
+关键观察：
+
+- 当前 `PotentialGame` 使用 sequential best-response scheduling：每个 cluster head 基于 `grid_score()` 选择 member/grid/RB。
+- `grid_score()` 是 grid-level utility 的边际提升，但代码没有显式全局势函数 `Phi`。
+- RB 占用、channel capacity 和 SINR 目前是 feasibility gate，不是同时进入局部 utility 与全局 potential 的 penalty。
+- 被注释掉的 replacement 逻辑说明当前主要是追加 schedule；收敛更多来自有限 action / 有限追加，而不是完整 best-response dynamics 的 exact-potential 证明。
+- `get_participating_clusters()` 当前遇到第一个 cluster 后 `break`，不等于完整 inter-cluster late utility 聚合。
+
+### 文档
+
+新增：
+
+```text
+docs/doc_workspace/SGCP/potential_game_conditions.md
+```
+
+结论：当前代码可以支撑 “potential-guided constrained best-response scheduling” 和 “finite empirical convergence”。若论文继续使用 exact potential game，需要明确限定条件：固定 cluster membership、固定候选 grid、additive grid utility、资源/SINR 作为 hard action constraints，且局部 utility 定义为全局 grid utility 的边际变化。更强的 exact-potential 声称需要补显式 `Phi` 计算、action replacement 和 `Delta Phi >= 0` 日志。
