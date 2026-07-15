@@ -80,7 +80,8 @@ def parse_args():
     parser.add_argument('--bandwidth-mhz', type=float, default=None,
                         help='Override SGCP total bandwidth in MHz.')
     parser.add_argument('--selective-sharing-baseline', default=None,
-                        choices=['nearest', 'density'],
+                        choices=['nearest', 'density',
+                                 'communication_aware'],
                         help='Run a CAV-only selective-sharing baseline instead of SGCP PPS.')
     parser.add_argument('--selective-member-budget', type=int, default=2,
                         help='Maximum uploaded non-head members per receiver for selective baseline.')
@@ -280,7 +281,7 @@ def select_baseline_members(world, cluster, baseline_name, member_budget):
         ]
         return [member_id for _, member_id in sorted(scored)[:member_budget]]
 
-    if baseline_name == 'density':
+    if baseline_name in ['density', 'communication_aware']:
         scored = []
         for member_id in members:
             sender_vm = world.get_vehicle_manager(member_id)
@@ -288,6 +289,9 @@ def select_baseline_members(world, cluster, baseline_name, member_budget):
             density_sum = sum(
                 sender_vm.perception_manager.lidar.get_grid_density(grid_id)
                 for grid_id in candidate_grids)
+            if baseline_name == 'communication_aware':
+                distance = vehicle_distance(head_vm, sender_vm)
+                density_sum = density_sum / (1.0 + distance / 100.0)
             scored.append((-density_sum, member_id))
         return [member_id for _, member_id in sorted(scored)[:member_budget]]
 
