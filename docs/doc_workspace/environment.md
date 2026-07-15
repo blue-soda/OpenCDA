@@ -234,8 +234,11 @@ C:\Workspace\carla-ns3-co-simulation\ns-3-dev\src\lte\CMakeLists.txt
 OpenCDA 侧解析入口：
 
 ```powershell
+conda run -n opencda python -m opencda.tools.ns3_log_eval --ns3-stdout <ns3_stdout.log> --upload-plan <upload_plan.csv> --output-dir <output_dir> --rsu-node-id 21 --max-frames <N>
 conda run -n opencda python -m opencda.tools.lgcp_ns3_log_eval --ns3-stdout <ns3_stdout.log> --upload-plan <upload_plan.csv> --output-dir <output_dir> --rsu-node-id 21 --max-frames <N>
 ```
+
+`opencda.tools.ns3_log_eval` 是通用入口；`opencda.tools.lgcp_ns3_log_eval` 保留为 LGCP 兼容入口。
 
 该解析器输出：
 

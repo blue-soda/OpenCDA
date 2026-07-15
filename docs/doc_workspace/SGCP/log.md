@@ -1787,3 +1787,76 @@ conda run -n opencda python -m py_compile opencda\core\common\config_manager.py 
 
 - 在离线 replay 中统计满簇数量、因 `N_max` 跳过的候选 move 数。
 - 若论文需要更强机制，再实现默认关闭的 replacement repair，并补消融。
+
+## 2026-07-16 - SGCP 离线 NS3 request-level replay
+
+### 目的
+
+- 复用 LGCP 已补充的 NS3 request-level trace 能力，推进 SGCP 离线实验 + NS3 仿真闭环。
+- 先验证 SGCP intra-cluster transfer request 能输出 `upload_plan.csv`，并能和 NS3 CAM/RLC 日志按 `pkt_id` 对齐。
+
+### 代码更新
+
+- 新增 `opencda.tools.ns3_log_eval`，作为通用 NS3 request-level 日志解析入口，复用现有 LGCP parser。
+- 扩展 `opencda.tools.offline_ns3_replay`：
+  - 新增 `--upload-plan-output`。
+  - SGCP 模式下输出 `timestamp/source_id/target_id/bytes/upload_type/pkt_id`。
+  - LGCP 模式也复用同一输出机制。
+
+### Dry-run
+
+命令：
+
+```powershell
+conda run -n opencda python -m opencda.tools.offline_ns3_replay --dataset-root D:\Data\Carla --scenario-id 2026_07_15_01_26_56 --ego-cav-id 1 --max-frames 11 --dry-run --upload-plan-output docs\doc_workspace\SGCP\artifacts\sgcp_ns3_11f_upload_plan.csv
+```
+
+结果：11 帧，每帧 20 车、6 个 cluster、14 条 SGCP intra-cluster request，共 154 条 request、1,540,000 bytes。
+
+### NS3 replay
+
+NS3 启动命令：
+
+```powershell
+wsl -d Ubuntu-22.04 -u sakakibara -- bash -lc "cd /home/sakakibara/workspace/carla-ns3-co-simulation/ns-3-dev && ./ns3 run 'scratch/vanet/main.cc --simTime=20.0 --enableTimeSync=true --carlaHost=auto'"
+```
+
+SGCP replay 命令：
+
+```powershell
+conda run -n opencda python -m opencda.tools.offline_ns3_replay --dataset-root D:\Data\Carla --scenario-id 2026_07_15_01_26_56 --ego-cav-id 1 --max-frames 11 --drain-seconds 0.5 --sync-timeout 20 --upload-plan-output docs\doc_workspace\SGCP\artifacts\sgcp_ns3_11f_upload_plan.csv
+```
+
+运行结果：NS3 bridge 成功连接，11 帧均完成 `sync_request/sync_ack` 和 transfer request 发送。
+
+### Log eval
+
+命令：
+
+```powershell
+conda run -n opencda python -m opencda.tools.ns3_log_eval --ns3-stdout docs\doc_workspace\SGCP\artifacts\sgcp_ns3_11f_stdout.log --upload-plan docs\doc_workspace\SGCP\artifacts\sgcp_ns3_11f_upload_plan.csv --output-dir docs\doc_workspace\SGCP\artifacts\sgcp_ns3_11f_eval --max-frames 11
+```
+
+结果：
+
+| Metric | Value |
+| --- | ---: |
+| Planned requests | 154 |
+| Planned bytes | 1,540,000 |
+| Observed `cam_received` | 86 |
+| Bridge-observed delivery ratio | 0.558442 |
+| Avg. delay | 26.756 ms |
+| P95 delay | 28.000 ms |
+| Max delay | 101.000 ms |
+| PHY decode events | 2,512 |
+| PHY decode failures | 0 |
+| RLC TX events | 4,158 |
+| RLC RX events | 2,512 |
+| Unique RLC RX requests | 150 |
+| RLC request RX ratio | 0.974026 |
+
+### 观察
+
+- SGCP 离线 replay 已能生成和 NS3 request-level trace 对齐的 upload plan。
+- application `cam_received` ratio 明显低于 RLC request RX ratio；论文中应明确这两个口径代表不同层级。
+- 当前结果还没有反馈到 OpenCOOD mAP；下一步需要把 request delivery/PDR 接入 SGCP PPS 或 constrained inference 的传输过滤。

@@ -60,6 +60,9 @@ def parse_args():
                         help='Optional LGCP upload_plan.csv. If set, replay '
                              'LGCP hierarchy transfers instead of SGCP cluster '
                              'requests.')
+    parser.add_argument('--upload-plan-output', default=None,
+                        help='Optional path to write replayed transfer '
+                             'requests as upload_plan.csv for NS3 log eval.')
     parser.add_argument('--rsu-node-id', type=int, default=None,
                         help='Positive integer node id used for RSU targets in '
                              'LGCP plan. Defaults to max CAV id + 1.')
@@ -224,6 +227,40 @@ def build_lgcp_requests(upload_rows, rsu_node_id):
     return requests
 
 
+def append_upload_plan_rows(rows, timestamp, requests, mode):
+    for request in requests:
+        rows.append({
+            'timestamp': timestamp,
+            'area_id': '',
+            'source_id': request['source'],
+            'target_id': request['target'],
+            'bytes': request['size'],
+            'upload_type': request.get('upload_type', mode),
+            'pkt_id': request.get('pkt_id', ''),
+        })
+
+
+def write_upload_plan(path, rows):
+    if not path:
+        return
+    output_dir = os.path.dirname(os.path.abspath(path))
+    if output_dir:
+        os.makedirs(output_dir, exist_ok=True)
+    fieldnames = [
+        'timestamp',
+        'area_id',
+        'source_id',
+        'target_id',
+        'bytes',
+        'upload_type',
+        'pkt_id',
+    ]
+    with open(path, 'w', newline='') as stream:
+        writer = csv.DictWriter(stream, fieldnames=fieldnames)
+        writer.writeheader()
+        writer.writerows(rows)
+
+
 def main():
     args = parse_args()
     dataset = OPV2VFrameDataset(args.dataset_root)
@@ -255,6 +292,7 @@ def main():
 
     try:
         first_vehicle_data = None
+        upload_plan_rows = []
         for index, timestamp in enumerate(timestamps):
             if lgcp_uploads is None:
                 vehicle_data, requests, clusters = build_world_and_requests(
@@ -281,6 +319,12 @@ def main():
                     rsu_node_id)
                 cluster_count = 0
                 request_mode = 'lgcp'
+
+            append_upload_plan_rows(
+                upload_plan_rows,
+                timestamp,
+                requests,
+                request_mode)
 
             if args.dry_run:
                 print('frame=%s/%s timestamp=%s mode=%s vehicles=%s '
@@ -330,6 +374,7 @@ def main():
         if not args.dry_run:
             print('offline_ns3_replay completed frames=%s final_sync_time=%.3f' %
                   (len(timestamps), final_time))
+        write_upload_plan(args.upload_plan_output, upload_plan_rows)
     finally:
         if bridge is not None:
             bridge.stop()
