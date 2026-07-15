@@ -81,8 +81,8 @@
 
 ## P4：论文写作修订
 
-- [ ] 重写 related work 的 decentralized CP 和 coalition game 对比。
-- [ ] 增强 novelty：突出感知效用驱动、稳定性约束、分层 fusion、分布式资源调度的组合贡献。
+- [x] 重写 related work 的 decentralized CP 和 coalition game 对比。已新增 `related_work_novelty_revision.md`，给出 V2V-only CP、RSU-centric CP、learned communication selection、其他领域 coalition formation 的对比段落和 `main.tex` 插入建议。
+- [x] 增强 novelty：突出感知效用驱动、稳定性约束、分层 fusion、分布式资源调度的组合贡献。已在 `related_work_novelty_revision.md` 中形成 introduction contribution 和 rebuttal 可用文本。
 - [ ] 补充 `f(rho)` 标定过程和曲线。
 - [ ] 补充 `T_min^stab`、`N_max`、`rho_th` 参数选择依据。
 - [ ] 补充 FullPerception baseline 的实现细节和公平性讨论。

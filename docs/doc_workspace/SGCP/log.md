@@ -2213,3 +2213,32 @@ docs/doc_workspace/SGCP/paper_revision_plan.md
 > 每个 100 ms cooperation cycle 更新 beacon、density metadata、PPS scheduling 和 perception fusion；cluster membership / leader election 仅在 topology/stability trigger 或 periodic guard 触发时更新。
 
 文档同时给出 `main.tex` 替换建议、rebuttal 答法、实时性补充口径、`f(rho)` 标定口径、baseline fairness 风险边界和 game-theoretic convergence 的保守改写建议。
+
+## 2026-07-16 - Related work and novelty revision plan
+
+### 目的
+
+推进 P4：
+
+- 重写 related work 的 decentralized CP 和 coalition game 对比。
+- 增强 novelty：突出感知效用驱动、稳定性约束、分层 fusion、分布式资源调度的组合贡献。
+
+### 复核材料
+
+- `C:\Workspace\icdcs-paper\SGCP\main.tex` 的 Related Work 与 Introduction contribution。
+- `C:\Workspace\icdcs-paper\SGCP\SGCP-review.txt` 中 Reviewer 2/3/4 对 Smartform 相似性、baseline fairness 和 decentralized CP baseline 的意见。
+
+### 输出
+
+新增：
+
+```text
+docs/doc_workspace/SGCP/related_work_novelty_revision.md
+```
+
+关键口径：
+
+- 不把 novelty 写成 “使用 coalition game” 本身。
+- 强调 SGCP 面向 RSU-free dense urban CP 的组合贡献：grid-level perception utility、LiDAR density calibration、motion/stability-aware coalition control、硬 `N_max` 容量约束、PPS 子信道可行调度和 inter-cluster late fusion。
+- Related work 增补 V2V-only / decentralized CP、learned communication selection、RSU-centric scheduling 和其他领域 coalition formation 的边界。
+- Rebuttal 中承认 coalition formation 在其他领域已有应用，但说明 SGCP 的 utility、deadline、payload、subchannel 和 hierarchical fusion 约束不同。
