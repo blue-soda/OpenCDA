@@ -18,6 +18,7 @@ from opencda.core.common.offline_replay import (
 from opencda.core.clustering.algorithms.clustering.coalition_game import (
     CoalitionGame,
 )
+from opencda.core.clustering.utils import common
 from opencda.core.clustering.algorithms.resource_allocation import (
     build_resource_allocator,
 )
@@ -42,6 +43,8 @@ def parse_args():
                         help='Only print aggregate metrics for multi-frame replay.')
     parser.add_argument('--resource-allocation', default=None,
                         help='Resource allocation algorithm: potential_game, pcs, mws, random, naive.')
+    parser.add_argument('--t-min-stab', type=float, default=None,
+                        help='Override CoalitionGame Params.T_min_stab in seconds. Use 0 for no stability window.')
     return parser.parse_args()
 
 
@@ -76,7 +79,7 @@ def get_resource_allocation_name(protocol, override=None):
 
 
 def replay_frame(dataset, scenario_id, timestamp, ego_cav_id, protocol,
-                 resource_allocation=None):
+                 resource_allocation=None, t_min_stab=None):
     frame = dataset.load_frame(
         scenario_id,
         timestamp,
@@ -87,7 +90,10 @@ def replay_frame(dataset, scenario_id, timestamp, ego_cav_id, protocol,
         ego_id=ego_cav_id,
         protocol=protocol)
     start_time = time.time()
-    clusters = CoalitionGame(world).run()
+    clustering_algorithm = CoalitionGame(world)
+    if t_min_stab is not None:
+        clustering_algorithm.p.T_min_stab = t_min_stab
+    clusters = clustering_algorithm.run()
     apply_cluster_state(world, clusters)
     ra_start_time = time.time()
     ra_name = get_resource_allocation_name(protocol, resource_allocation)
@@ -119,6 +125,8 @@ def replay_frame(dataset, scenario_id, timestamp, ego_cav_id, protocol,
         'elapsed_ms': elapsed_ms,
         'resource_allocation_ms': ra_elapsed_ms,
         'resource_allocation': ra_name,
+        't_min_stab': (
+            common.Params().T_min_stab if t_min_stab is None else t_min_stab),
         'channel_allocation_count': len(channel_allocation),
         'channel_allocation_sample': sorted(
             channel_allocation.items())[:10],
@@ -272,7 +280,8 @@ def main():
             timestamp,
             args.ego_cav_id,
             protocol,
-            resource_allocation=args.resource_allocation)
+            resource_allocation=args.resource_allocation,
+            t_min_stab=args.t_min_stab)
         results.append(result)
         if not args.summary_only:
             print_frame_result(index, len(frames), sid, result)

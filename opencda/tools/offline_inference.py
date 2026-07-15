@@ -20,6 +20,7 @@ from opencda.core.common.offline_replay import (
 from opencda.core.clustering.algorithms.clustering.coalition_game import (
     CoalitionGame,
 )
+from opencda.core.clustering.utils import common
 from opencda.core.clustering.algorithms.resource_allocation import (
     build_resource_allocator,
 )
@@ -57,6 +58,8 @@ def parse_args():
     parser.add_argument('--sgcp-inter-cluster-late-fusion',
                         action='store_true',
                         help='Late-fuse predictions from all SGCP cluster heads into the requested ego pose and submit one AP sample per frame.')
+    parser.add_argument('--t-min-stab', type=float, default=None,
+                        help='Override CoalitionGame Params.T_min_stab in seconds. Use 0 for no stability window.')
     return parser.parse_args()
 
 
@@ -86,13 +89,16 @@ def load_protocol(dataset, scenario_id):
 
 
 def apply_sgcp_constraint(frame, protocol, ego_cav_id, resource_allocation,
-                          receiver_policy):
+                          receiver_policy, t_min_stab=None):
     clear_sgcp_globals()
     world = OfflineCavWorld(
         frame,
         ego_id=ego_cav_id,
         protocol=protocol)
-    clusters = CoalitionGame(world).run()
+    clustering_algorithm = CoalitionGame(world)
+    if t_min_stab is not None:
+        clustering_algorithm.p.T_min_stab = t_min_stab
+    clusters = clustering_algorithm.run()
     apply_cluster_state(world, clusters)
     allocator = build_resource_allocator(resource_allocation, world)
     allocator.set_clusters(clusters)
@@ -114,6 +120,8 @@ def apply_sgcp_constraint(frame, protocol, ego_cav_id, resource_allocation,
         metadata['cluster_count'] = len(clusters)
         metadata['resource_allocation'] = resource_allocation
         metadata['receiver_policy'] = receiver_policy
+        metadata['t_min_stab'] = (
+            common.Params().T_min_stab if t_min_stab is None else t_min_stab)
         constrained_items.append((constrained_frame, metadata))
     return constrained_items
 
@@ -174,7 +182,8 @@ def main():
                 args.ego_cav_id,
                 args.resource_allocation,
                 'all-cluster-heads' if args.sgcp_inter_cluster_late_fusion
-                else args.sgcp_receiver_policy)
+                else args.sgcp_receiver_policy,
+                args.t_min_stab)
         if args.sgcp_inter_cluster_late_fusion:
             original_ego = next(cav for cav in frame.values() if cav['ego'])
             target_ego_lidar_pose = original_ego['params']['lidar_pose']

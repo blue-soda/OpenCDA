@@ -934,3 +934,84 @@ conda run -n opencda python -m opencda.tools.offline_inference --dataset-root D:
 
 - late-only full 20-CAV checkpoint 高于 full early fusion baseline 的 0.85/0.83/0.48，也高于当前 SGCP constrained late-fusion 的 0.77/0.73/0.35。
 - 该结果使用 OpenCOOD late checkpoint，并非“同一 checkpoint 只切换融合机制”的严格 SGCP 消融；进入论文表格前应标注为 full late fusion reference，或重新设计同等通信约束下的 late-only SGCP 口径。
+
+## 2026-07-15 - w/o stability window 消融
+
+### 目的
+
+- 推进 P1 “完整 SGCP vs 无稳定窗口” 消融。
+- 增加离线入口参数，允许覆盖 `CoalitionGame.Params.T_min_stab`；用 `--t-min-stab 0` 表示不使用预测稳定窗口。
+
+### 代码更新
+
+- `opencda.tools.offline_replay`
+  - 新增 `--t-min-stab`，用于离线 clustering/replay 稳定性指标实验。
+- `opencda.tools.offline_inference`
+  - 新增 `--t-min-stab`，用于 SGCP constrained + inter-cluster late fusion AP 评估。
+
+### 验证
+
+语法检查：
+
+```powershell
+conda run -n opencda python -m py_compile opencda\tools\offline_inference.py opencda\tools\offline_replay.py
+```
+
+3 帧 smoke test：
+
+```powershell
+conda run -n opencda python -m opencda.tools.offline_replay --dataset-root D:\Data\Carla --scenario-id 2026_07_15_01_26_56 --ego-cav-id 1 --resource-allocation potential_game --t-min-stab 0 --max-frames 3 --summary-only
+```
+
+结果：
+
+- frames：3
+- avg_clusters：6.00
+- avg_cluster_size：3.33
+- reconfiguration_events：1
+- vehicle_head_changes：11
+- avg_cluster_lifetime_frames：1.80
+- avg_total_runtime：89.75 ms
+- avg_ra_runtime：35.99 ms
+
+41 帧 replay 汇总：
+
+```powershell
+conda run -n opencda python -m opencda.tools.offline_replay --dataset-root D:\Data\Carla --scenario-id 2026_07_15_01_26_56 --ego-cav-id 1 --resource-allocation potential_game --t-min-stab 0 --max-frames 0 --summary-only
+```
+
+结果：
+
+- frames：41
+- avg_clusters：6.00
+- avg_cluster_size：3.33
+- avg_isolated_cavs：0.00
+- reconfiguration_events：11
+- vehicle_head_changes：76
+- avg_cluster_lifetime_frames：6.65
+- min/max_cluster_lifetime_frames：1 / 38
+- avg_total_runtime：99.99 ms
+- avg_ra_runtime：37.39 ms
+
+41 帧 AP 评估：
+
+```powershell
+conda run -n opencda python -m opencda.tools.offline_inference --dataset-root D:\Data\Carla --scenario-id 2026_07_15_01_26_56 --ego-cav-id 1 --sgcp-constrained --resource-allocation potential_game --sgcp-inter-cluster-late-fusion --t-min-stab 0 --max-frames 0
+```
+
+结果：
+
+- frames：41
+- cluster-head sources/frame：6
+- AP@0.3：0.77
+- AP@0.5：0.73
+- AP@0.7：0.35
+- avg_comm_bytes/source：109,415.48
+- total_comm_bytes：26,916,208
+- avg_source_cavs/source：2.67
+
+### 观察
+
+- 当前 41 帧 dump 上，`T_min_stab=0` 与默认 `T_min_stab=1.0` 的 cluster/reconfiguration/mAP/communication 指标完全一致。
+- 这说明该短片段和当前速度/轨迹条件不足以体现稳定窗口收益；论文中如需支撑稳定窗口，应补更长序列、更高相对速度或更频繁 topology change 的场景。
+- `T_min_stab=0` 的离线运行时更低，但当前耗时数据受 Python/日志/机器负载影响，仅作为工程参考。
