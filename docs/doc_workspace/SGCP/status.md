@@ -107,6 +107,7 @@ SGCP 工作与仓库中以下部分关系最紧密：
 - 已完成修复后 SGCP potential_game 11 帧 NS3 replay：110 条 PPS scheduled request、44 条 skipped unscheduled demand、CAM delivery 110/110、RLC RX 2970/2970、PHY failures 0、manual reject 0。
 - 已补齐 NS3 request-level 三层统计：application callback、RLC request completion/partial/no_tx、PHY decode diagnostics。`offline_ns3_replay` 现使用全局唯一 `pkt_id`，避免 RLC 延迟事件跨帧错配。
 - 已完成 NS3 暴露带宽/子信道窗口回归：`targetSubchannels=10` 时 110/110 PPS request application/RLC complete；`targetSubchannels=5` 时 `sc_start=0..4` 的 55 条全部 complete，`sc_start=5..9` 的 55 条全部在 bridge 层 `MANUAL_CMD_REJECT reason=bridge_out_of_band`，无 CAM/RLC/PHY 污染。
+- 已将 NS3 request-level delivery 接入 communication-aware selective-sharing baseline：`offline_inference --ns3-link-quality-csv <rlc_by_request.csv>` 使用 `rlc_complete` 作为 link-quality cost。11 帧对照中，distance proxy 为 AP@0.3/0.5/0.7 = 0.71/0.67/0.31、总通信 7,977,680 bytes；NS3 RLC-complete aware 为 0.68/0.63/0.27、总通信 7,796,560 bytes。
 
 ## 当前阻塞项
 
@@ -119,7 +120,7 @@ SGCP 工作与仓库中以下部分关系最紧密：
 - 当前 `T_min_stab=0` 消融未显示差异，说明当前 41 帧 dump 不足以证明稳定窗口贡献；需要更长序列或更强相对运动/topology change 场景。
 - `T_min^stab=100-1000 ms` 参数实验同样未显示差异；当前只能作为“短序列无敏感性”的工程记录，不能作为论文中参数选择依据。
 - singleton-cluster 结果会 late-fuse 全部 20 个 CAV 的检测框，但当前只统计点云 payload，不能直接作为零通信公平 baseline；需要补检测框交换开销或实现距离/随机固定簇对比。
-- FullPerception-Decentralized / same-budget CAV-only selective baseline 已有 first version，但 communication-aware baseline 在当前 dump 上 AP@0.5/AP@0.7 高于 SGCP 且 payload 更高；论文主张需要谨慎转向稳定性、PPS channel feasibility 和动态网络约束，而不是简单宣称 AP 全面领先。
+- FullPerception-Decentralized / same-budget CAV-only selective baseline 已有 first version；communication-aware baseline 现在同时支持 distance proxy 与 NS3 RLC-complete cost。当前 dump 上 distance proxy AP@0.5/AP@0.7 高于 SGCP 且 payload 更高；NS3-aware 11 帧结果显示链路可行性约束会降低 AP 和通信量。论文主张需要谨慎转向稳定性、PPS channel feasibility 和动态网络约束，而不是简单宣称 AP 全面领先。
 - `N_max` 参数实验显示非单调趋势；进入论文前需要补更长序列/不同密度场景，并计入 inter-cluster 检测框交换开销。
 - `rho_th` 参数实验已显示通信-精度折中，但完整 `f(rho)` 标定曲线仍未复现；论文需要补密度采样协议、拟合过程和跨场景/探测器泛化。
 - CAV 数量规模实验目前只是固定场景子集实验；论文级“密度扩展”仍需重新导出不同 CAV/背景车密度的 CARLA 场景。
@@ -129,4 +130,4 @@ SGCP 工作与仓库中以下部分关系最紧密：
 - Topology trigger 已接入离线 replay 统计，但尚未接入在线 `ClusteringV2XManager` gate；单独 relative-speed trigger 仍偏敏感，在线 gate 应结合 neighbor-set change、utility drop 和 `T_min_stab` 滞回。
 - 在线 topology trigger gate 尚未在真实 CARLA 图形仿真中回归；当前仅完成代码接入和静态编译检查。
 - Cluster capacity 策略目前是机制规格；尚未统计满簇跳过次数，也未实现 optional replacement repair。
-- SGCP potential_game NS3 replay 已确认“PPS 已调度且无冲突的 request 全部成功”，且低暴露子信道场景能正确拒绝超出带宽窗口的 request；下一步是把 NS3 delivery/PDR 反馈到 SGCP PPS 或 OpenCOOD mAP 评估中。
+- SGCP potential_game NS3 replay 已确认“PPS 已调度且无冲突的 request 全部成功”，且低暴露子信道场景能正确拒绝超出带宽窗口的 request；NS3 delivery/PDR 已先接入 selective-sharing baseline。下一步是把该 link-quality 反馈进一步接入 SGCP PPS 本身或 OpenCOOD mAP 的端到端丢包裁剪。

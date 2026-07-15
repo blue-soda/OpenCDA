@@ -4,8 +4,10 @@ Run OpenCOOD inference from an OPV2V-style data dump.
 """
 
 import argparse
+import csv
 import math
 import os
+from collections import defaultdict
 
 from omegaconf import OmegaConf
 import yaml
@@ -87,6 +89,11 @@ def parse_args():
                         help='Maximum uploaded non-head members per receiver for selective baseline.')
     parser.add_argument('--selective-grid-budget', type=int, default=87,
                         help='Maximum selected grids per receiver for selective baseline.')
+    parser.add_argument('--ns3-link-quality-csv', default=None,
+                        help='Optional rlc_by_request.csv from ns3_log_eval. '
+                             'When set, communication_aware selective sharing '
+                             'uses per-link RLC complete ratio instead of only '
+                             'a distance proxy.')
     return parser.parse_args()
 
 
@@ -253,6 +260,44 @@ def vehicle_distance(vm_a, vm_b):
         (pos_a.y - pos_b.y) ** 2)
 
 
+def load_ns3_link_quality(path):
+    if not path:
+        return None
+    exact = defaultdict(list)
+    pair = defaultdict(list)
+    with open(path, newline='') as stream:
+        for row in csv.DictReader(stream):
+            try:
+                source = int(row['source_node'])
+                target = int(row['target_node'])
+            except (KeyError, TypeError, ValueError):
+                continue
+            timestamp = str(row.get('timestamp', ''))
+            complete = int(float(row.get('rlc_complete', 0) or 0))
+            exact[(timestamp, source, target)].append(complete)
+            pair[(source, target)].append(complete)
+    return {
+        'exact': {
+            key: sum(values) / float(len(values))
+            for key, values in exact.items()
+        },
+        'pair': {
+            key: sum(values) / float(len(values))
+            for key, values in pair.items()
+        },
+        'path': path,
+    }
+
+
+def ns3_link_quality(link_quality, timestamp, source_id, target_id):
+    if not link_quality:
+        return None
+    exact_key = (str(timestamp), int(source_id), int(target_id))
+    if exact_key in link_quality['exact']:
+        return link_quality['exact'][exact_key]
+    return link_quality['pair'].get((int(source_id), int(target_id)))
+
+
 def candidate_grids_for_sender(head_vm, sender_vm):
     head_lidar = head_vm.perception_manager.lidar
     sender_lidar = sender_vm.perception_manager.lidar
@@ -263,7 +308,8 @@ def candidate_grids_for_sender(head_vm, sender_vm):
     return candidates
 
 
-def select_baseline_members(world, cluster, baseline_name, member_budget):
+def select_baseline_members(world, cluster, baseline_name, member_budget,
+                            link_quality=None, timestamp=None):
     head_id = int(cluster.head_id)
     head_vm = world.get_vehicle_manager(head_id)
     members = [
@@ -291,7 +337,16 @@ def select_baseline_members(world, cluster, baseline_name, member_budget):
                 for grid_id in candidate_grids)
             if baseline_name == 'communication_aware':
                 distance = vehicle_distance(head_vm, sender_vm)
-                density_sum = density_sum / (1.0 + distance / 100.0)
+                quality = ns3_link_quality(
+                    link_quality,
+                    timestamp,
+                    member_id,
+                    head_id)
+                if quality is None:
+                    density_sum = density_sum / (1.0 + distance / 100.0)
+                else:
+                    density_sum = (
+                        density_sum * quality / (1.0 + distance / 100.0))
             scored.append((-density_sum, member_id))
         return [member_id for _, member_id in sorted(scored)[:member_budget]]
 
@@ -299,14 +354,17 @@ def select_baseline_members(world, cluster, baseline_name, member_budget):
 
 
 def assign_selective_grid_selection(world, cluster, baseline_name,
-                                    member_budget, grid_budget):
+                                    member_budget, grid_budget,
+                                    link_quality=None, timestamp=None):
     head_id = int(cluster.head_id)
     head_vm = world.get_vehicle_manager(head_id)
     selected_members = select_baseline_members(
         world,
         cluster,
         baseline_name,
-        member_budget)
+        member_budget,
+        link_quality=link_quality,
+        timestamp=timestamp)
     if grid_budget <= 0 or not selected_members:
         return
 
@@ -336,7 +394,8 @@ def apply_selective_sharing_baseline(frame, protocol, ego_cav_id,
                                      baseline_name, receiver_policy,
                                      member_budget, grid_budget,
                                      t_min_stab=None, clustering='coalition_game',
-                                     n_max=None, rho_th=None):
+                                     n_max=None, rho_th=None,
+                                     link_quality=None, timestamp=None):
     clear_sgcp_globals()
     world = OfflineCavWorld(
         frame,
@@ -363,7 +422,9 @@ def apply_selective_sharing_baseline(frame, protocol, ego_cav_id,
             cluster,
             baseline_name,
             member_budget,
-            grid_budget)
+            grid_budget,
+            link_quality=link_quality,
+            timestamp=timestamp)
 
     if receiver_policy == 'all-cluster-heads':
         receiver_ids = sorted(int(cluster.head_id) for cluster in clusters)
@@ -393,6 +454,8 @@ def apply_selective_sharing_baseline(frame, protocol, ego_cav_id,
             if rho_th is None else rho_th)
         metadata['selective_member_budget'] = member_budget
         metadata['selective_grid_budget'] = grid_budget
+        metadata['ns3_link_quality_csv'] = (
+            link_quality['path'] if link_quality else '')
         constrained_items.append((constrained_frame, metadata))
     return constrained_items
 
@@ -425,6 +488,7 @@ def main():
         args.fusion_method)
     manager = OpenCOODManager(coperception_params)
     sgcp_summaries = []
+    ns3_link_quality = load_ns3_link_quality(args.ns3_link_quality_csv)
 
     if args.timestamp is not None:
         if args.scenario_id is None:
@@ -471,7 +535,9 @@ def main():
                 args.t_min_stab,
                 args.clustering,
                 args.n_max,
-                args.rho_th)
+                args.rho_th,
+                link_quality=ns3_link_quality,
+                timestamp=timestamp)
         elif args.sgcp_constrained:
             protocol = load_protocol(dataset, scenario_id)
             frame_items = apply_sgcp_constraint(

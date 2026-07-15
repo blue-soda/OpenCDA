@@ -57,11 +57,11 @@
 - [x] 在 `results.md` 中单独记录 baseline 公平性说明。
 - [x] 实现 same-budget CAV-only selective-sharing baseline，例如 nearest/top-k density/communication-aware top-k，匹配 SGCP 的 payload 或 source CAV 数。已完成 nearest/density/communication-aware grid-budget baseline；communication-aware baseline 为当前最强竞争 baseline。
 - [x] 补充 communication-aware selective-sharing baseline，加入距离/链路质量/payload cost，而不只按 density 排序。当前 first version 使用 `density_sum / (1 + distance / 100)`；后续可替换为 NS3/link-quality cost。
-- [ ] 将 communication-aware selective-sharing baseline 的距离 proxy 替换或扩展为 NS3/link-quality cost。
+- [x] 将 communication-aware selective-sharing baseline 的距离 proxy 替换或扩展为 NS3/link-quality cost。已新增 `--ns3-link-quality-csv`，可用 `rlc_by_request.csv` 的 `rlc_complete` 调整成员选择分数。
 - [x] 使用 NS3 request-level trace 对 SGCP 离线上传请求做链路层统计。旧 all-member replay 为 CAM callback delivery ratio = 0.558442；修复后 potential_game scheduled replay 为 110/110 CAM delivery、RLC RX 2970/2970、PHY failures 0。
 - [x] 继续补充 RLC request completion 口径：按 request_id 对比 TX/RX segment 数、DROP 事件和 application callback，给出 partial reception、complete application delivery、PHY diagnostics 三层指标。已新增 `rlc_complete_requests`、`rlc_partial_requests`、`rlc_no_rx_requests`，并通过 10/5 子信道回归验证。
 - [x] 构造 NS3 受限暴露带宽回归：`targetSubchannels=5` 下 110 个 scheduled request 中 `sc_start=0..4` 的 55 个 complete，`sc_start=5..9` 的 55 个 no_tx/no_rx，`MANUAL_CMD_REJECT=55`。
-- [ ] 将 NS3 request-level delivery/PDR 接入 SGCP PPS 或 selective-sharing baseline 的 link-quality cost。
+- [x] 将 NS3 request-level delivery/PDR 接入 SGCP PPS 或 selective-sharing baseline 的 link-quality cost。已接入 selective-sharing baseline，并完成 11 帧 distance proxy vs NS3 RLC-complete aware 对照。
 
 ## P3：完善机制设计
 

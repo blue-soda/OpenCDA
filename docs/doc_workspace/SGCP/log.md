@@ -2003,3 +2003,33 @@ conda run -n opencda python -m opencda.tools.ns3_log_eval --ns3-stdout docs\doc_
 结果：110 planned requests 中，`sc_start=0..4` 共 55 条全部 complete，`sc_start=5..9` 共 55 条全部 no_tx；application callback 55/110，RLC complete 55/110，partial 0，PHY decode failures 0，`MANUAL_CMD_REJECT=55`，`MANUAL_RESOURCE_APPLY=1485`。
 
 结论：当前 NS3 与 OpenCDA 的手动子信道接口已区分三层指标：application callback 表示应用层完整可见交付；RLC complete 表示 request 的 RLC TX/RX segment 数闭合；PHY decode diagnostics 用于解释冲突/信道失败。正常带宽内、无冲突的 SGCP PPS 请求可完整收发；超出 OpenCDA 暴露子信道范围的请求在 bridge 层被拒绝，不进入 CAM/RLC，也不会污染后续合法请求。
+
+## 2026-07-16 - NS3 link-quality aware selective-sharing baseline
+
+### 代码修正
+
+- `opencda.tools.offline_inference` 新增 `--ns3-link-quality-csv`。
+- 当 `--selective-sharing-baseline communication_aware` 同时传入 `rlc_by_request.csv` 时，成员选择分数从旧的 `density_sum / (1 + distance / 100)` 扩展为 `density_sum * rlc_complete_ratio / (1 + distance / 100)`。
+- `rlc_complete_ratio` 优先使用同 timestamp 的 `(source_node, target_node)`，缺失时退回该 pair 的全局平均；未传入 CSV 时保持旧距离 proxy 行为。
+
+### 11-frame 对照命令
+
+```powershell
+conda run -n opencda python -m opencda.tools.offline_inference --dataset-root D:\Data\Carla --scenario-id 2026_07_15_01_26_56 --ego-cav-id 1 --selective-sharing-baseline communication_aware --sgcp-inter-cluster-late-fusion --selective-member-budget 2 --selective-grid-budget 87 --max-frames 11
+
+conda run -n opencda python -m opencda.tools.offline_inference --dataset-root D:\Data\Carla --scenario-id 2026_07_15_01_26_56 --ego-cav-id 1 --selective-sharing-baseline communication_aware --sgcp-inter-cluster-late-fusion --selective-member-budget 2 --selective-grid-budget 87 --ns3-link-quality-csv docs\doc_workspace\SGCP\artifacts\sgcp_ns3_pg_11f_target5_exposedfixed\eval\rlc_by_request.csv --max-frames 11
+```
+
+日志路径：
+
+- `docs\doc_workspace\SGCP\artifacts\selective_commaware_ns3_quality_11f\distance_proxy_stdout.log`
+- `docs\doc_workspace\SGCP\artifacts\selective_commaware_ns3_quality_11f\ns3_quality_stdout.log`
+
+### 结果
+
+| Baseline | Frames | AP@0.3 | AP@0.5 | AP@0.7 | Total Bytes | Avg. Bytes / Source | Avg. Source CAVs | Avg. Selected Grids |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| Communication-aware distance proxy | 11 | 0.71 | 0.67 | 0.31 | 7,977,680 | 120,873.94 | 2.80 | 80.85 |
+| Communication-aware NS3 RLC-complete aware | 11 | 0.68 | 0.63 | 0.27 | 7,796,560 | 118,129.70 | 2.80 | 80.85 |
+
+结论：NS3 link-quality cost 已能进入 same-budget selective baseline。受限 5 子信道链路质量会使 baseline 避开不可达链路，通信量略降，但短 11 帧窗口 AP 也下降。论文叙事应强调这是网络可行性约束下的公平 baseline，而不是只按感知密度贪心的上界。

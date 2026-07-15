@@ -50,7 +50,7 @@ FullPerception-Decentralized 如果作为公平 baseline，不能等同于 full 
 - 每帧使用与 SGCP 相同或显式匹配的通信预算，例如相同 selected-grid 上限、相同 source CAV 数、相同 total upload bytes，或相同子信道/带宽约束。
 - 可作为 “same-budget full-perception attempt”，但需要实现具体调度策略，例如 nearest-neighbor sharing、top-k density sharing、communication-aware top-k sharing。
 
-当前已实现 nearest/density/communication-aware selective-sharing first version：它们共享 SGCP cluster/head-wise evaluation path，不使用 PPS，按固定 grid budget 进行 CAV-only V2V sharing。其中 communication-aware 使用 `density_sum / (1 + distance / 100)` 作为离线 proxy。
+当前已实现 nearest/density/communication-aware selective-sharing first version：它们共享 SGCP cluster/head-wise evaluation path，不使用 PPS，按固定 grid budget 进行 CAV-only V2V sharing。其中 communication-aware 默认使用 `density_sum / (1 + distance / 100)` 作为离线 proxy；若传入 `--ns3-link-quality-csv <rlc_by_request.csv>`，则扩展为 `density_sum * rlc_complete_ratio / (1 + distance / 100)`，用于体现 NS3 request-level 完整交付约束。
 
 ## 建议进入论文的表述
 
@@ -61,6 +61,6 @@ FullPerception-Decentralized 如果作为公平 baseline，不能等同于 full 
 ## 后续任务
 
 - 为 FullPerception-RSU 决定实现路线：真实 RSU dump、虚拟 RSU 聚合，或只作为 upper reference 不复现。
-- 将 communication-aware selective-sharing baseline 扩展为更真实的链路质量或 NS3 cost，而不是仅使用距离 proxy。
+- 已将 communication-aware selective-sharing baseline 扩展为可选 NS3 RLC-complete cost；后续需要在完整 41 帧或更强网络受限场景中报告主表结果。
 - 为 singleton full late-fusion reference 估算 prediction-level box exchange overhead。
 - 在 `results.md` 的主结果表旁保留 baseline fairness 说明，避免审稿回复中被理解为不公平对比。

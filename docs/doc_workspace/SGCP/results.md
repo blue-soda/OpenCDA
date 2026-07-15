@@ -81,6 +81,17 @@ conda run -n opencda python -m opencda.tools.offline_inference --dataset-root D:
 
 观察：communication-aware selective-sharing 是当前最强公平 baseline，AP@0.5/AP@0.7 均高于 SGCP，但 payload 也高于 SGCP。论文中不能声称 SGCP 在该 dump 上全面优于所有 selective-sharing baseline；更稳妥的结论是 SGCP 提供 coalition stability、PPS channel feasibility、动态/网络约束建模和可解释资源分配，而单帧 density/communication-aware top-k 在当前短序列上是强竞争 baseline。
 
+### NS3 Link-Quality-Aware Selective Sharing
+
+实验口径：`D:\Data\Carla\2026_07_15_01_26_56` 前 11 帧，20 CAV，same-budget selective sharing，`communication_aware`，member budget 2，grid budget 87，inter-cluster late fusion。NS3 link-quality 使用 `docs\doc_workspace\SGCP\artifacts\sgcp_ns3_pg_11f_target5_exposedfixed\eval\rlc_by_request.csv` 中的 `rlc_complete`，即 `targetSubchannels=5` 受限暴露子信道回归。
+
+| Variant | Frames | AP@0.3 | AP@0.5 | AP@0.7 | Avg. Upload (bytes/source) | Total Upload (bytes) | Avg. Source CAVs | Avg. Selected Grids | Notes |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | --- |
+| Distance proxy | 11 | 0.71 | 0.67 | 0.31 | 120873.94 | 7977680 | 2.80 | 80.85 | Old `density / distance` score |
+| NS3 RLC-complete aware | 11 | 0.68 | 0.63 | 0.27 | 118129.70 | 7796560 | 2.80 | 80.85 | Uses `density * rlc_complete_ratio / distance` |
+
+观察：NS3-aware cost 避开了受限 5 子信道下不可完整交付的链路，通信量略降，但 11 帧 AP 也下降。该结果不应被解释为 NS3-aware baseline 更强，而是说明真实链路可行性会改变 selective-sharing 的成员选择；后续主实验应在完整 41 帧或重新导出的网络受限场景上报告。
+
 ## 参数敏感性
 
 ### Stability Window
