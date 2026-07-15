@@ -47,13 +47,15 @@
 
 ### Stability Window
 
-| `T_min^stab` (ms) | mAP@0.5 | Comm. Overhead (Mbps) | Reconfig. Count | Avg. Cluster Lifetime (s) | Notes |
-| ---: | ---: | ---: | ---: | ---: | --- |
-| 100 | TBD | TBD | TBD | TBD |  |
-| 300 | TBD | TBD | TBD | TBD |  |
-| 500 | TBD | TBD | TBD | TBD | Paper default candidate |
-| 700 | TBD | TBD | TBD | TBD |  |
-| 1000 | TBD | TBD | TBD | TBD |  |
+实验口径：`D:\Data\Carla\2026_07_15_01_26_56`，41 帧，20 CAV，`potential_game`，SGCP inter-cluster late fusion。`T_min^stab` 命令行单位为秒；表中按论文写作习惯记录为 ms。
+
+| `T_min^stab` (ms) | AP@0.3 | AP@0.5 | AP@0.7 | Avg. Upload (bytes/source) | Total Upload (bytes) | Reconfig. Count | Vehicle-Head Changes | Avg. Cluster Lifetime (frames) | Notes |
+| ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | --- |
+| 100 | 0.77 | 0.73 | 0.35 | 109415.48 | 26916208 | 11 | 76 | 6.65 | Same as default on current dump |
+| 300 | 0.77 | 0.73 | 0.35 | 109415.48 | 26916208 | 11 | 76 | 6.65 | Same as default on current dump |
+| 500 | 0.77 | 0.73 | 0.35 | 109415.48 | 26916208 | 11 | 76 | 6.65 | Paper default candidate; no sensitivity observed here |
+| 700 | 0.77 | 0.73 | 0.35 | 109415.48 | 26916208 | 11 | 76 | 6.65 | Same as default on current dump |
+| 1000 | 0.77 | 0.73 | 0.35 | 109415.48 | 26916208 | 11 | 76 | 6.65 | Current implementation default |
 
 ### Max Cluster Size
 

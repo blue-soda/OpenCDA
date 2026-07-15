@@ -1177,3 +1177,53 @@ conda run -n opencda python -m opencda.tools.offline_inference --dataset-root D:
 - `N_max=4` 接近论文默认候选，AP 与通信开销处于中间位置；`N_max=5/6` 的聚类结构和 AP 完全一致，说明当前 20-CAV 片段中有效簇大小没有继续增大。
 - `N_max=3` 反而低于 2/4，提示 coalition search 路径、head 选择和当前 detector 输出之间存在非单调关系；论文写作中应避免把参数敏感性描述成单调趋势。
 - 当前 communication payload 只统计 intra-cluster 点云 upload；inter-cluster late-fusion 的检测框交换开销仍需补计。
+
+## 2026-07-15 - `T_min^stab` 参数敏感性实验
+
+### 目的
+
+- 推进 P1 参数实验：`T_min^stab = 100/300/500/700/1000 ms`。
+- 检查稳定时间窗口对 cluster reconfiguration、vehicle-head changes、cluster lifetime 和 AP 的影响。
+
+### 单位说明
+
+- 代码参数 `--t-min-stab` 的单位是秒。
+- 本组实验命令分别使用 `0.1/0.3/0.5/0.7/1.0`，对应论文表述中的 `100/300/500/700/1000 ms`。
+
+### 41 帧 replay 汇总
+
+命令模板：
+
+```powershell
+conda run -n opencda python -m opencda.tools.offline_replay --dataset-root D:\Data\Carla --scenario-id 2026_07_15_01_26_56 --ego-cav-id 1 --resource-allocation potential_game --t-min-stab <seconds> --max-frames 0 --summary-only
+```
+
+| `T_min^stab` (ms) | Avg. Clusters | Avg. Cluster Size | Avg. Isolated CAVs | Reconfig. Events | Vehicle-Head Changes | Avg. Cluster Lifetime (frames) | Avg. Runtime (ms) | Avg. RA Runtime (ms) |
+| ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| 100 | 6.00 | 3.33 | 0.00 | 11 | 76 | 6.65 | 97.36 | 36.81 |
+| 300 | 6.00 | 3.33 | 0.00 | 11 | 76 | 6.65 | 99.59 | 40.05 |
+| 500 | 6.00 | 3.33 | 0.00 | 11 | 76 | 6.65 | 99.08 | 37.80 |
+| 700 | 6.00 | 3.33 | 0.00 | 11 | 76 | 6.65 | 99.12 | 40.02 |
+| 1000 | 6.00 | 3.33 | 0.00 | 11 | 76 | 6.65 | 99.99 | 37.39 |
+
+### 41 帧 AP 评估
+
+命令模板：
+
+```powershell
+conda run -n opencda python -m opencda.tools.offline_inference --dataset-root D:\Data\Carla --scenario-id 2026_07_15_01_26_56 --ego-cav-id 1 --sgcp-constrained --resource-allocation potential_game --sgcp-inter-cluster-late-fusion --t-min-stab <seconds> --max-frames 0
+```
+
+| `T_min^stab` (ms) | Frames | Cluster-Head Sources | AP@0.3 | AP@0.5 | AP@0.7 | Avg. Upload (bytes/source) | Total Upload (bytes) | Avg. Source CAVs |
+| ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| 100 | 41 | 246 | 0.77 | 0.73 | 0.35 | 109415.48 | 26916208 | 2.67 |
+| 300 | 41 | 246 | 0.77 | 0.73 | 0.35 | 109415.48 | 26916208 | 2.67 |
+| 500 | 41 | 246 | 0.77 | 0.73 | 0.35 | 109415.48 | 26916208 | 2.67 |
+| 700 | 41 | 246 | 0.77 | 0.73 | 0.35 | 109415.48 | 26916208 | 2.67 |
+| 1000 | 41 | 246 | 0.77 | 0.73 | 0.35 | 109415.48 | 26916208 | 2.67 |
+
+### 观察
+
+- 当前 41 帧 dump 中，`T_min^stab` 从 100 ms 到 1000 ms 的 replay 和 AP 指标完全一致。
+- 这进一步确认当前短序列不足以支撑稳定窗口参数选择。论文若要回应审稿意见，需要补更长序列、更高相对速度或更频繁 topology change 的场景。
+- 运行时差异处于 Python 执行和机器负载噪声范围内，不宜作为论文结论。
