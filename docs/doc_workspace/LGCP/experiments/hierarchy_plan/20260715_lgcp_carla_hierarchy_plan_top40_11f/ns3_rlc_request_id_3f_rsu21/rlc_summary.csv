@@ -1,0 +1,2 @@
+planned_requests,rlc_tx_events,rlc_rx_events,rlc_drop_events,matched_rlc_tx_events,matched_rlc_rx_events,matched_rlc_drop_events,unique_tx_requests,unique_rx_requests,unique_drop_requests,rlc_request_rx_ratio,note
+186,228,41,0,0,0,0,2,2,0,0.010752688172043012,RLC events are matched by frame_index and request_id; TX may contain multiple segments per request

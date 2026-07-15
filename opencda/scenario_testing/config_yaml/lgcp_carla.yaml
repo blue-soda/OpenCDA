@@ -1,0 +1,131 @@
+description: |-
+  LGCP-oriented Town03 roundabout simulation configuration.
+
+  This scenario keeps the same urban roundabout scale as v2xp_cluster_carla
+  without modifying that baseline configuration:
+  - Town03 map.
+  - 100 total vehicles: 1 explicit ego CAV plus 99 background vehicles.
+  - 20 intelligent / managed vehicles: the ego CAV plus 19 uniformly sampled
+    traffic vehicle managers.
+  - 80 unmanaged background vehicles.
+  - One RSU near the roundabout to support local-to-global orchestration studies.
+
+  The current OpenCDA implementation still uses the existing cluster-oriented
+  cooperative perception managers. This configuration prepares the scenario
+  entities and grid-aware sensing needed by LGCP, but the full area-based LGCP
+  assignment / local fusion / RSU global aggregation mechanism requires
+  dedicated algorithm code.
+
+blueprint:
+  use_multi_class_bp: false
+  bp_meta_path: "opencda/assets/blueprint_meta/bbx_stats_0911.json"
+  bp_class_sample_prob:
+    car: 0.5
+    truck: 0.1
+    bus: 0.1
+    bicycle: 0.1
+    motorcycle: 0.1
+
+lgcp:
+  enabled: true
+  roi:
+    center: [0.0, 0.0]
+    size: [280.0, 80.0]
+    grid_size: [10.0, 6.0]
+  target_cav_num: 20
+  target_total_vehicle_num: 100
+  area_confidence:
+    delta_g: 0.075
+  notes:
+    - "Metadata for LGCP experiments; ignored by the current scenario runner."
+    - "Use log/results/status docs under docs/doc_workspace/LGCP for experiment tracking."
+
+vehicle_base:
+  sensing:
+    perception:
+      lidar:
+        visualize: true
+        range: 80
+        enable_grids: true
+        grid_size: 10.0
+        density_threshold: 2.0
+  v2x:
+    communication_range: 70
+
+traffic_vehicle_base:
+  sensing:
+    perception:
+      lidar:
+        visualize: false
+        range: 80
+        enable_grids: true
+        grid_size: 10.0
+        density_threshold: 2.0
+  v2x:
+    communication_range: 70
+
+rsu_base:
+  sensing:
+    perception:
+      activate: false
+      camera:
+        visualize: 0
+        num: 0
+        positions: []
+      lidar:
+        visualize: true
+        channels: 32
+        range: 160
+        points_per_second: 1000000
+        rotation_frequency: 20
+        upper_fov: 2
+        lower_fov: -25
+        dropoff_general_rate: 0.3
+        dropoff_intensity_limit: 0.7
+        dropoff_zero_intensity: 0.4
+        noise_stddev: 0.02
+        enable_grids: true
+        grid_size: 10.0
+        density_threshold: 2.0
+    localization:
+      activate: false
+      dt: ${world.fixed_delta_seconds}
+      gnss:
+        noise_alt_stddev: 0.05
+        noise_lat_stddev: 3e-6
+        noise_lon_stddev: 3e-6
+
+carla_traffic_manager:
+  sync_mode: true
+  global_distance: 5
+  global_speed_perc: -10
+  set_osm_mode: true
+  auto_lane_change: true
+  random: true
+  ignore_lights_percentage: 100
+  vehicle_list: ~
+  range:
+    - [-50, 40, -100, 100, 3.5, 15, 99, 19]
+
+scenario:
+  rsu_list:
+    - id: -1
+      spawn_position: [0.00, -30.31, 12.0]
+
+  single_cav_list:
+    -
+      spawn_position: [8.00, -30.31, 0.3, 0, -90, 0]
+      destination: [8.00, -40.50, 1.0]
+      behavior:
+        local_planner:
+          debug_trajectory: false
+          debug: false
+
+coperception:
+  models:
+    early: 'opencood/logs/pointpillar_early_fusion'
+    intermediate_v2xvit: 'opencood/logs/pointpillar_v2xvit_fusion'
+    intermediate_attentive: 'opencood/logs/pointpillar_attentive_fusion'
+    intermediate_cobevt: 'opencood/logs/pointpillar_cobevt_fusion'
+    late: 'opencood/logs/pointpillar_late_fusion'
+  fusion_method: 'early'

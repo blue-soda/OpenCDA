@@ -1,0 +1,13 @@
+input_dir: C:\Workspace\OpenCDA\docs\doc_workspace\LGCP\experiments\area_confidence\20260715_lgcp_carla_area_ap_11f_detector_score
+confidence_field: density_linear
+max_agents: 6
+max_areas: 5
+max_group_size: 4
+delta_g:
+- 0.05
+- 0.075
+- 0.1
+- 0.125
+lambda_size: 0.02
+instances: 11
+note: Group-member selection only; leader load balancing is not included yet.

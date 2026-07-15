@@ -1,6 +1,6 @@
 # 实验环境
 
-更新时间：2026-07-15
+更新时间：2026-07-16
 
 ## Conda 环境
 
@@ -206,3 +206,62 @@ conda run -n opencda python -m opencda.tools.offline_ns3_replay --dataset-root D
 ```
 
 该工具不启动 CARLA，只从 dump 数据重建车辆位姿和 SGCP cluster 内上传请求，并按数据集帧间隔向 NS3 发送 `vehicles_position`、`sync_request`、`transfer_requests`。
+
+## NS3 Request-Level Trace 约定
+
+当前 co-simulation 的 ns-3 侧已支持跨研究可复用的 request-level trace，用于把 OpenCDA 发送的单个 transfer request 映射到 application / RLC 层事件。
+
+核心约定：
+
+- OpenCDA replay 发送 `transfer_requests` 时，每个请求带 `pkt_id`。
+- ns-3 CAM application 将 `pkt_id` 写入 CAM header 的 `request_id`。
+- `cam_received` 日志输出 `request_id`，可按 `(frame_index, request_id)` 回连到 OpenCDA 侧请求表。
+- ns-3 侧新增 `LteRlcRequestIdTag`，CAM packet 同时写入 PacketTag 和 ByteTag。
+- NR sidelink RLC UM 日志输出 `[NRSL_RLC_TX]`、`[NRSL_RLC_RX]`、`[NRSL_RLC_DROP]`，并携带 `request_id`。
+
+相关 ns-3 文件：
+
+```text
+C:\Workspace\carla-ns3-co-simulation\ns3\vanet\cam-application.h
+C:\Workspace\carla-ns3-co-simulation\ns3\vanet\cam-application.cc
+C:\Workspace\carla-ns3-co-simulation\ns3\vanet\main.cc
+C:\Workspace\carla-ns3-co-simulation\ns3\src\lte-model\lte-rlc-request-id-tag.h
+C:\Workspace\carla-ns3-co-simulation\ns3\src\lte-model\lte-rlc-request-id-tag.cc
+C:\Workspace\carla-ns3-co-simulation\ns3\src\lte-model\lte-rlc-um.cc
+C:\Workspace\carla-ns3-co-simulation\ns-3-dev\src\lte\CMakeLists.txt
+```
+
+OpenCDA 侧解析入口：
+
+```powershell
+conda run -n opencda python -m opencda.tools.lgcp_ns3_log_eval --ns3-stdout <ns3_stdout.log> --upload-plan <upload_plan.csv> --output-dir <output_dir> --rsu-node-id 21 --max-frames <N>
+```
+
+该解析器输出：
+
+```text
+cam_received_records.csv
+delivery_summary.csv
+delivery_by_frame.csv
+delivery_by_type.csv
+phy_decode_events.csv
+phy_decode_summary.csv
+rlc_events.csv
+rlc_summary.csv
+rlc_by_request.csv
+```
+
+已验证的 LGCP 11 帧 replay 口径：
+
+- planned requests：`676`
+- application `cam_received`：`31`
+- RLC TX events：`1131`
+- RLC RX events：`252`
+- unique RLC RX requests：`164`
+- RLC request RX ratio：`0.242604`
+
+注意：
+
+- application callback 统计低于 RLC RX 统计，不能直接替代链路层 delivery ratio。
+- 当前 PSCCH / PSSCH decode diagnostics 仍是 aggregate PHY 事件，尚未逐条绑定 `request_id`。
+- 若后续研究要解释 HARQ、subchannel collision 或 PHY decode failure，需要继续把 `request_id` 透传到 PHY TB / HARQ trace。

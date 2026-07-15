@@ -1,0 +1,5 @@
+area_records: C:\Workspace\OpenCDA\docs\doc_workspace\LGCP\experiments\area_confidence\20260715_lgcp_carla_area_ap_11f_detector_score\area_records.csv
+subset_frame_records: C:\Workspace\OpenCDA\docs\doc_workspace\LGCP\experiments\ablation\20260715_lgcp_carla_comm_aware_baseline_11f\subset_frame_records.csv
+ablation_summary: C:\Workspace\OpenCDA\docs\doc_workspace\LGCP\experiments\ablation\20260715_lgcp_carla_comm_aware_baseline_11f\ablation_summary.csv
+area_quality: C:\Workspace\OpenCDA\docs\doc_workspace\LGCP\experiments\area_confidence\20260715_lgcp_carla_area_ap_11f_detector_score\area_quality.csv
+confidence_field: density_distance

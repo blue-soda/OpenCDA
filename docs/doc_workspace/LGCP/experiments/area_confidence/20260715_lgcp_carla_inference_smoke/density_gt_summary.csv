@@ -1,0 +1,2 @@
+scenario_id,timestamp,agent_area_rows,gt_area_count,gt_object_count_in_roi,density_gt_count_pearson,density_gt_count_spearman,quality_gt_count,quality_pred_count,quality_recall_05
+2026_07_15_02_33_21,000060,1945,12,14,-0.028869,-0.051536,48,40,0.791667

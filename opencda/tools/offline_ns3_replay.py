@@ -7,9 +7,11 @@ time synchronization against deterministic OPV2V-style data dumps.
 """
 
 import argparse
+import csv
 import math
 import os
 import time
+from collections import defaultdict
 
 import yaml
 
@@ -54,7 +56,25 @@ def parse_args():
                         help='Override NS3 host. Defaults to bridge settings.')
     parser.add_argument('--sync-timeout', type=float, default=10.0,
                         help='Seconds to wait for each sync_ack.')
+    parser.add_argument('--lgcp-upload-plan', default=None,
+                        help='Optional LGCP upload_plan.csv. If set, replay '
+                             'LGCP hierarchy transfers instead of SGCP cluster '
+                             'requests.')
+    parser.add_argument('--rsu-node-id', type=int, default=None,
+                        help='Positive integer node id used for RSU targets in '
+                             'LGCP plan. Defaults to max CAV id + 1.')
+    parser.add_argument('--dry-run', action='store_true',
+                        help='Build and print replay requests without opening '
+                             'NS3 sockets.')
     return parser.parse_args()
+
+
+def read_upload_plan(path):
+    by_timestamp = defaultdict(list)
+    with open(path, newline='') as stream:
+        for row in csv.DictReader(stream):
+            by_timestamp[row['timestamp']].append(row)
+    return by_timestamp
 
 
 def load_protocol(dataset, scenario_id):
@@ -161,11 +181,57 @@ def build_world_and_requests(dataset, scenario_id, timestamp, ego_cav_id,
     return vehicle_data, requests, clusters
 
 
+def resolve_rsu_node_id(dataset, scenario_id, override=None):
+    if override is not None:
+        if int(override) <= 0:
+            raise ValueError('--rsu-node-id must be positive for NS3 replay')
+        return int(override)
+    positive_ids = []
+    for cav_id in dataset.scenarios[scenario_id]['cav_ids']:
+        try:
+            value = int(cav_id)
+        except ValueError:
+            continue
+        if value > 0:
+            positive_ids.append(value)
+    return max(positive_ids or [0]) + 1
+
+
+def request_endpoint_to_int(value, rsu_node_id):
+    value = str(value)
+    if value.upper() == 'RSU':
+        return int(rsu_node_id)
+    return int(value)
+
+
+def pose_to_replay_vehicle_state(index, vehicle_id, cav_content, rsu_node_id):
+    state = pose_to_vehicle_state(index, vehicle_id, cav_content)
+    if str(vehicle_id) == '-1':
+        state['carla_id'] = int(rsu_node_id)
+    return state
+
+
+def build_lgcp_requests(upload_rows, rsu_node_id):
+    requests = []
+    for pkt_id, row in enumerate(upload_rows, start=1):
+        requests.append({
+            'source': request_endpoint_to_int(row['source_id'], rsu_node_id),
+            'target': request_endpoint_to_int(row['target_id'], rsu_node_id),
+            'size': int(float(row['bytes'])),
+            'pkt_id': pkt_id,
+            'upload_type': row.get('upload_type', ''),
+        })
+    return requests
+
+
 def main():
     args = parse_args()
     dataset = OPV2VFrameDataset(args.dataset_root)
     scenario_id = args.scenario_id or next(iter(dataset.scenarios.keys()))
     protocol = load_protocol(dataset, scenario_id)
+    lgcp_uploads = read_upload_plan(args.lgcp_upload_plan) \
+        if args.lgcp_upload_plan else None
+    rsu_node_id = resolve_rsu_node_id(dataset, scenario_id, args.rsu_node_id)
     timestamps = select_timestamps(
         dataset,
         scenario_id,
@@ -179,22 +245,54 @@ def main():
         fixed_delta_from_protocol(protocol)
     frame_interval = frame_interval_seconds(timestamps, fixed_delta_seconds)
 
-    bridge = CarlaNs3Bridge(ns3_host=args.ns3_host) if args.ns3_host else \
-        CarlaNs3Bridge()
-    bridge.sync_timeout = args.sync_timeout
-    bridge.enable_time_sync(True)
-    bridge.start()
+    bridge = None
+    if not args.dry_run:
+        bridge = CarlaNs3Bridge(ns3_host=args.ns3_host) if args.ns3_host else \
+            CarlaNs3Bridge()
+        bridge.sync_timeout = args.sync_timeout
+        bridge.enable_time_sync(True)
+        bridge.start()
 
     try:
         first_vehicle_data = None
         for index, timestamp in enumerate(timestamps):
-            vehicle_data, requests, clusters = build_world_and_requests(
-                dataset,
-                scenario_id,
-                timestamp,
-                args.ego_cav_id,
-                protocol,
-                args.packet_size)
+            if lgcp_uploads is None:
+                vehicle_data, requests, clusters = build_world_and_requests(
+                    dataset,
+                    scenario_id,
+                    timestamp,
+                    args.ego_cav_id,
+                    protocol,
+                    args.packet_size)
+                cluster_count = len(clusters)
+                request_mode = 'sgcp'
+            else:
+                frame = dataset.load_frame(
+                    scenario_id,
+                    timestamp,
+                    ego_cav_id=args.ego_cav_id)
+                vehicle_data = [
+                    pose_to_replay_vehicle_state(
+                        index, vehicle_id, cav_content, rsu_node_id)
+                    for index, (vehicle_id, cav_content) in enumerate(frame.items())
+                ]
+                requests = build_lgcp_requests(
+                    lgcp_uploads.get(timestamp, []),
+                    rsu_node_id)
+                cluster_count = 0
+                request_mode = 'lgcp'
+
+            if args.dry_run:
+                print('frame=%s/%s timestamp=%s mode=%s vehicles=%s '
+                      'requests=%s bytes=%s dry_run=true' % (
+                          index + 1,
+                          len(timestamps),
+                          timestamp,
+                          request_mode,
+                          len(vehicle_data),
+                          len(requests),
+                          sum(item['size'] for item in requests)))
+                continue
 
             if first_vehicle_data is None:
                 first_vehicle_data = vehicle_data
@@ -209,25 +307,32 @@ def main():
             if requests:
                 bridge.send_transfer_requests(requests)
 
-            print('frame=%s/%s timestamp=%s sim_time=%.3f vehicles=%s '
-                  'clusters=%s requests=%s' % (
+            print('frame=%s/%s timestamp=%s sim_time=%.3f mode=%s vehicles=%s '
+                  'clusters=%s requests=%s bytes=%s' % (
                       index + 1,
                       len(timestamps),
                       timestamp,
                       sim_time,
+                      request_mode,
                       len(vehicle_data),
-                      len(clusters),
-                      len(requests)))
+                      cluster_count,
+                      len(requests),
+                      sum(item['size'] for item in requests)))
 
         final_time = (len(timestamps) - 1) * frame_interval + args.drain_seconds
-        if args.drain_seconds > 0:
+        if args.dry_run:
+            print('offline_ns3_replay dry_run completed frames=%s' %
+                  len(timestamps))
+        elif args.drain_seconds > 0:
             bridge.sync_with_ns3(final_time)
             time.sleep(min(args.drain_seconds, 0.2))
 
-        print('offline_ns3_replay completed frames=%s final_sync_time=%.3f' %
-              (len(timestamps), final_time))
+        if not args.dry_run:
+            print('offline_ns3_replay completed frames=%s final_sync_time=%.3f' %
+                  (len(timestamps), final_time))
     finally:
-        bridge.stop()
+        if bridge is not None:
+            bridge.stop()
 
 
 if __name__ == '__main__':
