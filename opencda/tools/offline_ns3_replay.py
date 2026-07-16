@@ -75,6 +75,9 @@ def parse_args():
                         help='Override SGCP resource allocation channel count.')
     parser.add_argument('--bandwidth-mhz', type=float, default=None,
                         help='Override SGCP total bandwidth in MHz.')
+    parser.add_argument('--rho-th', type=float, default=None,
+                        help='Override lidar density_threshold / rho_th for '
+                             'SGCP grid candidate construction.')
     parser.add_argument('--sgcp-grid-score-mode', default='utility',
                         choices=['utility', 'raw_density',
                                  'density_distance'],
@@ -196,7 +199,7 @@ def build_world_and_requests(dataset, scenario_id, timestamp, ego_cav_id,
                              protocol, packet_size, resource_allocation=None,
                              include_unscheduled=False, num_channels=None,
                              bandwidth_mhz=None,
-                             grid_score_mode='utility'):
+                             grid_score_mode='utility', rho_th=None):
     frame = dataset.load_frame(
         scenario_id,
         timestamp,
@@ -207,7 +210,11 @@ def build_world_and_requests(dataset, scenario_id, timestamp, ego_cav_id,
     ]
 
     clear_sgcp_globals()
-    world = OfflineCavWorld(frame, ego_id=ego_cav_id, protocol=protocol)
+    world = OfflineCavWorld(
+        frame,
+        ego_id=ego_cav_id,
+        protocol=protocol,
+        density_threshold=rho_th)
     clusters = CoalitionGame(world).run()
     ra_name = get_resource_allocation_name(protocol, resource_allocation)
     resource_allocator = build_resource_allocator(ra_name, world)
@@ -378,7 +385,8 @@ def main():
                     include_unscheduled=args.include_unscheduled,
                     num_channels=args.num_channels,
                     bandwidth_mhz=args.bandwidth_mhz,
-                    grid_score_mode=args.sgcp_grid_score_mode)
+                    grid_score_mode=args.sgcp_grid_score_mode,
+                    rho_th=args.rho_th)
                 cluster_count = len(clusters)
                 request_mode = 'sgcp_%s_%s_%s' % (
                     ra_name,

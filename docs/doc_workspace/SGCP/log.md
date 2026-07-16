@@ -2876,3 +2876,38 @@ payload_bytes * 8 / 4.1 s / 1e6
 ### 当前结论
 
 论文正文已经不再声称 SGCP 全面超过 FullPerception，也不再用低 payload 的 Random/MWS 证明通信节省。下一步优先补 `rho_th=3` 的 NS3 request-level replay，随后把 coverage-aware grid selection 写入机制章节并准备 rebuttal 文本。
+
+## 2026-07-16 - Spatial-diverse 10ch rho=3 NS3 replay
+
+### 目的
+
+补齐主表推荐行 `SGCP coverage-aware, 10ch, rho_th=3` 的 NS3 request-level delivery 证据，并确保 NS3 replay 与离线感知主表使用同一 `rho_th` 参数。
+
+### 代码修复
+
+- `opencda.tools.offline_ns3_replay` 新增 `--rho-th` 参数。
+- `--rho-th` 传入 `OfflineCavWorld(..., density_threshold=rho_th)`，使 replay 的 SGCP grid candidate / resource allocation 与离线 AP 实验同参。
+
+### 命令
+
+```powershell
+wsl -d Ubuntu-22.04 -u sakakibara -- bash -lc "cd ~/workspace/carla-ns3-co-simulation/ns-3-dev && ./ns3 run 'scratch/vanet/main.cc --simTime=5.0 --enableTimeSync=true --carlaHost=auto --targetSubchannels=10'"
+conda run -n opencda python -m opencda.tools.offline_ns3_replay --dataset-root D:\Data\Carla --scenario-id 2026_07_15_01_26_56 --ego-cav-id 1 --max-frames 11 --num-channels 10 --sgcp-grid-selection-mode spatial_diverse --rho-th 3.0 --drain-seconds 1.0 --sync-timeout 20 --upload-plan-output docs\doc_workspace\SGCP\artifacts\sgcp_ns3_spatial_ch10_rho3_11f\upload_plan.csv
+conda run -n opencda python -m opencda.tools.ns3_log_eval --ns3-stdout docs\doc_workspace\SGCP\artifacts\sgcp_ns3_spatial_ch10_rho3_11f\ns3_stdout.log --upload-plan docs\doc_workspace\SGCP\artifacts\sgcp_ns3_spatial_ch10_rho3_11f\upload_plan.csv --output-dir docs\doc_workspace\SGCP\artifacts\sgcp_ns3_spatial_ch10_rho3_11f\eval --max-frames 11
+```
+
+### 结果
+
+- Frames：11。
+- Scheduled requests：110。
+- Skipped unscheduled：44。
+- Planned bytes：1,100,000。
+- Application callback：110/110，delivery ratio 1.000000。
+- RLC TX/RX：2,970 / 2,970。
+- RLC complete requests：110/110。
+- PHY decode failures：0。
+- Avg / P95 delay：23.909 / 24.000 ms。
+
+### 结论
+
+`rho_th=3.0` 的 10ch tuned low-budget 主表候选与 `rho_th=2.0` 一样，request-level NS3 交付完整。主表中该行的 NS3 delivery 可以从 Pending 改为 `110/110 complete`。

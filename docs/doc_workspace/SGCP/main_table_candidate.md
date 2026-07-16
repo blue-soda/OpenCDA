@@ -9,7 +9,7 @@
 - 数据：`D:\Data\Carla\2026_07_15_01_26_56`，41 帧，20 CAV。
 - 感知：OpenCOOD early-fusion checkpoint，SGCP inter-cluster late fusion evaluation path。
 - 通信量：点云 upload payload；Mbps 按 41 帧、0.1 s 协作周期换算，即 `payload_bytes * 8 / 4.1 s / 1e6`。
-- NS3：`spatial_diverse` 10ch 和 20ch 已完成 11 帧 request-level replay，均为 application/RLC complete。
+- NS3：`spatial_diverse` 10ch (`rho_th=2/3`) 和 20ch 已完成 11 帧 request-level replay，均为 application/RLC complete。
 
 ## 推荐主表
 
@@ -22,7 +22,7 @@
 | Selective density, 3m/117g | Fair V2V baseline | 0.80 | 0.76 | 0.40 | 37,710,864 | 73.58 | Not constrained | Payload-matched high-budget selective baseline |
 | SGCP original utility, 10ch | Previous SGCP | 0.77 | 0.73 | 0.35 | 26,916,208 | 52.52 | 110/110 complete | Original saturated-density utility |
 | SGCP coverage-aware, 10ch, `rho_th=2` | Proposed low-budget | 0.79 | 0.75 | 0.37 | 28,743,280 | 56.08 | 110/110 complete | Spatial-diverse grid selection |
-| SGCP coverage-aware, 10ch, `rho_th=3` | Proposed low-budget tuned | 0.79 | 0.76 | 0.38 | 29,405,296 | 57.38 | Pending | Better threshold setting; same channel budget |
+| SGCP coverage-aware, 10ch, `rho_th=3` | Proposed low-budget tuned | 0.79 | 0.76 | 0.38 | 29,405,296 | 57.38 | 110/110 complete | Better threshold setting; same channel budget |
 | SGCP coverage-aware, 20ch, `rho_th=2` | Proposed high-budget | 0.80 | 0.76 | 0.41 | 37,912,544 | 73.98 | 154/154 complete | Near full-cluster AP@0.7 with 84.5% full-cluster payload |
 
 ## 不建议放入主公平表的行
@@ -46,4 +46,4 @@
 
 - Use `rho_th=3` or `rho_th=2` as the 10ch main row. `rho_th=3` gives better AP with small payload increase; `rho_th=2` is closer to the original calibrated default.
 - Decide whether the main table shows both SGCP 10ch and 20ch, or places 20ch in network-resource sensitivity.
-- If time allows, run NS3 replay for `spatial_diverse rho_th=3`; request links are expected to be close to 10ch, but the exact plan should be verified before claiming NS3 delivery.
+- `rho_th=3` NS3 replay is now complete: 110/110 application callbacks and 110/110 RLC-complete requests over the first 11 frames, with no PHY decode failures.

@@ -347,9 +347,10 @@ conda run -n opencda python -m opencda.tools.ns3_log_eval --ns3-stdout docs\doc_
 | SGCP Variant | NS3 Target Subchannels | Frames | Scheduled Requests | Skipped Unscheduled | Planned Bytes | CAM Received | CAM Delivery Ratio | Avg. Delay (ms) | P95 Delay (ms) | PHY Failures | RLC TX Events | RLC RX Events | RLC Complete | RLC Partial | RLC No TX/RX |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
 | Spatial-diverse, 10-channel | 10 | 11 | 110 | 44 | 1,100,000 | 110 | 1.000000 | 23.909 | 24.000 | 0 | 2,970 | 2,970 | 110 | 0 | 0 |
+| Spatial-diverse, 10-channel, `rho_th=3` | 10 | 11 | 110 | 44 | 1,100,000 | 110 | 1.000000 | 23.909 | 24.000 | 0 | 2,970 | 2,970 | 110 | 0 | 0 |
 | Spatial-diverse, 20-channel | 20 | 11 | 154 | 0 | 1,540,000 | 154 | 1.000000 | 23.909 | 24.000 | 0 | 4,158 | 4,158 | 154 | 0 | 0 |
 
-Trace diagnostics：10 子信道 low-budget 候选使用 `sc_start=0..9`，每个子信道各 11 条 planned request；20 子信道 high-budget 候选使用 `sc_start=0..13`，每个子信道各 11 条 planned request。10 子信道 replay 中 `MANUAL_RESOURCE_APPLY=2970`、`MANUAL_CMD_REJECT=0`、`PSCCH_DECODE_FAIL=0`、`PSSCH_DECODE_FAIL=0`；20 子信道 replay 中 `MANUAL_RESOURCE_APPLY=4158`、`MANUAL_CMD_REJECT=0`、`PSCCH_DECODE_FAIL=0`、`PSSCH_DECODE_FAIL=0`。该结果确认：`spatial_diverse` 的低通信和高预算候选都在 NS3 暴露窗口内完整收发；10 子信道下的 44 条未调度需求在 OpenCDA replay 侧跳过，没有绕过 PPS 进入 NS3。
+Trace diagnostics：10 子信道 low-budget 候选使用 `sc_start=0..9`，每个子信道各 11 条 planned request；`rho_th=3` 的 10 子信道 tuned low-budget 候选保持同一 request-level 调度形态；20 子信道 high-budget 候选使用 `sc_start=0..13`，每个子信道各 11 条 planned request。10 子信道 replay 中 `MANUAL_RESOURCE_APPLY=2970`、`MANUAL_CMD_REJECT=0`、`PSCCH_DECODE_FAIL=0`、`PSSCH_DECODE_FAIL=0`；20 子信道 replay 中 `MANUAL_RESOURCE_APPLY=4158`、`MANUAL_CMD_REJECT=0`、`PSCCH_DECODE_FAIL=0`、`PSSCH_DECODE_FAIL=0`。该结果确认：`spatial_diverse` 的低通信、tuned low-budget 和高预算候选都在 NS3 暴露窗口内完整收发；10 子信道下的 44 条未调度需求在 OpenCDA replay 侧跳过，没有绕过 PPS 进入 NS3。
 
 10 子信道结果：`sc_start=0..9` 每个子信道各 11 条 planned request；NS3 trace 中 `MANUAL_RESOURCE_APPLY=2970`、`MANUAL_CMD_REJECT=0`、`PSCCH_DECODE_FAIL=0`、`PSSCH_DECODE_FAIL=0`。该结果确认：在修复后的 NS3 中，SGCP PPS 已调度、带宽范围内、无冲突的 request 可以完整收发。
 
