@@ -1628,3 +1628,62 @@ PHY / HARQ trace 后续应输出 request-aware event：
 - 可以报告 request-level RLC delivery。
 - 可以报告 aggregate PHY decode failure breakdown。
 - 尚不能声称每个 LGCP upload request 的 PHY / HARQ 失败原因已经可归因。
+
+## 2026-07-16 - OpenCDA parser 接入 request lifecycle funnel
+
+### 目标
+
+- 先完成 OpenCDA 侧 parser，使其能够消费未来 ns-3 输出的 request-level PHY / HARQ event。
+- 在现有 11 帧 RLC request-id replay 上生成 request lifecycle funnel，复查 planned / RLC / application 三层状态。
+
+### 代码变更
+
+更新：
+
+```text
+opencda/tools/lgcp_ns3_log_eval.py
+```
+
+新增解析能力：
+
+- `[NRSL_PHY_EVENT] ... request_id=...`
+- `[NRSL_HARQ_EVENT] ... request_id=...`
+- `request_ids=1,2,3` 多 request TB 展开
+
+新增输出：
+
+- `phy_harq_request_events.csv`
+- `request_lifecycle.csv`
+- `request_lifecycle_summary.csv`
+
+### 回归命令
+
+```powershell
+conda run -n opencda python -m py_compile opencda\tools\lgcp_ns3_log_eval.py
+conda run -n opencda python -m opencda.tools.lgcp_ns3_log_eval --ns3-stdout docs\doc_workspace\LGCP\experiments\hierarchy_plan\20260715_lgcp_carla_hierarchy_plan_top40_11f\ns3_rlc_request_id_11f_rsu21\ns3_stdout.log --upload-plan docs\doc_workspace\LGCP\experiments\hierarchy_plan\20260715_lgcp_carla_hierarchy_plan_top40_11f\upload_plan.csv --output-dir docs\doc_workspace\LGCP\experiments\hierarchy_plan\20260715_lgcp_carla_hierarchy_plan_top40_11f\ns3_rlc_request_id_11f_rsu21 --rsu-node-id 21 --max-frames 11
+```
+
+### 回归结果
+
+```text
+planned_requests=676 observed_cam_received=31 bridge_observed_delivery_ratio=0.045858 avg_delay_ms=109.645 p95_delay_ms=209.000 max_delay_ms=211.000 phy_decode_events=12740 phy_decode_failures=7779 phy_harq_request_events=0 rlc_tx_events=1131 rlc_rx_events=252
+```
+
+`request_lifecycle_summary.csv`：
+
+| Metric | Value |
+| --- | --- |
+| planned_requests | 676 |
+| requests_with_rlc_tx | 614 |
+| requests_with_rlc_rx | 164 |
+| requests_with_cam_received | 31 |
+| terminal_application_received | 31 |
+| terminal_rlc_rx_only | 133 |
+| terminal_rlc_tx_no_rx | 450 |
+| terminal_planned_only | 62 |
+
+### 结论
+
+- OpenCDA 侧 lifecycle funnel 已就绪。
+- 当前 ns-3 日志尚无 request-level PHY / HARQ event，因此 `phy_harq_request_events=0` 是预期结果。
+- 下一步应改 ns-3 侧 PHY schedule / PSSCH / HARQ 输出，而不是继续改 OpenCDA parser。

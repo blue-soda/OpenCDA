@@ -22,6 +22,7 @@ PSCCH_PATTERN = re.compile(
     r'\[PSCCH_DECODE_(OK|FAIL)\]\s+txRnti=(\d+)\s+dstL2Id=(\d+)')
 PSSCH_PATTERN = re.compile(r'\[PSSCH_DECODE_(OK|FAIL)\].*')
 RLC_PATTERN = re.compile(r'\[NRSL_RLC_(TX|RX|DROP)\].*')
+REQUEST_PHY_PATTERN = re.compile(r'\[NRSL_(PHY|HARQ)_EVENT\].*')
 TRANSFER_FRAME_PATTERN = re.compile(r'Processing transfer_requests with')
 FIELD_PATTERN = re.compile(r'([A-Za-z][A-Za-z0-9_]*)=([^\s]+)')
 
@@ -229,6 +230,68 @@ def parse_rlc_events(path):
                 'vr_ur': fields.get('vrUr', ''),
                 'vr_uh': fields.get('vrUh', ''),
             })
+    return records
+
+
+def split_request_ids(fields):
+    if 'request_id' in fields:
+        request_id = int(fields.get('request_id') or 0)
+        return [request_id] if request_id > 0 else [0]
+    if 'request_ids' not in fields:
+        return [0]
+    values = str(fields.get('request_ids') or '')
+    request_ids = []
+    for value in values.split(','):
+        value = value.strip()
+        if not value:
+            continue
+        try:
+            request_ids.append(int(value))
+        except ValueError:
+            continue
+    return request_ids or [0]
+
+
+def first_present(fields, names, default=''):
+    for name in names:
+        if name in fields:
+            return fields[name]
+    return default
+
+
+def parse_phy_harq_request_events(path):
+    records = []
+    frame_index = -1
+    with open(path, encoding='utf-8', errors='ignore') as stream:
+        for line_no, line in enumerate(stream, start=1):
+            if TRANSFER_FRAME_PATTERN.search(line):
+                frame_index += 1
+                continue
+            match = REQUEST_PHY_PATTERN.search(line)
+            if not match:
+                continue
+            fields = fields_from_line(line.replace('\x00', '0'))
+            for request_id in split_request_ids(fields):
+                records.append({
+                    'line_no': line_no,
+                    'frame_index': int(fields.get('frame_index', frame_index)),
+                    'trace_layer': match.group(1),
+                    'event': str(fields.get('event', '')),
+                    'request_id': int(request_id),
+                    'source_node': str(first_present(
+                        fields, ('sender_l2_id', 'srcL2Id', 'txRnti'))),
+                    'target_node': str(first_present(
+                        fields, ('receiver_l2_id', 'dstL2Id'))),
+                    'tb_size': fields.get('tb_size', fields.get('tbSize', '')),
+                    'subchannel_start': fields.get('subchannel_start', ''),
+                    'subchannel_num': fields.get('subchannel_num', ''),
+                    'slot': fields.get('slot', ''),
+                    'harq_id': fields.get('harq_id', fields.get('harqId', '')),
+                    'sinr': fields.get('sinr', fields.get('sinrAvg', '')),
+                    'tbler': fields.get('tbler', ''),
+                    'reason': fields.get('reason', ''),
+                    'raw_event': line.strip(),
+                })
     return records
 
 
@@ -471,6 +534,40 @@ def enrich_rlc_records(rlc_records, plan_rows, timestamps):
     return enriched
 
 
+def enrich_request_events(records, plan_rows, timestamps):
+    plan_by_frame_pkt = {
+        (int(row['frame_index']), int(row.get('pkt_id') or row['frame_pkt_id'])): row
+        for row in plan_rows
+    }
+    enriched = []
+    for record in records:
+        output = dict(record)
+        plan = plan_by_frame_pkt.get(
+            (int(record['frame_index']), int(record['request_id'])))
+        if plan is None:
+            output.update({
+                'timestamp': timestamps[record['frame_index']]
+                if 0 <= record['frame_index'] < len(timestamps) else '',
+                'area_id': '',
+                'upload_type': 'unmatched',
+                'plan_index': '',
+                'pkt_id': '',
+                'matched': 0,
+            })
+        else:
+            output.update({
+                'timestamp': plan['timestamp'],
+                'frame_index': plan['frame_index'],
+                'area_id': plan['area_id'],
+                'upload_type': plan.get('upload_type', ''),
+                'plan_index': plan['plan_index'],
+                'pkt_id': plan.get('pkt_id') or plan.get('frame_pkt_id', ''),
+                'matched': 1,
+            })
+        enriched.append(output)
+    return enriched
+
+
 def aggregate_rlc(rlc_records, plan_rows):
     planned_total = len(plan_rows)
     event_counts = Counter(row['event'] for row in rlc_records)
@@ -577,6 +674,143 @@ def aggregate_rlc(rlc_records, plan_rows):
     return summary, request_rows
 
 
+def build_request_lifecycle(plan_rows, aligned_records, rlc_records,
+                            phy_request_records):
+    lifecycle = {}
+    for row in plan_rows:
+        request_id = int(row.get('pkt_id') or row['frame_pkt_id'])
+        key = (int(row['frame_index']), request_id)
+        lifecycle[key] = {
+            'frame_index': row['frame_index'],
+            'timestamp': row.get('timestamp', ''),
+            'request_id': request_id,
+            'source_node': row['source_node'],
+            'target_node': row['target_node'],
+            'area_id': row.get('area_id', ''),
+            'upload_type': row.get('upload_type', ''),
+            'planned_bytes': row.get('bytes', 0),
+            'rlc_tx_count': 0,
+            'rlc_rx_count': 0,
+            'rlc_drop_count': 0,
+            'phy_schedule_count': 0,
+            'pscch_ok_count': 0,
+            'pscch_fail_count': 0,
+            'pssch_ok_count': 0,
+            'pssch_fail_count': 0,
+            'harq_ack_count': 0,
+            'harq_nack_count': 0,
+            'harq_timeout_count': 0,
+            'cam_received': 0,
+            'terminal_state': 'planned_only',
+        }
+
+    for row in rlc_records:
+        if not int(row.get('matched', 0)):
+            continue
+        key = (int(row['frame_index']), int(row['request_id']))
+        item = lifecycle.get(key)
+        if item is None:
+            continue
+        if row['event'] == 'TX':
+            item['rlc_tx_count'] += 1
+        elif row['event'] == 'RX':
+            item['rlc_rx_count'] += 1
+        elif row['event'] == 'DROP':
+            item['rlc_drop_count'] += 1
+
+    for row in phy_request_records:
+        if not int(row.get('matched', 0)):
+            continue
+        key = (int(row['frame_index']), int(row['request_id']))
+        item = lifecycle.get(key)
+        if item is None:
+            continue
+        event = str(row.get('event', '')).upper()
+        if event == 'PHY_SCHEDULE':
+            item['phy_schedule_count'] += 1
+        elif event == 'PSCCH_DECODE_OK':
+            item['pscch_ok_count'] += 1
+        elif event == 'PSCCH_DECODE_FAIL':
+            item['pscch_fail_count'] += 1
+        elif event == 'PSSCH_DECODE_OK':
+            item['pssch_ok_count'] += 1
+        elif event == 'PSSCH_DECODE_FAIL':
+            item['pssch_fail_count'] += 1
+        elif event == 'HARQ_ACK':
+            item['harq_ack_count'] += 1
+        elif event == 'HARQ_NACK':
+            item['harq_nack_count'] += 1
+        elif event == 'HARQ_TIMEOUT':
+            item['harq_timeout_count'] += 1
+
+    for row in aligned_records:
+        if not int(row.get('matched', 0)):
+            continue
+        key = (int(row['frame_index']), int(row.get('pkt_id') or 0))
+        item = lifecycle.get(key)
+        if item is not None:
+            item['cam_received'] = 1
+
+    for item in lifecycle.values():
+        if item['cam_received']:
+            item['terminal_state'] = 'application_received'
+        elif item['rlc_rx_count'] > 0:
+            item['terminal_state'] = 'rlc_rx_only'
+        elif item['harq_ack_count'] > 0:
+            item['terminal_state'] = 'harq_ack_only'
+        elif item['pssch_ok_count'] > 0:
+            item['terminal_state'] = 'pssch_ok_only'
+        elif item['pssch_fail_count'] > 0:
+            item['terminal_state'] = 'pssch_fail'
+        elif item['harq_nack_count'] > 0:
+            item['terminal_state'] = 'harq_nack'
+        elif item['harq_timeout_count'] > 0:
+            item['terminal_state'] = 'harq_timeout'
+        elif item['pscch_fail_count'] > 0:
+            item['terminal_state'] = 'pscch_fail'
+        elif item['phy_schedule_count'] > 0:
+            item['terminal_state'] = 'phy_scheduled_only'
+        elif item['rlc_tx_count'] > 0:
+            item['terminal_state'] = 'rlc_tx_no_rx'
+
+    return sorted(lifecycle.values(),
+                  key=lambda item: (int(item['frame_index']),
+                                    int(item['request_id'])))
+
+
+def aggregate_request_lifecycle(lifecycle_rows):
+    total = len(lifecycle_rows)
+    terminal_counts = Counter(row['terminal_state'] for row in lifecycle_rows)
+    return [{
+        'planned_requests': total,
+        'requests_with_rlc_tx': sum(1 for row in lifecycle_rows
+                                    if row['rlc_tx_count'] > 0),
+        'requests_with_phy_schedule': sum(1 for row in lifecycle_rows
+                                          if row['phy_schedule_count'] > 0),
+        'requests_with_pssch_ok': sum(1 for row in lifecycle_rows
+                                      if row['pssch_ok_count'] > 0),
+        'requests_with_pssch_fail': sum(1 for row in lifecycle_rows
+                                        if row['pssch_fail_count'] > 0),
+        'requests_with_harq_ack': sum(1 for row in lifecycle_rows
+                                      if row['harq_ack_count'] > 0),
+        'requests_with_harq_nack': sum(1 for row in lifecycle_rows
+                                       if row['harq_nack_count'] > 0),
+        'requests_with_rlc_rx': sum(1 for row in lifecycle_rows
+                                    if row['rlc_rx_count'] > 0),
+        'requests_with_cam_received': sum(1 for row in lifecycle_rows
+                                          if row['cam_received']),
+        'terminal_application_received': terminal_counts['application_received'],
+        'terminal_rlc_rx_only': terminal_counts['rlc_rx_only'],
+        'terminal_pssch_fail': terminal_counts['pssch_fail'],
+        'terminal_harq_nack': terminal_counts['harq_nack'],
+        'terminal_harq_timeout': terminal_counts['harq_timeout'],
+        'terminal_pscch_fail': terminal_counts['pscch_fail'],
+        'terminal_rlc_tx_no_rx': terminal_counts['rlc_tx_no_rx'],
+        'terminal_planned_only': terminal_counts['planned_only'],
+        'note': 'PHY/HARQ counts are populated only when NS3 emits NRSL_PHY_EVENT or NRSL_HARQ_EVENT request-level logs',
+    }]
+
+
 def write_csv(path, rows):
     if not rows:
         return
@@ -598,8 +832,13 @@ def main():
     cam_records = parse_cam_received(args.ns3_stdout, args.frame_interval_ms)
     phy_records = parse_phy_decodes(args.ns3_stdout)
     rlc_records = parse_rlc_events(args.ns3_stdout)
+    phy_request_records = parse_phy_harq_request_events(args.ns3_stdout)
     aligned_records = align_records(cam_records, plan_rows, timestamps)
     enriched_rlc_records = enrich_rlc_records(rlc_records, plan_rows, timestamps)
+    enriched_phy_request_records = enrich_request_events(
+        phy_request_records,
+        plan_rows,
+        timestamps)
     frame_summary, type_summary, summary = aggregate(
         plan_rows,
         aligned_records,
@@ -608,6 +847,12 @@ def main():
     rlc_summary, rlc_by_request = aggregate_rlc(
         enriched_rlc_records,
         plan_rows)
+    request_lifecycle = build_request_lifecycle(
+        plan_rows,
+        aligned_records,
+        enriched_rlc_records,
+        enriched_phy_request_records)
+    lifecycle_summary = aggregate_request_lifecycle(request_lifecycle)
 
     write_csv(os.path.join(args.output_dir, 'cam_received_records.csv'),
               aligned_records)
@@ -626,6 +871,12 @@ def main():
               rlc_summary)
     write_csv(os.path.join(args.output_dir, 'rlc_by_request.csv'),
               rlc_by_request)
+    write_csv(os.path.join(args.output_dir, 'phy_harq_request_events.csv'),
+              enriched_phy_request_records)
+    write_csv(os.path.join(args.output_dir, 'request_lifecycle.csv'),
+              request_lifecycle)
+    write_csv(os.path.join(args.output_dir, 'request_lifecycle_summary.csv'),
+              lifecycle_summary)
 
     row = summary[0]
     phy_failures = sum(1 for item in phy_records if item['status'] == 'FAIL')
@@ -633,7 +884,8 @@ def main():
     print('planned_requests=%s observed_cam_received=%s '
           'bridge_observed_delivery_ratio=%.6f avg_delay_ms=%.3f '
           'p95_delay_ms=%.3f max_delay_ms=%.3f phy_decode_events=%s '
-          'phy_decode_failures=%s rlc_tx_events=%s rlc_rx_events=%s' % (
+          'phy_decode_failures=%s phy_harq_request_events=%s '
+          'rlc_tx_events=%s rlc_rx_events=%s' % (
               row['planned_requests'],
               row['observed_cam_received'],
               row['bridge_observed_delivery_ratio'],
@@ -642,6 +894,7 @@ def main():
               row['max_delay_ms'],
               len(phy_records),
               phy_failures,
+              len(enriched_phy_request_records),
               rlc_row['rlc_tx_events'],
               rlc_row['rlc_rx_events']))
 

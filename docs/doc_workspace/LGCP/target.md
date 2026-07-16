@@ -72,5 +72,6 @@
 - [x] 接入 ns-3 application request-id trace，将 `cam_received` 精确映射回 LGCP upload request。
 - [x] 接入 ns-3 RLC trace，将 RLC events 进一步映射回 LGCP upload request。
 - [x] 完成 NS3 PHY / HARQ request-level trace 设计，明确字段、落点、解析器输出和论文边界。
+- [x] 扩展 OpenCDA NS3 log parser，支持未来 request-level PHY / HARQ events 并输出 request lifecycle funnel。
 - [ ] 将 PHY decode events / HARQ feedback 进一步绑定到 LGCP upload request。
 - [ ] 实现 LGCP 专用 RSU area assignment、leader local fusion 和 RSU global aggregation 管线。

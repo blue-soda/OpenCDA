@@ -42,6 +42,7 @@
 - ns-3 co-simulation 侧已扩展 CAM header，将 OpenCDA `pkt_id` 作为 `request_id` 透传到 `cam_received`，从而把 application callback 精确映射回 `upload_plan.csv`。
 - ns-3 co-simulation 侧已新增 RLC request-id tag，并完成 11 帧 RLC TX/RX/DROP trace 到 LGCP `upload_plan.csv` 的 request-level 映射。
 - 已新增 `ns3_phy_harq_request_trace.md`，明确下一步 PHY / HARQ request-level trace 的字段、ns-3 落点、OpenCDA 解析器输出和论文使用边界。
+- `opencda/tools/lgcp_ns3_log_eval.py` 已支持解析未来 `[NRSL_PHY_EVENT]` / `[NRSL_HARQ_EVENT]` request-level 日志，并生成 `request_lifecycle.csv` / `request_lifecycle_summary.csv`。
 - 已新增 LGCP 专用仿真入口 `opencda/scenario_testing/lgcp_carla.py` 和配置 `opencda/scenario_testing/config_yaml/lgcp_carla.yaml`。
 - 未修改 `v2xp_cluster_carla` 原始配置。
 - 已补齐 RSU 首次启用所需的基础运行路径：固定基础设施感知初始化、RSU 注册/访问、最近感知结果保存、销毁路径。
@@ -59,7 +60,7 @@
 
 - 当前仓库已有 cluster-oriented cooperative perception / network co-simulation 管线，RSU 现在可以作为固定感知/注册实体启用；offline subset ablation、scalable quality proxy、hierarchy control-plane plan、11 帧 offline NS3 request-id bridge-observed replay、RLC request-id trace 和 PHY decode-failure breakdown 已能支持部分 rebuttal 证据，但尚未实现真实 feature slicing、leader local fusion、RSU global perception aggregation 和 LGCP 专用 NS3 scheduling。
 - 尚未确认 OPV2V / V2XSet 数据集、本地模型 checkpoint 和可用 conda 环境的位置。
-- NS3 当前版本已可接收 LGCP upload plan transfer requests，`cam_received` 和 RLC TX/RX/DROP 已可通过 `request_id` 精确映射回 upload request，stdout 中也已有可解析的 PSCCH / PSSCH decode diagnostics；但尚未接入 PHY decode / HARQ 到 request id 的严格 trace。
+- NS3 当前版本已可接收 LGCP upload plan transfer requests，`cam_received` 和 RLC TX/RX/DROP 已可通过 `request_id` 精确映射回 upload request，OpenCDA 解析器也已准备好接收 request-level PHY / HARQ event；但 ns-3 侧尚未实际输出 PHY decode / HARQ 到 request id 的严格 trace。
 
 ## 场景配置判断
 

@@ -791,3 +791,33 @@ Large-scale co-simulation evaluates latency and communication scalability. Perce
 - Subchannel count `Z`。
 - CAV / edge compute capacity。
 - Transmission rate / SINR threshold。
+## 2026-07-16：Request Lifecycle Funnel Parser
+
+在既有 11 帧 RLC request-id replay 上，`lgcp_ns3_log_eval.py` 已新增 request lifecycle 输出。
+
+当前日志尚未包含 request-level PHY / HARQ event，因此 PHY / HARQ 计数为 0；该结果主要验证 OpenCDA 侧 parser 与 funnel 表结构已经就绪。
+
+| Metric | Value |
+| --- | --- |
+| planned requests | 676 |
+| requests with RLC TX | 614 |
+| requests with RLC RX | 164 |
+| requests with application `cam_received` | 31 |
+| terminal application received | 31 |
+| terminal RLC RX only | 133 |
+| terminal RLC TX no RX | 450 |
+| terminal planned only | 62 |
+| request-level PHY/HARQ events | 0 |
+
+输出目录：
+
+```text
+docs/doc_workspace/LGCP/experiments/hierarchy_plan/20260715_lgcp_carla_hierarchy_plan_top40_11f/ns3_rlc_request_id_11f_rsu21/
+```
+
+新增结果文件：
+
+- `request_lifecycle.csv`
+- `request_lifecycle_summary.csv`
+
+解释边界：当前 funnel 可以报告 planned -> RLC TX -> RLC RX -> application received；PHY / HARQ 仍等待 ns-3 侧输出 `[NRSL_PHY_EVENT]` / `[NRSL_HARQ_EVENT]` request-level 日志。
