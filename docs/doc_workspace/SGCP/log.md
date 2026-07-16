@@ -2992,3 +2992,19 @@ docs\doc_workspace\SGCP\rebuttal_draft.md
 ### 结论
 
 正文现在已经覆盖 `rho_th`、`N_max` 和 `T_min^stab` 三个 reviewer 指出的关键参数。对 `T_min^stab` 的口径保持保守：当前序列显示无敏感性，但更激进动态场景仍需额外分析。
+
+## 2026-07-17 - Short rebuttal consolidation
+
+### 目的
+
+把 `rebuttal_draft.md` 的长证据材料压缩成最终 rebuttal 可粘贴版本，降低后续投稿时的字数整理成本。
+
+### 修改内容
+
+- 新增 `rebuttal_short.md`，按 opening、R2、R3、R4 和 claim boundary 组织。
+- 保留关键数值：FullPerception upper reference、payload-matched selective baseline、SGCP coverage-aware 10/20ch、`rho_th` sweep、runtime、NS3 request-level delivery。
+- 明确更保守主张：SGCP 不再声称 AP 全面压过所有 selective V2V heuristic，而是强调 decentralized stability、channel feasibility、较低通信量与 NS3 可验证 transmission semantics。
+
+### 结论
+
+Rebuttal 目前已有长版证据稿和短版提交稿两层结构。下一步可根据会议 rebuttal 字数限制继续压缩，或补真实在线 CARLA/NS3 短回归增强系统可信度。
