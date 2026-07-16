@@ -75,4 +75,5 @@
 - [x] 扩展 OpenCDA NS3 log parser，支持未来 request-level PHY / HARQ events 并输出 request lifecycle funnel。
 - [x] 接入 ns-3 PSSCH request-level trace，将 PSSCH decode OK/FAIL 映射回 LGCP upload request。
 - [x] 将 HARQ feedback 进一步绑定到 LGCP upload request，并确认 replay 配置下 HARQ event 可观测。
+- [x] 扩大 request-level PSSCH / HARQ trace 到 11 帧 LGCP replay。
 - [ ] 实现 LGCP 专用 RSU area assignment、leader local fusion 和 RSU global aggregation 管线。

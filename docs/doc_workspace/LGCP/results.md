@@ -901,3 +901,59 @@ docs/doc_workspace/LGCP/experiments/hierarchy_plan/20260715_lgcp_carla_hierarchy
 
 - HARQ event 现在可 request-level 归因。
 - 该结果是 3 帧 smoke，用于验证 trace 链路；论文级结论仍需扩展到 11 帧 / 多 seed。
+
+## 2026-07-16：11 帧 PSSCH / HARQ Request-Level Trace
+
+使用：
+
+```text
+--enableSlHarq=true --psfchPeriod=4
+```
+
+完成 11 帧 LGCP upload plan replay，并解析 request-level PSSCH / HARQ trace。
+
+| Metric | Value |
+| --- | --- |
+| planned requests | 676 |
+| observed `cam_received` | 29 |
+| bridge-observed delivery ratio | 0.042899 |
+| average delay | 108.276 ms |
+| p95 delay | 209 ms |
+| RLC TX events | 1131 |
+| RLC RX events | 251 |
+| aggregate PHY decode events | 12736 |
+| aggregate PHY decode failures | 7789 |
+| request-level PHY/HARQ events | 1177 |
+| matched PSSCH OK events | 251 |
+| matched PSSCH FAIL events | 390 |
+| matched HARQ ACK events | 251 |
+| matched HARQ NACK events | 285 |
+| requests with PSSCH OK | 167 |
+| requests with PSSCH FAIL | 316 |
+| requests with HARQ ACK | 167 |
+| requests with HARQ NACK | 224 |
+| requests with RLC RX | 167 |
+| requests with application callback | 29 |
+| terminal application received | 29 |
+| terminal RLC RX only | 138 |
+| terminal PSSCH fail | 222 |
+| terminal RLC TX no RX | 225 |
+| terminal planned only | 62 |
+
+按 upload type 的 application callback：
+
+| Upload type | Planned | Observed `cam_received` | Bridge-observed ratio | Avg delay |
+| --- | --- | --- | --- | --- |
+| leader_to_rsu | 440 | 17 | 0.038636 | 75.235 ms |
+| member_to_leader | 236 | 12 | 0.050847 | 155.083 ms |
+
+输出目录：
+
+```text
+docs/doc_workspace/LGCP/experiments/hierarchy_plan/20260715_lgcp_carla_hierarchy_plan_top40_11f/ns3_harq_request_11f_rsu21/
+```
+
+解释边界：
+
+- 该结果已经可以做 request-level RLC / PSSCH / HARQ funnel。
+- 仍需多 seed 或更多场景验证稳定性。

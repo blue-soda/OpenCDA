@@ -1,0 +1,3 @@
+upload_type,planned_requests,observed_cam_received,bridge_observed_delivery_ratio,planned_bytes,observed_bytes,avg_delay_ms,p95_delay_ms,max_delay_ms
+leader_to_rsu,440,17,0.038636363636363635,880000,34000,75.23529411764706,115.0,211.0
+member_to_leader,236,12,0.05084745762711865,2360000,120000,155.08333333333334,209.0,209.0

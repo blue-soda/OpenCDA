@@ -1840,3 +1840,69 @@ planned_requests=186 observed_cam_received=5 bridge_observed_delivery_ratio=0.02
 - HARQ ACK/NACK 已完成 request-level attribution。
 - 当前 trace 链路已经覆盖 planned request -> RLC TX/RX -> PSSCH OK/FAIL -> HARQ ACK/NACK -> application callback。
 - 下一步应扩展到 11 帧 replay，并按 `upload_type` / area / leader 分解失败原因。
+
+## 2026-07-16 - 11 帧 PSSCH / HARQ request-level trace
+
+### 目标
+
+- 将 3 帧 HARQ smoke 扩展到完整 11 帧 LGCP replay。
+- 形成 planned -> RLC -> PSSCH -> HARQ -> application callback 的 request-level funnel。
+
+### 运行配置
+
+ns-3：
+
+```text
+./build/scratch/vanet/ns3.42-main-default --simTime=1.6 --enableTimeSync=true --carlaHost=auto --enableSlHarq=true --psfchPeriod=4
+```
+
+OpenCDA replay：
+
+```powershell
+conda run -n opencda python -m opencda.tools.offline_ns3_replay --dataset-root D:\Data\Carla --scenario-id 2026_07_15_02_33_21 --ego-cav-id 1 --max-frames 11 --lgcp-upload-plan docs\doc_workspace\LGCP\experiments\hierarchy_plan\20260715_lgcp_carla_hierarchy_plan_top40_11f\upload_plan.csv --rsu-node-id 21 --drain-seconds 0.3 --sync-timeout 10
+```
+
+解析：
+
+```powershell
+conda run -n opencda python -m opencda.tools.lgcp_ns3_log_eval --ns3-stdout docs\doc_workspace\LGCP\experiments\hierarchy_plan\20260715_lgcp_carla_hierarchy_plan_top40_11f\ns3_harq_request_11f_rsu21\ns3_stdout.log --upload-plan docs\doc_workspace\LGCP\experiments\hierarchy_plan\20260715_lgcp_carla_hierarchy_plan_top40_11f\upload_plan.csv --output-dir docs\doc_workspace\LGCP\experiments\hierarchy_plan\20260715_lgcp_carla_hierarchy_plan_top40_11f\ns3_harq_request_11f_rsu21 --rsu-node-id 21 --max-frames 11
+```
+
+### 结果
+
+```text
+planned_requests=676 observed_cam_received=29 bridge_observed_delivery_ratio=0.042899 avg_delay_ms=108.276 p95_delay_ms=209.000 max_delay_ms=211.000 phy_decode_events=12736 phy_decode_failures=7789 phy_harq_request_events=1177 rlc_tx_events=1131 rlc_rx_events=251
+```
+
+`phy_harq_request_events.csv` event counts：
+
+| Event | Count |
+| --- | --- |
+| PSSCH_DECODE_OK | 251 |
+| PSSCH_DECODE_FAIL | 390 |
+| HARQ_ACK | 251 |
+| HARQ_NACK | 285 |
+
+`request_lifecycle_summary.csv`：
+
+| Metric | Value |
+| --- | --- |
+| planned_requests | 676 |
+| requests_with_rlc_tx | 614 |
+| requests_with_pssch_ok | 167 |
+| requests_with_pssch_fail | 316 |
+| requests_with_harq_ack | 167 |
+| requests_with_harq_nack | 224 |
+| requests_with_rlc_rx | 167 |
+| requests_with_cam_received | 29 |
+| terminal_application_received | 29 |
+| terminal_rlc_rx_only | 138 |
+| terminal_pssch_fail | 222 |
+| terminal_rlc_tx_no_rx | 225 |
+| terminal_planned_only | 62 |
+
+### 结论
+
+- 11 帧 request-level RLC / PSSCH / HARQ funnel 已完成。
+- PSSCH OK 与 HARQ ACK 事件数一致，均为 251；request 级均为 167。
+- Application callback 明显低于 RLC/PSSCH/HARQ 成功层，论文中应避免把 `cam_received` 直接当作链路层 delivery ratio。
