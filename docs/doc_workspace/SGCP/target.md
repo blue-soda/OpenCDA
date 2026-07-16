@@ -19,7 +19,7 @@
 - [x] 修正主表 baseline 口径：FullPerception-RSU 在当前 RSU-free dump 上不可直接填实测，应以 full 20-CAV early `0.85/0.83/0.48`、60,838,528 bytes 作为 centralized FullPerception upper reference；Random/MWS scheduler 因 payload 过低只作 w/o PPS 消融；公平主对比使用 payload-matched selective sharing（高预算 0.80/0.76/0.40，37,710,864 bytes）和 SGCP spatial-diverse 10/20ch。
 - [x] 补充通信量可调参数实验：已完成 `spatial_diverse` `rho_th=1/2/3/4` sweep，其中 `rho_th=3.0` 为 0.79/0.76/0.38，payload 29,405,296 bytes；`rho_th=3.0` 的 10ch NS3 replay 也已验证 110/110 application/RLC complete。
 - [x] 当主表结果达到论文可写水平后，修改 `C:\Workspace\icdcs-paper\SGCP\main.tex`：已完成第一轮替换，删除旧 `0.85/0.84/0.69` 和 `22.33 Mbps` 主张，改为 FullPerception centralized upper reference、payload-matched selective baseline、SGCP coverage-aware 10/20ch、NS3 request-level delivery 与 near-real-time feasibility 口径。
-- [ ] 根据最新结果更新 rebuttal 答复，覆盖审稿意见中的 FullPerception 公平性、decentralized baseline、`f(rho)` 标定、500 ms 参数、100 ms 实时性、topology trigger、NS3/通信可靠性。
+- [x] 根据最新结果更新 rebuttal 答复，覆盖审稿意见中的 FullPerception 公平性、decentralized baseline、`f(rho)` 标定、500 ms 参数、100 ms 实时性、topology trigger、NS3/通信可靠性。已新增 `rebuttal_draft.md`，作为 reviewer-by-reviewer response 草稿。
 - [ ] 将过程中发现的新问题回写到 `status.md` 和 `target.md`，并在 `log.md` 记录每次实验的命令、commit、日志路径和结论。
 
 ## P0：先建立可复现实验基线

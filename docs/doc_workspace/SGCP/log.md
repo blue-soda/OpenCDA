@@ -2950,3 +2950,27 @@ conda run -n opencda python -m opencda.tools.ns3_log_eval --ns3-stdout docs\doc_
 ### 结论
 
 `rho_th=3.0` 主表行现在有三重支撑：density calibration、AP/Mbps sensitivity、NS3 110/110 request-level delivery。正文也明确了默认 `rho_th=2.0` 是保守通信-精度折中，而非最优或通用阈值。
+
+## 2026-07-16 - Rebuttal draft
+
+### 目的
+
+将当前已完成的实验、机制修订和论文正文修改整理成 reviewer-by-reviewer rebuttal 草稿，避免后续答复继续散落在多个 revision 文档中。
+
+### 输出
+
+新增：
+
+```text
+docs\doc_workspace\SGCP\rebuttal_draft.md
+```
+
+### 覆盖问题
+
+- R2：coalition max baseline、满簇处理、merge/split、成员贡献重算、Smartform/coalition novelty、FullPerception/RSU fairness。
+- R3：`f(rho)` calibration、`T_min^stab=500 ms`、公平 decentralized baseline、ablation 和参数实验。
+- R4：100 ms feasibility、density utility 泛化、topology trigger、NS3 三层 delivery metrics。
+
+### 结论
+
+当前 rebuttal 草稿的主线是：承认旧稿中 baseline 和理论表述过强，说明修订后采用 centralized upper reference + fair V2V selective baselines + coverage-aware SGCP 主表；同时用 density calibration、rho sweep、NS3 request-level delivery 和 runtime breakdown 支撑可复现性与工程可行性。
