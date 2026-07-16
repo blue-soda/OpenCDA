@@ -187,7 +187,9 @@ class ScenarioManager:
 
         self.client = \
             carla.Client('localhost', simulation_config['client_port'])
-        client_timeout = simulation_config.get('client_timeout', 10.0)
+        client_timeout = float(os.environ.get(
+            'OPENCDA_CARLA_CLIENT_TIMEOUT',
+            simulation_config.get('client_timeout', 10.0)))
         self.client.set_timeout(client_timeout)
 
         if xodr_path:

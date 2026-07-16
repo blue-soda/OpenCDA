@@ -3362,3 +3362,36 @@ conda run -n opencda python -m py_compile opencda\scenario_testing\utils\sim_api
 ### 下一步
 
 使用 `OPENCDA_CLEAN_WORLD_ON_INIT=1` 重跑 clean online reupload 回归。若仍失败，再定位 CARLA 初始地图/traffic manager state；若通过，则更新 `online_ns3_short_regression.md` 和 `results.md` 的 clean row。
+
+## 2026-07-17 - CARLA load_world timeout guard
+
+### 目的
+
+继续排查 clean online reupload 回归启动失败。`online_ns3_reupload_clean35_20260717_070046` 和 `online_ns3_reupload_clean35_20260717_070617` 都没有进入 NS3 request 阶段；日志显示 OpenCDA 在 `client.load_world('Town03')` 阶段超时：
+
+```text
+Failed to load Town03 from CARLA.
+Error: time-out of 60000ms while waiting for the simulator
+World loading failed
+```
+
+单独启动 CARLA 并探测 2000 端口可以成功，但 RPC 端口 ready 不等同于地图加载完成。
+
+### 修复
+
+`ScenarioManager` 新增环境变量覆盖 CARLA client timeout：
+
+```powershell
+$env:OPENCDA_CARLA_CLIENT_TIMEOUT = "180"
+```
+
+在线回归命令现在同时建议启用：
+
+```powershell
+$env:OPENCDA_CLEAN_WORLD_ON_INIT = "1"
+$env:OPENCDA_CARLA_CLIENT_TIMEOUT = "180"
+```
+
+### 下一步
+
+使用更长 client timeout 重跑 clean online reupload。若仍失败，应进一步检查 CARLA 是否已直接启动在 Town03，或者在启动 CARLA 时显式指定 Town03 map。

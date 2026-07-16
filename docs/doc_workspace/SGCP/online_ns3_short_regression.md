@@ -189,10 +189,12 @@ Test-NetConnection -ComputerName 127.0.0.1 -Port 2000 -InformationLevel Quiet
 $env:OPENCDA_CLUSTERING_CONFIG = "opencda/scenario_testing/config_yaml/networking_clustering_topology_gate.yaml"
 $env:OPENCDA_ONLINE_TICKS = "35"
 $env:OPENCDA_CLEAN_WORLD_ON_INIT = "1"
+$env:OPENCDA_CARLA_CLIENT_TIMEOUT = "180"
 conda run -n opencda python opencda.py -t v2xp_cluster_carla --apply_cp --apply_ml --debug --network
 Remove-Item Env:\OPENCDA_CLUSTERING_CONFIG
 Remove-Item Env:\OPENCDA_ONLINE_TICKS
 Remove-Item Env:\OPENCDA_CLEAN_WORLD_ON_INIT
+Remove-Item Env:\OPENCDA_CARLA_CLIENT_TIMEOUT
 ```
 
 需保存 stdout 到：
