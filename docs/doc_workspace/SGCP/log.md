@@ -3206,3 +3206,47 @@ conda run -n opencda python opencda.py -t v2xp_cluster_carla --apply_cp --apply_
 相对于 gate 修复后的上一轮在线短回归，`PSCCH/PSSCH_DECODE_FAIL` 从 `1836/480` 降至 `95/10`，`cam_received` 从 137 升至 150，AP 从 `0.86/0.84/0.74` 升至 `0.88/0.88/0.79`。这说明在线多轮 CP 的主冲突源确实是 scheduler strategy 残留，修复后真实 CARLA tick、OpenCDA manual subchannel request 与 NS3 接收链路基本一致。
 
 剩余 incomplete upload 主要出现在短 35 tick 窗口中的后续轮次，下一步如需论文级在线证据，应补更长 tick 或显式 drain 阶段，并逐 request 对齐 application callback、RLC completion 与 PHY failure。
+
+## 2026-07-17 - Online upload episode-level analysis
+
+### 目的
+
+把在线 OpenCDA 日志中的重复 `incomplete (NS3 mode)` 轮询行压缩成 source-target upload episode，判断剩余问题是整条链路失败、短窗口未 drain，还是单 fragment 丢失。
+
+### 新增工具
+
+```powershell
+conda run -n opencda python -m opencda.tools.online_ns3_log_eval `
+  --opencda-stdout docs\doc_workspace\SGCP\artifacts\online_ns3_short_strategyclear_20260717_041313\opencda_stdout.log `
+  --ns3-stdout docs\doc_workspace\SGCP\artifacts\online_ns3_short_strategyclear_20260717_041313\ns3_stdout.log `
+  --output-dir docs\doc_workspace\SGCP\artifacts\online_ns3_short_strategyclear_20260717_041313\online_eval
+```
+
+工具输出：
+
+```text
+online_upload_lifecycle.csv
+online_upload_summary.json
+```
+
+### 对比结果
+
+| Artifact | Complete Episodes | Partial Episodes | Incomplete Lines | Duplicate Incomplete Lines | PSCCH/PSSCH Fail |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| `online_ns3_short_fixed_20260717_031703` | 14 | 8 | 245 | 237 | 1836 / 480 |
+| `online_ns3_short_strategyclear_20260717_041313` | 21 | 6 | 184 | 178 | 95 / 10 |
+
+策略清空修复后剩余 6 个 partial episode：
+
+| Source -> Target | Received / Expected | Missing |
+| --- | ---: | ---: |
+| 11 -> 1 | 25424 / 35424 | 10000 |
+| 14 -> 3 | 70320 / 80320 | 10000 |
+| 12 -> 4 | 20560 / 30560 | 10000 |
+| 7 -> 4 | 60192 / 70192 | 10000 |
+| 10 -> 9 | 56896 / 66896 | 10000 |
+| 13 -> 9 | 34432 / 44432 | 10000 |
+
+### 结论
+
+`184` 行 incomplete 不是 `184` 个失败请求，其中 `178` 行是同一批 partial episode 的重复轮询。真实未完成 episode 为 6 个，且每个都恰好缺少一个 OpenCDA `max_packet_size=10000` fragment。当前剩余问题更像单 fragment 在 PHY decode failure 后没有应用层重传/重调度；它已经不是车辆初始化、CARLA/NS3 时间同步、子信道越界或整条链路调度绕过问题。

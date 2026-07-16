@@ -95,6 +95,13 @@ network_time_sync tests passed
 | OpenCDA CP counter | 1 |
 | Online AP@0.3 / AP@0.5 / AP@0.7 | 0.88 / 0.88 / 0.79 |
 
+使用 `opencda.tools.online_ns3_log_eval` 进一步按 source-target upload episode 去重后：
+
+| Run | Complete Episodes | Partial Episodes | Duplicate Incomplete Lines | Main Failure Shape |
+| --- | ---: | ---: | ---: | --- |
+| `online_ns3_short_fixed_20260717_031703` | 14 | 8 | 237 | stale scheduler strategy caused many overlap failures |
+| `online_ns3_short_strategyclear_20260717_041313` | 21 | 6 | 178 | each remaining partial episode misses exactly one 10000-byte fragment |
+
 该轮新增修复：
 
 - `PotentialGame.clear_resource_allocation_strategy()` 同步清理各 CAV `ClusteringScheduler.channel_allocation`。
@@ -103,7 +110,8 @@ network_time_sync tests passed
 
 剩余边界：
 
-- 35 tick 短回归仍不足以完成多轮大包 drain，OpenCDA 日志仍有重复 incomplete upload line。
+- 35 tick 短回归中 OpenCDA 日志仍有重复 incomplete upload line；episode-level 去重后，真实 partial episode 为 6 个，均是缺少一个 10000-byte fragment。
+- 这更像单 fragment PHY/PSCCH/PSSCH loss 后缺少应用层重传/重调度，而不是时间同步、车辆初始化或子信道越界问题。
 - 该在线短回归用于证明真实 CARLA tick + NS3 bridge + manual subchannel 语义已闭环；论文主表仍以离线 41 帧 mAP 与 request-level NS3 replay 为主。
 
 时间同步证据：
