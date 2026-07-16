@@ -1,0 +1,4 @@
+grid_size,records,active_areas,area_acc_noisy_or_ap05_samples,area_acc_noisy_or_ap05_pearson,area_acc_noisy_or_ap05_spearman,area_acc_score_mean_ap05_samples,area_acc_score_mean_ap05_pearson,area_acc_score_mean_ap05_spearman,area_frame_noisy_or_recall05_samples,area_frame_noisy_or_recall05_pearson,area_frame_noisy_or_recall05_spearman,area_frame_score_mean_recall05_samples,area_frame_score_mean_recall05_pearson,area_frame_score_mean_recall05_spearman
+5x3,46993,1101,53,0.454054,0.213836,53,0.340895,0.363570,500,0.254815,0.475952,403,0.151016,0.018000
+10x6,21418,337,36,0.380141,0.411840,36,0.300028,0.402059,354,0.229353,0.570407,321,0.096942,0.019480
+20x12,8386,94,21,0.505131,0.233766,21,0.239125,0.472727,209,0.401608,0.458975,206,0.244637,0.173859

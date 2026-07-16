@@ -993,3 +993,26 @@ docs/doc_workspace/LGCP/experiments/hierarchy_plan/20260715_lgcp_carla_hierarchy
 - 当前结果是 byte proxy，不是 PHY airtime 或 MAC scheduling overhead。
 - 在 20 CAV / top-40 area / 11 frame 设置下，control-plane traffic 约为 30.96 KB/frame，占 planned data + control 的 9.52%。
 - 该结果可回应 control-plane overhead 未量化的问题；论文级稳定性仍需多 seed / 多场景复核。
+
+## 2026-07-16：Grid / Area Size Sensitivity Smoke
+
+`opencda/tools/lgcp_area_confidence_eval.py` 新增 `--grid-size-x` / `--grid-size-y`，允许离线覆盖 ROI grid size，不修改 `lgcp_carla.yaml`。
+
+共同设置：
+
+- scenario：`2026_07_15_02_33_21`
+- frames：11
+- fusion method：`early`
+- ROI：`280m x 80m`
+
+| Grid size | Records | Active areas | Area-frame noisy-or vs recall@0.5 Spearman | Area-acc noisy-or vs AP@0.5 Spearman | Area-acc score_mean vs AP@0.5 Spearman |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| `5m x 3m` | 46993 | 1101 | 0.475952 | 0.213836 | 0.363570 |
+| `10m x 6m` | 21418 | 337 | 0.570407 | 0.411840 | 0.402059 |
+| `20m x 12m` | 8386 | 94 | 0.458975 | 0.233766 | 0.472727 |
+
+解释边界：
+
+- default `10m x 6m` 在该 11 帧 smoke 中给出最强 area-frame recall ranking。
+- `5m x 3m` 样本更多但 per-area AP 更稀疏；`20m x 12m` active areas 更少，accumulated AP 样本也更少。
+- 当前只支持 default grid 的合理性，不能声称 LGCP 对 area size 完全不敏感。

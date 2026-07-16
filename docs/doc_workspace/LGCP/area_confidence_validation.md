@@ -175,3 +175,17 @@ area_confidence/
 - 当前离线推理默认以 ego 为参考坐标，area 切分必须确保坐标系一致。
 - RSU 作为 `-1` agent 可以导出数据，但 OpenCOOD loader 是否应把 RSU 当作普通 CAV sensor provider，需要在实现时单独验证。
 - `density_score()` 只反映 LiDAR 点云密度，不一定等价于 detector quality；若相关性弱，需要引入 detector score 或 learned calibration。
+
+## 2026-07-16 Grid Size Sensitivity Smoke
+
+`opencda/tools/lgcp_area_confidence_eval.py` 已支持通过 `--grid-size-x` / `--grid-size-y` 在离线评估中覆盖 ROI grid size。
+
+当前完成三组单场景 11 帧 smoke：
+
+| Grid size | Area-frame noisy-or vs recall@0.5 Spearman | Area-acc noisy-or vs AP@0.5 Spearman |
+| --- | ---: | ---: |
+| `5m x 3m` | 0.475952 | 0.213836 |
+| `10m x 6m` | 0.570407 | 0.411840 |
+| `20m x 12m` | 0.458975 | 0.233766 |
+
+该结果支持 `10m x 6m` 作为当前默认 grid，但仍需多 seed / 多场景复核。

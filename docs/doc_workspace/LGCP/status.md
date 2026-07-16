@@ -50,6 +50,7 @@
 - 已新增 `workflow_and_group_semantics.md`，形成 LGCP workflow figure 草稿、area-task group 语义、packet granularity、dedup / reuse 和 leader-to-RSU reliability 的论文写作素材。
 - 已新增 `deployment_assumptions.md`，形成 RSU-assisted assumption、mobility / stale assignment、localization error、failure modes、multi-RSU scaling 和 large-scale claim boundary 的论文讨论素材。
 - 已新增 `manuscript_language_audit.md`，定位 TeX 中 stage 编号不一致和 `approximate solution` 高风险表述，并给出替换段落、rebuttal wording 和论文编辑 checklist。
+- 已新增 `grid_size_sensitivity.md`，并在不修改 `lgcp_carla.yaml` 的前提下完成 `5m x 3m`、`10m x 6m`、`20m x 12m` 三组 11 帧 grid-size sensitivity smoke；当前 default `10m x 6m` 在 area-frame noisy-or vs recall@0.5 上 Spearman 最高。
 - 已新增 LGCP 专用仿真入口 `opencda/scenario_testing/lgcp_carla.py` 和配置 `opencda/scenario_testing/config_yaml/lgcp_carla.yaml`。
 - 未修改 `v2xp_cluster_carla` 原始配置。
 - 已补齐 RSU 首次启用所需的基础运行路径：固定基础设施感知初始化、RSU 注册/访问、最近感知结果保存、销毁路径。

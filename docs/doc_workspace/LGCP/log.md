@@ -2054,3 +2054,53 @@ docs/doc_workspace/LGCP/manuscript_language_audit.md
 
 - `target.md` 中 stage 编号一致性和 heuristic / approximate 表述两项 P2 已标记完成。
 - 本次只沉淀论文修改建议，没有直接修改 `C:\Workspace\icdcs-paper\LGCP\conference_101719.tex`。
+
+## 2026-07-16 - grid / area size sensitivity smoke
+
+### 目标
+
+- 推进 P1 中 area size / grid size sensitivity。
+- 不修改 `lgcp_carla.yaml`，只在离线 area confidence 评估中覆盖 grid size。
+
+### 代码
+
+`opencda/tools/lgcp_area_confidence_eval.py` 新增：
+
+```text
+--grid-size-x
+--grid-size-y
+```
+
+### 运行命令
+
+示例：
+
+```powershell
+conda run -n opencda python -m opencda.tools.lgcp_area_confidence_eval --dataset-root D:\Data\Carla --scenario-id 2026_07_15_02_33_21 --max-frames 11 --with-inference --fusion-method early --ego-cav-id 1 --grid-size-x 10 --grid-size-y 6 --output-dir docs\doc_workspace\LGCP\experiments\area_confidence\20260716_lgcp_carla_grid_sensitivity_10x6_11f
+```
+
+三组 grid：
+
+- `5m x 3m`
+- `10m x 6m`
+- `20m x 12m`
+
+### 结果
+
+汇总文件：
+
+```text
+docs/doc_workspace/LGCP/experiments/area_confidence/20260716_lgcp_carla_grid_sensitivity_summary.csv
+```
+
+| Grid size | Records | Active areas | Area-frame noisy-or vs recall@0.5 Spearman | Area-acc noisy-or vs AP@0.5 Spearman |
+| --- | ---: | ---: | ---: | ---: |
+| `5m x 3m` | 46993 | 1101 | 0.475952 | 0.213836 |
+| `10m x 6m` | 21418 | 337 | 0.570407 | 0.411840 |
+| `20m x 12m` | 8386 | 94 | 0.458975 | 0.233766 |
+
+### 结论
+
+- 当前单场景 11 帧 smoke 支持 `10m x 6m` 作为默认 grid：area-frame noisy-or confidence vs recall@0.5 Spearman 最高。
+- 细网格样本更多但 AP 排序变弱，粗网格 active areas 和 AP samples 更少。
+- `target.md` 中 area size / grid size sensitivity 已标记为单场景 smoke 完成；最终论文仍应扩展多 seed。

@@ -45,6 +45,10 @@ def parse_args():
                         help='Frame index to start from within the scenario.')
     parser.add_argument('--density-threshold', type=float, default=None,
                         help='Override density threshold. Defaults to YAML lidar threshold.')
+    parser.add_argument('--grid-size-x', type=float, default=None,
+                        help='Override LGCP ROI grid width in meters.')
+    parser.add_argument('--grid-size-y', type=float, default=None,
+                        help='Override LGCP ROI grid height in meters.')
     parser.add_argument('--include-empty', action='store_true',
                         help='Write all area-agent rows, including empty cells.')
     parser.add_argument('--with-inference', action='store_true',
@@ -500,6 +504,11 @@ def main():
     config = load_lgcp_config(args.lgcp_yaml)
     if args.density_threshold is not None:
         config['density_threshold'] = args.density_threshold
+    if args.grid_size_x is not None or args.grid_size_y is not None:
+        gx, gy = config['grid_size']
+        config['grid_size'] = (
+            float(args.grid_size_x) if args.grid_size_x is not None else gx,
+            float(args.grid_size_y) if args.grid_size_y is not None else gy)
 
     dataset = OPV2VFrameDataset(args.dataset_root)
     scenario_id = args.scenario_id or next(iter(dataset.scenarios.keys()))
