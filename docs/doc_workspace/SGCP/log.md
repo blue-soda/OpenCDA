@@ -2355,3 +2355,32 @@ docs\doc_workspace\SGCP\artifacts\runtime_breakdown_41f\offline_replay_runtime.l
 - SGCP 控制面 Python 原型平均 105.24 ms，接近但略高于 100 ms，因此论文只能写 near-real-time feasibility，不能写完整端到端 100 ms 保证。
 - PPS 本身平均 40.58 ms 且 41/41 帧 3 轮收敛；主要优化空间在 coalition formation。
 - 在线 topology-trigger gate 可用于摊销 coalition formation 成本，因为 cluster membership 不必每帧重构。
+
+## 2026-07-16 - Reproducibility manifest
+
+### 目的
+
+推进 P0 “确认论文现有结果对应的代码版本、配置、随机种子和日志路径”，把当前可复现实验和论文旧主表分开管理。
+
+### 复核材料
+
+- `C:\Workspace\icdcs-paper\SGCP\main.tex`
+- `docs/doc_workspace/SGCP/results.md`
+- `docs/doc_workspace/SGCP/artifacts/`
+- 当前 OpenCDA git 状态
+
+### 输出
+
+新增：
+
+```text
+docs/doc_workspace/SGCP/reproducibility_manifest.md
+```
+
+### 结论
+
+- 当前 OpenCDA 复现实验 commit：`2cd026ec96691d15e4d764f4bd78af51a2404859`。
+- 论文旧主表 `NC/RS/MUG/FullPerception/Ours` 尚未找到原始日志、随机种子、代码提交和完整配置。
+- 当前可复现实验固定为 `D:\Data\Carla\2026_07_15_01_26_56`，20 CAV，41 帧。
+- Manifest 已记录 full 20-CAV early upper reference、SGCP constrained + inter-cluster late fusion、scheduler ablation、same-budget selective-sharing baseline、NS3 request-level replay、runtime breakdown 和 control overhead。
+- 后续论文修订应优先使用 manifest 中的已复现结果；如果要继续使用旧主表，必须先找回旧日志。

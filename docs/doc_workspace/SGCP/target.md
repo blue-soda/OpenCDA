@@ -10,7 +10,7 @@
 - [x] 修复 NS3 暴露子信道窗口语义：OpenCDA/bridge 按 `targetSubchannels` 校验 `sc_start/sc_num`，超出范围的 request 在 CAM/RLC 创建前拒绝；manual scheduler 对确定越界命令 drop+pop，避免无效队头阻塞后续合法请求。
 - [x] 定位 SGCP 当前实现入口、配置文件和运行命令。
 - [x] 建立 `v2xp_cluster_carla` 数据集导出、导入能力，用离线数据替代 CARLA 在线运行。
-- [ ] 当前优先：确认论文现有结果对应的代码版本、配置、随机种子和日志路径。
+- [x] 当前优先：确认论文现有结果对应的代码版本、配置、随机种子和日志路径。已新增 `reproducibility_manifest.md`；结论是 `main.tex` 旧主表缺原始日志/随机种子/代码版本，当前只能把已复现离线结果作为修订依据。
 - [x] 记录项目运行环境：`conda activate opencda`。
 - [x] 记录在线命令：`python opencda.py -t v2xp_cluster_carla --apply_cp --apply_ml --debug`，NS3 模式追加 `--network`。
 - [x] 新增数据导出入口：`python opencda.py -t v2xp_cluster_carla --dump`。
@@ -31,9 +31,9 @@
 - [x] 确认 CARLA、OpenCDA、NS3、OpenCOOD 的版本和环境依赖。
 - [x] 修复在线 CARLA-NS3 时间流速不一致：`NetworkManager.time_slot` 与 `world.fixed_delta_seconds` 保持一致。
 - [x] 新增离线 NS3 replay smoke test，验证不启动 CARLA 时 `sync_request/sync_ack` 与 transfer request 链路可用。
-- [ ] 确认论文现有结果对应的代码版本、配置、随机种子和日志路径。
+- [x] 确认论文现有结果对应的代码版本、配置、随机种子和日志路径。旧论文表格尚未找到原始日志；当前复现 manifest 固定 OpenCDA commit、数据集、命令、结果和 artifact 路径。
 - [x] 建立一次最小可复现实验流程，输出 mAP、通信开销、运行时耗时。
-- [ ] 在 `log.md` 中记录每次运行的完整命令和日志路径。
+- [x] 在 `log.md` 中记录每次运行的完整命令和日志路径。已将核心复现实验集中整理到 `reproducibility_manifest.md`，`log.md` 继续保留探索过程和每轮新增命令。
 
 ## P1：补充关键实验
 

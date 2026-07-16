@@ -105,6 +105,7 @@ SGCP 工作与仓库中以下部分关系最紧密：
 - 已新增 `parameter_calibration_revision.md`，完成 P4 `f(rho)` 标定过程和 `T_min^stab/N_max/rho_th` 参数依据写作口径；特别明确当前短序列不能证明 `T_min^stab=500 ms` 最优，只能写为五个感知周期的保守默认。
 - 已新增 `fullperception_baseline_revision.md`，完成 P4 FullPerception baseline 写作口径：FullPerception-RSU、full 20-CAV early/late fusion 作为 centralized/infrastructure-assisted upper reference；同通信预算主对比采用 CAV-only nearest/density/communication-aware selective sharing，并明确当前短序列上 SGCP 不能声称 AP 全面领先强 selective baseline。
 - 已扩展 `opencda.tools.offline_replay` 输出 `runtime_breakdown_ms`，并新增 `runtime_feasibility_revision.md`。当前 41 帧控制面 profiling 中，SGCP algorithm total 平均 105.24 ms，coalition formation 64.39 ms，PPS scheduling 40.58 ms；离线读取和 world build 约 599.73 ms/frame，属于 replay artifact，不计入在线周期。论文中应写为 near-real-time feasibility，而不是完整端到端 100 ms 保证。
+- 已新增 `reproducibility_manifest.md`，固定当前可复现实验的 OpenCDA commit、数据集、命令、结果和 artifact 路径；同时确认 `main.tex` 旧主表 `NC/RS/MUG/FullPerception/Ours = 0.13/0.31/0.37/0.81/0.85@AP0.3...` 尚未找到原始日志、随机种子和代码版本，论文修订应以当前复现结果替换或找回旧日志后再使用。
 - 已完成 SGCP 11 帧离线 NS3 request-level replay：154 条 SGCP intra-cluster request，CAM callback delivery ratio 0.558442，request with any RLC RX event ratio 0.974026。后者仅表示 request_id 至少出现一个 RLC RX 片段/事件，不代表完整 request delivery。
 - 已确认当前可运行环境版本快照，并记录到 `docs/doc_workspace/environment.md`：OpenCDA HEAD `fcc29fdc9ee9a9fe694c12e1fb6792b4d41bccac`，Python 3.7.10，CARLA Python API 0.9.11，PyTorch 1.10.0+cu113，Open3D 0.10.0.0，ns-3 wrapper `ns-3-dev-v2x-v1.1-dirty`。
 - 已修复在线 CARLA-NS3 时间流速不一致问题：`NetworkManager.time_slot` 不再将 `world.fixed_delta_seconds` 除以 5，`current_sim_time`、`current_time_slot` 与 CARLA tick 统一推进。
@@ -121,7 +122,7 @@ SGCP 工作与仓库中以下部分关系最紧密：
 
 ## 当前阻塞项
 
-- 尚未确认论文中表格结果对应的原始日志、随机种子和复现实验配置。
+- 论文旧主表已经确认缺少原始日志、随机种子和复现实验配置；当前处理策略是使用 `reproducibility_manifest.md` 中的已复现离线结果修订论文，或后续人工找回旧日志后再恢复旧表。
 - 当前 OpenCDA 与 ns-3 工作区均存在未提交/dirty 状态；NS3 exposed-subchannel 修复与 request-level 统计已通过离线回归，但仍需要分别在 OpenCDA 仓库和 co-simulation 仓库提交。
 - 离线 SGCP 回放已完成到“多帧 clustering + `potential_game` 资源分配 + 稳定性/运行时指标 + OpenCOOD 约束感知 mAP”层。
 - 论文 SGCP 的 PPS/博弈调度当前按配置默认 `potential_game` 执行；已完成 `RandomRA/MWS` 初版对比，但 MWS 结果低于 random，需要结合论文文本复核 baseline 定义与效用函数。
