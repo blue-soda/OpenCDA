@@ -8,13 +8,13 @@
 - [x] 审计离线 SGCP 测试链路，确认分簇结果是否真实决定每个 cluster head 的融合对象、成员集合和 inter-cluster late fusion 输入。已新增 `protocol_audit.md` 和 `--sgcp-trace-output`；41 帧输出 246 条 receiver trace，cluster head/member/source 列表与融合输入一致。
 - [x] 审计点云选择链路，确认 `PotentialGame` 输出的 grid selection 是否真实裁剪 sender 点云，并进入 OpenCOOD early fusion 输入；输出逐帧/逐 CAV 的 selected grids、点数、payload 和 AP 关联日志。41 帧 trace 已记录 selected grids、point counts、payload、pred/gt boxes。
 - [x] 审计子信道分配链路，确认 `sc_start/sc_num` 不只用于 NS3 replay，也真实约束离线/在线传输请求；对未调度 member 或超出子信道窗口的请求进行 drop/delay，而不是绕过 PPS 进入融合。41 帧 trace 中 `missing_channel_rows=0`，未发现未调度 sender 绕过 PPS 进入融合。
-- [ ] 构造离线单帧可解释 probe：同一帧分别运行 full early、SGCP grid-constrained、关闭 grid selection、随机 grid selection、固定 cluster membership，对比输入点云数量、预测框和 AP，确认每个机制开关能改变融合结果。已完成 head-only / grid-constrained / full-cluster / random-grid 41 帧机制 probe；random-grid 在相同 scheduled links 和 grid count 下达到 `0.78/0.75/0.36`，略高于当前 utility selection，还需补固定 cluster membership。
+- [ ] 构造离线单帧可解释 probe：同一帧分别运行 full early、SGCP grid-constrained、关闭 grid selection、随机 grid selection、固定 cluster membership，对比输入点云数量、预测框和 AP，确认每个机制开关能改变融合结果。已完成 head-only / grid-constrained / full-cluster / random-grid / raw-density / density-distance / spatial-diverse 41 帧机制 probe；`spatial_diverse` 在相同 scheduled links 和 grid count 下达到 `0.79/0.75/0.37`，当前优于原始 utility 与 random-grid，还需补固定 cluster membership。
 - [ ] 构造离线多帧协议一致性 probe：输出 cluster、grid selection、channel allocation、fused CAV ids、payload、prediction count、GT count 和 AP 的逐帧 CSV。
 - [ ] 用真实 CARLA 在线无 NS3 短回归验证 cluster membership、grid selection 和融合结果一致性；确保 CARLA 进程至多一个，并记录完整命令、日志和 AP。
 - [ ] 用真实 CARLA + NS3 或离线 NS3 replay 验证时间同步和 transfer request 语义：CARLA tick / OpenCDA network time slot / NS3 sync time 必须一致；带宽内无冲突请求成功，带宽外请求延迟或丢包。
 - [ ] 若协议链路存在 bug，优先修复并重跑主表；修复项必须配套离线 probe、NS3 request-level trace 和必要的在线 CARLA smoke test。
-- [ ] 若协议无误但主表 AP 仍低，展开细致消融定位原因：cluster 质量、grid utility、`rho_th`、`N_max`、member budget、channel budget、inter-cluster late fusion/NMS、检测框坐标变换、payload/AP tradeoff。已新增 `mechanism_probe.md`；当前定位为 grid utility selection 没有优于随机 grid candidates，而不是 cluster 或 late fusion 主体崩溃。
-- [ ] 在保持论文叙事的前提下改造算法以提升主表：优先优化 grid utility / candidate scoring，使其在相同 scheduled links 和相同 grid count 下稳定优于 random-grid；随后再评估 member selection、cluster-head selection、late fusion weighting、fallback sharing 或 topology-trigger 策略，但必须保留“较少通信量 + 分层融合 + 子信道可行调度”的核心主张。
+- [ ] 若协议无误但主表 AP 仍低，展开细致消融定位原因：cluster 质量、grid utility、`rho_th`、`N_max`、member budget、channel budget、inter-cluster late fusion/NMS、检测框坐标变换、payload/AP tradeoff。已新增 `mechanism_probe.md`；当前定位为原始饱和 density utility selection 不足，coverage-aware `spatial_diverse` 是正向改造。
+- [ ] 在保持论文叙事的前提下改造算法以提升主表：优先将 `spatial_diverse` 整理成 coverage-aware grid utility / candidate scoring，使其在相同 scheduled links 和相同 grid count 下稳定优于 random-grid；随后再评估 member selection、cluster-head selection、late fusion weighting、fallback sharing 或 topology-trigger 策略，但必须保留“较少通信量 + 分层融合 + 子信道可行调度”的核心主张。
 - [ ] 重新生成主表候选结果：至少包含 NC、RS/random、MUG/MWS 或强 selective baseline、Full/reference、SGCP；统一报告 AP@0.3/0.5/0.7、payload/Mbps、control overhead、runtime 和 NS3 delivery。
 - [ ] 当主表结果达到论文可写水平后，修改 `C:\Workspace\icdcs-paper\SGCP\main.tex`：替换旧主表、通信开销、实时性、baseline fairness、NS3 协议和机制描述。
 - [ ] 根据最新结果更新 rebuttal 答复，覆盖审稿意见中的 FullPerception 公平性、decentralized baseline、`f(rho)` 标定、500 ms 参数、100 ms 实时性、topology trigger、NS3/通信可靠性。

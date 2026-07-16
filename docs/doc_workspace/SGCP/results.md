@@ -101,9 +101,12 @@ conda run -n opencda python -m opencda.tools.offline_inference --dataset-root D:
 | Head-only | 0.26 | 0.22 | 0.09 | 0 | 0.00 | 0.00 | 0.00 | Cluster heads detect alone, then late-fuse |
 | SGCP grid-constrained | 0.77 | 0.73 | 0.35 | 26,916,208 | 109,415.48 | 1.67 | 6,838.47 | Current main SGCP constrained mode |
 | Random grid, same scheduled links | 0.78 | 0.75 | 0.36 | 27,908,560 | 113,449.43 | 1.67 | 7,090.59 | Same PPS scheduled sender links and grid counts, deterministic random grid candidates |
+| Raw-density score | 0.74 | 0.70 | 0.37 | 29,290,768 | 119,068.16 | 1.67 | 7,441.76 | Replaces saturated utility with sender grid density |
+| Density-distance score | 0.74 | 0.71 | 0.37 | 29,219,088 | 118,776.78 | 1.67 | 7,423.55 | Sender density divided by receiver-grid distance cost |
+| Spatial-diverse grid, same scheduled links | 0.79 | 0.75 | 0.37 | 28,743,280 | 116,842.60 | 1.67 | 7,302.66 | Density-aware spatial cover, same PPS scheduled links and grid counts |
 | Full-cluster upload | 0.82 | 0.79 | 0.42 | 44,850,528 | 182,319.22 | 2.33 | 11,394.95 | Same clusters, upload all member point clouds |
 
-观察：SGCP grid-constrained 使用约 60.0% 的 full-cluster payload，并保留大部分 AP@0.5，但 AP@0.7 损失明显。随机 grid selection 在相同 PPS scheduled links 和相同 grid 数量下略高于当前 utility selection，说明当前主表修复重点应放在 grid utility、member/grid budget 和高精度定位相关 grid selection，而不是推翻 cluster formation 或 inter-cluster late fusion。
+观察：SGCP grid-constrained 使用约 60.0% 的 full-cluster payload，并保留大部分 AP@0.5，但 AP@0.7 损失明显。随机 grid selection 在相同 PPS scheduled links 和相同 grid 数量下略高于当前 utility selection，说明原始饱和 density utility 不足。`spatial_diverse` 进一步达到 `0.79/0.75/0.37`，高于 random-grid，说明 coverage-aware grid selection 是当前最有希望的主表修复方向；raw density / density-distance 虽提升 AP@0.7，但会损失 AP@0.3/0.5 且 payload 更高。
 
 ## 参数敏感性
 

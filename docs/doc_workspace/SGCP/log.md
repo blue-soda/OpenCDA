@@ -2585,3 +2585,48 @@ conda run -n opencda python -m opencda.tools.offline_inference --dataset-root D:
 - Random grid selection 在相同 scheduled links 和相同 grid count 下略高于当前 SGCP utility selection（`0.77/0.73/0.35`）。
 - 该结果排除了“随机低效选择一定明显更差”的假设，说明当前 grid utility 与 OpenCOOD 检测 AP 的目标不够一致。
 - 下一步应优先做 fixed-cluster / fixed-link 的 grid scoring 改造与消融，目标是在接近当前 payload 的前提下稳定超过 random-grid，并缩小到 full-cluster upload（`0.82/0.79/0.42`）的差距。
+
+## 2026-07-16 - Grid utility repair probes
+
+### 目的
+
+继续推进 P-1 主表修复：在协议链路已确认有效的基础上，尝试改造 grid utility / selection，判断是否能在相同 PPS scheduled links 和相近 payload 下超过 random-grid。
+
+### 代码
+
+新增离线实验开关：
+
+```text
+--sgcp-grid-score-mode {utility,raw_density,density_distance}
+--sgcp-grid-selection-mode {utility,random,spatial_diverse}
+```
+
+其中：
+
+- `raw_density`：用 sender grid 原始 density 替代饱和 utility。
+- `density_distance`：用 sender grid density 除以 receiver-to-grid distance cost。
+- `spatial_diverse`：保留 PPS scheduled links 和每条 link 的 grid count，在候选 grid 内用 density-aware spatial cover 替换原始选格。
+
+### 命令
+
+```powershell
+conda run -n opencda python -m opencda.tools.offline_inference --dataset-root D:\Data\Carla --scenario-id 2026_07_15_01_26_56 --ego-cav-id 1 --sgcp-constrained --sgcp-inter-cluster-late-fusion --resource-allocation potential_game --sgcp-grid-score-mode raw_density --max-frames 0 --sgcp-trace-output docs\doc_workspace\SGCP\artifacts\mechanism_probe\raw_density_grid_41f_trace.csv *> docs\doc_workspace\SGCP\artifacts\mechanism_probe\raw_density_grid_41f_stdout.log
+conda run -n opencda python -m opencda.tools.offline_inference --dataset-root D:\Data\Carla --scenario-id 2026_07_15_01_26_56 --ego-cav-id 1 --sgcp-constrained --sgcp-inter-cluster-late-fusion --resource-allocation potential_game --sgcp-grid-score-mode density_distance --max-frames 0 --sgcp-trace-output docs\doc_workspace\SGCP\artifacts\mechanism_probe\density_distance_grid_41f_trace.csv *> docs\doc_workspace\SGCP\artifacts\mechanism_probe\density_distance_grid_41f_stdout.log
+conda run -n opencda python -m opencda.tools.offline_inference --dataset-root D:\Data\Carla --scenario-id 2026_07_15_01_26_56 --ego-cav-id 1 --sgcp-constrained --sgcp-inter-cluster-late-fusion --resource-allocation potential_game --sgcp-grid-selection-mode spatial_diverse --max-frames 0 --sgcp-trace-output docs\doc_workspace\SGCP\artifacts\mechanism_probe\spatial_diverse_grid_41f_trace.csv *> docs\doc_workspace\SGCP\artifacts\mechanism_probe\spatial_diverse_grid_41f_stdout.log
+```
+
+### 结果
+
+| Variant | AP@0.3 | AP@0.5 | AP@0.7 | Total Payload | Avg. Payload / Receiver | Avg. Uploaded Points | Avg. Selected Grids | Missing Channel Rows |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| SGCP utility | 0.77 | 0.73 | 0.35 | 26,916,208 | 109,415.48 | 6,838.47 | 87.32 | 0 |
+| Random grid | 0.78 | 0.75 | 0.36 | 27,908,560 | 113,449.43 | 7,090.59 | 87.32 | 0 |
+| Raw-density score | 0.74 | 0.70 | 0.37 | 29,290,768 | 119,068.16 | 7,441.76 | 88.55 | 0 |
+| Density-distance score | 0.74 | 0.71 | 0.37 | 29,219,088 | 118,776.78 | 7,423.55 | 88.00 | 0 |
+| Spatial-diverse grid | 0.79 | 0.75 | 0.37 | 28,743,280 | 116,842.60 | 7,302.66 | 87.32 | 0 |
+
+### 观察
+
+- `raw_density` 和 `density_distance` 虽然提升 AP@0.7，但损失 AP@0.3/0.5 且 payload 增加，说明单纯追高密度并不稳健。
+- `spatial_diverse` 在相同 scheduled links 和 grid count 下超过 random-grid，同时 payload 约为 full-cluster upload 的 64.1%，是当前最有希望的 grid utility 改造方向。
+- 后续应把 `spatial_diverse` 从 probe 整理为 coverage-aware SGCP grid utility，并补 fixed-cluster/fixed-link、payload sweep 和 NS3-aware 交付裁剪。

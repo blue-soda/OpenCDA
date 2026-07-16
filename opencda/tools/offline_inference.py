@@ -73,8 +73,12 @@ def parse_args():
                         choices=['grid', 'head_only', 'full_cluster'],
                         help='Upload mode for SGCP constrained replay. grid uses PPS-selected grids; head_only keeps only each receiver; full_cluster uploads all cluster member point clouds for protocol probes.')
     parser.add_argument('--sgcp-grid-selection-mode', default='utility',
-                        choices=['utility', 'random'],
-                        help='Grid selection mode for SGCP scheduled links. random keeps scheduled links and grid counts but replaces grids with deterministic random candidates.')
+                        choices=['utility', 'random', 'spatial_diverse'],
+                        help='Grid selection mode for SGCP scheduled links. random/spatial_diverse keep scheduled links and grid counts but replace grids with deterministic candidate choices.')
+    parser.add_argument('--sgcp-grid-score-mode', default='utility',
+                        choices=['utility', 'raw_density',
+                                 'density_distance'],
+                        help='Grid scoring mode used by potential_game before optional grid selection replacement.')
     parser.add_argument('--t-min-stab', type=float, default=None,
                         help='Override CoalitionGame Params.T_min_stab in seconds. Use 0 for no stability window.')
     parser.add_argument('--n-max', type=int, default=None,
@@ -228,12 +232,103 @@ def randomize_scheduled_grid_selection(world, clusters, timestamp):
         co_manager.set_grid_selection(randomized)
 
 
+def grid_center_from_id(grid_id, grid_size):
+    try:
+        x_idx, y_idx = [int(item) for item in str(grid_id).split('_')]
+    except (TypeError, ValueError):
+        return None
+    return (
+        x_idx * grid_size + grid_size / 2.0,
+        y_idx * grid_size + grid_size / 2.0,
+    )
+
+
+def squared_distance(point_a, point_b):
+    return (
+        (point_a[0] - point_b[0]) ** 2 +
+        (point_a[1] - point_b[1]) ** 2)
+
+
+def select_spatially_diverse_grids(head_vm, sender_vm, candidates, count):
+    if count <= 0 or not candidates:
+        return []
+    lidar = sender_vm.perception_manager.lidar
+    grid_size = lidar.grid_size
+    remaining = set(candidates)
+    selected = []
+
+    def density(grid_id):
+        return lidar.get_grid_density(grid_id)
+
+    first = max(
+        remaining,
+        key=lambda grid_id: (density(grid_id), str(grid_id)))
+    selected.append(first)
+    remaining.remove(first)
+
+    while remaining and len(selected) < count:
+        selected_centers = [
+            grid_center_from_id(grid_id, grid_size)
+            for grid_id in selected
+        ]
+        selected_centers = [
+            center for center in selected_centers if center is not None
+        ]
+
+        def diversity_score(grid_id):
+            center = grid_center_from_id(grid_id, grid_size)
+            if center is None or not selected_centers:
+                min_distance = 0.0
+            else:
+                min_distance = min(
+                    squared_distance(center, selected_center)
+                    for selected_center in selected_centers)
+            return (density(grid_id) + 1e-6) * (1.0 + min_distance / 10000.0)
+
+        best_grid = max(
+            remaining,
+            key=lambda grid_id: (diversity_score(grid_id), str(grid_id)))
+        selected.append(best_grid)
+        remaining.remove(best_grid)
+    return selected
+
+
+def diversify_scheduled_grid_selection(world, clusters):
+    """Replace selected grids with deterministic density-aware spatial cover."""
+    for cluster in clusters:
+        head_id = int(cluster.head_id)
+        head_vm = world.get_vehicle_manager(head_id)
+        if head_vm is None:
+            continue
+        co_manager = head_vm.perception_manager.co_manager
+        current_selection = getattr(co_manager, 'grid_selection', {}) or {}
+        diversified = {}
+        for sender_id, grid_ids in current_selection.items():
+            sender_id = int(sender_id)
+            sender_vm = world.get_vehicle_manager(sender_id)
+            if sender_vm is None:
+                continue
+            candidates = sorted(candidate_grids_for_sender(head_vm, sender_vm))
+            if not candidates:
+                continue
+            count = min(len(grid_ids), len(candidates))
+            diversified[sender_id] = select_spatially_diverse_grids(
+                head_vm,
+                sender_vm,
+                candidates,
+                count)
+        co_manager.clear_grid_selection()
+        co_manager.set_grid_selection(diversified)
+
+
 def apply_sgcp_constraint(frame, protocol, ego_cav_id, resource_allocation,
                           receiver_policy, t_min_stab=None,
                           clustering='coalition_game', n_max=None,
                           rho_th=None, num_channels=None,
                           bandwidth_mhz=None, upload_mode='grid',
-                          grid_selection_mode='utility', timestamp=None):
+                          grid_selection_mode='utility',
+                          grid_score_mode='utility',
+                          timestamp=None):
     clear_sgcp_globals()
     world = OfflineCavWorld(
         frame,
@@ -255,6 +350,8 @@ def apply_sgcp_constraint(frame, protocol, ego_cav_id, resource_allocation,
     clusters = clustering_algorithm.run()
     apply_cluster_state(world, clusters)
     allocator = build_resource_allocator(resource_allocation, world)
+    if hasattr(allocator, 'grid_score_mode'):
+        allocator.grid_score_mode = grid_score_mode
     apply_resource_overrides(
         allocator,
         world,
@@ -264,6 +361,8 @@ def apply_sgcp_constraint(frame, protocol, ego_cav_id, resource_allocation,
     allocator.run()
     if grid_selection_mode == 'random':
         randomize_scheduled_grid_selection(world, clusters, timestamp)
+    elif grid_selection_mode == 'spatial_diverse':
+        diversify_scheduled_grid_selection(world, clusters)
     if receiver_policy == 'all-cluster-heads':
         receiver_ids = sorted(int(cluster.head_id) for cluster in clusters)
     else:
@@ -299,6 +398,7 @@ def apply_sgcp_constraint(frame, protocol, ego_cav_id, resource_allocation,
             if hasattr(allocator, 'p') else None)
         metadata['upload_mode'] = upload_mode
         metadata['grid_selection_mode'] = grid_selection_mode
+        metadata['grid_score_mode'] = grid_score_mode
         constrained_items.append((constrained_frame, metadata))
     return constrained_items
 
@@ -566,6 +666,7 @@ def trace_row(scenario_id, timestamp, metadata, eval_frame,
         'resource_allocation': metadata.get('resource_allocation', ''),
         'upload_mode': metadata.get('upload_mode', ''),
         'grid_selection_mode': metadata.get('grid_selection_mode', ''),
+        'grid_score_mode': metadata.get('grid_score_mode', ''),
         'clustering': metadata.get('clustering', ''),
         'cluster_count': metadata.get('cluster_count', ''),
         'cluster_member_ids': ';'.join(
@@ -599,6 +700,7 @@ def write_trace_csv(path, rows):
         'resource_allocation',
         'upload_mode',
         'grid_selection_mode',
+        'grid_score_mode',
         'clustering',
         'cluster_count',
         'cluster_member_ids',
@@ -697,6 +799,7 @@ def main():
                 args.bandwidth_mhz,
                 args.sgcp_upload_mode,
                 args.sgcp_grid_selection_mode,
+                args.sgcp_grid_score_mode,
                 timestamp)
         if args.sgcp_inter_cluster_late_fusion:
             original_ego = next(cav for cav in frame.values() if cav['ego'])

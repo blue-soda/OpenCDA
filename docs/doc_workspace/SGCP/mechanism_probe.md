@@ -10,7 +10,8 @@
 
 ```text
 --sgcp-upload-mode {grid,head_only,full_cluster}
---sgcp-grid-selection-mode {utility,random}
+--sgcp-grid-selection-mode {utility,random,spatial_diverse}
+--sgcp-grid-score-mode {utility,raw_density,density_distance}
 ```
 
 含义：
@@ -19,6 +20,8 @@
 - `head_only`：每个 cluster head 只使用自身点云，随后做 inter-cluster late fusion。
 - `full_cluster`：每个 cluster head 接收本 cluster 所有成员的完整点云，随后做 inter-cluster late fusion。
 - `random` grid selection：保留 SGCP/PPS 已调度 sender link 和每条 link 的 grid 数量，但将具体 grid 替换为确定性随机候选 grid，用于判断 utility 排序是否有效。
+- `spatial_diverse` grid selection：同样保留 scheduled links 和 grid 数量，但在每条 link 内用 density-aware farthest-point cover 选择空间分散的候选 grid，用于测试覆盖多样性是否比单点 utility 更适合检测 AP。
+- `raw_density` / `density_distance` grid score：只改变 `PotentialGame.grid_score()`，分别测试未饱和 sender density 和 density/distance cost 是否优于原始饱和 utility。
 
 该开关只用于机制 probe。默认仍是 `grid`，不改变主实验命令。
 
@@ -48,6 +51,12 @@ docs\doc_workspace\SGCP\artifacts\protocol_audit\sgcp_41f_trace.csv
 conda run -n opencda python -m opencda.tools.offline_inference --dataset-root D:\Data\Carla --scenario-id 2026_07_15_01_26_56 --ego-cav-id 1 --sgcp-constrained --sgcp-inter-cluster-late-fusion --resource-allocation potential_game --sgcp-grid-selection-mode random --max-frames 0 --sgcp-trace-output docs\doc_workspace\SGCP\artifacts\mechanism_probe\random_grid_41f_trace.csv
 ```
 
+Spatial-diverse grid selection：
+
+```powershell
+conda run -n opencda python -m opencda.tools.offline_inference --dataset-root D:\Data\Carla --scenario-id 2026_07_15_01_26_56 --ego-cav-id 1 --sgcp-constrained --sgcp-inter-cluster-late-fusion --resource-allocation potential_game --sgcp-grid-selection-mode spatial_diverse --max-frames 0 --sgcp-trace-output docs\doc_workspace\SGCP\artifacts\mechanism_probe\spatial_diverse_grid_41f_trace.csv
+```
+
 ## 结果
 
 | Mode | AP@0.3 | AP@0.5 | AP@0.7 | Total Bytes | Avg. Bytes / Receiver | Avg. Sources | Avg. Uploaded Sources | Avg. Uploaded Points | Avg. Selected Grids |
@@ -55,6 +64,9 @@ conda run -n opencda python -m opencda.tools.offline_inference --dataset-root D:
 | Head-only | 0.26 | 0.22 | 0.09 | 0 | 0.00 | 1.00 | 0.00 | 0.00 | 0.00 |
 | SGCP grid-constrained | 0.77 | 0.73 | 0.35 | 26,916,208 | 109,415.48 | 2.67 | 1.67 | 6,838.47 | 87.32 |
 | Random grid, same scheduled links | 0.78 | 0.75 | 0.36 | 27,908,560 | 113,449.43 | 2.67 | 1.67 | 7,090.59 | 87.32 |
+| Raw-density score | 0.74 | 0.70 | 0.37 | 29,290,768 | 119,068.16 | 2.67 | 1.67 | 7,441.76 | 88.55 |
+| Density-distance score | 0.74 | 0.71 | 0.37 | 29,219,088 | 118,776.78 | 2.67 | 1.67 | 7,423.55 | 88.00 |
+| Spatial-diverse grid, same scheduled links | 0.79 | 0.75 | 0.37 | 28,743,280 | 116,842.60 | 2.67 | 1.67 | 7,302.66 | 87.32 |
 | Full-cluster upload | 0.82 | 0.79 | 0.42 | 44,850,528 | 182,319.22 | 3.33 | 2.33 | 11,394.95 | 0.00 |
 
 ## 结论
@@ -63,10 +75,12 @@ conda run -n opencda python -m opencda.tools.offline_inference --dataset-root D:
 - Full-cluster upload 在同一 cluster 和 inter-cluster late fusion 结构下达到 `0.82/0.79/0.42`，说明 cluster formation 和 late fusion 主体并没有崩。
 - SGCP grid-constrained 使用约 60.0% 的 full-cluster payload，AP@0.5 保留约 92.4% 的 full-cluster AP，但 AP@0.7 损失明显。
 - Random grid selection 在同一调度链路和相同 grid 数量下达到 `0.78/0.75/0.36`，略高于当前 utility selection 的 `0.77/0.73/0.35`。这说明当前 grid utility 对检测 AP 的排序能力不足，至少在该 dump 上没有优于简单随机候选。
-- 当前主表偏低的主要嫌疑从协议链路转移到 grid/PPS 选择质量：utility 目标、grid budget、`B_h=1` 以及 AP@0.7 所需的定位精度。
+- `raw_density` 和 `density_distance` 提升 AP@0.7 到 `0.37`，但明显损失 AP@0.3/0.5，并增加 payload；单纯追高密度或近距离高密度不是稳健解。
+- `spatial_diverse` 在相同 scheduled links 和相同 grid count 下达到 `0.79/0.75/0.37`，高于原始 utility 和 random-grid，同时仍只使用 full-cluster payload 的约 64.1%。这说明覆盖多样性是比饱和密度 utility 更有希望的算法改造方向。
+- 当前主表偏低的主要嫌疑从协议链路转移到 grid/PPS 选择质量：需要把 grid utility 从“密度饱和增益”改为“检测导向的覆盖/定位增益”，并继续处理 `B_h=1`、grid budget 和 AP@0.7 定位精度。
 
 ## 下一步
 
 - 增加 fixed-cluster / all-in-one / singleton 的同 upload-mode 对照，拆分 cluster 质量影响。
 - 检查 `PotentialGame.best_response()` 中 `B_h=1` 和 `max_grids_per_rb` 的实际约束，评估是否需要更灵活的 per-head member budget。
-- 优化 grid utility，使其优先选择对 AP@0.7 更有贡献的近距离、高密度、低遮挡或高定位增益 grid。
+- 将 `spatial_diverse` 进一步整理为论文可解释的 coverage-aware grid utility，并补 payload-matched sweep，目标是在约 60-65% full-cluster payload 下稳定超过 random-grid。

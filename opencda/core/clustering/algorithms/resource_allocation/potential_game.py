@@ -65,6 +65,7 @@ class PotentialGame(ResourceAllocationAlgorithm):
         self.grids_ch_sens = set()
         self.grids_density = {}
         self.convergence_stats = {}
+        self.grid_score_mode = 'utility'
     
     def set_clusters(self, clusters):
         super().set_clusters(clusters)
@@ -115,6 +116,17 @@ class PotentialGame(ResourceAllocationAlgorithm):
     def grid_early_utility(self, density, hid=1):
         # 计算某网格由参与簇集合提供早期融合的总效用
         return self.grid_utility_density(density, common.global_vehicles[hid].rho_th)
+
+    @staticmethod
+    def grid_center(grid_id, grid_size):
+        try:
+            x_idx, y_idx = [int(item) for item in str(grid_id).split('_')]
+        except (TypeError, ValueError):
+            return None
+        return (
+            x_idx * grid_size + grid_size / 2.0,
+            y_idx * grid_size + grid_size / 2.0,
+        )
         
     def get_certain_strategy(self, hid, mid=None, grid_id=None):
         for (mid, sc, t, grids) in self.strategies[hid]:
@@ -219,6 +231,19 @@ class PotentialGame(ResourceAllocationAlgorithm):
             self.grids_ch_sens |= common.global_vehicles[head_id].high_density_grids
 
     def grid_score(self, cluster, grid_id, member_grid_density):
+        if self.grid_score_mode == 'raw_density':
+            return member_grid_density
+        if self.grid_score_mode == 'density_distance':
+            head_vehicle = common.global_vehicles[cluster.head_id]
+            center = self.grid_center(grid_id, head_vehicle.grid_size)
+            if center is None:
+                return member_grid_density
+            head_location = head_vehicle.get_position().location
+            distance = math.sqrt(
+                (center[0] - head_location.x) ** 2 +
+                (center[1] - head_location.y) ** 2)
+            return member_grid_density / (1.0 + distance / 100.0)
+
         participating_clusters = self.get_participating_clusters(grid_id)
         late_score = self.grid_late_utility(participating_clusters)
 
