@@ -3008,3 +3008,29 @@ docs\doc_workspace\SGCP\rebuttal_draft.md
 ### 结论
 
 Rebuttal 目前已有长版证据稿和短版提交稿两层结构。下一步可根据会议 rebuttal 字数限制继续压缩，或补真实在线 CARLA/NS3 短回归增强系统可信度。
+
+## 2026-07-17 - Online CARLA+NS3 short regression preparation
+
+### 目的
+
+为 P-1 中尚未闭环的“真实 CARLA+NS3 时间同步短回归”建立可执行协议，并先完成无需图形仿真的轻量时间同步检查。
+
+### 命令
+
+```powershell
+conda run -n opencda python -m py_compile opencda\core\networking\network_manager.py opencda\core\networking\ns3_co_simulation\bridge\carla_ns3_bridge.py opencda\tools\offline_ns3_replay.py test\test_network_time_sync.py
+
+conda run -n opencda python -c "from test.test_network_time_sync import test_network_time_slot_matches_carla_fixed_delta,test_multiple_network_slots_track_carla_time; test_network_time_slot_matches_carla_fixed_delta(); test_multiple_network_slots_track_carla_time(); print('network_time_sync tests passed')"
+
+wsl -d Ubuntu-22.04 -u sakakibara -- bash -lc "ps -ef | grep -E 'ns3|vanet/main|scratch/vanet|CarlaUE4' | grep -v grep || true; ss -ltnp | grep -E ':5556|:5557' || true"
+```
+
+### 结果
+
+- `network_time_sync tests passed`
+- 未发现 CARLA / NS3 / 5556 / 5557 残留进程。
+- 新增 `online_ns3_short_regression.md`，记录真实在线短回归的启动顺序、日志路径、时间同步验收条件和 subchannel 语义检查项。
+
+### 结论
+
+当前轻量测试继续支持此前修复：OpenCDA `NetworkManager.time_slot` 与 CARLA `fixed_delta_seconds` 使用同一时间基准。真实 CARLA+NS3 图形短回归仍待执行；执行时应先启动 WSL ns-3，再启动 CARLA，最后运行有限 tick 的 `opencda.py ... --network`。

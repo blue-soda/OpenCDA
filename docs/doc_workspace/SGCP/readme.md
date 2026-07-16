@@ -21,6 +21,7 @@
 - `runtime_feasibility_revision.md`：SGCP 控制面毫秒级耗时分解、100 ms 周期可行性边界和 rebuttal 写法。
 - `reproducibility_manifest.md`：当前可复现实验的代码版本、数据集、命令、结果和日志路径；同时标注论文旧主表缺少原始日志的问题。
 - `online_topology_gate_regression.md`：真实 CARLA 在线打开 topology-trigger gate 的短回归命令、日志、trigger 统计和结论边界。
+- `online_ns3_short_regression.md`：真实 CARLA + NS3 短回归协议，记录启动顺序、时间同步验收条件和 subchannel 语义检查项。
 - `protocol_audit.md`：主表修复阶段的离线协议审计，记录 cluster、grid selection、channel allocation 是否真实进入融合输入。
 - `mechanism_probe.md`：head-only、SGCP grid-constrained 和 full-cluster upload 的机制 probe，用于定位 AP 损失来源。
 - `main_table_candidate.md`：论文主表候选，收束 FullPerception upper reference、payload-matched selective baseline、SGCP 10/20ch、Mbps 换算和主表/附表边界。
