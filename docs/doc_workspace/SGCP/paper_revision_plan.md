@@ -185,9 +185,10 @@ The coalition formation stage is guided by a stability-aware utility and empiric
 - conclusion 中弱化 unconditional Nash-stable guarantee。
 
 2026-07-16 更新：`f(rho)` 标定统计和 `rho_th` sweep 已写入 `main.tex` 实验/参数段。
+2026-07-17 更新：`N_max` 和 `T_min^stab` 参数依据已写入 `main.tex`，包括 `N_max=4` 容量控制解释、capacity-skipped candidate joins 统计，以及 `T_min^stab=100--1000 ms` sweep 的无敏感性边界。
 
 剩余应优先推进：
 
 - 把 FullPerception centralized upper reference 与 V2V-only selective baseline 的公平性写成 rebuttal；
 - 形成 reviewer-by-reviewer response 草稿；
-- 视版面情况将 `N_max` / `T_min^stab` 参数依据加入正文或 appendix。
+- 视版面情况将完整 `N_max` / `T_min^stab` 表格放入 appendix。

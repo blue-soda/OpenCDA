@@ -2974,3 +2974,21 @@ docs\doc_workspace\SGCP\rebuttal_draft.md
 ### 结论
 
 当前 rebuttal 草稿的主线是：承认旧稿中 baseline 和理论表述过强，说明修订后采用 centralized upper reference + fair V2V selective baselines + coverage-aware SGCP 主表；同时用 density calibration、rho sweep、NS3 request-level delivery 和 runtime breakdown 支撑可复现性与工程可行性。
+
+## 2026-07-17 - Paper Nmax and Tmin parameter revision
+
+### 目的
+
+回应审稿人对 `T_min^stab=500 ms` 和 `N_max=4` 参数依据不足的质疑，把已完成的参数 sweep 和 capacity statistics 写入 `C:\Workspace\icdcs-paper\SGCP\main.tex`。
+
+### 修改内容
+
+- 在实验参数表后补充 `N_max=4` 的解释：它是容量控制参数而不是纯 AP tuning knob。
+- 写入当前 dump 的 capacity evidence：`N_max=4` 无 singleton clusters，平均 cluster size 3.33，且每帧仍有 99.15 次 capacity-skipped candidate joins，说明硬容量约束实际生效。
+- 写入 `T_min^stab=500 ms` 的解释：它是五个 10 Hz sensing cycles 的保守 hysteresis default，不声称全局最优。
+- 写入 `T_min^stab=100/300/500/700/1000 ms` 当前短序列中 mAP@0.5 和 reconfiguration count 均保持 0.73 和 11，说明主结果不依赖脆弱稳定窗口调参。
+- 在 sensitivity 段落补充 `N_max=2/3/4/5/6` 的 mAP@0.5 = 0.74/0.71/0.73/0.71/0.71，并说明 `N_max=4` 的选择来自避免 singleton fragmentation 与保持 capacity constraint active 的折中。
+
+### 结论
+
+正文现在已经覆盖 `rho_th`、`N_max` 和 `T_min^stab` 三个 reviewer 指出的关键参数。对 `T_min^stab` 的口径保持保守：当前序列显示无敏感性，但更激进动态场景仍需额外分析。

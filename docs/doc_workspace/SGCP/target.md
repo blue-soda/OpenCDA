@@ -109,3 +109,4 @@
 - [x] 修正 “topology change 才触发” 与 “每个周期重复” 的表述矛盾。已新增 `paper_revision_plan.md`，明确每周期更新 beacon/density/PPS，cluster membership 仅在 topology/stability trigger 或 periodic guard 触发时更新，并给出 `main.tex` 替换建议。
 - [x] 将 coverage-aware / spatial-diverse grid selection 和 potential-guided constrained PPS 口径写入 `C:\Workspace\icdcs-paper\SGCP\main.tex`，弱化无条件 exact-potential/Nash guarantee 表述，使机制章节与当前实现和主表结果一致。
 - [x] 将 `f(rho)` / `rho_th` 标定统计和 `rho_th` sensitivity 表写入 `C:\Workspace\icdcs-paper\SGCP\main.tex`：包括 788,020 个 CAV-grid 样本、非空网格 5.98%、非空密度 p90/p95 = 1.40/3.60、`rho_th=2.0` 选择 7.18% 非空网格，以及 coverage-aware 10ch `rho_th=1/2/3/4` AP/Mbps 表。
+- [x] 将 `N_max` 和 `T_min^stab` 参数依据写入 `C:\Workspace\icdcs-paper\SGCP\main.tex`：说明 `N_max=4` 是容量控制折中而非纯 AP 调参，`T_min^stab=500 ms` 是五个 10 Hz 感知周期的保守滞回默认，并记录当前 sweep 中 `T_min^stab=100--1000 ms` 对 AP/reconfiguration 不敏感。
