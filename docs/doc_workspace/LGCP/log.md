@@ -1946,3 +1946,32 @@ docs/doc_workspace/LGCP/experiments/hierarchy_plan/20260715_lgcp_carla_hierarchy
 - 当前 20 CAV / top-40 area / 11 frame 设置下，控制面平均约 30.96 KB/frame。
 - 主要控制面来源是 area-confidence report，平均约 25.76 KB/frame。
 - 控制面占 planned data + control 总量约 9.52%，可作为 rebuttal 中 control-plane overhead 的初步量化证据。
+
+## 2026-07-16 - workflow figure 与 area-task group 机制草稿
+
+### 目标
+
+- 推进 P2 写作 / 机制完善项。
+- 回应 group 被误解为传统 clustering、workflow figure 缺失、packet granularity 不清楚和 leader-to-RSU upload 可靠性不足的问题。
+
+### 产物
+
+新增：
+
+```text
+docs/doc_workspace/LGCP/workflow_and_group_semantics.md
+```
+
+该文档包含：
+
+- LGCP workflow Mermaid figure draft；
+- 三层 figure 布局建议：confidence report、area-task group、local-to-global fusion；
+- area-task group vs traditional vehicle clustering 对照表；
+- packet 粒度 `(frame_id, source_cav_id, target_id, area_id, upload_stage)`；
+- adjacent-area batching、feature cache、shared backbone feature reuse 的去重复用机制；
+- leader-to-RSU upload 优先级、失败检测和 fallback。
+
+### 结论
+
+- `target.md` 中 workflow figure、group 概念、packet 粒度/去重、leader-to-RSU 上传策略四个 P2 项已形成可直接转写论文的机制草稿。
+- 真实 feature slicing、leader local fusion 和 RSU global aggregation 仍未实现，因此文档中已明确当前实现边界。

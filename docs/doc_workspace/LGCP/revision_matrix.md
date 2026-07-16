@@ -27,9 +27,9 @@
 | ID | Reviewer | 问题类型 | Priority | 审稿人关注点 | 修改动作 | 产物 / 位置 | 状态 |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | R1-1 | R1, R4 | 机制 / 理论 | P0 | 算法只是 heuristic，没有 approximation guarantee 或理论分析。 | 增加小规模 optimality gap：对 group selection 用 exhaustive search / ILP 做最优参考；正文避免声称 approximate guarantee，改为 heuristic with empirical gap。 | `results.md` R2；论文 Solution / Experiment | 未开始 |
-| R1-2 | R1 | 机制 / 写作 | P1 | Grouping 不是传统 clustering，一个 CAV 可参与多个 group，示例中 CAV2 重复参与且 packet 含义不清。 | 将 group 命名为 area-task group / hypergraph assignment；说明 packet granularity 是 area-specific feature slice；补充去重/复用策略。 | 论文 Framework / Problem Formulation；新增机制说明 | 未开始 |
-| R1-3 | R1 | 机制 / 实验 | P1 | leader 到 RSU 的 aggregated result 更重要，为什么不用第一阶段方法保障上传？ | 明确 leader-to-RSU upload 的优先级和可靠性；补充 leader upload scheduling 或失败影响实验。 | `target.md` P2；论文 latency / scheduling 小节 | 未开始 |
-| R2-1 | R2, R3 | 写作 | P2 | 缺 workflow figure，Fig. 2 不能清楚展示 partition、grouping 等流程。 | 增加 LGCP workflow 图：RSU partition、CAV report、area group assignment、local fusion、leader upload、RSU global aggregation、broadcast。 | 论文 Framework；figure artifact | 未开始 |
+| R1-2 | R1 | 机制 / 写作 | P1 | Grouping 不是传统 clustering，一个 CAV 可参与多个 group，示例中 CAV2 重复参与且 packet 含义不清。 | 将 group 命名为 area-task group / hypergraph assignment；说明 packet granularity 是 area-specific feature slice；补充去重/复用策略。 | `workflow_and_group_semantics.md`；论文 Framework / Problem Formulation | 已形成草稿 |
+| R1-3 | R1 | 机制 / 实验 | P1 | leader 到 RSU 的 aggregated result 更重要，为什么不用第一阶段方法保障上传？ | 明确 leader-to-RSU upload 的优先级和可靠性；补充 leader upload scheduling 或失败影响实验。 | `workflow_and_group_semantics.md`；论文 latency / scheduling 小节 | 已形成机制草稿，仍需实验 |
+| R2-1 | R2, R3 | 写作 | P2 | 缺 workflow figure，Fig. 2 不能清楚展示 partition、grouping 等流程。 | 增加 LGCP workflow 图：RSU partition、CAV report、area group assignment、local fusion、leader upload、RSU global aggregation、broadcast。 | `workflow_and_group_semantics.md`；论文 Framework figure artifact | 已形成草稿 |
 | R2-2 | R2 | 写作 / 实验解释 | P2 | Fig. 7 y-axis label 错误；低车数 latency 与 baseline 接近原因不清。 | 修正图轴；解释低密度下冲突少、固定控制开销占比高、调度优势尚未显现。 | 论文 Evaluation Fig. 7 / discussion | 未开始 |
 | R2-3 | R2, R3 | 实验 / 机制 | P1 | >20 CAV latency 改善有限，需要瓶颈分析和 scalability 解释。 | 增加瓶颈分解：V2V scheduling、leader fusion、leader-to-RSU、control-plane overhead；若质量未测，收窄大规模 claim。 | `results.md` R5；论文 Evaluation / Limitation | 未开始 |
 | R2-4 | R2, R3 | 实验 | P0 | 位置误差、车辆移动、update frequency、车速会影响 partition 和 redundancy removal。 | 增加 localization error、vehicle speed、update frequency / stale assignment 敏感性实验。 | `results.md` R6；论文 Robustness | 未开始 |
@@ -76,4 +76,3 @@
 | RSU agent 数据 | data dump 已包含 `-1` 目录 | 决定 offline loader 是否把 RSU 作为 sensor provider 或 controller |
 | area/grid 信息 | LiDAR grid 已开启，导出仍以完整 PCD 为主 | 导出 grid id、area id、grid density、confidence |
 | baseline / ablation | 现有 cluster 管线可作为参考 | 新增 selective sharing only / LGCP variants |
-

@@ -31,10 +31,10 @@
 
 ## P2：机制与写作完善
 
-- [ ] 增加 LGCP workflow figure，覆盖 partition、group assignment、leader selection、local fusion、RSU aggregation、broadcast。
-- [ ] 重新阐述 group 概念，避免被理解为传统 clustering。
-- [ ] 明确一个 CAV 参与多个 area group 时的数据包粒度、去重和复用机制。
-- [ ] 完善 leader 到 RSU 上传策略，说明重要结果的优先级、可靠性和失败处理。
+- [x] 增加 LGCP workflow figure，覆盖 partition、group assignment、leader selection、local fusion、RSU aggregation、broadcast。
+- [x] 重新阐述 group 概念，避免被理解为传统 clustering。
+- [x] 明确一个 CAV 参与多个 area group 时的数据包粒度、去重和复用机制。
+- [x] 完善 leader 到 RSU 上传策略，说明重要结果的优先级、可靠性和失败处理。
 - [ ] 增加 deployment assumptions / limitations 小节：RSU centralization、mobility、multi-RSU、stale information、failure modes。
 - [ ] 修正文中 stage 编号不一致问题。
 - [ ] 将 “heuristic / approximate” 的表述调整为与实际理论保证一致的写法。
