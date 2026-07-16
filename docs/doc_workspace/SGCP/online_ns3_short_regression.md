@@ -114,6 +114,14 @@ network_time_sync tests passed
 - 这更像单 fragment PHY/PSCCH/PSSCH loss 后缺少应用层重传/重调度，而不是时间同步、车辆初始化或子信道越界问题。
 - 该在线短回归用于证明真实 CARLA tick + NS3 bridge + manual subchannel 语义已闭环；论文主表仍以离线 41 帧 mAP 与 request-level NS3 replay 为主。
 
+后续 timeout reupload first trial：
+
+```text
+docs\doc_workspace\SGCP\artifacts\online_ns3_reupload_20260717_053012\
+```
+
+该轮打开 `re_upload_when_timeout=true`、`max_reupload_attempts=1`。Episode-level 结果从 `21/6` complete/partial 改善到 `39/3`，说明应用层补偿能修复一部分单 fragment loss。但该轮不是 clean exit：late CAM completion 到达时对应 sender 的 `uploading_cavs` round state 已被清理，触发 `KeyError: 17`。代码已改为安全处理 late completion，仍需再跑一轮 clean reupload 回归后才能把它作为最终在线协议结果。
+
 时间同步证据：
 
 ```text

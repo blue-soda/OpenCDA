@@ -3250,3 +3250,61 @@ online_upload_summary.json
 ### 结论
 
 `184` 行 incomplete 不是 `184` 个失败请求，其中 `178` 行是同一批 partial episode 的重复轮询。真实未完成 episode 为 6 个，且每个都恰好缺少一个 OpenCDA `max_packet_size=10000` fragment。当前剩余问题更像单 fragment 在 PHY decode failure 后没有应用层重传/重调度；它已经不是车辆初始化、CARLA/NS3 时间同步、子信道越界或整条链路调度绕过问题。
+
+## 2026-07-17 - Online timeout reupload first trial
+
+### 目的
+
+针对上一轮定位出的单 fragment 缺失，增加可配置的应用层 timeout reupload 机制，并用真实 CARLA+NS3 短回归验证是否减少 partial episode。
+
+### 代码变更
+
+- `CoperceptionManager` 从 `network_manager.config` 读取：
+  - `upload_timeout_slots`
+  - `re_upload_when_timeout`
+  - `max_reupload_attempts`
+- `enable_network.yaml` 中在线 NS3 默认打开一次 timeout reupload：
+
+```yaml
+upload_timeout_slots: 4
+re_upload_when_timeout: true
+max_reupload_attempts: 1
+```
+
+### 轻量验证
+
+```powershell
+conda run -n opencda python -m py_compile opencda\core\sensing\perception\coperception_manager.py opencda\tools\online_ns3_log_eval.py
+```
+
+另用 fake `NetworkManager/V2X/Scheduler` 验证：首次发送一次，timeout 后只重传一次，超过 `max_reupload_attempts` 后不继续重传。
+
+### 真实回归 artifact
+
+```text
+docs\doc_workspace\SGCP\artifacts\online_ns3_reupload_20260717_053012\
+```
+
+该轮使用修正后的 NS3 启动路径和 5556 端口等待，真实进入 CARLA+NS3 联仿。`online_ns3_log_eval` 结果：
+
+| Metric | Value |
+| --- | ---: |
+| `sync_request/sync_ack` | 18 / 18 |
+| `MANUAL_CMD_ADD` | 355 |
+| `MANUAL_CMD_REJECT` | 0 |
+| `cam_received` | 346 |
+| PSCCH/PSSCH decode failures | 95 / 10 |
+| Complete / partial episodes | 39 / 3 |
+| Incomplete lines / duplicate incomplete lines | 44 / 41 |
+| CP counter | 4 |
+| Online AP@0.3/0.5/0.7 | 0.81 / 0.80 / 0.69 |
+
+相对于 strategy-clear 回归，timeout reupload 将 complete episodes 从 21 提升到 39，partial episodes 从 6 降到 3，说明应用层补偿方向有效。
+
+### 新发现问题与修复
+
+本轮不是 clean exit。OpenCDA 在后续 tick 收到 late CAM completion 时，`receive_cams_via_network()` 直接索引 `self.uploading_cavs[sender_id]`，但该 sender 的 round state 已清理，触发 `KeyError: 17`。已修复为使用 `.get()` 并在缺少 start slot 时记录 `cost_slots=-1`，避免 late completion 让在线联仿崩溃。
+
+### 结论
+
+timeout reupload 已证明能显著减少在线 partial episode，但需要在 `KeyError` 修复后再跑一轮 clean CARLA+NS3 短回归，才能把该机制作为稳定在线协议结论写入论文/结果表。

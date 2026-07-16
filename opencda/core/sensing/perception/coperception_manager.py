@@ -35,8 +35,14 @@ class CoperceptionManager:
         self.uploading_data = None
         self.uploading_data_size = {}
 
-        self.timeout_slots = 4 # number of time slots to wait before re-uploading data from a cav
-        self.re_upload_when_timeout = False # Don't re-upload on timeout - rely on NS3 sidelink retransmission
+        network_config = getattr(network_manager, 'config', {}) or {}
+        self.timeout_slots = int(network_config.get(
+            'upload_timeout_slots', 4))
+        self.re_upload_when_timeout = bool(network_config.get(
+            're_upload_when_timeout', False))
+        self.max_reupload_attempts = int(network_config.get(
+            'max_reupload_attempts',
+            1 if self.re_upload_when_timeout else 0))
         self.ego_vehicle_ids = set() # vehicles which should not be gt boxes
 
         self.grid_selection = {} # dict of {vid: [grid_ids]}
@@ -134,17 +140,20 @@ class CoperceptionManager:
 
             timeout_count = self.cavs_timeout.get(cav_id, 0) + 1
             self.cavs_timeout[cav_id] = timeout_count
-            # NOTE: With NS3 sidelink retransmission, data WILL arrive even if the
-            # initial transmission takes longer than timeout_slots. This "timeout"
-            #告警 only indicates the NS3 retransmission window is still open.
-            # Do NOT interpret this as upload failure - NS3 sidelink ensures delivery.
+            # In NS3 mode, a timeout means the application has not yet observed
+            # a complete fragmented upload.  When configured, requeue the same
+            # payload once so a lost fragment can be repaired at application
+            # level; otherwise keep waiting for NS3 sidelink delivery.
             print(f"[NS3-retransmit] cav {cav_id} still in-flight, "
                   f"current_time_slot: {current_time_slot}, start_slot: {start_slot}, "
-                  f"waiting for sidelink retransmission (not a failure).")
+                  f"timeout_count: {timeout_count}.")
             logger.info(f"[NS3-retransmit] cav {cav_id} still in-flight, "
-                        f"current_time_slot: {current_time_slot}, start_slot: {start_slot}.")
+                        f"current_time_slot: {current_time_slot}, "
+                        f"start_slot: {start_slot}, "
+                        f"timeout_count: {timeout_count}.")
 
-            if not self.re_upload_when_timeout or timeout_count > 1:
+            if (not self.re_upload_when_timeout or
+                    timeout_count > self.max_reupload_attempts):
                 continue
 
             self.uploading_cavs[cav_id] = current_time_slot
@@ -177,7 +186,10 @@ class CoperceptionManager:
                 if packet_size >= data_size:
                     # Complete data received - now pop from received_cams
                     delay_infos = self.network_manager.pop_received_cams(receiver_id, sender_id)
-                    logger.info(f"cav {sender_id} data upload to {receiver_id} succeeded (NS3 mode). Received size: {packet_size} bytes, expected size: {data_size} bytes, cost time: {self.network_manager.current_time_slot - self.uploading_cavs[sender_id]}.")
+                    start_slot = self.uploading_cavs.get(sender_id)
+                    cost_slots = (self.network_manager.current_time_slot -
+                                  start_slot) if start_slot is not None else -1
+                    logger.info(f"cav {sender_id} data upload to {receiver_id} succeeded (NS3 mode). Received size: {packet_size} bytes, expected size: {data_size} bytes, cost time: {cost_slots}.")
                     logger.info(f"cav {sender_id} communication delay info: {delay_infos}")
                     logger.info(f"cav {sender_id} uploading_data keys before pop: {list(self.uploading_data.keys()) if self.uploading_data else None}")
                     data = self.uploading_data.pop(sender_id, None)

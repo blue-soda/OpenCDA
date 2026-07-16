@@ -16,3 +16,6 @@ enable_network:
     use_ns3: true
     sync_timeout: 8.0  # seconds - avoid false sync timeouts during multi-batch NS3 delivery
     final_drain_slots: 20  # stop() tail drain budget for the last in-flight CP upload round
+    upload_timeout_slots: 4
+    re_upload_when_timeout: true
+    max_reupload_attempts: 1
