@@ -2005,3 +2005,52 @@ docs/doc_workspace/LGCP/deployment_assumptions.md
 
 - `target.md` 中 deployment assumptions / limitations P2 项已标记完成。
 - 该文档是论文 discussion / limitation 草稿，不替代后续 P1 sensitivity experiments。
+
+## 2026-07-16 - stage 编号与 heuristic / approximate 表述审计
+
+### 目标
+
+- 推进 P2 中 stage 编号一致性和 heuristic / approximate 表述边界。
+- 避免正文暗示未证明的 approximation guarantee。
+
+### 输入
+
+论文源文件：
+
+```text
+C:\Workspace\icdcs-paper\LGCP\conference_101719.tex
+```
+
+关键词检查：
+
+```powershell
+rg -n -i "stage|fifth|heuristic|approx|optimal|guarantee|greedy" C:\Workspace\icdcs-paper\LGCP\conference_101719.tex
+```
+
+### 观察
+
+- `conference_101719.tex:268-292` 中 latency section 写了 first / second / third stage，但 global-view broadcast 被写成 `fifth stage`。
+- 同一段公式使用 `\sum_{k=1}^{4} t_i` / `\sum_{i=1}^{4} t_i` 的四阶段 latency，因此应改成 fourth stage，并建议用 `k` 避免和 area index `i` 混淆。
+- `conference_101719.tex:355` 中 `derive an approximate solution` 容易被理解为有 approximation guarantee，应改成 `derive an efficient heuristic solution`。
+- `conference_101719.tex:491` 中 `two-stage process` 指算法模块，不是 latency stage，建议改成 `two algorithmic modules`。
+
+### 产物
+
+新增：
+
+```text
+docs/doc_workspace/LGCP/manuscript_language_audit.md
+```
+
+该文档包含：
+
+- TeX line-level audit；
+- 四阶段 latency 命名建议；
+- `heuristic / approximate / optimal` 推荐和禁用表述；
+- 可直接写进 Algorithm / Evaluation / Rebuttal 的英文段落；
+- 论文编辑 checklist。
+
+### 结论
+
+- `target.md` 中 stage 编号一致性和 heuristic / approximate 表述两项 P2 已标记完成。
+- 本次只沉淀论文修改建议，没有直接修改 `C:\Workspace\icdcs-paper\LGCP\conference_101719.tex`。

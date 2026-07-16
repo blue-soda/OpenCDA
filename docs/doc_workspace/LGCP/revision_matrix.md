@@ -26,7 +26,7 @@
 
 | ID | Reviewer | 问题类型 | Priority | 审稿人关注点 | 修改动作 | 产物 / 位置 | 状态 |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| R1-1 | R1, R4 | 机制 / 理论 | P0 | 算法只是 heuristic，没有 approximation guarantee 或理论分析。 | 增加小规模 optimality gap：对 group selection 用 exhaustive search / ILP 做最优参考；正文避免声称 approximate guarantee，改为 heuristic with empirical gap。 | `results.md` R2；论文 Solution / Experiment | 未开始 |
+| R1-1 | R1, R4 | 机制 / 理论 | P0 | 算法只是 heuristic，没有 approximation guarantee 或理论分析。 | 增加小规模 optimality gap：对 group selection 用 exhaustive search / ILP 做最优参考；正文避免声称 approximate guarantee，改为 heuristic with empirical gap。 | `results.md` R2；`manuscript_language_audit.md`；论文 Solution / Experiment | 已有 smoke gap 与措辞草稿，仍需多 seed |
 | R1-2 | R1 | 机制 / 写作 | P1 | Grouping 不是传统 clustering，一个 CAV 可参与多个 group，示例中 CAV2 重复参与且 packet 含义不清。 | 将 group 命名为 area-task group / hypergraph assignment；说明 packet granularity 是 area-specific feature slice；补充去重/复用策略。 | `workflow_and_group_semantics.md`；论文 Framework / Problem Formulation | 已形成草稿 |
 | R1-3 | R1 | 机制 / 实验 | P1 | leader 到 RSU 的 aggregated result 更重要，为什么不用第一阶段方法保障上传？ | 明确 leader-to-RSU upload 的优先级和可靠性；补充 leader upload scheduling 或失败影响实验。 | `workflow_and_group_semantics.md`；论文 latency / scheduling 小节 | 已形成机制草稿，仍需实验 |
 | R2-1 | R2, R3 | 写作 | P2 | 缺 workflow figure，Fig. 2 不能清楚展示 partition、grouping 等流程。 | 增加 LGCP workflow 图：RSU partition、CAV report、area group assignment、local fusion、leader upload、RSU global aggregation、broadcast。 | `workflow_and_group_semantics.md`；论文 Framework figure artifact | 已形成草稿 |
@@ -40,7 +40,7 @@
 | R3-5 | R3 | 实验 | P1 | 大规模 30 CAV 只报告 latency，不是 end-to-end perception evaluation。 | 增加 scalable quality proxy 或明确大规模只验证 communication/computation latency。 | `results.md` R5；论文 claim / limitation | 未开始 |
 | R3-6 | R3 | 实验 | P1 | key gains 可能依赖单一设置；缺 sensitivity analyses。 | 变化 area size、`Delta_g`、subchannel count `Z`、CAV/edge compute capacity、transmission threshold/rate。 | `results.md` R6 | 未开始 |
 | R3-7 | R3 | 实验 / 系统 | P1 | control-plane overhead 未量化。 | 显式统计每 cycle 的 location、direction、confidence upload、assignment broadcast、global view broadcast 字节数和时延占比。 | `results.md` R5/R6；日志字段 | 未开始 |
-| R3-8 | R3 | 写作 | P2 | 算法解释过度依赖伪代码，缺直觉；stage-number inconsistency。 | 增加算法直觉段；修正 “fifth stage” 和总 latency stage 编号。 | 论文 Solution / Latency | 未开始 |
+| R3-8 | R3 | 写作 | P2 | 算法解释过度依赖伪代码，缺直觉；stage-number inconsistency。 | 增加算法直觉段；修正 “fifth stage” 和总 latency stage 编号。 | `manuscript_language_audit.md`；论文 Solution / Latency | 已形成修改清单 |
 | R3-9 | R3 | 写作 / 限制 | P2 | 需要部署假设和 failure modes：RSU centralization、mobility、stale information、multi-RSU scaling。 | 新增 Deployment Assumptions and Limitations 小节。 | `deployment_assumptions.md`；论文 Discussion | 已形成草稿 |
 | R4-1 | R4 | 写作 / 定位 | P0 | 贡献被认为只是经典 hierarchical task partitioning / aggregation 的应用。 | 重写 contribution：强调 area-confidence-driven perception-quality/resource co-design、可重叠 area-task groups、local-to-global global-awareness pipeline；明确与 clustering/task assignment 的区别。 | Introduction / Related Work / Discussion | 未开始 |
 | R4-2 | R4 | 实验 / 论证 | P0 | 性能提升被认为是 expected：减少共享和并行化导致。 | 用 ablation 和 stronger baseline 证明收益不是简单减少传输；报告 quality preservation under comparable budget。 | `results.md` R3/R4 | 未开始 |
