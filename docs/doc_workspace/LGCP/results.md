@@ -1016,3 +1016,28 @@ docs/doc_workspace/LGCP/experiments/hierarchy_plan/20260715_lgcp_carla_hierarchy
 - default `10m x 6m` 在该 11 帧 smoke 中给出最强 area-frame recall ranking。
 - `5m x 3m` 样本更多但 per-area AP 更稀疏；`20m x 12m` active areas 更少，accumulated AP 样本也更少。
 - 当前只支持 default grid 的合理性，不能声称 LGCP 对 area size 完全不敏感。
+
+## 2026-07-16：Localization Error Sensitivity Smoke
+
+`opencda/tools/lgcp_area_confidence_eval.py` 新增 `--localization-noise-std` / `--localization-noise-seed`，在 CAV confidence report 路径中注入 deterministic xy pose noise。
+
+共同设置：
+
+- scenario：`2026_07_15_02_33_21`
+- frames：11
+- grid：`10m x 6m`
+- fusion method：`early`
+- noise seed：`7`
+
+| Noise std | Records | Active areas | Area-frame noisy-or vs recall@0.5 Spearman | Area-acc noisy-or vs AP@0.5 Spearman | Area-acc score_mean vs AP@0.5 Spearman |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| `0.0m` | 21418 | 337 | 0.570407 | 0.411840 | 0.402059 |
+| `0.2m` | 21428 | 343 | 0.564515 | 0.411840 | 0.396911 |
+| `0.5m` | 21408 | 347 | 0.546341 | 0.411840 | 0.396911 |
+| `1.0m` | 21432 | 356 | 0.550885 | 0.314543 | 0.396911 |
+
+解释边界：
+
+- Area-frame confidence-to-recall ranking 在 1.0m xy pose noise 下仍保持约 `0.55` Spearman。
+- Accumulated AP ranking 在 1.0m 噪声下降低，因此论文中只能作为 robustness diagnostic。
+- 当前没有模拟 feature alignment 误差对 model-level fusion 的影响，后续完整 LGCP local fusion 仍需单独验证。

@@ -1,0 +1,5 @@
+noise_std_m,records,active_areas,area_frame_noisy_or_recall05_samples,area_frame_noisy_or_recall05_pearson,area_frame_noisy_or_recall05_spearman,area_acc_noisy_or_ap05_samples,area_acc_noisy_or_ap05_pearson,area_acc_noisy_or_ap05_spearman,area_acc_score_mean_ap05_samples,area_acc_score_mean_ap05_pearson,area_acc_score_mean_ap05_spearman
+0.0,21418,337,354,0.229353,0.570407,36,0.380141,0.411840,36,0.299951,0.402059
+0.2,21428,343,354,0.234676,0.564515,36,0.391875,0.411840,36,0.299785,0.396911
+0.5,21408,347,354,0.240298,0.546341,36,0.401395,0.411840,36,0.299717,0.396911
+1.0,21432,356,354,0.251009,0.550885,36,0.405850,0.314543,36,0.299734,0.396911

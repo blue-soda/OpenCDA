@@ -12,6 +12,7 @@ This first pass validates the offline area/grid data path:
 
 import argparse
 import csv
+import hashlib
 import math
 import os
 from collections import Counter, OrderedDict
@@ -49,6 +50,10 @@ def parse_args():
                         help='Override LGCP ROI grid width in meters.')
     parser.add_argument('--grid-size-y', type=float, default=None,
                         help='Override LGCP ROI grid height in meters.')
+    parser.add_argument('--localization-noise-std', type=float, default=0.0,
+                        help='Gaussian xy pose noise std in meters for CAV confidence export.')
+    parser.add_argument('--localization-noise-seed', type=int, default=7,
+                        help='Seed for deterministic localization noise.')
     parser.add_argument('--include-empty', action='store_true',
                         help='Write all area-agent rows, including empty cells.')
     parser.add_argument('--with-inference', action='store_true',
@@ -121,6 +126,21 @@ def pcd_to_world_xy(points, lidar_pose):
     world_x = x0 + cos_yaw * local_x - sin_yaw * local_y
     world_y = y0 + sin_yaw * local_x + cos_yaw * local_y
     return world_x, world_y
+
+
+def noisy_lidar_pose(lidar_pose, timestamp, agent_id, std, seed):
+    pose = list(lidar_pose)
+    if std <= 0:
+        return pose
+    # Use a stable per-frame/per-agent seed so reruns are reproducible and
+    # independent of dataset iteration order.
+    key = '%s:%s:%s' % (seed, timestamp, agent_id)
+    digest = hashlib.md5(key.encode('utf-8')).hexdigest()
+    local_seed = int(digest[:8], 16)
+    rng = np.random.RandomState(local_seed)
+    pose[0] = float(pose[0]) + float(rng.normal(0.0, std))
+    pose[1] = float(pose[1]) + float(rng.normal(0.0, std))
+    return pose
 
 
 def count_points_by_area(points, lidar_pose, config):
@@ -543,9 +563,15 @@ def main():
         frame_confidence = []
         frame_gt_count = []
         for agent_id, cav in frame.items():
+            confidence_lidar_pose = noisy_lidar_pose(
+                cav['params']['lidar_pose'],
+                timestamp,
+                agent_id,
+                args.localization_noise_std,
+                args.localization_noise_seed)
             point_counts = count_points_by_area(
-                cav['lidar_np'], cav['params']['lidar_pose'], config)
-            lidar_x, lidar_y = cav['params']['lidar_pose'][0:2]
+                cav['lidar_np'], confidence_lidar_pose, config)
+            lidar_x, lidar_y = confidence_lidar_pose[0:2]
             for area_id in area_ids:
                 point_count = int(point_counts.get(area_id, 0))
                 gt_count = int(gt_counts.get(area_id, 0))
@@ -686,6 +712,8 @@ def main():
         },
         'density_threshold': rho_th,
         'include_empty': args.include_empty,
+        'localization_noise_std': args.localization_noise_std,
+        'localization_noise_seed': args.localization_noise_seed,
         'with_inference': args.with_inference,
         'fusion_method': None if coperception_params is None
         else coperception_params['fusion_method'],

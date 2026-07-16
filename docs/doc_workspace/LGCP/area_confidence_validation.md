@@ -189,3 +189,18 @@ area_confidence/
 | `20m x 12m` | 0.458975 | 0.233766 |
 
 该结果支持 `10m x 6m` 作为当前默认 grid，但仍需多 seed / 多场景复核。
+
+## 2026-07-16 Localization Error Sensitivity Smoke
+
+`opencda/tools/lgcp_area_confidence_eval.py` 已支持通过 `--localization-noise-std` 和 `--localization-noise-seed` 为 CAV confidence report 注入 deterministic xy pose noise。
+
+当前完成四组单场景 11 帧 smoke：
+
+| Noise std | Area-frame noisy-or vs recall@0.5 Spearman | Area-acc noisy-or vs AP@0.5 Spearman |
+| --- | ---: | ---: |
+| `0.0m` | 0.570407 | 0.411840 |
+| `0.2m` | 0.564515 | 0.411840 |
+| `0.5m` | 0.546341 | 0.411840 |
+| `1.0m` | 0.550885 | 0.314543 |
+
+该结果支持中等定位误差下 area-frame confidence ranking 仍较稳定，但不覆盖真实 feature alignment error。

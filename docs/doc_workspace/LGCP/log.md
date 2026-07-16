@@ -2104,3 +2104,50 @@ docs/doc_workspace/LGCP/experiments/area_confidence/20260716_lgcp_carla_grid_sen
 - 当前单场景 11 帧 smoke 支持 `10m x 6m` 作为默认 grid：area-frame noisy-or confidence vs recall@0.5 Spearman 最高。
 - 细网格样本更多但 AP 排序变弱，粗网格 active areas 和 AP samples 更少。
 - `target.md` 中 area size / grid size sensitivity 已标记为单场景 smoke 完成；最终论文仍应扩展多 seed。
+
+## 2026-07-16 - localization error sensitivity smoke
+
+### 目标
+
+- 推进 P1 中 localization error sensitivity。
+- 在不重新运行 CARLA 的前提下，对 CAV confidence report 注入 xy pose noise，观察 area-confidence ranking 是否退化。
+
+### 代码
+
+`opencda/tools/lgcp_area_confidence_eval.py` 新增：
+
+```text
+--localization-noise-std
+--localization-noise-seed
+```
+
+噪声按 `(seed, timestamp, agent_id)` deterministic 生成。
+
+### 运行命令
+
+示例：
+
+```powershell
+conda run -n opencda python -m opencda.tools.lgcp_area_confidence_eval --dataset-root D:\Data\Carla --scenario-id 2026_07_15_02_33_21 --max-frames 11 --with-inference --fusion-method early --ego-cav-id 1 --localization-noise-std 0.5 --localization-noise-seed 7 --output-dir docs\doc_workspace\LGCP\experiments\area_confidence\20260716_lgcp_carla_localization_noise_0p5m_11f
+```
+
+### 结果
+
+汇总文件：
+
+```text
+docs/doc_workspace/LGCP/experiments/area_confidence/20260716_lgcp_carla_localization_noise_summary.csv
+```
+
+| Noise std | Area-frame noisy-or vs recall@0.5 Spearman | Area-acc noisy-or vs AP@0.5 Spearman |
+| --- | ---: | ---: |
+| `0.0m` | 0.570407 | 0.411840 |
+| `0.2m` | 0.564515 | 0.411840 |
+| `0.5m` | 0.546341 | 0.411840 |
+| `1.0m` | 0.550885 | 0.314543 |
+
+### 结论
+
+- 当前单场景 11 帧 smoke 显示 area-frame confidence-to-recall ranking 对 0.2m-1.0m xy noise 相对稳定。
+- accumulated AP ranking 在 1.0m 下开始下降。
+- `target.md` 中 localization error sensitivity 已标记为单场景 smoke 完成；完整论文结论仍需多 seed 和真实 feature alignment 误差验证。

@@ -22,6 +22,7 @@
 - `deployment_assumptions.md`：LGCP 部署假设、限制、failure modes、multi-RSU 扩展和大规模 claim 边界。
 - `manuscript_language_audit.md`：论文 stage 编号一致性、heuristic / approximate 表述边界和替换措辞清单。
 - `grid_size_sensitivity.md`：LGCP ROI grid / area size sensitivity 的单场景 11 帧 smoke 结果。
+- `localization_error_sensitivity.md`：LGCP CAV pose localization error sensitivity 的单场景 11 帧 smoke 结果。
 - `experiments/readme.md`：LGCP 实验输出目录、run id、配置快照和结果归档规则。
 - `../environment.md`：全局环境文档，统一维护 Conda 环境、数据路径、CARLA 路径、启动命令和通用工具入口；运行实验前优先查看这里。
 
