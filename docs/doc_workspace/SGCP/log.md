@@ -66,6 +66,52 @@ docs\doc_workspace\SGCP\artifacts\protocol_audit\sgcp_41f_trace.csv
 - `PotentialGame` 输出的 grid selection 真实裁剪 sender 点云，并进入 OpenCOOD early fusion 输入。
 - 当前离线融合没有发现未调度 sender 绕过 PPS 进入融合；主表 AP 偏低更可能来自 grid/cluster/late-fusion 质量和通信预算，而不是协议链路未接入。
 
+## 2026-07-16 - Head-only / full-cluster mechanism probe
+
+### 目的
+
+定位当前 SGCP 主表 AP 损失来自 cluster/late fusion 主体，还是来自 grid/PPS 选择。
+
+### 代码修正
+
+- `opencda.tools.offline_inference` 新增 `--sgcp-upload-mode {grid,head_only,full_cluster}`。
+- `build_constrained_frame()` 支持三种上传模式：
+  - `grid`
+  - `head_only`
+  - `full_cluster`
+
+### 命令
+
+```powershell
+conda run -n opencda python -m opencda.tools.offline_inference --dataset-root D:\Data\Carla --scenario-id 2026_07_15_01_26_56 --ego-cav-id 1 --sgcp-constrained --sgcp-inter-cluster-late-fusion --resource-allocation potential_game --sgcp-upload-mode head_only --max-frames 0 --sgcp-trace-output docs\doc_workspace\SGCP\artifacts\mechanism_probe\head_only_41f_trace.csv
+
+conda run -n opencda python -m opencda.tools.offline_inference --dataset-root D:\Data\Carla --scenario-id 2026_07_15_01_26_56 --ego-cav-id 1 --sgcp-constrained --sgcp-inter-cluster-late-fusion --resource-allocation potential_game --sgcp-upload-mode full_cluster --max-frames 0 --sgcp-trace-output docs\doc_workspace\SGCP\artifacts\mechanism_probe\full_cluster_41f_trace.csv
+```
+
+### 日志路径
+
+```text
+docs\doc_workspace\SGCP\artifacts\mechanism_probe\head_only_41f_stdout.log
+docs\doc_workspace\SGCP\artifacts\mechanism_probe\head_only_41f_trace.csv
+docs\doc_workspace\SGCP\artifacts\mechanism_probe\full_cluster_41f_stdout.log
+docs\doc_workspace\SGCP\artifacts\mechanism_probe\full_cluster_41f_trace.csv
+```
+
+### 结果
+
+| Mode | AP@0.3 | AP@0.5 | AP@0.7 | Total Bytes | Avg. Bytes / Receiver | Avg. Uploaded Sources | Avg. Uploaded Points |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| Head-only | 0.26 | 0.22 | 0.09 | 0 | 0.00 | 0.00 | 0.00 |
+| SGCP grid-constrained | 0.77 | 0.73 | 0.35 | 26,916,208 | 109,415.48 | 1.67 | 6,838.47 |
+| Full-cluster upload | 0.82 | 0.79 | 0.42 | 44,850,528 | 182,319.22 | 2.33 | 11,394.95 |
+
+### 结论
+
+- Cluster-head local-only 很弱，说明协同上传对 AP 确实有贡献。
+- Full-cluster upload 在同一 cluster 和 inter-cluster late fusion 结构下效果明显更高，说明 cluster / late fusion 主体可用。
+- SGCP grid-constrained 使用约 60.0% 的 full-cluster payload，AP@0.5 保留约 92.4%，但 AP@0.7 损失明显。
+- 下一步应聚焦 grid utility、member/grid budget、`B_h=1` 和高精度定位相关 grid selection。
+
 ## 记录模板
 
 ````markdown

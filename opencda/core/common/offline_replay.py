@@ -333,13 +333,15 @@ def select_sgcp_receiver_id(world, ego_cav_id=None,
 
 
 def build_constrained_frame(frame, world, receiver_id,
-                            include_unconstrained_cluster=False):
+                            include_unconstrained_cluster=False,
+                            upload_mode='grid'):
     """
     Build an OpenCOOD frame using online SGCP grid-upload semantics.
 
-    The receiver keeps its full point cloud. Other CAVs only contribute the
-    grid-selected local points stored in the receiver's co_manager. This mirrors
-    CoperceptionManager.get_data_from_lidar() for offline evaluation.
+    The receiver keeps its full point cloud. In the default grid mode, other
+    CAVs only contribute grid-selected local points stored in the receiver's
+    co_manager. Probe modes can keep only the receiver or upload full cluster
+    member point clouds for protocol debugging.
     """
     receiver_id = int(receiver_id)
     receiver_vm = world.get_vehicle_manager(receiver_id)
@@ -368,25 +370,30 @@ def build_constrained_frame(frame, world, receiver_id,
 
     co_manager = receiver_vm.perception_manager.co_manager
     grid_selection = getattr(co_manager, 'grid_selection', {}) or {}
-    for sender_id, grid_ids in grid_selection.items():
-        sender_id = int(sender_id)
-        if sender_id == receiver_id or sender_id not in frame:
-            continue
-        sender_vm = world.get_vehicle_manager(sender_id)
-        if sender_vm is None:
-            continue
-        selected_points = sender_vm.perception_manager.lidar.\
-            get_local_points_by_grid_ids(grid_ids)
-        if selected_points is None or selected_points.size == 0:
-            continue
-        constrained[sender_id] = clone_cav(
-            sender_id,
-            selected_points,
-            is_ego=False)
-        communication_bytes += int(selected_points.nbytes)
-        selected_grid_counts[sender_id] = len(grid_ids)
+    if upload_mode not in ['grid', 'head_only', 'full_cluster']:
+        raise ValueError('Unknown SGCP upload_mode: %s' % upload_mode)
 
-    if include_unconstrained_cluster and not grid_selection:
+    if upload_mode == 'grid':
+        for sender_id, grid_ids in grid_selection.items():
+            sender_id = int(sender_id)
+            if sender_id == receiver_id or sender_id not in frame:
+                continue
+            sender_vm = world.get_vehicle_manager(sender_id)
+            if sender_vm is None:
+                continue
+            selected_points = sender_vm.perception_manager.lidar.\
+                get_local_points_by_grid_ids(grid_ids)
+            if selected_points is None or selected_points.size == 0:
+                continue
+            constrained[sender_id] = clone_cav(
+                sender_id,
+                selected_points,
+                is_ego=False)
+            communication_bytes += int(selected_points.nbytes)
+            selected_grid_counts[sender_id] = len(grid_ids)
+
+    if upload_mode == 'full_cluster' or (
+            include_unconstrained_cluster and not grid_selection):
         member_ids = receiver_vm.v2x_manager.cluster_state.get(
             'member_ids', set())
         for sender_id in sorted(member_ids):
@@ -411,5 +418,6 @@ def build_constrained_frame(frame, world, receiver_id,
         'channel_allocation': dict(
             getattr(receiver_vm.v2x_manager.scheduler,
                     'channel_allocation', {}) or {}),
+        'upload_mode': upload_mode,
     }
     return constrained, metadata

@@ -92,6 +92,18 @@ conda run -n opencda python -m opencda.tools.offline_inference --dataset-root D:
 
 观察：NS3-aware cost 避开了受限 5 子信道下不可完整交付的链路，通信量略降，但 11 帧 AP 也下降。该结果不应被解释为 NS3-aware baseline 更强，而是说明真实链路可行性会改变 selective-sharing 的成员选择；后续主实验应在完整 41 帧或重新导出的网络受限场景上报告。
 
+## Mechanism Probe
+
+详细口径见 `mechanism_probe.md`。该 probe 使用同一 41 帧 dump、同一 coalition formation 和 inter-cluster late fusion，只改变每个 cluster head 接收的点云上传模式。
+
+| Mode | AP@0.3 | AP@0.5 | AP@0.7 | Total Bytes | Avg. Bytes / Receiver | Avg. Uploaded Sources | Avg. Uploaded Points | Notes |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | --- |
+| Head-only | 0.26 | 0.22 | 0.09 | 0 | 0.00 | 0.00 | 0.00 | Cluster heads detect alone, then late-fuse |
+| SGCP grid-constrained | 0.77 | 0.73 | 0.35 | 26,916,208 | 109,415.48 | 1.67 | 6,838.47 | Current main SGCP constrained mode |
+| Full-cluster upload | 0.82 | 0.79 | 0.42 | 44,850,528 | 182,319.22 | 2.33 | 11,394.95 | Same clusters, upload all member point clouds |
+
+观察：SGCP grid-constrained 使用约 60.0% 的 full-cluster payload，并保留大部分 AP@0.5，但 AP@0.7 损失明显。当前主表修复重点应放在 grid utility、member/grid budget 和高精度定位相关 grid selection，而不是推翻 cluster formation 或 inter-cluster late fusion。
+
 ## 参数敏感性
 
 ### Stability Window
