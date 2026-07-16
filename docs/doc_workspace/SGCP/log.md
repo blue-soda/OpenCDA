@@ -2858,3 +2858,21 @@ payload_bytes * 8 / 4.1 s / 1e6
 - 推荐主表包含：Head-only、FullPerception centralized upper reference、Full-cluster upper reference、Selective communication-aware low-budget、Selective density high-budget、SGCP original、SGCP coverage-aware 10ch、SGCP coverage-aware 10ch `rho_th=3`、SGCP coverage-aware 20ch。
 - Random/MWS 不进入公平主表，只作为 w/o PPS 消融。
 - 论文主叙事应强调：SGCP coverage-aware 20ch 在与 high-budget selective baseline 几乎相同 payload 下 AP@0.7 略高，且有 NS3 request-level 完整交付；SGCP coverage-aware 10ch `rho_th=3` 在 57.38 Mbps 下提供低通信折中，远低于 FullPerception centralized 118.71 Mbps。
+
+## 2026-07-16 - Paper main table first-pass revision
+
+### 目的
+
+把已复现主表候选迁移到 `C:\Workspace\icdcs-paper\SGCP\main.tex`，移除旧论文中无法复现且 baseline 口径不清的主表、通信开销和 FullPerception 对比表述。
+
+### 修改内容
+
+- 将 `rho_th` 写为默认 2.0 与 tuned low-budget 3.0 的敏感性口径。
+- 将 baseline 列表改为 NC、FullPerception-centralized upper reference、Full-cluster、capacity-matched Selective V2V、Random/MWS diagnostics 和 SGCP。
+- 将旧 `tab:mAP` 替换为 AP + Mbps 统一主表，包含 FullPerception centralized、Full-cluster、Selective V2V、SGCP utility、SGCP coverage-aware 10ch 和 20ch。
+- 删除旧 `comm_overhead.eps` 正文引用，避免图中旧 Mbps 与新主表冲突。
+- 将实时性段落从“comfortably fits 100ms”改为 near-real-time feasibility，并解释 topology-triggered cluster update 降低 recurring control path 成本。
+
+### 当前结论
+
+论文正文已经不再声称 SGCP 全面超过 FullPerception，也不再用低 payload 的 Random/MWS 证明通信节省。下一步优先补 `rho_th=3` 的 NS3 request-level replay，随后把 coverage-aware grid selection 写入机制章节并准备 rebuttal 文本。
