@@ -2911,3 +2911,23 @@ conda run -n opencda python -m opencda.tools.ns3_log_eval --ns3-stdout docs\doc_
 ### 结论
 
 `rho_th=3.0` 的 10ch tuned low-budget 主表候选与 `rho_th=2.0` 一样，request-level NS3 交付完整。主表中该行的 NS3 delivery 可以从 Pending 改为 `110/110 complete`。
+
+## 2026-07-16 - Paper mechanism second-pass revision
+
+### 目的
+
+把主表中实际有效的 coverage-aware / spatial-diverse grid selection 写入 `C:\Workspace\icdcs-paper\SGCP\main.tex` 机制章节，并降低 exact-potential/Nash guarantee 的理论风险。
+
+### 修改内容
+
+- 摘要中的调度描述从 non-cooperative potential game 改为 potential-guided constrained scheduling，突出 coverage-aware point cloud regions。
+- System model 中明确每周期更新 beacon/density/PPS，cluster membership 仅在 topology/stability trigger 或 periodic guard 触发时更新。
+- Coalition formation 段落明确“固定拓扑快照下收敛”，不再写成每个 `T_c` 无条件重构。
+- Resource scheduling 小节和算法标题改为 potential-guided PPS。
+- Potential 段落从无条件 exact potential/Nash convergence 改成固定候选集合和硬可行约束下的 grid-level potential guide，并强调 empirical convergence/runtime。
+- PPS 算法增加 coverage-aware grid subset：每条 scheduled link 不上传全部 candidate grids，而是选择高密度且空间分散的 bounded grid subset。
+- Conclusion 中将“Both algorithms are guaranteed...”弱化为 coalition fixed-snapshot convergence + PPS finite feasible action set empirical convergence。
+
+### 结论
+
+论文机制章节现在与代码和主表更一致：`spatial_diverse` 不再只是实验 hack，而是被表述为 density-aware spatial diversification 的 coverage-aware grid selection；同时避免把当前工程实现包装成无条件 exact potential game。

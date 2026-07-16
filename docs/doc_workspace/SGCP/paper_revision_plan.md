@@ -173,3 +173,19 @@ The coalition formation stage is guided by a stability-aware utility and empiric
 - `T_min^stab`、`N_max`、`rho_th` 参数选择依据。
 - FullPerception baseline 公平性说明。
 - 端到端实时性实验表。
+
+## 2026-07-16 机制第二轮修订状态
+
+已将以下内容写入 `C:\Workspace\icdcs-paper\SGCP\main.tex`：
+
+- coverage-aware / density-aware spatial diversification grid selection；
+- potential-guided constrained PPS，而不是无条件 exact potential game；
+- fixed-topology snapshot 下的 coalition convergence；
+- every-cycle beacon/density/PPS 与 event-triggered cluster membership update 的区别；
+- conclusion 中弱化 unconditional Nash-stable guarantee。
+
+剩余应优先推进：
+
+- 把 `f(rho)` 标定统计和 `rho_th` sweep 写入实验/参数段；
+- 把 FullPerception centralized upper reference 与 V2V-only selective baseline 的公平性写成 rebuttal；
+- 形成 reviewer-by-reviewer response 草稿。
