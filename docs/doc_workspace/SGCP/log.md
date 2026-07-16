@@ -2384,3 +2384,56 @@ docs/doc_workspace/SGCP/reproducibility_manifest.md
 - 当前可复现实验固定为 `D:\Data\Carla\2026_07_15_01_26_56`，20 CAV，41 帧。
 - Manifest 已记录 full 20-CAV early upper reference、SGCP constrained + inter-cluster late fusion、scheduler ablation、same-budget selective-sharing baseline、NS3 request-level replay、runtime breakdown 和 control overhead。
 - 后续论文修订应优先使用 manifest 中的已复现结果；如果要继续使用旧主表，必须先找回旧日志。
+
+## 2026-07-16 - Online topology-trigger gate regression
+
+### 目的
+
+推进 P3 剩余项：在真实 CARLA 在线仿真中打开 `enable_topology_trigger_gate`，回归 cluster trigger 日志、reconfiguration 次数和感知结果。
+
+### 代码与配置
+
+- 新增 `opencda/scenario_testing/config_yaml/networking_clustering_topology_gate.yaml`。
+- `v2xp_cluster_carla.py` 新增环境变量：
+  - `OPENCDA_CLUSTERING_CONFIG`
+  - `OPENCDA_ONLINE_TICKS`
+
+### 命令
+
+```powershell
+Start-Process "C:\Programs\Carla\WindowsNoEditor\CarlaUE4.exe"
+$env:OPENCDA_CLUSTERING_CONFIG = "opencda/scenario_testing/config_yaml/networking_clustering_topology_gate.yaml"
+$env:OPENCDA_ONLINE_TICKS = "35"
+conda run -n opencda python opencda.py -t v2xp_cluster_carla --apply_cp --apply_ml --debug
+Remove-Item Env:\OPENCDA_CLUSTERING_CONFIG
+Remove-Item Env:\OPENCDA_ONLINE_TICKS
+```
+
+### 日志路径
+
+```text
+docs\doc_workspace\SGCP\artifacts\online_topology_gate\online_gate_stdout.log
+opencda\log\opencda_20260716_090705.log
+evaluation_outputs\v2xp_cluster_carla_2026_07_16_09_07_11\log.txt
+```
+
+### 结果
+
+- Exit code：0
+- CARLA：回归后已关闭
+- NS3：未启动
+- Online ticks：35
+- CP counter：8
+- Fusion method：early
+- AP@0.3 / AP@0.5 / AP@0.7：0.84 / 0.82 / 0.69
+- Cluster trigger：
+  - `recluster reason=initial`：1
+  - `recluster reason=neighbor_set_change`：1
+  - `recluster reason=head_member_unreachable`：3
+  - `skip reason=no_topology_change`：0
+
+### 观察
+
+- `enable_topology_trigger_gate` 已通过 config path 生效，并输出 `CLUSTER_TRIGGER` / `CLUSTER_SYNC`。
+- 本轮没有出现 skip，因为默认 35 m 通信范围下持续触发 `head_member_unreachable` hard condition。
+- 该在线回归证明 gate 接入和日志可用，但不能证明 reduced reconfiguration；若论文需要展示 skip 收益，应补更静态或更大通信范围的在线回归。

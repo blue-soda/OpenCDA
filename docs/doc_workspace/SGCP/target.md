@@ -68,7 +68,7 @@
 - [x] 定义 topology change trigger，包括邻居变化、相对速度、链路质量或 utility 下降阈值。已新增 `topology_trigger.md` 机制规格；后续需接入代码统计。
 - [x] 将 topology trigger 接入离线 replay，输出每帧 trigger type、是否触发 reconfiguration、vehicle-head change 的对应关系。已在 `opencda.tools.offline_replay` 中新增 summary 和 `--print-topology-events`。
 - [x] 将 topology trigger gate 接入在线 `ClusteringV2XManager`，避免无事件时每周期重构 cluster。已完成默认关闭 first version；后续需真实 CARLA 回归。
-- [ ] 在真实 CARLA 在线仿真中打开 `enable_topology_trigger_gate`，回归 cluster trigger 日志、reconfiguration 次数和感知结果。
+- [x] 在真实 CARLA 在线仿真中打开 `enable_topology_trigger_gate`，回归 cluster trigger 日志、reconfiguration 次数和感知结果。已新增 `online_topology_gate_regression.md`；35 tick 在线回归正常结束，CP AP@0.3/0.5/0.7 = 0.84/0.82/0.69，触发 `initial=1`、`neighbor_set_change=1`、`head_member_unreachable=3`，未观察到 skip。
 - [x] 设计 cluster 已满时的处理策略：保留、替换、等待、split/merge 或 leader-level late fusion 补偿。已新增 `cluster_capacity_policy.md`，当前主策略为硬 `N_max` + 保留/未满簇迁移/singleton fallback/inter-cluster late fusion 补偿。
 - [x] 明确是否支持 cluster merge/split，并说明与 `N_max` 的关系。当前口径：不允许超过 `N_max` 的 merge；split/merge 通过 topology trigger + coalition reformation 间接发生。
 - [x] 补充成员加入后的边际贡献重算流程。当前迭代会在后续车辆/后续轮次基于更新后的 coalition state 重算贡献，并用 `ita` 抑制振荡。

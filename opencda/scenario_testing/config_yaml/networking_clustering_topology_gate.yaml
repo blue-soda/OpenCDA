@@ -1,0 +1,31 @@
+# V2X Network and Clustering Configuration for topology-trigger gate regression.
+# Keep the default SGCP resource settings, but enable online recluster gating.
+
+v2x_network:
+  subchannel_num: 10
+  subchannel_bandwidth: 0.180  # MHz
+  min_sinr_threshold: 3.0  # dB
+  time_slot: 0.05  # seconds
+  max_vehicle_num: 30
+  max_packet_size: 10000  # bytes
+  reference_distance: 10.0  # meters
+  path_loss_exponent: 2.0
+  transmission_power: 23.0  # dBm
+  noise_power: -114.0  # dBm
+
+ns3:
+  enable: false
+  bridge_port: 5555
+  sync_interval: 0.05
+
+clustering:
+  algorithm: "coalition_game"
+  cluster_interval: 4
+  enable_scheduler: true
+  max_cluster_size: 10
+  enable_topology_trigger_gate: true
+  topology_periodic_guard: 5
+
+resource_allocation:
+  algorithm: "potential_game"
+  enable: true
