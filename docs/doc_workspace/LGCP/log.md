@@ -1975,3 +1975,33 @@ docs/doc_workspace/LGCP/workflow_and_group_semantics.md
 
 - `target.md` 中 workflow figure、group 概念、packet 粒度/去重、leader-to-RSU 上传策略四个 P2 项已形成可直接转写论文的机制草稿。
 - 真实 feature slicing、leader local fusion 和 RSU global aggregation 仍未实现，因此文档中已明确当前实现边界。
+
+## 2026-07-16 - deployment assumptions / limitations 草稿
+
+### 目标
+
+- 推进 P2 中 deployment assumptions / limitations 小节。
+- 回应 RSU centralization、mobility、multi-RSU、stale information 和 failure modes 相关审稿风险。
+
+### 产物
+
+新增：
+
+```text
+docs/doc_workspace/LGCP/deployment_assumptions.md
+```
+
+该文档包含：
+
+- RSU-assisted road segment、periodic CAV state report、shared spatial reference、bounded mobility、RSU compute availability 等核心假设；
+- RSU centralization 的保守论文表述；
+- mobility / stale assignment 来源与 mitigation；
+- localization error 对 area assignment / feature slicing 的影响和后续敏感性实验建议；
+- member loss、leader failure、leader-to-RSU loss、RSU overload、RSU outage 等 failure mode 表；
+- multi-RSU scaling 的边界区域交换和 handover 口径；
+- 大规模实验只报告 latency / proxy 时的 claim boundary。
+
+### 结论
+
+- `target.md` 中 deployment assumptions / limitations P2 项已标记完成。
+- 该文档是论文 discussion / limitation 草稿，不替代后续 P1 sensitivity experiments。

@@ -48,6 +48,7 @@
 - 已完成 11 帧 LGCP replay 的 request-level PSSCH / HARQ trace：1177 条 PHY/HARQ request events 全部映射回 `upload_plan.csv`。
 - 已新增 `opencda/tools/lgcp_control_overhead_eval.py` 和 `control_plane_overhead.md`，完成 11 帧 LGCP hierarchy control-plane overhead 统计；当前平均 control-plane bytes 为 30.96 KB/frame，占 planned data + control 的 9.52%。
 - 已新增 `workflow_and_group_semantics.md`，形成 LGCP workflow figure 草稿、area-task group 语义、packet granularity、dedup / reuse 和 leader-to-RSU reliability 的论文写作素材。
+- 已新增 `deployment_assumptions.md`，形成 RSU-assisted assumption、mobility / stale assignment、localization error、failure modes、multi-RSU scaling 和 large-scale claim boundary 的论文讨论素材。
 - 已新增 LGCP 专用仿真入口 `opencda/scenario_testing/lgcp_carla.py` 和配置 `opencda/scenario_testing/config_yaml/lgcp_carla.yaml`。
 - 未修改 `v2xp_cluster_carla` 原始配置。
 - 已补齐 RSU 首次启用所需的基础运行路径：固定基础设施感知初始化、RSU 注册/访问、最近感知结果保存、销毁路径。

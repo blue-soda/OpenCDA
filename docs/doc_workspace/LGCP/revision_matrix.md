@@ -41,7 +41,7 @@
 | R3-6 | R3 | 实验 | P1 | key gains 可能依赖单一设置；缺 sensitivity analyses。 | 变化 area size、`Delta_g`、subchannel count `Z`、CAV/edge compute capacity、transmission threshold/rate。 | `results.md` R6 | 未开始 |
 | R3-7 | R3 | 实验 / 系统 | P1 | control-plane overhead 未量化。 | 显式统计每 cycle 的 location、direction、confidence upload、assignment broadcast、global view broadcast 字节数和时延占比。 | `results.md` R5/R6；日志字段 | 未开始 |
 | R3-8 | R3 | 写作 | P2 | 算法解释过度依赖伪代码，缺直觉；stage-number inconsistency。 | 增加算法直觉段；修正 “fifth stage” 和总 latency stage 编号。 | 论文 Solution / Latency | 未开始 |
-| R3-9 | R3 | 写作 / 限制 | P2 | 需要部署假设和 failure modes：RSU centralization、mobility、stale information、multi-RSU scaling。 | 新增 Deployment Assumptions and Limitations 小节。 | 论文 Discussion | 未开始 |
+| R3-9 | R3 | 写作 / 限制 | P2 | 需要部署假设和 failure modes：RSU centralization、mobility、stale information、multi-RSU scaling。 | 新增 Deployment Assumptions and Limitations 小节。 | `deployment_assumptions.md`；论文 Discussion | 已形成草稿 |
 | R4-1 | R4 | 写作 / 定位 | P0 | 贡献被认为只是经典 hierarchical task partitioning / aggregation 的应用。 | 重写 contribution：强调 area-confidence-driven perception-quality/resource co-design、可重叠 area-task groups、local-to-global global-awareness pipeline；明确与 clustering/task assignment 的区别。 | Introduction / Related Work / Discussion | 未开始 |
 | R4-2 | R4 | 实验 / 论证 | P0 | 性能提升被认为是 expected：减少共享和并行化导致。 | 用 ablation 和 stronger baseline 证明收益不是简单减少传输；报告 quality preservation under comparable budget。 | `results.md` R3/R4 | 未开始 |
 
