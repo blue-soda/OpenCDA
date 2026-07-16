@@ -2194,3 +2194,48 @@ docs/doc_workspace/LGCP/experiments/area_confidence/20260716_lgcp_carla_stale_as
 - 1/2 帧 stale assignment 在当前 11 帧 smoke 中仍能保留较稳定 ranking。
 - 3 帧 stale assignment 开始明显退化，支持短 TTL 或 event-driven reassignment。
 - `target.md` 中 update frequency / stale assignment sensitivity 已标记为单场景 smoke 完成；显式车辆速度变化仍需多场景实验。
+
+## 2026-07-16 - subchannel count Z sensitivity proxy
+
+### 目标
+
+- 推进 P1 中 subchannel count `Z` sensitivity。
+- 先用 LGCP `upload_plan.csv` 做 scheduling-capacity proxy，避免立即重跑多组 NS3。
+
+### 代码
+
+新增：
+
+```text
+opencda/tools/lgcp_subchannel_sensitivity_eval.py
+docs/doc_workspace/LGCP/subchannel_sensitivity.md
+```
+
+### 运行命令
+
+```powershell
+conda run -n opencda python -m opencda.tools.lgcp_subchannel_sensitivity_eval --upload-plan docs\doc_workspace\LGCP\experiments\hierarchy_plan\20260715_lgcp_carla_hierarchy_plan_top40_11f\upload_plan.csv --output-dir docs\doc_workspace\LGCP\experiments\hierarchy_plan\20260716_lgcp_carla_subchannel_sensitivity_top40_11f --z-values "5,10,15,20"
+```
+
+语法验证：
+
+```powershell
+conda run -n opencda python -c "compile(open(r'opencda\tools\lgcp_subchannel_sensitivity_eval.py', encoding='utf-8').read(), r'opencda\tools\lgcp_subchannel_sensitivity_eval.py', 'exec')"
+```
+
+`py_compile` 在当前 Windows 工作区写 `__pycache__` 时遇到权限拒绝，因此使用不写 `.pyc` 的 `compile()` 验证。
+
+### 结果
+
+| Z | Mean slots / frame | Max slots / frame | Mean max stage packets / subchannel |
+| ---: | ---: | ---: | ---: |
+| 5 | 12.727273 | 13.000000 | 8.000000 |
+| 10 | 6.727273 | 7.000000 | 4.000000 |
+| 15 | 5.000000 | 5.000000 | 2.666667 |
+| 20 | 3.727273 | 4.000000 | 2.000000 |
+
+### 结论
+
+- `Z` 从 5 增至 20 时，slot proxy 下降约 70.7%。
+- 该结果支持“subchannel 数不足会放大 PSCCH overlap / scheduling pressure”的解释。
+- `target.md` 中 subchannel count sensitivity 已标记为 proxy 完成；NS3 多 Z replay 仍需后续复核。

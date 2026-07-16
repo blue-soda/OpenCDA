@@ -1,0 +1,7 @@
+upload_plan: C:\Workspace\OpenCDA\docs\doc_workspace\LGCP\experiments\hierarchy_plan\20260715_lgcp_carla_hierarchy_plan_top40_11f\upload_plan.csv
+z_values:
+- 5
+- 10
+- 15
+- 20
+note: Scheduling-capacity proxy; not an ns-3 PHY simulation.

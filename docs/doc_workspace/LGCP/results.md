@@ -1071,3 +1071,26 @@ opencda/tools/lgcp_stale_assignment_eval.py
 - lag 1/2 帧仍保留较稳定 area ranking。
 - lag 3 帧开始明显退化，支持论文中加入 assignment TTL 或 event-driven reassignment 机制。
 - 当前是 temporal staleness proxy，没有显式改变车辆速度；真实 high-speed scenario 仍需后续多场景验证。
+
+## 2026-07-16：Subchannel Count Z Sensitivity Proxy
+
+新增离线工具：
+
+```text
+opencda/tools/lgcp_subchannel_sensitivity_eval.py
+```
+
+该工具基于 11 帧 `upload_plan.csv`，估算不同 `Z` 下每帧需要的顺序 scheduling slots。`member_to_leader` 和 `leader_to_rsu` 被视为两个顺序 stage。
+
+| Z | Mean slots / frame | P95 slots / frame | Max slots / frame | Mean max stage packets / subchannel |
+| ---: | ---: | ---: | ---: | ---: |
+| 5 | 12.727273 | 13.000000 | 13.000000 | 8.000000 |
+| 10 | 6.727273 | 7.000000 | 7.000000 | 4.000000 |
+| 15 | 5.000000 | 5.000000 | 5.000000 | 2.666667 |
+| 20 | 3.727273 | 4.000000 | 4.000000 | 2.000000 |
+
+解释边界：
+
+- 该结果是 scheduling-capacity proxy，不是 ns-3 PHY delivery 多组重跑。
+- `Z` 增大显著降低 slot proxy 和 per-subchannel pressure，可解释当前 NS3 aggregate PHY 中 PSCCH `decoded_overlap` 的敏感性。
+- 后续若进入论文主实验，应补多组 NS3 replay 验证 RLC / PSSCH / HARQ delivery 是否随 `Z` 改善。
