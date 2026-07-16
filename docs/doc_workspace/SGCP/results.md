@@ -26,9 +26,10 @@
 | NC | TBD | TBD | TBD | TBD | TBD | No cooperation |
 | RS | TBD | TBD | TBD | TBD | TBD | Random schedule |
 | MUG | TBD | TBD | TBD | TBD | TBD | Maximum utility greedy |
-| FullPerception-RSU | TBD | TBD | TBD | TBD | TBD | RSU-assisted reference |
-| FullPerception-Decentralized | TBD | TBD | TBD | TBD | TBD | Same V2V information budget as SGCP |
-| SGCP | TBD | TBD | TBD | TBD | TBD | Full method |
+| FullPerception centralized full early | 0.85 | 0.83 | 0.48 | TBD | TBD | Full 20-CAV point-cloud sharing upper reference; upload non-ego CAV payload 60,838,528 bytes |
+| FullPerception decentralized density | 0.80 | 0.76 | 0.40 | TBD | TBD | CAV-only selective sharing, 3 members/head, 117 grid budget, payload 37,710,864 bytes |
+| SGCP coverage-aware, 10ch | 0.79 | 0.75 | 0.37 | TBD | TBD | Low-budget spatial-diverse candidate, payload 28,743,280 bytes |
+| SGCP coverage-aware, 20ch | 0.80 | 0.76 | 0.41 | TBD | TBD | High-budget spatial-diverse candidate, payload 37,912,544 bytes |
 
 ## 消融实验
 
@@ -49,18 +50,21 @@
 
 | Layer | Method | Current Result | Main Fair Baseline? | Notes |
 | --- | --- | --- | --- | --- |
-| Upper reference | Full 20-CAV early fusion | 0.85 / 0.83 / 0.48 | No | 全点云共享，无 SGCP 通信约束 |
+| Upper reference | Full 20-CAV early / virtual FullPerception centralized | 0.85 / 0.83 / 0.48 | No | 全点云共享，无 SGCP 通信约束；non-ego upload payload 60,838,528 bytes |
 | Upper reference | Full 20-CAV late checkpoint | 0.91 / 0.85 / 0.51 | No | 使用独立 late checkpoint，不能直接作为同 checkpoint 消融 |
-| Upper reference | FullPerception-RSU | TBD | No | 集中式/RSU-assisted reference；`v2xp_cluster_carla` 当前未启用 RSU |
+| Upper reference | FullPerception-RSU | N/A on current dump | No | `v2xp_cluster_carla` 当前未启用 RSU；真实 RSU baseline 需重新导出带 RSU sensor 的场景 |
 | SGCP main | SGCP constrained + inter-cluster late fusion | 0.77 / 0.73 / 0.35 | Yes | 当前完整 SGCP 离线主口径 |
 | Same pipeline ablation | Random scheduler | 0.44 / 0.39 / 0.17 | Yes | 同 SGCP clustering + late-fusion path，替换 PPS |
 | Same pipeline ablation | MWS scheduler | 0.31 / 0.26 / 0.11 | Pending | 需要复核 MWS baseline 定义 |
 | Same-budget selective baseline | Nearest top-k grid sharing | 0.76 / 0.73 / 0.37 | Yes | CAV-only, same clustering + late-fusion path, grid budget 87 |
 | Same-budget selective baseline | Density top-k grid sharing | 0.77 / 0.74 / 0.39 | Yes | Strong baseline; slightly higher AP@0.7 with higher payload |
-| Same-budget selective baseline | Communication-aware density sharing | 0.78 / 0.75 / 0.40 | Yes | Strongest current baseline; density divided by distance cost |
+| Same-budget selective baseline | Communication-aware density sharing | 0.78 / 0.75 / 0.40 | Yes | 2 members/head, 87 grid budget; density divided by distance cost |
+| Same-budget selective baseline | Density/communication-aware high-budget | 0.80 / 0.76 / 0.40 | Yes | 3 members/head, 117 grid budget; payload-matched to SGCP 20ch |
+| SGCP main candidate | Coverage-aware spatial-diverse, 10ch | 0.79 / 0.75 / 0.37 | Yes | Low-budget SGCP candidate; NS3 110/110 complete |
+| SGCP main candidate | Coverage-aware spatial-diverse, 20ch | 0.80 / 0.76 / 0.41 | Yes | High-budget SGCP candidate; NS3 154/154 complete |
 | Reference only | Singleton full late-fusion reference | 0.82 / 0.76 / 0.37 | No | late-fuse 全部 20 CAV，当前未计 detection-box exchange overhead |
 
-论文写作建议：FullPerception-RSU 和 full 20-CAV early/late fusion 只能作为 upper/reference，不应放入“同通信预算公平主对比”结论。公平主对比应使用同数据、同 backbone、同 AP 口径，并尽量匹配通信预算或显式报告 payload。
+论文写作建议：FullPerception-RSU 和 full 20-CAV early/late fusion 只能作为 upper/reference，不应放入“同通信预算公平主对比”结论。公平主对比应使用同数据、同 backbone、同 AP 口径，并尽量匹配通信预算或显式报告 payload。旧 `RandomRA/MWS` 的 payload 只有约 9.7/9.9 MB，未充分利用 10 子信道资源，不宜作为“SGCP 降低通信量”的主证据；它们更适合作 w/o PPS 消融。主公平 baseline 应改用 payload-matched selective sharing 和 random-grid same-link probe。
 
 ### Same-Budget CAV-Only Selective Sharing
 
@@ -78,8 +82,10 @@ conda run -n opencda python -m opencda.tools.offline_inference --dataset-root D:
 | Selective nearest | 0.76 | 0.73 | 0.37 | 113930.21 | 28026832 | 2.81 | 81.38 | CAV-only nearest member selection |
 | Selective density | 0.77 | 0.74 | 0.39 | 124286.05 | 30574368 | 2.81 | 81.38 | Strong baseline; higher payload and AP@0.7 |
 | Selective communication-aware | 0.78 | 0.75 | 0.40 | 122854.70 | 30222256 | 2.81 | 81.38 | Strongest current baseline; density score penalized by distance |
+| Selective density high-budget | 0.80 | 0.76 | 0.40 | 153296.20 | 37710864 | 3.33 | 102.18 | 3 members/head, 117 grid budget; payload-matched to SGCP 20ch |
+| Selective communication-aware high-budget | 0.80 | 0.76 | 0.40 | 153296.20 | 37710864 | 3.33 | 102.18 | Same result as density on this dump without external NS3 quality CSV |
 
-观察：communication-aware selective-sharing 是当前最强公平 baseline，AP@0.5/AP@0.7 均高于 SGCP，但 payload 也高于 SGCP。论文中不能声称 SGCP 在该 dump 上全面优于所有 selective-sharing baseline；更稳妥的结论是 SGCP 提供 coalition stability、PPS channel feasibility、动态/网络约束建模和可解释资源分配，而单帧 density/communication-aware top-k 在当前短序列上是强竞争 baseline。
+观察：communication-aware selective-sharing 是强公平 baseline。低预算 2-member/87-grid 设置中，它的 AP@0.7 高于原始 SGCP；高预算 3-member/117-grid 设置中，它达到 `0.80/0.76/0.40`，与 SGCP spatial-diverse 20ch 的 `0.80/0.76/0.41` 接近但 AP@0.7 略低，payload 也接近。因此论文中不应依赖低通信 Random/MWS 来证明通信节省，而应报告 payload-matched selective baselines，并强调 SGCP 的 PPS 子信道可行性、NS3 完整交付和 coverage-aware grid selection。
 
 ### NS3 Link-Quality-Aware Selective Sharing
 
@@ -169,6 +175,17 @@ Observation: the default `N_max=4` creates no singleton clusters in this dump, b
 | 2.0 | 0.77 | 0.73 | 0.35 | 109415.48 | 26916208 | 246 | 6.00 | 11 | 76 | Current implementation default / paper candidate |
 | 3.0 | 0.77 | 0.73 | 0.37 | 113689.69 | 27967664 | 246 | 6.00 | 11 | 76 | Higher AP@0.7, higher payload |
 | 4.0 | 0.77 | 0.74 | 0.37 | 115754.73 | 28475664 | 246 | 6.00 | 11 | 76 | Best AP@0.5/AP@0.7 in this dump, highest payload |
+
+Coverage-aware spatial-diverse under the same `rho_th` sweep:
+
+| `rho_th` | AP@0.3 | AP@0.5 | AP@0.7 | Avg. Upload (bytes/source) | Total Upload (bytes) | Avg. Source CAVs | Avg. Selected Grids | Notes |
+| ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | --- |
+| 1.0 | 0.76 | 0.72 | 0.34 | 106896.20 | 26296464 | 2.67 | 80.75 | Lower payload, but AP drops |
+| 2.0 | 0.79 | 0.75 | 0.37 | 116842.60 | 28743280 | 2.67 | 87.32 | Current low-budget candidate |
+| 3.0 | 0.79 | 0.76 | 0.38 | 119533.72 | 29405296 | 2.67 | 89.72 | Slight AP gain with modest payload increase |
+| 4.0 | 0.79 | 0.76 | 0.38 | 121291.64 | 29837744 | 2.67 | 90.62 | Similar AP to 3.0, higher payload |
+
+Observation: `rho_th` is the main point-cloud threshold knob for this pipeline. For `spatial_diverse`, increasing `rho_th` from 2.0 to 3.0 improves AP@0.5/AP@0.7 from `0.75/0.37` to `0.76/0.38` with payload rising from 28.74 MB to 29.41 MB. This is a better paper parameter sweep than claiming Random/MWS reduce communication, because it shows an actual AP/payload threshold tradeoff inside the proposed method.
 
 ### CAV Count Scaling
 

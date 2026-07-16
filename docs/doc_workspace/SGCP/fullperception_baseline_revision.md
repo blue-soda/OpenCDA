@@ -26,7 +26,7 @@
 | 虚拟 RSU 聚合全 CAV 数据 | 否 | 当前 20-CAV full early/late fusion 更接近这个口径；应标注为 centralized oracle/reference。 |
 | 只在表中说明不复现 | 是，作为说明 | 若主贡献是 RSU-free decentralized CP，可以不把 RSU baseline 放入主结果表。 |
 
-当前 `D:\Data\Carla\2026_07_15_01_26_56` dump 不包含 RSU 目录，因此不应把 FullPerception-RSU 填成真实主实验结果。已完成的 full 20-CAV early fusion `0.85/0.83/0.48` 和 full 20-CAV late checkpoint `0.91/0.85/0.51` 只能写成 full-sharing reference。
+当前 `D:\Data\Carla\2026_07_15_01_26_56` dump 不包含 RSU 目录，因此不应把 FullPerception-RSU 填成真实主实验结果。已完成的 full 20-CAV early fusion `0.85/0.83/0.48` 和 full 20-CAV late checkpoint `0.91/0.85/0.51` 只能写成 full-sharing reference。若把 full 20-CAV early fusion 解释为 virtual centralized FullPerception，其 41 帧 non-ego CAV 点云上传 payload 为 60,838,528 bytes。
 
 ## FullPerception-Decentralized 实现口径
 
@@ -49,8 +49,10 @@
 | Selective nearest | 0.76 / 0.73 / 0.37 | 28,026,832 bytes | 同数据、同评估口径、略高 payload |
 | Selective density | 0.77 / 0.74 / 0.39 | 30,574,368 bytes | 强 V2V baseline，高 payload |
 | Selective communication-aware | 0.78 / 0.75 / 0.40 | 30,222,256 bytes | 当前最强 V2V baseline，高 payload |
+| Selective density high-budget | 0.80 / 0.76 / 0.40 | 37,710,864 bytes | 3 members/head, 117 grid budget |
+| SGCP coverage-aware 20ch | 0.80 / 0.76 / 0.41 | 37,912,544 bytes | Payload-matched high-budget SGCP candidate |
 
-这个结果要求论文叙事保持诚实：在当前短 41 帧 dump 上，SGCP 不是 AP 全面领先。更稳妥的贡献表述是 SGCP 在接近通信预算下提供 cluster stability、PPS 子信道可行性、NS3 可验证的无冲突传输、控制开销可解释和分层 early/late fusion，而 naive density-based selective sharing 是强竞争基线。
+这个结果要求论文叙事保持诚实：在当前短 41 帧 dump 上，原始 SGCP 不是 AP 全面领先。coverage-aware SGCP 后，20ch high-budget 版本在 AP@0.7 上略高于 payload-matched selective baseline，并且具备 PPS 子信道可行性和 NS3 完整交付证据。更稳妥的贡献表述是 SGCP 在接近通信预算下提供 cluster stability、PPS 子信道可行性、NS3 可验证的无冲突传输、控制开销可解释和分层 early/late fusion，而 naive density-based selective sharing 是强竞争基线。
 
 ## 论文正文建议
 

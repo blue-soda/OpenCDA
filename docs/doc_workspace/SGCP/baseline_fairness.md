@@ -17,15 +17,18 @@ SGCP 的核心设定是去中心化 CAV 协同感知：车辆先形成 coalition
 
 | 层级 | 方法 | 当前结果 | 是否公平主对比 | 用途 |
 | --- | --- | --- | --- | --- |
-| Upper reference | Full 20-CAV early fusion | AP@0.3/0.5/0.7 = 0.85/0.83/0.48 | 否 | 估计无通信约束、全点云共享上界 |
+| Upper reference | Full 20-CAV early fusion / virtual FullPerception centralized | AP@0.3/0.5/0.7 = 0.85/0.83/0.48 | 否 | 估计无通信约束、全点云共享上界；non-ego upload payload 60,838,528 bytes |
 | Upper reference | Full 20-CAV late fusion checkpoint | AP@0.3/0.5/0.7 = 0.91/0.85/0.51 | 否 | 估计全 CAV prediction-level late fusion 上界；checkpoint 不同 |
-| Upper reference | FullPerception-RSU | TBD | 否 | 若启用 RSU/虚拟 RSU，可作为集中式 upper reference |
+| Upper reference | FullPerception-RSU | N/A on current dump | 否 | 当前 dump 无 RSU；若启用 RSU/虚拟 RSU，可作为集中式 upper reference |
 | SGCP main | SGCP constrained + inter-cluster late fusion | AP@0.3/0.5/0.7 = 0.77/0.73/0.35 | 是 | 当前完整 SGCP 离线主口径 |
 | Same pipeline ablation | Random scheduler | AP@0.3/0.5/0.7 = 0.44/0.39/0.17 | 是 | 同 SGCP clustering + late-fusion 口径，替换 PPS |
 | Same pipeline ablation | MWS scheduler | AP@0.3/0.5/0.7 = 0.31/0.26/0.11 | 暂定 | 需要复核 MWS 定义和效用函数 |
 | Same-budget selective baseline | Nearest grid sharing | AP@0.3/0.5/0.7 = 0.76/0.73/0.37 | 是 | 每簇头最多 2 个成员、87 个 grid budget |
 | Same-budget selective baseline | Density grid sharing | AP@0.3/0.5/0.7 = 0.77/0.74/0.39 | 是 | 当前强 baseline，payload 高于 SGCP |
 | Same-budget selective baseline | Communication-aware density sharing | AP@0.3/0.5/0.7 = 0.78/0.75/0.40 | 是 | 当前最强 baseline，density score 加入距离成本 |
+| High-budget selective baseline | Density / communication-aware sharing | AP@0.3/0.5/0.7 = 0.80/0.76/0.40 | 是 | 3 members/head, 117 grid budget, payload 37,710,864 bytes |
+| SGCP candidate | Coverage-aware spatial-diverse, 10ch | AP@0.3/0.5/0.7 = 0.79/0.75/0.37 | 是 | Low-budget SGCP candidate, payload 28,743,280 bytes, NS3 110/110 complete |
+| SGCP candidate | Coverage-aware spatial-diverse, 20ch | AP@0.3/0.5/0.7 = 0.80/0.76/0.41 | 是 | High-budget SGCP candidate, payload 37,912,544 bytes, NS3 154/154 complete |
 | Reference only | Singleton-cluster full late-fusion reference | AP@0.3/0.5/0.7 = 0.82/0.76/0.37 | 否 | late-fuse 全部 20 CAV，当前未计 prediction exchange overhead |
 
 ## FullPerception-RSU 口径
@@ -39,7 +42,7 @@ SGCP 的核心设定是去中心化 CAV 协同感知：车辆先形成 coalition
 - 通信预算不与 SGCP 的 decentralized V2V PPS 严格相同。
 - 结果用于说明“如果存在集中式基础设施和更强通信条件，理论上可达到的参考性能”。
 
-当前 `v2xp_cluster_carla` 没有启用 RSU，离线 dump 也没有 RSU 目录。因此本路线暂不把 FullPerception-RSU 填入主实验表；如需真实复现，应重新导出带 RSU 的场景，或明确使用虚拟 RSU 聚合全 CAV 数据。
+当前 `v2xp_cluster_carla` 没有启用 RSU，离线 dump 也没有 RSU 目录。因此本路线暂不把 FullPerception-RSU 填入主实验表；如需真实复现，应重新导出带 RSU 的场景，或明确使用虚拟 RSU 聚合全 CAV 数据。当前可复现的虚拟 centralized FullPerception 口径为 full 20-CAV early fusion：AP@0.3/0.5/0.7 = 0.85/0.83/0.48，non-ego CAV upload payload = 60,838,528 bytes。
 
 ## FullPerception-Decentralized 口径
 
@@ -51,6 +54,8 @@ FullPerception-Decentralized 如果作为公平 baseline，不能等同于 full 
 - 可作为 “same-budget full-perception attempt”，但需要实现具体调度策略，例如 nearest-neighbor sharing、top-k density sharing、communication-aware top-k sharing。
 
 当前已实现 nearest/density/communication-aware selective-sharing first version：它们共享 SGCP cluster/head-wise evaluation path，不使用 PPS，按固定 grid budget 进行 CAV-only V2V sharing。其中 communication-aware 默认使用 `density_sum / (1 + distance / 100)` 作为离线 proxy；若传入 `--ns3-link-quality-csv <rlc_by_request.csv>`，则扩展为 `density_sum * rlc_complete_ratio / (1 + distance / 100)`，用于体现 NS3 request-level 完整交付约束。
+
+注意：旧 RandomRA/MWS scheduler payload 只有约 9.7/9.9 MB，远低于 SGCP 10ch/20ch 和 high-budget selective baseline，说明它们没有充分利用通信资源。它们应保留为 w/o PPS 消融，不应作为“SGCP 降低通信量”的主公平 baseline。公平主表应优先使用 payload-matched selective sharing、random-grid same-link probe 和 SGCP coverage-aware variants。
 
 ## 建议进入论文的表述
 

@@ -2759,3 +2759,64 @@ conda run -n opencda python -m opencda.tools.ns3_log_eval --ns3-stdout docs\doc_
 - 10 子信道 low-budget `spatial_diverse` 候选的 110 条 PPS scheduled requests 全部交付。
 - 每帧 4 条未调度需求在 OpenCDA replay 侧跳过，没有进入 NS3 默认调度路径。
 - 至此，`spatial_diverse` 10 子信道低通信主点和 20 子信道高预算敏感性点均有 NS3 request-level 交付证据。
+
+## 2026-07-16 - Baseline and threshold corrections
+
+### 目的
+
+回应主表设计问题：补全 FullPerception baseline；避免使用 payload 过低的 Random/MWS scheduler 作为通信量减少证据；补充 SGCP 内部点云阈值参数实验。
+
+### FullPerception payload 统计
+
+命令：
+
+```powershell
+conda run -n opencda python -c "from opencda.core.common.offline_dataset import OPV2VFrameDataset; ds=OPV2VFrameDataset(r'D:\\Data\\Carla'); scenario='2026_07_15_01_26_56'; ego='1'; frames=[ds.load_frame(scenario,ts,ego_cav_id=ego) for ts in ds.scenarios[scenario]['timestamps']]; total_all=sum(c['lidar_np'].nbytes for f in frames for c in f.values()); total_non=sum(c['lidar_np'].nbytes for f in frames for cid,c in f.items() if str(cid)!=ego); print(total_all,total_non)"
+```
+
+结果：
+
+- Full 20-CAV early AP：0.85 / 0.83 / 0.48
+- Full 20-CAV all point bytes：64,070,912
+- Full 20-CAV non-ego upload bytes：60,838,528
+- 结论：当前 dump 无 RSU，因此 FullPerception-RSU 不应填成实测；full 20-CAV early 可作为 centralized/virtual FullPerception upper reference。
+
+### High-budget selective baseline
+
+命令：
+
+```powershell
+conda run -n opencda python -m opencda.tools.offline_inference --dataset-root D:\Data\Carla --scenario-id 2026_07_15_01_26_56 --ego-cav-id 1 --selective-sharing-baseline density --sgcp-inter-cluster-late-fusion --selective-member-budget 3 --selective-grid-budget 117 --max-frames 0 --sgcp-trace-output docs\doc_workspace\SGCP\artifacts\selective_high_budget_41f\density_m3_g117_trace.csv
+conda run -n opencda python -m opencda.tools.offline_inference --dataset-root D:\Data\Carla --scenario-id 2026_07_15_01_26_56 --ego-cav-id 1 --selective-sharing-baseline communication_aware --sgcp-inter-cluster-late-fusion --selective-member-budget 3 --selective-grid-budget 117 --max-frames 0 --sgcp-trace-output docs\doc_workspace\SGCP\artifacts\selective_high_budget_41f\communication_aware_m3_g117_trace.csv
+```
+
+结果：
+
+- Density high-budget：0.80 / 0.76 / 0.40，payload 37,710,864 bytes。
+- Communication-aware high-budget：0.80 / 0.76 / 0.40，payload 37,710,864 bytes。
+- 结论：高预算 selective baseline 已充分利用接近 SGCP 20ch 的通信量；SGCP spatial-diverse 20ch 为 0.80 / 0.76 / 0.41，payload 37,912,544 bytes，AP@0.7 略高。
+
+### Spatial-diverse `rho_th` threshold sweep
+
+命令：
+
+```powershell
+conda run -n opencda python -m opencda.tools.offline_inference --dataset-root D:\Data\Carla --scenario-id 2026_07_15_01_26_56 --ego-cav-id 1 --sgcp-constrained --sgcp-inter-cluster-late-fusion --resource-allocation potential_game --sgcp-grid-selection-mode spatial_diverse --rho-th 1.0 --max-frames 0
+conda run -n opencda python -m opencda.tools.offline_inference --dataset-root D:\Data\Carla --scenario-id 2026_07_15_01_26_56 --ego-cav-id 1 --sgcp-constrained --sgcp-inter-cluster-late-fusion --resource-allocation potential_game --sgcp-grid-selection-mode spatial_diverse --rho-th 3.0 --max-frames 0
+conda run -n opencda python -m opencda.tools.offline_inference --dataset-root D:\Data\Carla --scenario-id 2026_07_15_01_26_56 --ego-cav-id 1 --sgcp-constrained --sgcp-inter-cluster-late-fusion --resource-allocation potential_game --sgcp-grid-selection-mode spatial_diverse --rho-th 4.0 --max-frames 0
+```
+
+结果：
+
+| `rho_th` | AP@0.3 | AP@0.5 | AP@0.7 | Total Payload | Avg. Selected Grids |
+| ---: | ---: | ---: | ---: | ---: | ---: |
+| 1.0 | 0.76 | 0.72 | 0.34 | 26,296,464 | 80.75 |
+| 2.0 | 0.79 | 0.75 | 0.37 | 28,743,280 | 87.32 |
+| 3.0 | 0.79 | 0.76 | 0.38 | 29,405,296 | 89.72 |
+| 4.0 | 0.79 | 0.76 | 0.38 | 29,837,744 | 90.62 |
+
+### 观察
+
+- Random/MWS scheduler payload 只有约 9.7/9.9 MB，确实没有充分利用通信资源；它们不适合作通信量减少主证据。
+- 公平主表应使用 payload-matched selective baselines 和 SGCP 10/20ch，而不是低通信 Random/MWS。
+- `rho_th` 是当前最清晰的点云阈值/通信量调节参数；`rho_th=3.0` 比默认 2.0 有更高 AP@0.5/AP@0.7，payload 只增加约 0.66 MB。
