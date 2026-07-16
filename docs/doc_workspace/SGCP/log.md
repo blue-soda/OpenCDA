@@ -2298,3 +2298,60 @@ docs/doc_workspace/SGCP/fullperception_baseline_revision.md
 - `FullPerception-Decentralized` 应具体化为 same-budget CAV-only selective sharing，匹配数据、backbone、cluster-head late-fusion path 和 grid budget。
 - 当前 strong V2V baseline 包括 nearest、density、communication-aware selective sharing；其中 communication-aware 41 帧 AP@0.3/0.5/0.7 = 0.78/0.75/0.40，payload 高于 SGCP。
 - 论文叙事应避免宣称 SGCP 在该短 dump 上 AP 全面领先，转而强调 SGCP 的 cluster stability、PPS channel feasibility、NS3 request-level 可验证传输和可解释控制开销。
+
+## 2026-07-16 - Runtime feasibility breakdown
+
+### 目的
+
+推进 P4 “补充实时性实验，包括毫秒级耗时分解”，区分离线 replay artifact、SGCP 控制面算法耗时和仍未测量的端到端感知耗时。
+
+### 代码与环境
+
+- Conda 环境：`opencda`
+- 数据集：`D:\Data\Carla\2026_07_15_01_26_56`
+- CAV 数量：20
+- 帧数：41
+- 资源分配：`potential_game`
+
+### 代码修正
+
+- `opencda.tools.offline_replay` 新增 `runtime_breakdown_ms`：
+  - `load_frame`
+  - `world_build`
+  - `clustering`
+  - `post_cluster_state`
+  - `resource_allocation`
+  - `control_accounting`
+  - `algorithm_total`
+  - `offline_total`
+
+### 命令
+
+```powershell
+conda run -n opencda python -m py_compile opencda\tools\offline_replay.py
+conda run -n opencda python -m opencda.tools.offline_replay --dataset-root D:\Data\Carla --scenario-id 2026_07_15_01_26_56 --ego-cav-id 1 --resource-allocation potential_game --max-frames 0 --summary-only
+```
+
+### 日志路径
+
+```text
+docs\doc_workspace\SGCP\artifacts\runtime_breakdown_41f\offline_replay_runtime.log
+```
+
+### 结果摘要
+
+- SGCP algorithm total：avg 105.24 ms，max 127.58 ms。
+- Coalition formation：avg 64.39 ms，max 82.32 ms。
+- PPS scheduling：avg 40.58 ms，max 53.05 ms。
+- Post-cluster state update：avg 0.24 ms，max 0.44 ms。
+- Control overhead accounting：avg 0.03 ms，max 0.05 ms。
+- Dump frame loading：avg 448.40 ms，max 513.31 ms。
+- Offline world build：avg 151.33 ms，max 199.34 ms。
+- Offline total：avg 704.97 ms，max 789.68 ms。
+
+### 观察
+
+- 离线文件读取和 world build 合计约 599.73 ms/frame，是 replay pipeline artifact，不应写成在线 CARLA 周期耗时。
+- SGCP 控制面 Python 原型平均 105.24 ms，接近但略高于 100 ms，因此论文只能写 near-real-time feasibility，不能写完整端到端 100 ms 保证。
+- PPS 本身平均 40.58 ms 且 41/41 帧 3 轮收敛；主要优化空间在 coalition formation。
+- 在线 topology-trigger gate 可用于摊销 coalition formation 成本，因为 cluster membership 不必每帧重构。

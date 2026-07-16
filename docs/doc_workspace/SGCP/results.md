@@ -302,18 +302,32 @@ conda run -n opencda python -m opencda.tools.ns3_log_eval --ns3-stdout docs\doc_
 
 ## 实时性结果
 
-当前尚未复现。后续需要补充：
+详细写作口径见 `runtime_feasibility_revision.md`。当前结果来自 41 帧离线 replay，不启动 CARLA/NS3；`SGCP algorithm total` 不含离线文件 I/O、OpenCOOD detector inference 和真实传输等待。
 
-| Stage | Mean (ms) | P95 (ms) | Max (ms) | Notes |
-| --- | ---: | ---: | ---: | --- |
-| Topology/change detection | TBD | TBD | TBD |  |
-| Coalition formation | TBD | TBD | TBD |  |
-| PPS scheduling | TBD | TBD | TBD |  |
-| Point cloud transmission | TBD | TBD | TBD |  |
-| Intra-cluster fusion | TBD | TBD | TBD |  |
-| Detector inference | TBD | TBD | TBD |  |
-| Inter-cluster late fusion | TBD | TBD | TBD |  |
-| End-to-end cycle | TBD | TBD | TBD | Target <= 100 ms |
+命令：
+
+```powershell
+conda run -n opencda python -m opencda.tools.offline_replay --dataset-root D:\Data\Carla --scenario-id 2026_07_15_01_26_56 --ego-cav-id 1 --resource-allocation potential_game --max-frames 0 --summary-only
+```
+
+日志：
+
+```text
+docs\doc_workspace\SGCP\artifacts\runtime_breakdown_41f\offline_replay_runtime.log
+```
+
+| Stage | Mean (ms) | Max (ms) | Online cycle? | Notes |
+| --- | ---: | ---: | --- | --- |
+| Dump frame loading | 448.40 | 513.31 | No | Offline PCD/YAML replay artifact |
+| Offline world build | 151.33 | 199.34 | No/partial | Offline adapter rebuilds manager state |
+| Coalition formation | 64.39 | 82.32 | Yes | `CoalitionGame.run()` |
+| Post-cluster state update | 0.24 | 0.44 | Yes | Apply cluster state and topology state |
+| PPS scheduling | 40.58 | 53.05 | Yes | `PotentialGame` resource allocation |
+| Control overhead accounting | 0.03 | 0.05 | No | Paper accounting only |
+| SGCP algorithm total | 105.24 | 127.58 | Yes | Control-plane prototype, excluding perception inference |
+| Offline total | 704.97 | 789.68 | No | Includes replay file I/O and world rebuild |
+
+观察：当前 Python 原型的 control-plane 平均 105.24 ms，接近但略高于 100 ms 协作周期，因此论文中应写为 near-real-time feasibility，而不是完整端到端 100 ms 保证。PPS 本身平均 40.58 ms，41/41 帧在 3 轮内收敛；主要优化空间在 coalition formation。已接入的 topology-trigger gate 可作为机制解释：在线执行时 cluster membership 不必每个 sensing cycle 重算，只有 topology/stability trigger 或 periodic guard 触发时才支付该成本。
 
 ## 数据集导出验证
 

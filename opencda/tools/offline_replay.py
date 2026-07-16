@@ -339,18 +339,23 @@ def replay_frame(dataset, scenario_id, timestamp, ego_cav_id, protocol,
                  resource_allocation=None, t_min_stab=None,
                  clustering='coalition_game', n_max=None, rho_th=None,
                  cav_ids=None, num_channels=None, bandwidth_mhz=None):
+    load_start = time.perf_counter()
     frame = dataset.load_frame(
         scenario_id,
         timestamp,
         ego_cav_id=ego_cav_id,
         cav_ids=cav_ids)
+    load_elapsed_ms = (time.perf_counter() - load_start) * 1000.0
+    world_start = time.perf_counter()
     clear_sgcp_globals()
     world = OfflineCavWorld(
         frame,
         ego_id=ego_cav_id,
         protocol=protocol,
         density_threshold=rho_th)
-    start_time = time.time()
+    world_build_ms = (time.perf_counter() - world_start) * 1000.0
+    start_time = time.perf_counter()
+    clustering_start = time.perf_counter()
     if clustering == 'coalition_game':
         clustering_algorithm = CoalitionGame(world)
     elif clustering == 'singleton':
@@ -364,10 +369,13 @@ def replay_frame(dataset, scenario_id, timestamp, ego_cav_id, protocol,
     if n_max is not None and hasattr(clustering_algorithm, 'p'):
         clustering_algorithm.p.N_max = n_max
     clusters = clustering_algorithm.run()
+    clustering_elapsed_ms = (time.perf_counter() - clustering_start) * 1000.0
+    post_cluster_start = time.perf_counter()
     capacity_stats = getattr(clustering_algorithm, 'capacity_stats', {})
     apply_cluster_state(world, clusters)
     topology_state = collect_topology_state(world)
-    ra_start_time = time.time()
+    post_cluster_ms = (time.perf_counter() - post_cluster_start) * 1000.0
+    ra_start_time = time.perf_counter()
     ra_name = get_resource_allocation_name(protocol, resource_allocation)
     resource_allocator = build_resource_allocator(ra_name, world)
     apply_resource_overrides(
@@ -378,9 +386,13 @@ def replay_frame(dataset, scenario_id, timestamp, ego_cav_id, protocol,
     resource_allocator.set_clusters(clusters)
     resource_allocator.run()
     pps_stats = getattr(resource_allocator, 'convergence_stats', {})
+    ra_elapsed_ms = (time.perf_counter() - ra_start_time) * 1000.0
+    control_start = time.perf_counter()
     control_overhead = estimate_control_overhead(world, clusters)
-    ra_elapsed_ms = (time.time() - ra_start_time) * 1000.0
-    elapsed_ms = (time.time() - start_time) * 1000.0
+    control_accounting_ms = (time.perf_counter() - control_start) * 1000.0
+    elapsed_ms = (time.perf_counter() - start_time) * 1000.0
+    offline_total_ms = (
+        load_elapsed_ms + world_build_ms + elapsed_ms)
     channel_allocation = {}
     first_vm = next(iter(world.get_vehicle_managers().values()))
     if first_vm.v2x_manager.scheduler is not None:
@@ -403,6 +415,16 @@ def replay_frame(dataset, scenario_id, timestamp, ego_cav_id, protocol,
             float(len(cluster_summary) or 1)),
         'elapsed_ms': elapsed_ms,
         'resource_allocation_ms': ra_elapsed_ms,
+        'runtime_breakdown_ms': {
+            'load_frame': load_elapsed_ms,
+            'world_build': world_build_ms,
+            'clustering': clustering_elapsed_ms,
+            'post_cluster_state': post_cluster_ms,
+            'resource_allocation': ra_elapsed_ms,
+            'control_accounting': control_accounting_ms,
+            'algorithm_total': elapsed_ms,
+            'offline_total': offline_total_ms,
+        },
         'resource_allocation': ra_name,
         'clustering': clustering,
         't_min_stab': (
@@ -627,6 +649,26 @@ def summarize_replay(results, relative_speed_threshold=5.0,
     pps_converged_frames = sum(
         1 for item in results
         if item.get('pps_stats', {}).get('converged', False))
+    runtime_keys = [
+        'load_frame',
+        'world_build',
+        'clustering',
+        'post_cluster_state',
+        'resource_allocation',
+        'control_accounting',
+        'algorithm_total',
+        'offline_total',
+    ]
+    runtime_breakdown = {}
+    for key in runtime_keys:
+        values = [
+            item.get('runtime_breakdown_ms', {}).get(key, 0.0)
+            for item in results
+        ]
+        runtime_breakdown[key] = {
+            'avg': sum(values) / float(frame_count),
+            'max': max(values),
+        }
 
     reconfiguration_events = 0
     vehicle_head_changes = 0
@@ -698,6 +740,7 @@ def summarize_replay(results, relative_speed_threshold=5.0,
         'avg_resource_allocation_ms': (
             sum(item['resource_allocation_ms'] for item in results) /
             float(frame_count)),
+        'runtime_breakdown_ms': runtime_breakdown,
         'control_overhead': {
             'total_control_bytes': control_sums['total_control_bytes'],
             'avg_control_bytes_per_frame': (
@@ -792,6 +835,32 @@ def print_summary(summary):
     print('summary runtime_ms avg_total=%.2f avg_ra=%.2f' % (
         summary['avg_elapsed_ms'],
         summary['avg_resource_allocation_ms']))
+    runtime = summary.get('runtime_breakdown_ms', {})
+    print('summary runtime_breakdown_ms '
+          'load_avg=%.2f load_max=%.2f '
+          'world_build_avg=%.2f world_build_max=%.2f '
+          'clustering_avg=%.2f clustering_max=%.2f '
+          'post_cluster_avg=%.2f post_cluster_max=%.2f '
+          'pps_avg=%.2f pps_max=%.2f '
+          'control_avg=%.2f control_max=%.2f '
+          'algorithm_avg=%.2f algorithm_max=%.2f '
+          'offline_total_avg=%.2f offline_total_max=%.2f' % (
+              runtime.get('load_frame', {}).get('avg', 0.0),
+              runtime.get('load_frame', {}).get('max', 0.0),
+              runtime.get('world_build', {}).get('avg', 0.0),
+              runtime.get('world_build', {}).get('max', 0.0),
+              runtime.get('clustering', {}).get('avg', 0.0),
+              runtime.get('clustering', {}).get('max', 0.0),
+              runtime.get('post_cluster_state', {}).get('avg', 0.0),
+              runtime.get('post_cluster_state', {}).get('max', 0.0),
+              runtime.get('resource_allocation', {}).get('avg', 0.0),
+              runtime.get('resource_allocation', {}).get('max', 0.0),
+              runtime.get('control_accounting', {}).get('avg', 0.0),
+              runtime.get('control_accounting', {}).get('max', 0.0),
+              runtime.get('algorithm_total', {}).get('avg', 0.0),
+              runtime.get('algorithm_total', {}).get('max', 0.0),
+              runtime.get('offline_total', {}).get('avg', 0.0),
+              runtime.get('offline_total', {}).get('max', 0.0)))
     pps_stats = summary.get('pps_stats', {})
     print('summary pps_convergence avg_iterations=%.2f '
           'max_iterations=%s converged_frames=%s avg_cluster_updates=%.2f '
