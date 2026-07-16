@@ -1,0 +1,11 @@
+area_records: C:\Workspace\OpenCDA\docs\doc_workspace\LGCP\experiments\area_confidence\20260715_lgcp_carla_area_ap_11f_detector_score\area_records.csv
+area_quality: C:\Workspace\OpenCDA\docs\doc_workspace\LGCP\experiments\area_confidence\20260715_lgcp_carla_area_ap_11f_detector_score\area_quality.csv
+confidence_field: density_distance
+quality_field: recall_05
+lags:
+- 0
+- 1
+- 2
+- 3
+top_k: 40
+note: Offline stale assignment sensitivity; no CARLA rerun.

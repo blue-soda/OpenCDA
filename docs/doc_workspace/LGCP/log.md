@@ -2151,3 +2151,46 @@ docs/doc_workspace/LGCP/experiments/area_confidence/20260716_lgcp_carla_localiza
 - 当前单场景 11 帧 smoke 显示 area-frame confidence-to-recall ranking 对 0.2m-1.0m xy noise 相对稳定。
 - accumulated AP ranking 在 1.0m 下开始下降。
 - `target.md` 中 localization error sensitivity 已标记为单场景 smoke 完成；完整论文结论仍需多 seed 和真实 feature alignment 误差验证。
+
+## 2026-07-16 - update frequency / stale assignment sensitivity smoke
+
+### 目标
+
+- 推进 P1 中 vehicle mobility / update frequency / stale assignment sensitivity。
+- 用前若干 frame 的 area confidence 预测当前 frame quality，近似更低 update frequency 或 stale RSU assignment。
+
+### 代码
+
+新增：
+
+```text
+opencda/tools/lgcp_stale_assignment_eval.py
+docs/doc_workspace/LGCP/stale_assignment_sensitivity.md
+```
+
+### 运行命令
+
+```powershell
+conda run -n opencda python -m opencda.tools.lgcp_stale_assignment_eval --area-records docs\doc_workspace\LGCP\experiments\area_confidence\20260715_lgcp_carla_area_ap_11f_detector_score\area_records.csv --area-quality docs\doc_workspace\LGCP\experiments\area_confidence\20260715_lgcp_carla_area_ap_11f_detector_score\area_quality.csv --output-dir docs\doc_workspace\LGCP\experiments\area_confidence\20260716_lgcp_carla_stale_assignment_11f --confidence-field density_distance --quality-field recall_05 --lags "0,1,2,3" --top-k 40
+```
+
+### 结果
+
+```text
+lag=0 samples=354 noisy_or_spearman=0.584992 top_jaccard_mean=1.000000
+lag=1 samples=321 noisy_or_spearman=0.527720 top_jaccard_mean=0.911095
+lag=2 samples=289 noisy_or_spearman=0.529556 top_jaccard_mean=0.857818
+lag=3 samples=257 noisy_or_spearman=0.447925 top_jaccard_mean=0.805484
+```
+
+输出目录：
+
+```text
+docs/doc_workspace/LGCP/experiments/area_confidence/20260716_lgcp_carla_stale_assignment_11f/
+```
+
+### 结论
+
+- 1/2 帧 stale assignment 在当前 11 帧 smoke 中仍能保留较稳定 ranking。
+- 3 帧 stale assignment 开始明显退化，支持短 TTL 或 event-driven reassignment。
+- `target.md` 中 update frequency / stale assignment sensitivity 已标记为单场景 smoke 完成；显式车辆速度变化仍需多场景实验。

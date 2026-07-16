@@ -204,3 +204,16 @@ area_confidence/
 | `1.0m` | 0.550885 | 0.314543 |
 
 该结果支持中等定位误差下 area-frame confidence ranking 仍较稳定，但不覆盖真实 feature alignment error。
+
+## 2026-07-16 Update Frequency / Stale Assignment Smoke
+
+`opencda/tools/lgcp_stale_assignment_eval.py` 使用 stale confidence report 评估当前 frame area quality ranking。
+
+| Lag steps | Noisy-or vs recall@0.5 Spearman | Top-40 Jaccard mean |
+| --- | ---: | ---: |
+| 0 | 0.584992 | 1.000000 |
+| 1 | 0.527720 | 0.911095 |
+| 2 | 0.529556 | 0.857818 |
+| 3 | 0.447925 | 0.805484 |
+
+该结果支持短 assignment TTL；显式车速变化仍需单独实验。

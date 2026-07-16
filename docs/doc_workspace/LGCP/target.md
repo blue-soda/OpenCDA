@@ -21,7 +21,7 @@
 ## P1：重要补强
 
 - [x] 增加定位误差敏感性实验。（已完成单场景 11 帧 smoke，论文级结果仍需多 seed）
-- [ ] 增加车辆速度 / update frequency / stale assignment 敏感性实验。
+- [x] 增加车辆速度 / update frequency / stale assignment 敏感性实验。（已完成 update frequency / stale assignment 单场景 11 帧 smoke，显式车速仍需多场景）
 - [x] 增加 area size / grid size 敏感性实验。（已完成单场景 11 帧 smoke，论文级结果仍需多 seed）
 - [ ] 增加 subchannel count `Z` 敏感性实验。
 - [ ] 增加 CAV / edge computation capacity 敏感性实验。

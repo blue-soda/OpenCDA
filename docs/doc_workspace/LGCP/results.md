@@ -1041,3 +1041,33 @@ docs/doc_workspace/LGCP/experiments/hierarchy_plan/20260715_lgcp_carla_hierarchy
 - Area-frame confidence-to-recall ranking 在 1.0m xy pose noise 下仍保持约 `0.55` Spearman。
 - Accumulated AP ranking 在 1.0m 噪声下降低，因此论文中只能作为 robustness diagnostic。
 - 当前没有模拟 feature alignment 误差对 model-level fusion 的影响，后续完整 LGCP local fusion 仍需单独验证。
+
+## 2026-07-16：Update Frequency / Stale Assignment Sensitivity Smoke
+
+新增离线工具：
+
+```text
+opencda/tools/lgcp_stale_assignment_eval.py
+```
+
+该工具使用前 `lag_steps` 个 update 的 area confidence 预测当前 frame 的 area quality，近似较低 update frequency 或 stale assignment。
+
+共同设置：
+
+- scenario：`2026_07_15_02_33_21`
+- frames：11
+- quality：`recall_05`
+- top-k：40 areas
+
+| Lag steps | Samples | Noisy-or vs recall@0.5 Spearman | Top-40 Jaccard mean | Top-40 Jaccard min |
+| --- | ---: | ---: | ---: | ---: |
+| 0 | 354 | 0.584992 | 1.000000 | 1.000000 |
+| 1 | 321 | 0.527720 | 0.911095 | 0.777778 |
+| 2 | 289 | 0.529556 | 0.857818 | 0.777778 |
+| 3 | 257 | 0.447925 | 0.805484 | 0.666667 |
+
+解释边界：
+
+- lag 1/2 帧仍保留较稳定 area ranking。
+- lag 3 帧开始明显退化，支持论文中加入 assignment TTL 或 event-driven reassignment 机制。
+- 当前是 temporal staleness proxy，没有显式改变车辆速度；真实 high-speed scenario 仍需后续多场景验证。
