@@ -2664,3 +2664,63 @@ docs\doc_workspace\SGCP\artifacts\mechanism_probe\spatial_diverse_grid_41f_trace
 - 10 子信道是低通信主表候选：payload 约为 full-cluster 的 64.1%，AP 为 `0.79/0.75/0.37`。
 - 20 子信道是高预算敏感性候选：AP@0.7 = 0.41，接近 full-cluster 0.42，同时 payload 比 full-cluster 低约 15.5%。
 - 后续主表可以考虑同时报告 low-budget SGCP 和 high-budget SGCP，或者将 10 子信道作为主设置、20 子信道放入 network-resource sensitivity。
+
+## 2026-07-16 - Spatial-diverse NS3 high-budget replay
+
+### 目的
+
+验证 20 子信道 `spatial_diverse` high-budget 主表候选的 SGCP/PPS transfer requests 是否能在 NS3 暴露子信道窗口内完整交付。
+
+### 代码更新
+
+`opencda.tools.offline_ns3_replay` 新增：
+
+```text
+--num-channels
+--bandwidth-mhz
+--sgcp-grid-score-mode {utility,raw_density,density_distance}
+--sgcp-grid-selection-mode {utility,random,spatial_diverse}
+```
+
+说明：`spatial_diverse` 影响每条 scheduled link 内的 grid 选择，不改变 NS3 transfer request 的 source/target/subchannel；这里主要用于让 replay artifact 与离线感知主表候选同名、同子信道窗口。
+
+### Dry-run
+
+```powershell
+conda run -n opencda python -m opencda.tools.offline_ns3_replay --dataset-root D:\Data\Carla --scenario-id 2026_07_15_01_26_56 --ego-cav-id 1 --max-frames 11 --num-channels 10 --sgcp-grid-selection-mode spatial_diverse --dry-run --upload-plan-output docs\doc_workspace\SGCP\artifacts\sgcp_ns3_spatial_ch10_11f_dryrun\upload_plan.csv
+conda run -n opencda python -m opencda.tools.offline_ns3_replay --dataset-root D:\Data\Carla --scenario-id 2026_07_15_01_26_56 --ego-cav-id 1 --max-frames 11 --num-channels 20 --sgcp-grid-selection-mode spatial_diverse --dry-run --upload-plan-output docs\doc_workspace\SGCP\artifacts\sgcp_ns3_spatial_ch20_11f_dryrun\upload_plan.csv
+```
+
+Dry-run 结果：
+
+- 10 子信道：110 rows，`sc_start=0..9`，每帧 10 scheduled requests，4 skipped unscheduled。
+- 20 子信道：154 rows，`sc_start=0..13`，每帧 14 scheduled requests，0 skipped unscheduled。
+
+### NS3 实跑
+
+```powershell
+wsl -d Ubuntu-22.04 -u sakakibara -- bash -lc "cd ~/workspace/carla-ns3-co-simulation/ns-3-dev && timeout 90s stdbuf -oL -eL ./ns3 run 'scratch/vanet/main.cc --simTime=2.5 --enableTimeSync=true --carlaHost=auto --targetSubchannels=20'"
+conda run -n opencda python -m opencda.tools.offline_ns3_replay --dataset-root D:\Data\Carla --scenario-id 2026_07_15_01_26_56 --ego-cav-id 1 --max-frames 11 --num-channels 20 --sgcp-grid-selection-mode spatial_diverse --drain-seconds 1.0 --sync-timeout 20 --upload-plan-output docs\doc_workspace\SGCP\artifacts\sgcp_ns3_spatial_ch20_11f\upload_plan.csv
+conda run -n opencda python -m opencda.tools.ns3_log_eval --ns3-stdout docs\doc_workspace\SGCP\artifacts\sgcp_ns3_spatial_ch20_11f\ns3_stdout.log --upload-plan docs\doc_workspace\SGCP\artifacts\sgcp_ns3_spatial_ch20_11f\upload_plan.csv --output-dir docs\doc_workspace\SGCP\artifacts\sgcp_ns3_spatial_ch20_11f\eval --max-frames 11
+```
+
+### 结果
+
+- Frames：11
+- Scheduled requests：154
+- Skipped unscheduled：0
+- Planned bytes：1,540,000
+- CAM received：154 / 154
+- CAM delivery ratio：1.000000
+- Avg / P95 delay：23.909 ms / 24.000 ms
+- RLC TX / RX events：4,158 / 4,158
+- RLC complete requests：154 / 154
+- `MANUAL_RESOURCE_APPLY`：4,158
+- `MANUAL_CMD_REJECT`：0
+- `PSCCH_DECODE_FAIL` / `PSSCH_DECODE_FAIL`：0 / 0
+
+### 观察
+
+- 20 子信道 high-budget `spatial_diverse` 候选增加到每帧 14 条 member-to-head request，NS3 仍全部交付。
+- 该结果支撑论文中将 20 子信道作为 high-budget sensitivity：更高 AP 不是通过绕过 PPS 或 NS3 默认调度得到，而是在 OpenCDA 指定子信道上完整交付。
+- 后续可补 10 子信道 `spatial_diverse` NS3 replay，使低通信主点也有同口径 delivery 证据。

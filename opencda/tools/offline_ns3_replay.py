@@ -71,6 +71,20 @@ def parse_args():
                         help='SGCP resource allocation algorithm for replay. '
                              'Defaults to data_protocol resource_allocation.algorithm '
                              'or potential_game.')
+    parser.add_argument('--num-channels', type=int, default=None,
+                        help='Override SGCP resource allocation channel count.')
+    parser.add_argument('--bandwidth-mhz', type=float, default=None,
+                        help='Override SGCP total bandwidth in MHz.')
+    parser.add_argument('--sgcp-grid-score-mode', default='utility',
+                        choices=['utility', 'raw_density',
+                                 'density_distance'],
+                        help='Grid scoring mode used by potential_game before '
+                             'building NS3 transfer requests.')
+    parser.add_argument('--sgcp-grid-selection-mode', default='utility',
+                        choices=['utility', 'random', 'spatial_diverse'],
+                        help='Grid selection mode label for replay plans. '
+                             'Selection modes do not change NS3 request links; '
+                             'they are recorded to align with perception runs.')
     parser.add_argument('--include-unscheduled', action='store_true',
                         help='Also send SGCP member->head requests without an '
                              'assigned subchannel. By default these are skipped '
@@ -158,9 +172,31 @@ def collect_channel_allocation(world):
     return channel_allocation
 
 
+def apply_resource_overrides(resource_allocator, world, num_channels=None,
+                             bandwidth_mhz=None):
+    if num_channels is not None:
+        if num_channels <= 0:
+            raise ValueError('--num-channels must be positive')
+        world.network_manager.subchannel_num = int(num_channels)
+    if not hasattr(resource_allocator, 'p'):
+        return
+    if num_channels is not None:
+        resource_allocator.p.num_channels = int(num_channels)
+    if bandwidth_mhz is not None:
+        if bandwidth_mhz <= 0:
+            raise ValueError('--bandwidth-mhz must be positive')
+        resource_allocator.p.bandwidth_all = float(bandwidth_mhz) * (10 ** 6)
+    if num_channels is not None or bandwidth_mhz is not None:
+        resource_allocator.p.bandwidth_per_channel = (
+            resource_allocator.p.bandwidth_all /
+            resource_allocator.p.num_channels)
+
+
 def build_world_and_requests(dataset, scenario_id, timestamp, ego_cav_id,
                              protocol, packet_size, resource_allocation=None,
-                             include_unscheduled=False):
+                             include_unscheduled=False, num_channels=None,
+                             bandwidth_mhz=None,
+                             grid_score_mode='utility'):
     frame = dataset.load_frame(
         scenario_id,
         timestamp,
@@ -175,6 +211,13 @@ def build_world_and_requests(dataset, scenario_id, timestamp, ego_cav_id,
     clusters = CoalitionGame(world).run()
     ra_name = get_resource_allocation_name(protocol, resource_allocation)
     resource_allocator = build_resource_allocator(ra_name, world)
+    if hasattr(resource_allocator, 'grid_score_mode'):
+        resource_allocator.grid_score_mode = grid_score_mode
+    apply_resource_overrides(
+        resource_allocator,
+        world,
+        num_channels=num_channels,
+        bandwidth_mhz=bandwidth_mhz)
     resource_allocator.set_clusters(clusters)
     resource_allocator.run()
 
@@ -332,9 +375,15 @@ def main():
                     protocol,
                     args.packet_size,
                     resource_allocation=args.resource_allocation,
-                    include_unscheduled=args.include_unscheduled)
+                    include_unscheduled=args.include_unscheduled,
+                    num_channels=args.num_channels,
+                    bandwidth_mhz=args.bandwidth_mhz,
+                    grid_score_mode=args.sgcp_grid_score_mode)
                 cluster_count = len(clusters)
-                request_mode = 'sgcp_%s' % ra_name
+                request_mode = 'sgcp_%s_%s_%s' % (
+                    ra_name,
+                    args.sgcp_grid_score_mode,
+                    args.sgcp_grid_selection_mode)
             else:
                 frame = dataset.load_frame(
                     scenario_id,
