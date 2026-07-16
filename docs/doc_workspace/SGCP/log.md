@@ -2931,3 +2931,22 @@ conda run -n opencda python -m opencda.tools.ns3_log_eval --ns3-stdout docs\doc_
 ### 结论
 
 论文机制章节现在与代码和主表更一致：`spatial_diverse` 不再只是实验 hack，而是被表述为 density-aware spatial diversification 的 coverage-aware grid selection；同时避免把当前工程实现包装成无条件 exact potential game。
+
+## 2026-07-16 - Paper f(rho) and rho_th calibration revision
+
+### 目的
+
+回应审稿人对 `f(rho)` 标定过短、`rho_th` 像拍脑袋参数、以及 density utility 泛化边界不清的质疑。
+
+### 修改内容
+
+- `C:\Workspace\icdcs-paper\SGCP\main.tex` 中将原本一句 empirical calibration 扩展为可复现协议：使用与 SGCP replay 相同的 10 m global grid 重建，统计每个 CAV/frame 的 points/m^2。
+- 写入 41 帧 dump 的密度统计：788,020 个 CAV-grid samples，非空网格 5.98%，非空 density p90/p95 = 1.40 / 3.60 points/m^2。
+- 写明默认 `rho_th=2.0` 位于 p90 和 p95 之间，选择 7.18% 非空网格作为 high-density candidates。
+- 明确 `rho_th` 依赖 LiDAR resolution、grid size、point-cloud preprocessing 和 detector backbone，不能当作通用常数。
+- 新增 coverage-aware SGCP 10ch `rho_th=1/2/3/4` sensitivity table：AP/Mbps 分别为 0.76/0.72/0.34/51.31、0.79/0.75/0.37/56.08、0.79/0.76/0.38/57.38、0.79/0.76/0.38/58.22。
+- 统一 introduction/contribution/baseline 中旧的 potential-game wording 为 potential-guided PPS。
+
+### 结论
+
+`rho_th=3.0` 主表行现在有三重支撑：density calibration、AP/Mbps sensitivity、NS3 110/110 request-level delivery。正文也明确了默认 `rho_th=2.0` 是保守通信-精度折中，而非最优或通用阈值。

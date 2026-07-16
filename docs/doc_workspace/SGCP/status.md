@@ -120,6 +120,7 @@ SGCP 工作与仓库中以下部分关系最紧密：
 - 已新增 `main_table_candidate.md`，把可复现结果收束为论文主表候选：FullPerception centralized upper reference 118.71 Mbps、payload-matched selective high-budget 73.58 Mbps、SGCP coverage-aware 10ch `rho_th=3` 为 57.38 Mbps、SGCP coverage-aware 20ch 为 73.98 Mbps，并明确 Random/MWS 只作消融。
 - 已完成 `C:\Workspace\icdcs-paper\SGCP\main.tex` 第一轮论文落地：替换旧主表、旧通信开销图引用和过强 FullPerception 对比，改为 centralized full-sharing upper reference、capacity-matched V2V baseline、SGCP coverage-aware 10/20ch、NS3 request-level delivery 和 near-real-time feasibility 叙事。
 - 已完成 `C:\Workspace\icdcs-paper\SGCP\main.tex` 第二轮机制修订：PPS 机制改为 potential-guided constrained scheduling，加入 coverage-aware / density-aware spatial diversification grid selection；同时修正 topology trigger 与 every-cycle PPS 的关系，并弱化无条件 exact-potential/Nash guarantee。
+- 已完成 `C:\Workspace\icdcs-paper\SGCP\main.tex` 第三轮参数标定修订：把 `f(rho)` / `rho_th` 标定写成可复现协议，并加入 coverage-aware 10ch `rho_th` sensitivity 表，明确 `rho_th` 依赖 LiDAR、grid size、预处理和 detector backbone，不作为通用常数。
 - 已完成 SGCP 11 帧离线 NS3 request-level replay：154 条 SGCP intra-cluster request，CAM callback delivery ratio 0.558442，request with any RLC RX event ratio 0.974026。后者仅表示 request_id 至少出现一个 RLC RX 片段/事件，不代表完整 request delivery。
 - 已确认当前可运行环境版本快照，并记录到 `docs/doc_workspace/environment.md`：OpenCDA HEAD `fcc29fdc9ee9a9fe694c12e1fb6792b4d41bccac`，Python 3.7.10，CARLA Python API 0.9.11，PyTorch 1.10.0+cu113，Open3D 0.10.0.0，ns-3 wrapper `ns-3-dev-v2x-v1.1-dirty`。
 - 已修复在线 CARLA-NS3 时间流速不一致问题：`NetworkManager.time_slot` 不再将 `world.fixed_delta_seconds` 除以 5，`current_sim_time`、`current_time_slot` 与 CARLA tick 统一推进。
@@ -157,4 +158,4 @@ SGCP 工作与仓库中以下部分关系最紧密：
 - Cluster capacity 策略已有离线统计支撑；optional replacement repair 尚未实现，进入论文前可明确为 future/optional enhancement。
 - PPS `PotentialGame` 当前没有显式势函数、action replacement 和 `Delta Phi >= 0` 日志；论文中不宜无条件声称当前实现是完整 exact potential game。若要保留强理论表述，需要补代码诊断和证明。
 - SGCP potential_game NS3 replay 已确认“PPS 已调度且无冲突的 request 全部成功”，且低暴露子信道场景能正确拒绝超出带宽窗口的 request；NS3 delivery/PDR 已先接入 selective-sharing baseline。下一步是把该 link-quality 反馈进一步接入 SGCP PPS 本身或 OpenCOOD mAP 的端到端丢包裁剪。
-- Random-grid probe 已显示当前 utility selection 不优于随机候选；`spatial_diverse` 已超过 random-grid，且 20 子信道下 AP@0.7 接近 full-cluster upper reference。10ch `rho_th=2/3` 与 20ch `spatial_diverse` 候选的 NS3 request-level delivery 均已验证。主表候选和 coverage-aware PPS 机制已完成论文迁移；下一步应开始 rebuttal 对应条目，并继续补充 `f(rho)` / 参数标定的正文细节。
+- Random-grid probe 已显示当前 utility selection 不优于随机候选；`spatial_diverse` 已超过 random-grid，且 20 子信道下 AP@0.7 接近 full-cluster upper reference。10ch `rho_th=2/3` 与 20ch `spatial_diverse` 候选的 NS3 request-level delivery 均已验证。主表候选、coverage-aware PPS 机制和 `f(rho)` 参数标定已完成论文迁移；下一步应开始 reviewer-by-reviewer rebuttal 对应条目。

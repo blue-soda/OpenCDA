@@ -184,8 +184,10 @@ The coalition formation stage is guided by a stability-aware utility and empiric
 - every-cycle beacon/density/PPS 与 event-triggered cluster membership update 的区别；
 - conclusion 中弱化 unconditional Nash-stable guarantee。
 
+2026-07-16 更新：`f(rho)` 标定统计和 `rho_th` sweep 已写入 `main.tex` 实验/参数段。
+
 剩余应优先推进：
 
-- 把 `f(rho)` 标定统计和 `rho_th` sweep 写入实验/参数段；
 - 把 FullPerception centralized upper reference 与 V2V-only selective baseline 的公平性写成 rebuttal；
-- 形成 reviewer-by-reviewer response 草稿。
+- 形成 reviewer-by-reviewer response 草稿；
+- 视版面情况将 `N_max` / `T_min^stab` 参数依据加入正文或 appendix。
