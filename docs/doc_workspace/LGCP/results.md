@@ -821,3 +821,39 @@ docs/doc_workspace/LGCP/experiments/hierarchy_plan/20260715_lgcp_carla_hierarchy
 - `request_lifecycle_summary.csv`
 
 解释边界：当前 funnel 可以报告 planned -> RLC TX -> RLC RX -> application received；PHY / HARQ 仍等待 ns-3 侧输出 `[NRSL_PHY_EVENT]` / `[NRSL_HARQ_EVENT]` request-level 日志。
+
+## 2026-07-16：PSSCH Request-Level Trace Smoke
+
+ns-3 侧已在 PSSCH decode OK/FAIL 处输出 `[NRSL_PHY_EVENT]`，OpenCDA parser 能将事件映射回 LGCP `upload_plan.csv`。
+
+当前 3 帧 smoke：
+
+| Metric | Value |
+| --- | --- |
+| planned requests | 186 |
+| observed `cam_received` | 5 |
+| RLC TX events | 228 |
+| RLC RX events | 41 |
+| aggregate PHY decode events | 2619 |
+| aggregate PHY decode failures | 1653 |
+| request-level PHY/HARQ events | 124 |
+| matched request-level PSSCH OK events | 41 |
+| matched request-level PSSCH FAIL events | 83 |
+| requests with PSSCH OK | 31 |
+| requests with PSSCH FAIL | 68 |
+| terminal application received | 5 |
+| terminal RLC RX only | 26 |
+| terminal PSSCH fail | 50 |
+| terminal RLC TX no RX | 43 |
+| terminal planned only | 62 |
+
+输出目录：
+
+```text
+docs/doc_workspace/LGCP/experiments/hierarchy_plan/20260715_lgcp_carla_hierarchy_plan_top40_11f/ns3_phy_harq_request_3f_rsu21/
+```
+
+解释边界：
+
+- PSSCH decode OK/FAIL 已能 request-level 归因到 area / upload type。
+- 当前 smoke 未观测到 HARQ ACK/NACK event，HARQ feedback 仍需继续确认配置和触发路径。

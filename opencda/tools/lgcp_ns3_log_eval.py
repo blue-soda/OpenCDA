@@ -84,6 +84,7 @@ def read_upload_plan(path, rsu_node_id, max_frames, start_index, frame_step):
         row['frame_index'] = timestamp_to_frame[row['timestamp']]
         frame_pkt_counters[row['timestamp']] += 1
         row['frame_pkt_id'] = frame_pkt_counters[row['timestamp']]
+        row['request_id'] = int(row.get('pkt_id') or row['plan_index'])
     return rows, timestamps
 
 
@@ -301,7 +302,12 @@ def build_match_queues(plan_rows):
         pkt_key = (
             'pkt_id',
             int(row['frame_index']),
-            int(row.get('pkt_id') or row['frame_pkt_id']),
+            int(row['request_id']),
+        )
+        legacy_pkt_key = (
+            'pkt_id',
+            int(row['frame_index']),
+            int(row['frame_pkt_id']),
         )
         key = (
             'endpoint',
@@ -311,6 +317,7 @@ def build_match_queues(plan_rows):
             int(row['bytes']),
         )
         queues[pkt_key].append(row)
+        queues[legacy_pkt_key].append(row)
         queues[key].append(row)
     return queues
 
@@ -359,7 +366,7 @@ def align_records(cam_records, plan_rows, timestamps):
                 'area_id': plan['area_id'],
                 'upload_type': plan.get('upload_type', ''),
                 'plan_index': plan['plan_index'],
-                'pkt_id': plan.get('pkt_id') or plan.get('frame_pkt_id', ''),
+                'pkt_id': plan.get('request_id', ''),
                 'matched': 1,
                 'match_method': match_method,
             })
@@ -493,21 +500,27 @@ def aggregate_phy(phy_records):
 
 def enrich_rlc_records(rlc_records, plan_rows, timestamps):
     plan_by_frame_pkt = {
-        (int(row['frame_index']), int(row.get('pkt_id') or row['frame_pkt_id'])): row
+        (int(row['frame_index']), int(row['request_id'])): row
         for row in plan_rows
     }
-    pkt_counts = Counter(int(row.get('pkt_id') or row['frame_pkt_id'])
-                         for row in plan_rows)
-    plan_by_unique_pkt = {
-        int(row.get('pkt_id') or row['frame_pkt_id']): row
+    plan_by_frame_legacy_pkt = {
+        (int(row['frame_index']), int(row['frame_pkt_id'])): row
         for row in plan_rows
-        if pkt_counts[int(row.get('pkt_id') or row['frame_pkt_id'])] == 1
+    }
+    pkt_counts = Counter(int(row['request_id']) for row in plan_rows)
+    plan_by_unique_pkt = {
+        int(row['request_id']): row
+        for row in plan_rows
+        if pkt_counts[int(row['request_id'])] == 1
     }
     enriched = []
     for record in rlc_records:
         output = dict(record)
         plan = plan_by_frame_pkt.get(
             (int(record['frame_index']), int(record['request_id'])))
+        if plan is None:
+            plan = plan_by_frame_legacy_pkt.get(
+                (int(record['frame_index']), int(record['request_id'])))
         if plan is None:
             plan = plan_by_unique_pkt.get(int(record['request_id']))
         if plan is None:
@@ -527,7 +540,7 @@ def enrich_rlc_records(rlc_records, plan_rows, timestamps):
                 'area_id': plan['area_id'],
                 'upload_type': plan.get('upload_type', ''),
                 'plan_index': plan['plan_index'],
-                'pkt_id': plan.get('pkt_id') or plan.get('frame_pkt_id', ''),
+                'pkt_id': plan.get('request_id', ''),
                 'matched': 1,
             })
         enriched.append(output)
@@ -536,14 +549,29 @@ def enrich_rlc_records(rlc_records, plan_rows, timestamps):
 
 def enrich_request_events(records, plan_rows, timestamps):
     plan_by_frame_pkt = {
-        (int(row['frame_index']), int(row.get('pkt_id') or row['frame_pkt_id'])): row
+        (int(row['frame_index']), int(row['request_id'])): row
         for row in plan_rows
+    }
+    plan_by_frame_legacy_pkt = {
+        (int(row['frame_index']), int(row['frame_pkt_id'])): row
+        for row in plan_rows
+    }
+    pkt_counts = Counter(int(row['request_id']) for row in plan_rows)
+    plan_by_unique_pkt = {
+        int(row['request_id']): row
+        for row in plan_rows
+        if pkt_counts[int(row['request_id'])] == 1
     }
     enriched = []
     for record in records:
         output = dict(record)
         plan = plan_by_frame_pkt.get(
             (int(record['frame_index']), int(record['request_id'])))
+        if plan is None:
+            plan = plan_by_frame_legacy_pkt.get(
+                (int(record['frame_index']), int(record['request_id'])))
+        if plan is None:
+            plan = plan_by_unique_pkt.get(int(record['request_id']))
         if plan is None:
             output.update({
                 'timestamp': timestamps[record['frame_index']]
@@ -561,7 +589,7 @@ def enrich_request_events(records, plan_rows, timestamps):
                 'area_id': plan['area_id'],
                 'upload_type': plan.get('upload_type', ''),
                 'plan_index': plan['plan_index'],
-                'pkt_id': plan.get('pkt_id') or plan.get('frame_pkt_id', ''),
+                'pkt_id': plan.get('request_id', ''),
                 'matched': 1,
             })
         enriched.append(output)
@@ -575,7 +603,7 @@ def aggregate_rlc(rlc_records, plan_rows):
                              if int(row.get('matched', 0)))
     by_request = {}
     for row in plan_rows:
-        request_id = int(row.get('pkt_id') or row['frame_pkt_id'])
+        request_id = int(row['request_id'])
         key = (int(row['frame_index']), request_id)
         by_request[key] = {
             'frame_index': row['frame_index'],
@@ -678,7 +706,7 @@ def build_request_lifecycle(plan_rows, aligned_records, rlc_records,
                             phy_request_records):
     lifecycle = {}
     for row in plan_rows:
-        request_id = int(row.get('pkt_id') or row['frame_pkt_id'])
+        request_id = int(row['request_id'])
         key = (int(row['frame_index']), request_id)
         lifecycle[key] = {
             'frame_index': row['frame_index'],

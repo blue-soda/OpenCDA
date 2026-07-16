@@ -1687,3 +1687,79 @@ planned_requests=676 observed_cam_received=31 bridge_observed_delivery_ratio=0.0
 - OpenCDA 侧 lifecycle funnel 已就绪。
 - 当前 ns-3 日志尚无 request-level PHY / HARQ event，因此 `phy_harq_request_events=0` 是预期结果。
 - 下一步应改 ns-3 侧 PHY schedule / PSSCH / HARQ 输出，而不是继续改 OpenCDA parser。
+
+## 2026-07-16 - ns-3 PSSCH request-level trace smoke
+
+### 目标
+
+- 在 ns-3 PSSCH decode OK/FAIL 处读取 `LteRlcRequestIdTag`。
+- 输出 `[NRSL_PHY_EVENT]`，让 OpenCDA parser 能将 PSSCH decode event 映射回 LGCP upload request。
+
+### 代码变更
+
+ns-3 co-simulation：
+
+```text
+C:\Workspace\carla-ns3-co-simulation\ns3\src\nr-spectrum-phy.cc
+```
+
+新增：
+
+- `CollectRequestIds()`
+- `PrintRequestPhyEvent()`
+- `PrintRequestHarqEvent()`
+
+当前实际可观测：
+
+- `[NRSL_PHY_EVENT] event=PSSCH_DECODE_OK request_ids=...`
+- `[NRSL_PHY_EVENT] event=PSSCH_DECODE_FAIL request_ids=...`
+
+HARQ ACK/NACK 输出代码已接入 feedback 分支，但本轮 3 帧 smoke 未观测到 `[NRSL_HARQ_EVENT]`。
+
+### 验证
+
+ns-3 build：
+
+```powershell
+wsl -d Ubuntu-22.04 -u sakakibara -- bash -lc "cd ~/workspace/carla-ns3-co-simulation/ns-3-dev && ./ns3 build"
+```
+
+3 帧 replay：
+
+```powershell
+conda run -n opencda python -m opencda.tools.offline_ns3_replay --dataset-root D:\Data\Carla --scenario-id 2026_07_15_02_33_21 --ego-cav-id 1 --max-frames 3 --lgcp-upload-plan docs\doc_workspace\LGCP\experiments\hierarchy_plan\20260715_lgcp_carla_hierarchy_plan_top40_11f\upload_plan.csv --rsu-node-id 21 --drain-seconds 0.3 --sync-timeout 10
+```
+
+解析：
+
+```powershell
+conda run -n opencda python -m opencda.tools.lgcp_ns3_log_eval --ns3-stdout docs\doc_workspace\LGCP\experiments\hierarchy_plan\20260715_lgcp_carla_hierarchy_plan_top40_11f\ns3_phy_harq_request_3f_rsu21\ns3_stdout.log --upload-plan docs\doc_workspace\LGCP\experiments\hierarchy_plan\20260715_lgcp_carla_hierarchy_plan_top40_11f\upload_plan.csv --output-dir docs\doc_workspace\LGCP\experiments\hierarchy_plan\20260715_lgcp_carla_hierarchy_plan_top40_11f\ns3_phy_harq_request_3f_rsu21 --rsu-node-id 21 --max-frames 3
+```
+
+### 结果
+
+```text
+planned_requests=186 observed_cam_received=5 bridge_observed_delivery_ratio=0.026882 avg_delay_ms=16.000 p95_delay_ms=31.000 max_delay_ms=31.000 phy_decode_events=2619 phy_decode_failures=1653 phy_harq_request_events=124 rlc_tx_events=228 rlc_rx_events=41
+```
+
+`request_lifecycle_summary.csv`：
+
+| Metric | Value |
+| --- | --- |
+| planned_requests | 186 |
+| requests_with_rlc_tx | 124 |
+| requests_with_pssch_ok | 31 |
+| requests_with_pssch_fail | 68 |
+| requests_with_rlc_rx | 31 |
+| requests_with_cam_received | 5 |
+| terminal_application_received | 5 |
+| terminal_rlc_rx_only | 26 |
+| terminal_pssch_fail | 50 |
+| terminal_rlc_tx_no_rx | 43 |
+| terminal_planned_only | 62 |
+
+### 结论
+
+- PSSCH decode OK/FAIL 已完成 request-level attribution。
+- 124 条 request-level PHY event 全部成功匹配到 `upload_plan.csv`。
+- HARQ feedback 尚未在本轮 smoke 中出现，后续需要确认 HARQ enable / PSFCH / feedback callback 触发条件。
