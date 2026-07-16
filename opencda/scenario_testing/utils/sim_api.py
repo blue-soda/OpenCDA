@@ -195,15 +195,28 @@ class ScenarioManager:
         if xodr_path:
             self.world = load_customized_world(xodr_path, self.client)
         elif town:
+            force_current_world = os.environ.get(
+                'OPENCDA_USE_CURRENT_CARLA_WORLD', '').lower() in (
+                    '1', 'true', 'yes')
             current_map_name = ""
+            current_world = None
             try:
-                current_map_name = self.client.get_world().get_map().name
+                current_world = self.client.get_world()
+                current_map_name = current_world.get_map().name
             except RuntimeError:
                 current_map_name = ""
 
             if current_map_name.endswith("/%s" % town) or \
-                    current_map_name == town:
-                self.world = self.client.get_world()
+                    current_map_name == town or force_current_world:
+                self.world = current_world or self.client.get_world()
+                if force_current_world and current_map_name and not (
+                        current_map_name.endswith("/%s" % town) or
+                        current_map_name == town):
+                    print(
+                        f"{bcolors.WARNING} Using current CARLA world "
+                        f"{current_map_name} instead of loading {town}. "
+                        f"Ensure CARLA was launched with the intended map."
+                        f"{bcolors.ENDC}")
             else:
                 try:
                     self.world = self.client.load_world(town)

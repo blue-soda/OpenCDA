@@ -190,11 +190,13 @@ $env:OPENCDA_CLUSTERING_CONFIG = "opencda/scenario_testing/config_yaml/networkin
 $env:OPENCDA_ONLINE_TICKS = "35"
 $env:OPENCDA_CLEAN_WORLD_ON_INIT = "1"
 $env:OPENCDA_CARLA_CLIENT_TIMEOUT = "180"
+$env:OPENCDA_USE_CURRENT_CARLA_WORLD = "1"
 conda run -n opencda python opencda.py -t v2xp_cluster_carla --apply_cp --apply_ml --debug --network
 Remove-Item Env:\OPENCDA_CLUSTERING_CONFIG
 Remove-Item Env:\OPENCDA_ONLINE_TICKS
 Remove-Item Env:\OPENCDA_CLEAN_WORLD_ON_INIT
 Remove-Item Env:\OPENCDA_CARLA_CLIENT_TIMEOUT
+Remove-Item Env:\OPENCDA_USE_CURRENT_CARLA_WORLD
 ```
 
 需保存 stdout 到：

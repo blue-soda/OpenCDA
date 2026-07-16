@@ -3395,3 +3395,38 @@ $env:OPENCDA_CARLA_CLIENT_TIMEOUT = "180"
 ### 下一步
 
 使用更长 client timeout 重跑 clean online reupload。若仍失败，应进一步检查 CARLA 是否已直接启动在 Town03，或者在启动 CARLA 时显式指定 Town03 map。
+
+## 2026-07-17 - CARLA current-world reuse guard
+
+### 目的
+
+`OPENCDA_CARLA_CLIENT_TIMEOUT=180` 后，clean reupload rerun 仍卡在 `client.load_world('Town03')`：
+
+```text
+Error: time-out of 180000ms while waiting for the simulator
+World loading failed
+```
+
+这说明当前 blocker 已不是 timeout 数值，而是 `load_world` RPC 在本轮 CARLA 进程中不稳定。
+
+### 修复
+
+`ScenarioManager` 新增显式环境开关：
+
+```powershell
+$env:OPENCDA_USE_CURRENT_CARLA_WORLD = "1"
+```
+
+启用后，如果 CARLA 已经启动并加载了地图，OpenCDA 将复用当前 world 而不是调用 `client.load_world(town)`。若当前地图名与目标 town 不一致，会打印 warning，要求操作者确认 CARLA 是用目标地图启动的。
+
+### 下一步
+
+下一轮 clean online reupload 应优先用 Town03 直接启动 CARLA，再设置：
+
+```powershell
+$env:OPENCDA_CLEAN_WORLD_ON_INIT = "1"
+$env:OPENCDA_CARLA_CLIENT_TIMEOUT = "180"
+$env:OPENCDA_USE_CURRENT_CARLA_WORLD = "1"
+```
+
+这样可以同时规避固定 spawn 点残留、短 timeout 和 `load_world` RPC 卡死。
