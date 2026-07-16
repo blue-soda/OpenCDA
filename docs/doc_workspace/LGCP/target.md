@@ -41,7 +41,7 @@
 
 ## 待落地到仓库的实验方向
 
-- [ ] 确认 OpenCOOD 中 OPV2V / V2XSet 的模型评估入口和日志格式。
+- [x] 确认 OpenCOOD 中 OPV2V / V2XSet 的模型评估入口和日志格式。（已形成 `opencood_eval_entry.md`，记录 `inference.py`、`eval.yaml`、`--save_npy` 和 LGCP area-level 复用边界）
 - [x] 确认 OpenCDA 中多 CAV + NS3 的基础可复现实验命令。
 - [x] 新增 LGCP 专用 Town03 仿真配置，避免修改 `v2xp_cluster_carla`。
 - [x] 补齐 RSU 首次启用的基础初始化、注册、读取和销毁路径。

@@ -2307,3 +2307,30 @@ conda run -n opencda python -c "compile(open(r'opencda\tools\lgcp_compute_capaci
 
 - `target.md` 中两个 P1 写作/图表项已标记完成。
 - 后续若进入论文源文件修改，需要用原始绘图源重导出 `num_latency_v2.pdf`。
+
+## 2026-07-17 - OpenCOOD OPV2V / V2XSet evaluation entry audit
+
+### 目标
+
+- 推进 `target.md` 中“确认 OpenCOOD 中 OPV2V / V2XSet 的模型评估入口和日志格式”。
+- 为后续多 seed area confidence / subset ablation 复用 OpenCOOD 输出做准备。
+
+### 核查文件
+
+```text
+opencood/opencood/tools/inference.py
+opencood/opencood/tools/inference_utils.py
+opencood/opencood/utils/eval_utils.py
+opencood/opencood/hypes_yaml/yaml_utils.py
+opencood/opencood/data_utils/datasets/__init__.py
+opencood/README.md
+```
+
+### 结论
+
+- 主评估入口是 `opencood/tools/inference.py`。
+- 标准命令为 `python opencood/tools/inference.py --model_dir <CHECKPOINT_DIR> --fusion_method <late|early|intermediate>`。
+- `--model_dir` 会自动读取 `<CHECKPOINT_DIR>/config.yaml`；OPV2V / V2XSet 数据路径由 `root_dir` / `validate_dir` 控制。
+- whole-frame AP 输出到 `<CHECKPOINT_DIR>/eval.yaml`，包含 `ap30`、`ap_50`、`ap_70`、`mpre_50`、`mrec_50`、`mpre_70`、`mrec_70`。
+- `--save_npy` 会输出 `<CHECKPOINT_DIR>/npy/%04d_pcd.npy`、`%04d_pred.npy` 和 `%04d_gt.npy_test`；GT 后缀不是标准 `.npy`，后续脚本需要显式兼容或包装。
+- 新增 `docs/doc_workspace/LGCP/opencood_eval_entry.md`，并将 `target.md` 对应项标记完成。

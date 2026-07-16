@@ -22,6 +22,7 @@
 - `deployment_assumptions.md`：LGCP 部署假设、限制、failure modes、multi-RSU 扩展和大规模 claim 边界。
 - `manuscript_language_audit.md`：论文 stage 编号一致性、heuristic / approximate 表述边界和替换措辞清单。
 - `latency_figure_audit.md`：Fig. 7 轴标核查、低车数 latency 接近原因解释和 rebuttal wording。
+- `opencood_eval_entry.md`：OpenCOOD OPV2V / V2XSet 评估入口、`eval.yaml` / `npy` 输出格式和 LGCP 复用边界。
 - `grid_size_sensitivity.md`：LGCP ROI grid / area size sensitivity 的单场景 11 帧 smoke 结果。
 - `localization_error_sensitivity.md`：LGCP CAV pose localization error sensitivity 的单场景 11 帧 smoke 结果。
 - `stale_assignment_sensitivity.md`：LGCP update frequency / stale assignment sensitivity 的单场景 11 帧 smoke 结果。

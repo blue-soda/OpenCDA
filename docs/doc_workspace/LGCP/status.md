@@ -51,6 +51,7 @@
 - 已新增 `deployment_assumptions.md`，形成 RSU-assisted assumption、mobility / stale assignment、localization error、failure modes、multi-RSU scaling 和 large-scale claim boundary 的论文讨论素材。
 - 已新增 `manuscript_language_audit.md`，定位 TeX 中 stage 编号不一致和 `approximate solution` 高风险表述，并给出替换段落、rebuttal wording 和论文编辑 checklist。
 - 已新增 `latency_figure_audit.md`，完成 Fig. 7 轴标核查和低 CAV 数 latency 接近原因解释；当前 Fig. 7 y-axis 语义正确，建议将 x-axis 从 `Number of vehicles` 改为 `Number of CAVs`。
+- 已新增 `opencood_eval_entry.md`，确认 OpenCOOD OPV2V / V2XSet 评估主入口为 `opencood/tools/inference.py`，整体 AP 输出到 checkpoint `eval.yaml`，`--save_npy` 输出 prediction / GT 文件但 GT 后缀为 `.npy_test`。
 - 已新增 `grid_size_sensitivity.md`，并在不修改 `lgcp_carla.yaml` 的前提下完成 `5m x 3m`、`10m x 6m`、`20m x 12m` 三组 11 帧 grid-size sensitivity smoke；当前 default `10m x 6m` 在 area-frame noisy-or vs recall@0.5 上 Spearman 最高。
 - 已新增 `localization_error_sensitivity.md`，完成 `0.0m / 0.2m / 0.5m / 1.0m` CAV xy pose noise 的 11 帧 localization sensitivity smoke；area-frame noisy-or vs recall@0.5 Spearman 在 1.0m 噪声下仍约 `0.55`。
 - 已新增 `opencda/tools/lgcp_stale_assignment_eval.py` 和 `stale_assignment_sensitivity.md`，完成 `0/1/2/3` 帧 stale assignment smoke；lag 1/2 帧 ranking 仍较稳定，lag 3 帧 Spearman 降到 `0.447925`。
@@ -62,7 +63,7 @@
 
 ## 近期建议焦点
 
-1. 扩大 area confidence validation 到多 seed / 多场景，形成可进入论文的稳定相关性结果。
+1. 扩大 area confidence validation 到多 seed / 多场景，形成可进入论文的稳定相关性结果；OpenCOOD 评估入口和日志格式已确认。
 2. 扩大 offline subset ablation 到多 seed，确认 `comm_aware_topk` 与 area-aware union 的相对关系是否稳定。
 3. 推进完整 LGCP hierarchy 机制；当前 offline proxy 显示强 communication-aware baseline 已非常有竞争力，LGCP 后续主张需要靠 local fusion / RSU aggregation / scheduling 共同支撑。
 4. 大规模 30 CAV 结果若短期只跑 latency，应在论文中收窄为 communication/computation scalability；若报告 perception scalability，只能报告已校准的 proxy，不能写成真实 AP。
