@@ -3128,3 +3128,37 @@ Sent sync_ack: CARLA t=1.90s, NS3 t=1.90s
 ### 结论
 
 真实在线短回归确认 CARLA tick / OpenCDA network slot / NS3 sync time 已按 0.05 s 对齐，不再存在此前时间流速不一致或初始化 SIGABRT。新的待处理问题是在线真实 PHY 下大包分片和同帧并发导致部分 upload incomplete；论文主表仍应采用离线 request-level replay 的严格 110/110 RLC-complete 结果，在线短回归用于证明联仿时钟和 bridge 初始化正确。
+
+## 2026-07-17 - Online PHY failure first diagnosis
+
+### 目的
+
+分析 `online_ns3_short_fixed_20260717_031703` 中大量 PSCCH/PSSCH decode failure 和 partial upload 的来源，判断是否属于时间同步/子信道语义 bug。
+
+### 日志诊断
+
+修复后的在线短回归中：
+
+- NS3 初始 `vehicles_num=20`，不再出现 address collision。
+- `sync_request/sync_ack=38/38`，无 sync timeout。
+- `MANUAL_CMD_REJECT=0`，说明子信道窗口没有越界。
+- 第一轮上传在 OpenCDA slot 6/7 可完成，例如 receiver 1/3/4/6/9/16 出现 100% uploaded。
+- 后续轮次出现大量 incomplete upload，NS3 PHY failure 多集中于同一 receiver/subchannel，例如 `txRnti=20` 和 `txRnti=5` 同时在 `dstL2Id=16, scStart=5` 上触发 `reason=decoded_overlap`。
+
+代码根因：
+
+- `PotentialGame.run()` 调用 `clear_resource_allocation_strategy()` 只清空算法内部 `self.strategies`。
+- 已经写入各 CAV `ClusteringScheduler.channel_allocation` 的旧链路不会被清空。
+- 在线多轮 CP 时，新一轮 PPS 策略叠加旧策略，造成同一 receiver/subchannel 上残留链路与新链路并发进入 NS3。
+
+### 修复
+
+修改 `opencda/core/clustering/algorithms/resource_allocation/potential_game.py`：
+
+- 在 `clear_resource_allocation_strategy()` 中遍历 `cav_world.get_vehicle_managers()`；
+- 对每个存在 `clear_strategies()` 的 scheduler 调用清理；
+- 保证每轮 PPS 更新前，online `ClusteringScheduler.channel_allocation` 与算法内部策略一起清空。
+
+### 结论
+
+在线短回归中的 PHY failure 不是时间同步漂移，也不是 NS3 bridge 越界子信道误收；第一类明确 bug 是 online scheduler strategy 残留。修复后需要重跑真实在线 CARLA+NS3 短回归，重点观察 `PSCCH/PSSCH_DECODE_FAIL`、incomplete upload 和 CP counter 是否改善。

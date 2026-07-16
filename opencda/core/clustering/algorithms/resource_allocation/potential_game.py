@@ -89,6 +89,12 @@ class PotentialGame(ResourceAllocationAlgorithm):
         self.grids_uploading = set()
         self.grids_ch_sens = set()
         self.grids_density = {}
+        vehicle_dict = self.cav_world.get_vehicle_managers()
+        for vm in vehicle_dict.values():
+            scheduler = getattr(getattr(vm, 'v2x_manager', None),
+                                'scheduler', None)
+            if scheduler is not None and hasattr(scheduler, 'clear_strategies'):
+                scheduler.clear_strategies()
 
     def update_resource_allocation_strategy(self):
         vehicle_dict = self.cav_world.get_vehicle_managers()
