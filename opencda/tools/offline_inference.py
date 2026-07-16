@@ -8,6 +8,7 @@ import csv
 import math
 import os
 import json
+import random
 from collections import defaultdict
 
 from omegaconf import OmegaConf
@@ -71,6 +72,9 @@ def parse_args():
     parser.add_argument('--sgcp-upload-mode', default='grid',
                         choices=['grid', 'head_only', 'full_cluster'],
                         help='Upload mode for SGCP constrained replay. grid uses PPS-selected grids; head_only keeps only each receiver; full_cluster uploads all cluster member point clouds for protocol probes.')
+    parser.add_argument('--sgcp-grid-selection-mode', default='utility',
+                        choices=['utility', 'random'],
+                        help='Grid selection mode for SGCP scheduled links. random keeps scheduled links and grid counts but replaces grids with deterministic random candidates.')
     parser.add_argument('--t-min-stab', type=float, default=None,
                         help='Override CoalitionGame Params.T_min_stab in seconds. Use 0 for no stability window.')
     parser.add_argument('--n-max', type=int, default=None,
@@ -189,11 +193,47 @@ def apply_resource_overrides(resource_allocator, world, num_channels=None,
             resource_allocator.p.num_channels)
 
 
+def candidate_grids_for_sender(head_vm, sender_vm):
+    head_lidar = head_vm.perception_manager.lidar
+    sender_lidar = sender_vm.perception_manager.lidar
+    weak_head_grids = head_lidar.req_grids - head_lidar.high_density_grids
+    candidates = sender_lidar.sens_grids & weak_head_grids
+    if not candidates:
+        candidates = sender_lidar.sens_grids
+    return candidates
+
+
+def randomize_scheduled_grid_selection(world, clusters, timestamp):
+    """Replace selected grids while preserving SGCP scheduled links/counts."""
+    for cluster in clusters:
+        head_id = int(cluster.head_id)
+        head_vm = world.get_vehicle_manager(head_id)
+        if head_vm is None:
+            continue
+        co_manager = head_vm.perception_manager.co_manager
+        current_selection = getattr(co_manager, 'grid_selection', {}) or {}
+        randomized = {}
+        for sender_id, grid_ids in current_selection.items():
+            sender_id = int(sender_id)
+            sender_vm = world.get_vehicle_manager(sender_id)
+            if sender_vm is None:
+                continue
+            candidates = sorted(candidate_grids_for_sender(head_vm, sender_vm))
+            if not candidates:
+                continue
+            count = min(len(grid_ids), len(candidates))
+            rng = random.Random('%s-%s-%s' % (timestamp, head_id, sender_id))
+            randomized[sender_id] = rng.sample(candidates, count)
+        co_manager.clear_grid_selection()
+        co_manager.set_grid_selection(randomized)
+
+
 def apply_sgcp_constraint(frame, protocol, ego_cav_id, resource_allocation,
                           receiver_policy, t_min_stab=None,
                           clustering='coalition_game', n_max=None,
                           rho_th=None, num_channels=None,
-                          bandwidth_mhz=None, upload_mode='grid'):
+                          bandwidth_mhz=None, upload_mode='grid',
+                          grid_selection_mode='utility', timestamp=None):
     clear_sgcp_globals()
     world = OfflineCavWorld(
         frame,
@@ -222,6 +262,8 @@ def apply_sgcp_constraint(frame, protocol, ego_cav_id, resource_allocation,
         bandwidth_mhz=bandwidth_mhz)
     allocator.set_clusters(clusters)
     allocator.run()
+    if grid_selection_mode == 'random':
+        randomize_scheduled_grid_selection(world, clusters, timestamp)
     if receiver_policy == 'all-cluster-heads':
         receiver_ids = sorted(int(cluster.head_id) for cluster in clusters)
     else:
@@ -256,6 +298,7 @@ def apply_sgcp_constraint(frame, protocol, ego_cav_id, resource_allocation,
             getattr(allocator.p, 'bandwidth_all', 0.0) / (10 ** 6)
             if hasattr(allocator, 'p') else None)
         metadata['upload_mode'] = upload_mode
+        metadata['grid_selection_mode'] = grid_selection_mode
         constrained_items.append((constrained_frame, metadata))
     return constrained_items
 
@@ -304,16 +347,6 @@ def ns3_link_quality(link_quality, timestamp, source_id, target_id):
     if exact_key in link_quality['exact']:
         return link_quality['exact'][exact_key]
     return link_quality['pair'].get((int(source_id), int(target_id)))
-
-
-def candidate_grids_for_sender(head_vm, sender_vm):
-    head_lidar = head_vm.perception_manager.lidar
-    sender_lidar = sender_vm.perception_manager.lidar
-    weak_head_grids = head_lidar.req_grids - head_lidar.high_density_grids
-    candidates = sender_lidar.sens_grids & weak_head_grids
-    if not candidates:
-        candidates = sender_lidar.sens_grids
-    return candidates
 
 
 def select_baseline_members(world, cluster, baseline_name, member_budget,
@@ -532,6 +565,7 @@ def trace_row(scenario_id, timestamp, metadata, eval_frame,
         'receiver_policy': metadata.get('receiver_policy', ''),
         'resource_allocation': metadata.get('resource_allocation', ''),
         'upload_mode': metadata.get('upload_mode', ''),
+        'grid_selection_mode': metadata.get('grid_selection_mode', ''),
         'clustering': metadata.get('clustering', ''),
         'cluster_count': metadata.get('cluster_count', ''),
         'cluster_member_ids': ';'.join(
@@ -564,6 +598,7 @@ def write_trace_csv(path, rows):
         'receiver_policy',
         'resource_allocation',
         'upload_mode',
+        'grid_selection_mode',
         'clustering',
         'cluster_count',
         'cluster_member_ids',
@@ -660,7 +695,9 @@ def main():
                 args.rho_th,
                 args.num_channels,
                 args.bandwidth_mhz,
-                args.sgcp_upload_mode)
+                args.sgcp_upload_mode,
+                args.sgcp_grid_selection_mode,
+                timestamp)
         if args.sgcp_inter_cluster_late_fusion:
             original_ego = next(cav for cav in frame.values() if cav['ego'])
             target_ego_lidar_pose = original_ego['params']['lidar_pose']

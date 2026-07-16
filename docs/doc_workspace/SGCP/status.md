@@ -1,6 +1,6 @@
 # SGCP 当前状态
 
-更新时间：2026-07-15
+更新时间：2026-07-16
 
 ## 运行环境
 
@@ -109,6 +109,7 @@ SGCP 工作与仓库中以下部分关系最紧密：
 - 已完成真实 CARLA 在线 topology-trigger gate 短回归，并新增 `online_topology_gate_regression.md`。通过 `OPENCDA_CLUSTERING_CONFIG=networking_clustering_topology_gate.yaml` 打开 gate，通过 `OPENCDA_ONLINE_TICKS=35` 自动结束在线仿真；回归正常退出，CP counter=8，AP@0.3/0.5/0.7 = 0.84/0.82/0.69，cluster trigger 为 `initial=1`、`neighbor_set_change=1`、`head_member_unreachable=3`、`skip=0`。结论：gate 接入和日志生效，但当前 35 m 通信范围下 hard condition 持续触发，不能用该回归证明 skip 收益。
 - 已进入主表修复阶段，新增 `opencda.tools.offline_inference --sgcp-trace-output` 和 `protocol_audit.md`。第一轮离线协议审计显示：41 帧 SGCP inter-cluster late-fusion 共有 246 条 cluster-head receiver trace，`missing_channel_rows=0`，总通信 26,916,208 bytes，AP@0.3/0.5/0.7 = 0.77/0.73/0.35；分簇、grid selection 和 channel allocation 均已真实进入融合输入，暂未发现未调度 sender 绕过 PPS 的协议 bug。
 - 已新增 `--sgcp-upload-mode {grid,head_only,full_cluster}` 和 `mechanism_probe.md`。41 帧机制 probe 显示 head-only 为 0.26/0.22/0.09，SGCP grid-constrained 为 0.77/0.73/0.35，full-cluster upload 为 0.82/0.79/0.42；SGCP 使用约 60.0% 的 full-cluster payload，主要 AP 损失集中在 grid/PPS 选择，cluster formation 和 inter-cluster late fusion 主体可用。
+- 已新增 `--sgcp-grid-selection-mode {utility,random}`。Random grid probe 保留同一 PPS scheduled links 和每条 link 的 grid 数量，仅将具体 grid 替换为确定性随机候选；41 帧结果为 AP@0.3/0.5/0.7 = 0.78/0.75/0.36，总 payload 27,908,560 bytes，`missing_channel_rows=0`。该结果略高于当前 utility selection，说明 grid utility 对检测 AP 的排序能力不足，是下一轮算法改造优先目标。
 - 已完成 SGCP 11 帧离线 NS3 request-level replay：154 条 SGCP intra-cluster request，CAM callback delivery ratio 0.558442，request with any RLC RX event ratio 0.974026。后者仅表示 request_id 至少出现一个 RLC RX 片段/事件，不代表完整 request delivery。
 - 已确认当前可运行环境版本快照，并记录到 `docs/doc_workspace/environment.md`：OpenCDA HEAD `fcc29fdc9ee9a9fe694c12e1fb6792b4d41bccac`，Python 3.7.10，CARLA Python API 0.9.11，PyTorch 1.10.0+cu113，Open3D 0.10.0.0，ns-3 wrapper `ns-3-dev-v2x-v1.1-dirty`。
 - 已修复在线 CARLA-NS3 时间流速不一致问题：`NetworkManager.time_slot` 不再将 `world.fixed_delta_seconds` 除以 5，`current_sim_time`、`current_time_slot` 与 CARLA tick 统一推进。
@@ -146,3 +147,4 @@ SGCP 工作与仓库中以下部分关系最紧密：
 - Cluster capacity 策略已有离线统计支撑；optional replacement repair 尚未实现，进入论文前可明确为 future/optional enhancement。
 - PPS `PotentialGame` 当前没有显式势函数、action replacement 和 `Delta Phi >= 0` 日志；论文中不宜无条件声称当前实现是完整 exact potential game。若要保留强理论表述，需要补代码诊断和证明。
 - SGCP potential_game NS3 replay 已确认“PPS 已调度且无冲突的 request 全部成功”，且低暴露子信道场景能正确拒绝超出带宽窗口的 request；NS3 delivery/PDR 已先接入 selective-sharing baseline。下一步是把该 link-quality 反馈进一步接入 SGCP PPS 本身或 OpenCOOD mAP 的端到端丢包裁剪。
+- Random-grid probe 已显示当前 utility selection 不优于随机候选。主表修复下一步应优先做固定簇/固定链路下的 grid scoring 改造，目标是在接近当前 payload 的前提下超过 random-grid 并逼近 full-cluster upper reference。

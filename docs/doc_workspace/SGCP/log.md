@@ -2547,3 +2547,41 @@ evaluation_outputs\v2xp_cluster_carla_2026_07_16_09_07_11\log.txt
 - `enable_topology_trigger_gate` 已通过 config path 生效，并输出 `CLUSTER_TRIGGER` / `CLUSTER_SYNC`。
 - 本轮没有出现 skip，因为默认 35 m 通信范围下持续触发 `head_member_unreachable` hard condition。
 - 该在线回归证明 gate 接入和日志可用，但不能证明 reduced reconfiguration；若论文需要展示 skip 收益，应补更静态或更大通信范围的在线回归。
+
+## 2026-07-16 - Random grid selection mechanism probe
+
+### 目的
+
+推进 P-1 主表修复：在保持同一 SGCP cluster、PPS scheduled links 和每条 link 的 grid 数量不变时，将具体 grid selection 替换为确定性随机候选，判断当前 utility selection 是否真的优于随机。
+
+### 代码
+
+`opencda.tools.offline_inference` 新增：
+
+```text
+--sgcp-grid-selection-mode {utility,random}
+```
+
+### 命令
+
+```powershell
+conda run -n opencda python -m opencda.tools.offline_inference --dataset-root D:\Data\Carla --scenario-id 2026_07_15_01_26_56 --ego-cav-id 1 --sgcp-constrained --sgcp-inter-cluster-late-fusion --resource-allocation potential_game --sgcp-grid-selection-mode random --max-frames 0 --sgcp-trace-output docs\doc_workspace\SGCP\artifacts\mechanism_probe\random_grid_41f_trace.csv *> docs\doc_workspace\SGCP\artifacts\mechanism_probe\random_grid_41f_stdout.log
+```
+
+### 结果
+
+- Frames：41
+- Receiver trace rows：246
+- `missing_channel_rows`：0
+- AP@0.3 / AP@0.5 / AP@0.7：0.78 / 0.75 / 0.36
+- Total payload：27,908,560 bytes
+- Avg. payload / receiver：113,449.43 bytes
+- Avg. uploaded sources / receiver：1.67
+- Avg. uploaded points / receiver：7,090.59
+- Avg. selected grids / receiver：87.32
+
+### 观察
+
+- Random grid selection 在相同 scheduled links 和相同 grid count 下略高于当前 SGCP utility selection（`0.77/0.73/0.35`）。
+- 该结果排除了“随机低效选择一定明显更差”的假设，说明当前 grid utility 与 OpenCOOD 检测 AP 的目标不够一致。
+- 下一步应优先做 fixed-cluster / fixed-link 的 grid scoring 改造与消融，目标是在接近当前 payload 的前提下稳定超过 random-grid，并缩小到 full-cluster upload（`0.82/0.79/0.42`）的差距。

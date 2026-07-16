@@ -2,7 +2,7 @@
 
 本文件只记录经过确认、可复现或准备进入论文/rebuttal 的核心结果。探索性现象先记录在 `log.md`，稳定后再整理到这里。
 
-更新时间：2026-07-15
+更新时间：2026-07-16
 
 ## 结果记录规范
 
@@ -100,9 +100,10 @@ conda run -n opencda python -m opencda.tools.offline_inference --dataset-root D:
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | --- |
 | Head-only | 0.26 | 0.22 | 0.09 | 0 | 0.00 | 0.00 | 0.00 | Cluster heads detect alone, then late-fuse |
 | SGCP grid-constrained | 0.77 | 0.73 | 0.35 | 26,916,208 | 109,415.48 | 1.67 | 6,838.47 | Current main SGCP constrained mode |
+| Random grid, same scheduled links | 0.78 | 0.75 | 0.36 | 27,908,560 | 113,449.43 | 1.67 | 7,090.59 | Same PPS scheduled sender links and grid counts, deterministic random grid candidates |
 | Full-cluster upload | 0.82 | 0.79 | 0.42 | 44,850,528 | 182,319.22 | 2.33 | 11,394.95 | Same clusters, upload all member point clouds |
 
-观察：SGCP grid-constrained 使用约 60.0% 的 full-cluster payload，并保留大部分 AP@0.5，但 AP@0.7 损失明显。当前主表修复重点应放在 grid utility、member/grid budget 和高精度定位相关 grid selection，而不是推翻 cluster formation 或 inter-cluster late fusion。
+观察：SGCP grid-constrained 使用约 60.0% 的 full-cluster payload，并保留大部分 AP@0.5，但 AP@0.7 损失明显。随机 grid selection 在相同 PPS scheduled links 和相同 grid 数量下略高于当前 utility selection，说明当前主表修复重点应放在 grid utility、member/grid budget 和高精度定位相关 grid selection，而不是推翻 cluster formation 或 inter-cluster late fusion。
 
 ## 参数敏感性
 
