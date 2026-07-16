@@ -3325,3 +3325,40 @@ timeout reupload 已证明能显著减少在线 partial episode，但需要在 `
 ### 当前结论
 
 本轮没有得到 clean online reupload 结果；不能据此评价 timeout reupload 的最终效果。上一轮 `online_ns3_reupload_20260717_053012` 仍是目前唯一有效的 reupload first trial：它显示 complete/partial episode 从 `21/6` 改善到 `39/3`，但不是 clean exit。下一轮应重新启动 CARLA 后再跑 35 tick clean reupload；若再遇到 spawn collision，需要先检查 CARLA 端场景清理/初始 spawn 点占用问题。
+
+## 2026-07-17 - CARLA spawn cleanup guard
+
+### 目的
+
+修复在线 clean rerun 中第一个 single CAV 固定 spawn 点被占用的问题：
+
+```text
+RuntimeError: Spawn failed because of collision at spawn position
+```
+
+### 修复
+
+在 `ScenarioManager` 中新增显式环境开关：
+
+```powershell
+$env:OPENCDA_CLEAN_WORLD_ON_INIT = "1"
+```
+
+打开后，ScenarioManager 在创建 CAV 前销毁当前 CARLA world 中已有的动态 actor：
+
+- `vehicle.*`
+- `sensor.*`
+- `walker.*`
+- `controller.*`
+
+销毁后 tick 3 次，让 CARLA 释放固定 spawn 点占位。默认不启用，避免影响普通交互实验；SGCP 在线自动回归命令中显式启用。
+
+### 验证
+
+```powershell
+conda run -n opencda python -m py_compile opencda\scenario_testing\utils\sim_api.py
+```
+
+### 下一步
+
+使用 `OPENCDA_CLEAN_WORLD_ON_INIT=1` 重跑 clean online reupload 回归。若仍失败，再定位 CARLA 初始地图/traffic manager state；若通过，则更新 `online_ns3_short_regression.md` 和 `results.md` 的 clean row。

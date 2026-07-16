@@ -8,6 +8,7 @@ please use cosim_api.py.
 # License: TDG-Attribution-NonCommercial-NoDistrib
 
 import math
+import os
 import random
 import sys
 import json
@@ -233,6 +234,10 @@ class ScenarioManager:
         weather = self.set_weather(simulation_config['weather'])
         self.world.set_weather(weather)
 
+        if os.environ.get('OPENCDA_CLEAN_WORLD_ON_INIT', '').lower() in (
+                '1', 'true', 'yes'):
+            self.destroy_dynamic_actors()
+
         # Define probabilities for each type of blueprint
         self.use_multi_class_bp = scenario_params["blueprint"][
             'use_multi_class_bp'] if 'blueprint' in scenario_params else False
@@ -252,6 +257,29 @@ class ScenarioManager:
         self.carla_map = self.world.get_map()
         self.apply_ml = apply_ml
         self.apply_cp = apply_cp
+
+    def destroy_dynamic_actors(self):
+        """Remove stale dynamic actors before deterministic scenario spawning."""
+        dynamic_prefixes = (
+            'vehicle.',
+            'sensor.',
+            'walker.',
+            'controller.',
+        )
+        actors = [
+            actor for actor in self.world.get_actors()
+            if actor.type_id.startswith(dynamic_prefixes)
+        ]
+        if not actors:
+            return
+        print(f"Cleaning {len(actors)} existing dynamic actors before spawn.")
+        for actor in actors:
+            try:
+                actor.destroy()
+            except RuntimeError:
+                pass
+        for _ in range(3):
+            self.world.tick()
 
     @staticmethod
     def set_weather(weather_settings):
