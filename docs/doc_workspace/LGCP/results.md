@@ -957,3 +957,39 @@ docs/doc_workspace/LGCP/experiments/hierarchy_plan/20260715_lgcp_carla_hierarchy
 
 - 该结果已经可以做 request-level RLC / PSSCH / HARQ funnel。
 - 仍需多 seed 或更多场景验证稳定性。
+
+## 2026-07-16：Control-Plane Overhead Breakdown
+
+新增离线统计工具：
+
+```text
+opencda/tools/lgcp_control_overhead_eval.py
+```
+
+在 11 帧 top-40 hierarchy plan 上显式拆分 CAV pose / direction report、area-confidence report、RSU assignment、RSU global-view broadcast 和 planned data upload。
+
+| Metric | Mean | Max |
+| --- | ---: | ---: |
+| active CAVs / frame | 20.000000 | 20.000000 |
+| confidence entries / frame | 1609.818182 | 1629.000000 |
+| assignment entries / frame | 40.000000 | 40.000000 |
+| pose report bytes / frame | 640.000000 | 640.000000 |
+| confidence report bytes / frame | 25757.090909 | 26064.000000 |
+| assignment bytes / frame | 2560.000000 | 2560.000000 |
+| global-view bytes / frame | 2000.000000 | 2000.000000 |
+| control-plane bytes / frame | 30957.090909 | 31264.000000 |
+| planned data bytes / frame | 294545.454545 | 310000.000000 |
+| total bytes with control / frame | 325502.545455 | 341264.000000 |
+| control-plane ratio | 0.095202 | 0.099794 |
+
+输出目录：
+
+```text
+docs/doc_workspace/LGCP/experiments/hierarchy_plan/20260715_lgcp_carla_hierarchy_plan_top40_11f/control_overhead_11f/
+```
+
+解释边界：
+
+- 当前结果是 byte proxy，不是 PHY airtime 或 MAC scheduling overhead。
+- 在 20 CAV / top-40 area / 11 frame 设置下，control-plane traffic 约为 30.96 KB/frame，占 planned data + control 的 9.52%。
+- 该结果可回应 control-plane overhead 未量化的问题；论文级稳定性仍需多 seed / 多场景复核。

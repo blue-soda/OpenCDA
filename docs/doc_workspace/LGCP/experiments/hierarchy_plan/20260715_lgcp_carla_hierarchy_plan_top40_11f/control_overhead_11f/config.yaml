@@ -1,0 +1,11 @@
+area_records: C:\Workspace\OpenCDA\docs\doc_workspace\LGCP\experiments\area_confidence\20260715_lgcp_carla_area_ap_11f_detector_score\area_records.csv
+area_assignment_plan: C:\Workspace\OpenCDA\docs\doc_workspace\LGCP\experiments\hierarchy_plan\20260715_lgcp_carla_hierarchy_plan_top40_11f\area_assignment_plan.csv
+upload_plan: C:\Workspace\OpenCDA\docs\doc_workspace\LGCP\experiments\hierarchy_plan\20260715_lgcp_carla_hierarchy_plan_top40_11f\upload_plan.csv
+hierarchy_frame_summary: C:\Workspace\OpenCDA\docs\doc_workspace\LGCP\experiments\hierarchy_plan\20260715_lgcp_carla_hierarchy_plan_top40_11f\hierarchy_frame_summary.csv
+confidence_field: density_distance
+min_confidence_report: 0.0
+pose_report_bytes: 32
+confidence_entry_bytes: 16
+assignment_entry_bytes: 64
+global_view_bytes: 2000
+note: Offline LGCP control-plane overhead estimate.

@@ -25,7 +25,7 @@
 - [ ] 增加 area size / grid size 敏感性实验。
 - [ ] 增加 subchannel count `Z` 敏感性实验。
 - [ ] 增加 CAV / edge computation capacity 敏感性实验。
-- [ ] 显式统计 control-plane overhead：location、direction、confidence、assignment、global view。
+- [x] 显式统计 control-plane overhead：location、direction、confidence、assignment、global view。
 - [ ] 解释或修复低车数场景下 LGCP 与 baseline latency 接近的问题。
 - [ ] 检查并修正 Fig. 7 y-axis 标注问题。
 

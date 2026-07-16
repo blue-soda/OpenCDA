@@ -1906,3 +1906,43 @@ planned_requests=676 observed_cam_received=29 bridge_observed_delivery_ratio=0.0
 - 11 帧 request-level RLC / PSSCH / HARQ funnel 已完成。
 - PSSCH OK 与 HARQ ACK 事件数一致，均为 251；request 级均为 167。
 - Application callback 明显低于 RLC/PSSCH/HARQ 成功层，论文中应避免把 `cam_received` 直接当作链路层 delivery ratio。
+
+## 2026-07-16 - control-plane overhead breakdown
+
+### 目标
+
+- 回应 P1 中 “显式统计 control-plane overhead：location、direction、confidence、assignment、global view”。
+- 在已有 11 帧 hierarchy control-plane plan 上输出可复现的 per-frame / summary CSV。
+
+### 代码
+
+新增：
+
+```text
+opencda/tools/lgcp_control_overhead_eval.py
+docs/doc_workspace/LGCP/control_plane_overhead.md
+```
+
+### 运行命令
+
+```powershell
+conda run -n opencda python -m opencda.tools.lgcp_control_overhead_eval --area-records docs\doc_workspace\LGCP\experiments\area_confidence\20260715_lgcp_carla_area_ap_11f_detector_score\area_records.csv --area-assignment-plan docs\doc_workspace\LGCP\experiments\hierarchy_plan\20260715_lgcp_carla_hierarchy_plan_top40_11f\area_assignment_plan.csv --upload-plan docs\doc_workspace\LGCP\experiments\hierarchy_plan\20260715_lgcp_carla_hierarchy_plan_top40_11f\upload_plan.csv --hierarchy-frame-summary docs\doc_workspace\LGCP\experiments\hierarchy_plan\20260715_lgcp_carla_hierarchy_plan_top40_11f\hierarchy_frame_summary.csv --output-dir docs\doc_workspace\LGCP\experiments\hierarchy_plan\20260715_lgcp_carla_hierarchy_plan_top40_11f\control_overhead_11f
+```
+
+### 结果
+
+```text
+frames=11 control_plane_bytes_mean=30957.090909 planned_data_bytes_mean=294545.454545 control_plane_ratio_mean=0.095202
+```
+
+输出目录：
+
+```text
+docs/doc_workspace/LGCP/experiments/hierarchy_plan/20260715_lgcp_carla_hierarchy_plan_top40_11f/control_overhead_11f/
+```
+
+### 结论
+
+- 当前 20 CAV / top-40 area / 11 frame 设置下，控制面平均约 30.96 KB/frame。
+- 主要控制面来源是 area-confidence report，平均约 25.76 KB/frame。
+- 控制面占 planned data + control 总量约 9.52%，可作为 rebuttal 中 control-plane overhead 的初步量化证据。
