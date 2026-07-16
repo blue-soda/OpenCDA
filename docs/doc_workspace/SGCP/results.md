@@ -108,6 +108,18 @@ conda run -n opencda python -m opencda.tools.offline_inference --dataset-root D:
 
 观察：SGCP grid-constrained 使用约 60.0% 的 full-cluster payload，并保留大部分 AP@0.5，但 AP@0.7 损失明显。随机 grid selection 在相同 PPS scheduled links 和相同 grid 数量下略高于当前 utility selection，说明原始饱和 density utility 不足。`spatial_diverse` 进一步达到 `0.79/0.75/0.37`，高于 random-grid，说明 coverage-aware grid selection 是当前最有希望的主表修复方向；raw density / density-distance 虽提升 AP@0.7，但会损失 AP@0.3/0.5 且 payload 更高。
 
+### Spatial-Diverse Channel Sweep
+
+实验口径：同一 41 帧 dump、20 CAV、`potential_game`、SGCP inter-cluster late fusion，启用 `--sgcp-grid-selection-mode spatial_diverse`。该表用于评估 coverage-aware grid selection 在不同子信道预算下的通信-精度折中。
+
+| Num. Channels | AP@0.3 | AP@0.5 | AP@0.7 | Total Bytes | Avg. Bytes / Receiver | Avg. Uploaded Sources | Avg. Uploaded Points | Avg. Selected Grids | Payload vs Full-Cluster | Notes |
+| ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | --- |
+| 5 | 0.56 | 0.53 | 0.27 | 14,815,408 | 60,225.24 | 0.83 | 3,764.08 | 45.58 | 33.0% | Strong channel bottleneck; AP governed by admitted links |
+| 10 | 0.79 | 0.75 | 0.37 | 28,743,280 | 116,842.60 | 1.67 | 7,302.66 | 87.32 | 64.1% | Current best low-payload SGCP candidate |
+| 20 | 0.80 | 0.76 | 0.41 | 37,912,544 | 154,116.03 | 2.33 | 9,632.25 | 117.18 | 84.5% | Near full-cluster AP@0.7 with lower payload |
+
+观察：`spatial_diverse` 的 10 子信道版本在约 64.1% full-cluster payload 下达到 `0.79/0.75/0.37`，比原始 utility 和 random-grid 更稳；20 子信道版本把 AP@0.7 提升到 `0.41`，接近 full-cluster `0.42`，但 payload 升至 full-cluster 的 84.5%。论文主表可以考虑报告 10 子信道作为低通信主点，并用 20 子信道作为 high-budget sensitivity，而不是只给单一设置。
+
 ## 参数敏感性
 
 ### Stability Window
@@ -178,6 +190,14 @@ Observation: the default `N_max=4` creates no singleton clusters in this dump, b
 | 5 | 40 | 0.56 | 0.53 | 0.27 | 60225.24 | 14815408 | 1.83 | 45.58 | 6.00 | 11 | Fewer channels, PPS admits fewer members per cluster head |
 | 10 | 40 | 0.77 | 0.73 | 0.35 | 109415.48 | 26916208 | 2.67 | 87.32 | 6.00 | 11 | Current default |
 | 20 | 40 | 0.77 | 0.73 | 0.38 | 139299.64 | 34267712 | 3.33 | 117.18 | 6.00 | 11 | More channels increase payload and AP@0.7 |
+
+Coverage-aware spatial-diverse selection under the same channel sweep:
+
+| Num. Channels | Bandwidth (MHz) | AP@0.3 | AP@0.5 | AP@0.7 | Avg. Upload (bytes/source) | Total Upload (bytes) | Avg. Source CAVs | Avg. Selected Grids | Notes |
+| ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | --- |
+| 5 | 40 | 0.56 | 0.53 | 0.27 | 60225.24 | 14815408 | 1.83 | 45.58 | Same as default under severe channel bottleneck |
+| 10 | 40 | 0.79 | 0.75 | 0.37 | 116842.60 | 28743280 | 2.67 | 87.32 | Coverage-aware selection improves over utility/random |
+| 20 | 40 | 0.80 | 0.76 | 0.41 | 154116.03 | 37912544 | 3.33 | 117.18 | Near full-cluster AP@0.7 with lower payload |
 
 | Num. Channels | Bandwidth (MHz) | AP@0.3 | AP@0.5 | AP@0.7 | Avg. Upload (bytes/source) | Total Upload (bytes) | Avg. Source CAVs | Avg. Selected Grids | Avg. Clusters | Reconfig. Count | Notes |
 | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | --- |

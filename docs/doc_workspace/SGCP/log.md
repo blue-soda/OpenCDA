@@ -2630,3 +2630,37 @@ conda run -n opencda python -m opencda.tools.offline_inference --dataset-root D:
 - `raw_density` 和 `density_distance` 虽然提升 AP@0.7，但损失 AP@0.3/0.5 且 payload 增加，说明单纯追高密度并不稳健。
 - `spatial_diverse` 在相同 scheduled links 和 grid count 下超过 random-grid，同时 payload 约为 full-cluster upload 的 64.1%，是当前最有希望的 grid utility 改造方向。
 - 后续应把 `spatial_diverse` 从 probe 整理为 coverage-aware SGCP grid utility，并补 fixed-cluster/fixed-link、payload sweep 和 NS3-aware 交付裁剪。
+
+## 2026-07-16 - Spatial-diverse channel sweep
+
+### 目的
+
+继续推进 P-1 主表修复：评估 coverage-aware `spatial_diverse` grid selection 在不同子信道预算下的 AP/payload tradeoff，选择低通信主点和高预算敏感性设置。
+
+### 命令
+
+```powershell
+conda run -n opencda python -m opencda.tools.offline_inference --dataset-root D:\Data\Carla --scenario-id 2026_07_15_01_26_56 --ego-cav-id 1 --sgcp-constrained --sgcp-inter-cluster-late-fusion --resource-allocation potential_game --sgcp-grid-selection-mode spatial_diverse --num-channels 5 --max-frames 0 --sgcp-trace-output docs\doc_workspace\SGCP\artifacts\mechanism_probe\spatial_diverse_ch5_41f_trace.csv *> docs\doc_workspace\SGCP\artifacts\mechanism_probe\spatial_diverse_ch5_41f_stdout.log
+conda run -n opencda python -m opencda.tools.offline_inference --dataset-root D:\Data\Carla --scenario-id 2026_07_15_01_26_56 --ego-cav-id 1 --sgcp-constrained --sgcp-inter-cluster-late-fusion --resource-allocation potential_game --sgcp-grid-selection-mode spatial_diverse --num-channels 20 --max-frames 0 --sgcp-trace-output docs\doc_workspace\SGCP\artifacts\mechanism_probe\spatial_diverse_ch20_41f_trace.csv *> docs\doc_workspace\SGCP\artifacts\mechanism_probe\spatial_diverse_ch20_41f_stdout.log
+```
+
+10 子信道结果来自上一轮：
+
+```text
+docs\doc_workspace\SGCP\artifacts\mechanism_probe\spatial_diverse_grid_41f_trace.csv
+```
+
+### 结果
+
+| Num. Channels | AP@0.3 | AP@0.5 | AP@0.7 | Total Payload | Avg. Payload / Receiver | Avg. Uploaded Sources | Avg. Uploaded Points | Avg. Selected Grids | Payload vs Full-Cluster |
+| ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| 5 | 0.56 | 0.53 | 0.27 | 14,815,408 | 60,225.24 | 0.83 | 3,764.08 | 45.58 | 33.0% |
+| 10 | 0.79 | 0.75 | 0.37 | 28,743,280 | 116,842.60 | 1.67 | 7,302.66 | 87.32 | 64.1% |
+| 20 | 0.80 | 0.76 | 0.41 | 37,912,544 | 154,116.03 | 2.33 | 9,632.25 | 117.18 | 84.5% |
+
+### 观察
+
+- 5 子信道与原始 utility 的低资源结果基本一致，说明强瓶颈下 AP 主要由 admitted links 决定。
+- 10 子信道是低通信主表候选：payload 约为 full-cluster 的 64.1%，AP 为 `0.79/0.75/0.37`。
+- 20 子信道是高预算敏感性候选：AP@0.7 = 0.41，接近 full-cluster 0.42，同时 payload 比 full-cluster 低约 15.5%。
+- 后续主表可以考虑同时报告 low-budget SGCP 和 high-budget SGCP，或者将 10 子信道作为主设置、20 子信道放入 network-resource sensitivity。
