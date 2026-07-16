@@ -1117,3 +1117,19 @@ opencda/tools/lgcp_compute_capacity_eval.py
 - 该结果是 compute workload proxy，不是真实 OpenCOOD model-level runtime。
 - 低 RSU capacity 时 RSU aggregation 会成为瓶颈；低 CAV capacity 时 leader local fusion 会成为瓶颈。
 - 当前结果可支撑 CAV / edge capacity sensitivity 讨论，但完整 LGCP local fusion 实现后仍需测真实 runtime。
+
+## 2026-07-17：Fig. 7 Axis and Low-Density Latency Audit
+
+`C:\Workspace\icdcs-paper\LGCP\picture\num_latency_v2.pdf` 已渲染为 `docs/doc_workspace/LGCP/fig7_latency_audit.png` 进行人工核查。
+
+| Item | Current state | Conclusion |
+| --- | --- | --- |
+| y-axis | `End-to-end latency (ms)` | 语义正确，单位明确 |
+| x-axis | `Number of vehicles` | 建议改为 `Number of CAVs`，与 caption 和正文一致 |
+| Low-CAV explanation | 正文当前解释不足 | 已形成 fixed overhead / sparse contention / edge compute 小规模优势解释 |
+
+论文修改要点：
+
+- 保留 y-axis 为 `End-to-end latency (ms)`。
+- 使用原始绘图源重导出 Fig. 7，将 x-axis 改为 `Number of CAVs`。
+- 在 Fig. 7 讨论中补充低密度解释：低 CAV 数时冗余和冲突尚小，LGCP 固定控制面开销未被充分摊薄，edge-assisted baseline 的边缘算力优势仍能覆盖集中式瓶颈；随 CAV 数增加，LGCP 的 area-task sharing、leader local fusion 和 RSU aggregation 才更明显体现 scalability。

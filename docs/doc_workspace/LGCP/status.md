@@ -50,6 +50,7 @@
 - 已新增 `workflow_and_group_semantics.md`，形成 LGCP workflow figure 草稿、area-task group 语义、packet granularity、dedup / reuse 和 leader-to-RSU reliability 的论文写作素材。
 - 已新增 `deployment_assumptions.md`，形成 RSU-assisted assumption、mobility / stale assignment、localization error、failure modes、multi-RSU scaling 和 large-scale claim boundary 的论文讨论素材。
 - 已新增 `manuscript_language_audit.md`，定位 TeX 中 stage 编号不一致和 `approximate solution` 高风险表述，并给出替换段落、rebuttal wording 和论文编辑 checklist。
+- 已新增 `latency_figure_audit.md`，完成 Fig. 7 轴标核查和低 CAV 数 latency 接近原因解释；当前 Fig. 7 y-axis 语义正确，建议将 x-axis 从 `Number of vehicles` 改为 `Number of CAVs`。
 - 已新增 `grid_size_sensitivity.md`，并在不修改 `lgcp_carla.yaml` 的前提下完成 `5m x 3m`、`10m x 6m`、`20m x 12m` 三组 11 帧 grid-size sensitivity smoke；当前 default `10m x 6m` 在 area-frame noisy-or vs recall@0.5 上 Spearman 最高。
 - 已新增 `localization_error_sensitivity.md`，完成 `0.0m / 0.2m / 0.5m / 1.0m` CAV xy pose noise 的 11 帧 localization sensitivity smoke；area-frame noisy-or vs recall@0.5 Spearman 在 1.0m 噪声下仍约 `0.55`。
 - 已新增 `opencda/tools/lgcp_stale_assignment_eval.py` 和 `stale_assignment_sensitivity.md`，完成 `0/1/2/3` 帧 stale assignment smoke；lag 1/2 帧 ranking 仍较稳定，lag 3 帧 Spearman 降到 `0.447925`。
@@ -66,7 +67,7 @@
 3. 推进完整 LGCP hierarchy 机制；当前 offline proxy 显示强 communication-aware baseline 已非常有竞争力，LGCP 后续主张需要靠 local fusion / RSU aggregation / scheduling 共同支撑。
 4. 大规模 30 CAV 结果若短期只跑 latency，应在论文中收窄为 communication/computation scalability；若报告 perception scalability，只能报告已校准的 proxy，不能写成真实 AP。
 5. 下一步将 request-level PHY/RLC/HARQ trace 和 control-plane overhead 扩展到多 seed，或开始推进完整 LGCP local fusion / RSU aggregation。
-6. 以 `revision_matrix.md` 作为论文修改和实验补强的主索引。
+6. 以 `revision_matrix.md` 作为论文修改和实验补强的主索引；下一轮若进入论文源文件修改，应优先重导出 Fig. 7 x-axis 并加入低密度 latency 解释段。
 
 ## 当前阻塞点
 

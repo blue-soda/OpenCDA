@@ -2282,3 +2282,28 @@ conda run -n opencda python -c "compile(open(r'opencda\tools\lgcp_compute_capaci
 - 均衡提升 CAV / RSU capacity 时，compute latency proxy 从 8.41ms 降到 1.05ms。
 - 单独提高 CAV 或 RSU capacity 会暴露另一侧瓶颈。
 - `target.md` 中 CAV / edge computation capacity sensitivity 已标记为 proxy 完成；真实 runtime 仍需完整 local fusion / RSU aggregation 实现。
+
+## 2026-07-17 - Fig. 7 axis audit and low-density latency explanation
+
+### 目标
+
+- 推进 `target.md` 中 P1：解释低车数场景下 LGCP 与 baseline latency 接近的问题。
+- 检查 Fig. 7 axis label 问题，并形成修稿动作。
+
+### 核查命令
+
+```powershell
+& "C:\Users\sakakibara\.cache\codex-runtimes\codex-primary-runtime\dependencies\native\poppler\Library\bin\pdftoppm.exe" -png -singlefile -r 220 "C:\Workspace\icdcs-paper\LGCP\picture\num_latency_v2.pdf" "C:\Workspace\OpenCDA\docs\doc_workspace\LGCP\fig7_latency_audit"
+```
+
+### 结果
+
+- 新增 `docs/doc_workspace/LGCP/latency_figure_audit.md`。
+- Fig. 7 y-axis 当前为 `End-to-end latency (ms)`，语义正确。
+- Fig. 7 x-axis 当前为 `Number of vehicles`，与 caption / 正文中的 CAV 数不完全一致，应在重导出图源时改为 `Number of CAVs`。
+- 低 CAV 数 latency 接近的解释已整理为论文段落和 rebuttal wording：低密度下冗余与冲突少，LGCP 固定控制面开销占比高，edge-assisted baseline 的边缘算力优势尚未被集中式瓶颈抵消。
+
+### 结论
+
+- `target.md` 中两个 P1 写作/图表项已标记完成。
+- 后续若进入论文源文件修改，需要用原始绘图源重导出 `num_latency_v2.pdf`。

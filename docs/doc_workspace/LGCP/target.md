@@ -26,8 +26,8 @@
 - [x] 增加 subchannel count `Z` 敏感性实验。（已完成 11 帧 scheduling-capacity proxy，NS3 多 Z 仍需复核）
 - [x] 增加 CAV / edge computation capacity 敏感性实验。（已完成 11 帧 compute-latency proxy，模型级 runtime 仍需后续实现）
 - [x] 显式统计 control-plane overhead：location、direction、confidence、assignment、global view。
-- [ ] 解释或修复低车数场景下 LGCP 与 baseline latency 接近的问题。
-- [ ] 检查并修正 Fig. 7 y-axis 标注问题。
+- [x] 解释或修复低车数场景下 LGCP 与 baseline latency 接近的问题。（已形成 `latency_figure_audit.md`，解释 fixed coordination overhead / sparse contention / edge compute 小规模优势）
+- [x] 检查并修正 Fig. 7 y-axis 标注问题。（已渲染核查：y-axis `End-to-end latency (ms)` 正确；实际应将 x-axis 从 `Number of vehicles` 改为 `Number of CAVs`，需用原始绘图源重导出）
 
 ## P2：机制与写作完善
 

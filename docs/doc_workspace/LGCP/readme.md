@@ -21,6 +21,7 @@
 - `workflow_and_group_semantics.md`：LGCP workflow figure 草稿、area-task group 语义、packet 粒度、去重复用和 leader-to-RSU 可靠性说明。
 - `deployment_assumptions.md`：LGCP 部署假设、限制、failure modes、multi-RSU 扩展和大规模 claim 边界。
 - `manuscript_language_audit.md`：论文 stage 编号一致性、heuristic / approximate 表述边界和替换措辞清单。
+- `latency_figure_audit.md`：Fig. 7 轴标核查、低车数 latency 接近原因解释和 rebuttal wording。
 - `grid_size_sensitivity.md`：LGCP ROI grid / area size sensitivity 的单场景 11 帧 smoke 结果。
 - `localization_error_sensitivity.md`：LGCP CAV pose localization error sensitivity 的单场景 11 帧 smoke 结果。
 - `stale_assignment_sensitivity.md`：LGCP update frequency / stale assignment sensitivity 的单场景 11 帧 smoke 结果。
