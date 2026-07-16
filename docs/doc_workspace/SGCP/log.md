@@ -2724,3 +2724,38 @@ conda run -n opencda python -m opencda.tools.ns3_log_eval --ns3-stdout docs\doc_
 - 20 子信道 high-budget `spatial_diverse` 候选增加到每帧 14 条 member-to-head request，NS3 仍全部交付。
 - 该结果支撑论文中将 20 子信道作为 high-budget sensitivity：更高 AP 不是通过绕过 PPS 或 NS3 默认调度得到，而是在 OpenCDA 指定子信道上完整交付。
 - 后续可补 10 子信道 `spatial_diverse` NS3 replay，使低通信主点也有同口径 delivery 证据。
+
+## 2026-07-16 - Spatial-diverse NS3 low-budget replay
+
+### 目的
+
+补齐 10 子信道 `spatial_diverse` low-budget 主表候选的 NS3 request-level 交付证据。
+
+### 命令
+
+```powershell
+wsl -d Ubuntu-22.04 -u sakakibara -- bash -lc "cd ~/workspace/carla-ns3-co-simulation/ns-3-dev && timeout 90s stdbuf -oL -eL ./ns3 run 'scratch/vanet/main.cc --simTime=2.5 --enableTimeSync=true --carlaHost=auto --targetSubchannels=10'"
+conda run -n opencda python -m opencda.tools.offline_ns3_replay --dataset-root D:\Data\Carla --scenario-id 2026_07_15_01_26_56 --ego-cav-id 1 --max-frames 11 --num-channels 10 --sgcp-grid-selection-mode spatial_diverse --drain-seconds 1.0 --sync-timeout 20 --upload-plan-output docs\doc_workspace\SGCP\artifacts\sgcp_ns3_spatial_ch10_11f\upload_plan.csv
+conda run -n opencda python -m opencda.tools.ns3_log_eval --ns3-stdout docs\doc_workspace\SGCP\artifacts\sgcp_ns3_spatial_ch10_11f\ns3_stdout.log --upload-plan docs\doc_workspace\SGCP\artifacts\sgcp_ns3_spatial_ch10_11f\upload_plan.csv --output-dir docs\doc_workspace\SGCP\artifacts\sgcp_ns3_spatial_ch10_11f\eval --max-frames 11
+```
+
+### 结果
+
+- Frames：11
+- Scheduled requests：110
+- Skipped unscheduled：44
+- Planned bytes：1,100,000
+- CAM received：110 / 110
+- CAM delivery ratio：1.000000
+- Avg / P95 delay：23.909 ms / 24.000 ms
+- RLC TX / RX events：2,970 / 2,970
+- RLC complete requests：110 / 110
+- `MANUAL_RESOURCE_APPLY`：2,970
+- `MANUAL_CMD_REJECT`：0
+- `PSCCH_DECODE_FAIL` / `PSSCH_DECODE_FAIL`：0 / 0
+
+### 观察
+
+- 10 子信道 low-budget `spatial_diverse` 候选的 110 条 PPS scheduled requests 全部交付。
+- 每帧 4 条未调度需求在 OpenCDA replay 侧跳过，没有进入 NS3 默认调度路径。
+- 至此，`spatial_diverse` 10 子信道低通信主点和 20 子信道高预算敏感性点均有 NS3 request-level 交付证据。
