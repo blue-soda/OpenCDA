@@ -1763,3 +1763,80 @@ planned_requests=186 observed_cam_received=5 bridge_observed_delivery_ratio=0.02
 - PSSCH decode OK/FAIL 已完成 request-level attribution。
 - 124 条 request-level PHY event 全部成功匹配到 `upload_plan.csv`。
 - HARQ feedback 尚未在本轮 smoke 中出现，后续需要确认 HARQ enable / PSFCH / feedback callback 触发条件。
+
+## 2026-07-16 - ns-3 HARQ request-level trace smoke
+
+### 目标
+
+- 让 ns-3 replay 可显式启用 sidelink HARQ / PSFCH。
+- 验证 `[NRSL_HARQ_EVENT]` 能携带 request id 并映射回 LGCP upload request。
+
+### 代码变更
+
+ns-3 co-simulation：
+
+```text
+C:\Workspace\carla-ns3-co-simulation\ns3\vanet\main.cc
+```
+
+新增命令行参数：
+
+- `--enableSlHarq`
+- `--psfchPeriod`
+
+默认值保持原行为：
+
+```text
+--enableSlHarq=false --psfchPeriod=0
+```
+
+HARQ smoke 使用：
+
+```text
+--enableSlHarq=true --psfchPeriod=4
+```
+
+### 关键发现
+
+- `slInfo.m_harqEnabled` 此前固定为 `false`。
+- `NrSlCommResourcePoolFactory` 的 PSFCH period 默认也是 `0`，即 PSFCH disabled。
+- 因此此前 PSSCH request-level trace 能出现，但 HARQ ACK/NACK 不会出现。
+
+### 结果
+
+```text
+planned_requests=186 observed_cam_received=5 bridge_observed_delivery_ratio=0.026882 avg_delay_ms=15.800 p95_delay_ms=31.000 max_delay_ms=31.000 phy_decode_events=2622 phy_decode_failures=1660 phy_harq_request_events=233 rlc_tx_events=228 rlc_rx_events=40
+```
+
+`phy_harq_request_events.csv` event counts：
+
+| Event | Count |
+| --- | --- |
+| PSSCH_DECODE_OK | 40 |
+| PSSCH_DECODE_FAIL | 85 |
+| HARQ_ACK | 40 |
+| HARQ_NACK | 68 |
+
+`request_lifecycle_summary.csv`：
+
+| Metric | Value |
+| --- | --- |
+| planned_requests | 186 |
+| requests_with_rlc_tx | 124 |
+| requests_with_pssch_ok | 30 |
+| requests_with_pssch_fail | 66 |
+| requests_with_harq_ack | 30 |
+| requests_with_harq_nack | 49 |
+| requests_with_rlc_rx | 30 |
+| requests_with_cam_received | 5 |
+| terminal_application_received | 5 |
+| terminal_rlc_rx_only | 25 |
+| terminal_pssch_fail | 50 |
+| terminal_rlc_tx_no_rx | 44 |
+| terminal_planned_only | 62 |
+
+### 结论
+
+- HARQ ACK/NACK 已完成 request-level attribution。
+- 当前 trace 链路已经覆盖 planned request -> RLC TX/RX -> PSSCH OK/FAIL -> HARQ ACK/NACK -> application callback。
+- 下一步应扩展到 11 帧 replay，并按 `upload_type` / area / leader 分解失败原因。

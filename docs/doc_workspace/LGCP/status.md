@@ -44,6 +44,7 @@
 - 已新增 `ns3_phy_harq_request_trace.md`，明确下一步 PHY / HARQ request-level trace 的字段、ns-3 落点、OpenCDA 解析器输出和论文使用边界。
 - `opencda/tools/lgcp_ns3_log_eval.py` 已支持解析未来 `[NRSL_PHY_EVENT]` / `[NRSL_HARQ_EVENT]` request-level 日志，并生成 `request_lifecycle.csv` / `request_lifecycle_summary.csv`。
 - ns-3 侧已新增 PSSCH request-level `[NRSL_PHY_EVENT]`，3 帧 smoke 中解析到 124 条 request-level PHY event，并全部映射回 LGCP `upload_plan.csv`。
+- ns-3 侧已新增 `--enableSlHarq` 和 `--psfchPeriod` 参数；当使用 `--enableSlHarq=true --psfchPeriod=4` 时，3 帧 smoke 中已观测到 request-level HARQ ACK/NACK，并全部映射回 LGCP `upload_plan.csv`。
 - 已新增 LGCP 专用仿真入口 `opencda/scenario_testing/lgcp_carla.py` 和配置 `opencda/scenario_testing/config_yaml/lgcp_carla.yaml`。
 - 未修改 `v2xp_cluster_carla` 原始配置。
 - 已补齐 RSU 首次启用所需的基础运行路径：固定基础设施感知初始化、RSU 注册/访问、最近感知结果保存、销毁路径。
@@ -54,14 +55,14 @@
 2. 扩大 offline subset ablation 到多 seed，确认 `comm_aware_topk` 与 area-aware union 的相对关系是否稳定。
 3. 推进完整 LGCP hierarchy 机制；当前 offline proxy 显示强 communication-aware baseline 已非常有竞争力，LGCP 后续主张需要靠 local fusion / RSU aggregation / scheduling 共同支撑。
 4. 大规模 30 CAV 结果若短期只跑 latency，应在论文中收窄为 communication/computation scalability；若报告 perception scalability，只能报告已校准的 proxy，不能写成真实 AP。
-5. 继续推进 HARQ feedback request-level trace；PSSCH decode OK/FAIL 已完成 request-level 映射，但当前 3 帧 smoke 未观测到 HARQ ACK/NACK event。
+5. 下一步将 request-level PHY/RLC/HARQ trace 扩展到 11 帧或多 seed，并开始推进完整 LGCP local fusion / RSU aggregation。
 6. 以 `revision_matrix.md` 作为论文修改和实验补强的主索引。
 
 ## 当前阻塞点
 
 - 当前仓库已有 cluster-oriented cooperative perception / network co-simulation 管线，RSU 现在可以作为固定感知/注册实体启用；offline subset ablation、scalable quality proxy、hierarchy control-plane plan、11 帧 offline NS3 request-id bridge-observed replay、RLC request-id trace 和 PHY decode-failure breakdown 已能支持部分 rebuttal 证据，但尚未实现真实 feature slicing、leader local fusion、RSU global perception aggregation 和 LGCP 专用 NS3 scheduling。
 - 尚未确认 OPV2V / V2XSet 数据集、本地模型 checkpoint 和可用 conda 环境的位置。
-- NS3 当前版本已可接收 LGCP upload plan transfer requests，`cam_received`、RLC TX/RX/DROP 和 PSSCH decode OK/FAIL 已可通过 `request_id` 精确映射回 upload request；HARQ feedback 代码路径已预留 request-level 输出，但当前 replay 尚未观测到 HARQ ACK/NACK event。
+- NS3 当前版本已可接收 LGCP upload plan transfer requests，`cam_received`、RLC TX/RX/DROP、PSSCH decode OK/FAIL 和 HARQ ACK/NACK 已可通过 `request_id` 精确映射回 upload request；HARQ trace 需要显式使用 `--enableSlHarq=true --psfchPeriod=4`。
 
 ## 场景配置判断
 

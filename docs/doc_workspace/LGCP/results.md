@@ -857,3 +857,47 @@ docs/doc_workspace/LGCP/experiments/hierarchy_plan/20260715_lgcp_carla_hierarchy
 
 - PSSCH decode OK/FAIL 已能 request-level 归因到 area / upload type。
 - 当前 smoke 未观测到 HARQ ACK/NACK event，HARQ feedback 仍需继续确认配置和触发路径。
+
+## 2026-07-16：HARQ Request-Level Trace Smoke
+
+ns-3 侧已新增 HARQ/PSFCH 运行开关：
+
+```text
+--enableSlHarq=true --psfchPeriod=4
+```
+
+在该配置下，HARQ ACK/NACK 能通过 `[NRSL_HARQ_EVENT]` 输出，并由 OpenCDA parser 映射回 LGCP `upload_plan.csv`。
+
+当前 3 帧 smoke：
+
+| Metric | Value |
+| --- | --- |
+| planned requests | 186 |
+| observed `cam_received` | 5 |
+| RLC TX events | 228 |
+| RLC RX events | 40 |
+| aggregate PHY decode events | 2622 |
+| aggregate PHY decode failures | 1660 |
+| request-level PHY/HARQ events | 233 |
+| matched PSSCH OK events | 40 |
+| matched PSSCH FAIL events | 85 |
+| matched HARQ ACK events | 40 |
+| matched HARQ NACK events | 68 |
+| requests with HARQ ACK | 30 |
+| requests with HARQ NACK | 49 |
+| terminal application received | 5 |
+| terminal RLC RX only | 25 |
+| terminal PSSCH fail | 50 |
+| terminal RLC TX no RX | 44 |
+| terminal planned only | 62 |
+
+输出目录：
+
+```text
+docs/doc_workspace/LGCP/experiments/hierarchy_plan/20260715_lgcp_carla_hierarchy_plan_top40_11f/ns3_harq_request_3f_rsu21/
+```
+
+解释边界：
+
+- HARQ event 现在可 request-level 归因。
+- 该结果是 3 帧 smoke，用于验证 trace 链路；论文级结论仍需扩展到 11 帧 / 多 seed。
