@@ -56,7 +56,7 @@
 - [ ] 扩大 area confidence validation 到多 seed / 多场景，形成可进入论文的稳定相关性结果。
 - [x] 实现 greedy group-member selection exhaustive-search gap smoke test。
 - [x] 扩展 greedy optimality gap 到 leader assignment / load balancing。
-- [ ] 扩大 greedy optimality gap 到多 seed / 更大 instance，并接入 latency-aware O3 objective。
+- [ ] 扩大 greedy optimality gap 到多 seed / 更大 instance，并接入 latency-aware O3 objective。（O3 objective 已接入并完成 11 帧 smoke；仍需多 seed / 多场景）
 - [x] 完成 local-to-global ablation 实验设计。
 - [x] 实现 offline selective-sharing vs LGCP area-aware subset ablation。
 - [x] 扩大 offline subset ablation 到完整 11 帧。

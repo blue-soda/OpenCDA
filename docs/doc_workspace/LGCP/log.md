@@ -2334,3 +2334,48 @@ opencood/README.md
 - whole-frame AP 输出到 `<CHECKPOINT_DIR>/eval.yaml`，包含 `ap30`、`ap_50`、`ap_70`、`mpre_50`、`mrec_50`、`mpre_70`、`mrec_70`。
 - `--save_npy` 会输出 `<CHECKPOINT_DIR>/npy/%04d_pcd.npy`、`%04d_pred.npy` 和 `%04d_gt.npy_test`；GT 后缀不是标准 `.npy`，后续脚本需要显式兼容或包装。
 - 新增 `docs/doc_workspace/LGCP/opencood_eval_entry.md`，并将 `target.md` 对应项标记完成。
+
+## 2026-07-17 - Greedy optimality gap O3 latency-aware smoke
+
+### 目标
+
+- 推进 `target.md` 中 greedy optimality gap 的剩余部分：接入 latency-aware `O3_confidence_latency_ratio`。
+- 在 11 帧 `lgcp_carla` area confidence records 上跑一个受控 exhaustive smoke。
+
+### 代码
+
+更新：
+
+```text
+opencda/tools/lgcp_greedy_gap_eval.py
+```
+
+新增能力：
+
+- `--enable-o3`
+- `--o3-t-delta`
+- `--o3-packet-weight`
+- `--o3-load-weight`
+- 输出 `o3_instance_records.csv` 和 `o3_gap_summary.csv`
+
+### 运行命令
+
+```powershell
+conda run -n opencda python -m opencda.tools.lgcp_greedy_gap_eval --input-dir docs\doc_workspace\LGCP\experiments\area_confidence\20260715_lgcp_carla_area_ap_11f_detector_score --output-dir docs\doc_workspace\LGCP\experiments\greedy_optimality_gap\20260717_lgcp_carla_greedy_gap_o3_11f --confidence-field density_linear --max-agents 5 --max-areas 3 --max-group-size 3 --delta-g "0.05,0.075,0.1,0.125" --lambda-size 0.02 --enable-o3 --o3-t-delta 1.0 --o3-packet-weight 0.05 --o3-load-weight 0.1
+```
+
+### 结果
+
+| Objective | Delta_g | Instances | Mean relative gap | P90 relative gap | Max relative gap | Greedy packets | Optimal packets |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| O3 | 0.050 | 11 | 0.021944 | 0.034483 | 0.068966 | 3.000000 | 3.454545 |
+| O3 | 0.075 | 11 | 0.021944 | 0.034483 | 0.068966 | 3.000000 | 3.454545 |
+| O3 | 0.100 | 11 | 0.021944 | 0.034483 | 0.068966 | 3.000000 | 3.454545 |
+| O3 | 0.125 | 11 | 0.021944 | 0.034483 | 0.068966 | 3.000000 | 3.454545 |
+
+### 结论
+
+- O3 latency-aware holistic objective 已接入。
+- 当前 11 帧 smoke 中，O3 mean relative gap 为 `2.19%`，max 为 `6.90%`。
+- O1 / O2 和 leader load gap 在同一配置下仍为 `0.0`。
+- `target.md` 对应项仍保持未完成，因为还需要多 seed / 多场景扩展。

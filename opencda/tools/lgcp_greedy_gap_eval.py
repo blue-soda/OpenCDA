@@ -36,6 +36,14 @@ def parse_args():
                         help='Comma-separated Delta_g values.')
     parser.add_argument('--lambda-size', type=float, default=0.02,
                         help='Size penalty for O2 objective.')
+    parser.add_argument('--enable-o3', action='store_true',
+                        help='Evaluate holistic latency-aware O3 objective.')
+    parser.add_argument('--o3-t-delta', type=float, default=1.0,
+                        help='Fixed coordination latency term for O3 proxy.')
+    parser.add_argument('--o3-packet-weight', type=float, default=0.05,
+                        help='Packet/link count weight for O3 proxy.')
+    parser.add_argument('--o3-load-weight', type=float, default=0.1,
+                        help='Leader max-load weight for O3 proxy.')
     parser.add_argument('--max-instances', type=int, default=0,
                         help='Limit timestamps. 0 means all timestamps.')
     return parser.parse_args()
@@ -310,6 +318,90 @@ def evaluate_leader_assignment(instance, delta_g):
     })
 
 
+def subset_candidates(area_conf, agents, max_group_size):
+    candidates = []
+    upper = min(max_group_size, len(agents))
+    for size in range(1, upper + 1):
+        for subset in itertools.combinations(agents, size):
+            group = list(subset)
+            candidates.append({
+                'members': group,
+                'confidence': group_confidence(area_conf, group),
+                'load': len(group),
+            })
+    return candidates
+
+
+def min_max_leader_load(groups, agents):
+    _, loads = optimal_leader_assignment(groups, agents)
+    return max(loads.values()) if loads else 0
+
+
+def o3_value(groups, agents, t_delta, packet_weight, load_weight):
+    if not groups:
+        return 0.0, 0.0, 0, 0
+    mean_conf = float(np.mean([group['confidence'] for group in groups]))
+    packet_count = sum(len(group['members']) for group in groups)
+    max_load = min_max_leader_load(groups, agents)
+    latency = t_delta + packet_weight * packet_count + load_weight * max_load
+    return mean_conf / max(latency, 1e-9), mean_conf, packet_count, max_load
+
+
+def evaluate_o3_instance(instance, delta_g, max_group_size, t_delta,
+                         packet_weight, load_weight):
+    greedy_groups = construct_greedy_groups(instance, delta_g)
+    greedy_value, greedy_conf, greedy_packets, greedy_max_load = o3_value(
+        greedy_groups, instance['agents'], t_delta, packet_weight, load_weight)
+
+    area_candidates = []
+    for area_id in instance['areas']:
+        candidates = subset_candidates(
+            instance['area_conf'][area_id], instance['agents'], max_group_size)
+        for candidate in candidates:
+            candidate['area_id'] = area_id
+        area_candidates.append(candidates)
+
+    best_value = float('-inf')
+    best_conf = 0.0
+    best_packets = 0
+    best_max_load = 0
+    combinations = 0
+    for combination in itertools.product(*area_candidates):
+        combinations += 1
+        groups = [dict(group) for group in combination]
+        value, conf, packets, max_load = o3_value(
+            groups, instance['agents'], t_delta, packet_weight, load_weight)
+        if value > best_value:
+            best_value = value
+            best_conf = conf
+            best_packets = packets
+            best_max_load = max_load
+
+    absolute_gap = best_value - greedy_value
+    relative_gap = (
+        absolute_gap / max(abs(best_value), 1e-9)
+        if best_value != 0 else 0.0)
+
+    return OrderedDict({
+        'timestamp': instance['timestamp'],
+        'agent_count': len(instance['agents']),
+        'area_count': len(instance['areas']),
+        'delta_g': '%.6f' % delta_g,
+        'objective': 'O3_confidence_latency_ratio',
+        'greedy_value': '%.6f' % greedy_value,
+        'optimal_value': '%.6f' % best_value,
+        'absolute_gap': '%.6f' % absolute_gap,
+        'relative_gap': '%.6f' % relative_gap,
+        'greedy_mean_conf': '%.6f' % greedy_conf,
+        'optimal_mean_conf': '%.6f' % best_conf,
+        'greedy_packet_count': greedy_packets,
+        'optimal_packet_count': best_packets,
+        'greedy_max_load': greedy_max_load,
+        'optimal_max_load': best_max_load,
+        'candidate_combinations': combinations,
+    })
+
+
 def summarize(records):
     grouped = defaultdict(list)
     for row in records:
@@ -353,6 +445,34 @@ def summarize_leader(records):
     return rows
 
 
+def summarize_o3(records):
+    grouped = defaultdict(list)
+    for row in records:
+        grouped[row['delta_g']].append(row)
+
+    rows = []
+    for delta_g, group in sorted(grouped.items()):
+        gaps = np.asarray([float(row['relative_gap']) for row in group])
+        abs_gaps = np.asarray([float(row['absolute_gap']) for row in group])
+        greedy_packets = np.asarray(
+            [float(row['greedy_packet_count']) for row in group])
+        optimal_packets = np.asarray(
+            [float(row['optimal_packet_count']) for row in group])
+        rows.append(OrderedDict({
+            'objective': 'O3_confidence_latency_ratio',
+            'delta_g': delta_g,
+            'instances': len(group),
+            'mean_relative_gap': '%.6f' % float(np.mean(gaps)),
+            'median_relative_gap': '%.6f' % float(np.median(gaps)),
+            'p90_relative_gap': '%.6f' % float(np.percentile(gaps, 90)),
+            'max_relative_gap': '%.6f' % float(np.max(gaps)),
+            'mean_absolute_gap': '%.6f' % float(np.mean(abs_gaps)),
+            'mean_greedy_packet_count': '%.6f' % float(np.mean(greedy_packets)),
+            'mean_optimal_packet_count': '%.6f' % float(np.mean(optimal_packets)),
+        }))
+    return rows
+
+
 def main():
     args = parse_args()
     os.makedirs(args.output_dir, exist_ok=True)
@@ -366,9 +486,14 @@ def main():
 
     rows = []
     leader_rows = []
+    o3_rows = []
     for instance in instances:
         for delta_g in deltas:
             leader_rows.append(evaluate_leader_assignment(instance, delta_g))
+            if args.enable_o3:
+                o3_rows.append(evaluate_o3_instance(
+                    instance, delta_g, args.max_group_size, args.o3_t_delta,
+                    args.o3_packet_weight, args.o3_load_weight))
         for objective in ('O1_confidence_only', 'O2_confidence_minus_size'):
             for delta_g in deltas:
                 rows.append(evaluate_instance(
@@ -411,6 +536,28 @@ def main():
     write_csv(os.path.join(args.output_dir, 'leader_gap_summary.csv'),
               leader_summary_fields, leader_summary_rows)
 
+    o3_summary_rows = []
+    if args.enable_o3:
+        o3_fields = [
+            'timestamp', 'agent_count', 'area_count', 'delta_g', 'objective',
+            'greedy_value', 'optimal_value', 'absolute_gap', 'relative_gap',
+            'greedy_mean_conf', 'optimal_mean_conf', 'greedy_packet_count',
+            'optimal_packet_count', 'greedy_max_load', 'optimal_max_load',
+            'candidate_combinations',
+        ]
+        write_csv(os.path.join(args.output_dir, 'o3_instance_records.csv'),
+                  o3_fields, o3_rows)
+
+        o3_summary_rows = summarize_o3(o3_rows)
+        o3_summary_fields = [
+            'objective', 'delta_g', 'instances', 'mean_relative_gap',
+            'median_relative_gap', 'p90_relative_gap', 'max_relative_gap',
+            'mean_absolute_gap', 'mean_greedy_packet_count',
+            'mean_optimal_packet_count',
+        ]
+        write_csv(os.path.join(args.output_dir, 'o3_gap_summary.csv'),
+                  o3_summary_fields, o3_summary_rows)
+
     config = {
         'input_dir': os.path.abspath(args.input_dir),
         'confidence_field': args.confidence_field,
@@ -419,8 +566,12 @@ def main():
         'max_group_size': args.max_group_size,
         'delta_g': deltas,
         'lambda_size': args.lambda_size,
+        'enable_o3': args.enable_o3,
+        'o3_t_delta': args.o3_t_delta,
+        'o3_packet_weight': args.o3_packet_weight,
+        'o3_load_weight': args.o3_load_weight,
         'instances': len(instances),
-        'note': 'Group-member exhaustive gap plus leader assignment exhaustive load gap.',
+        'note': 'Group-member exhaustive gap, leader assignment exhaustive load gap, and optional holistic O3 latency-aware exhaustive gap.',
     }
     with open(os.path.join(args.output_dir, 'config.yaml'), 'w') as stream:
         yaml.safe_dump(config, stream, sort_keys=False)
@@ -437,6 +588,8 @@ def main():
         stream.write('- summary_rows: `%d`\n' % len(summary_rows))
         stream.write('- leader_records: `%d`\n' % len(leader_rows))
         stream.write('- leader_summary_rows: `%d`\n' % len(leader_summary_rows))
+        stream.write('- o3_records: `%d`\n' % len(o3_rows))
+        stream.write('- o3_summary_rows: `%d`\n' % len(o3_summary_rows))
 
     print('Wrote %d gap records to %s' % (len(rows), args.output_dir))
     for row in summary_rows:
@@ -447,6 +600,12 @@ def main():
         print('leader delta=%s mean_gap=%s p90=%s max=%s' % (
             row['delta_g'], row['mean_relative_gap'],
             row['p90_relative_gap'], row['max_relative_gap']))
+    for row in o3_summary_rows:
+        print('O3 delta=%s mean_gap=%s p90=%s max=%s packets=%s/%s' % (
+            row['delta_g'], row['mean_relative_gap'],
+            row['p90_relative_gap'], row['max_relative_gap'],
+            row['mean_greedy_packet_count'],
+            row['mean_optimal_packet_count']))
 
 
 if __name__ == '__main__':

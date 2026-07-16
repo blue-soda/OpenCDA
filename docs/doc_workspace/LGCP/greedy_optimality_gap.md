@@ -206,6 +206,46 @@ greedy_optimality_gap/
 4. 第二版接入 leader assignment 和 `O3_confidence_latency_ratio`。
 5. 通过 `results.md` 记录 smoke result，再决定是否扩大 instance 数。
 
+## Current O3 Smoke Result
+
+2026-07-17 已将 `opencda/tools/lgcp_greedy_gap_eval.py` 扩展为支持 `--enable-o3`。O3 使用 holistic exhaustive search：为每个 area 枚举候选 CAV subset，对每个 subset combination 求 leader min-max load，再计算：
+
+```text
+O3 = mean_confidence / (t_delta + packet_weight * packet_count + load_weight * max_leader_load)
+```
+
+运行配置：
+
+```text
+input: docs/doc_workspace/LGCP/experiments/area_confidence/20260715_lgcp_carla_area_ap_11f_detector_score
+output: docs/doc_workspace/LGCP/experiments/greedy_optimality_gap/20260717_lgcp_carla_greedy_gap_o3_11f
+max_agents: 5
+max_areas: 3
+max_group_size: 3
+delta_g: 0.05, 0.075, 0.1, 0.125
+o3_t_delta: 1.0
+o3_packet_weight: 0.05
+o3_load_weight: 0.1
+instances: 11
+```
+
+Summary:
+
+| Objective | Delta_g | Instances | Mean relative gap | P90 relative gap | Max relative gap | Greedy packets | Optimal packets |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| O3 | 0.050 | 11 | 0.021944 | 0.034483 | 0.068966 | 3.000000 | 3.454545 |
+| O3 | 0.075 | 11 | 0.021944 | 0.034483 | 0.068966 | 3.000000 | 3.454545 |
+| O3 | 0.100 | 11 | 0.021944 | 0.034483 | 0.068966 | 3.000000 | 3.454545 |
+| O3 | 0.125 | 11 | 0.021944 | 0.034483 | 0.068966 | 3.000000 | 3.454545 |
+
+Interpretation:
+
+- O1 / O2 group-member gap remains zero on this 11-frame instance set.
+- Greedy leader assignment also remains zero gap under the current selected groups.
+- O3 introduces a small but non-zero gap because the holistic optimum may spend slightly more packets to improve the confidence / latency ratio.
+- Current evidence supports the wording “efficient heuristic with small empirical optimality gap” for this smoke setting, but not a theoretical approximation guarantee.
+- This is still single-scenario / 11-frame evidence. The target item remains open until multi-seed or multi-scenario O3 results are available.
+
 ## 论文写法建议
 
 如果结果显示 gap 较小：

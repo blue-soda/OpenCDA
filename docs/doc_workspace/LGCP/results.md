@@ -1133,3 +1133,27 @@ opencda/tools/lgcp_compute_capacity_eval.py
 - 保留 y-axis 为 `End-to-end latency (ms)`。
 - 使用原始绘图源重导出 Fig. 7，将 x-axis 改为 `Number of CAVs`。
 - 在 Fig. 7 讨论中补充低密度解释：低 CAV 数时冗余和冲突尚小，LGCP 固定控制面开销未被充分摊薄，edge-assisted baseline 的边缘算力优势仍能覆盖集中式瓶颈；随 CAV 数增加，LGCP 的 area-task sharing、leader local fusion 和 RSU aggregation 才更明显体现 scalability。
+
+## 2026-07-17：Greedy Gap O3 Latency-Aware Smoke
+
+`opencda/tools/lgcp_greedy_gap_eval.py` 已接入 `--enable-o3`，使用 holistic exhaustive search 评估 `O3_confidence_latency_ratio`。
+
+Run:
+
+```text
+docs/doc_workspace/LGCP/experiments/greedy_optimality_gap/20260717_lgcp_carla_greedy_gap_o3_11f
+```
+
+| Objective | Delta_g | Instances | Mean relative gap | P90 relative gap | Max relative gap | Mean greedy packets | Mean optimal packets |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| O3 | 0.050 | 11 | 0.021944 | 0.034483 | 0.068966 | 3.000000 | 3.454545 |
+| O3 | 0.075 | 11 | 0.021944 | 0.034483 | 0.068966 | 3.000000 | 3.454545 |
+| O3 | 0.100 | 11 | 0.021944 | 0.034483 | 0.068966 | 3.000000 | 3.454545 |
+| O3 | 0.125 | 11 | 0.021944 | 0.034483 | 0.068966 | 3.000000 | 3.454545 |
+
+Additional observations:
+
+- O1 / O2 group-member gap remains `0.0` on the same 11 instances.
+- Greedy leader min-max load gap remains `0.0`.
+- O3 shows a small non-zero gap: the exhaustive optimum sometimes selects slightly more packets (`3.45` vs `3.00` mean) to improve confidence enough to offset the latency proxy.
+- This supports an empirical small-gap claim for the smoke setup, but the paper should still avoid theoretical approximation wording.
