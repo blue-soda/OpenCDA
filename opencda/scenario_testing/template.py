@@ -150,6 +150,9 @@ def init(opt, scenario_params):
             uav_manager.takeoff()
             uav_list.append(uav_manager)
 
+    if 'network' in applications and getattr(cav_world, 'network_manager', None):
+        cav_world.network_manager.mark_vehicle_registration_complete()
+
     # create evaluation manager
     eval_manager = \
         EvaluationManager(scenario_manager.cav_world,

@@ -69,6 +69,7 @@ class NetworkManager:
         self.receiver_thread = None
         self.sender_thread = None
         self.all_vehicles = []
+        self.vehicle_registration_complete = False
         self.max_vehicle_num = 30
         self.max_packet_size = 10000 # 64000 # bytes, UDP packet size
         self._ns3_initialized = False
@@ -82,11 +83,28 @@ class NetworkManager:
     def add_vehicles(self, vehicles):
         self.all_vehicles.extend(vehicles)
 
+    def mark_vehicle_registration_complete(self):
+        """Allow the NS3 sender to initialize after scenario vehicles exist."""
+        self.vehicle_registration_complete = True
+        logger.info(
+            "NS3 vehicle registration marked complete with %s vehicles",
+            len(self.all_vehicles))
+
     def _wait_for_ns3_vehicle_initialization(self):
         """Send the first vehicle frame before time synchronization starts."""
         while self.bridge.is_simulation_running():
+            if not self.vehicle_registration_complete:
+                time.sleep(min(self.time_slot, 0.01))
+                continue
             if self.all_vehicles:
-                vehicle_data = collect_vehicle_data(self.all_vehicles, self.cav_world)
+                vehicle_data = collect_vehicle_data(
+                    self.all_vehicles, self.cav_world)
+                if any(v.get("carla_id") is None for v in vehicle_data):
+                    logger.info(
+                        "Waiting for CARLA-to-OpenCDA id mapping before NS3 "
+                        "initialization")
+                    time.sleep(min(self.time_slot, 0.01))
+                    continue
                 self.bridge.send_vehicles_num(len(vehicle_data))
                 self.bridge.send_vehicles_position(vehicle_data)
                 self._ns3_initialized = True

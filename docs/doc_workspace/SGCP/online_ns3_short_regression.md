@@ -6,7 +6,35 @@
 
 ## 当前状态
 
-本轮尚未启动图形 CARLA 长流程，只完成了在线回归前的轻量检查：
+2026-07-17 已完成一次真实 CARLA + NS3 35 tick 短回归，并修复在线初始化时序 bug。原始日志位于：
+
+```text
+docs\doc_workspace\SGCP\artifacts\online_ns3_short_fixed_20260717_031703\
+```
+
+该 artifact 目录包含：
+
+```text
+ns3_stdout.log
+ns3_stderr.log
+opencda_stdout.log
+```
+
+本轮同时保留了一次失败日志用于定位 bug：
+
+```text
+docs\doc_workspace\SGCP\artifacts\online_ns3_short_20260717_031125\
+```
+
+失败原因：OpenCDA sender thread 在只有 1 辆车注册时就向 NS3 发送 `vehicles_num=1`，随后真实第一帧位置为 20 车，NS3 在已安装协议栈后尝试重新初始化并触发 `Ipv4AddressGeneratorImpl::Add(): Address Collision` / `SIGABRT`。
+
+修复：
+
+- `NetworkManager` 新增 `vehicle_registration_complete` gate。
+- `template.init()` 在 single CAV、traffic CAV、RSU/platoon/UAV 创建完成后调用 `mark_vehicle_registration_complete()`。
+- NS3 初始化前额外检查 CARLA id 映射，避免 `carla_id=null` 的半初始化帧进入 NS3。
+
+修复后轻量检查：
 
 ```powershell
 conda run -n opencda python -m py_compile opencda\core\networking\network_manager.py opencda\core\networking\ns3_co_simulation\bridge\carla_ns3_bridge.py opencda\tools\offline_ns3_replay.py test\test_network_time_sync.py
@@ -20,7 +48,39 @@ conda run -n opencda python -c "from test.test_network_time_sync import test_net
 network_time_sync tests passed
 ```
 
-进程检查显示当前无 CARLA / NS3 / 5556 / 5557 残留进程。
+修复后在线短回归结果：
+
+| Metric | Value |
+| --- | ---: |
+| OpenCDA exit code | 0 |
+| CARLA ticks | 35 |
+| NS3 initialized vehicles | 20 |
+| `sync_request` / `sync_ack` | 38 / 38 |
+| Sync timeout / reconnect failure | 0 / 0 |
+| `MANUAL_CMD_ADD` | 158 |
+| `MANUAL_CMD_REJECT` | 0 |
+| `cam_received` lines | 137 |
+| NS fatal / SIGABRT / address collision | 0 |
+| PSCCH decode failures | 1836 |
+| PSSCH decode failures | 480 |
+| OpenCDA CP counter | 1 |
+| Online AP@0.3 / AP@0.5 / AP@0.7 | 0.86 / 0.84 / 0.74 |
+
+时间同步证据：
+
+```text
+Sent sync_ack: CARLA t=0.05s, NS3 t=0.05s
+Sent sync_ack: CARLA t=0.10s, NS3 t=0.10s
+...
+Sent sync_ack: CARLA t=1.90s, NS3 t=1.90s
+```
+
+结论：
+
+- 在线 CARLA 与 NS3 的时间流速不一致问题已在短回归中闭环：CARLA time 与 NS3 time 按 0.05 s tick 对齐推进。
+- OpenCDA 指定的 `sc_start/sc_num` 已真实落到 NS3 manual scheduler，日志中出现合法 `MANUAL_CMD_ADD` 和对应 `PSCCH_DECODE_OK`。
+- 本轮在线短回归仍出现大量 PHY decode failures 和部分 OpenCDA 大包上传 incomplete。这不是车辆初始化/时间同步 bug，但说明在线图形仿真的大包分片、同帧并发和 PHY 诊断仍需独立分析；论文主表仍应以离线 request-level replay 的 110/110 RLC-complete 结果作为严格链路可行性证据。
+- 回归后已关闭 CARLA，并确认无 CARLA / NS3 / 5556 / 5557 残留进程。
 
 ## 重要前提
 
@@ -119,3 +179,5 @@ OpenCDA stdout/log 中应确认：
 ## 当前结论边界
 
 离线 NS3 replay 已经验证 coverage-aware SGCP 10ch `rho_th=3` 的 110/110 scheduled request application/RLC complete，且 5-subchannel exposed regression 能正确拒绝 out-of-window request。本在线短回归的新增价值不是重新替代离线主表，而是证明真实 CARLA tick 驱动下，OpenCDA bridge 与 NS3 不再发生时间流速不一致。
+
+在线短回归当前不作为主表结果来源，原因是 35 tick 图形仿真中 CP counter 仅为 1，且大包分片在真实 PHY 下存在 incomplete upload。后续如果要把在线 NS3 结果写入论文正文，需要进一步解析在线 request-level trace，把 application callback、RLC completion 和 PHY failure 逐 request 对齐。

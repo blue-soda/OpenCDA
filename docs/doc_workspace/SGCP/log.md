@@ -3034,3 +3034,97 @@ wsl -d Ubuntu-22.04 -u sakakibara -- bash -lc "ps -ef | grep -E 'ns3|vanet/main|
 ### 结论
 
 当前轻量测试继续支持此前修复：OpenCDA `NetworkManager.time_slot` 与 CARLA `fixed_delta_seconds` 使用同一时间基准。真实 CARLA+NS3 图形短回归仍待执行；执行时应先启动 WSL ns-3，再启动 CARLA，最后运行有限 tick 的 `opencda.py ... --network`。
+
+## 2026-07-17 - Online CARLA+NS3 short regression and init fix
+
+### 目的
+
+实际执行真实 CARLA + NS3 有限 tick 短回归，验证此前在线时间同步修复是否能在图形仿真中工作。
+
+### 首次回归失败
+
+Artifact：
+
+```text
+docs\doc_workspace\SGCP\artifacts\online_ns3_short_20260717_031125\
+```
+
+现象：
+
+- OpenCDA 正常 exit 0，但 NS3 在 0.05 s 后 SIGABRT。
+- NS3 stderr：
+
+```text
+Ipv4AddressGeneratorImpl::Add(): Address Collision: 7.0.0.1
+NS_FATAL, terminating
+```
+
+根因：
+
+- `NetworkManager.send_msg_to_ns3()` 在线程启动后只要看到 `all_vehicles` 非空就初始化 NS3。
+- `VehicleManager` 是逐辆创建的，第一辆 single CAV 注册后，traffic CAV 尚未创建；因此 NS3 先收到 `vehicles_num=1`。
+- 随后第一帧真实 `vehicles_position` 为 20 车，NS3 尝试重新初始化协议栈并触发 address collision。
+
+### 修复
+
+修改：
+
+- `opencda/core/networking/network_manager.py`
+  - 新增 `vehicle_registration_complete` gate；
+  - 新增 `mark_vehicle_registration_complete()`；
+  - NS3 初始化前等待车辆注册完成，并过滤 `carla_id=None` 的半初始化帧。
+- `opencda/scenario_testing/template.py`
+  - 在 single CAV、traffic CAV、RSU/platoon/UAV 创建完成后调用 `mark_vehicle_registration_complete()`。
+
+验证：
+
+```powershell
+conda run -n opencda python -m py_compile opencda\core\networking\network_manager.py opencda\scenario_testing\template.py test\test_network_time_sync.py
+conda run -n opencda python -c "from test.test_network_time_sync import test_network_time_slot_matches_carla_fixed_delta,test_multiple_network_slots_track_carla_time; test_network_time_slot_matches_carla_fixed_delta(); test_multiple_network_slots_track_carla_time(); print('network_time_sync tests passed')"
+```
+
+结果：`network_time_sync tests passed`。
+
+### 修复后在线短回归
+
+Artifact：
+
+```text
+docs\doc_workspace\SGCP\artifacts\online_ns3_short_fixed_20260717_031703\
+```
+
+命令摘要：
+
+```powershell
+wsl -d Ubuntu-22.04 -u sakakibara -- bash -lc "cd ~/workspace/carla-ns3-co-simulation/ns-3-dev && ./ns3 run 'scratch/vanet/main.cc --simTime=12.0 --enableTimeSync=true --carlaHost=auto --targetSubchannels=10'"
+Start-Process "C:\Programs\Carla\WindowsNoEditor\CarlaUE4.exe" -WindowStyle Hidden
+$env:OPENCDA_CLUSTERING_CONFIG = "opencda/scenario_testing/config_yaml/networking_clustering_topology_gate.yaml"
+$env:OPENCDA_ONLINE_TICKS = "35"
+conda run -n opencda python opencda.py -t v2xp_cluster_carla --apply_cp --apply_ml --debug --network
+```
+
+关键结果：
+
+- OpenCDA exit code：0
+- NS3 initialized vehicles：20
+- `sync_request/sync_ack`：38/38
+- sync timeout / reconnect failure：0/0
+- `MANUAL_CMD_ADD`：158
+- `MANUAL_CMD_REJECT`：0
+- NS fatal / SIGABRT / address collision：0
+- `cam_received`：137
+- PSCCH/PSSCH decode failures：1836 / 480
+- OpenCDA CP counter：1
+- Online AP@0.3/0.5/0.7：0.86 / 0.84 / 0.74
+
+时间同步证据：
+
+```text
+Sent sync_ack: CARLA t=0.05s, NS3 t=0.05s
+...
+Sent sync_ack: CARLA t=1.90s, NS3 t=1.90s
+```
+
+### 结论
+
+真实在线短回归确认 CARLA tick / OpenCDA network slot / NS3 sync time 已按 0.05 s 对齐，不再存在此前时间流速不一致或初始化 SIGABRT。新的待处理问题是在线真实 PHY 下大包分片和同帧并发导致部分 upload incomplete；论文主表仍应采用离线 request-level replay 的严格 110/110 RLC-complete 结果，在线短回归用于证明联仿时钟和 bridge 初始化正确。
