@@ -2239,3 +2239,46 @@ conda run -n opencda python -c "compile(open(r'opencda\tools\lgcp_subchannel_sen
 - `Z` 从 5 增至 20 时，slot proxy 下降约 70.7%。
 - 该结果支持“subchannel 数不足会放大 PSCCH overlap / scheduling pressure”的解释。
 - `target.md` 中 subchannel count sensitivity 已标记为 proxy 完成；NS3 多 Z replay 仍需后续复核。
+
+## 2026-07-17 - CAV / edge computation capacity sensitivity proxy
+
+### 目标
+
+- 推进 P1 中 CAV / edge computation capacity sensitivity。
+- 使用已有 hierarchy plan 估算 local fusion 与 RSU aggregation compute latency proxy。
+
+### 代码
+
+新增：
+
+```text
+opencda/tools/lgcp_compute_capacity_eval.py
+docs/doc_workspace/LGCP/compute_capacity_sensitivity.md
+```
+
+### 运行命令
+
+```powershell
+conda run -n opencda python -m opencda.tools.lgcp_compute_capacity_eval --hierarchy-frame-summary docs\doc_workspace\LGCP\experiments\hierarchy_plan\20260715_lgcp_carla_hierarchy_plan_top40_11f\hierarchy_frame_summary.csv --output-dir docs\doc_workspace\LGCP\experiments\hierarchy_plan\20260717_lgcp_carla_compute_capacity_top40_11f --cav-capacities "2,4,8,16" --rsu-capacities "10,20,40,80"
+```
+
+语法验证：
+
+```powershell
+conda run -n opencda python -c "compile(open(r'opencda\tools\lgcp_compute_capacity_eval.py', encoding='utf-8').read(), r'opencda\tools\lgcp_compute_capacity_eval.py', 'exec')"
+```
+
+### 结果
+
+| CAV capacity | RSU capacity | Compute mean ms | Compute max ms | CAV bottleneck ratio |
+| ---: | ---: | ---: | ---: | ---: |
+| 2 | 10 | 8.409091 | 9.000000 | 0.909091 |
+| 4 | 20 | 4.204545 | 4.500000 | 0.909091 |
+| 8 | 40 | 2.102273 | 2.250000 | 0.909091 |
+| 16 | 80 | 1.051136 | 1.125000 | 0.909091 |
+
+### 结论
+
+- 均衡提升 CAV / RSU capacity 时，compute latency proxy 从 8.41ms 降到 1.05ms。
+- 单独提高 CAV 或 RSU capacity 会暴露另一侧瓶颈。
+- `target.md` 中 CAV / edge computation capacity sensitivity 已标记为 proxy 完成；真实 runtime 仍需完整 local fusion / RSU aggregation 实现。

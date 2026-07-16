@@ -54,6 +54,7 @@
 - 已新增 `localization_error_sensitivity.md`，完成 `0.0m / 0.2m / 0.5m / 1.0m` CAV xy pose noise 的 11 帧 localization sensitivity smoke；area-frame noisy-or vs recall@0.5 Spearman 在 1.0m 噪声下仍约 `0.55`。
 - 已新增 `opencda/tools/lgcp_stale_assignment_eval.py` 和 `stale_assignment_sensitivity.md`，完成 `0/1/2/3` 帧 stale assignment smoke；lag 1/2 帧 ranking 仍较稳定，lag 3 帧 Spearman 降到 `0.447925`。
 - 已新增 `opencda/tools/lgcp_subchannel_sensitivity_eval.py` 和 `subchannel_sensitivity.md`，完成 `Z=5/10/15/20` 的 11 帧 scheduling-capacity proxy；mean slots/frame 从 `12.73` 降到 `3.73`。
+- 已新增 `opencda/tools/lgcp_compute_capacity_eval.py` 和 `compute_capacity_sensitivity.md`，完成 CAV leader local-fusion / RSU aggregation compute capacity proxy；代表性均衡容量下 compute mean 从 `8.41ms` 降到 `1.05ms`。
 - 已新增 LGCP 专用仿真入口 `opencda/scenario_testing/lgcp_carla.py` 和配置 `opencda/scenario_testing/config_yaml/lgcp_carla.yaml`。
 - 未修改 `v2xp_cluster_carla` 原始配置。
 - 已补齐 RSU 首次启用所需的基础运行路径：固定基础设施感知初始化、RSU 注册/访问、最近感知结果保存、销毁路径。

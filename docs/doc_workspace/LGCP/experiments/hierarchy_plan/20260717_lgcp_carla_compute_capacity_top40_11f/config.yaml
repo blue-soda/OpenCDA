@@ -1,0 +1,12 @@
+hierarchy_frame_summary: C:\Workspace\OpenCDA\docs\doc_workspace\LGCP\experiments\hierarchy_plan\20260715_lgcp_carla_hierarchy_plan_top40_11f\hierarchy_frame_summary.csv
+cav_capacities_units_per_ms:
+- 2.0
+- 4.0
+- 8.0
+- 16.0
+rsu_capacities_areas_per_ms:
+- 10.0
+- 20.0
+- 40.0
+- 80.0
+note: Compute latency proxy; units are abstract workload units.

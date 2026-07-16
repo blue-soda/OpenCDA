@@ -1094,3 +1094,26 @@ opencda/tools/lgcp_subchannel_sensitivity_eval.py
 - 该结果是 scheduling-capacity proxy，不是 ns-3 PHY delivery 多组重跑。
 - `Z` 增大显著降低 slot proxy 和 per-subchannel pressure，可解释当前 NS3 aggregate PHY 中 PSCCH `decoded_overlap` 的敏感性。
 - 后续若进入论文主实验，应补多组 NS3 replay 验证 RLC / PSSCH / HARQ delivery 是否随 `Z` 改善。
+
+## 2026-07-17：CAV / Edge Computation Capacity Sensitivity Proxy
+
+新增离线工具：
+
+```text
+opencda/tools/lgcp_compute_capacity_eval.py
+```
+
+该工具基于 11 帧 `hierarchy_frame_summary.csv`，使用 `leader_max_load` 估计 CAV leader local-fusion workload，使用 `covered_area_count` 估计 RSU aggregation workload。
+
+| CAV capacity | RSU capacity | Local fusion mean ms | RSU aggregation mean ms | Compute mean ms | Compute max ms |
+| ---: | ---: | ---: | ---: | ---: | ---: |
+| 2 | 10 | 4.409091 | 4.000000 | 8.409091 | 9.000000 |
+| 4 | 20 | 2.204545 | 2.000000 | 4.204545 | 4.500000 |
+| 8 | 40 | 1.102273 | 1.000000 | 2.102273 | 2.250000 |
+| 16 | 80 | 0.551136 | 0.500000 | 1.051136 | 1.125000 |
+
+解释边界：
+
+- 该结果是 compute workload proxy，不是真实 OpenCOOD model-level runtime。
+- 低 RSU capacity 时 RSU aggregation 会成为瓶颈；低 CAV capacity 时 leader local fusion 会成为瓶颈。
+- 当前结果可支撑 CAV / edge capacity sensitivity 讨论，但完整 LGCP local fusion 实现后仍需测真实 runtime。
