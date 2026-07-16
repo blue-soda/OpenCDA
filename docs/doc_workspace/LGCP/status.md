@@ -41,6 +41,7 @@
 - 已新增 `opencda/tools/lgcp_ns3_log_eval.py`，并完成 LGCP upload plan 的 11 帧 offline NS3 replay；当前可输出 request-id 精确匹配的 bridge-observed delivery ratio / delay summary，以及 NS3 PHY decode-failure breakdown。
 - ns-3 co-simulation 侧已扩展 CAM header，将 OpenCDA `pkt_id` 作为 `request_id` 透传到 `cam_received`，从而把 application callback 精确映射回 `upload_plan.csv`。
 - ns-3 co-simulation 侧已新增 RLC request-id tag，并完成 11 帧 RLC TX/RX/DROP trace 到 LGCP `upload_plan.csv` 的 request-level 映射。
+- 已新增 `ns3_phy_harq_request_trace.md`，明确下一步 PHY / HARQ request-level trace 的字段、ns-3 落点、OpenCDA 解析器输出和论文使用边界。
 - 已新增 LGCP 专用仿真入口 `opencda/scenario_testing/lgcp_carla.py` 和配置 `opencda/scenario_testing/config_yaml/lgcp_carla.yaml`。
 - 未修改 `v2xp_cluster_carla` 原始配置。
 - 已补齐 RSU 首次启用所需的基础运行路径：固定基础设施感知初始化、RSU 注册/访问、最近感知结果保存、销毁路径。
@@ -51,7 +52,7 @@
 2. 扩大 offline subset ablation 到多 seed，确认 `comm_aware_topk` 与 area-aware union 的相对关系是否稳定。
 3. 推进完整 LGCP hierarchy 机制；当前 offline proxy 显示强 communication-aware baseline 已非常有竞争力，LGCP 后续主张需要靠 local fusion / RSU aggregation / scheduling 共同支撑。
 4. 大规模 30 CAV 结果若短期只跑 latency，应在论文中收窄为 communication/computation scalability；若报告 perception scalability，只能报告已校准的 proxy，不能写成真实 AP。
-5. 将 ns-3 PHY decode events / HARQ feedback 进一步绑定回 LGCP upload request；当前 application request-id trace、RLC request-id trace 和 PHY decode-failure aggregate breakdown 已完成。
+5. 按 `ns3_phy_harq_request_trace.md` 推进 PHY / HARQ request-level trace；优先实现 PSSCH / HARQ 到 scheduled request 的绑定，再补 PSCCH overlap 的 request-level 回填。
 6. 以 `revision_matrix.md` 作为论文修改和实验补强的主索引。
 
 ## 当前阻塞点

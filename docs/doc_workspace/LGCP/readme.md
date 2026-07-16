@@ -16,6 +16,7 @@
 - `communication_aware_baseline.md`：强 communication-aware selective-sharing baseline 的定义、当前结果和论文解释边界。
 - `large_scale_quality_proxy.md`：大规模 latency-only 实验的论文口径，以及可校准 perception-quality proxy。
 - `hierarchy_pipeline.md`：LGCP RSU area assignment、area-task group、leader upload 和后续 hierarchy 管线的当前实现状态。
+- `ns3_phy_harq_request_trace.md`：NS3 PHY / HARQ request-level trace 的字段、落点、解析器和论文使用边界。
 - `experiments/readme.md`：LGCP 实验输出目录、run id、配置快照和结果归档规则。
 - `../environment.md`：全局环境文档，统一维护 Conda 环境、数据路径、CARLA 路径、启动命令和通用工具入口；运行实验前优先查看这里。
 

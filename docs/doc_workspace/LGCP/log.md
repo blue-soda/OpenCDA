@@ -1586,3 +1586,45 @@ conda run -n opencda python -m opencda.tools.lgcp_ns3_log_eval --ns3-stdout docs
 
 - `target.md` 中 “接入 ns-3 RLC trace，将 RLC events 进一步映射回 LGCP upload request” 已标记完成。
 - 新增后续待办：“将 PHY decode events / HARQ feedback 进一步绑定到 LGCP upload request”。
+
+## 2026-07-16 - NS3 PHY / HARQ request-level trace 设计
+
+### 目标
+
+- 在 application request-id trace 和 RLC request-id trace 已完成的基础上，明确 PHY / HARQ request-level trace 的下一步落点。
+- 避免把当前 aggregate PSCCH / PSSCH decode diagnostics 误写成 request-level failure attribution。
+
+### 文档变更
+
+新增：
+
+```text
+docs/doc_workspace/LGCP/ns3_phy_harq_request_trace.md
+```
+
+同步更新：
+
+- `readme.md`
+- `target.md`
+- `status.md`
+
+### 设计结论
+
+PHY / HARQ trace 后续应输出 request-aware event：
+
+```text
+[NRSL_PHY_EVENT] event=PSSCH_DECODE_FAIL time_s=... frame_index=... request_id=... sender_l2_id=... receiver_l2_id=... harq_id=... subchannel_start=... subchannel_num=... reason=...
+```
+
+推荐实现顺序：
+
+1. 确认 `LteRlcRequestIdTag` 作为 ByteTag 是否能从 RLC 继续传播到 MAC / PHY。
+2. 先记录 PHY schedule event，形成 request id 到 TB / slot / subchannel / HARQ process 的桥。
+3. 优先绑定 PSSCH decode event；PSCCH event 若不天然带 request id，可通过 schedule event 回填。
+4. HARQ ACK / NACK / timeout 通过 `(sender_l2_id, receiver_l2_id, harq_id, slot)` 回连到 scheduled request。
+
+### 当前论文边界
+
+- 可以报告 request-level RLC delivery。
+- 可以报告 aggregate PHY decode failure breakdown。
+- 尚不能声称每个 LGCP upload request 的 PHY / HARQ 失败原因已经可归因。
