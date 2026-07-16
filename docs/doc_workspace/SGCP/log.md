@@ -18,6 +18,54 @@
 - 审计 `offline_inference` / `offline_replay` 中 cluster、grid selection、channel allocation 到 OpenCOOD 输入的链路。
 - 设计单帧 probe 和多帧 CSV trace，确认每个机制开关都会改变 fused input、payload 和 AP。
 
+## 2026-07-16 - Offline SGCP protocol audit
+
+### 目的
+
+检查当前离线测试流程中，分簇结果、点云选择、子信道分配结果是否能够正确影响融合结果。
+
+### 代码修正
+
+- `opencda.tools.offline_inference` 新增 `--sgcp-trace-output`。
+- `build_constrained_frame()` metadata 新增 `cluster_member_ids` 和 `channel_allocation`。
+- Trace CSV 记录 receiver、cluster members、source CAVs、uploaded sources、selected grids、point counts、payload、channel allocation、missing channel sources、pred/gt boxes。
+
+### 命令
+
+单帧：
+
+```powershell
+conda run -n opencda python -m opencda.tools.offline_inference --dataset-root D:\Data\Carla --scenario-id 2026_07_15_01_26_56 --timestamp 000060 --ego-cav-id 1 --sgcp-constrained --sgcp-inter-cluster-late-fusion --resource-allocation potential_game --sgcp-trace-output docs\doc_workspace\SGCP\artifacts\protocol_audit\sgcp_000060_trace.csv
+```
+
+41 帧：
+
+```powershell
+conda run -n opencda python -m opencda.tools.offline_inference --dataset-root D:\Data\Carla --scenario-id 2026_07_15_01_26_56 --ego-cav-id 1 --sgcp-constrained --sgcp-inter-cluster-late-fusion --resource-allocation potential_game --max-frames 0 --sgcp-trace-output docs\doc_workspace\SGCP\artifacts\protocol_audit\sgcp_41f_trace.csv
+```
+
+### 日志路径
+
+```text
+docs\doc_workspace\SGCP\artifacts\protocol_audit\sgcp_000060_stdout.log
+docs\doc_workspace\SGCP\artifacts\protocol_audit\sgcp_000060_trace.csv
+docs\doc_workspace\SGCP\artifacts\protocol_audit\sgcp_41f_stdout.log
+docs\doc_workspace\SGCP\artifacts\protocol_audit\sgcp_41f_trace.csv
+```
+
+### 结果
+
+- 单帧 `000060`：6 个 cluster-head receiver 的 uploaded sources 均有 channel allocation，`missing_channel_sources` 全空。
+- 41 帧：246 条 receiver trace，`missing_channel_rows=0`。
+- 41 帧 AP@0.3 / AP@0.5 / AP@0.7：0.77 / 0.73 / 0.35。
+- 41 帧总通信：26,916,208 bytes，平均 109,415.48 bytes / receiver sample。
+
+### 结论
+
+- 分簇结果真实决定 cluster head / member / fusion source 列表。
+- `PotentialGame` 输出的 grid selection 真实裁剪 sender 点云，并进入 OpenCOOD early fusion 输入。
+- 当前离线融合没有发现未调度 sender 绕过 PPS 进入融合；主表 AP 偏低更可能来自 grid/cluster/late-fusion 质量和通信预算，而不是协议链路未接入。
+
 ## 记录模板
 
 ````markdown

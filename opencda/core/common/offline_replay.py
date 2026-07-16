@@ -405,5 +405,11 @@ def build_constrained_frame(frame, world, receiver_id,
         'source_cav_ids': list(constrained.keys()),
         'communication_bytes': communication_bytes,
         'selected_grid_counts': selected_grid_counts,
+        'cluster_member_ids': sorted(
+            int(member_id) for member_id in
+            receiver_vm.v2x_manager.cluster_state.get('member_ids', set())),
+        'channel_allocation': dict(
+            getattr(receiver_vm.v2x_manager.scheduler,
+                    'channel_allocation', {}) or {}),
     }
     return constrained, metadata

@@ -5,9 +5,9 @@
 
 ## P-1：最高优先级 - 主表结果修复与论文落地
 
-- [ ] 审计离线 SGCP 测试链路，确认分簇结果是否真实决定每个 cluster head 的融合对象、成员集合和 inter-cluster late fusion 输入。
-- [ ] 审计点云选择链路，确认 `PotentialGame` 输出的 grid selection 是否真实裁剪 sender 点云，并进入 OpenCOOD early fusion 输入；输出逐帧/逐 CAV 的 selected grids、点数、payload 和 AP 关联日志。
-- [ ] 审计子信道分配链路，确认 `sc_start/sc_num` 不只用于 NS3 replay，也真实约束离线/在线传输请求；对未调度 member 或超出子信道窗口的请求进行 drop/delay，而不是绕过 PPS 进入融合。
+- [x] 审计离线 SGCP 测试链路，确认分簇结果是否真实决定每个 cluster head 的融合对象、成员集合和 inter-cluster late fusion 输入。已新增 `protocol_audit.md` 和 `--sgcp-trace-output`；41 帧输出 246 条 receiver trace，cluster head/member/source 列表与融合输入一致。
+- [x] 审计点云选择链路，确认 `PotentialGame` 输出的 grid selection 是否真实裁剪 sender 点云，并进入 OpenCOOD early fusion 输入；输出逐帧/逐 CAV 的 selected grids、点数、payload 和 AP 关联日志。41 帧 trace 已记录 selected grids、point counts、payload、pred/gt boxes。
+- [x] 审计子信道分配链路，确认 `sc_start/sc_num` 不只用于 NS3 replay，也真实约束离线/在线传输请求；对未调度 member 或超出子信道窗口的请求进行 drop/delay，而不是绕过 PPS 进入融合。41 帧 trace 中 `missing_channel_rows=0`，未发现未调度 sender 绕过 PPS 进入融合。
 - [ ] 构造离线单帧可解释 probe：同一帧分别运行 full early、SGCP grid-constrained、关闭 grid selection、随机 grid selection、固定 cluster membership，对比输入点云数量、预测框和 AP，确认每个机制开关能改变融合结果。
 - [ ] 构造离线多帧协议一致性 probe：输出 cluster、grid selection、channel allocation、fused CAV ids、payload、prediction count、GT count 和 AP 的逐帧 CSV。
 - [ ] 用真实 CARLA 在线无 NS3 短回归验证 cluster membership、grid selection 和融合结果一致性；确保 CARLA 进程至多一个，并记录完整命令、日志和 AP。

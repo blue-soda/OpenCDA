@@ -7,6 +7,7 @@ import argparse
 import csv
 import math
 import os
+import json
 from collections import defaultdict
 
 from omegaconf import OmegaConf
@@ -94,6 +95,8 @@ def parse_args():
                              'When set, communication_aware selective sharing '
                              'uses per-link RLC complete ratio instead of only '
                              'a distance proxy.')
+    parser.add_argument('--sgcp-trace-output', default=None,
+                        help='Optional CSV path for per-receiver SGCP protocol trace.')
     return parser.parse_args()
 
 
@@ -479,6 +482,102 @@ def is_empty_pillar_error(error):
         'input.numel() == 0' in str(error))
 
 
+def format_channel_allocation(channel_allocation):
+    items = []
+    for link, subchannel in sorted(channel_allocation.items()):
+        try:
+            source_id, target_id = link
+            items.append('%s>%s:%s' % (source_id, target_id, subchannel))
+        except (TypeError, ValueError):
+            items.append('%s:%s' % (link, subchannel))
+    return ';'.join(items)
+
+
+def trace_row(scenario_id, timestamp, metadata, eval_frame,
+              pred_count=None, gt_count=None, skipped=''):
+    source_ids = [int(cav_id) for cav_id in metadata.get('source_cav_ids', [])]
+    receiver_id = int(metadata.get('receiver_id'))
+    selected_grid_counts = {
+        int(key): int(value)
+        for key, value in metadata.get('selected_grid_counts', {}).items()
+    }
+    channel_allocation = metadata.get('channel_allocation', {}) or {}
+    scheduled_sources = set()
+    for link in channel_allocation.keys():
+        try:
+            source_id, target_id = link
+        except (TypeError, ValueError):
+            continue
+        if int(target_id) == receiver_id:
+            scheduled_sources.add(int(source_id))
+    uploaded_sources = [source_id for source_id in source_ids
+                        if source_id != receiver_id]
+    missing_channel_sources = [
+        source_id for source_id in uploaded_sources
+        if source_id not in scheduled_sources
+    ]
+    point_counts = {
+        int(cav_id): int(cav['lidar_np'].shape[0])
+        for cav_id, cav in eval_frame.items()
+    }
+    return {
+        'scenario_id': scenario_id,
+        'timestamp': timestamp,
+        'receiver_id': receiver_id,
+        'receiver_policy': metadata.get('receiver_policy', ''),
+        'resource_allocation': metadata.get('resource_allocation', ''),
+        'clustering': metadata.get('clustering', ''),
+        'cluster_count': metadata.get('cluster_count', ''),
+        'cluster_member_ids': ';'.join(
+            str(item) for item in metadata.get('cluster_member_ids', [])),
+        'source_cav_ids': ';'.join(str(item) for item in source_ids),
+        'uploaded_source_ids': ';'.join(str(item) for item in uploaded_sources),
+        'selected_grid_counts_json': json.dumps(
+            selected_grid_counts, sort_keys=True),
+        'point_counts_json': json.dumps(point_counts, sort_keys=True),
+        'communication_bytes': metadata.get('communication_bytes', 0),
+        'channel_allocation': format_channel_allocation(channel_allocation),
+        'missing_channel_sources': ';'.join(
+            str(item) for item in missing_channel_sources),
+        'pred_boxes': '' if pred_count is None else pred_count,
+        'gt_boxes': '' if gt_count is None else gt_count,
+        'skipped': skipped,
+    }
+
+
+def write_trace_csv(path, rows):
+    if not path or not rows:
+        return
+    output_dir = os.path.dirname(os.path.abspath(path))
+    if output_dir and not os.path.exists(output_dir):
+        os.makedirs(output_dir)
+    fieldnames = [
+        'scenario_id',
+        'timestamp',
+        'receiver_id',
+        'receiver_policy',
+        'resource_allocation',
+        'clustering',
+        'cluster_count',
+        'cluster_member_ids',
+        'source_cav_ids',
+        'uploaded_source_ids',
+        'selected_grid_counts_json',
+        'point_counts_json',
+        'communication_bytes',
+        'channel_allocation',
+        'missing_channel_sources',
+        'pred_boxes',
+        'gt_boxes',
+        'skipped',
+    ]
+    with open(path, 'w', newline='') as stream:
+        writer = csv.DictWriter(stream, fieldnames=fieldnames)
+        writer.writeheader()
+        for row in rows:
+            writer.writerow(row)
+
+
 def main():
     args = parse_args()
     dataset = OPV2VFrameDataset(args.dataset_root)
@@ -488,6 +587,7 @@ def main():
         args.fusion_method)
     manager = OpenCOODManager(coperception_params)
     sgcp_summaries = []
+    sgcp_trace_rows = []
     ns3_link_quality = load_ns3_link_quality(args.ns3_link_quality_csv)
 
     if args.timestamp is not None:
@@ -572,6 +672,12 @@ def main():
                         raise
                     if sgcp_metadata is not None:
                         sgcp_summaries.append(sgcp_metadata)
+                        sgcp_trace_rows.append(trace_row(
+                            scenario_id,
+                            timestamp,
+                            sgcp_metadata,
+                            eval_frame,
+                            skipped='empty_pillars'))
                     print('frame=%s/%s late_source=%s/%s scenario=%s '
                           'timestamp=%s receiver=%s cavs=%s skipped=%s '
                           'comm_bytes=%s' % (
@@ -594,6 +700,17 @@ def main():
                     gt_tensors.append(gt_box_tensor)
                 if sgcp_metadata is not None:
                     sgcp_summaries.append(sgcp_metadata)
+                    sgcp_trace_rows.append(trace_row(
+                        scenario_id,
+                        timestamp,
+                        sgcp_metadata,
+                        eval_frame,
+                        pred_count=(
+                            0 if pred_box_tensor is None else
+                            pred_box_tensor.shape[0]),
+                        gt_count=(
+                            0 if gt_box_tensor is None else
+                            gt_box_tensor.shape[0])))
                 print('frame=%s/%s late_source=%s/%s scenario=%s '
                       'timestamp=%s receiver=%s cavs=%s pred_boxes=%s '
                       'gt_boxes=%s comm_bytes=%s' % (
@@ -654,6 +771,13 @@ def main():
                       list(eval_frame.keys())))
             if sgcp_metadata is not None:
                 sgcp_summaries.append(sgcp_metadata)
+                sgcp_trace_rows.append(trace_row(
+                    scenario_id,
+                    timestamp,
+                    sgcp_metadata,
+                    eval_frame,
+                    pred_count=pred_count,
+                    gt_count=gt_count))
                 print('sgcp_constrained receiver=%s policy=%s sources=%s '
                       'clusters=%s ra=%s comm_bytes=%s selected_grids=%s' % (
                           sgcp_metadata['receiver_id'],
@@ -694,6 +818,7 @@ def main():
                       total_comm,
                       avg_sources,
                       avg_selected_grids))
+    write_trace_csv(args.sgcp_trace_output, sgcp_trace_rows)
 
 
 if __name__ == '__main__':
