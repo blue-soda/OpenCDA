@@ -2820,3 +2820,41 @@ conda run -n opencda python -m opencda.tools.offline_inference --dataset-root D:
 - Random/MWS scheduler payload 只有约 9.7/9.9 MB，确实没有充分利用通信资源；它们不适合作通信量减少主证据。
 - 公平主表应使用 payload-matched selective baselines 和 SGCP 10/20ch，而不是低通信 Random/MWS。
 - `rho_th` 是当前最清晰的点云阈值/通信量调节参数；`rho_th=3.0` 比默认 2.0 有更高 AP@0.5/AP@0.7，payload 只增加约 0.66 MB。
+
+## 2026-07-16 - Main table candidate consolidation
+
+### 目的
+
+将已复现的 FullPerception、payload-matched selective baseline、SGCP coverage-aware 10/20ch、`rho_th` threshold sweep 和 NS3 delivery 证据收束为一份论文主表候选，避免继续在 `results.md` 的散表中手工拼接。
+
+### 输出
+
+新增：
+
+```text
+docs\doc_workspace\SGCP\main_table_candidate.md
+```
+
+### 换算口径
+
+Mbps 按 41 帧、0.1 s 协作周期换算：
+
+```text
+payload_bytes * 8 / 4.1 s / 1e6
+```
+
+关键换算：
+
+- FullPerception centralized：60,838,528 bytes，118.71 Mbps。
+- Full-cluster reference：44,850,528 bytes，87.51 Mbps。
+- Selective high-budget：37,710,864 bytes，73.58 Mbps。
+- SGCP coverage-aware 10ch `rho_th=2`：28,743,280 bytes，56.08 Mbps。
+- SGCP coverage-aware 10ch `rho_th=3`：29,405,296 bytes，57.38 Mbps。
+- SGCP coverage-aware 20ch：37,912,544 bytes，73.98 Mbps。
+- Random scheduler / MWS：18.98 / 19.34 Mbps，仅作消融。
+
+### 结论
+
+- 推荐主表包含：Head-only、FullPerception centralized upper reference、Full-cluster upper reference、Selective communication-aware low-budget、Selective density high-budget、SGCP original、SGCP coverage-aware 10ch、SGCP coverage-aware 10ch `rho_th=3`、SGCP coverage-aware 20ch。
+- Random/MWS 不进入公平主表，只作为 w/o PPS 消融。
+- 论文主叙事应强调：SGCP coverage-aware 20ch 在与 high-budget selective baseline 几乎相同 payload 下 AP@0.7 略高，且有 NS3 request-level 完整交付；SGCP coverage-aware 10ch `rho_th=3` 在 57.38 Mbps 下提供低通信折中，远低于 FullPerception centralized 118.71 Mbps。

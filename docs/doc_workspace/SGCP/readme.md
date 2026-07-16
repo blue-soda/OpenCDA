@@ -23,6 +23,7 @@
 - `online_topology_gate_regression.md`：真实 CARLA 在线打开 topology-trigger gate 的短回归命令、日志、trigger 统计和结论边界。
 - `protocol_audit.md`：主表修复阶段的离线协议审计，记录 cluster、grid selection、channel allocation 是否真实进入融合输入。
 - `mechanism_probe.md`：head-only、SGCP grid-constrained 和 full-cluster upload 的机制 probe，用于定位 AP 损失来源。
+- `main_table_candidate.md`：论文主表候选，收束 FullPerception upper reference、payload-matched selective baseline、SGCP 10/20ch、Mbps 换算和主表/附表边界。
 - `../environment.md`：全局环境文档，统一维护 Conda 环境、数据路径、CARLA 路径、启动命令和通用工具入口；运行实验前优先查看这里。
 
 ## 维护约定
