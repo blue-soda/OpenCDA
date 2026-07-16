@@ -6,7 +6,15 @@
 
 ## 当前状态
 
-2026-07-17 已完成一次真实 CARLA + NS3 35 tick 短回归，并修复在线初始化时序 bug。原始日志位于：
+2026-07-17 已完成真实 CARLA + NS3 35 tick 短回归，并连续修复两个在线协议 bug：车辆注册未完成时过早初始化 NS3、以及多轮 CP 中 scheduler strategy 残留。最新日志位于：
+
+```text
+docs\doc_workspace\SGCP\artifacts\online_ns3_short_strategyclear_20260717_041313\
+```
+
+该轮使用策略清空修复后的代码。与上一轮相比，时间同步继续保持 38/38，NS3 fatal/manual reject 仍为 0，PHY decode failure 大幅下降，在线 AP 提升到 `0.88/0.88/0.79`。
+
+上一轮车辆注册 gate 修复日志位于：
 
 ```text
 docs\doc_workspace\SGCP\artifacts\online_ns3_short_fixed_20260717_031703\
@@ -65,6 +73,38 @@ network_time_sync tests passed
 | PSSCH decode failures | 480 |
 | OpenCDA CP counter | 1 |
 | Online AP@0.3 / AP@0.5 / AP@0.7 | 0.86 / 0.84 / 0.74 |
+
+策略清空修复后在线短回归结果：
+
+| Metric | Value |
+| --- | ---: |
+| Artifact | `online_ns3_short_strategyclear_20260717_041313` |
+| OpenCDA exit code | 0 |
+| CARLA ticks | 35 |
+| `sync_request` / `sync_ack` | 38 / 38 |
+| Sync timeout / reconnect failure | 0 / 0 |
+| `MANUAL_CMD_ADD` | 156 |
+| `MANUAL_CMD_REJECT` | 0 |
+| `cam_received` lines | 150 |
+| NS fatal / SIGABRT / address collision | 0 |
+| PSCCH decode failures | 95 |
+| PSSCH decode failures | 10 |
+| Decoded-overlap failures | 88 |
+| OpenCDA successful upload lines | 21 |
+| OpenCDA incomplete upload lines | 184 |
+| OpenCDA CP counter | 1 |
+| Online AP@0.3 / AP@0.5 / AP@0.7 | 0.88 / 0.88 / 0.79 |
+
+该轮新增修复：
+
+- `PotentialGame.clear_resource_allocation_strategy()` 同步清理各 CAV `ClusteringScheduler.channel_allocation`。
+- 避免新一轮 PPS 结果与上一轮残留 sender 在同一 receiver/subchannel 上叠加。
+- 在线 PHY failure 从上一轮 `PSCCH/PSSCH=1836/480` 降到 `95/10`，说明主要冲突源已经定位并消除。
+
+剩余边界：
+
+- 35 tick 短回归仍不足以完成多轮大包 drain，OpenCDA 日志仍有重复 incomplete upload line。
+- 该在线短回归用于证明真实 CARLA tick + NS3 bridge + manual subchannel 语义已闭环；论文主表仍以离线 41 帧 mAP 与 request-level NS3 replay 为主。
 
 时间同步证据：
 

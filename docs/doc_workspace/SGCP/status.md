@@ -1,6 +1,6 @@
 # SGCP 当前状态
 
-更新时间：2026-07-16
+更新时间：2026-07-17
 
 ## 运行环境
 
@@ -126,7 +126,7 @@ SGCP 工作与仓库中以下部分关系最紧密：
 - 已新增 `rebuttal_short.md`，将长 rebuttal 素材压缩为最终可粘贴版本，保留 FullPerception 公平性、payload-matched V2V baseline、`f(rho)`/`rho_th`/`N_max`/`T_min^stab` 参数依据、runtime、topology trigger、NS3 三层可靠性和更保守的 claim boundary。
 - 已新增 `online_ns3_short_regression.md`，明确真实 CARLA+NS3 短回归的三段启动顺序、日志保存位置、时间同步验收条件和 subchannel 语义检查项。本轮已通过 `test_network_time_sync` 轻量回归，且确认没有 CARLA/NS3 残留进程。
 - 已执行真实 CARLA+NS3 35 tick 短回归并修复在线初始化时序 bug：原先 sender thread 在 1 车注册时就发送 `vehicles_num=1`，导致 NS3 之后收到 20 车位置帧时重新初始化并 address collision / SIGABRT。现在 `NetworkManager` 等待 `mark_vehicle_registration_complete()` 后再初始化 NS3，并过滤 `carla_id=None` 帧；修复后 NS3 20 车初始化、38/38 sync_ack、无 sync timeout、无 fatal、无 manual reject，在线 AP@0.3/0.5/0.7 = 0.86/0.84/0.74。
-- 已诊断在线 PHY failure 的第一类原因：`PotentialGame` 每轮只清空算法内部 strategies，没有清空各车辆 `ClusteringScheduler.channel_allocation`，导致在线多轮 CP 旧链路残留；日志中可见后续轮次同一 receiver/subchannel 出现新旧 sender 重叠。已补充 scheduler strategy 清理逻辑，待下一轮真实在线短回归验证。
+- 已诊断并修复在线 PHY failure 的第一类原因：`PotentialGame` 每轮只清空算法内部 strategies，没有清空各车辆 `ClusteringScheduler.channel_allocation`，导致在线多轮 CP 旧链路残留；修复后真实 CARLA+NS3 35 tick 短回归中 PSCCH/PSSCH decode failures 从 `1836/480` 降至 `95/10`，`MANUAL_CMD_REJECT=0`，在线 AP@0.3/0.5/0.7 从 `0.86/0.84/0.74` 升至 `0.88/0.88/0.79`。
 - 已完成 SGCP 11 帧离线 NS3 request-level replay：154 条 SGCP intra-cluster request，CAM callback delivery ratio 0.558442，request with any RLC RX event ratio 0.974026。后者仅表示 request_id 至少出现一个 RLC RX 片段/事件，不代表完整 request delivery。
 - 已确认当前可运行环境版本快照，并记录到 `docs/doc_workspace/environment.md`：OpenCDA HEAD `fcc29fdc9ee9a9fe694c12e1fb6792b4d41bccac`，Python 3.7.10，CARLA Python API 0.9.11，PyTorch 1.10.0+cu113，Open3D 0.10.0.0，ns-3 wrapper `ns-3-dev-v2x-v1.1-dirty`。
 - 已修复在线 CARLA-NS3 时间流速不一致问题：`NetworkManager.time_slot` 不再将 `world.fixed_delta_seconds` 除以 5，`current_sim_time`、`current_time_slot` 与 CARLA tick 统一推进。
@@ -158,7 +158,7 @@ SGCP 工作与仓库中以下部分关系最紧密：
 - CAV 数量规模实验目前只是固定场景子集实验；论文级“密度扩展”仍需重新导出不同 CAV/背景车密度的 CARLA 场景。
 - 网络资源实验已证明子信道数量影响 PPS 结果；低带宽 stress test 已触发带宽瓶颈。论文中应谨慎区分“常规带宽下该 dump 已饱和”和“极低带宽下吞吐约束有效”。
 - Dump 中速度字段目前使用 `ego_speed`；后续如需更严格动态稳定性，应确认单位并评估是否改为相邻帧差分速度。
-- 在线 CARLA-NS3 时间同步修复已通过真实 35 tick 图形短回归；当前正在收敛 online scheduler 残留策略导致的 PHY collision 问题。若要把在线 NS3 作为论文主结果，还需重跑修复后短回归，并逐 request 解析 application/RLC/PHY。
+- 在线 CARLA-NS3 时间同步修复已通过真实 35 tick 图形短回归；online scheduler 残留策略导致的主要 PHY collision 已通过策略清空修复显著缓解。若要把在线 NS3 作为论文主结果，还需补更长 tick/drain 或逐 request 解析 application/RLC/PHY，确认后续轮次 incomplete upload 的边界。
 - Topology trigger 已接入离线 replay 统计，但尚未接入在线 `ClusteringV2XManager` gate；单独 relative-speed trigger 仍偏敏感，在线 gate 应结合 neighbor-set change、utility drop 和 `T_min_stab` 滞回。
 - 在线 topology trigger gate 已完成真实 CARLA 35 tick smoke regression；未观察到 skip，原因是当前默认 35 m 通信范围下持续触发 `head_member_unreachable`。若论文需要展示 reduced reconfiguration，应补一组更静态或更大通信范围的在线回归。
 - Cluster capacity 策略已有离线统计支撑；optional replacement repair 尚未实现，进入论文前可明确为 future/optional enhancement。

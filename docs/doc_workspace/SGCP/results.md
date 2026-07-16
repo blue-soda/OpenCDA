@@ -415,6 +415,15 @@ docs\doc_workspace\SGCP\artifacts\runtime_breakdown_41f\offline_replay_runtime.l
 | `D:\Data\Carla\2026_07_15_01_26_56` | Early | 41 | 1 | 0.85 | 0.83 | 0.48 | No NS3, no online CARLA sensor stream |
 | `D:\Data\Carla\2026_07_15_01_26_56` | Late | 41 | 1 | 0.91 | 0.85 | 0.51 | Full 20-CAV OpenCOOD late model; reference only |
 
+## 在线 CARLA+NS3 短回归
+
+说明：该表用于记录真实联仿 smoke/regression，不作为论文主表来源。论文主表仍采用 41 帧离线 mAP 和离线 NS3 request-level replay；在线短回归的价值是验证 CARLA tick、OpenCDA network slot、NS3 sync time、manual subchannel request 和真实接收链路没有明显协议漂移。
+
+| Artifact | Ticks | Sync Req/Ack | Manual Add/Reject | CAM Callback Lines | PSCCH Fail | PSSCH Fail | Online AP@0.3 | Online AP@0.5 | Online AP@0.7 | Notes |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | --- |
+| `online_ns3_short_fixed_20260717_031703` | 35 | 38/38 | 158/0 | 137 | 1836 | 480 | 0.86 | 0.84 | 0.74 | Vehicle-registration gate fixed; scheduler stale strategy still present |
+| `online_ns3_short_strategyclear_20260717_041313` | 35 | 38/38 | 156/0 | 150 | 95 | 10 | 0.88 | 0.88 | 0.79 | Scheduler strategy clear fixed; remaining incomplete uploads require longer drain/request-level parse |
+
 ## SGCP 约束感知评估
 
 命令：

@@ -3162,3 +3162,47 @@ Sent sync_ack: CARLA t=1.90s, NS3 t=1.90s
 ### 结论
 
 在线短回归中的 PHY failure 不是时间同步漂移，也不是 NS3 bridge 越界子信道误收；第一类明确 bug 是 online scheduler strategy 残留。修复后需要重跑真实在线 CARLA+NS3 短回归，重点观察 `PSCCH/PSSCH_DECODE_FAIL`、incomplete upload 和 CP counter 是否改善。
+
+## 2026-07-17 - Online scheduler strategy-clear rerun
+
+### 目的
+
+验证 `PotentialGame.clear_resource_allocation_strategy()` 同步清理各 CAV `ClusteringScheduler.channel_allocation` 后，真实在线 CARLA+NS3 短回归中的同 receiver/subchannel 残留冲突是否下降。
+
+### Artifact
+
+```text
+docs\doc_workspace\SGCP\artifacts\online_ns3_short_strategyclear_20260717_041313\
+```
+
+### 命令摘要
+
+```powershell
+wsl -d Ubuntu-22.04 -u sakakibara -- bash -lc "cd ~/workspace/carla-ns3-co-simulation/ns-3-dev && ./ns3 run 'scratch/vanet/main.cc --simTime=12.0 --enableTimeSync=true --carlaHost=auto --targetSubchannels=10'"
+Start-Process "C:\Programs\Carla\WindowsNoEditor\CarlaUE4.exe" -WindowStyle Hidden
+$env:OPENCDA_CLUSTERING_CONFIG = "opencda/scenario_testing/config_yaml/networking_clustering_topology_gate.yaml"
+$env:OPENCDA_ONLINE_TICKS = "35"
+conda run -n opencda python opencda.py -t v2xp_cluster_carla --apply_cp --apply_ml --debug --network
+```
+
+### 关键结果
+
+- OpenCDA exit code：0
+- `sync_request/sync_ack`：38/38
+- sync timeout / reconnect failure：0/0
+- `MANUAL_CMD_ADD`：156
+- `MANUAL_CMD_REJECT`：0
+- NS fatal / SIGABRT / address collision：0
+- `cam_received`：150
+- PSCCH/PSSCH decode failures：95 / 10
+- decoded-overlap failures：88
+- OpenCDA successful upload lines：21
+- OpenCDA incomplete upload lines：184
+- OpenCDA CP counter：1
+- Online AP@0.3/0.5/0.7：0.88 / 0.88 / 0.79
+
+### 对比与结论
+
+相对于 gate 修复后的上一轮在线短回归，`PSCCH/PSSCH_DECODE_FAIL` 从 `1836/480` 降至 `95/10`，`cam_received` 从 137 升至 150，AP 从 `0.86/0.84/0.74` 升至 `0.88/0.88/0.79`。这说明在线多轮 CP 的主冲突源确实是 scheduler strategy 残留，修复后真实 CARLA tick、OpenCDA manual subchannel request 与 NS3 接收链路基本一致。
+
+剩余 incomplete upload 主要出现在短 35 tick 窗口中的后续轮次，下一步如需论文级在线证据，应补更长 tick 或显式 drain 阶段，并逐 request 对齐 application callback、RLC completion 与 PHY failure。
