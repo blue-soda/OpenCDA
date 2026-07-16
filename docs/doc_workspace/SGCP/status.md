@@ -128,7 +128,7 @@ SGCP 工作与仓库中以下部分关系最紧密：
 - 已执行真实 CARLA+NS3 35 tick 短回归并修复在线初始化时序 bug：原先 sender thread 在 1 车注册时就发送 `vehicles_num=1`，导致 NS3 之后收到 20 车位置帧时重新初始化并 address collision / SIGABRT。现在 `NetworkManager` 等待 `mark_vehicle_registration_complete()` 后再初始化 NS3，并过滤 `carla_id=None` 帧；修复后 NS3 20 车初始化、38/38 sync_ack、无 sync timeout、无 fatal、无 manual reject，在线 AP@0.3/0.5/0.7 = 0.86/0.84/0.74。
 - 已诊断并修复在线 PHY failure 的第一类原因：`PotentialGame` 每轮只清空算法内部 strategies，没有清空各车辆 `ClusteringScheduler.channel_allocation`，导致在线多轮 CP 旧链路残留；修复后真实 CARLA+NS3 35 tick 短回归中 PSCCH/PSSCH decode failures 从 `1836/480` 降至 `95/10`，`MANUAL_CMD_REJECT=0`，在线 AP@0.3/0.5/0.7 从 `0.86/0.84/0.74` 升至 `0.88/0.88/0.79`。
 - 已新增 `opencda.tools.online_ns3_log_eval`，将在线 OpenCDA 重复 incomplete 轮询行压缩为 upload episode。最新策略清空回归中 `184` 行 incomplete 只有 `6` 个真实 partial episode，且每个都缺少一个 `10000` bytes fragment；这将剩余在线问题收窄到 fragment-level loss 后的重传/重调度或失败裁剪，而不是时间同步或子信道语义。
-- 已新增可配置的在线 NS3 timeout reupload：`upload_timeout_slots`、`re_upload_when_timeout`、`max_reupload_attempts`。first trial 中 complete/partial episode 从 `21/6` 改善到 `39/3`，但暴露 late CAM completion 引发的 `KeyError`；已修复为安全处理缺少 `uploading_cavs` start slot 的 late completion，待下一轮 clean online rerun。
+- 已新增可配置的在线 NS3 timeout reupload：`upload_timeout_slots`、`re_upload_when_timeout`、`max_reupload_attempts`。first trial 中 complete/partial episode 从 `21/6` 改善到 `39/3`，但暴露 late CAM completion 引发的 `KeyError`；已修复为安全处理缺少 `uploading_cavs` start slot 的 late completion。修复后的 clean rerun 尚未完成：一次启动等待超时，一次 CARLA spawn collision，均未进入有效 NS3/reupload 验证。
 - 已完成 SGCP 11 帧离线 NS3 request-level replay：154 条 SGCP intra-cluster request，CAM callback delivery ratio 0.558442，request with any RLC RX event ratio 0.974026。后者仅表示 request_id 至少出现一个 RLC RX 片段/事件，不代表完整 request delivery。
 - 已确认当前可运行环境版本快照，并记录到 `docs/doc_workspace/environment.md`：OpenCDA HEAD `fcc29fdc9ee9a9fe694c12e1fb6792b4d41bccac`，Python 3.7.10，CARLA Python API 0.9.11，PyTorch 1.10.0+cu113，Open3D 0.10.0.0，ns-3 wrapper `ns-3-dev-v2x-v1.1-dirty`。
 - 已修复在线 CARLA-NS3 时间流速不一致问题：`NetworkManager.time_slot` 不再将 `world.fixed_delta_seconds` 除以 5，`current_sim_time`、`current_time_slot` 与 CARLA tick 统一推进。
@@ -160,7 +160,7 @@ SGCP 工作与仓库中以下部分关系最紧密：
 - CAV 数量规模实验目前只是固定场景子集实验；论文级“密度扩展”仍需重新导出不同 CAV/背景车密度的 CARLA 场景。
 - 网络资源实验已证明子信道数量影响 PPS 结果；低带宽 stress test 已触发带宽瓶颈。论文中应谨慎区分“常规带宽下该 dump 已饱和”和“极低带宽下吞吐约束有效”。
 - Dump 中速度字段目前使用 `ego_speed`；后续如需更严格动态稳定性，应确认单位并评估是否改为相邻帧差分速度。
-- 在线 CARLA-NS3 时间同步修复已通过真实 35 tick 图形短回归；online scheduler 残留策略导致的主要 PHY collision 已通过策略清空修复显著缓解。当前应用层 timeout reupload 已将 partial episode 从 6 降到 3，但上一轮因 late CAM state cleanup bug 不是 clean exit；若要把在线 NS3 作为论文主结果，还需重跑 clean online reupload 回归，并考虑进一步的 fragment-level selective retransmission/drop-aware fusion。
+- 在线 CARLA-NS3 时间同步修复已通过真实 35 tick 图形短回归；online scheduler 残留策略导致的主要 PHY collision 已通过策略清空修复显著缓解。当前应用层 timeout reupload 已将 partial episode 从 6 降到 3，但 clean rerun 仍 pending；若要把在线 NS3 作为论文主结果，还需先排除 CARLA spawn/startup 不稳定，再重跑 clean online reupload 回归，并考虑进一步的 fragment-level selective retransmission/drop-aware fusion。
 - Topology trigger 已接入离线 replay 统计，但尚未接入在线 `ClusteringV2XManager` gate；单独 relative-speed trigger 仍偏敏感，在线 gate 应结合 neighbor-set change、utility drop 和 `T_min_stab` 滞回。
 - 在线 topology trigger gate 已完成真实 CARLA 35 tick smoke regression；未观察到 skip，原因是当前默认 35 m 通信范围下持续触发 `head_member_unreachable`。若论文需要展示 reduced reconfiguration，应补一组更静态或更大通信范围的在线回归。
 - Cluster capacity 策略已有离线统计支撑；optional replacement repair 尚未实现，进入论文前可明确为 future/optional enhancement。

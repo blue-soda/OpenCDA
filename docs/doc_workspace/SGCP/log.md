@@ -3308,3 +3308,20 @@ docs\doc_workspace\SGCP\artifacts\online_ns3_reupload_20260717_053012\
 ### 结论
 
 timeout reupload 已证明能显著减少在线 partial episode，但需要在 `KeyError` 修复后再跑一轮 clean CARLA+NS3 短回归，才能把该机制作为稳定在线协议结论写入论文/结果表。
+
+## 2026-07-17 - Online reupload clean rerun attempts
+
+### 目的
+
+在 late CAM `KeyError` 修复后，尝试重跑 clean CARLA+NS3 reupload 回归，确认 timeout reupload 是否能稳定消除或继续降低 partial episode。
+
+### 尝试记录
+
+| Artifact | Intended Run | Result | Conclusion |
+| --- | --- | --- | --- |
+| `online_ns3_reupload_clean_20260717_055257` | 35 ticks, `simTime=20.0` | 启动等待阶段超时，未产生 OpenCDA/NS3 日志 | 无效回归，不作为协议证据 |
+| `online_ns3_reupload_clean20_20260717_060851` | 20 ticks, `simTime=30.0` | OpenCDA 早期退出：`RuntimeError: Spawn failed because of collision at spawn position` | CARLA spawn 阶段失败，未进入 NS3/reupload 验证 |
+
+### 当前结论
+
+本轮没有得到 clean online reupload 结果；不能据此评价 timeout reupload 的最终效果。上一轮 `online_ns3_reupload_20260717_053012` 仍是目前唯一有效的 reupload first trial：它显示 complete/partial episode 从 `21/6` 改善到 `39/3`，但不是 clean exit。下一轮应重新启动 CARLA 后再跑 35 tick clean reupload；若再遇到 spawn collision，需要先检查 CARLA 端场景清理/初始 spawn 点占用问题。
