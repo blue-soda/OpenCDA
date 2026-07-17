@@ -1308,3 +1308,33 @@ Interpretation:
 - This materializes the area-specific slicing interface required by LGCP hierarchy.
 - The byte proxy is now variable and data-dependent, unlike the earlier fixed `10000 bytes` per feature packet.
 - It remains a raw LiDAR proxy; model-level feature tensor slicing is still the next implementation step.
+
+## 2026-07-17：Hierarchy Area-Budget Sweep
+
+Run:
+
+```text
+docs/doc_workspace/LGCP/experiments/hierarchy_plan/20260717_lgcp_carla_hierarchy_budget_sweep_density_distance
+```
+
+Config:
+
+```text
+confidence_field=density_distance
+delta_g=0.05
+max_group_size=4
+max_areas=10,20,30,40
+```
+
+| Max areas | Selected GT ratio | Mean area recall@0.5 | Weighted quality | Bytes / frame | Local packets / frame | Leader max load |
+| ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| 10 | 0.472790 | 0.836364 | 0.766486 | 70821.818182 | 4.818182 | 3.000000 |
+| 20 | 0.738288 | 0.827273 | 0.763475 | 138734.545455 | 9.545455 | 4.090909 |
+| 30 | 0.953193 | 0.869697 | 0.795948 | 222101.818182 | 15.818182 | 6.181818 |
+| 40 | 1.000000 | 0.670455 | 0.609181 | 299105.454545 | 21.454545 | 8.818182 |
+
+Interpretation:
+
+- Top-30 captures most GT-bearing area coverage with substantially less byte proxy and leader load than Top-40.
+- Top-40 is useful as a coverage upper setting, but it includes lower-quality marginal areas; reporting only Top-40 can hide the budget tradeoff.
+- This is a hierarchy control-plane / aggregation proxy result, not full model-level local fusion.

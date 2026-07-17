@@ -140,6 +140,35 @@ conda run -n opencda python -m opencda.tools.lgcp_feature_slice_manifest --datas
 - 该结果显示固定 `feature_packet_bytes=10000` 的早期 proxy 偏粗：真实 area raw-point slice byte proxy 随 area / CAV 明显变化。
 - 下一步应将该 manifest 接入 OpenCOOD 中间特征或 BEV feature map slicing，替换 raw point proxy。
 
+## Hierarchy Area-Budget Sweep
+
+2026-07-17 使用与 Top-40 hierarchy plan 相同的 `density_distance` confidence field、`delta_g=0.05` 和 `max_group_size=4`，补跑 `max_areas=10/20/30/40` sweep，用于观察 local-to-global hierarchy 在不同 area budget 下的 coverage / bytes / leader load tradeoff。
+
+输出目录：
+
+```text
+docs/doc_workspace/LGCP/experiments/hierarchy_plan/20260717_lgcp_carla_hierarchy_budget_sweep_density_distance/
+```
+
+汇总文件：
+
+```text
+budget_sweep_summary.csv
+```
+
+| Max areas | Selected GT ratio | Mean area recall@0.5 | Weighted quality | Bytes / frame | Local packets / frame | Leader packets / frame | Leader max load |
+| ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| 10 | 0.472790 | 0.836364 | 0.766486 | 70821.818182 | 4.818182 | 10.000000 | 3.000000 |
+| 20 | 0.738288 | 0.827273 | 0.763475 | 138734.545455 | 9.545455 | 20.000000 | 4.090909 |
+| 30 | 0.953193 | 0.869697 | 0.795948 | 222101.818182 | 15.818182 | 30.000000 | 6.181818 |
+| 40 | 1.000000 | 0.670455 | 0.609181 | 299105.454545 | 21.454545 | 40.000000 | 8.818182 |
+
+Interpretation:
+
+- Top-30 已覆盖 `95.32%` GT-bearing areas，byte proxy 约为 Top-40 的 `74.25%`。
+- Top-40 达到 `100%` selected GT ratio，但会纳入更多低质量 / 低收益 area，因此 mean selected area recall 下降。
+- 该 sweep 支持将 LGCP hierarchy 描述为 area-prioritized budgeted aggregation，而不是简单的 full sharing 或 flat top-k selective sharing。
+
 ## Offline NS3 Replay 接入
 
 `opencda/tools/offline_ns3_replay.py` 已支持：

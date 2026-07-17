@@ -111,6 +111,29 @@ docs/doc_workspace/LGCP/experiments/ablation/20260717_lgcp_carla_offline_subset_
 - `comm_aware_topk` 仍高于 `area_aware_union`。
 - 因此 offline 第一阶段已经证明 random baseline 不够强，但尚未证明 LGCP hierarchy 本身优于 strong communication-aware selective sharing。
 
+### Current Hierarchy Budget Status
+
+2026-07-17 已完成 hierarchy area-budget sweep：
+
+```text
+docs/doc_workspace/LGCP/experiments/hierarchy_plan/20260717_lgcp_carla_hierarchy_budget_sweep_density_distance/
+```
+
+该结果不是 model-level local fusion AP，但已经把 local-to-global hierarchy 的 area budget tradeoff 显式化：
+
+| Max areas | Selected GT ratio | Bytes / frame | Local packets / frame | Leader max load |
+| ---: | ---: | ---: | ---: | ---: |
+| 10 | 0.472790 | 70821.818182 | 4.818182 | 3.000000 |
+| 20 | 0.738288 | 138734.545455 | 9.545455 | 4.090909 |
+| 30 | 0.953193 | 222101.818182 | 15.818182 | 6.181818 |
+| 40 | 1.000000 | 299105.454545 | 21.454545 | 8.818182 |
+
+解读：
+
+- Top-30 在约 `222.1 KB/frame` 下覆盖 `95.32%` GT-bearing area，说明 hierarchy 可以用 area budget 控制 global aggregation 范围。
+- Top-40 虽覆盖所有 GT-bearing area，但 mean selected area quality 下降，表明继续增加 area budget 会纳入边际收益较低的区域。
+- 该结果能支持 rebuttal 中 “LGCP is an area-prioritized local-to-global hierarchy” 的机制解释，但仍不能替代 A5/A6 的真实 model-level fusion ablation。
+
 ## Online / Mechanism 第二阶段实现方案
 
 第二阶段需要真正实现 LGCP pipeline：

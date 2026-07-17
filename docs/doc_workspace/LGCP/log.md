@@ -2635,3 +2635,35 @@ conda run -n opencda python -m opencda.tools.lgcp_greedy_gap_eval --input-dir do
 - 多 seed sampled setting 下，O3 mean relative gap 保持在 `4.37%` 到 `6.07%`。
 - 该结果补齐了单场景多 seed smoke，但还不是多场景论文级结论。
 - 尝试 6-agent multiseed sampled exhaustive run 时超过本机 100s timeout；当前保留 6-agent deterministic larger-instance 结果和 5-agent multiseed sampled 结果。
+
+## 2026-07-17 - Hierarchy area-budget sweep
+
+### 目标
+
+- 推进 local-to-global ablation 中 “hierarchy structure” 的可解释证据。
+- 在不实现 model-level fusion 的前提下，量化 RSU area assignment / leader upload / RSU aggregation proxy 随 `max_areas` 的 tradeoff。
+
+### 运行命令
+
+对 `max_areas=10/20/30/40` 分别运行：
+
+```powershell
+conda run -n opencda python -m opencda.tools.lgcp_hierarchy_plan_eval --area-records docs\doc_workspace\LGCP\experiments\area_confidence\20260715_lgcp_carla_area_ap_11f_detector_score\area_records.csv --area-quality docs\doc_workspace\LGCP\experiments\area_confidence\20260715_lgcp_carla_area_ap_11f_detector_score\area_quality.csv --output-dir docs\doc_workspace\LGCP\experiments\hierarchy_plan\20260717_lgcp_carla_hierarchy_budget_sweep_density_distance\area<MAX_AREAS> --confidence-field density_distance --delta-g 0.05 --max-group-size 4 --max-areas <MAX_AREAS> --feature-packet-bytes 10000 --leader-result-bytes 2000 --assignment-bytes 64 --broadcast-bytes 2000
+
+conda run -n opencda python -m opencda.tools.lgcp_hierarchy_aggregation_eval --assignment-plan docs\doc_workspace\LGCP\experiments\hierarchy_plan\20260717_lgcp_carla_hierarchy_budget_sweep_density_distance\area<MAX_AREAS>\area_assignment_plan.csv --area-quality docs\doc_workspace\LGCP\experiments\area_confidence\20260715_lgcp_carla_area_ap_11f_detector_score\area_quality.csv --output-dir docs\doc_workspace\LGCP\experiments\hierarchy_plan\20260717_lgcp_carla_hierarchy_budget_sweep_density_distance\area<MAX_AREAS>\aggregation --quality-field recall_05
+```
+
+### 结果
+
+| Max areas | Selected GT ratio | Mean area recall@0.5 | Weighted quality | Bytes / frame | Local packets / frame | Leader max load |
+| ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| 10 | 0.472790 | 0.836364 | 0.766486 | 70821.818182 | 4.818182 | 3.000000 |
+| 20 | 0.738288 | 0.827273 | 0.763475 | 138734.545455 | 9.545455 | 4.090909 |
+| 30 | 0.953193 | 0.869697 | 0.795948 | 222101.818182 | 15.818182 | 6.181818 |
+| 40 | 1.000000 | 0.670455 | 0.609181 | 299105.454545 | 21.454545 | 8.818182 |
+
+### 结论
+
+- Top-30 已覆盖 `95.32%` GT-bearing area，且 byte proxy 约为 Top-40 的 `74.25%`。
+- Top-40 覆盖所有 GT-bearing area，但 mean selected area recall 降低，说明低优先级 area 的边际收益较低。
+- 该结果补强 hierarchy control-plane 的 budget tradeoff，但仍不等同于真实 leader local fusion / RSU model-level aggregation。

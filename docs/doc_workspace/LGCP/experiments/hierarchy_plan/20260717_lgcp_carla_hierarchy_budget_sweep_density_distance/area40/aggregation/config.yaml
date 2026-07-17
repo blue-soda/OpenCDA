@@ -1,0 +1,4 @@
+assignment_plan: C:\Workspace\OpenCDA\docs\doc_workspace\LGCP\experiments\hierarchy_plan\20260717_lgcp_carla_hierarchy_budget_sweep_density_distance\area40\area_assignment_plan.csv
+area_quality: C:\Workspace\OpenCDA\docs\doc_workspace\LGCP\experiments\area_confidence\20260715_lgcp_carla_area_ap_11f_detector_score\area_quality.csv
+quality_field: recall_05
+note: Offline proxy only; no model-level feature fusion.
