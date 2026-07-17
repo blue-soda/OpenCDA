@@ -4477,3 +4477,20 @@ conda run -n opencda python -m opencda.tools.offline_inference --dataset-root D:
 ### 结论
 
 PAPG `0.81/0.78/0.39` at 62.54 Mbps 明显优于 forced-budget random `0.77/0.73/0.38` at 61.68 Mbps。论文主表可以把 old RandomRA 放到 w/o-PPS 消融，把 forced-budget random 放入公平 V2V baseline。
+
+## 2026-07-17 Rebuttal 与 PAPG 主表一致性收口
+
+### 目的
+
+此前 `rebuttal_draft.md` / `rebuttal_short.md` 仍使用 coverage-aware 10ch/20ch 作为主要 SGCP 结果，和当前 PAPG 主表 `0.81/0.78/0.39`、62.54 Mbps 以及 forced-budget random baseline 不一致。
+
+### 修改
+
+- FullPerception fairness 回复改为：full 20-CAV early 是 upper reference，PAPG 为主 SGCP 行，强 high-budget selective baseline 为公平 V2V 对比。
+- Fair baseline 回复新增 forced-budget random：`0.77/0.73/0.38` at 61.68 Mbps，并说明 PAPG 在近似相同通信量下提升 `+0.04/+0.05/+0.01` AP。
+- Ablation 回复保留 coverage-aware 10ch 为 predecessor/ablation，同时加入 PAPG 对象级 missed rows 从 106 降到 59。
+- NS3 reliability 回复改为 PAPG 主设置 110/110 application/RLC complete、0 PHY failures。
+
+### 结论
+
+rebuttal、`main.tex`、`main_table_candidate.md` 当前已经使用同一条主线：PAPG 是主算法，forced-budget random 和 selective density 是公平 V2V baseline，FullPerception centralized 是 upper reference。
