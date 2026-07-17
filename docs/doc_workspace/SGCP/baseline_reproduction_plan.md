@@ -26,6 +26,7 @@
 | `fullperception_decentralized` | CAV-side V2V only | cluster-local density with distance/link-quality cost | Implemented; 41-frame result and 11-frame true NS3 replay available |
 | `edgecooper` | edge / virtual RSU | complementarity minus redundancy proxy | First proxy implemented |
 | `edgecooper_global` | edge / virtual RSU with network-aware global assignment proxy | blind-spot complementarity + global sender-load balancing + 35 m V2V feasibility gate | Implemented; 41-frame offline result and 11-frame true NS3 replay available, but NS3 delivery incomplete |
+| `edgecooper_global_hd` | edge / virtual RSU with network-aware half-duplex global assignment proxy | `edgecooper_global` plus sender/receiver half-duplex exclusion within each slot | Implemented; 41-frame offline result and 11-frame true NS3 replay available with full delivery |
 
 PCS/MWS/RS 通过 `--resource-allocation fullperception_pcs|fullperception_mws|fullperception_random` 进入资源分配路径；`fullperception_rsu/fullperception_decentralized/edgecooper/edgecooper_global` 是后补的 selective-sharing proxy，通过 `--selective-sharing-baseline <name>` 进入同一 OpenCOOD checkpoint、同一 41-frame dump 和同一 inter-cluster late-fusion evaluation path。
 
@@ -74,13 +75,15 @@ PCS/MWS/RS 通过 `--resource-allocation fullperception_pcs|fullperception_mws|f
 - blind-spot-aware 3-frame smoke test 恢复到 `0.76/0.72/0.33`；41-frame full run 为 `0.75/0.70/0.32`，payload 56,134,048 bytes / 109.53 Mbps。
 - `edgecooper_global` 在上述 proxy 基础上加入全局 sender-load balancing 和 35 m V2V feasibility gate，近似 edge-side global assignment，同时避免逐 receiver 贪心重复选择同一 sender。41-frame full run 为 `0.81/0.77/0.42`，payload 38,223,408 bytes / 74.58 Mbps，avg source CAVs 3.26，avg selected grids 98.75。
 - `edgecooper_global` 11-frame true NS3 replay：73/110 application callback complete，73/110 RLC complete，RLC TX/RX events 2970/1971，37 个 request 为 `rlc_tx_no_rx`，PHY decode failures 0。该结果说明链路无 PHY 解码错误，但 deadline/调度层仍不能保证所有 request 及时完成。
+- failure diagnosis 显示旧 `edgecooper_global` 的 NS3 failure 高度集中在 target 1 / target 4，同一 slot 中这些 receiver 又被调度为 sender，例如 `4->1` 与 `1->4` 同时存在；这些链路距离多在 7.8-32.6 m 内，因此不是距离超限，而是半双工 sender/receiver role conflict。
+- `edgecooper_global_hd` 禁止本轮所有 cluster-head receivers 同时作为 sender。41-frame full run 为 `0.81/0.78/0.42`，payload 33,519,040 bytes / 65.40 Mbps，avg source CAVs 3.00，avg selected grids 89.02。11-frame true NS3 replay 为 110/110 application callback complete，110/110 RLC complete，RLC TX/RX events 2970/2970，PHY decode failures 0。
 
-当前结论：EdgeCooper proxy 已经可复现并可进入 artifact 记录。`edgecooper_global` 的离线 AP 明显强于第一版 blind-spot proxy，且 AP@0.7 高于 PAPG；但它属于 virtual edge/RSU-assisted 口径，Mbps 高于 PAPG，且 11 帧真实 NS3 replay 只有 73/110 request complete。因此论文中应将其标注为 `EdgeCooper-global network-aware proxy` 或 RSU/edge-assisted diagnostic baseline，不宜声称完成了严格原论文 MCF/coloring 复现，也不宜把离线 AP 直接作为公平 V2V 主表结论。
+当前结论：EdgeCooper proxy 已经可复现并可进入 artifact 记录。`edgecooper_global_hd` 是当前最强 edge-assisted baseline proxy：AP@0.7 高于 PAPG，Mbps 接近 PAPG，且 NS3 delivery 完整。但它属于 virtual edge/RSU-assisted 口径，使用全局 receiver set 和全局 sender-load state，不是 V2V-only decentralized baseline。因此论文中应将其标注为 `EdgeCooper-global-HD proxy` 或 RSU/edge-assisted baseline，不宜把它和 PAPG 混写成同一信息条件下的公平 V2V 对比。
 
 下一步实现方向：
 
-- 将当前 global sender-load/capacity proxy 进一步升级为 minimum-cost-flow-style global assignment；
-- 加入 conflict/coloring 或 deadline-aware scheduling，使真实 NS3 request delivery 接近 PAPG 的 110/110 complete；
+- 若需要更贴近原论文，将当前 global sender-load/capacity + half-duplex proxy 进一步升级为 minimum-cost-flow-style global assignment；
+- 若主表必须混放 RSU/edge-assisted 与 V2V-only，继续提升 PAPG AP@0.7 或显式说明信息条件差异；
 - 若继续保持虚拟 RSU，表格中必须将其归入 RSU/edge-assisted baseline，而不是 V2V-only decentralized baseline。
 
 ## Additional Candidate Baselines

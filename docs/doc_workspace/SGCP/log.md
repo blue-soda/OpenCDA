@@ -4951,3 +4951,76 @@ docs\doc_workspace\SGCP\artifacts\edgecooper_global_35m_probe_ns3_20260718\
 `edgecooper_global` 显著强于第一版 blind-spot proxy，离线 AP@0.7 达到 `0.42`，接近 full-cluster reference，并且 payload 从 109.53 Mbps 降到 74.58 Mbps。这个结果说明 edge/global assignment 方向有价值，也可作为审稿意见中“补更强 baseline”的重要材料。
 
 但该结果不能直接替代 PAPG 主线：`edgecooper_global` 属于 virtual edge/RSU-assisted baseline，使用全局候选池；且真实 NS3 replay 只有 73/110 request complete，而 PAPG 在同一 11 帧口径下为 110/110 complete、0 PHY failures、62.54 Mbps。论文写作应把它放入 RSU/edge-assisted diagnostic baseline 或补充实验表，而不是 V2V-only 公平主表。下一步若要严格复现 EdgeCooper，应继续实现 MCF/conflict-coloring 或 deadline-aware global assignment，使 high-AP proxy 也具备 request-level delivery guarantee。
+
+## 2026-07-18 EdgeCooper half-duplex diagnosis and repair
+
+### 目的
+
+上一轮 `edgecooper_global` 41 帧离线 AP 已经较强，但 11 帧真实 NS3 replay 只有 73/110 request complete。需要定位这是距离/带宽问题、NS3 bug，还是调度协议缺少链路约束。
+
+### 失败诊断
+
+对 `docs\doc_workspace\SGCP\artifacts\edgecooper_global_35m_probe_ns3_20260718\eval\rlc_by_request.csv` 聚合后发现：
+
+- 失败为 37 个 `rlc_tx_no_rx`，没有 partial request，PHY decode failures 为 0。
+- 失败集中在 `000068/000070/000072/000076/000078/000080`，这些帧均为 10 个 request 中只有 4 个 complete。
+- 失败 target 高度集中在 1 和 4：target 1 有 18 个失败，target 4 有 15 个失败。
+- 失败链路距离多在 7.8-32.6 m 内，例如 `12->4` 为 7.78 m，`8->1` 为 15.20 m，`4->1` 为 32.59 m；因此不是 35 m feasibility gate 失效。
+- 失败帧存在半双工 role conflict：同一 100 ms slot 内 target 1 和 target 4 同时接收、同时作为 sender，例如 `4->1` 与 `1->4` 同时出现在 upload plan 中。
+
+结论：旧 `edgecooper_global` 的 NS3 failure 主要不是 PHY collision 或距离超限，而是 global edge assignment 没有约束 CAV 的半双工角色。PAPG/SGCP 天然只让 cluster members 上传到 cluster head，因此较少出现 cluster head 同时作为 sender 的问题；EdgeCooper global candidate pool 会引入该冲突。
+
+### 代码改动
+
+- 新增 selective baseline：`edgecooper_global_hd`。
+- 继承 `edgecooper_global` 的全局 sender-load balancing、35 m V2V feasibility gate 和 blind-spot complementarity grid selection。
+- 在每帧所有 cluster head receiver 集合确定后，设置 `world._edgecooper_global_receiver_ids`。
+- `edgecooper_global_hd` 在候选 sender 阶段排除本帧所有 receiver，保证同一 slot 内 cluster-head receiver 不会同时作为 sender。
+- `offline_inference` 和 `offline_ns3_replay` 使用同一 receiver exclusion 逻辑。
+
+### 验证命令
+
+11-frame dry-run half-duplex audit：
+
+```powershell
+conda run -n opencda python -m opencda.tools.offline_ns3_replay --dataset-root D:\Data\Carla --scenario-id 2026_07_15_01_26_56 --max-frames 11 --selective-sharing-baseline edgecooper_global_hd --selective-member-budget 3 --selective-grid-budget 117 --num-channels 10 --bandwidth-mhz 20 --dry-run --upload-plan-output docs\doc_workspace\SGCP\artifacts\edgecooper_global_hd_dryrun_20260718\upload_plan.csv
+```
+
+审计结果：110 requests，half-duplex violations = 0。
+
+41-frame offline AP：
+
+```powershell
+conda run -n opencda python -m opencda.tools.offline_inference --dataset-root D:\Data\Carla --scenario-id 2026_07_15_01_26_56 --ego-cav-id 1 --max-frames 0 --selective-sharing-baseline edgecooper_global_hd --selective-member-budget 3 --selective-grid-budget 117 --sgcp-inter-cluster-late-fusion --rho-th 3 --num-channels 10 --bandwidth-mhz 20 --sgcp-trace-output docs\doc_workspace\SGCP\artifacts\edgecooper_global_hd_20260718\edgecooper_global_hd_trace_41f.csv
+```
+
+11-frame true NS3 replay：
+
+```powershell
+wsl -d Ubuntu-22.04 -u sakakibara -- bash -lc "cd /home/sakakibara/workspace/carla-ns3-co-simulation/ns-3-dev && ./ns3 run 'scratch/vanet/main.cc --simTime=5.0 --enableTimeSync=true --carlaHost=auto --targetSubchannels=10'"
+
+conda run -n opencda python -m opencda.tools.offline_ns3_replay --dataset-root D:\Data\Carla --scenario-id 2026_07_15_01_26_56 --max-frames 11 --selective-sharing-baseline edgecooper_global_hd --selective-member-budget 3 --selective-grid-budget 117 --num-channels 10 --bandwidth-mhz 20 --ns3-host 127.0.0.1 --upload-plan-output docs\doc_workspace\SGCP\artifacts\edgecooper_global_hd_ns3_20260718\upload_plan.csv
+
+conda run -n opencda python -m opencda.tools.ns3_log_eval --ns3-stdout docs\doc_workspace\SGCP\artifacts\edgecooper_global_hd_ns3_20260718\ns3_stdout.log --upload-plan docs\doc_workspace\SGCP\artifacts\edgecooper_global_hd_ns3_20260718\upload_plan.csv --output-dir docs\doc_workspace\SGCP\artifacts\edgecooper_global_hd_ns3_20260718\eval --max-frames 11
+```
+
+### 结果
+
+| Method | AP@0.3 | AP@0.5 | AP@0.7 | Payload bytes | Mbps | Avg. source CAVs | Avg. selected grids | NS3 |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | --- |
+| EdgeCooper-global | 0.81 | 0.77 | 0.42 | 38,223,408 | 74.58 | 3.26 | 98.75 | 73/110 complete |
+| EdgeCooper-global-HD | 0.81 | 0.78 | 0.42 | 33,519,040 | 65.40 | 3.00 | 89.02 | 110/110 complete |
+
+NS3 11-frame diagnostics for `edgecooper_global_hd`：
+
+| Metric | Value |
+| --- | ---: |
+| Application callbacks | 110 / 110 |
+| RLC complete requests | 110 / 110 |
+| RLC TX/RX events | 2970 / 2970 |
+| PHY decode failures | 0 |
+| Avg / p95 callback delay | 23.91 / 24.00 ms |
+
+### 当前判断
+
+半双工约束把 EdgeCooper global proxy 从“离线强但 NS3 不完整”修复为“离线强且 NS3 完整”。这条 baseline 很有价值，但也会改变论文叙事压力：它是 virtual edge/RSU-assisted global scheduler，信息条件强于 PAPG；如果和 PAPG 混在同一公平主表，PAPG 不再是 AP@0.7 最高。因此后续论文表格应分层呈现 RSU/edge-assisted 与 V2V-only decentralized baselines，或者继续改造 PAPG 以提升 AP@0.7。

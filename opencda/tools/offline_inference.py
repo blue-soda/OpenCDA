@@ -133,7 +133,8 @@ def parse_args():
                                  'fullperception_rsu',
                                  'fullperception_decentralized',
                                  'edgecooper',
-                                 'edgecooper_global'],
+                                 'edgecooper_global',
+                                 'edgecooper_global_hd'],
                         help='Run a selective-sharing or RSU/edge-assisted baseline instead of SGCP PPS.')
     parser.add_argument('--selective-member-budget', type=int, default=2,
                         help='Maximum uploaded non-head members per receiver for selective baseline.')
@@ -856,12 +857,18 @@ def candidate_member_ids(world, cluster, baseline_name):
             for member_id in sorted(world.get_vehicle_managers().keys())
             if int(member_id) != head_id
         ]
-    if baseline_name == 'edgecooper_global':
+    if baseline_name in ['edgecooper_global', 'edgecooper_global_hd']:
         head_vm = world.get_vehicle_manager(head_id)
+        receiver_ids = set(getattr(
+            world,
+            '_edgecooper_global_receiver_ids',
+            set()) or set())
         feasible_members = []
         for member_id in sorted(world.get_vehicle_managers().keys()):
             member_id = int(member_id)
             if member_id == head_id:
+                continue
+            if baseline_name == 'edgecooper_global_hd' and member_id in receiver_ids:
                 continue
             sender_vm = world.get_vehicle_manager(member_id)
             if vehicle_distance(head_vm, sender_vm) <= EDGECOOPER_GLOBAL_COMM_RANGE_M:
@@ -1006,10 +1013,11 @@ def select_baseline_members(world, cluster, baseline_name, member_budget,
         ]
         return [member_id for _, member_id in sorted(scored)[:member_budget]]
 
-    if baseline_name in ['edgecooper', 'edgecooper_global']:
+    if baseline_name in ['edgecooper', 'edgecooper_global',
+                         'edgecooper_global_hd']:
         sender_loads = None
         sender_capacity = None
-        if baseline_name == 'edgecooper_global':
+        if baseline_name in ['edgecooper_global', 'edgecooper_global_hd']:
             sender_loads = getattr(
                 world,
                 '_edgecooper_global_sender_loads',
@@ -1082,7 +1090,8 @@ def assign_selective_grid_selection(world, cluster, baseline_name,
         if remaining <= 0:
             break
         sender_vm = world.get_vehicle_manager(member_id)
-        if baseline_name in ['edgecooper', 'edgecooper_global']:
+        if baseline_name in ['edgecooper', 'edgecooper_global',
+                             'edgecooper_global_hd']:
             candidate_grids = edgecooper_candidate_grids(head_vm, sender_vm)
         else:
             candidate_grids = candidate_grids_for_sender(head_vm, sender_vm)
@@ -1094,7 +1103,8 @@ def assign_selective_grid_selection(world, cluster, baseline_name,
                 member_id,
                 grid_budget))
             rng.shuffle(grids)
-        elif baseline_name in ['edgecooper', 'edgecooper_global']:
+        elif baseline_name in ['edgecooper', 'edgecooper_global',
+                               'edgecooper_global_hd']:
             grids = select_edgecooper_grids(
                 head_vm,
                 sender_vm,
@@ -1110,7 +1120,8 @@ def assign_selective_grid_selection(world, cluster, baseline_name,
         selected = grids[:min(per_member_budget, remaining)]
         if selected:
             grid_selection[member_id] = selected
-            if baseline_name in ['edgecooper', 'edgecooper_global']:
+            if baseline_name in ['edgecooper', 'edgecooper_global',
+                                 'edgecooper_global_hd']:
                 covered_edge_grids.update(selected)
             remaining -= len(selected)
     head_vm.perception_manager.co_manager.set_grid_selection(grid_selection)
@@ -1143,9 +1154,11 @@ def apply_selective_sharing_baseline(frame, protocol, ego_cav_id,
         clustering_algorithm.p.N_max = n_max
     clusters = clustering_algorithm.run()
     apply_cluster_state(world, clusters)
-    if baseline_name == 'edgecooper_global':
+    if baseline_name in ['edgecooper_global', 'edgecooper_global_hd']:
         world._edgecooper_global_sender_loads = {}
         world._edgecooper_global_cluster_count = len(clusters)
+        world._edgecooper_global_receiver_ids = set(
+            int(cluster.head_id) for cluster in clusters)
     for cluster in clusters:
         assign_selective_grid_selection(
             world,
