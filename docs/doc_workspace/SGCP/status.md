@@ -178,7 +178,7 @@ SGCP 工作与仓库中以下部分关系最紧密：
 - CAV 数量规模实验目前只是固定场景子集实验；论文级“密度扩展”仍需重新导出不同 CAV/背景车密度的 CARLA 场景。
 - 网络资源实验已证明子信道数量影响 PPS 结果；低带宽 stress test 已触发带宽瓶颈。论文中应谨慎区分“常规带宽下该 dump 已饱和”和“极低带宽下吞吐约束有效”。
 - Dump 中速度字段目前使用 `ego_speed`；后续如需更严格动态稳定性，应确认单位并评估是否改为相邻帧差分速度。
-- 在线 CARLA-NS3 时间同步修复已通过真实 35 tick 图形短回归；online scheduler 残留策略导致的主要 PHY collision 已通过策略清空修复显著缓解。用户 2026-07-17 run 进一步暴露在线评价帧过少：185 个 CP wait、ego=1 wait 34 次，11 个 upload episode 全部 partial。已加入 timeout-exhausted partial CP 和通信 Mbps 对齐字段；下一步用固定 `OPENCDA_ONLINE_TICKS=80/140` 重跑，确认 `cp_submit_frames`、`cp_counter`、online AP 和 Mbps 是否稳定。
+- 在线 CARLA-NS3 时间同步修复已通过真实 80 tick 回归：`NetworkManager` 现在在每个 CARLA tick 内先发送位置和 transfer requests，再执行 `sync_request/sync_ack`，主循环等待 NS3 ack 后才进入下一 tick；严格模式 sync timeout 下限提升到 60 s。最新两轮在线回归均无 sync timeout，`MANUAL_RESOURCE_APPLY` 显示 `requestedStart == physicalStart`。`min_upload_count=1` 后 CP submit 从用户 run 的 4/5 次提升到 10 次，最佳在线 AP@0.3/0.5/0.7 = `0.70/0.68/0.58`，complete/partial episode = `55/2`，total/try payload = `25.48/17.85 Mbps`。无重传对照为 `0.64/0.59/0.50`、CP submit 7、complete/partial `45/3`，说明严格同步后仍需要 1 次受控 deadline 重传；后续论文应区分最终 request delivery 与 deadline-aware CP delivery。
 - Topology trigger 已接入离线 replay 统计，但尚未接入在线 `ClusteringV2XManager` gate；单独 relative-speed trigger 仍偏敏感，在线 gate 应结合 neighbor-set change、utility drop 和 `T_min_stab` 滞回。
 - 在线 topology trigger gate 已完成真实 CARLA 35 tick smoke regression；未观察到 skip，原因是当前默认 35 m 通信范围下持续触发 `head_member_unreachable`。若论文需要展示 reduced reconfiguration，应补一组更静态或更大通信范围的在线回归。
 - Cluster capacity 策略已有离线统计支撑；optional replacement repair 尚未实现，进入论文前可明确为 future/optional enhancement。

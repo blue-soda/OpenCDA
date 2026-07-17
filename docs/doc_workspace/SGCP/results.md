@@ -490,6 +490,28 @@ Detector-quality proxy 也支持这个判断：41 帧 `B_h=2,rho3` 的 receiver-
 
 Quality-persistent fallback 的 11 帧 safety probe 表明质量门槛可以阻止有害替换，但还不能带来收益：`B_h=2,rho3,quality_persistent` 为 AP `0.69/0.64/0.34`、7,416,720 bytes、0 次 replacement，等同 no fallback。下一步需要 object/target-aware 候选生成。
 
+## Online CARLA/NS3 Alignment Check
+
+命令口径：
+
+```powershell
+$env:OPENCDA_ONLINE_TICKS = "80"
+$env:OPENCDA_CLEAN_WORLD_ON_INIT = "1"
+$env:OPENCDA_CARLA_CLIENT_TIMEOUT = "180"
+$env:OPENCDA_USE_CURRENT_CARLA_WORLD = "1"
+conda run -n opencda python opencda.py -t v2xp_cluster_carla --apply_cp --apply_ml --debug --network
+```
+
+NS3 口径：`targetSubchannels=10`、`enableTimeSync=true`。在线 Mbps 使用 `total_slots * time_slot`，并同时报告总计流量和 intra-cluster try upload。
+
+| Online Variant | CP Submit | Complete / Partial Episodes | Sync Timeout | AP@0.3 | AP@0.5 | AP@0.7 | Total Payload Mbps | Try Payload Mbps | Notes |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | --- |
+| User run before strict barrier | 4 | 26 / 9 | N/A | 0.51 | 0.48 | 0.41 | 18.51 | 15.83 | CP deadline consumption too sparse |
+| Strict barrier + `min_upload_count=1` + one reupload | 10 | 55 / 2 | 0 | 0.70 | 0.68 | 0.58 | 25.48 | 17.85 | Current best online CARLA/NS3 alignment result |
+| Strict barrier + `min_upload_count=1` + no reupload | 7 | 45 / 3 | 0 | 0.64 | 0.59 | 0.50 | 23.94 | 19.52 | Fewer PHY overlaps but worse deadline delivery |
+
+结论：在线 CARLA/NS3 已经消除时间流速不一致导致的 sync timeout，并确认 OpenCDA 指定子信道真实落到 NS3 发送行为。在线 AP 仍不应直接与离线“最终 request complete”主表混用；论文中应额外声明 deadline-aware online CP delivery，即 request 必须在当前融合周期截止前完整或部分可用，才会影响该帧 AP。
+
 ## 离线 SGCP 回放稳定性与耗时
 
 命令：

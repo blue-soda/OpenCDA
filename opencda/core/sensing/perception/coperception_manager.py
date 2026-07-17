@@ -43,6 +43,10 @@ class CoperceptionManager:
         self.max_reupload_attempts = int(network_config.get(
             'max_reupload_attempts',
             1 if self.re_upload_when_timeout else 0))
+        self.min_upload_ratio = float(network_config.get(
+            'min_upload_ratio', 0.5))
+        self.min_upload_count = int(network_config.get(
+            'min_upload_count', 1))
         self.ego_vehicle_ids = set() # vehicles which should not be gt boxes
 
         self.grid_selection = {} # dict of {vid: [grid_ids]}
@@ -230,21 +234,27 @@ class CoperceptionManager:
 
         return received_data
 
-    def all_data_uploaded(self, percent=0.6):
+    def all_data_uploaded(self, percent=None):
+        if percent is None:
+            percent = self.min_upload_ratio
         uploaded_num = len(self.uploaded_cavs)
         all_cavs_num = self.cavs_num
         if all_cavs_num == 0 or self.enable_network is False:
             print(f"{self.vid} all_data_uploaded, all_cavs_num: {all_cavs_num}, return True")
             return True
-        ok = (uploaded_num / all_cavs_num) >= percent
+        upload_ratio = uploaded_num / all_cavs_num
+        ok = (
+            uploaded_num >= self.min_upload_count or
+            upload_ratio >= percent
+        )
         logger.info(
             f"{self.vid} Coperception data uploaded: {uploaded_num}/{all_cavs_num} "
-            f"({uploaded_num / all_cavs_num:.2%}), return {ok}, "
+            f"({upload_ratio:.2%}), return {ok}, "
             f"timeout_waiting: {list(self.cavs_timeout.keys())}"
         )
         print(
             f"{self.vid} Coperception data uploaded: {uploaded_num}/{all_cavs_num} "
-            f"({uploaded_num / all_cavs_num:.2%}), return {ok}, "
+            f"({upload_ratio:.2%}), return {ok}, "
             f"timeout_waiting: {list(self.cavs_timeout.keys())}"
         )
         return ok

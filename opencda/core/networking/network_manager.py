@@ -38,6 +38,12 @@ class NetworkManager:
         self.use_ns3 = config.get("use_ns3", False)
         self.current_time_slot = 0
         self.world_tick = False
+        self._world_tick_event = threading.Event()
+        self._sync_done_event = threading.Event()
+        self._sync_done_event.set()
+        self._last_sync_success = True
+        self.block_until_ns3_synced = bool(config.get(
+            "block_until_ns3_synced", True))
         self.pkt_id = 1
 
         # Time synchronization state
@@ -120,6 +126,10 @@ class NetworkManager:
         self.tick_count += 1
         self.current_sim_time = self.tick_count * self.fixed_delta_seconds
         self.world_tick = True
+        if self.use_ns3:
+            self._last_sync_success = False
+            self._sync_done_event.clear()
+            self._world_tick_event.set()
 
     def send_msg_to_ns3(self):
         """Send messages to ns-3 if needed.
@@ -130,41 +140,56 @@ class NetworkManager:
         try:
             if not self._wait_for_ns3_vehicle_initialization():
                 logger.warning("NS3 sender stopped before vehicles were registered")
+                self._last_sync_success = False
+                self._sync_done_event.set()
                 return
             logger.info("NS3 sender thread started, waiting for world ticks")
             while self.bridge.is_simulation_running():
-                if self.world_tick:
+                if self._world_tick_event.wait(timeout=min(self.time_slot, 0.01)):
+                    self._world_tick_event.clear()
+                    if not self.world_tick:
+                        continue
                     self.world_tick = False
 
-                    # Synchronize with NS3 before sending data
-                    sync_result = self.bridge.sync_with_ns3(self.current_sim_time)
+                    target_sim_time = self.current_sim_time
+                    try:
+                        vehicle_data = collect_vehicle_data(
+                            self.all_vehicles, self.cav_world)
+                        self.bridge.send_vehicles_position(vehicle_data)
+
+                        pending_requests = self.communication_requests[:]
+                        self.communication_requests = []
+                        if pending_requests:
+                            self.bridge.send_transfer_requests(pending_requests)
+
+                        # Transfer requests produced by this CARLA tick must be
+                        # in NS3 before the simulator advances to the same
+                        # timestamp.  Otherwise callbacks are systematically one
+                        # or more CARLA ticks late.
+                        sync_result = self.bridge.sync_with_ns3(target_sim_time)
+                    except Exception as exc:
+                        logger.error(f"Error while advancing NS3 sync: {exc}")
+                        sync_result = False
+
                     if not sync_result:
                         # NS3 is not responding - don't send on a dead socket.
                         # Setting connected=False triggers reconnection on next tick.
                         # Sending on a dead socket would cause TCP errors that could
                         # propagate to bridge.stop() and close the CARLA-NS3 connection,
                         # which terminates the entire co-simulation prematurely.
-                        logger.warning(f"Sync failed at time {self.current_sim_time:.4f}s, not sending data (NS3 may be terminated)")
+                        logger.warning(f"Sync failed at time {target_sim_time:.4f}s (NS3 may be terminated)")
                         self.bridge.connected = False
                         # Trigger reconnection attempt so the next sync can succeed
                         self.bridge.ensure_connection()
-                        time.sleep(min(self.time_slot, 0.01))
-                        continue
-
-                    vehicle_data = collect_vehicle_data(self.all_vehicles, self.cav_world)
-                    self.bridge.send_vehicles_position(vehicle_data)
-
-                    if len(self.communication_requests) == 0:
-                        time.sleep(min(self.time_slot, 0.01))
-                        continue
-                    self.bridge.send_transfer_requests(self.communication_requests[:])
-                    self.communication_requests = []
-                time.sleep(min(self.time_slot, 0.01))
+                    self._last_sync_success = sync_result
+                    self._sync_done_event.set()
 
         except KeyboardInterrupt:
             logger.info("Simulation interrupted by user")
 
         finally:
+            self._last_sync_success = False
+            self._sync_done_event.set()
             try:
                 self.bridge.stop()
             except Exception as e:
@@ -185,9 +210,16 @@ class NetworkManager:
 
         # Configure time synchronization from config
         enable_sync = self.config.get('enable_time_sync', True)
-        # Very short sync timeouts misclassify normal NS3 startup / burst-delivery
-        # latency as bridge failure and can tear down the co-simulation early.
-        sync_timeout = max(self.config.get('sync_timeout', 10.0), 8.0)
+        # In strict online co-simulation, CARLA must not outrun NS3 just
+        # because the NR-V2X event workload takes longer than real time to
+        # simulate.  Use a generous wall-clock timeout; otherwise late
+        # sync_ack messages are treated as stale and the next CARLA fusion tick
+        # consumes an under-drained network state.
+        strict_sync = bool(self.config.get('block_until_ns3_synced', True))
+        min_sync_timeout = 60.0 if strict_sync else 8.0
+        sync_timeout = max(
+            float(self.config.get('sync_timeout', 10.0)),
+            min_sync_timeout)
         self.bridge.enable_time_sync(enable_sync)
         self.bridge.sync_timeout = sync_timeout
         logger.info(f"NS3 time sync enabled={enable_sync}, timeout={sync_timeout}s")
@@ -577,6 +609,23 @@ class NetworkManager:
         # Update current time slot
         self.current_time_slot += 1
         self.tick()
+        if self.use_ns3 and self.block_until_ns3_synced:
+            bridge_timeout = getattr(self.bridge, 'sync_timeout', None)
+            wait_timeout = (
+                float(bridge_timeout) + 1.0
+                if bridge_timeout is not None
+                else max(float(self.config.get('sync_timeout', 10.0)) + 1.0,
+                         9.0)
+            )
+            if not self._sync_done_event.wait(timeout=wait_timeout):
+                logger.warning(
+                    f"NS3 sync barrier timeout after {wait_timeout}s at "
+                    f"CARLA sim time {self.current_sim_time:.4f}s")
+                return
+            if not self._last_sync_success:
+                logger.warning(
+                    f"NS3 sync barrier completed with failure at "
+                    f"CARLA sim time {self.current_sim_time:.4f}s")
 
 
 class ResourceConflictError(Exception):

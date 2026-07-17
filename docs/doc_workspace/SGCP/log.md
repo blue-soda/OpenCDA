@@ -4101,3 +4101,25 @@ conda run -n opencda python -m opencda.tools.online_ns3_log_eval --opencda-stdou
 该结果不能解释为“在线联合仿真中大部分包都发送失败”。日志中有大量 `cam_received` / `Combined message`，且解析出 26 个完整 application upload episode。真正的问题是 CP 消费窗口不足：4 次 CP submit 中，slot 0 和 slot 2 没有远端点云，slot 7 使用 `[2, 11]`，slot 15 仅在 `wait_exhausted=True` 后使用 `[2]`。因此 AP 下降主要来自在线 CP 没有稳定消费已发送/晚到的远端点云，而不是 NS3 完全丢包。
 
 这与离线仿真的差异在于：离线 request-level replay 通常统计“请求最终完成/链路可行”，而在线融合需要“当前 CP 截止前完整 payload 到达并被本帧消费”。后续离线/在线主表对齐应采用 deadline-aware delivery/cropping，或在线端改进 CP scheduling、fragment reassembly 和 late completion 处理。
+
+## 2026-07-17 在线 CARLA/NS3 严格同步修复验证
+
+### 修复内容
+
+- `NetworkManager` 增加严格 NS3 barrier：每个 CARLA tick 先发送本 tick 的车辆位置和 transfer requests，再向 NS3 发送 `sync_request`；CARLA 主循环等待 `sync_ack` 后才进入下一 tick。
+- 严格同步模式下 `sync_timeout` 下限提升到 60 s，避免 NS3 事件仿真慢于 wall-clock 时被误判为通信失败。
+- `CoperceptionManager` 增加 `min_upload_ratio` 和 `min_upload_count`，在线 deadline 到达时允许“至少 1 个远端上传完成”触发本轮融合，避免 CP 长期卡在完整上传等待。
+
+### 80 tick 在线结果
+
+| Variant | Sync Timeout | CP Submit | Complete / Partial Episodes | AP@0.3 | AP@0.5 | AP@0.7 | Total Mbps | Try Mbps | Notes |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | --- |
+| 用户 run, 修复前 | - | 4 | 26 / 9 | 0.51 | 0.48 | 0.41 | 18.51 | 15.83 | NS3 回调存在，但 CP 消费帧很少 |
+| strict sync + `min_upload_count=1` + 1 次受控重传 | 0 | 10 | 55 / 2 | 0.70 | 0.68 | 0.58 | 25.48 | 17.85 | 当前最佳在线口径 |
+| strict sync + `min_upload_count=1` + 无重传 | 0 | 7 | 45 / 3 | 0.64 | 0.59 | 0.50 | 23.94 | 19.52 | decode overlap 下降但 deadline 内可用上传减少 |
+
+### 结论
+
+CARLA 与 NS3 时间流速不一致问题已经定位并修复：最新两轮真实在线回归均无 `sync timeout`，NS3 日志中的 `sync_ack` 与 CARLA 目标时间对齐，且 `MANUAL_RESOURCE_APPLY` 显示 `requestedStart == physicalStart`，说明 OpenCDA 指定子信道真实落到 NS3 发送行为。
+
+在线结果已从用户 run 的 `0.51/0.48/0.41` 提升到 `0.70/0.68/0.58`，但仍低于离线 41 帧 SGCP `0.79/0.75/0.37` 或 20ch `0.80/0.76/0.41` 的主表候选。剩余差距主要来自在线 deadline 语义：部分 request 虽会最终完成，但未必在当前融合周期截止前完整到达并被消费。无重传对照说明完全关闭重传会降低 deadline 内可用点云；后续应把“最终 request delivery”和“deadline-aware CP delivery”分开报告。
