@@ -5246,3 +5246,31 @@ conda run -n opencda python -m opencda.tools.offline_inference --dataset-root D:
 ### 结论
 
 ISPG 是中性/负面 probe：它保持了 PAPG 的 AP@0.5/AP@0.7 和通信量，但 AP@0.3 低 0.01，且覆盖结构没有变化，仍为每帧 16/20 fused、10/20 uploaded、4/20 unscheduled。这说明实例支撑 proxy 只放进簇内 sender/grid utility 不足以突破当前瓶颈。下一步应把实例支撑推进到更高一层：跨簇 receiver assignment / target-to-head routing，确保最佳实例视角能送到真正负责该目标的 head，而不是只在现有 cluster 内重排 grid。
+
+## 2026-07-18 Cross-cluster instance routing probe
+
+### 目的
+
+上一轮 ISPG 说明簇内 sender/grid utility 不足。本轮新增 `cross_cluster_instance_support_potential_game` (`ccispg`)：在同一 20 MHz / 10 ch / `rho_th=3` / `B_h=2` 全局预算下，允许非 cluster-head CAV 作为外部 sender，把强实例支撑视角跨簇送给更相关的 cluster head。机制上仍保留 PAPG 的 coverage layer / target layer。
+
+### 代码
+
+```text
+opencda/core/clustering/algorithms/resource_allocation/cross_cluster_instance_support_potential_game.py
+opencda/core/clustering/algorithms/resource_allocation/builder.py
+```
+
+### 结果
+
+| Variant | Frames | External links | AP@0.3 | AP@0.5 | AP@0.7 | Payload bytes | Mbps | Avg. fused CAVs | Avg. uploaded CAVs |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| Naive CCISPG | 11 | 104 / 110 | 0.68 | 0.64 | 0.37 | 8,663,216 | 62.99 | 16.00 / 20 | 10.00 / 20 |
+| Layered CCISPG | 11 | 44 / 110 | 0.75 | 0.71 | 0.33 | 8,605,088 | 62.58 | 16.00 / 20 | 10.00 / 20 |
+| Cap1 CCISPG | 11 | 11 / 110 | 0.75 | 0.72 | 0.33 | 8,614,848 | 62.65 | 16.00 / 20 | 10.00 / 20 |
+| PAPG short reference | 11 | 0 / 110 external | 0.76 | 0.73 | 0.34 | about 8.60M | about 62.5 | 16.00 / 20 | 10.00 / 20 |
+
+### 结论
+
+跨簇 routing 能改变高 IoU 定位：naive CCISPG 的 AP@0.7 到 0.37，但 AP@0.3/0.5 明显下降，原因是 94.55% 上传链路变成 external，稳定 coverage layer 被破坏。Layered 和 Cap1 版本把 external 限制到 target layer 或每帧 1 条，AP@0.3/0.5 仍未恢复到 PAPG，说明仅靠在线 density/object proxy 自动触发跨簇路由不够稳。
+
+下一步不应继续放宽 cross-cluster routing，而应改成 diagnostic-triggered / persistent-target-triggered routing：只有当目标区域在历史或当前诊断中满足“full-reference 可检、PAPG 漏检、nearest/best raw source 不在相关 head 输入中”时，才用 1 条 target-layer RB 做跨簇实例补偿。这样可以保留论文中的势博弈叙事，同时避免全局外部 sender 替换稳定覆盖源。

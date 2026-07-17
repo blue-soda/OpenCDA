@@ -31,6 +31,9 @@ from opencda.core.clustering.algorithms.resource_allocation.head_urgent_percepti
 from opencda.core.clustering.algorithms.resource_allocation.instance_support_potential_game import (
     InstanceSupportPotentialGame,
 )
+from opencda.core.clustering.algorithms.resource_allocation.cross_cluster_instance_support_potential_game import (
+    CrossClusterInstanceSupportPotentialGame,
+)
 
 
 RESOURCE_ALLOCATION_ALGORITHMS = {
@@ -63,6 +66,11 @@ RESOURCE_ALLOCATION_ALGORITHMS = {
     'instance_support_potential_game': InstanceSupportPotentialGame,
     'instance_support_pg': InstanceSupportPotentialGame,
     'ispg': InstanceSupportPotentialGame,
+    'cross_cluster_instance_support_potential_game':
+        CrossClusterInstanceSupportPotentialGame,
+    'cross_cluster_instance_support_pg':
+        CrossClusterInstanceSupportPotentialGame,
+    'ccispg': CrossClusterInstanceSupportPotentialGame,
     'pcs': PCS,
     'fullperception': PCS,
     'fullperception_pcs': PCS,
