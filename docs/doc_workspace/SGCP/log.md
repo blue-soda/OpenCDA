@@ -4425,3 +4425,22 @@ conda run -n opencda python -m opencda.tools.ns3_log_eval --ns3-stdout docs\doc_
 ### 结论
 
 PAPG 的 11 帧真实 NS3 replay 已通过：带宽内、无冲突的 scheduled requests 均可完成 application callback 和 RLC request delivery。PowerShell `Start-Job` 捕获的 ns-3 stdout 是 UTF-16 LE，解析前已转为 `ns3_stdout_utf8.log`；该编码问题不影响 ns-3 结果，只影响离线解析器读日志。
+
+## 2026-07-17 PAPG 论文正文同步
+
+### 目的
+
+将 `C:\Workspace\icdcs-paper\SGCP\main.tex` 从旧 coverage-aware 10ch 主表口径同步到 PAPG 主候选，避免论文正文继续引用 `0.79/0.76/0.38`、57.38 Mbps 作为最终主行。
+
+### 修改摘要
+
+- 摘要和 introduction 将 intra-cluster scheduling 改为 perception-aware potential-guided constrained scheduling，突出 coverage layer + object-prototype target layer。
+- 仿真参数主带宽从 40 MHz 改为当前主表使用的 20 MHz / 10 subchannels，20ch 作为资源敏感性设置。
+- 主表新增并加粗 `SGCP (PAPG, 10 ch.) = 0.81/0.78/0.39, 62.54 Mbps`；旧 coverage-aware 10ch 保留为 ablation。
+- 结果分析改为：PAPG 相比 high-budget density selective baseline 提升 AP@0.3/AP@0.5 0.01/0.02，同时减少约 15.0% upload traffic；相比 full centralized 使用 52.7% payload。
+- communication efficiency 增加 PAPG 11 帧 NS3 replay 证据：110/110 application/RLC complete、2970/2970 RLC TX/RX、0 PHY failures、平均 delay 23.91 ms。
+- conclusion 将 “less than half” 改成 “roughly half”，避免超过 50% payload 时主张过强。
+
+### 验证
+
+本机未检测到 `latexmk` 或 `pdflatex` 命令，因此本轮只做了文本级一致性检查。下一轮如需提交论文 PDF，应在具备 LaTeX 环境后编译并检查表格宽度。
