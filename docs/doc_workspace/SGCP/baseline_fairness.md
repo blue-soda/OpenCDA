@@ -68,6 +68,6 @@ FullPerception-Decentralized 如果作为公平 baseline，不能等同于 full 
 ## 后续任务
 
 - 为 FullPerception-RSU 决定实现路线：真实 RSU dump、虚拟 RSU 聚合，或只作为 upper reference 不复现。
-- 已将 communication-aware selective-sharing baseline 扩展为可选 NS3 RLC-complete cost；PAPG 主方法已完成 11 帧真实 NS3 replay，forced-budget random 可按需补 NS3 replay 作为附加验证。
+- 已将 communication-aware selective-sharing baseline 扩展为可选 NS3 RLC-complete cost；PAPG 主方法和 forced-budget random baseline 均已完成 11 帧真实 NS3 replay，二者 scheduled requests 均为 110/110 application/RLC complete、0 PHY failures。
 - 为 singleton full late-fusion reference 估算 prediction-level box exchange overhead。
 - 在 `results.md` 的主结果表旁保留 baseline fairness 说明，避免审稿回复中被理解为不公平对比。

@@ -4527,3 +4527,64 @@ FullPerception baseline、主表候选和 rebuttal 的公平性口径已进一�
 ### 结论
 
 SGCP 文档工作区的入口文档现在优先呈现 PAPG 主线：`0.81/0.78/0.39` at 62.54 Mbps，forced-budget random `0.77/0.73/0.38` at 61.68 Mbps，FullPerception centralized upper reference `0.85/0.83/0.48` at 118.71 Mbps。
+
+## 2026-07-17 Forced-budget random NS3 replay
+
+### 目的
+
+PAPG 主设置已有 11 帧真实 NS3 replay，但公平随机 baseline 只有离线 AP/payload 结果。为避免“PAPG 有链路验证而 random baseline 没有”的证据不对称，本轮将 `offline_ns3_replay` 扩展到 CAV-only selective-sharing baseline，并补 forced-budget random 的 request-level replay。
+
+### 代码改动
+
+`opencda.tools.offline_ns3_replay` 新增参数：
+
+```text
+--selective-sharing-baseline
+--selective-member-budget
+--selective-grid-budget
+```
+
+该分支复用 `offline_inference.assign_selective_grid_selection` 的成员/网格选择逻辑，随后把每帧可调度 request 映射到 `--num-channels` 个子信道；超出窗口的候选需求记录为 `skipped_unscheduled`，不会交给 NS3 自主调度。
+
+### Dry-run
+
+```powershell
+conda run -n opencda python -m opencda.tools.offline_ns3_replay --dataset-root D:\Data\Carla --scenario-id 2026_07_15_01_26_56 --ego-cav-id 1 --max-frames 11 --selective-sharing-baseline random --selective-member-budget 3 --selective-grid-budget 117 --rho-th 3 --num-channels 10 --bandwidth-mhz 20 --dry-run
+```
+
+结果：11/11 帧均为 20 CAV、6 clusters、10 scheduled requests、4 skipped unscheduled demands。
+
+### 真实 NS3 replay
+
+Artifact：
+
+```text
+docs\doc_workspace\SGCP\artifacts\forced_random_ns3_20260717_2304b\
+```
+
+Replay 命令：
+
+```powershell
+conda run -n opencda python -m opencda.tools.offline_ns3_replay --dataset-root D:\Data\Carla --scenario-id 2026_07_15_01_26_56 --ego-cav-id 1 --max-frames 11 --selective-sharing-baseline random --selective-member-budget 3 --selective-grid-budget 117 --rho-th 3 --num-channels 10 --bandwidth-mhz 20 --upload-plan-output docs\doc_workspace\SGCP\artifacts\forced_random_ns3_20260717_2304b\upload_plan.csv --drain-seconds 0.3 --sync-timeout 30
+```
+
+评估命令：
+
+```powershell
+conda run -n opencda python -m opencda.tools.ns3_log_eval --ns3-stdout docs\doc_workspace\SGCP\artifacts\forced_random_ns3_20260717_2304b\ns3_stdout.log --upload-plan docs\doc_workspace\SGCP\artifacts\forced_random_ns3_20260717_2304b\upload_plan.csv --output-dir docs\doc_workspace\SGCP\artifacts\forced_random_ns3_20260717_2304b\eval --rsu-node-id 21 --max-frames 11
+```
+
+| Metric | Value |
+| --- | ---: |
+| planned / scheduled requests | 110 |
+| application `cam_received` | 110 |
+| matched callback ratio | 1.000 |
+| RLC complete requests | 110 / 110 |
+| RLC TX / RX events | 2970 / 2970 |
+| RLC drops | 0 |
+| PHY decode failures | 0 |
+| avg / p95 callback delay | 23.91 / 24.00 ms |
+
+### 结论
+
+forced-budget random baseline 在同一 20 MHz / 10ch scheduled-only replay 口径下也能 110/110 完成交付。因此 PAPG 相对 forced random 的 AP 增益不来自 NS3 链路失败差异，而来自 perception-aware scheduling 本身。

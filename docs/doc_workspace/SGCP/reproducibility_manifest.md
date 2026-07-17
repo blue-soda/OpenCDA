@@ -214,6 +214,29 @@ docs\doc_workspace\SGCP\artifacts\sgcp_ns3_pg_11f_target5_exposedfixed\
 
 解释：该结果验证 OpenCDA 指定的子信道窗口能真实落到 NS3；带宽范围内且无冲突的 request 成功，超出暴露子信道范围的 request 被拒绝，不污染后续合法 request。
 
+### Forced-budget random 10-subchannel scheduled replay
+
+相关 artifact：
+
+```text
+docs\doc_workspace\SGCP\artifacts\forced_random_ns3_20260717_2304b\
+```
+
+结果：
+
+- Frames：11
+- Scheduled requests：110
+- Skipped unscheduled demand：44
+- CAM/application callback received：110/110
+- RLC complete requests：110/110
+- RLC TX/RX events：2970/2970
+- RLC drops：0
+- PHY decode failures：0
+- Avg. delay：23.909 ms
+- P95 delay：24.000 ms
+
+说明：forced-budget random 在同一 scheduled-only NS3 口径下也能完整交付，因此 PAPG 相比 forced random 的 AP 增益不来自链路可靠性差异。
+
 ## 运行时与控制开销
 
 运行时 profiling 命令：
@@ -245,6 +268,6 @@ docs\doc_workspace\SGCP\artifacts\runtime_breakdown_41f\offline_replay_runtime.l
 ## 待补证事项
 
 - 若 reviewer 坚持 FullPerception-RSU 真实 baseline，需要重新导出带 RSU sensor 的场景；当前 full 20-CAV early fusion 只能作为 centralized upper reference。
-- forced-budget random 尚未补真实 NS3 replay；如版面需要，可按 PAPG replay 协议追加 11 帧链路验证。
+- forced-budget random 已补 11 帧真实 NS3 replay；如版面需要，可只在 rebuttal 或附表中引用，不必进入主表主体。
 - 仍缺 LaTeX 编译验证；当前机器未检测到 `latexmk/pdflatex`，需要在具备 TeX 环境后检查 `main.tex` 表格宽度和引用。
 - 若继续优化主表，可围绕 PAPG 剩余 missed grids（`0_-2`、`3_-1`、`0_1`、`2_-2`）做对象级可视化，而不是恢复旧不可复现主表。

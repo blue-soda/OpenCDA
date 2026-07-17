@@ -207,6 +207,8 @@ PAPG object-level diagnostics reduce full-reference-detected but SGCP-missed row
 
 PAPG NS3 request-level replay is now complete over the first 11 frames: 110 planned/scheduled requests, 110 matched `cam_received` callbacks, 110/110 RLC-complete requests, 2970/2970 RLC TX/RX events, 0 RLC drops, 0 PHY decode failures, average callback delay 23.91 ms and p95 delay 24.00 ms. Artifact path: `docs/doc_workspace/SGCP/artifacts/papg_ns3_20260717_210304/`.
 
+Forced-budget random selective baseline now has the same 11-frame scheduled-only NS3 replay evidence: 110 planned/scheduled requests, 110 matched `cam_received` callbacks, 110/110 RLC-complete requests, 2970/2970 RLC TX/RX events, 0 RLC drops, 0 PHY decode failures, average callback delay 23.91 ms and p95 delay 24.00 ms. Artifact path: `docs/doc_workspace/SGCP/artifacts/forced_random_ns3_20260717_2304b/`. This confirms PAPG's AP gain over forced random is not caused by giving PAPG a more reliable NS3 path.
+
 Forced-budget random selective baseline: using the same coalition and late-fusion path with 3 uploaded members per head and 117 grid budget, deterministic random member/grid selection reaches AP@0.3/0.5/0.7 = `0.77/0.73/0.38`, total payload `31,613,424` bytes (`61.68 Mbps`), avg source CAVs `3.33`, avg selected grids `103.20`. This replaces the old low-payload RandomRA row as the fair random baseline for main-table discussion.
 
 ### CAV Count Scaling

@@ -71,6 +71,16 @@ def parse_args():
                         help='SGCP resource allocation algorithm for replay. '
                              'Defaults to data_protocol resource_allocation.algorithm '
                              'or potential_game.')
+    parser.add_argument('--selective-sharing-baseline', default=None,
+                        help='Replay a CAV-only selective-sharing baseline '
+                             'instead of SGCP PPS. Uses the same member/grid '
+                             'selection logic as offline_inference.')
+    parser.add_argument('--selective-member-budget', type=int, default=2,
+                        help='Maximum uploaded non-head members per receiver '
+                             'for selective baseline replay.')
+    parser.add_argument('--selective-grid-budget', type=int, default=87,
+                        help='Maximum selected grids per receiver for '
+                             'selective baseline replay.')
     parser.add_argument('--num-channels', type=int, default=None,
                         help='Override SGCP resource allocation channel count.')
     parser.add_argument('--bandwidth-mhz', type=float, default=None,
@@ -267,6 +277,79 @@ def build_world_and_requests(dataset, scenario_id, timestamp, ego_cav_id,
     return vehicle_data, requests, clusters, ra_name, skipped_unscheduled
 
 
+def build_selective_world_and_requests(dataset, scenario_id, timestamp,
+                                       ego_cav_id, protocol, packet_size,
+                                       baseline_name, member_budget,
+                                       grid_budget, include_unscheduled=False,
+                                       num_channels=None, rho_th=None):
+    from opencda.tools.offline_inference import assign_selective_grid_selection
+
+    frame = dataset.load_frame(
+        scenario_id,
+        timestamp,
+        ego_cav_id=ego_cav_id)
+    vehicle_data = [
+        pose_to_vehicle_state(index, vehicle_id, cav_content)
+        for index, (vehicle_id, cav_content) in enumerate(frame.items())
+    ]
+
+    clear_sgcp_globals()
+    world = OfflineCavWorld(
+        frame,
+        ego_id=ego_cav_id,
+        protocol=protocol,
+        density_threshold=rho_th)
+    if num_channels is not None:
+        if num_channels <= 0:
+            raise ValueError('--num-channels must be positive')
+        world.network_manager.subchannel_num = int(num_channels)
+
+    clusters = CoalitionGame(world).run()
+    candidate_requests = []
+    for cluster in sorted(clusters, key=lambda item: int(item.head_id)):
+        head_id = int(cluster.head_id)
+        assign_selective_grid_selection(
+            world,
+            cluster,
+            baseline_name,
+            member_budget,
+            grid_budget,
+            timestamp=timestamp)
+        head_vm = world.get_vehicle_manager(head_id)
+        grid_selection = getattr(
+            head_vm.perception_manager.co_manager,
+            'grid_selection',
+            {}) or {}
+        for member_id in sorted(int(item) for item in grid_selection.keys()):
+            if member_id == head_id:
+                continue
+            if not grid_selection.get(member_id):
+                continue
+            candidate_requests.append({
+                'source': member_id,
+                'target': head_id,
+                'size': int(packet_size),
+            })
+
+    channel_count = int(
+        num_channels or getattr(world.network_manager, 'subchannel_num', 10))
+    requests = []
+    skipped_unscheduled = 0
+    for index, request in enumerate(candidate_requests):
+        request = dict(request)
+        request['pkt_id'] = index + 1
+        if index < channel_count:
+            request['sc_start'] = index
+            request['sc_num'] = 1
+            requests.append(request)
+        elif include_unscheduled:
+            requests.append(request)
+        else:
+            skipped_unscheduled += 1
+
+    return vehicle_data, requests, clusters, skipped_unscheduled
+
+
 def resolve_rsu_node_id(dataset, scenario_id, override=None):
     if override is not None:
         if int(override) <= 0:
@@ -382,7 +465,25 @@ def main():
         upload_plan_rows = []
         next_pkt_id = 1
         for index, timestamp in enumerate(timestamps):
-            if lgcp_uploads is None:
+            if lgcp_uploads is None and args.selective_sharing_baseline:
+                vehicle_data, requests, clusters, skipped_unscheduled = \
+                    build_selective_world_and_requests(
+                    dataset,
+                    scenario_id,
+                    timestamp,
+                    args.ego_cav_id,
+                    protocol,
+                    args.packet_size,
+                    args.selective_sharing_baseline,
+                    args.selective_member_budget,
+                    args.selective_grid_budget,
+                    include_unscheduled=args.include_unscheduled,
+                    num_channels=args.num_channels,
+                    rho_th=args.rho_th)
+                cluster_count = len(clusters)
+                request_mode = 'selective_%s' % (
+                    args.selective_sharing_baseline)
+            elif lgcp_uploads is None:
                 vehicle_data, requests, clusters, ra_name, skipped_unscheduled = \
                     build_world_and_requests(
                     dataset,
