@@ -2780,3 +2780,42 @@ conda run -n opencda python -m opencda.tools.offline_ns3_replay --dataset-root D
 - Live bridge 接受 raw-slice-aware plan，并成功写出带 `pkt_id` 的 `upload_plan_replayed.csv`。
 - 本次 ns-3 stdout 没有作为完整 parser input 保存，因此不能报告 request-level delivery ratio。
 - 下一步若需要网络证据，应重新运行并保存完整 ns-3 stdout，再接 `lgcp_ns3_log_eval.py`。
+
+## 2026-07-17 - Raw-slice-aware request-level NS3 trace
+
+### 目标
+
+- 重新运行 Top-30 raw-slice-aware 3 帧 NS3 smoke，完整保存 ns-3 stdout。
+- 使用 `lgcp_ns3_log_eval.py` 输出 request-level lifecycle。
+
+### 运行要点
+
+- 3 帧 replay 的最终同步时间约为 `0.5s`，time-sync ns-3 使用 `simTime=0.6`。
+- ns-3 在 replay 完成后仍可能等待重连；解析前已手动结束残留进程。
+
+### 解析命令
+
+```powershell
+conda run -n opencda python -m opencda.tools.lgcp_ns3_log_eval --ns3-stdout docs\doc_workspace\LGCP\experiments\hierarchy_plan\20260717_lgcp_carla_raw_slice_upload_plan_area30\ns3_smoke_3f_rsu21\ns3_stdout_request.log --upload-plan docs\doc_workspace\LGCP\experiments\hierarchy_plan\20260717_lgcp_carla_raw_slice_upload_plan_area30\ns3_smoke_3f_rsu21\upload_plan_replayed_request.csv --output-dir docs\doc_workspace\LGCP\experiments\hierarchy_plan\20260717_lgcp_carla_raw_slice_upload_plan_area30\ns3_request_trace_3f_rsu21 --rsu-node-id 21 --max-frames 3
+```
+
+### 结果
+
+| Metric | Value |
+| --- | ---: |
+| Planned requests | 137 |
+| Planned bytes | 352400 |
+| Observed `cam_received` | 6 |
+| Bridge-observed delivery ratio | 0.043796 |
+| RLC TX events | 106 |
+| RLC RX events | 20 |
+| Requests with RLC TX | 88 |
+| Requests with RLC RX | 14 |
+| Requests with PSSCH OK | 14 |
+| Requests with PSSCH FAIL | 51 |
+
+### 结论
+
+- Raw-slice-aware plan 的 request-level trace 路径已闭合：plan -> RLC -> PSSCH request events -> application callback。
+- 当前 unscheduled replay 的链路瓶颈仍严重，尤其 PSCCH overlap / PSSCH decode failure。
+- 该结果适合作为 trace-path validation，不应作为最终网络性能行。

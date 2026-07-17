@@ -249,6 +249,36 @@ docs/doc_workspace/LGCP/experiments/hierarchy_plan/20260717_lgcp_carla_raw_slice
 
 该 smoke 生成 `upload_plan_replayed.csv`，确认 raw-slice-aware plan 可进入 live ns-3 bridge；但本次没有完整 ns-3 stdout parser 输入，因此不报告 delivery ratio。
 
+Request-level trace rerun:
+
+```text
+docs/doc_workspace/LGCP/experiments/hierarchy_plan/20260717_lgcp_carla_raw_slice_upload_plan_area30/ns3_request_trace_3f_rsu21/
+```
+
+使用完整 `ns3_stdout_request.log` 和 `upload_plan_replayed_request.csv` 解析：
+
+| Metric | Value |
+| --- | ---: |
+| Planned requests | 137 |
+| Planned bytes | 352400 |
+| `cam_received` | 6 |
+| Bridge-observed delivery ratio | 0.043796 |
+| RLC TX events | 106 |
+| RLC RX events | 20 |
+| Requests with RLC TX | 88 |
+| Requests with RLC RX | 14 |
+| Requests with PSSCH OK | 14 |
+| Requests with PSSCH FAIL | 51 |
+
+按 upload type：
+
+| Upload type | Planned | Observed app | Bridge-observed ratio |
+| --- | ---: | ---: | ---: |
+| member_to_leader | 47 | 1 | 0.021277 |
+| leader_to_rsu | 90 | 5 | 0.055556 |
+
+该 trace 已能将 raw-slice-aware LGCP requests 映射到 RLC / request-level PSSCH / application callback；PSCCH breakdown 仍是 aggregate decode 统计。
+
 ## Offline NS3 Replay 接入
 
 `opencda/tools/offline_ns3_replay.py` 已支持：

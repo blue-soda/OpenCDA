@@ -20,8 +20,31 @@ conda run -n opencda python -m opencda.tools.offline_ns3_replay --dataset-root D
 `upload_plan_replayed.csv` was written with positive RSU node id `21` and
 request `pkt_id` values.
 
+## Request-Level Rerun
+
+A follow-up run captured complete ns-3 stdout as `ns3_stdout_request.log` and
+replayed request ids as `upload_plan_replayed_request.csv`.
+
+Parsed output:
+
+```text
+../ns3_request_trace_3f_rsu21/
+```
+
+Key parser summary:
+
+| Metric | Value |
+| --- | ---: |
+| Planned requests | 137 |
+| `cam_received` | 6 |
+| RLC TX events | 106 |
+| RLC RX events | 20 |
+| Requests with PSSCH OK | 14 |
+| Requests with PSSCH FAIL | 51 |
+
 ## Boundary
 
-This run confirms bridge/replay acceptance of the raw-slice-aware plan. It is
-not a request-level delivery analysis because the ns-3 stdout was not captured
-as a complete parser input in this run.
+The first live run confirmed bridge/replay acceptance. The follow-up rerun
+provides request-level RLC / PSSCH / application lifecycle evidence for three
+frames. It remains a smoke validation rather than a final network-performance
+row.

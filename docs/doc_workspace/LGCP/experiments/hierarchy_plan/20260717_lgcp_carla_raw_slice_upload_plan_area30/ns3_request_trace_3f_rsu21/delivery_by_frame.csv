@@ -1,0 +1,4 @@
+frame_index,timestamp,planned_requests,observed_cam_received,bridge_observed_delivery_ratio,planned_bytes,observed_bytes,avg_delay_ms,p95_delay_ms,max_delay_ms
+0,000060,46,0,0.0,125888,0,0.0,0.0,0.0
+1,000062,46,3,0.06521739130434782,121456,6000,5.666666666666667,9.0,9.0
+2,000064,45,3,0.06666666666666667,105056,6048,41.666666666666664,114.0,114.0

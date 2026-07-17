@@ -1405,3 +1405,46 @@ docs/doc_workspace/LGCP/experiments/hierarchy_plan/20260717_lgcp_carla_raw_slice
 Boundary: this confirms live bridge acceptance and request emission, but does
 not replace request-level delivery parsing because a complete ns-3 stdout log
 was not captured for this smoke.
+
+Request-level rerun with full stdout:
+
+```text
+docs/doc_workspace/LGCP/experiments/hierarchy_plan/20260717_lgcp_carla_raw_slice_upload_plan_area30/ns3_request_trace_3f_rsu21
+```
+
+| Metric | Value |
+| --- | ---: |
+| Planned requests | 137 |
+| Planned bytes | 352400 |
+| Observed `cam_received` | 6 |
+| Bridge-observed delivery ratio | 0.043796 |
+| Observed bytes | 12048 |
+| Avg delay | 23.667 ms |
+| P95 delay | 114.000 ms |
+| RLC TX events | 106 |
+| RLC RX events | 20 |
+| Requests with PSSCH OK | 14 |
+| Requests with PSSCH FAIL | 51 |
+
+By upload type:
+
+| Upload type | Planned | Observed app | Bridge ratio | Planned bytes | Observed bytes |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| member_to_leader | 47 | 1 | 0.021277 | 172400 | 2048 |
+| leader_to_rsu | 90 | 5 | 0.055556 | 180000 | 10000 |
+
+PHY decode breakdown:
+
+| Channel | Status | Reason | Count | Channel ratio |
+| --- | --- | --- | ---: | ---: |
+| PSCCH | FAIL | decoded_overlap | 441 | 0.509827 |
+| PSCCH | FAIL | error_model | 38 | 0.043931 |
+| PSCCH | OK | - | 386 | 0.446243 |
+| PSSCH | FAIL | decode_fail | 40 | 0.666667 |
+| PSSCH | OK | - | 20 | 0.333333 |
+
+Interpretation:
+
+- The raw-slice-aware plan now has a complete 3-frame request-level trace.
+- The network bottleneck remains severe under the current unscheduled replay setting; this supports the need for LGCP scheduling rather than weakening it.
+- This is a smoke result, not a final paper row; use it to validate the trace path and motivate scheduled replay.

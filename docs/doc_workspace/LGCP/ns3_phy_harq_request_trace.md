@@ -144,3 +144,36 @@ LGCP 论文需要解释 transmission scheduling 和两阶段 upload 的链路瓶
 - 可以报告 aggregate PHY decode failure breakdown。
 - 不应声称已经知道每个 LGCP request 的 PHY / HARQ 失败原因。
 - 如果论文需要 PHY/HARQ 证据，应表述为“diagnostic trace shows severe aggregate PSCCH/PSSCH failures”，而不是“request-level PHY attribution”。
+
+## 2026-07-17 Raw-Slice 3F Trace Update
+
+Top-30 raw-slice-aware upload plan 已完成 3 帧 request-level trace smoke：
+
+```text
+docs/doc_workspace/LGCP/experiments/hierarchy_plan/20260717_lgcp_carla_raw_slice_upload_plan_area30/ns3_request_trace_3f_rsu21/
+```
+
+当前该 run 已包含：
+
+- application `cam_received request_id`；
+- RLC TX / RX request id；
+- request-level `[NRSL_PHY_EVENT] event=PSSCH_DECODE_OK/FAIL request_ids=...`；
+- aggregate PSCCH decode breakdown；
+- `request_lifecycle.csv` 和 `request_lifecycle_summary.csv`。
+
+关键结果：
+
+| Metric | Value |
+| --- | ---: |
+| Planned requests | 137 |
+| Requests with RLC TX | 88 |
+| Requests with RLC RX | 14 |
+| Requests with PSSCH OK | 14 |
+| Requests with PSSCH FAIL | 51 |
+| Application callbacks | 6 |
+
+边界：
+
+- PSSCH 已有 request-level attribution。
+- PSCCH 仍主要作为 aggregate decode breakdown 使用。
+- HARQ ACK/NACK 在该 3 帧 run 中未观测到；后续若需要 HARQ 证据，仍应使用启用 HARQ 的配置重新跑。
