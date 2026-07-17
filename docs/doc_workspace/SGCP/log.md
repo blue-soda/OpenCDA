@@ -3439,11 +3439,23 @@ $env:OPENCDA_USE_CURRENT_CARLA_WORLD = "1"
 
 ### 测试
 
-启动命令：
+已测试启动命令：
 
 ```powershell
 Start-Process "C:\Programs\Carla\WindowsNoEditor\CarlaUE4.exe" `
   -ArgumentList @('/Game/Carla/Maps/Town03','-quality-level=Low') `
+  -WindowStyle Hidden
+```
+
+也测试过：
+
+```powershell
+Start-Process "C:\Programs\Carla\WindowsNoEditor\CarlaUE4.exe" `
+  -ArgumentList @('/Game/Carla/Maps/Town03','-carla-server','-quality-level=Low','-benchmark','-fps=20','-windowed','-ResX=800','-ResY=600') `
+  -WindowStyle Hidden
+
+Start-Process "C:\Programs\Carla\WindowsNoEditor\CarlaUE4.exe" `
+  -ArgumentList @('/Game/Carla/Maps/Town03','-carla-server','-quality-level=Low','-opengl','-windowed','-ResX=800','-ResY=600') `
   -WindowStyle Hidden
 ```
 
@@ -3457,6 +3469,20 @@ conda run -n opencda python -c "import carla; c=carla.Client('localhost',2000); 
 
 ```text
 RuntimeError: time-out of 180000ms while waiting for the simulator
+```
+
+### 新增工具
+
+新增 `opencda.tools.carla_rpc_probe`，用于在任何在线 OpenCDA/NS3 回归前验证 CARLA RPC：
+
+```powershell
+conda run -n opencda python -m opencda.tools.carla_rpc_probe --expect-map Town03 --timeout 30 --wait 180
+```
+
+只有输出类似以下内容时，才继续启动 OpenCDA/NS3：
+
+```text
+CARLA_RPC_READY map=Carla/Maps/Town03
 ```
 
 ### 结论

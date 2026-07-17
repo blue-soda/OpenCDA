@@ -133,6 +133,7 @@ SGCP 工作与仓库中以下部分关系最紧密：
 - 已新增 `OPENCDA_CARLA_CLIENT_TIMEOUT`，允许在线回归把 CARLA client/load_world timeout 从默认 60 秒提高到 180 秒；最近两次 clean rerun 的 blocker 已从 spawn collision 转移为 `load_world('Town03')` 超时。
 - 已新增 `OPENCDA_USE_CURRENT_CARLA_WORLD=1`，用于 CARLA 已经以目标地图启动时跳过 `client.load_world(town)`，避免本轮反复出现的 `load_world('Town03')` RPC 超时。
 - 已确认当前在线 clean rerun 的最新 blocker 是 CARLA RPC readiness：直接用 Town03 参数启动 CARLA 并等待 120 秒后，`carla.Client(...).get_world()` 在 180 秒 timeout 下仍超时。2000 端口 ready 不代表 CARLA Python API 可用；继续 NS3/reupload 前必须先恢复 CARLA smoke test。
+- 已新增 `opencda.tools.carla_rpc_probe`，在线 OpenCDA/NS3 前必须先通过 `conda run -n opencda python -m opencda.tools.carla_rpc_probe --expect-map Town03 --timeout 30 --wait 180`。
 - 已完成 SGCP 11 帧离线 NS3 request-level replay：154 条 SGCP intra-cluster request，CAM callback delivery ratio 0.558442，request with any RLC RX event ratio 0.974026。后者仅表示 request_id 至少出现一个 RLC RX 片段/事件，不代表完整 request delivery。
 - 已确认当前可运行环境版本快照，并记录到 `docs/doc_workspace/environment.md`：OpenCDA HEAD `fcc29fdc9ee9a9fe694c12e1fb6792b4d41bccac`，Python 3.7.10，CARLA Python API 0.9.11，PyTorch 1.10.0+cu113，Open3D 0.10.0.0，ns-3 wrapper `ns-3-dev-v2x-v1.1-dirty`。
 - 已修复在线 CARLA-NS3 时间流速不一致问题：`NetworkManager.time_slot` 不再将 `world.fixed_delta_seconds` 除以 5，`current_sim_time`、`current_time_slot` 与 CARLA tick 统一推进。
@@ -164,7 +165,7 @@ SGCP 工作与仓库中以下部分关系最紧密：
 - CAV 数量规模实验目前只是固定场景子集实验；论文级“密度扩展”仍需重新导出不同 CAV/背景车密度的 CARLA 场景。
 - 网络资源实验已证明子信道数量影响 PPS 结果；低带宽 stress test 已触发带宽瓶颈。论文中应谨慎区分“常规带宽下该 dump 已饱和”和“极低带宽下吞吐约束有效”。
 - Dump 中速度字段目前使用 `ego_speed`；后续如需更严格动态稳定性，应确认单位并评估是否改为相邻帧差分速度。
-- 在线 CARLA-NS3 时间同步修复已通过真实 35 tick 图形短回归；online scheduler 残留策略导致的主要 PHY collision 已通过策略清空修复显著缓解。当前应用层 timeout reupload 已将 partial episode 从 6 降到 3，但 clean rerun 仍 pending；下一步应先通过 `client.get_world().get_map().name` 恢复 CARLA RPC smoke test，再直接用 Town03 + 三个环境开关重跑 clean online reupload。
+- 在线 CARLA-NS3 时间同步修复已通过真实 35 tick 图形短回归；online scheduler 残留策略导致的主要 PHY collision 已通过策略清空修复显著缓解。当前应用层 timeout reupload 已将 partial episode 从 6 降到 3，但 clean rerun 仍 pending；下一步应先让 `opencda.tools.carla_rpc_probe --expect-map Town03` 通过，再直接用 Town03 + 三个环境开关重跑 clean online reupload。
 - Topology trigger 已接入离线 replay 统计，但尚未接入在线 `ClusteringV2XManager` gate；单独 relative-speed trigger 仍偏敏感，在线 gate 应结合 neighbor-set change、utility drop 和 `T_min_stab` 滞回。
 - 在线 topology trigger gate 已完成真实 CARLA 35 tick smoke regression；未观察到 skip，原因是当前默认 35 m 通信范围下持续触发 `head_member_unreachable`。若论文需要展示 reduced reconfiguration，应补一组更静态或更大通信范围的在线回归。
 - Cluster capacity 策略已有离线统计支撑；optional replacement repair 尚未实现，进入论文前可明确为 future/optional enhancement。

@@ -157,7 +157,17 @@ Get-Process CarlaUE4 -ErrorAction SilentlyContinue
 wsl -d Ubuntu-22.04 -u sakakibara -- bash -lc "ps -ef | grep -E 'ns3|vanet/main|scratch/vanet|CarlaUE4' | grep -v grep || true; ss -ltnp | grep -E ':5556|:5557' || true"
 ```
 
-### 2. 启动 ns-3
+### 2. 确认 CARLA RPC
+
+在线回归前必须先确认 CARLA Python RPC 可用。仅端口 2000 可连接还不够，必须能返回当前地图：
+
+```powershell
+conda run -n opencda python -m opencda.tools.carla_rpc_probe --expect-map Town03 --timeout 30 --wait 180
+```
+
+如果该命令没有输出 `CARLA_RPC_READY`，不要继续启动 OpenCDA/NS3；先恢复 CARLA 服务。
+
+### 3. 启动 ns-3
 
 建议先用 8--12 秒 `simTime` 覆盖 35--80 个 0.05 s CARLA tick，并留足 NS3 drain 时间。
 
@@ -171,7 +181,7 @@ wsl -d Ubuntu-22.04 -u sakakibara -- bash -lc "cd ~/workspace/carla-ns3-co-simul
 docs\doc_workspace\SGCP\artifacts\online_ns3_short\ns3_stdout.log
 ```
 
-### 3. 启动 CARLA
+### 4. 启动 CARLA
 
 ```powershell
 Start-Process "C:\Programs\Carla\WindowsNoEditor\CarlaUE4.exe" -WindowStyle Hidden
@@ -183,7 +193,7 @@ Start-Process "C:\Programs\Carla\WindowsNoEditor\CarlaUE4.exe" -WindowStyle Hidd
 Test-NetConnection -ComputerName 127.0.0.1 -Port 2000 -InformationLevel Quiet
 ```
 
-### 4. 运行 OpenCDA SGCP + NS3
+### 5. 运行 OpenCDA SGCP + NS3
 
 ```powershell
 $env:OPENCDA_CLUSTERING_CONFIG = "opencda/scenario_testing/config_yaml/networking_clustering_topology_gate.yaml"
