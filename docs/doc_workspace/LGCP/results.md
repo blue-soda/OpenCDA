@@ -1494,3 +1494,64 @@ Interpretation:
 - The 11-frame raw-slice-aware trace closes the request lifecycle path over the full local dump.
 - Current unscheduled replay is network-limited; leader-to-RSU application visibility is higher than member-to-leader, but both are low.
 - This result should be used as trace validation and motivation for scheduled replay, not as the final LGCP network row.
+
+## LGCP Raw-Slice Scheduled NS3 Smoke
+
+`opencda/tools/lgcp_schedule_upload_plan_eval.py` converts the raw-slice-aware plan into a single-slot, capacity-gated scheduled smoke input. `offline_ns3_replay.py` now preserves `sc_start/sc_num` from LGCP CSV rows, so the scheduled plan can drive ns-3 manual resource allocation.
+
+Run directory:
+
+```text
+docs/doc_workspace/LGCP/experiments/hierarchy_plan/20260718_lgcp_carla_raw_slice_scheduled_smoke_z10
+```
+
+11-frame scheduled plan summary:
+
+| Metric | Value |
+| --- | ---: |
+| Input requests | 504 |
+| Scheduled requests | 110 |
+| Capacity-gated requests | 394 |
+| Scheduled request ratio | 0.218254 |
+| Input bytes | 1313568 |
+| Scheduled bytes | 543408 |
+| Scheduled byte ratio | 0.413689 |
+
+3-frame live ns-3 scheduled request-level trace:
+
+```text
+docs/doc_workspace/LGCP/experiments/hierarchy_plan/20260718_lgcp_carla_raw_slice_scheduled_smoke_z10/ns3_request_trace_3f_rsu21
+```
+
+| Metric | Value |
+| --- | ---: |
+| Planned requests | 30 |
+| Observed `cam_received` | 24 |
+| Bridge-observed delivery ratio | 0.800000 |
+| Planned bytes | 146992 |
+| Observed bytes | 129696 |
+| Avg delay | 20.833 ms |
+| P95 delay | 42.000 ms |
+| RLC TX events | 415 |
+| RLC RX events | 376 |
+| Requests with PSSCH OK | 28 |
+| Requests with PSSCH FAIL | 0 |
+
+By upload type:
+
+| Upload type | Planned | Observed app | Bridge ratio | Planned bytes | Observed bytes |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| member_to_leader | 21 | 15 | 0.714286 | 128992 | 111696 |
+| leader_to_rsu | 9 | 9 | 1.000000 | 18000 | 18000 |
+
+PHY decode breakdown:
+
+| Channel | Status | Reason | Count | Channel ratio |
+| --- | --- | --- | ---: | ---: |
+| PSSCH | OK | - | 376 | 1.000000 |
+
+Interpretation:
+
+- The scheduled smoke sharply reduces visible decode failures compared with the unscheduled raw-slice replay.
+- This validates the `sc_start/sc_num` path and motivates a full LGCP scheduler.
+- It is a single-slot capacity-gated smoke; do not report it as final end-to-end LGCP throughput or perception performance.

@@ -528,4 +528,39 @@ phy_decode_summary.csv
 - RSU global aggregation 现在已有 coverage / quality proxy summary，但仍未生成真实 global perception result。
 - scheduling 仍未接入 LGCP 专用 subchannel / latency 优化；当前只是将 hierarchy upload plan 转换为 NS3 transfer requests，解析 request-id `cam_received`、RLC TX/RX/DROP 和 PHY decode diagnostics。
 
-下一步应把 PHY / HARQ event 继续绑定到 request id，或实现 leader local fusion 的离线近似。
+## Scheduled Smoke Plan
+
+`opencda/tools/lgcp_schedule_upload_plan_eval.py` 将 raw-slice-aware upload plan 转换为单 slot、capacity-gated scheduled smoke plan。该工具为每帧最多 `Z` 条 request 分配唯一 `sc_start/sc_num`，并把其余 request 写入 `capacity_gated_upload_rows.csv`。
+
+当前 Top-30 11 帧结果：
+
+| Metric | Value |
+| --- | ---: |
+| Input requests | 504 |
+| Scheduled requests | 110 |
+| Scheduled request ratio | 0.218254 |
+| Input bytes | 1313568 |
+| Scheduled bytes | 543408 |
+| Scheduled byte ratio | 0.413689 |
+
+3-frame live ns-3 scheduled smoke：
+
+```text
+docs/doc_workspace/LGCP/experiments/hierarchy_plan/20260718_lgcp_carla_raw_slice_scheduled_smoke_z10/ns3_request_trace_3f_rsu21
+```
+
+| Metric | Value |
+| --- | ---: |
+| Planned requests | 30 |
+| Observed `cam_received` | 24 |
+| Bridge-observed delivery ratio | 0.800000 |
+| Avg delay | 20.833 ms |
+| P95 delay | 42.000 ms |
+| RLC TX events | 415 |
+| RLC RX events | 376 |
+| Requests with PSSCH OK | 28 |
+| PHY decode failures | 0 |
+
+该结果说明 `sc_start/sc_num` 已能从 LGCP CSV 进入 offline replay 并驱动 ns-3 manual resource allocation；它是 scheduled bridge smoke，不是完整多 slot / latency-aware LGCP scheduler。
+
+下一步应把 single-slot smoke 扩展为多 slot / latency-aware scheduling，或实现 leader local fusion 的离线近似。

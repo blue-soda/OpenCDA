@@ -423,13 +423,19 @@ def pose_to_replay_vehicle_state(index, vehicle_id, cav_content, rsu_node_id):
 def build_lgcp_requests(upload_rows, rsu_node_id):
     requests = []
     for pkt_id, row in enumerate(upload_rows, start=1):
-        requests.append({
+        request = {
             'source': request_endpoint_to_int(row['source_id'], rsu_node_id),
             'target': request_endpoint_to_int(row['target_id'], rsu_node_id),
             'size': int(float(row['bytes'])),
             'pkt_id': pkt_id,
             'upload_type': row.get('upload_type', ''),
-        })
+        }
+        sc_start = row.get('sc_start', '')
+        sc_num = row.get('sc_num', '')
+        if sc_start != '' and sc_num != '':
+            request['sc_start'] = int(float(sc_start))
+            request['sc_num'] = int(float(sc_num))
+        requests.append(request)
     return requests
 
 

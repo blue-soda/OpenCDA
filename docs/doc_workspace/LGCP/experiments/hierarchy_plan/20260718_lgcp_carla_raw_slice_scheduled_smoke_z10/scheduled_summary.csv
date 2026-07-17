@@ -1,0 +1,2 @@
+frames,input_requests,scheduled_requests,capacity_gated_requests,scheduled_request_ratio,input_bytes,scheduled_bytes,capacity_gated_bytes,scheduled_byte_ratio
+11,504,110,394,0.218254,1313568,543408,770160,0.413689

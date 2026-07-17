@@ -1,0 +1,72 @@
+[INFO] Waiting for first Carla data...
+[INFO] Waiting for Carla on port 5556...
+[INFO] Carla connected on port 5556 from 127.0.0.1.
+[INFO] Auto-detected Carla callback host as 127.0.0.1.
+[DEBUG] Raw incoming: {"type": "vehicles_num", "vehicles_num": 21}
+[DEBUG] Received message type: vehicles_num
+[DEBUG] Processing vehicles_num: 21
+[INFO] Vehicles number changed: 0 -> 21
+[INFO] Installing MobilityModel
+[INFO] Installing Internet Stack
+[INFO] NR V2X Mode 2: targetSubchannels=10 totalSubChannel=11 bandwidthIn100kHz=396 slSubchannelSize=10
+实际带宽配置：396 Hz
+OperationBand频率：5.89e+09 Hz, (5.89e+09 - 5.89e+09)
+频率5.89e+09 Hz, (5.89e+09 - 5.89e+09)
+SLINFO.dstL2Id: 1
+SLINFO.dstL2Id: 2
+SLINFO.dstL2Id: 3
+SLINFO.dstL2Id: 4
+SLINFO.dstL2Id: 5
+SLINFO.dstL2Id: 6
+SLINFO.dstL2Id: 7
+SLINFO.dstL2Id: 8
+SLINFO.dstL2Id: 9
+SLINFO.dstL2Id: 10
+SLINFO.dstL2Id: 11
+SLINFO.dstL2Id: 12
+SLINFO.dstL2Id: 13
+SLINFO.dstL2Id: 14
+SLINFO.dstL2Id: 15
+SLINFO.dstL2Id: 16
+SLINFO.dstL2Id: 17
+SLINFO.dstL2Id: 18
+SLINFO.dstL2Id: 19
+SLINFO.dstL2Id: 20
+SLINFO.dstL2Id: 21
+[INFO] Installing Application
+[INFO] Vehicle 0 IP address: 7.0.0.2
+[INFO] Vehicle 1 IP address: 7.0.0.3
+[INFO] Vehicle 2 IP address: 7.0.0.4
+[INFO] Vehicle 3 IP address: 7.0.0.5
+[INFO] Vehicle 4 IP address: 7.0.0.6
+[INFO] Vehicle 5 IP address: 7.0.0.7
+[INFO] Vehicle 6 IP address: 7.0.0.8
+[INFO] Vehicle 7 IP address: 7.0.0.9
+[INFO] Vehicle 8 IP address: 7.0.0.10
+[INFO] Vehicle 9 IP address: 7.0.0.11
+[INFO] Vehicle 10 IP address: 7.0.0.12
+[INFO] Vehicle 11 IP address: 7.0.0.13
+[INFO] Vehicle 12 IP address: 7.0.0.14
+[INFO] Vehicle 13 IP address: 7.0.0.15
+[INFO] Vehicle 14 IP address: 7.0.0.16
+[INFO] Vehicle 15 IP address: 7.0.0.17
+[INFO] Vehicle 16 IP address: 7.0.0.18
+[INFO] Vehicle 17 IP address: 7.0.0.19
+[INFO] Vehicle 18 IP address: 7.0.0.20
+[INFO] Vehicle 19 IP address: 7.0.0.21
+[INFO] Vehicle 20 IP address: 7.0.0.22
+==== Routing table for Node 0 ====
+Node: 0, Time: +0s, Local time: +0s, Ipv4StaticRouting table
+Destination     Gateway         Genmask         Flags Metric Ref    Use Iface
+127.0.0.0       0.0.0.0         255.0.0.0       U     0      -      -   0
+7.0.0.0         0.0.0.0         255.0.0.0       U     0      -      -   1
+0.0.0.0         7.0.0.1         0.0.0.0         UGS   0      -      -   1
+
+[INFO] NR-V2X Mode2 vehicles initialized: 21 UE nodes.
+[INFO] First data received from Carla!
+[DEBUG] Raw incoming: {"type": "vehicles_position", "vehicles_position": [{"id": 0, "carla_id": 21, "position": {"x": 0.0, "y": -30.31, "z": 12.0}, "velocity": {"x": 0.0, "y": 0.0, "z": 0.0}, "heading": 0.0, "speed": 0.0}, {"id": 1, "carla_id": 1, "position": {"x": 8.0, "y": -30.31, "z": 0.03}, "velocity": {"x": 0.0, "y"
+[DEBUG] Received message type: vehicles_position
+[DEBUG] Processing vehicles_position with 21 vehicles
+[INFO] Received Vehicle Position Msg at 0
+[DEBUG] Raw incoming: {"type": "sync_request", "sync_request": {"carla_time": 0.0, "request_time": 1784306306.8692856}}
+[DEBUG] Received message type: sync_request

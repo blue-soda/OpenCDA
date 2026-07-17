@@ -2872,3 +2872,81 @@ conda run -n opencda python -m opencda.tools.lgcp_ns3_log_eval --ns3-stdout docs
 - Raw-slice-aware request lifecycle 已在完整 11 帧本地 dump 上闭合。
 - 当前 unscheduled replay 的 delivery ratio 仍低，主要作为调度必要性的诊断证据。
 - 下一步若继续网络方向，应基于 raw-slice-aware plan 接入 subchannel scheduling，而不是继续重复 unscheduled replay。
+## 2026-07-18 - Raw-slice scheduled NS3 smoke plan
+
+目标：
+
+- 将 raw-slice-aware LGCP upload plan 接入显式 `sc_start/sc_num` scheduling。
+- 验证 `offline_ns3_replay.py` 不再丢弃 LGCP CSV 中的调度字段。
+- 做一个保守的 single-slot capacity-gated live ns-3 smoke，确认 request-level trace 是否显著减少 decoded overlap / PSSCH failure。
+
+代码变更：
+
+```text
+opencda/tools/offline_ns3_replay.py
+opencda/tools/lgcp_schedule_upload_plan_eval.py
+```
+
+关键修复：
+
+- `build_lgcp_requests()` 现在会从 upload plan 读取并保留 `sc_start/sc_num`。
+- 新增 `lgcp_schedule_upload_plan_eval.py`，每帧最多保留 `Z` 条 request，并给 scheduled rows 写入唯一子信道；其余 rows 写入 `capacity_gated_upload_rows.csv`。
+
+命令：
+
+```powershell
+conda run -n opencda python -m py_compile opencda\tools\offline_ns3_replay.py opencda\tools\lgcp_schedule_upload_plan_eval.py
+conda run -n opencda python -m opencda.tools.lgcp_schedule_upload_plan_eval --upload-plan docs\doc_workspace\LGCP\experiments\hierarchy_plan\20260717_lgcp_carla_raw_slice_upload_plan_area30\raw_slice_upload_plan.csv --output-dir docs\doc_workspace\LGCP\experiments\hierarchy_plan\20260718_lgcp_carla_raw_slice_scheduled_smoke_z10 --subchannels 10 --leader-reserve 3
+conda run -n opencda python -m opencda.tools.offline_ns3_replay --dataset-root D:\Data\Carla --scenario-id 2026_07_15_02_33_21 --ego-cav-id 1 --max-frames 11 --lgcp-upload-plan docs\doc_workspace\LGCP\experiments\hierarchy_plan\20260718_lgcp_carla_raw_slice_scheduled_smoke_z10\scheduled_upload_plan.csv --dry-run --upload-plan-output docs\doc_workspace\LGCP\experiments\hierarchy_plan\20260718_lgcp_carla_raw_slice_scheduled_smoke_z10\dry_run_upload_plan_replayed.csv
+```
+
+scheduled plan 结果：
+
+| Metric | Value |
+| --- | ---: |
+| Frames | 11 |
+| Input requests | 504 |
+| Scheduled requests | 110 |
+| Capacity-gated requests | 394 |
+| Scheduled request ratio | 0.218254 |
+| Input bytes | 1313568 |
+| Scheduled bytes | 543408 |
+| Scheduled byte ratio | 0.413689 |
+
+dry-run 观察：
+
+- 11 帧均显示 `requests=10 scheduled=10 skipped_unscheduled=0`。
+- `dry_run_upload_plan_replayed.csv` 中已保留 `sc_start/sc_num`。
+
+live ns-3：
+
+- 第一次 11 帧尝试在 `sim_time=0.0` 同步前失败，ns-3 日志显示 callback `Connection refused`；该失败属于回连时序，不是调度字段错误。
+- 随后用 3 帧、`sync-timeout=20` 重试成功。
+
+解析命令：
+
+```powershell
+conda run -n opencda python -m opencda.tools.lgcp_ns3_log_eval --ns3-stdout docs\doc_workspace\LGCP\experiments\hierarchy_plan\20260718_lgcp_carla_raw_slice_scheduled_smoke_z10\ns3_scheduled_3f_rsu21_retry\ns3_stdout_request.log --upload-plan docs\doc_workspace\LGCP\experiments\hierarchy_plan\20260718_lgcp_carla_raw_slice_scheduled_smoke_z10\ns3_scheduled_3f_rsu21_retry\upload_plan_replayed_request.csv --output-dir docs\doc_workspace\LGCP\experiments\hierarchy_plan\20260718_lgcp_carla_raw_slice_scheduled_smoke_z10\ns3_request_trace_3f_rsu21 --rsu-node-id 21 --max-frames 3
+```
+
+3-frame scheduled trace：
+
+| Metric | Value |
+| --- | ---: |
+| Planned requests | 30 |
+| Observed `cam_received` | 24 |
+| Bridge-observed delivery ratio | 0.800000 |
+| Planned bytes | 146992 |
+| Observed bytes | 129696 |
+| Avg delay | 20.833 ms |
+| P95 delay | 42.000 ms |
+| RLC TX events | 415 |
+| RLC RX events | 376 |
+| Requests with PSSCH OK | 28 |
+| Requests with PSSCH FAIL | 0 |
+
+结论：
+
+- LGCP `sc_start/sc_num` CSV 字段现在可以进入 offline replay，并触发 ns-3 manual resource allocation。
+- 与 unscheduled raw-slice 3 帧 trace 相比，scheduled smoke 的 bridge-observed delivery ratio 从 `0.043796` 提升到 `0.800000`，且 PHY decode failures 为 0。
+- 该结果是 single-slot capacity-gated smoke，不是最终多 slot scheduling 或完整 LGCP throughput；下一步应实现 latency-aware 多 slot LGCP scheduler。
