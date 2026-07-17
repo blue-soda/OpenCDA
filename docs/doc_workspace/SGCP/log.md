@@ -5380,3 +5380,22 @@ docs/doc_workspace/SGCP/target.md
 PAPG 仍作为当前稳定 V2V-only SGCP 主算法：41 帧 `0.81/0.78/0.39`，62.54 Mbps，首 11 帧 NS3 110/110 request complete。ISPG 与 PAPG 基本持平但 AP@0.3 略低；CCISPG 能移动少数高 IoU 个例但显著伤低阈值 AP；object-grid routing hints 在逐 GT 对比中修复 4 行但损失 15 行。因此这些结果作为 failure analysis / claim boundary，而不是主表算法。
 
 论文口径应明确：PAPG 改善去中心化 V2V 的 AP/payload tradeoff；EdgeCooper-HD 的 AP@0.7 优势来自 edge/global assignment 能力，应单列为 edge-assisted reference。若继续追 AP@0.7，下一步必须设计 proposal/objectness-level trigger 来保护已覆盖 object prototypes，不能继续叠加临时 routing 修补。
+
+## 2026-07-18 main.tex PAPG consistency audit
+
+### 目的
+
+检查 `C:\Workspace\icdcs-paper\SGCP\main.tex` 是否与当前 SGCP 工作区的 PAPG 主线、EdgeCooper-HD 分层和 routing-probe 边界一致。
+
+### 修改
+
+已直接修改 `C:\Workspace\icdcs-paper\SGCP\main.tex`：
+
+- 主表中 `SGCP (PAPG, 10 ch.)` 只保留方法名加粗，移除 AP@0.3/AP@0.5/AP@0.7/Mbps 的数值加粗，避免把非列最优值标成最优。
+- 结果段新增 PAPG 与 communication-aware selective V2V 的精确 tradeoff：PAPG 在 AP@0.3/AP@0.5 高 `0.03/0.03`，但上传流量高 6.1%，AP@0.7 低 0.01。
+- 结果段补入 routing probe 边界：object-routing 可以修复少数漏检目标，但可能损失更多已覆盖目标，因此作为 failure analysis，不作为主算法。
+- 结论从“outperforms capacity-matched V2V scheduling heuristics”改为更准确的“improves low- and medium-IoU accuracy over capacity-matched V2V scheduling heuristics”，并明确 edge-assisted global assignment 是单独的高 IoU reference。
+
+### 结论
+
+这次修改降低了主表和结论被审稿人质疑“选择性加粗/过度声明”的风险。当前正文口径与 `main_table_candidate.md`、`results.md` 和 `rebuttal_short.md` 基本一致：PAPG 是 V2V-only 主线，EdgeCooper-HD 是 edge-assisted reference，routing hints 是失败分析。

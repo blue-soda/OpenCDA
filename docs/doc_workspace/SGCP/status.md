@@ -40,6 +40,7 @@ SGCP 工作与仓库中以下部分关系最紧密：
 - 已将 routing hints 的已调度 sender 行为改为 context-preserving merge：最多插入 3 个 object-neighborhood grids，其余保留原高密度上下文 grids。11 帧结果仍为 `0.75/0.71/0.35`、8,563,440 bytes / `62.28 Mbps`，`full_detected_method_missed` 为 91。结论：低阈值下降不是单纯 whole-list replacement 破坏上下文造成；object-grid/object-box support 仍不足以预测 detector benefit。
 - 已完成 detector-benefit post-hoc 对比：11 帧 PAPG 无 hint 基线为 `0.76/0.73/0.34`、8,598,224 bytes；merged routing hints 相比 PAPG 逐 GT 对比为 4 个 gained GT、15 个 lost GT，PAPG `full_detected_method_missed=82`，hint 为 91。结论：routing 可以修复少数诊断目标，但会破坏更多已覆盖目标；后续触发器必须保护已覆盖 object prototypes，而不是只看 object-support gap。
 - 已将 ISPG、CCISPG 和 routing-hint 诊断结果收束为论文边界：这些结果解释 PAPG 与 EdgeCooper-HD 在 AP@0.7 上的结构性差距，但当前不进入主表。主表/回复口径保持 PAPG 为稳定 V2V-only 主算法，EdgeCooper-HD 为 edge-assisted/global-assignment reference；若继续算法改造，必须先有 proposal/objectness-level trigger，不能继续追加临时 routing 修补。
+- 已完成 `C:\Workspace\icdcs-paper\SGCP\main.tex` 的 PAPG 主表一致性修订：PAPG 行不再把 AP@0.7/Mbps 误加粗为列最优；正文明确 PAPG 相比 communication-aware selective V2V 是 AP@0.3/0.5 提升、AP@0.7/通信量存在 tradeoff；结论弱化为低/中 IoU 改善和 NS3 子信道可行性，而不是无条件全面击败所有 heuristic。
 - PAPG 真实 NS3 replay 已完成 11 帧：110/110 scheduled requests application callback 和 RLC request complete，RLC drops=0，PHY decode failures=0。
 - `main.tex`、`main_table_candidate.md`、`results.md`、`baseline_fairness.md`、`fullperception_baseline_revision.md`、`baseline_reproduction_plan.md`、`rebuttal_draft.md` 和 `rebuttal_short.md` 当前应以 PAPG 主线和显式 baseline 分层为准；早期 coverage-aware 10ch/20ch 只作为消融或资源敏感性结果。
 

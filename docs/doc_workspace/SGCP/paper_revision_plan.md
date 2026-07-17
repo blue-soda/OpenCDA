@@ -186,9 +186,14 @@ The coalition formation stage is guided by a stability-aware utility and empiric
 
 2026-07-16 更新：`f(rho)` 标定统计和 `rho_th` sweep 已写入 `main.tex` 实验/参数段。
 2026-07-17 更新：`N_max` 和 `T_min^stab` 参数依据已写入 `main.tex`，包括 `N_max=4` 容量控制解释、capacity-skipped candidate joins 统计，以及 `T_min^stab=100--1000 ms` sweep 的无敏感性边界。
+2026-07-18 更新：完成 PAPG 主表一致性审计并直接修订 `C:\Workspace\icdcs-paper\SGCP\main.tex`：
+
+- 主表中 PAPG 行只加粗方法名，不再把 `0.39` AP@0.7 或 `62.54` Mbps 误标成列最优。
+- 结果段补充 PAPG 与 communication-aware selective V2V 的精确 tradeoff：PAPG 的 mAP@0.3/0.5 高 `0.03/0.03`，但上传流量高 6.1%，mAP@0.7 低 0.01。
+- 结果段加入 object-routing probe 边界：routing hints 可修复少数目标，但会打掉更多已覆盖目标，因此只作为 failure analysis。
+- 结论改为 “improves low- and medium-IoU accuracy” 和 “edge-assisted global assignment remains a distinct high-IoU reference”，避免无条件声称 SGCP 全面击败所有 capacity-matched heuristic。
 
 剩余应优先推进：
 
-- 把 FullPerception centralized upper reference 与 V2V-only selective baseline 的公平性写成 rebuttal；
-- 形成 reviewer-by-reviewer response 草稿；
 - 视版面情况将完整 `N_max` / `T_min^stab` 表格放入 appendix。
+- 若继续改算法，必须先有 proposal/objectness-level trigger；否则优先做论文版面、引用和 PDF 编译检查。
