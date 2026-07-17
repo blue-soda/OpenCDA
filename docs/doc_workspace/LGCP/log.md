@@ -2460,3 +2460,51 @@ conda run -n opencda python -m opencda.tools.lgcp_greedy_gap_eval --input-dir do
 - 6-agent O3 mean relative gap 为 `5.05%`，max 为 `12.82%`。
 - Gap 比 5-agent setting 增大，但仍可作为 online heuristic 的经验 small-scale gap 证据。
 - `target.md` 仍保持未完成，因为还缺多 seed / 多场景。
+
+## 2026-07-17 - Hierarchy leader / RSU aggregation proxy
+
+### 目标
+
+- 推进完整 LGCP hierarchy 管线中缺失的 leader local result 和 RSU global aggregation 数据接口。
+- 在不声称真实 feature fusion 的前提下，生成可复核的离线 proxy records。
+
+### 代码
+
+新增：
+
+```text
+opencda/tools/lgcp_hierarchy_aggregation_eval.py
+```
+
+输出：
+
+```text
+leader_local_results.csv
+rsu_global_frame_summary.csv
+rsu_global_summary.csv
+```
+
+### 运行命令
+
+```powershell
+conda run -n opencda python -m opencda.tools.lgcp_hierarchy_aggregation_eval --assignment-plan docs\doc_workspace\LGCP\experiments\hierarchy_plan\20260715_lgcp_carla_hierarchy_plan_top40_11f\area_assignment_plan.csv --area-quality docs\doc_workspace\LGCP\experiments\area_confidence\20260715_lgcp_carla_area_ap_11f_detector_score\area_quality.csv --output-dir docs\doc_workspace\LGCP\experiments\hierarchy_plan\20260717_lgcp_carla_hierarchy_aggregation_top40_11f --quality-field recall_05
+```
+
+### 结果
+
+| Metric | Value |
+| --- | ---: |
+| Frames | 11 |
+| Quality areas / frame | 33.000000 |
+| Selected hierarchy areas / frame | 40.000000 |
+| Selected GT ratio | 1.000000 |
+| Mean selected area recall@0.5 | 0.670455 |
+| Mean confidence-weighted quality | 0.609181 |
+| Active leaders / frame | 15.090909 |
+| Leader max load / frame | 8.818182 |
+
+### 结论
+
+- Top-40 hierarchy plan 覆盖了该 11 帧 dump 中所有 GT-bearing quality area。
+- `selected_area_ratio` 大于 1 是因为 plan 固定 Top-40，而 `area_quality.csv` 只记录有 quality 的 area；论文应优先报告 `selected_gt_ratio`。
+- 该工具补齐了 hierarchy 数据接口，但仍不是真实 feature slicing + OpenCOOD local fusion。

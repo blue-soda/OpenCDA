@@ -1205,3 +1205,30 @@ Interpretation:
 - O1 / O2 group-member gap and leader load gap remain `0.0` in this setting.
 - O3 gap increases with candidate agents, which is expected because holistic optimal selection has more alternatives.
 - This strengthens the rebuttal evidence by showing the heuristic gap under a larger enumerable setting, while preserving the limitation that it is still single-scenario / 11-frame evidence.
+
+## 2026-07-17：Hierarchy Aggregation Proxy
+
+新增 `opencda/tools/lgcp_hierarchy_aggregation_eval.py`，将 hierarchy assignment plan 转换为 leader local result proxy 和 RSU global aggregation proxy。
+
+Run:
+
+```text
+docs/doc_workspace/LGCP/experiments/hierarchy_plan/20260717_lgcp_carla_hierarchy_aggregation_top40_11f
+```
+
+| Metric | Value |
+| --- | ---: |
+| Frames | 11 |
+| Quality areas / frame | 33.000000 |
+| Selected hierarchy areas / frame | 40.000000 |
+| Selected GT ratio | 1.000000 |
+| Mean selected area recall@0.5 | 0.670455 |
+| Mean confidence-weighted quality | 0.609181 |
+| Active leaders / frame | 15.090909 |
+| Leader max load / frame | 8.818182 |
+
+Interpretation:
+
+- Top-40 hierarchy plan covers all GT-bearing quality areas in this 11-frame dump.
+- The new files materialize the missing hierarchy data products: `leader_local_results.csv`, `rsu_global_frame_summary.csv`, and `rsu_global_summary.csv`.
+- This is still not real feature-slice local fusion; it is a proxy that makes the full LGCP data interface explicit before implementing model-level fusion.
