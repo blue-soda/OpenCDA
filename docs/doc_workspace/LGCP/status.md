@@ -80,6 +80,7 @@
 - `lgcp_hierarchy_late_fusion_eval.py` 已扩大到 Top-30 首帧完整 area：30 assignment rows、23 次唯一 group inference、RSU fused pred / GT boxes 为 `35 / 35`，AP@0.5 为 `0.606851`；仍需扩大到 3 帧 / 11 帧后才能作为论文级对照。
 - `lgcp_hierarchy_late_fusion_eval.py` 已完成 Top-30 3 帧连续运行：90 assignment rows、68 次唯一 group inference、mean RSU fused pred / GT boxes 均为 `35.666667`，AP@0.5 为 `0.584564`；下一步扩大到 11 帧并与 flat selective-sharing baseline 对齐。
 - `lgcp_hierarchy_late_fusion_eval.py` 已完成 Top-30 11 帧运行：330 assignment rows、245 次唯一 group inference、mean RSU fused pred / GT boxes 为 `34.909091 / 37.090909`，AP@0.5 为 `0.602748`；下一步应汇总为 local-to-global ablation 表并对齐既有 flat selective-sharing baseline。
+- 已新增 `20260718_lgcp_local_to_global_ablation_alignment`，将 Top-30 11 帧 box-level hierarchy 与 full / random / confidence_topk / comm_aware_topk / area_aware_union 11 帧 flat baselines 对齐；当前 LGCP AP@0.5 为 `0.602748`，低于 strong flat baselines，但 AP@0.7 为 `0.506345`，接近 area-aware / comm-aware baselines；byte proxy 类型不同，论文中必须显式标注。
 - 已新增 LGCP 专用仿真入口 `opencda/scenario_testing/lgcp_carla.py` 和配置 `opencda/scenario_testing/config_yaml/lgcp_carla.yaml`。
 - 未修改 `v2xp_cluster_carla` 原始配置。
 - 已补齐 RSU 首次启用所需的基础运行路径：固定基础设施感知初始化、RSU 注册/访问、最近感知结果保存、销毁路径。
@@ -87,7 +88,7 @@
 ## 近期建议焦点
 
 1. 扩大 area confidence validation 到多 seed / 多场景，形成可进入论文的稳定相关性结果；OpenCOOD 评估入口、日志格式、远端数据路径和候选 checkpoint 已确认，下一步应在 `mindspore-186` 跑 400-frame gate。
-2. 将 Top-30 11 帧 box-level hierarchy late-fusion 与既有 11 帧 full / confidence_topk / comm_aware_topk / area_aware_union baseline 对齐成 local-to-global ablation 表；随后再推进 PointPillar intermediate neural feature tensor slicing、leader local fusion 和 RSU global perception aggregation。
+2. 基于已完成的 local-to-global ablation alignment，补跑 common-byte-budget 对照或推进 PointPillar intermediate neural feature tensor slicing、leader local fusion 和 RSU global perception aggregation。
 3. 若继续扩展 ablation，应将 source-unique 作为更真实 scheduler 约束保留，同时继续诊断 member slots 的 target receiver setup 和非 RSU receiver 的 CAM application completion；另一条主线是推进 model-level leader/RSU fusion。
 4. 大规模 30 CAV 结果若短期只跑 latency，应在论文中收窄为 communication/computation scalability；若报告 perception scalability，只能报告已校准的 proxy，不能写成真实 AP。
 5. 下一步将 request-level PHY/RLC/HARQ trace 和 control-plane overhead 扩展到多 seed，或开始推进完整 LGCP local fusion / RSU aggregation。

@@ -1884,3 +1884,27 @@ Interpretation:
 - It supports the local-to-global ablation direction more directly than the previous quality proxy because OpenCOOD is actually invoked for each leader area-task group.
 - It remains box-level late fusion. It should be described separately from future neural feature slicing / intermediate fusion.
 - The next table should align this result with the existing 11-frame flat selective-sharing baselines and report both perception AP and communication byte proxy.
+
+## Local-to-Global Ablation Alignment
+
+2026-07-18 对齐 11 帧 Top-30 box-level hierarchy late-fusion 与既有 flat selective-sharing baselines：
+
+```text
+docs/doc_workspace/LGCP/experiments/ablation/20260718_lgcp_local_to_global_ablation_alignment
+```
+
+| Method | Structure | Budget | AP@0.5 | AP@0.7 | Bytes / frame | Byte proxy |
+| --- | --- | --- | ---: | ---: | ---: | --- |
+| Full sharing | Flat | 20 agents | 0.839868 | 0.526521 | 190000.000000 | fixed 10KB / non-ego agent |
+| Random | Flat | 10 agents | 0.598993 | 0.380556 | 90000.000000 | fixed 10KB / non-ego agent |
+| Confidence top-k | Flat | 10 agents | 0.624088 | 0.436000 | 90000.000000 | fixed 10KB / non-ego agent |
+| Comm-aware top-k | Flat | 10 agents | 0.686146 | 0.545736 | 90000.000000 | fixed 10KB / non-ego agent |
+| Area-aware union | Flat | 10 agents | 0.676678 | 0.538273 | 90000.000000 | fixed 10KB / non-ego agent |
+| LGCP Top-30 box late fusion | Local-to-global hierarchy | 30 areas | 0.602748 | 0.506345 | 119415.272727 | scheduled raw-slice plan |
+
+Interpretation:
+
+- 当前 LGCP box-level hierarchy 的 AP@0.5 接近 random 10-agent flat selection，但低于 strong flat top-k baselines。
+- AP@0.7 明显优于 random，并接近 area-aware / communication-aware flat baselines。
+- Byte proxy 不是完全同口径：flat baselines 使用固定 selected-agent packet proxy，LGCP 使用 raw-slice-aware scheduled upload bytes。论文表格必须显式标注 proxy 类型，不能直接宣称通信量绝对公平。
+- 当前结果支持谨慎结论：local-to-global mechanism path 已经被真实模型调用验证，但若要主张 perception AP 超过强 flat selective-sharing baseline，还需要 neural feature slicing 或 common-byte-budget 对照。

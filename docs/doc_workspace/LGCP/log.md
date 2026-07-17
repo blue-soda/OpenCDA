@@ -3315,3 +3315,26 @@ by type：
   - 本地 `lgcp_carla` 11 帧 box-level hierarchy late-fusion 已跑通。
   - 该结果是真实 OpenCOOD model-calling hierarchy ablation，但仍是 box-level late fusion，不是 neural feature slicing。
   - 下一步应整理与 full / confidence_topk / comm_aware_topk / area_aware_union 的同帧 11 帧对照表。
+
+## Local-to-global ablation alignment
+
+- 新增目录：
+  - `docs/doc_workspace/LGCP/experiments/ablation/20260718_lgcp_local_to_global_ablation_alignment`
+- 输入：
+  - flat baselines: `20260715_lgcp_carla_comm_aware_baseline_11f/ablation_summary.csv`
+  - hierarchy perception: `20260718_lgcp_carla_hierarchy_late_fusion_top30_11f/rsu_global_eval_summary.csv`
+  - hierarchy bytes: `20260718_lgcp_carla_raw_slice_multislot_schedule_z10/scheduled_summary.csv`
+  - coverage / raw slice context: hierarchy and feature-slice budget sweeps
+- 输出：
+  - `local_to_global_ablation_summary.csv`
+  - `config.yaml`
+  - `notes.md`
+- 关键对齐结果：
+  - full sharing AP@0.5 / AP@0.7: `0.839868 / 0.526521`, bytes/frame `190000`
+  - comm-aware top-k AP@0.5 / AP@0.7: `0.686146 / 0.545736`, bytes/frame `90000`
+  - area-aware union AP@0.5 / AP@0.7: `0.676678 / 0.538273`, bytes/frame `90000`
+  - LGCP Top-30 box late fusion AP@0.5 / AP@0.7: `0.602748 / 0.506345`, scheduled raw-slice bytes/frame `119415.272727`
+- 结论：
+  - 当前 box-level hierarchy validates model-calling local-to-global path，但 AP@0.5 尚未超过 strong flat selective baselines。
+  - AP@0.7 明显好于 random，并接近 area-aware / comm-aware flat baselines。
+  - byte proxy 类型不一致；论文必须显式标注 fixed selected-agent proxy vs scheduled raw-slice plan，下一步最好补 common-byte-budget 对照。
