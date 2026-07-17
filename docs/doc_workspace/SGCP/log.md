@@ -4510,3 +4510,20 @@ rebuttal、`main.tex`、`main_table_candidate.md` 当前已经使用同一条主
 ### 结论
 
 FullPerception baseline、主表候选和 rebuttal 的公平性口径已进一步对齐：主表应使用 PAPG、forced-budget random、density/communication-aware selective baseline 和 centralized FullPerception upper reference。
+
+## 2026-07-17 Reproducibility/results PAPG 同步
+
+### 目的
+
+`reproducibility_manifest.md` 和 `results.md` 仍停留在 2026-07-16 的旧阶段：manifest 记录旧论文表 `22.33 Mbps`，results 首页仍把 coverage-aware 10ch/20ch 写成主候选。为避免后续写作或自动任务误读，本轮将两个核心索引文档同步到 PAPG 主线。
+
+### 修改
+
+- `reproducibility_manifest.md` 更新当前复现实验版本到 `23cbc0530c18a92c0545bf776b513e3def7c2baa`，将旧论文表标注为不可作为当前复现结果，并新增 PAPG 主设置命令、AP、payload、scheduled links 和对象级诊断。
+- `reproducibility_manifest.md` 的 NS3 段更新为 PAPG artifact：`docs\doc_workspace\SGCP\artifacts\papg_ns3_20260717_210304\`，110/110 application callback 与 RLC complete，0 PHY failures。
+- `results.md` 首页主表改为 PAPG 当前主表候选：FullPerception centralized upper reference、Full-cluster reference、forced-budget random、communication-aware/density selective baselines、SGCP PAPG 和 coverage-aware 消融/敏感性。
+- `status.md` 顶部新增“当前主线快照”，优先暴露 PAPG 主结果、forced-budget random、公平性边界和 NS3 replay 状态。
+
+### 结论
+
+SGCP 文档工作区的入口文档现在优先呈现 PAPG 主线：`0.81/0.78/0.39` at 62.54 Mbps，forced-budget random `0.77/0.73/0.38` at 61.68 Mbps，FullPerception centralized upper reference `0.85/0.83/0.48` at 118.71 Mbps。

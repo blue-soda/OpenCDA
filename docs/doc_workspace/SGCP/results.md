@@ -2,7 +2,7 @@
 
 本文件只记录经过确认、可复现或准备进入论文/rebuttal 的核心结果。探索性现象先记录在 `log.md`，稳定后再整理到这里。
 
-更新时间：2026-07-16
+更新时间：2026-07-17
 
 ## 结果记录规范
 
@@ -19,17 +19,19 @@
 
 ## 主结果表
 
-论文 `main.tex` 旧主表目前缺少原始日志、随机种子、代码提交和完整配置，不能直接作为已复现结果继续使用。当前可复现实验的版本、数据、命令和日志路径见 `reproducibility_manifest.md`；下表保留旧论文主表结构，用于后续替换为新主表。
+论文 `main.tex` 旧主表缺少原始日志、随机种子、代码提交和完整配置，不能作为已复现结果继续使用。当前可复现实验的版本、数据、命令和日志路径见 `reproducibility_manifest.md`；下表为当前 PAPG 主线的可复现主表候选。
 
 | Method | mAP@0.3 | mAP@0.5 | mAP@0.7 | Comm. Overhead (Mbps) | Runtime / Cycle (ms) | Notes |
 | --- | ---: | ---: | ---: | ---: | ---: | --- |
 | NC | TBD | TBD | TBD | TBD | TBD | No cooperation |
-| RS | TBD | TBD | TBD | TBD | TBD | Random schedule |
-| MUG | TBD | TBD | TBD | TBD | TBD | Maximum utility greedy |
-| FullPerception centralized full early | 0.85 | 0.83 | 0.48 | TBD | TBD | Full 20-CAV point-cloud sharing upper reference; upload non-ego CAV payload 60,838,528 bytes |
-| FullPerception decentralized density | 0.80 | 0.76 | 0.40 | TBD | TBD | CAV-only selective sharing, 3 members/head, 117 grid budget, payload 37,710,864 bytes |
-| SGCP coverage-aware, 10ch | 0.79 | 0.75 | 0.37 | TBD | TBD | Low-budget spatial-diverse candidate, payload 28,743,280 bytes |
-| SGCP coverage-aware, 20ch | 0.80 | 0.76 | 0.41 | TBD | TBD | High-budget spatial-diverse candidate, payload 37,912,544 bytes |
+| FullPerception centralized full early | 0.85 | 0.83 | 0.48 | 118.71 | TBD | Full 20-CAV point-cloud sharing upper reference; upload non-ego CAV payload 60,838,528 bytes |
+| Full-cluster reference | 0.82 | 0.79 | 0.42 | 87.51 | TBD | Full intra-cluster upload reference |
+| Selective V2V forced random | 0.77 | 0.73 | 0.38 | 61.68 | TBD | Same coalition path, 3 members/head, 117 grid budget |
+| Selective V2V communication-aware | 0.78 | 0.75 | 0.40 | 58.97 | TBD | 2 members/head, 87 grid budget |
+| Selective V2V density high-budget | 0.80 | 0.76 | 0.40 | 73.58 | TBD | 3 members/head, 117 grid budget |
+| SGCP PAPG, 10ch, `rho_th=3`, `B_h=2` | 0.81 | 0.78 | 0.39 | 62.54 | TBD | Current main method; 110/110 PAPG NS3 replay complete |
+| SGCP coverage-aware, 10ch, `rho_th=3` | 0.79 | 0.76 | 0.38 | 57.38 | TBD | PAPG predecessor/ablation |
+| SGCP coverage-aware, 20ch | 0.80 | 0.76 | 0.41 | 73.98 | TBD | Resource-sensitivity row |
 
 ## 消融实验
 
@@ -53,18 +55,20 @@
 | Upper reference | Full 20-CAV early / virtual FullPerception centralized | 0.85 / 0.83 / 0.48 | No | 全点云共享，无 SGCP 通信约束；non-ego upload payload 60,838,528 bytes |
 | Upper reference | Full 20-CAV late checkpoint | 0.91 / 0.85 / 0.51 | No | 使用独立 late checkpoint，不能直接作为同 checkpoint 消融 |
 | Upper reference | FullPerception-RSU | N/A on current dump | No | `v2xp_cluster_carla` 当前未启用 RSU；真实 RSU baseline 需重新导出带 RSU sensor 的场景 |
-| SGCP main | SGCP constrained + inter-cluster late fusion | 0.77 / 0.73 / 0.35 | Yes | 当前完整 SGCP 离线主口径 |
-| Same pipeline ablation | Random scheduler | 0.44 / 0.39 / 0.17 | Yes | 同 SGCP clustering + late-fusion path，替换 PPS |
-| Same pipeline ablation | MWS scheduler | 0.31 / 0.26 / 0.11 | Pending | 需要复核 MWS baseline 定义 |
+| SGCP main | SGCP PAPG 10ch | 0.81 / 0.78 / 0.39 | Yes | 当前主方法，62.54 Mbps，PAPG NS3 110/110 complete |
+| SGCP ablation | SGCP potential_game | 0.77 / 0.73 / 0.35 | Yes | 原始 PPS 消融 |
+| Same pipeline ablation | Random scheduler | 0.44 / 0.39 / 0.17 | No | payload 过低，只作 w/o-PPS 诊断 |
+| Same pipeline ablation | MWS scheduler | 0.31 / 0.26 / 0.11 | No | payload 过低，只作 w/o-PPS 诊断 |
 | Same-budget selective baseline | Nearest top-k grid sharing | 0.76 / 0.73 / 0.37 | Yes | CAV-only, same clustering + late-fusion path, grid budget 87 |
 | Same-budget selective baseline | Density top-k grid sharing | 0.77 / 0.74 / 0.39 | Yes | Strong baseline; slightly higher AP@0.7 with higher payload |
 | Same-budget selective baseline | Communication-aware density sharing | 0.78 / 0.75 / 0.40 | Yes | 2 members/head, 87 grid budget; density divided by distance cost |
+| Same-budget selective baseline | Forced-budget random sharing | 0.77 / 0.73 / 0.38 | Yes | 3 members/head, 117 grid budget，61.68 Mbps |
 | Same-budget selective baseline | Density/communication-aware high-budget | 0.80 / 0.76 / 0.40 | Yes | 3 members/head, 117 grid budget; payload-matched to SGCP 20ch |
-| SGCP main candidate | Coverage-aware spatial-diverse, 10ch | 0.79 / 0.75 / 0.37 | Yes | Low-budget SGCP candidate; NS3 110/110 complete |
-| SGCP main candidate | Coverage-aware spatial-diverse, 20ch | 0.80 / 0.76 / 0.41 | Yes | High-budget SGCP candidate; NS3 154/154 complete |
+| SGCP ablation | Coverage-aware spatial-diverse, 10ch/rho3 | 0.79 / 0.76 / 0.38 | Yes | PAPG 前身/消融，57.38 Mbps，NS3 110/110 complete |
+| SGCP sensitivity | Coverage-aware spatial-diverse, 20ch | 0.80 / 0.76 / 0.41 | Yes | 高预算资源敏感性，73.98 Mbps，NS3 154/154 complete |
 | Reference only | Singleton full late-fusion reference | 0.82 / 0.76 / 0.37 | No | late-fuse 全部 20 CAV，当前未计 detection-box exchange overhead |
 
-论文写作建议：FullPerception-RSU 和 full 20-CAV early/late fusion 只能作为 upper/reference，不应放入“同通信预算公平主对比”结论。公平主对比应使用同数据、同 backbone、同 AP 口径，并尽量匹配通信预算或显式报告 payload。旧 `RandomRA/MWS` 的 payload 只有约 9.7/9.9 MB，未充分利用 10 子信道资源，不宜作为“SGCP 降低通信量”的主证据；它们更适合作 w/o PPS 消融。主公平 baseline 应改用 payload-matched selective sharing 和 random-grid same-link probe。
+论文写作建议：FullPerception-RSU 和 full 20-CAV early/late fusion 只能作为 upper/reference，不应放入“同通信预算公平主对比”结论。公平主对比应使用同数据、同 backbone、同 AP 口径，并尽量匹配通信预算或显式报告 payload。旧 `RandomRA/MWS` 的 payload 只有约 9.7/9.9 MB，未充分利用 10 子信道资源，不宜作为“SGCP 降低通信量”的主证据；它们更适合作 w/o PPS 消融。主公平 baseline 使用 forced-budget random、density/communication-aware selective sharing；SGCP 主方法使用 PAPG。
 
 ### Same-Budget CAV-Only Selective Sharing
 
