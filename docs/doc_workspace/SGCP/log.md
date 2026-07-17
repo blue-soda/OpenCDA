@@ -4444,3 +4444,36 @@ PAPG 的 11 帧真实 NS3 replay 已通过：带宽内、无冲突的 scheduled 
 ### 验证
 
 本机未检测到 `latexmk` 或 `pdflatex` 命令，因此本轮只做了文本级一致性检查。下一轮如需提交论文 PDF，应在具备 LaTeX 环境后编译并检查表格宽度。
+
+## 2026-07-17 Forced-budget random baseline
+
+### 目的
+
+旧 RandomRA/MWS scheduler payload 只有约 18--19 Mbps，不能用于证明 SGCP 降低通信量。为公平比较，新增 deterministic random selective baseline：复用同一 coalition + inter-cluster late fusion 路径，强制使用 3 uploaded members/head 和 117 grid budget，使通信量接近 PAPG。
+
+### 代码改动
+
+`opencda.tools.offline_inference --selective-sharing-baseline` 新增：
+
+```text
+random
+greedy_density
+```
+
+其中 `random` 使用 timestamp/head/member/grid budget 作为 deterministic seed，随机选择成员和 grid；`greedy_density` 是 `density` 的显式别名，便于论文/脚本用 greedy 名称表达强 baseline。
+
+### 命令
+
+```powershell
+conda run -n opencda python -m opencda.tools.offline_inference --dataset-root D:\Data\Carla --scenario-id 2026_07_15_01_26_56 --ego-cav-id 1 --max-frames 0 --selective-sharing-baseline random --selective-member-budget 3 --selective-grid-budget 117 --sgcp-inter-cluster-late-fusion --rho-th 3 --num-channels 10 --bandwidth-mhz 20 --sgcp-trace-output docs\doc_workspace\SGCP\artifacts\random_forced_3m117g_41f_trace.csv
+```
+
+### 结果
+
+| Method | AP@0.3 | AP@0.5 | AP@0.7 | Payload bytes | Mbps | Avg. source CAVs | Avg. selected grids |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| Forced-budget random, 3m/117g | 0.77 | 0.73 | 0.38 | 31,613,424 | 61.68 | 3.33 | 103.20 |
+
+### 结论
+
+PAPG `0.81/0.78/0.39` at 62.54 Mbps 明显优于 forced-budget random `0.77/0.73/0.38` at 61.68 Mbps。论文主表可以把 old RandomRA 放到 w/o-PPS 消融，把 forced-budget random 放入公平 V2V baseline。

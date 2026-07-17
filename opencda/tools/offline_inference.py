@@ -124,8 +124,8 @@ def parse_args():
                              'selection. This keeps scheduling semantics '
                              'unchanged while probing payload/AP tradeoff.')
     parser.add_argument('--selective-sharing-baseline', default=None,
-                        choices=['nearest', 'density',
-                                 'communication_aware'],
+                        choices=['random', 'nearest', 'density',
+                                 'greedy_density', 'communication_aware'],
                         help='Run a CAV-only selective-sharing baseline instead of SGCP PPS.')
     parser.add_argument('--selective-member-budget', type=int, default=2,
                         help='Maximum uploaded non-head members per receiver for selective baseline.')
@@ -816,6 +816,12 @@ def select_baseline_members(world, cluster, baseline_name, member_budget,
     if member_budget <= 0 or not members:
         return []
 
+    if baseline_name == 'random':
+        rng = random.Random('%s_%s_%s' % (timestamp, head_id, member_budget))
+        shuffled = list(members)
+        rng.shuffle(shuffled)
+        return shuffled[:member_budget]
+
     if baseline_name == 'nearest':
         scored = [
             (vehicle_distance(head_vm, world.get_vehicle_manager(member_id)),
@@ -824,7 +830,7 @@ def select_baseline_members(world, cluster, baseline_name, member_budget,
         ]
         return [member_id for _, member_id in sorted(scored)[:member_budget]]
 
-    if baseline_name in ['density', 'communication_aware']:
+    if baseline_name in ['density', 'greedy_density', 'communication_aware']:
         scored = []
         for member_id in members:
             sender_vm = world.get_vehicle_manager(member_id)
@@ -875,11 +881,20 @@ def assign_selective_grid_selection(world, cluster, baseline_name,
             break
         sender_vm = world.get_vehicle_manager(member_id)
         candidate_grids = candidate_grids_for_sender(head_vm, sender_vm)
-        grids = sorted(
-            candidate_grids,
-            key=lambda grid_id: sender_vm.perception_manager.lidar.
-            get_grid_density(grid_id),
-            reverse=True)
+        if baseline_name == 'random':
+            grids = list(candidate_grids)
+            rng = random.Random('%s_%s_%s_%s' % (
+                timestamp,
+                head_id,
+                member_id,
+                grid_budget))
+            rng.shuffle(grids)
+        else:
+            grids = sorted(
+                candidate_grids,
+                key=lambda grid_id: sender_vm.perception_manager.lidar.
+                get_grid_density(grid_id),
+                reverse=True)
         selected = grids[:min(per_member_budget, remaining)]
         if selected:
             grid_selection[member_id] = selected

@@ -20,6 +20,7 @@
 | No cooperation / Head-only | Lower reference | 0.26 | 0.22 | 0.09 | 0 | 0.00 | N/A | Cluster heads detect alone, then late-fuse |
 | FullPerception centralized | Upper reference | 0.85 | 0.83 | 0.48 | 60,838,528 | 118.71 | Not constrained | Virtual full 20-CAV point-cloud sharing; current dump has no RSU |
 | Full-cluster intra-cluster upload | Upper reference | 0.82 | 0.79 | 0.42 | 44,850,528 | 87.51 | Not tested | Each cluster head receives all cluster-member point clouds |
+| Selective random, 3m/117g | Fair V2V baseline | 0.77 | 0.73 | 0.38 | 31,613,424 | 61.68 | Not replayed | Forced-budget random baseline; same coalition path, 3 members/head, 117 grid budget |
 | Selective communication-aware, 2m/87g | Fair V2V baseline | 0.78 | 0.75 | 0.40 | 30,222,256 | 58.97 | 11f diagnostic only | Strong low-budget selective baseline |
 | Selective density, 3m/117g | Fair V2V baseline | 0.80 | 0.76 | 0.40 | 37,710,864 | 73.58 | Not constrained | Payload-matched high-budget selective baseline |
 | SGCP original utility, 10ch | Previous SGCP | 0.77 | 0.73 | 0.35 | 26,916,208 | 52.52 | 110/110 complete | Original saturated-density utility |
@@ -45,7 +46,7 @@
 1. FullPerception centralized and full-cluster upload define upper references, not fair decentralized baselines.
 2. Random/MWS are w/o-PPS ablations; their low payload means they cannot support a communication-reduction claim.
 3. The fair baseline should be payload-matched selective sharing. In high-budget mode, selective density reaches `0.80/0.76/0.40` at 73.58 Mbps.
-4. SGCP PAPG 10ch `rho_th=3,B_h=2` is the current main point: `0.81/0.78/0.39` at 62.54 Mbps. It beats the strong high-budget selective baseline on AP@0.3/AP@0.5 while using about 15.0% less payload, and it remains far below centralized FullPerception's 118.71 Mbps.
+4. SGCP PAPG 10ch `rho_th=3,B_h=2` is the current main point: `0.81/0.78/0.39` at 62.54 Mbps. It beats the forced-budget random baseline by `+0.04/+0.05/+0.01` AP at nearly the same traffic, and beats the strong high-budget selective baseline on AP@0.3/AP@0.5 while using about 15.0% less payload. It remains far below centralized FullPerception's 118.71 Mbps.
 5. SGCP coverage-aware 20ch reaches `0.80/0.76/0.41` at 73.98 Mbps and can be used as a network-resource sensitivity row: higher channel budget improves AP@0.7 but does not beat PAPG on AP@0.3/AP@0.5.
 6. Target-aware PG `0.80/0.76/0.39` at 60.62 Mbps is now best treated as an ablation: it proves that moving target-aware utility into the allocator helps, while PAPG adds the missing coverage layer.
 7. `B_h=2` coverage-aware sensitivity remains useful for explaining localization-quality tradeoff (`0.76/0.72/0.42` at 54.56 Mbps), but PAPG recovers AP@0.3/AP@0.5 without relying on that tradeoff.
@@ -57,4 +58,4 @@
 - Decide whether the main table shows both SGCP 10ch and 20ch, or places 20ch in network-resource sensitivity.
 - `rho_th=3` NS3 replay is now complete: 110/110 application callbacks and 110/110 RLC-complete requests over the first 11 frames, with no PHY decode failures.
 - PAPG 11-frame true NS3 socket replay is complete: 110/110 application callbacks, 110/110 RLC-complete requests, 0 PHY decode failures. The algorithm uses 410 scheduled links over 41 frames in the perception run and does not bypass subchannel budget.
-- Before declaring SGCP "lowest Mbps", rerun Random/Greedy under forced bandwidth utilization or identical point cap. The existing Random/MWS rows use only about 18-19 Mbps and therefore are weak ablations, not fair main baselines.
+- Forced-budget random has been rerun under the same coalition path with 3 uploaded members/head and 117 grid budget: `0.77/0.73/0.38`, 31,613,424 bytes / 61.68 Mbps. Existing RandomRA/MWS rows still remain weak scheduler ablations because they use only about 18-19 Mbps.
