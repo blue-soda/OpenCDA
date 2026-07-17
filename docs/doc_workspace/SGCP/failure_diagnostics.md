@@ -145,12 +145,16 @@ Follow-up `sgcp_object_point_association` on the same PAPG dense-miss top40 foun
 | Avg total SGCP exact-box points | 98.48 |
 | Avg total SGCP box+2m points | 285.18 |
 | Zero nearest-CAV uploaded exact-box points | 31 / 40 |
+| Avg full-reference exact-box points | 164.98 |
+| Avg SGCP / full-reference exact-box point ratio | 0.62 |
+| Rows with SGCP / full-reference exact-box ratio < 0.5 | 18 / 40 |
+| Rows where nearest CAV is best raw exact-box source | 34 / 40 |
 
-This refines the failure mode again: the detector miss is usually not caused by an empty target neighborhood. Most objects have target-box or near-box points in the SGCP constrained input, but the most informative nearest-CAV object points are often not directly uploaded to the nearest head. Therefore the next algorithmic direction should be instance-support-aware scheduling: compare SGCP vs full-reference box-support points, then favor sender/grid choices that preserve object shape completeness rather than only coarse grid density.
+This refines the failure mode again: the detector miss is usually not caused by an empty target neighborhood. Most objects have target-box or near-box points in the SGCP constrained input, but the most informative nearest-CAV object points are often not directly uploaded to the nearest head. Full-reference has substantially higher object support on many rows, and the nearest CAV is usually the best raw object-support source. Therefore the next algorithmic direction should be instance-support-aware scheduling: favor sender/grid choices that preserve object shape completeness rather than only coarse grid density.
 
 ## Next Actions
 
-1. Add target-grid diagnostics to `offline_inference --object-diagnostics-output` or a companion tool: for every missed GT, record per-head pre-NMS best IoU, score, and source CAVs. Follow-ups completed via `sgcp_head_box_diagnostics` and `sgcp_object_point_association`; next step is comparing SGCP vs full-reference object/near-object point support.
+1. Add target-grid diagnostics to `offline_inference --object-diagnostics-output` or a companion tool: for every missed GT, record per-head pre-NMS best IoU, score, and source CAVs. Follow-ups completed via `sgcp_head_box_diagnostics` and `sgcp_object_point_association`; next step is turning the full-reference object-support gap into an instance-support-aware PPS utility.
 2. Implement target-aware scheduling probe: persistent missed grids get a same-cluster, high-quality covering sender if one exists, replacing the lowest utility scheduled grid/link under the same channel budget.
 3. Add CAV-body GT audit: mark GT objects whose centers overlap a CAV body, and decide whether paper AP should include them under the same convention as OPV2V/OpenCOOD.
 4. Re-run 10ch/rho3 and 20ch with the target-aware probe; accept only if AP improves without increasing Mbps.

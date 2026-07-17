@@ -5175,7 +5175,7 @@ conda run -n opencda python -m opencda.tools.sgcp_object_point_association --dat
 
 ### 结果
 
-Dense-miss top40 统计：
+Dense-miss top40 SGCP object-support 统计：
 
 | Metric | Min | Avg | Max | Zero rows |
 | --- | ---: | ---: | ---: | ---: |
@@ -5187,13 +5187,23 @@ Dense-miss top40 统计：
 | Nearest CAV raw points inside GT BEV box | 0 | 107.82 | 344 | 5 / 40 |
 | Nearest CAV uploaded points inside GT BEV box | 0 | 20.68 | 344 | 31 / 40 |
 
+Full-reference 对照：
+
+| Metric | Min | Avg | Max | Notes |
+| --- | ---: | ---: | ---: | --- |
+| Full-reference points inside exact GT BEV box | 24 | 164.98 | 386 | 0 / 40 rows are empty |
+| SGCP / full-reference exact-box point ratio | 0.00 | 0.62 | 0.97 | 18 / 40 rows are below 0.5 |
+| Full-reference points inside GT BEV box + 2 m | 46 | 433.70 | 1655 | 0 / 40 rows are empty |
+| SGCP / full-reference box+2m point ratio | 0.00 | 0.64 | 0.97 | 16 / 40 rows are below 0.5 |
+| Best single raw CAV exact-box points | 9 | 109.00 | 344 | nearest CAV is rank 1 in 34 / 40 rows |
+
 Lowest exact-box support examples include object `419` at frame `000060` with 0 exact-box points but 148 nearest-head coarse-grid points, and object `377` at frames `000076/000078` with only 4/5 exact-box points.
 
 ### 结论
 
-这批 dense-miss 不能解释为“目标附近完全没有点”。在 exact BEV box 内，39/40 行已有 SGCP 支撑点；扩展到 2 m 邻域后，40/40 行都有点。但 nearest CAV 的 object-box 点大多没有被直接上传到 nearest head：31/40 行的 `nearest_cav_uploaded_box_points_m0p0=0`。因此当前失败更像是两类问题叠加：
+这批 dense-miss 不能解释为“目标附近完全没有点”。在 exact BEV box 内，39/40 行已有 SGCP 支撑点；扩展到 2 m 邻域后，40/40 行都有点。但 nearest CAV 的 object-box 点大多没有被直接上传到 nearest head：31/40 行的 `nearest_cav_uploaded_box_points_m0p0=0`。Full-reference 对照进一步说明，SGCP 虽然平均保留了约 62% exact-box 点，但 18/40 行低于 50%，且 nearest CAV 在 34/40 行本来就是最佳 raw object-support source。因此当前失败更像是两类问题叠加：
 
 - coarse grid 覆盖不等价于目标实例级覆盖，部分 grid 点并不形成足够完整的目标形状；
 - 即使有目标附近点，SGCP constrained input 的多视角密度/形状上下文仍不足以让 head-local detector 出框。
 
-下一步应比较 full-reference 与 SGCP 在这些 GT box/near-box 内的点数差距，并把调度 utility 从 grid-density 进一步推进到 instance-support / box-support aware，而不是继续调普通 source fairness 或 late-fusion NMS。
+下一步应把调度 utility 从 grid-density 进一步推进到 instance-support / box-support aware：在不增加 RB 数的前提下，优先保护最佳实例视角到相关 cluster head 的传输，再由 target layer 选择能补全目标形状的 grid。

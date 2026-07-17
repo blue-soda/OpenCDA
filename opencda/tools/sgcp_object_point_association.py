@@ -204,6 +204,10 @@ def point_counts_for_frame(args, dataset, protocol, scenario_id, timestamp,
             cav['params']['lidar_pose'])
         for cav_id, cav in frame.items()
     }
+    full_reference_points = (
+        np.concatenate(list(raw_world_points.values()), axis=0)
+        if raw_world_points
+        else np.empty((0, 3), dtype=np.float32))
     rows = []
     for miss in miss_rows:
         object_id = str(miss.get('object_id', ''))
@@ -262,33 +266,66 @@ def point_counts_for_frame(args, dataset, protocol, scenario_id, timestamp,
             'nearest_cav_uploaded_total_points': int(
                 nearest_cav_uploaded_points.shape[0]),
             'nearest_cav_raw_total_points': int(nearest_cav_raw.shape[0]),
+            'full_reference_total_points': int(full_reference_points.shape[0]),
             'full_reference_best_iou': miss.get('full_reference_best_iou', ''),
             'method_best_iou': miss.get('method_best_iou', ''),
         }
         for margin in margins:
             suffix = ('m%s' % str(margin).replace('.', 'p'))
-            base['receiver_box_points_%s' % suffix] = count_points_in_box(
+            receiver_box_points = count_points_in_box(
                 receiver_points,
                 info,
                 margin=margin)
-            base['uploaded_box_points_%s' % suffix] = count_points_in_box(
+            uploaded_box_points = count_points_in_box(
                 uploaded_points,
                 info,
                 margin=margin)
-            base['total_box_points_%s' % suffix] = count_points_in_box(
+            total_box_points = count_points_in_box(
                 total_points,
                 info,
                 margin=margin)
+            nearest_cav_uploaded_box_points = count_points_in_box(
+                nearest_cav_uploaded_points,
+                info,
+                margin=margin)
+            nearest_cav_raw_box_points = count_points_in_box(
+                nearest_cav_raw,
+                info,
+                margin=margin)
+            full_reference_box_points = count_points_in_box(
+                full_reference_points,
+                info,
+                margin=margin)
+            raw_cav_box_counts = {
+                cav_id: count_points_in_box(points, info, margin=margin)
+                for cav_id, points in raw_world_points.items()
+            }
+            best_raw_cav_id, best_raw_cav_points = max(
+                raw_cav_box_counts.items(),
+                key=lambda item: item[1])
+            sorted_raw_counts = sorted(
+                raw_cav_box_counts.values(),
+                reverse=True)
+            nearest_cav_raw_rank = (
+                1 + sum(
+                    1 for value in sorted_raw_counts
+                    if value > nearest_cav_raw_box_points))
+            base['receiver_box_points_%s' % suffix] = receiver_box_points
+            base['uploaded_box_points_%s' % suffix] = uploaded_box_points
+            base['total_box_points_%s' % suffix] = total_box_points
             base['nearest_cav_uploaded_box_points_%s' % suffix] = (
-                count_points_in_box(
-                    nearest_cav_uploaded_points,
-                    info,
-                    margin=margin))
+                nearest_cav_uploaded_box_points)
             base['nearest_cav_raw_box_points_%s' % suffix] = (
-                count_points_in_box(
-                    nearest_cav_raw,
-                    info,
-                    margin=margin))
+                nearest_cav_raw_box_points)
+            base['full_reference_box_points_%s' % suffix] = (
+                full_reference_box_points)
+            base['sgcp_full_box_point_ratio_%s' % suffix] = (
+                round(float(total_box_points) / full_reference_box_points, 4)
+                if full_reference_box_points > 0
+                else '')
+            base['best_raw_cav_id_%s' % suffix] = best_raw_cav_id
+            base['best_raw_cav_box_points_%s' % suffix] = best_raw_cav_points
+            base['nearest_cav_raw_rank_%s' % suffix] = nearest_cav_raw_rank
         rows.append(base)
     return rows
 
