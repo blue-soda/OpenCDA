@@ -169,6 +169,35 @@ Interpretation:
 - Top-40 达到 `100%` selected GT ratio，但会纳入更多低质量 / 低收益 area，因此 mean selected area recall 下降。
 - 该 sweep 支持将 LGCP hierarchy 描述为 area-prioritized budgeted aggregation，而不是简单的 full sharing 或 flat top-k selective sharing。
 
+## Feature-Slice Budget Sweep
+
+2026-07-17 将同一组 `max_areas=10/20/30/40` hierarchy assignment plans 接入 raw LiDAR area-slice manifest，得到数据依赖的 member-to-leader upload byte proxy。
+
+输出目录：
+
+```text
+docs/doc_workspace/LGCP/experiments/hierarchy_plan/20260717_lgcp_carla_feature_slice_budget_sweep_density_distance/
+```
+
+汇总文件：
+
+```text
+feature_slice_budget_summary.csv
+```
+
+| Max areas | Selected GT ratio | Fixed local bytes / frame | Raw member slice bytes / frame | Raw total slice points / frame | Raw member upload points / frame |
+| ---: | ---: | ---: | ---: | ---: | ---: |
+| 10 | 0.472790 | 48181.818182 | 20933.818182 | 12578.090909 | 1308.363636 |
+| 20 | 0.738288 | 95454.545455 | 39287.272727 | 20149.909091 | 2455.454545 |
+| 30 | 0.953193 | 158181.818182 | 59415.272727 | 24373.090909 | 3713.454545 |
+| 40 | 1.000000 | 214545.454545 | 99186.909091 | 34993.636364 | 6199.181818 |
+
+Interpretation:
+
+- Raw area slice bytes are substantially lower than the fixed `10000 bytes` per member packet proxy.
+- The Top-30 setting reaches `95.32%` selected GT ratio with `59.42 KB/frame` raw member upload bytes.
+- This is still raw LiDAR slicing, not neural feature tensor slicing. Its value is to bound the next feature-slicing implementation and replace the earlier fixed-size proxy with data-dependent measurements.
+
 ## Offline NS3 Replay 接入
 
 `opencda/tools/offline_ns3_replay.py` 已支持：

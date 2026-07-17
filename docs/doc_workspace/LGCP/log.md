@@ -2667,3 +2667,33 @@ conda run -n opencda python -m opencda.tools.lgcp_hierarchy_aggregation_eval --a
 - Top-30 已覆盖 `95.32%` GT-bearing area，且 byte proxy 约为 Top-40 的 `74.25%`。
 - Top-40 覆盖所有 GT-bearing area，但 mean selected area recall 降低，说明低优先级 area 的边际收益较低。
 - 该结果补强 hierarchy control-plane 的 budget tradeoff，但仍不等同于真实 leader local fusion / RSU model-level aggregation。
+
+## 2026-07-17 - Feature-slice budget sweep
+
+### 目标
+
+- 将 hierarchy budget sweep 接入 raw LiDAR area-specific slice manifest。
+- 用数据依赖的 raw slice byte proxy 替代固定 `10000 bytes` per member packet proxy 的一部分解释。
+
+### 运行命令
+
+对 `max_areas=10/20/30/40` 分别运行：
+
+```powershell
+conda run -n opencda python -m opencda.tools.lgcp_feature_slice_manifest --dataset-root D:\Data\Carla --scenario-id 2026_07_15_02_33_21 --assignment-plan docs\doc_workspace\LGCP\experiments\hierarchy_plan\20260717_lgcp_carla_hierarchy_budget_sweep_density_distance\area<MAX_AREAS>\area_assignment_plan.csv --output-dir docs\doc_workspace\LGCP\experiments\hierarchy_plan\20260717_lgcp_carla_feature_slice_budget_sweep_density_distance\area<MAX_AREAS> --grid-size-x 10 --grid-size-y 6 --bytes-per-point 16
+```
+
+### 结果
+
+| Max areas | Selected GT ratio | Fixed local bytes / frame | Raw member slice bytes / frame | Raw total slice points / frame |
+| ---: | ---: | ---: | ---: | ---: |
+| 10 | 0.472790 | 48181.818182 | 20933.818182 | 12578.090909 |
+| 20 | 0.738288 | 95454.545455 | 39287.272727 | 20149.909091 |
+| 30 | 0.953193 | 158181.818182 | 59415.272727 | 24373.090909 |
+| 40 | 1.000000 | 214545.454545 | 99186.909091 | 34993.636364 |
+
+### 结论
+
+- Top-30 在 `95.32%` selected GT ratio 下 raw member upload bytes 为 `59.42 KB/frame`。
+- Raw slice byte proxy 明显低于固定 packet proxy，说明后续 feature tensor slicing 不应继续使用固定大小估计作为唯一通信量证据。
+- 该结果仍是 raw LiDAR proxy，不是 neural feature slicing 或 model-level leader fusion。

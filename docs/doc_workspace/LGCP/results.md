@@ -1338,3 +1338,24 @@ Interpretation:
 - Top-30 captures most GT-bearing area coverage with substantially less byte proxy and leader load than Top-40.
 - Top-40 is useful as a coverage upper setting, but it includes lower-quality marginal areas; reporting only Top-40 can hide the budget tradeoff.
 - This is a hierarchy control-plane / aggregation proxy result, not full model-level local fusion.
+
+## 2026-07-17：Feature-Slice Budget Sweep
+
+Run:
+
+```text
+docs/doc_workspace/LGCP/experiments/hierarchy_plan/20260717_lgcp_carla_feature_slice_budget_sweep_density_distance
+```
+
+| Max areas | Selected GT ratio | Fixed local bytes / frame | Raw member slice bytes / frame | Raw leader self bytes / frame | Raw total slice points / frame |
+| ---: | ---: | ---: | ---: | ---: | ---: |
+| 10 | 0.472790 | 48181.818182 | 20933.818182 | 180315.636364 | 12578.090909 |
+| 20 | 0.738288 | 95454.545455 | 39287.272727 | 283111.272727 | 20149.909091 |
+| 30 | 0.953193 | 158181.818182 | 59415.272727 | 330554.181818 | 24373.090909 |
+| 40 | 1.000000 | 214545.454545 | 99186.909091 | 460711.272727 | 34993.636364 |
+
+Interpretation:
+
+- Data-dependent raw member slice bytes are lower than the earlier fixed packet proxy in every budget setting.
+- Top-30 gives a useful operating point: `95.32%` selected GT ratio with `59.42 KB/frame` member upload raw slice bytes.
+- The result is a raw LiDAR proxy and should be described as a bridge toward neural feature slicing, not as completed model-level fusion.
