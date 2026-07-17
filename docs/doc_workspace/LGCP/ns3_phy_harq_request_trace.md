@@ -177,3 +177,32 @@ docs/doc_workspace/LGCP/experiments/hierarchy_plan/20260717_lgcp_carla_raw_slice
 - PSSCH 已有 request-level attribution。
 - PSCCH 仍主要作为 aggregate decode breakdown 使用。
 - HARQ ACK/NACK 在该 3 帧 run 中未观测到；后续若需要 HARQ 证据，仍应使用启用 HARQ 的配置重新跑。
+
+## 2026-07-18 Raw-Slice 11F Trace Update
+
+Top-30 raw-slice-aware upload plan 已扩展到完整 11 帧：
+
+```text
+docs/doc_workspace/LGCP/experiments/hierarchy_plan/20260717_lgcp_carla_raw_slice_upload_plan_area30/ns3_request_trace_11f_rsu21/
+```
+
+| Metric | Value |
+| --- | ---: |
+| Planned requests | 504 |
+| Requests with RLC TX | 446 |
+| Requests with RLC RX | 94 |
+| Requests with PSSCH OK | 94 |
+| Requests with PSSCH FAIL | 250 |
+| Application callbacks | 55 |
+
+Aggregate PHY decode:
+
+| Channel | Status | Reason | Count | Ratio |
+| --- | --- | --- | ---: | ---: |
+| PSCCH | FAIL | decoded_overlap | 1850 | 0.412670 |
+| PSCCH | FAIL | error_model | 216 | 0.048182 |
+| PSCCH | OK | - | 2417 | 0.539148 |
+| PSSCH | FAIL | decode_fail | 193 | 0.620579 |
+| PSSCH | OK | - | 118 | 0.379421 |
+
+该结果说明 raw-slice-aware LGCP request lifecycle 在完整本地 11 帧 dump 上已经可解析。当前 replay 仍未接入 LGCP scheduling，因此低 delivery ratio 应解释为 unscheduled network bottleneck。

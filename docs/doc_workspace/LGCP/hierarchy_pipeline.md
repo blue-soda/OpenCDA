@@ -279,6 +279,34 @@ docs/doc_workspace/LGCP/experiments/hierarchy_plan/20260717_lgcp_carla_raw_slice
 
 该 trace 已能将 raw-slice-aware LGCP requests 映射到 RLC / request-level PSSCH / application callback；PSCCH breakdown 仍是 aggregate decode 统计。
 
+11-frame request-level trace:
+
+```text
+docs/doc_workspace/LGCP/experiments/hierarchy_plan/20260717_lgcp_carla_raw_slice_upload_plan_area30/ns3_request_trace_11f_rsu21/
+```
+
+| Metric | Value |
+| --- | ---: |
+| Planned requests | 504 |
+| Planned bytes | 1313568 |
+| `cam_received` | 55 |
+| Bridge-observed delivery ratio | 0.109127 |
+| RLC TX events | 546 |
+| RLC RX events | 118 |
+| Requests with RLC TX | 446 |
+| Requests with RLC RX | 94 |
+| Requests with PSSCH OK | 94 |
+| Requests with PSSCH FAIL | 250 |
+
+按 upload type：
+
+| Upload type | Planned | Observed app | Bridge-observed ratio |
+| --- | ---: | ---: | ---: |
+| member_to_leader | 174 | 8 | 0.045977 |
+| leader_to_rsu | 330 | 47 | 0.142424 |
+
+11-frame trace confirms the raw-slice-aware plan scales beyond the 3-frame smoke. The low delivery ratio is expected for the current unscheduled replay and motivates LGCP scheduling.
+
 ## Offline NS3 Replay 接入
 
 `opencda/tools/offline_ns3_replay.py` 已支持：

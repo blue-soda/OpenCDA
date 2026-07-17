@@ -66,6 +66,7 @@
 - 已新增 `opencda/tools/lgcp_slice_upload_plan_eval.py`，可将 hierarchy fixed-byte upload plan 替换为 raw-slice-aware upload plan；Top-30 11 帧 member-to-leader bytes 从 `1.74 MB` 降到 `653.57 KB`，并通过 `offline_ns3_replay --dry-run`。
 - Top-30 raw-slice-aware upload plan 已完成 3 帧 live ns-3 replay smoke，输出 `upload_plan_replayed.csv`；本次只验证 bridge/replay 接受，不报告 request-level delivery ratio。
 - Top-30 raw-slice-aware upload plan 已进一步完成 3 帧 request-level trace rerun：137 planned requests、6 application callbacks、106 RLC TX、20 RLC RX、14 requests with PSSCH OK、51 requests with PSSCH FAIL；当前 unscheduled replay 仍显示严重链路瓶颈。
+- Top-30 raw-slice-aware upload plan 已扩展到完整 11 帧 request-level trace：504 planned requests、55 application callbacks、546 RLC TX、118 RLC RX、94 requests with PSSCH OK、250 requests with PSSCH FAIL；当前结果验证 trace 路径和调度必要性，不作为最终网络性能行。
 - 已新增 `opencda/tools/lgcp_feature_slice_manifest.py`，生成 raw LiDAR area-specific slice manifest；Top-40 11 帧 member upload slice 约 `6199` points/frame、`99.19 KB/frame`，为后续 neural feature slicing 提供接口和 byte proxy。
 - 已新增 LGCP 专用仿真入口 `opencda/scenario_testing/lgcp_carla.py` 和配置 `opencda/scenario_testing/config_yaml/lgcp_carla.yaml`。
 - 未修改 `v2xp_cluster_carla` 原始配置。

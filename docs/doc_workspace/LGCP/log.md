@@ -2819,3 +2819,56 @@ conda run -n opencda python -m opencda.tools.lgcp_ns3_log_eval --ns3-stdout docs
 - Raw-slice-aware plan 的 request-level trace 路径已闭合：plan -> RLC -> PSSCH request events -> application callback。
 - 当前 unscheduled replay 的链路瓶颈仍严重，尤其 PSCCH overlap / PSSCH decode failure。
 - 该结果适合作为 trace-path validation，不应作为最终网络性能行。
+
+## 2026-07-18 - Raw-slice-aware 11-frame request-level NS3 trace
+
+### 目标
+
+- 将 Top-30 raw-slice-aware request-level trace 从 3 帧扩展到完整 11 帧本地 dump。
+- 验证 raw-slice-aware upload plan 在完整 11 帧上也能形成 request lifecycle。
+
+### 修正
+
+- 初次启动失败是因为 `ns3_smoke_11f_rsu21` 输出目录尚不存在，导致 WSL stdout 重定向失败。
+- 创建目录后重跑成功。
+
+### 命令
+
+ns-3：
+
+```powershell
+wsl -d Ubuntu-22.04 -u sakakibara -- bash -lc "cd /home/sakakibara/workspace/carla-ns3-co-simulation/ns-3-dev && ./ns3 run 'scratch/vanet/main.cc --simTime=1.3 --enableTimeSync=true --carlaHost=auto --targetSubchannels=10' > /mnt/c/Workspace/OpenCDA/docs/doc_workspace/LGCP/experiments/hierarchy_plan/20260717_lgcp_carla_raw_slice_upload_plan_area30/ns3_smoke_11f_rsu21/ns3_stdout_request.log 2>&1"
+```
+
+OpenCDA replay：
+
+```powershell
+conda run -n opencda python -m opencda.tools.offline_ns3_replay --dataset-root D:\Data\Carla --scenario-id 2026_07_15_02_33_21 --ego-cav-id 1 --max-frames 11 --lgcp-upload-plan docs\doc_workspace\LGCP\experiments\hierarchy_plan\20260717_lgcp_carla_raw_slice_upload_plan_area30\raw_slice_upload_plan.csv --rsu-node-id 21 --drain-seconds 0.3 --sync-timeout 10 --upload-plan-output docs\doc_workspace\LGCP\experiments\hierarchy_plan\20260717_lgcp_carla_raw_slice_upload_plan_area30\ns3_smoke_11f_rsu21\upload_plan_replayed_request.csv
+```
+
+Parser：
+
+```powershell
+conda run -n opencda python -m opencda.tools.lgcp_ns3_log_eval --ns3-stdout docs\doc_workspace\LGCP\experiments\hierarchy_plan\20260717_lgcp_carla_raw_slice_upload_plan_area30\ns3_smoke_11f_rsu21\ns3_stdout_request.log --upload-plan docs\doc_workspace\LGCP\experiments\hierarchy_plan\20260717_lgcp_carla_raw_slice_upload_plan_area30\ns3_smoke_11f_rsu21\upload_plan_replayed_request.csv --output-dir docs\doc_workspace\LGCP\experiments\hierarchy_plan\20260717_lgcp_carla_raw_slice_upload_plan_area30\ns3_request_trace_11f_rsu21 --rsu-node-id 21 --max-frames 11
+```
+
+### 结果
+
+| Metric | Value |
+| --- | ---: |
+| Planned requests | 504 |
+| Planned bytes | 1313568 |
+| Observed `cam_received` | 55 |
+| Bridge-observed delivery ratio | 0.109127 |
+| RLC TX events | 546 |
+| RLC RX events | 118 |
+| Requests with RLC TX | 446 |
+| Requests with RLC RX | 94 |
+| Requests with PSSCH OK | 94 |
+| Requests with PSSCH FAIL | 250 |
+
+### 结论
+
+- Raw-slice-aware request lifecycle 已在完整 11 帧本地 dump 上闭合。
+- 当前 unscheduled replay 的 delivery ratio 仍低，主要作为调度必要性的诊断证据。
+- 下一步若继续网络方向，应基于 raw-slice-aware plan 接入 subchannel scheduling，而不是继续重复 unscheduled replay。

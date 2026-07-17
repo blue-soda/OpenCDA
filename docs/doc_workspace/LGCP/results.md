@@ -1448,3 +1448,49 @@ Interpretation:
 - The raw-slice-aware plan now has a complete 3-frame request-level trace.
 - The network bottleneck remains severe under the current unscheduled replay setting; this supports the need for LGCP scheduling rather than weakening it.
 - This is a smoke result, not a final paper row; use it to validate the trace path and motivate scheduled replay.
+
+11-frame request-level trace:
+
+```text
+docs/doc_workspace/LGCP/experiments/hierarchy_plan/20260717_lgcp_carla_raw_slice_upload_plan_area30/ns3_request_trace_11f_rsu21
+```
+
+| Metric | Value |
+| --- | ---: |
+| Planned requests | 504 |
+| Planned bytes | 1313568 |
+| Observed `cam_received` | 55 |
+| Bridge-observed delivery ratio | 0.109127 |
+| Observed bytes | 116624 |
+| Avg delay | 83.109 ms |
+| P95 delay | 114.000 ms |
+| Max delay | 212.000 ms |
+| RLC TX events | 546 |
+| RLC RX events | 118 |
+| Requests with RLC TX | 446 |
+| Requests with RLC RX | 94 |
+| Requests with PSSCH OK | 94 |
+| Requests with PSSCH FAIL | 250 |
+
+By upload type:
+
+| Upload type | Planned | Observed app | Bridge ratio | Planned bytes | Observed bytes |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| member_to_leader | 174 | 8 | 0.045977 | 653568 | 22624 |
+| leader_to_rsu | 330 | 47 | 0.142424 | 660000 | 94000 |
+
+PHY decode breakdown:
+
+| Channel | Status | Reason | Count | Channel ratio |
+| --- | --- | --- | ---: | ---: |
+| PSCCH | FAIL | decoded_overlap | 1850 | 0.412670 |
+| PSCCH | FAIL | error_model | 216 | 0.048182 |
+| PSCCH | OK | - | 2417 | 0.539148 |
+| PSSCH | FAIL | decode_fail | 193 | 0.620579 |
+| PSSCH | OK | - | 118 | 0.379421 |
+
+Interpretation:
+
+- The 11-frame raw-slice-aware trace closes the request lifecycle path over the full local dump.
+- Current unscheduled replay is network-limited; leader-to-RSU application visibility is higher than member-to-leader, but both are low.
+- This result should be used as trace validation and motivation for scheduled replay, not as the final LGCP network row.
