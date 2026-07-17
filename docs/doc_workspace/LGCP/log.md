@@ -3229,3 +3229,29 @@ by type：
   - `docs/doc_workspace/LGCP/model_level_hierarchy_entry.md`
 - 下一步：
   - 实现 `lgcp_hierarchy_late_fusion_eval.py`，按 `(timestamp, area_id, leader_id, group_members)` 真实调用 OpenCOOD，输出 leader local prediction 与 RSU global late-fusion AP。
+
+## Box-level hierarchy late-fusion adapter smoke
+
+- 新增脚本：
+  - `opencda/tools/lgcp_hierarchy_late_fusion_eval.py`
+- 功能：
+  - 读取 `area_assignment_plan.csv`。
+  - 对每个 `(timestamp, area_id, leader_id, group_members)` 真实调用 OpenCOOD。
+  - 将 leader prediction / GT 转到 world 坐标，再按 LGCP area 裁剪。
+  - 对同一帧的 area-local leader predictions 做 RSU global late fusion。
+  - 输出 `leader_local_predictions.csv`、`rsu_global_frame_summary.csv`、`rsu_global_eval_summary.csv`。
+- 语法检查：
+  - `python -m py_compile opencda\tools\lgcp_hierarchy_late_fusion_eval.py`
+- 初次 smoke：
+  - `return_object_ids=True` 与 late-fusion dataset 的 `post_process()` 不兼容，已改为 `return_object_ids=False`。
+- 成功命令：
+  - `conda run -n opencda python -m opencda.tools.lgcp_hierarchy_late_fusion_eval --dataset-root D:\Data\Carla --scenario-id 2026_07_15_02_33_21 --assignment-plan docs\doc_workspace\LGCP\experiments\hierarchy_plan\20260717_lgcp_carla_hierarchy_budget_sweep_density_distance\area30\area_assignment_plan.csv --output-dir docs\doc_workspace\LGCP\experiments\hierarchy_plan\20260718_lgcp_carla_hierarchy_late_fusion_smoke_area2 --max-frames 1 --max-areas-per-frame 2 --fusion-method late`
+- 结果：
+  - frames: `1`
+  - assignment rows: `2`
+  - cached group inference calls: `2`
+  - RSU fused pred / GT boxes: `6 / 6`
+  - AP@0.3 / AP@0.5 / AP@0.7: `1.000000 / 1.000000 / 0.833333`
+- 结论：
+  - box-level model-calling hierarchy path 已打通。
+  - 当前只覆盖 1 帧 2 area，不能作为论文数值；下一步应扩大到 Top-30 1 帧完整 area、3 帧和 11 帧。

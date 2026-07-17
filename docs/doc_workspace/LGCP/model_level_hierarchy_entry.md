@@ -166,4 +166,44 @@ notes.md
 | Box-level hierarchy | 待实现 | late-fusion hierarchy ablation / structure benefit |
 | Neural feature hierarchy | 待实现 | full LGCP model-level feature slicing and local-to-global fusion |
 
-下一步最小任务应是实现 Phase A 的 `lgcp_hierarchy_late_fusion_eval.py`，复用 SGCP late-fusion 路径，先得到可评估 AP 的 local-to-global hierarchy ablation。
+2026-07-18 已新增 Phase A 入口：
+
+```text
+opencda/tools/lgcp_hierarchy_late_fusion_eval.py
+```
+
+该脚本按 hierarchy assignment plan 中的 `(timestamp, area_id, leader_id, group_members)` 真实调用 OpenCOOD，先在 leader/group 上推理，再把 prediction / GT 转到 world 坐标并按 area 裁剪，最后对同一 timestamp 的多个 area-local leader prediction 做 RSU box-level late fusion 与 AP 统计。
+
+下一步最小任务应是使用 Top-30 计划跑 1-3 帧 smoke，确认输出的 `leader_local_predictions.csv`、`rsu_global_frame_summary.csv` 和 `rsu_global_eval_summary.csv` 可以进入 local-to-global ablation 结果表。
+
+## 2026-07-18 Box-Level Smoke
+
+运行目录：
+
+```text
+docs/doc_workspace/LGCP/experiments/hierarchy_plan/20260718_lgcp_carla_hierarchy_late_fusion_smoke_area2
+```
+
+命令：
+
+```powershell
+conda run -n opencda python -m opencda.tools.lgcp_hierarchy_late_fusion_eval --dataset-root D:\Data\Carla --scenario-id 2026_07_15_02_33_21 --assignment-plan docs\doc_workspace\LGCP\experiments\hierarchy_plan\20260717_lgcp_carla_hierarchy_budget_sweep_density_distance\area30\area_assignment_plan.csv --output-dir docs\doc_workspace\LGCP\experiments\hierarchy_plan\20260718_lgcp_carla_hierarchy_late_fusion_smoke_area2 --max-frames 1 --max-areas-per-frame 2 --fusion-method late
+```
+
+结果：
+
+| Metric | Value |
+| --- | ---: |
+| Frames | 1 |
+| Assignment rows | 2 |
+| Cached group inference calls | 2 |
+| RSU fused pred boxes | 6 |
+| RSU fused GT boxes | 6 |
+| AP@0.3 | 1.000000 |
+| AP@0.5 | 1.000000 |
+| AP@0.7 | 0.833333 |
+
+解释：
+
+- 该 smoke 证明 adapter 已能真实调用 OpenCOOD late model，并完成 leader/group 推理、world 坐标 area 裁剪、RSU global late fusion 和 AP 统计。
+- 该结果只覆盖 1 帧 2 个 area，不能作为论文数值；下一步应扩大到 Top-30 的 1 帧完整 area，再扩大到 3 帧 / 11 帧。

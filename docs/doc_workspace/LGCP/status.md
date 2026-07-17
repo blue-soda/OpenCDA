@@ -76,6 +76,7 @@
 - `lgcp_schedule_upload_plan_eval.py` 已增加 `--enforce-source-unique` 半双工敏感性；Top-30 11 帧 mean slots/frame 从 `5.0` 增至 `7.36`，3 帧 live replay 中 member-to-leader application callbacks 从 `2/47` 增到 `5/47`，但总 delivery 为 `52/137`，说明 source-unique 有帮助但不是充分修复。
 - 已新增 `opencda/tools/lgcp_feature_slice_manifest.py`，生成 raw LiDAR area-specific slice manifest；Top-40 11 帧 member upload slice 约 `6199` points/frame、`99.19 KB/frame`，为后续 neural feature slicing 提供接口和 byte proxy。
 - 已新增 `model_level_hierarchy_entry.md`，审计 OpenCOOD late/intermediate fusion、OpenCDA offline dataset 和 SGCP late-fusion 参考路径；结论是下一步应先实现 box-level hierarchy late-fusion adapter，再推进 PointPillar intermediate neural feature slicing。
+- 已新增 `opencda/tools/lgcp_hierarchy_late_fusion_eval.py`，实现 box-level hierarchy late-fusion adapter；1 帧 2 area smoke 已完成，能够真实调用 OpenCOOD late model，输出 leader local prediction、RSU global late-fusion summary 和 AP。
 - 已新增 LGCP 专用仿真入口 `opencda/scenario_testing/lgcp_carla.py` 和配置 `opencda/scenario_testing/config_yaml/lgcp_carla.yaml`。
 - 未修改 `v2xp_cluster_carla` 原始配置。
 - 已补齐 RSU 首次启用所需的基础运行路径：固定基础设施感知初始化、RSU 注册/访问、最近感知结果保存、销毁路径。
@@ -83,7 +84,7 @@
 ## 近期建议焦点
 
 1. 扩大 area confidence validation 到多 seed / 多场景，形成可进入论文的稳定相关性结果；OpenCOOD 评估入口、日志格式、远端数据路径和候选 checkpoint 已确认，下一步应在 `mindspore-186` 跑 400-frame gate。
-2. 推进 box-level hierarchy late-fusion adapter，先得到真实调用 OpenCOOD 推理的 local-to-global ablation；随后再推进 PointPillar intermediate neural feature tensor slicing、leader local fusion 和 RSU global perception aggregation。
+2. 扩大 box-level hierarchy late-fusion adapter 到 Top-30 1 帧完整 area、3 帧和 11 帧，形成可与 flat selective sharing 对照的 local-to-global ablation；随后再推进 PointPillar intermediate neural feature tensor slicing、leader local fusion 和 RSU global perception aggregation。
 3. 若继续扩展 ablation，应将 source-unique 作为更真实 scheduler 约束保留，同时继续诊断 member slots 的 target receiver setup 和非 RSU receiver 的 CAM application completion；另一条主线是推进 model-level leader/RSU fusion。
 4. 大规模 30 CAV 结果若短期只跑 latency，应在论文中收窄为 communication/computation scalability；若报告 perception scalability，只能报告已校准的 proxy，不能写成真实 AP。
 5. 下一步将 request-level PHY/RLC/HARQ trace 和 control-plane overhead 扩展到多 seed，或开始推进完整 LGCP local fusion / RSU aggregation。

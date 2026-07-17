@@ -1,0 +1,3 @@
+scenario_id,timestamp,area_id,leader_id,group_members,group_size,group_confidence,area_pred_count,area_gt_count
+2026_07_15_02_33_21,000060,12_9,5,5;20,2,0.993232,3,3
+2026_07_15_02_33_21,000060,13_2,11,11;2,2,0.982015,3,3

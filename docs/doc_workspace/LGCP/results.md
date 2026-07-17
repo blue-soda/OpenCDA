@@ -1771,3 +1771,28 @@ Interpretation:
 | Neural feature slicing | Pending | 只有完成 PointPillar intermediate feature slice 后，才能称为完整 LGCP model-level feature hierarchy |
 
 该结论记录在 `model_level_hierarchy_entry.md`，用于约束后续论文表述和实现优先级。
+
+## Box-Level Hierarchy Late-Fusion Smoke
+
+2026-07-18 新增 `opencda/tools/lgcp_hierarchy_late_fusion_eval.py`，并完成最小 model-calling smoke：
+
+```text
+docs/doc_workspace/LGCP/experiments/hierarchy_plan/20260718_lgcp_carla_hierarchy_late_fusion_smoke_area2
+```
+
+| Metric | Value |
+| --- | ---: |
+| Frames | 1 |
+| Assignment rows | 2 |
+| Cached group inference calls | 2 |
+| RSU fused pred boxes | 6 |
+| RSU fused GT boxes | 6 |
+| AP@0.3 | 1.000000 |
+| AP@0.5 | 1.000000 |
+| AP@0.7 | 0.833333 |
+
+Interpretation:
+
+- This smoke verifies the model-calling local-to-global path: leader/group OpenCOOD inference -> world-coordinate area slicing -> RSU global late fusion -> AP summary.
+- It is not a paper result because it only covers 1 frame and 2 areas from the Top-30 plan.
+- The next publishable step is Top-30 multi-frame evaluation and comparison against flat selective-sharing baselines.
