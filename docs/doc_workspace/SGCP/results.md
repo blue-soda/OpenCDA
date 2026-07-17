@@ -257,6 +257,20 @@ Forced-budget random selective baseline now has the same 11-frame scheduled-only
 
 Forced-budget random selective baseline: using the same coalition and late-fusion path with 3 uploaded members per head and 117 grid budget, deterministic random member/grid selection reaches AP@0.3/0.5/0.7 = `0.77/0.73/0.38`, total payload `31,613,424` bytes (`61.68 Mbps`), avg source CAVs `3.33`, avg selected grids `103.20`. This replaces the old low-payload RandomRA row as the fair random baseline for main-table discussion.
 
+### Routing Probe Boundary
+
+These probes diagnose the residual gap between PAPG and edge/global assignment baselines. They should not be promoted to main-table methods unless a principled detector/proposal-level trigger is added.
+
+| Probe | Frames | AP@0.3 | AP@0.5 | AP@0.7 | Payload / Mbps | Key Evidence | Paper Use |
+| --- | ---: | ---: | ---: | ---: | --- | --- | --- |
+| PAPG main reference | 41 | 0.81 | 0.78 | 0.39 | 32,049,872 bytes / 62.54 Mbps | 410 scheduled links; first-11-frame NS3 replay 110/110 complete | Main V2V-only SGCP method |
+| ISPG instance-support utility | 41 | 0.80 | 0.78 | 0.39 | 32,046,336 bytes / 62.53 Mbps | Instance-support term in intra-cluster utility is neutral/negative | Internal negative probe |
+| CCISPG naive cross-cluster routing | 11 | 0.68 | 0.64 | 0.37 | 8,663,216 bytes / 62.99 Mbps | External links 104/110; high-IoU can move but low-threshold recall collapses | Shows global routing is risky without edge-level control |
+| CCISPG layered/cap1 routing | 11 | 0.75/0.75 | 0.71/0.72 | 0.33/0.33 | about 62.6 Mbps | External links reduced to 44/110 or 11/110, but AP stays below PAPG | Negative mechanism probe |
+| PAPG + object-grid routing hints | 11 | 0.75 | 0.71 | 0.35 | 8,563,440 bytes / 62.28 Mbps | Post-hoc GT comparison: 4 gained rows, 15 lost rows | Failure analysis only |
+
+Interpretation: object-grid support can repair individual misses, but it can also remove context needed for other already-detected objects. The paper should therefore claim a stable decentralized AP/payload tradeoff for PAPG, while presenting EdgeCooper-HD as an edge-assisted/global-assignment capability that can retain an AP@0.7 advantage.
+
 ### CAV Count Scaling
 
 实验口径：`D:\Data\Carla\2026_07_15_01_26_56`，41 帧，`potential_game`，SGCP inter-cluster late fusion。该表使用同一 20-CAV dump 的数值排序前 `N` 个 CAV 子集，并固定 `ego_cav_id=1`；这是离线规模敏感性 smoke test，不等同于重新生成的不同交通密度场景。

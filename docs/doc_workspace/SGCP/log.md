@@ -5358,3 +5358,25 @@ Lost GTs concentrate on persistent/context-sensitive objects: object `337` lost 
 ### 结论
 
 Routing hints do fix some diagnosed objects, proving the underlying target-to-head idea can work. But the cost is larger: 4 gained GTs vs 15 lost GTs. The detector-benefit trigger therefore needs to protect the already-covered object set, not merely preserve total pred/GT count or selected-grid density. A usable non-oracle mechanism would need a local objectness/proposal-level estimate before replacement: only replace if the candidate route is likely to add a new object without suppressing currently covered object prototypes.
+
+## 2026-07-18 Routing-probe paper-boundary consolidation
+
+### 目的
+
+本轮不新增实验，目标是把近期 ISPG、CCISPG、routing-hint 和 detector-benefit post-hoc 结果从“算法继续试探”收束为论文主表和 rebuttal 的边界条件，避免把负面/半 oracle 探针误放进主表。
+
+### 更新文档
+
+```text
+docs/doc_workspace/SGCP/main_table_candidate.md
+docs/doc_workspace/SGCP/rebuttal_short.md
+docs/doc_workspace/SGCP/results.md
+docs/doc_workspace/SGCP/status.md
+docs/doc_workspace/SGCP/target.md
+```
+
+### 结论
+
+PAPG 仍作为当前稳定 V2V-only SGCP 主算法：41 帧 `0.81/0.78/0.39`，62.54 Mbps，首 11 帧 NS3 110/110 request complete。ISPG 与 PAPG 基本持平但 AP@0.3 略低；CCISPG 能移动少数高 IoU 个例但显著伤低阈值 AP；object-grid routing hints 在逐 GT 对比中修复 4 行但损失 15 行。因此这些结果作为 failure analysis / claim boundary，而不是主表算法。
+
+论文口径应明确：PAPG 改善去中心化 V2V 的 AP/payload tradeoff；EdgeCooper-HD 的 AP@0.7 优势来自 edge/global assignment 能力，应单列为 edge-assisted reference。若继续追 AP@0.7，下一步必须设计 proposal/objectness-level trigger 来保护已覆盖 object prototypes，不能继续叠加临时 routing 修补。

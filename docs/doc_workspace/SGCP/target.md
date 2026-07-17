@@ -35,7 +35,7 @@
 - [x] 将 PAPG 最新主表候选写入 `C:\Workspace\icdcs-paper\SGCP\main.tex`：主行更新为 `SGCP (PAPG, 10 ch.) = 0.81/0.78/0.39, 62.54 Mbps`；机制文字更新为 coverage layer + object-prototype target layer；通信效率段补入 110/110 application/RLC complete 和 0 PHY failures。尚未做 PDF 编译验证，因为本机未检测到 `latexmk/pdflatex`。
 - [x] 根据最新结果更新 rebuttal 答复，覆盖审稿意见中的 FullPerception 公平性、decentralized baseline、`f(rho)` 标定、500 ms 参数、100 ms 实时性、topology trigger、NS3/通信可靠性。已新增 `rebuttal_draft.md`，作为 reviewer-by-reviewer response 草稿。
 - [x] 压缩形成最终 rebuttal 可粘贴版本：已新增 `rebuttal_short.md`，保留 reviewer-by-reviewer 主线、关键数值和更保守的 claim boundary。
-- [ ] 将过程中发现的新问题回写到 `status.md` 和 `target.md`，并在 `log.md` 记录每次实验的命令、commit、日志路径和结论。
+- [x] 将过程中发现的新问题回写到 `status.md`、`target.md`、`results.md`、`main_table_candidate.md` 和 `rebuttal_short.md`：已把 PAPG 主线、EdgeCooper-HD 分层、FullPerception proxy/PCS 边界、online deadline 口径、ISPG/CCISPG/routing-hint 负面 probe 与 “不进主表” 决策归档。后续每次新增实验继续按 `readme.md` 维护 log/status/results。
 
 ## P0：先建立可复现实验基线
 
