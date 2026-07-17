@@ -19,6 +19,7 @@ SGCP 的核心设定是去中心化 CAV 协同感知：车辆先形成 coalition
 | --- | --- | --- | --- | --- |
 | Upper reference | Full 20-CAV early fusion | AP@0.3/0.5/0.7 = 0.85/0.83/0.48 | 否 | 估计无通信约束、全点云共享上界；non-ego upload payload 60,838,528 bytes |
 | Upper reference | Full 20-CAV late fusion checkpoint | AP@0.3/0.5/0.7 = 0.91/0.85/0.51 | 否 | 估计全 CAV prediction-level late fusion 上界；checkpoint 不同 |
+| Built-in FullPerception | PCS (`pcs.py`) | AP@0.3/0.5/0.7 = 0.44/0.39/0.17 | 否 | 对应 FullPerception 论文 PCS 调度；当前仓库实现 payload 12,684,880 bytes / 24.75 Mbps，明显未充分利用预算 |
 | RSU/edge-assisted | FullPerception-RSU proxy | AP@0.3/0.5/0.7 = 0.84/0.80/0.46 | 否 | 当前 dump 无真实 RSU sensor；该行使用虚拟 RSU/global candidate pool，payload 56,224,736 bytes / 109.71 Mbps |
 | V2V-only baseline | FullPerception-Decentralized proxy | AP@0.3/0.5/0.7 = 0.80/0.76/0.41 | 是 | cluster-local CAV candidates，payload 38,920,592 bytes / 75.94 Mbps |
 | SGCP main | SGCP PAPG 10ch | AP@0.3/0.5/0.7 = 0.81/0.78/0.39 | 是 | 当前主方法，payload 32,049,872 bytes / 62.54 Mbps，NS3 110/110 complete |
@@ -45,7 +46,9 @@ SGCP 的核心设定是去中心化 CAV 协同感知：车辆先形成 coalition
 - 通信预算不与 SGCP 的 decentralized V2V PPS 严格相同。
 - 结果用于说明“如果存在集中式基础设施和更强通信条件，理论上可达到的参考性能”。
 
-当前 `v2xp_cluster_carla` 没有启用真实 RSU，离线 dump 也没有 RSU 目录。因此真实 RSU sensor 版 FullPerception 仍需重新导出带 RSU 的场景。当前已实现的 `fullperception_rsu` 是虚拟 RSU/global scheduler proxy：虚拟 RSU 拥有全局 CAV 候选池，但每个 receiver 仍受 3 members/head 和 117 grid budget 限制；41 帧结果为 AP@0.3/0.5/0.7 = 0.84/0.80/0.46，payload = 56,224,736 bytes / 109.71 Mbps。它不应与 V2V-only SGCP 放入同一公平 ranking，但可作为 RSU/edge-assisted reference。full 20-CAV early fusion仍是更高一级 full-sharing upper reference：AP@0.3/0.5/0.7 = 0.85/0.83/0.48，non-ego CAV upload payload = 60,838,528 bytes。
+当前 `v2xp_cluster_carla` 没有启用真实 RSU，离线 dump 也没有 RSU 目录。因此真实 RSU sensor 版 FullPerception 仍需重新导出带 RSU 的场景。不过仓库内已有 FullPerception 论文 PCS 调度代码：`opencda/core/clustering/algorithms/resource_allocation/pcs.py`，并已新增 `--resource-allocation fullperception_pcs` alias。41 帧当前结果为 AP@0.3/0.5/0.7 = 0.44/0.39/0.17，payload = 12,684,880 bytes / 24.75 Mbps；该结果说明当前 PCS 工程实现 under-schedule，不能直接代表论文中强 FullPerception 结果。
+
+当前已实现的 `fullperception_rsu` 是另一个虚拟 RSU/global scheduler proxy：虚拟 RSU 拥有全局 CAV 候选池，但每个 receiver 仍受 3 members/head 和 117 grid budget 限制；41 帧结果为 AP@0.3/0.5/0.7 = 0.84/0.80/0.46，payload = 56,224,736 bytes / 109.71 Mbps。它不应与 V2V-only SGCP 放入同一公平 ranking，但可作为 RSU/edge-assisted proxy。full 20-CAV early fusion仍是更高一级 full-sharing upper reference：AP@0.3/0.5/0.7 = 0.85/0.83/0.48，non-ego CAV upload payload = 60,838,528 bytes。
 
 ## FullPerception-Decentralized 口径
 

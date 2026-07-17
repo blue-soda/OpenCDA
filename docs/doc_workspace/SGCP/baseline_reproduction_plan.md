@@ -13,17 +13,20 @@
 
 ## Current Code Audit
 
-仓库中此前没有显式命名的 `FullPerception` 算法分支。历史文档和表格中的 FullPerception 多数对应 full 20-CAV early fusion 或 full-sharing upper reference，而不是一个可切换的 baseline scheduler。
+仓库中没有以 `FullPerception` 命名的算法分支，但存在对应 FullPerception 论文的 PCS/MWS/RS resource-allocation 实现：`opencda/core/clustering/algorithms/resource_allocation/pcs.py`、`mws.py` 和 `random_ra.py`。PCS 实现包含 blind-spot grouping、potential link generation、link utility、conflict graph、weight splitting、recursive PCS scheduling 和 subchannel assignment，对应论文 `FullPerception: Network-level Collaborative Perception for Eliminating Vehicular Blind Spots` 中的 Proactive Conflict-free Scheduling (PCS)。因此，后续文档应把 `pcs.py` 视为仓库内置 FullPerception-PCS baseline，而不是继续说“没有实现”。
 
 已新增显式 baseline 名称：
 
 | Name | Information Scope | Scheduling Scope | Current Status |
 | --- | --- | --- | --- |
+| `fullperception_pcs` / `fullperception` | base-station / RSU-side PCS scheduling | PCS blind-spot link scheduling from `pcs.py` | Alias added; 41-frame result available |
+| `fullperception_mws` | base-station / RSU-side greedy baseline | MWS from `mws.py`, inherited from PCS | Alias added; old MWS result available |
+| `fullperception_random` | base-station / RSU-side random schedule | RS from `random_ra.py`, inherited from PCS | Alias added; old random result available |
 | `fullperception_rsu` | virtual RSU / global CAV candidate pool | global density with mild distance cost, then grid-budgeted upload | Implemented; 41-frame proxy result available |
 | `fullperception_decentralized` | CAV-side V2V only | cluster-local density with distance/link-quality cost | Implemented; 41-frame result available |
 | `edgecooper` | edge / virtual RSU | complementarity minus redundancy proxy | First proxy implemented; currently needs algorithm refinement |
 
-这些分支使用 `opencda.tools.offline_inference --selective-sharing-baseline <name>` 进入同一 OpenCOOD checkpoint、同一 41-frame dump、同一 inter-cluster late-fusion evaluation path，并可通过 `opencda.tools.offline_ns3_replay --selective-sharing-baseline <name>` 生成 scheduled-only request plan。
+PCS/MWS/RS 通过 `--resource-allocation fullperception_pcs|fullperception_mws|fullperception_random` 进入资源分配路径；`fullperception_rsu/fullperception_decentralized/edgecooper` 是后补的 selective-sharing proxy，通过 `--selective-sharing-baseline <name>` 进入同一 OpenCOOD checkpoint、同一 41-frame dump 和同一 inter-cluster late-fusion evaluation path。
 
 ## FullPerception Baselines
 
@@ -40,6 +43,7 @@
 | Method | AP@0.3 | AP@0.5 | AP@0.7 | Payload bytes | Mbps | Avg. source CAVs | Avg. selected grids | Interpretation |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | --- |
 | Full 20-CAV early upper reference | 0.85 | 0.83 | 0.48 | 60,838,528 | 118.71 | 20.00 | N/A | Full-sharing AP upper reference, not a fair baseline |
+| `fullperception_pcs` / built-in PCS | 0.44 | 0.39 | 0.17 | 12,684,880 | 24.75 | 1.66 | 630.66 | Current built-in FullPerception PCS implementation; under-utilizes payload in this dump |
 | `fullperception_rsu` proxy | 0.84 | 0.80 | 0.46 | 56,224,736 | 109.71 | 4.00 | 117.00 | Virtual RSU/global scheduler, strong but infrastructure-assisted |
 | `fullperception_decentralized` proxy | 0.80 | 0.76 | 0.41 | 38,920,592 | 75.94 | 3.33 | 103.20 | V2V-only decentralized FullPerception proxy |
 | `fullperception_rsu`, ego receiver probe | 0.71 | 0.70 | 0.49 | 26,350,784 | 51.42 | 9.54 | 332.93 | Diagnostic only; candidate fallback is unreliable |

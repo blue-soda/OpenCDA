@@ -4724,3 +4724,84 @@ conda run -n opencda python -m opencda.tools.offline_inference --dataset-root D:
 ### 结论
 
 EdgeCooper-style proxy 已可复现，但不是强 baseline：它的通信量接近 FullPerception-RSU proxy，AP 却明显低于 PAPG 和 FullPerception-RSU。当前结果应写为 preliminary proxy，而不是严格复现 EdgeCooper 原论文。下一步若继续推进 EdgeCooper，应实现 minimum-cost-flow/global-assignment 风格调度，并加入 conflict/coloring 或 sender capacity 约束。
+
+## 2026-07-18 FullPerception PCS code correction
+
+### 目的
+
+用户提醒此前 FullPerception 实现应对应 `opencda/core/clustering/algorithms/resource_allocation/pcs.py`，论文参考 `FullPerception_Network-level_Collaborative_Perception_for_Eliminating_Vehicular_Blind_Spots.pdf`。本轮重新核查代码和论文，纠正上一轮“仓库没有显式 FullPerception 算法分支”的不准确说法。
+
+### 论文核查
+
+本地 PDF 抽取结果显示 FullPerception 的核心机制包括：
+
+- blind spot 区域定义和 grid-level mAP utility；
+- link weight `w(L_i,j,k)`；
+- required subchannels `c(L_i,j,k)`；
+- Class A / Class B conflict graph；
+- Algorithm 1 Weight Splitting；
+- Algorithm 2 Resource Allocation；
+- Algorithm 3 PCS；
+- MWS 和 RS 作为 heuristic scheduling baselines。
+
+### 代码核查
+
+`pcs.py` 确实对应上述 PCS：
+
+| Paper Component | Code |
+| --- | --- |
+| blind spots | `_get_vehicle_blind_spots()` |
+| potential links | `_generate_potential_links()` |
+| grid mAP / link utility | `_precompute_grid_mAP()`, `_calculate_link_utilities()` |
+| conflicts | `_build_conflict_graph()` |
+| weight splitting | `_weight_splitting()` |
+| resource allocation | `_resource_allocation()` |
+| recursive PCS | `_pcs_recursion()` |
+
+`mws.py` 和 `random_ra.py` 继承 `PCS`，对应 FullPerception 论文中的 MWS / RS baseline。
+
+### 代码改动
+
+- `builder.py` 新增 alias：`fullperception`、`fullperception_pcs`、`fullperception_rsu_pcs`、`fullperception_mws`、`fullperception_random`。
+- `offline_inference.apply_resource_overrides()` 现在会把 `--num-channels` 同步到 PCS/MWS/RS 的 `lambda_subchannels`。
+
+### 当前实验
+
+3-frame smoke：
+
+```powershell
+conda run -n opencda python -m opencda.tools.offline_inference --dataset-root D:\Data\Carla --scenario-id 2026_07_15_01_26_56 --ego-cav-id 1 --max-frames 3 --sgcp-constrained --resource-allocation pcs --sgcp-receiver-policy all-cluster-heads --sgcp-inter-cluster-late-fusion --rho-th 3 --num-channels 10 --bandwidth-mhz 20
+```
+
+结果：`0.36/0.31/0.14`，785,312 bytes。
+
+41-frame run：
+
+```powershell
+conda run -n opencda python -m opencda.tools.offline_inference --dataset-root D:\Data\Carla --scenario-id 2026_07_15_01_26_56 --ego-cav-id 1 --max-frames 0 --sgcp-constrained --resource-allocation pcs --sgcp-receiver-policy all-cluster-heads --sgcp-inter-cluster-late-fusion --rho-th 3 --num-channels 10 --bandwidth-mhz 20 --sgcp-trace-output docs\doc_workspace\SGCP\artifacts\fullperception_pcs_20260718\pcs_trace.csv
+```
+
+Artifact：
+
+```text
+docs\doc_workspace\SGCP\artifacts\fullperception_pcs_20260718\
+```
+
+| Metric | Value |
+| --- | ---: |
+| AP@0.3 / AP@0.5 / AP@0.7 | 0.44 / 0.39 / 0.17 |
+| Total payload | 12,684,880 bytes |
+| Mbps | 24.75 |
+| Avg. source CAVs | 1.66 |
+| Avg. selected grids | 630.66 |
+
+### 当前判断
+
+PCS 是内置 FullPerception 实现，但当前工程结果明显 under-schedule，不能直接代表论文 FullPerception 的强 baseline。主要风险：
+
+- `_get_link_required_subchannels()` 直接 `return 1`，后续基于 feature size/channel capacity 的 `c(q)` 计算是死代码。
+- `--bandwidth-mhz` 尚未影响 PCS 的 required subchannels。
+- 同一 sender-receiver 的多个 blind spot 最终折叠到 `(sender, receiver) -> start_subchannel`，可能丢失多 blind-spot link 的资源区分。
+- 当前 late-fusion evaluation 仍沿用 SGCP cluster-head receiver path；PCS 原论文是 base-station/RSU 全局调度，需要进一步对齐接收/融合口径。
+
+下一步应先修复/校准 `pcs.py`，再把它作为 FullPerception 主 baseline；上一轮新增的 `fullperception_rsu` 和 `fullperception_decentralized` 应改写为 proxy/diagnostic，不再抢占 FullPerception 正名。

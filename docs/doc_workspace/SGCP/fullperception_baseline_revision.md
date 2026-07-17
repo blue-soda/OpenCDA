@@ -14,6 +14,22 @@
 
 因此，论文中应把 FullPerception 拆成两个层级：`FullPerception-RSU / full-sharing upper reference` 和 `FullPerception-Decentralized / same-budget V2V selective sharing`。
 
+## 代码核查修正
+
+2026-07-18 重新核查后确认：仓库中虽然没有以 `FullPerception` 命名的入口，但 `opencda/core/clustering/algorithms/resource_allocation/pcs.py` 对应 FullPerception 论文中的 Proactive Conflict-free Scheduling (PCS) 实现。该实现包含：
+
+- blind spot grouping：`_get_vehicle_blind_spots()`；
+- potential link generation：`_generate_potential_links()`；
+- link utility / grid mAP：`_precompute_grid_mAP()` 和 `_calculate_link_utilities()`；
+- conflict graph：`_build_conflict_graph()`；
+- weight splitting：`_weight_splitting()`；
+- recursive PCS scheduling：`_pcs_recursion()`；
+- subchannel assignment and grid selection：`_resource_allocation()`。
+
+同时，`mws.py` 和 `random_ra.py` 继承 `PCS`，对应 FullPerception 论文中的 MWS 和 RS heuristic baselines。已新增 alias：`--resource-allocation fullperception_pcs|fullperception_mws|fullperception_random`。
+
+当前 41 帧 `fullperception_pcs` 复现结果为 `0.44/0.39/0.17`，payload 12,684,880 bytes / 24.75 Mbps。这个结果远低于论文旧表和 full-sharing upper reference，原因是当前 `pcs.py` 工程实现存在 under-scheduling / simplification 风险，例如 `_get_link_required_subchannels()` 直接返回 1、`bandwidth_mhz` 尚未影响 `c(q)`、同一 sender-receiver 多 blind spot 会合并到一个 scheduler strategy。因此它应写为“built-in PCS implementation result / needs repair”，不能继续用 custom proxy 代替论文 PCS。
+
 ## FullPerception-RSU 实现口径
 
 `FullPerception-RSU` 建议定义为 centralized or RSU-assisted upper reference，而不是主公平 baseline。

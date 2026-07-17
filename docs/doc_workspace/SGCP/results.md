@@ -25,6 +25,7 @@
 | --- | ---: | ---: | ---: | ---: | ---: | --- |
 | NC | TBD | TBD | TBD | TBD | TBD | No cooperation |
 | Full 20-CAV early upper reference | 0.85 | 0.83 | 0.48 | 118.71 | TBD | Full point-cloud sharing AP upper bound; upload non-ego CAV payload 60,838,528 bytes |
+| Built-in FullPerception PCS | 0.44 | 0.39 | 0.17 | 24.75 | TBD | `--resource-allocation fullperception_pcs`; current `pcs.py` implementation under-utilizes payload on this dump |
 | FullPerception-RSU proxy | 0.84 | 0.80 | 0.46 | 109.71 | TBD | Virtual RSU/global candidate pool, 3 members/head, 117 grid budget; not a V2V-only fair baseline |
 | EdgeCooper-style proxy | 0.75 | 0.70 | 0.32 | 109.53 | TBD | Virtual edge/global candidate pool, blind-spot complementarity proxy; preliminary, not strict paper reproduction |
 | FullPerception-Decentralized proxy | 0.80 | 0.76 | 0.41 | 75.94 | TBD | CAV-side V2V only, cluster-local candidates, 3 members/head, 117 grid budget |
@@ -57,6 +58,7 @@
 | --- | --- | --- | --- | --- |
 | Upper reference | Full 20-CAV early / virtual FullPerception centralized | 0.85 / 0.83 / 0.48 | No | 全点云共享，无 SGCP 通信约束；non-ego upload payload 60,838,528 bytes |
 | Upper reference | Full 20-CAV late checkpoint | 0.91 / 0.85 / 0.51 | No | 使用独立 late checkpoint，不能直接作为同 checkpoint 消融 |
+| Built-in FullPerception | PCS (`pcs.py`) | 0.44 / 0.39 / 0.17 | No | 仓库内置 PCS 对应 FullPerception 论文调度算法；当前实现 payload 仅 12,684,880 bytes / 24.75 Mbps，不能作为强 FullPerception 实测结论 |
 | RSU/edge-assisted | FullPerception-RSU proxy | 0.84 / 0.80 / 0.46 | No | 虚拟 RSU/global candidate pool；当前 dump 无真实 RSU sensor，不作为 V2V-only 公平主对比 |
 | RSU/edge-assisted | EdgeCooper-style proxy | 0.75 / 0.70 / 0.32 | No | 虚拟 edge/global candidate pool；当前是 blind-spot complementarity proxy，不是严格原论文 MCF/coloring 复现 |
 | V2V-only fair baseline | FullPerception-Decentralized proxy | 0.80 / 0.76 / 0.41 | Yes | cluster-local candidate pool，3 members/head，117 grid budget；强 decentralized baseline |
@@ -77,7 +79,7 @@
 
 ### Explicit FullPerception Baselines
 
-代码状态：仓库此前没有显式命名的 FullPerception 算法分支；当前新增 `--selective-sharing-baseline fullperception_rsu` 和 `--selective-sharing-baseline fullperception_decentralized`。二者都使用 41 帧同一 dump、同一 OpenCOOD early checkpoint、同一 inter-cluster late-fusion evaluation path，并限制为 3 members/head 与 117 selected grids。
+代码状态：仓库没有以 `FullPerception` 命名的入口，但 `opencda/core/clustering/algorithms/resource_allocation/pcs.py` 是 FullPerception 论文 PCS 调度算法的内置实现；`mws.py` 和 `random_ra.py` 是同一 PCS 问题上的 greedy/random baseline。当前新增 `--resource-allocation fullperception_pcs|fullperception_mws|fullperception_random` alias，并保留 `--selective-sharing-baseline fullperception_rsu|fullperception_decentralized` 作为后补 proxy。proxy 分支使用 41 帧同一 dump、同一 OpenCOOD early checkpoint、同一 inter-cluster late-fusion evaluation path，并限制为 3 members/head 与 117 selected grids。
 
 命令模板：
 
@@ -94,6 +96,7 @@ docs\doc_workspace\SGCP\artifacts\fullperception_baselines_20260717\
 | Baseline | Candidate Scope | AP@0.3 | AP@0.5 | AP@0.7 | Payload bytes | Mbps | Avg. Source CAVs | Avg. Selected Grids | Notes |
 | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | --- |
 | Full 20-CAV early upper reference | all CAVs, full upload | 0.85 | 0.83 | 0.48 | 60,838,528 | 118.71 | 20.00 | N/A | AP upper bound, not budgeted scheduling |
+| `fullperception_pcs` built-in | PCS blind-spot scheduling | 0.44 | 0.39 | 0.17 | 12,684,880 | 24.75 | 1.66 | 630.66 | Current `pcs.py`; low payload/under-scheduled on this dump |
 | `fullperception_rsu` proxy | global / virtual RSU | 0.84 | 0.80 | 0.46 | 56,224,736 | 109.71 | 4.00 | 117.00 | Infrastructure-assisted global scheduler proxy |
 | `fullperception_decentralized` proxy | cluster-local V2V | 0.80 | 0.76 | 0.41 | 38,920,592 | 75.94 | 3.33 | 103.20 | Strong V2V-only decentralized FullPerception proxy |
 | `fullperception_rsu`, ego receiver probe | ego virtual receiver | 0.71 | 0.70 | 0.49 | 26,350,784 | 51.42 | 9.54 | 332.93 | Diagnostic only; several frames fell back to ego-only |

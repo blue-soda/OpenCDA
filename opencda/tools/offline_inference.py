@@ -224,6 +224,8 @@ def apply_resource_overrides(resource_allocator, world, num_channels=None,
         if num_channels <= 0:
             raise ValueError('--num-channels must be positive')
         world.network_manager.subchannel_num = int(num_channels)
+        if hasattr(resource_allocator, 'lambda_subchannels'):
+            resource_allocator.lambda_subchannels = int(num_channels)
     if not hasattr(resource_allocator, 'p'):
         return
     if num_channels is not None:
