@@ -117,6 +117,14 @@ conda run -n opencda python -m opencda.tools.offline_inference --dataset-root D:
 conda run -n opencda python -m opencda.tools.offline_inference --dataset-root D:\Data\Carla --scenario-id 2026_07_15_01_26_56 --ego-cav-id 1 --sgcp-constrained --sgcp-inter-cluster-late-fusion --resource-allocation potential_game --sgcp-grid-selection-mode spatial_diverse --rho-th 3 --head-rb-budget 2 --sgcp-coverage-fallback persistent --max-frames 11 --sgcp-trace-output docs\doc_workspace\SGCP\artifacts\mechanism_probe\spatial_diverse_rho3_bh2_persistent_conservative_11f_trace.csv
 ```
 
+Detector-quality proxy summary：
+
+```powershell
+conda run -n opencda python -m opencda.tools.sgcp_source_quality_summary --label spatial10-rho2-bh1 --trace-csv docs\doc_workspace\SGCP\artifacts\mechanism_probe\spatial_diverse_grid_41f_trace.csv --output-receiver-csv docs\doc_workspace\SGCP\artifacts\mechanism_probe\spatial_diverse_grid_41f_receiver_quality.csv --output-cav-csv docs\doc_workspace\SGCP\artifacts\mechanism_probe\spatial_diverse_grid_41f_cav_quality.csv
+
+conda run -n opencda python -m opencda.tools.sgcp_source_quality_summary --label spatial10-rho3-bh2 --trace-csv docs\doc_workspace\SGCP\artifacts\mechanism_probe\spatial_diverse_rho3_bh2_41f_trace.csv --output-receiver-csv docs\doc_workspace\SGCP\artifacts\mechanism_probe\spatial_diverse_rho3_bh2_41f_receiver_quality.csv --output-cav-csv docs\doc_workspace\SGCP\artifacts\mechanism_probe\spatial_diverse_rho3_bh2_41f_cav_quality.csv
+```
+
 ## 结果
 
 | Mode | AP@0.3 | AP@0.5 | AP@0.7 | Total Bytes | Avg. Bytes / Receiver | Avg. Sources | Avg. Uploaded Sources | Avg. Uploaded Points | Avg. Selected Grids |
@@ -176,6 +184,25 @@ conda run -n opencda python -m opencda.tools.offline_inference --dataset-root D:
 
 该 probe 保持 link count 和 subchannel 约束不变，7 次 frame-level replacement 均未产生 missing channel rows；但 AP@0.3/0.5 下降。结论：CAV 级 history fairness 不是足够的替换准则。后续若要加入 fallback，应引入 detector-quality proxy、object/target-level coverage 或 uncertainty，而不是只保护长期未调度成员。
 
+## Detector-Quality Proxy Summary
+
+| Variant | Receiver Rows | Avg. Pred/GT Ratio | Low-Ratio Rows | Zero-Pred Rows | Avg. Bytes / Receiver |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| `spatial10-rho2-bh1`, 41f | 246 | 0.3928 | 10 | 2 | 116,842.60 |
+| `spatial10-rho3-bh2`, 41f | 246 | 0.4461 | 9 | 2 | 113,670.18 |
+| `spatial10-rho3-bh2`, 11f | 66 | 0.4284 | 7 | 0 | 112,374.55 |
+| `spatial10-rho3-bh2 persistent`, 11f | 66 | 0.4242 | 7 | 0 | 112,936.48 |
+
+| CAV | Upload Rows `B_h=1` | Upload Rows `B_h=2,rho3` | Avg. Pred/GT Ratio `B_h=1` | Avg. Pred/GT Ratio `B_h=2,rho3` | Low-Ratio Rows `B_h=1` | Low-Ratio Rows `B_h=2,rho3` |
+| ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| 6 | 41 | 7 | 0.6341 | 0.5746 | 0 | 0 |
+| 5 | 6 | 31 | 0.3129 | 0.3893 | 0 | 0 |
+| 12 | 5 | 10 | 0.3977 | 0.3081 | 0 | 0 |
+| 10 | 39 | 37 | 0.2827 | 0.2885 | 1 | 1 |
+| 18 | 9 | 8 | 0.1837 | 0.1654 | 4 | 4 |
+
+`B_h=2` 的 receiver-level pred/GT ratio 高于 `B_h=1`，支持“高 IoU 定位更好”的解释；但它显著减少高质量 CAV 6 的上传并增加较低 ratio 成员。下一步 fallback 应使用 quality-weighted coverage，而不是 plain history fairness。
+
 ## Spatial-Diverse Channel Sweep
 
 | Num. Channels | AP@0.3 | AP@0.5 | AP@0.7 | Total Bytes | Avg. Bytes / Receiver | Avg. Uploaded Sources | Avg. Uploaded Points | Avg. Selected Grids | Payload vs Full-Cluster |
@@ -198,6 +225,7 @@ conda run -n opencda python -m opencda.tools.offline_inference --dataset-root D:
 - Late-fusion box-count diagnostics 进一步说明：`B_h=2` 的 fused GT 覆盖少于 `B_h=1` 10ch 和 20ch，且 fused prediction 数量没有增加。这支持“覆盖分布变窄、定位质量变好”的解释；主表低通信推荐仍应优先使用 `B_h=1` coverage-aware 10ch/20ch，`B_h=2` 暂写成 high-IoU sensitivity。
 - CAV coverage diagnostics 显示 `B_h=2` 在 10ch 下并未增加 fused CAV 数，仍是每帧 16/20 CAV；主要变化是 CAV 6 被 CAV 5/4/12 替代。下一步算法修复应关注 member coverage fairness 和关键成员保护，而不是单独提高 `B_h`。
 - Persistent coverage fallback 的 11 帧负面 probe 显示，单纯按历史欠覆盖保护成员会轻微降低 AP@0.3/0.5。coverage repair 必须引入检测质量或目标覆盖约束；当前不建议把 `--sgcp-coverage-fallback persistent` 作为主表机制。
+- Detector-quality proxy 显示 CAV 6 是高质量长期贡献者，`B_h=2` 将其上传从 41 行降到 7 行是低阈值 AP 下降的重要线索。后续算法应是 quality-weighted coverage。
 - 子信道 sweep 显示 20 子信道 `spatial_diverse` 可达到 `0.80/0.76/0.41`，AP@0.7 已接近 full-cluster `0.42`，payload 约为 full-cluster 的 84.5%。10 子信道仍是更强的低通信主点，20 子信道适合作为 high-budget sensitivity。
 - 当前主表偏低的主要嫌疑从协议链路转移到 grid/PPS 选择质量：需要把 grid utility 从“密度饱和增益”改为“检测导向的覆盖/定位增益”，并继续处理 `B_h=1`、grid budget 和 AP@0.7 定位精度。
 

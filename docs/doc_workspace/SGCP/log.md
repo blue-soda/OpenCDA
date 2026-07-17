@@ -3883,3 +3883,54 @@ conda run -n opencda python -m opencda.tools.offline_inference --dataset-root D:
 ### 结论
 
 Persistent fallback 没有修复 AP@0.3/0.5，反而略降。协议层仍正确：`missing_channel_rows=0`，替换复用了已有 subchannel，没有绕过 PPS。负面结果说明“历史欠覆盖公平性”不足以作为上传成员替换准则；下一步应把 fallback 与 detector-quality proxy / per-target coverage / uncertainty 或 frame-level object recall 绑定，而不是只按 CAV 级 coverage deficit 替换。
+
+## 2026-07-17 - Detector-quality proxy summary
+
+### 目的
+
+为下一步 object-aware / quality-aware fallback 建立可复现诊断：从 SGCP receiver-level trace 中提取每个 cluster-head source 的 `pred_boxes/gt_boxes`、zero/low-ratio 风险、payload 和每个 uploaded CAV 参与的 receiver 行质量，解释为什么简单 coverage fallback 会伤 AP。
+
+### 代码更新
+
+新增只读解析工具：
+
+```text
+opencda.tools.sgcp_source_quality_summary
+```
+
+说明：该工具输出 detector-quality proxy，不计算 AP。AP 仍以 OpenCOOD 全局累计结果为准。
+
+### 命令
+
+```powershell
+conda run -n opencda python -m opencda.tools.sgcp_source_quality_summary --label spatial10-rho2-bh1 --trace-csv docs\doc_workspace\SGCP\artifacts\mechanism_probe\spatial_diverse_grid_41f_trace.csv --output-receiver-csv docs\doc_workspace\SGCP\artifacts\mechanism_probe\spatial_diverse_grid_41f_receiver_quality.csv --output-cav-csv docs\doc_workspace\SGCP\artifacts\mechanism_probe\spatial_diverse_grid_41f_cav_quality.csv
+
+conda run -n opencda python -m opencda.tools.sgcp_source_quality_summary --label spatial10-rho3-bh2 --trace-csv docs\doc_workspace\SGCP\artifacts\mechanism_probe\spatial_diverse_rho3_bh2_41f_trace.csv --output-receiver-csv docs\doc_workspace\SGCP\artifacts\mechanism_probe\spatial_diverse_rho3_bh2_41f_receiver_quality.csv --output-cav-csv docs\doc_workspace\SGCP\artifacts\mechanism_probe\spatial_diverse_rho3_bh2_41f_cav_quality.csv
+
+conda run -n opencda python -m opencda.tools.sgcp_source_quality_summary --label spatial10-rho3-bh2-baseline-11f --trace-csv docs\doc_workspace\SGCP\artifacts\mechanism_probe\spatial_diverse_rho3_bh2_baseline_11f_trace.csv --output-receiver-csv docs\doc_workspace\SGCP\artifacts\mechanism_probe\spatial_diverse_rho3_bh2_baseline_11f_receiver_quality.csv --output-cav-csv docs\doc_workspace\SGCP\artifacts\mechanism_probe\spatial_diverse_rho3_bh2_baseline_11f_cav_quality.csv
+
+conda run -n opencda python -m opencda.tools.sgcp_source_quality_summary --label spatial10-rho3-bh2-persistent-11f --trace-csv docs\doc_workspace\SGCP\artifacts\mechanism_probe\spatial_diverse_rho3_bh2_persistent_conservative_11f_trace.csv --output-receiver-csv docs\doc_workspace\SGCP\artifacts\mechanism_probe\spatial_diverse_rho3_bh2_persistent_conservative_11f_receiver_quality.csv --output-cav-csv docs\doc_workspace\SGCP\artifacts\mechanism_probe\spatial_diverse_rho3_bh2_persistent_conservative_11f_cav_quality.csv
+```
+
+### 结果
+
+| Variant | Receiver Rows | Avg. Pred/GT Ratio | Low-Ratio Rows | Zero-Pred Rows | Avg. Bytes / Receiver |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| `spatial10-rho2-bh1`, 41f | 246 | 0.3928 | 10 | 2 | 116,842.60 |
+| `spatial10-rho3-bh2`, 41f | 246 | 0.4461 | 9 | 2 | 113,670.18 |
+| `spatial10-rho3-bh2`, 11f | 66 | 0.4284 | 7 | 0 | 112,374.55 |
+| `spatial10-rho3-bh2 persistent`, 11f | 66 | 0.4242 | 7 | 0 | 112,936.48 |
+
+Key uploaded-CAV proxy deltas between 41f `B_h=1` and 41f `B_h=2,rho3`:
+
+| CAV | Upload Rows `B_h=1` | Upload Rows `B_h=2,rho3` | Avg. Pred/GT Ratio `B_h=1` | Avg. Pred/GT Ratio `B_h=2,rho3` | Low-Ratio Rows `B_h=1` | Low-Ratio Rows `B_h=2,rho3` |
+| ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| 6 | 41 | 7 | 0.6341 | 0.5746 | 0 | 0 |
+| 5 | 6 | 31 | 0.3129 | 0.3893 | 0 | 0 |
+| 12 | 5 | 10 | 0.3977 | 0.3081 | 0 | 0 |
+| 10 | 39 | 37 | 0.2827 | 0.2885 | 1 | 1 |
+| 18 | 9 | 8 | 0.1837 | 0.1654 | 4 | 4 |
+
+### 结论
+
+`B_h=2` 的 receiver-level quality proxy 高于 `B_h=1`，这解释了 AP@0.7 上升；但它把高质量长期贡献者 CAV 6 的上传从 41 行降到 7 行，并增加了 CAV 5 等较低 ratio 成员。因此下一步不是普通 coverage fairness，而是 quality-weighted coverage：只有当候选成员能提供足够 detector-quality / target-level coverage 时才替换当前成员。
