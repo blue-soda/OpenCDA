@@ -3255,3 +3255,20 @@ by type：
 - 结论：
   - box-level model-calling hierarchy path 已打通。
   - 当前只覆盖 1 帧 2 area，不能作为论文数值；下一步应扩大到 Top-30 1 帧完整 area、3 帧和 11 帧。
+
+## Box-level hierarchy Top-30 one-frame run
+
+- 命令：
+  - `conda run -n opencda python -m opencda.tools.lgcp_hierarchy_late_fusion_eval --dataset-root D:\Data\Carla --scenario-id 2026_07_15_02_33_21 --assignment-plan docs\doc_workspace\LGCP\experiments\hierarchy_plan\20260717_lgcp_carla_hierarchy_budget_sweep_density_distance\area30\area_assignment_plan.csv --output-dir docs\doc_workspace\LGCP\experiments\hierarchy_plan\20260718_lgcp_carla_hierarchy_late_fusion_top30_1f --max-frames 1 --fusion-method late`
+- 输出目录：
+  - `docs/doc_workspace/LGCP/experiments/hierarchy_plan/20260718_lgcp_carla_hierarchy_late_fusion_top30_1f`
+- 结果：
+  - frames: `1`
+  - assignment rows: `30`
+  - cached group inference calls: `23`
+  - leader local pred / GT boxes: `38 / 35`
+  - RSU fused pred / GT boxes: `35 / 35`
+  - AP@0.3 / AP@0.5 / AP@0.7: `0.606851 / 0.606851 / 0.517668`
+- 观察：
+  - Top-30 首帧完整 area budget 可运行，且重复 leader/group 被缓存为 23 次模型调用。
+  - 单帧结果只用于验证 adapter 的完整 area-budget 路径，下一步应扩大到 3 帧 / 11 帧，并与 flat selective-sharing baselines 对齐。

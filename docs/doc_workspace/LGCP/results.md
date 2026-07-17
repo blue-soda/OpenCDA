@@ -1796,3 +1796,30 @@ Interpretation:
 - This smoke verifies the model-calling local-to-global path: leader/group OpenCOOD inference -> world-coordinate area slicing -> RSU global late fusion -> AP summary.
 - It is not a paper result because it only covers 1 frame and 2 areas from the Top-30 plan.
 - The next publishable step is Top-30 multi-frame evaluation and comparison against flat selective-sharing baselines.
+
+## Box-Level Hierarchy Top-30 One-Frame
+
+2026-07-18 将 `lgcp_hierarchy_late_fusion_eval.py` 扩大到 Top-30 的完整首帧：
+
+```text
+docs/doc_workspace/LGCP/experiments/hierarchy_plan/20260718_lgcp_carla_hierarchy_late_fusion_top30_1f
+```
+
+| Metric | Value |
+| --- | ---: |
+| Frames | 1 |
+| Assignment rows | 30 |
+| Cached group inference calls | 23 |
+| Leader local pred boxes | 38 |
+| Leader local GT boxes | 35 |
+| RSU fused pred boxes | 35 |
+| RSU fused GT boxes | 35 |
+| AP@0.3 | 0.606851 |
+| AP@0.5 | 0.606851 |
+| AP@0.7 | 0.517668 |
+
+Interpretation:
+
+- This verifies that the adapter can handle a complete Top-30 area budget for a frame, not only a two-area smoke.
+- Caching reduced 30 area rows to 23 unique OpenCOOD group inference calls.
+- Because this is one frame only, it should remain a method-validation result until expanded to 3/11 frames and compared with the existing flat selective-sharing baselines.

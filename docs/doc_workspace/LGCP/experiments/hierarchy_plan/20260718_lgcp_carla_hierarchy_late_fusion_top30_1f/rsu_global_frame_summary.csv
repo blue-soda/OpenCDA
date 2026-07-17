@@ -1,0 +1,2 @@
+scenario_id,timestamp,planned_areas,unique_group_inference_calls,leader_local_pred_boxes,leader_local_gt_boxes,rsu_fused_pred_boxes,rsu_fused_gt_boxes
+2026_07_15_02_33_21,000060,30,23,38,35,35,35

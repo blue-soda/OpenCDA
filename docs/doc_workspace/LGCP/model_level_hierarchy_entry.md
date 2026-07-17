@@ -207,3 +207,36 @@ conda run -n opencda python -m opencda.tools.lgcp_hierarchy_late_fusion_eval --d
 
 - 该 smoke 证明 adapter 已能真实调用 OpenCOOD late model，并完成 leader/group 推理、world 坐标 area 裁剪、RSU global late fusion 和 AP 统计。
 - 该结果只覆盖 1 帧 2 个 area，不能作为论文数值；下一步应扩大到 Top-30 的 1 帧完整 area，再扩大到 3 帧 / 11 帧。
+
+## 2026-07-18 Top-30 One-Frame Run
+
+运行目录：
+
+```text
+docs/doc_workspace/LGCP/experiments/hierarchy_plan/20260718_lgcp_carla_hierarchy_late_fusion_top30_1f
+```
+
+命令：
+
+```powershell
+conda run -n opencda python -m opencda.tools.lgcp_hierarchy_late_fusion_eval --dataset-root D:\Data\Carla --scenario-id 2026_07_15_02_33_21 --assignment-plan docs\doc_workspace\LGCP\experiments\hierarchy_plan\20260717_lgcp_carla_hierarchy_budget_sweep_density_distance\area30\area_assignment_plan.csv --output-dir docs\doc_workspace\LGCP\experiments\hierarchy_plan\20260718_lgcp_carla_hierarchy_late_fusion_top30_1f --max-frames 1 --fusion-method late
+```
+
+结果：
+
+| Metric | Value |
+| --- | ---: |
+| Frames | 1 |
+| Assignment rows | 30 |
+| Cached group inference calls | 23 |
+| Leader local pred / GT boxes | 38 / 35 |
+| RSU fused pred / GT boxes | 35 / 35 |
+| AP@0.3 | 0.606851 |
+| AP@0.5 | 0.606851 |
+| AP@0.7 | 0.517668 |
+
+解释：
+
+- 这是首个完整 Top-30 area budget 的 box-level hierarchy run。
+- 30 个 area 中有重复 leader/group，因此缓存后只需 23 次 OpenCOOD inference。
+- 结果仍只有单帧，主要用于确认 Top-30 local-to-global adapter 可运行；下一步应扩大到 3 帧和 11 帧，并与 flat selective-sharing baselines 对齐。
