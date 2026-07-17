@@ -189,6 +189,41 @@ conda run -n opencda python -m opencda.tools.sgcp_source_quality_summary --label
 
 Quality-persistent fallback 阻止了 plain persistent 的有害替换，结果与 no fallback 一致。该安全门是必要的，但仍过于保守；真正的提升需要 target-level/object-aware 候选生成。
 
+## Object Diagnostics And Payload Cap Probe
+
+### Full-reference missed GT diagnosis
+
+在 5ch/20MHz `spatial_diverse` stress test 中，新增 `--object-diagnostics-output` 对每个 canonical GT 做 full-reference 与 method prediction 匹配。41 帧共有 773 个 GT 满足 `full_reference_matched=1` 且 `method_matched=0`。
+
+| Item | Observation |
+| --- | --- |
+| Top missed objects | `385` 41 帧、`400` 38 帧、`427` 37 帧、`337` 37 帧、`362` 35 帧 |
+| Top missed grids | `-2_-3`、`-4_-4`、`-5_0`、`0_0`、`4_-2` |
+| Center tendency | 主要在 ego 左侧/左后，x median 约 -17.27，y median 约 -10.43 |
+
+结论：低带宽下漏检具有稳定目标轨迹和空间区域，不是随机噪声；后续算法应引入 target/object-aware coverage proxy。
+
+### Negative grid-clustering probe
+
+新增 `--sgcp-grid-selection-mode object_clustered`，保持同一 PPS scheduled links 和 grid count，只把每条 link 的 grid 替换成局部高密度紧凑 patches。2 帧 smoke test：
+
+| Variant | Frames | AP@0.3 | AP@0.5 | AP@0.7 | Payload |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| `object_clustered`, 5ch/20MHz | 2 | 0.50 | 0.48 | 0.24 | 643,424 |
+
+该结果低于同帧 `spatial_diverse` smoke，不建议继续作为主算法。它说明目标检测需要跨区域覆盖，不能只把点云集中到少数高密度局部块。
+
+### Point-level payload cap
+
+新增 `--max-upload-points-per-source`，在 SGCP 选定 member/grid 后对每个上传源做确定性点预算抽样，不改变分簇、PPS 或子信道语义。
+
+| Variant | Frames | AP@0.3 | AP@0.5 | AP@0.7 | Total Bytes | Mbps |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| `spatial_diverse,rho3,10ch`, no cap | 41 | 0.79 | 0.76 | 0.38 | 29,405,296 | 57.38 |
+| `spatial_diverse,rho3,10ch`, cap=3000 | 41 | 0.74 | 0.70 | 0.33 | 19,510,848 | 38.07 |
+
+结论：point cap 是有效通信量旋钮，但当前随机抽样会损失 AP；它适合作为 payload sensitivity。若要进入最终主表，需要替换为检测/目标感知的点级采样或让 baseline 使用相同 cap 后做公平比较。
+
 ## Detector-Quality Proxy Summary
 
 | Variant | Receiver Rows | Avg. Pred/GT Ratio | Low-Ratio Rows | Zero-Pred Rows | Avg. Bytes / Receiver |

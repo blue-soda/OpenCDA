@@ -9,6 +9,7 @@ state required by the clustering code from an OPV2V-style dumped frame.
 from collections import OrderedDict, defaultdict, deque
 import copy
 import math
+import random
 
 import numpy as np
 
@@ -332,9 +333,21 @@ def select_sgcp_receiver_id(world, ego_cav_id=None,
     return int(head_id) if head_id is not None else ego_id
 
 
+def deterministic_point_budget(points, max_points, seed):
+    """Apply a reproducible per-source point budget after SGCP selection."""
+    if max_points is None or max_points <= 0:
+        return points
+    if points is None or points.shape[0] <= max_points:
+        return points
+    rng = random.Random(seed)
+    indices = sorted(rng.sample(range(points.shape[0]), int(max_points)))
+    return points[indices]
+
+
 def build_constrained_frame(frame, world, receiver_id,
                             include_unconstrained_cluster=False,
-                            upload_mode='grid'):
+                            upload_mode='grid',
+                            max_upload_points_per_source=None):
     """
     Build an OpenCOOD frame using online SGCP grid-upload semantics.
 
@@ -385,6 +398,10 @@ def build_constrained_frame(frame, world, receiver_id,
                 get_local_points_by_grid_ids(grid_ids)
             if selected_points is None or selected_points.size == 0:
                 continue
+            selected_points = deterministic_point_budget(
+                selected_points,
+                max_upload_points_per_source,
+                '%s-%s-%s-grid' % (receiver_id, sender_id, len(grid_ids)))
             constrained[sender_id] = clone_cav(
                 sender_id,
                 selected_points,
@@ -401,6 +418,10 @@ def build_constrained_frame(frame, world, receiver_id,
             if sender_id == receiver_id or sender_id not in frame:
                 continue
             lidar_np = frame[sender_id]['lidar_np']
+            lidar_np = deterministic_point_budget(
+                lidar_np,
+                max_upload_points_per_source,
+                '%s-%s-full' % (receiver_id, sender_id))
             constrained[sender_id] = clone_cav(
                 sender_id,
                 lidar_np,
@@ -419,5 +440,6 @@ def build_constrained_frame(frame, world, receiver_id,
             getattr(receiver_vm.v2x_manager.scheduler,
                     'channel_allocation', {}) or {}),
         'upload_mode': upload_mode,
+        'max_upload_points_per_source': max_upload_points_per_source or '',
     }
     return constrained, metadata

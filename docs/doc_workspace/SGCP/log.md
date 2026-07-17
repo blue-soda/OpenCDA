@@ -4123,3 +4123,49 @@ conda run -n opencda python -m opencda.tools.online_ns3_log_eval --opencda-stdou
 CARLA 与 NS3 时间流速不一致问题已经定位并修复：最新两轮真实在线回归均无 `sync timeout`，NS3 日志中的 `sync_ack` 与 CARLA 目标时间对齐，且 `MANUAL_RESOURCE_APPLY` 显示 `requestedStart == physicalStart`，说明 OpenCDA 指定子信道真实落到 NS3 发送行为。
 
 在线结果已从用户 run 的 `0.51/0.48/0.41` 提升到 `0.70/0.68/0.58`，但仍低于离线 41 帧 SGCP `0.79/0.75/0.37` 或 20ch `0.80/0.76/0.41` 的主表候选。剩余差距主要来自在线 deadline 语义：部分 request 虽会最终完成，但未必在当前融合周期截止前完整到达并被消费。无重传对照说明完全关闭重传会降低 deadline 内可用点云；后续应把“最终 request delivery”和“deadline-aware CP delivery”分开报告。
+
+## 2026-07-17 主表重构：object-level 诊断与 payload cap probe
+
+### 目的
+
+用户要求最终形成一张 SGCP 同时具备最高 AP、最低 Mbps，并与 Random/Greedy/FullPerception 使用统一参数的主表。本轮先补三件事：
+
+1. 用 20 CAV full fusion 确认当前 dump 的 AP 上界。
+2. 定位 full fusion 能检出但 SGCP 漏检的 GT 对象和空间区域。
+3. 尝试两个低通信算法 probe：目标局部聚集选格和点级 payload cap。
+
+### 关键命令
+
+```powershell
+conda run -n opencda python -m opencda.tools.offline_inference --dataset-root D:\Data\Carla --scenario-id 2026_07_15_01_26_56 --ego-cav-id 1 --max-frames 0 --object-diagnostics-output docs\doc_workspace\SGCP\artifacts\object_diag_full_41f.csv
+
+conda run -n opencda python -m opencda.tools.offline_inference --dataset-root D:\Data\Carla --scenario-id 2026_07_15_01_26_56 --ego-cav-id 1 --max-frames 0 --sgcp-constrained --resource-allocation potential_game --sgcp-inter-cluster-late-fusion --sgcp-grid-selection-mode spatial_diverse --num-channels 5 --bandwidth-mhz 20 --object-diagnostics-output docs\doc_workspace\SGCP\artifacts\object_diag_sgcp_spatial_5ch20mhz_41f.csv --sgcp-trace-output docs\doc_workspace\SGCP\artifacts\object_diag_sgcp_spatial_5ch20mhz_41f_trace.csv
+
+conda run -n opencda python -m opencda.tools.offline_inference --dataset-root D:\Data\Carla --scenario-id 2026_07_15_01_26_56 --ego-cav-id 1 --max-frames 0 --sgcp-constrained --resource-allocation potential_game --sgcp-inter-cluster-late-fusion --sgcp-grid-selection-mode spatial_diverse --rho-th 3 --num-channels 10 --bandwidth-mhz 20 --max-upload-points-per-source 3000 --sgcp-trace-output docs\doc_workspace\SGCP\artifacts\main_table_sgcp_spatial_rho3_10ch_cap3000_41f_trace.csv
+```
+
+### 结果
+
+| Variant | Frames | AP@0.3 | AP@0.5 | AP@0.7 | Payload bytes | Mbps | Notes |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | --- |
+| Full 20-CAV early reference | 41 | 0.85 | 0.83 | 0.48 | 60,838,528 | 118.71 | 当前 dump 上界 |
+| SGCP `spatial_diverse`, 5ch/20MHz | 41 | 0.56 | 0.53 | 0.27 | 14,815,408 | 28.91 | 强低带宽 stress；AP 太低 |
+| Random scheduler, 5ch/20MHz | 41 | 0.43 | 0.38 | 0.18 | 9,531,504 | 18.60 | 未充分利用 payload，不适合证明通信节省 |
+| MWS scheduler, 5ch/20MHz | 41 | 0.31 | 0.26 | 0.11 | 9,989,952 | 19.49 | 未充分利用 payload，不适合证明通信节省 |
+| SGCP `object_clustered`, 5ch/20MHz | 2 | 0.50 | 0.48 | 0.24 | 643,424 | 25.74 on 0.2s | 负面 probe，局部聚集选格会伤覆盖 |
+| SGCP `spatial_diverse,rho_th=3,10ch`, cap=3000 | 41 | 0.74 | 0.70 | 0.33 | 19,510,848 | 38.07 | 有效降低 payload，但 AP 低于无 cap |
+
+Object-level 诊断：
+
+- 5ch/20MHz SGCP 中，full reference matched 但 method missed 的 GT 为 773 个。
+- 高频漏检对象包括 `385` 41 帧、`400` 38 帧、`427` 37 帧、`337` 37 帧、`362` 35 帧。
+- 漏检中心主要集中在 ego 左侧/左后：x 分位约 `[-95.28, -56.01, -36.67, -17.27, 0.50, 48.93, 90.33]`，y 分位约 `[-36.16, -31.45, -25.13, -10.43, 0.28, 8.33, 37.10]`。
+- top missed grid 包括 `-2_-3`、`-4_-4`、`-5_0`、`0_0`、`4_-2`，说明单纯按全局 density/diversity 排序仍会系统性漏掉某些目标轨迹。
+
+### 结论
+
+- 当前 full fusion 上界仍是 `0.85/0.83/0.48`，论文主表不能追求超过该 dump 的 early-fusion AP 上界。
+- 5ch/20MHz 可以显著压低 Random/MWS AP，但 Random/MWS payload 也很低，不能支持“SGCP Mbps 最低”的主表叙事。
+- `object_clustered` 负面结果说明检测 AP 需要跨区域覆盖，而不是把点云集中在局部高密度目标块。
+- `--max-upload-points-per-source 3000` 是有效通信旋钮，把 SGCP `rho_th=3,10ch` 从 57.38 Mbps 降到 38.07 Mbps，但 AP 降为 `0.74/0.70/0.33`；它适合做 payload sensitivity，不宜直接作为最终主表主行。
+- 下一步若要满足“SGCP 最高 AP + 最少 Mbps”，必须先把 Random/Greedy baseline 改成强制使用相同带宽/相同 payload cap 的版本，或将主表切换为 payload-matched selective baseline；否则低 payload 的弱 Random/MWS 会破坏表格叙事。

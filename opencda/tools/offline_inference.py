@@ -11,8 +11,11 @@ import json
 import random
 from collections import defaultdict
 
+import numpy as np
 from omegaconf import OmegaConf
 import yaml
+
+from opencood.utils import common_utils
 
 from opencda.core.common.offline_dataset import OPV2VFrameDataset
 from opencda.core.common.offline_replay import (
@@ -77,8 +80,12 @@ def parse_args():
                         choices=['grid', 'head_only', 'full_cluster'],
                         help='Upload mode for SGCP constrained replay. grid uses PPS-selected grids; head_only keeps only each receiver; full_cluster uploads all cluster member point clouds for protocol probes.')
     parser.add_argument('--sgcp-grid-selection-mode', default='utility',
-                        choices=['utility', 'random', 'spatial_diverse'],
-                        help='Grid selection mode for SGCP scheduled links. random/spatial_diverse keep scheduled links and grid counts but replace grids with deterministic candidate choices.')
+                        choices=['utility', 'random', 'spatial_diverse',
+                                 'object_clustered'],
+                        help='Grid selection mode for SGCP scheduled links. '
+                             'random/spatial_diverse/object_clustered keep '
+                             'scheduled links and grid counts but replace '
+                             'grids with deterministic candidate choices.')
     parser.add_argument('--sgcp-grid-score-mode', default='utility',
                         choices=['utility', 'raw_density',
                                  'density_distance'],
@@ -110,6 +117,12 @@ def parse_args():
                         help='Override PotentialGame per-head RB budget B_h. '
                              'Defaults to 1 to preserve the original SGCP '
                              'protocol.')
+    parser.add_argument('--max-upload-points-per-source', type=int,
+                        default=None,
+                        help='Optional deterministic point budget for each '
+                             'uploaded source CAV after grid/full-cluster '
+                             'selection. This keeps scheduling semantics '
+                             'unchanged while probing payload/AP tradeoff.')
     parser.add_argument('--selective-sharing-baseline', default=None,
                         choices=['nearest', 'density',
                                  'communication_aware'],
@@ -125,6 +138,14 @@ def parse_args():
                              'a distance proxy.')
     parser.add_argument('--sgcp-trace-output', default=None,
                         help='Optional CSV path for per-receiver SGCP protocol trace.')
+    parser.add_argument('--object-diagnostics-output', default=None,
+                        help='Optional CSV path for per-GT object miss diagnostics. '
+                             'When set, each evaluated sample is compared '
+                             'against a full-20CAV reference from the same '
+                             'frame.')
+    parser.add_argument('--object-diagnostics-iou', type=float, default=0.5,
+                        help='IoU threshold used by object diagnostics. '
+                             'Defaults to 0.5.')
     return parser.parse_args()
 
 
@@ -314,6 +335,51 @@ def select_spatially_diverse_grids(head_vm, sender_vm, candidates, count):
     return selected
 
 
+def grid_index_from_id(grid_id):
+    try:
+        return tuple(int(item) for item in str(grid_id).split('_'))
+    except (TypeError, ValueError):
+        return None
+
+
+def grid_l1_distance(grid_a, grid_b):
+    index_a = grid_index_from_id(grid_a)
+    index_b = grid_index_from_id(grid_b)
+    if index_a is None or index_b is None:
+        return 999999
+    return abs(index_a[0] - index_b[0]) + abs(index_a[1] - index_b[1])
+
+
+def select_object_clustered_grids(head_vm, sender_vm, candidates, count):
+    """Select compact high-density grid patches as object-level proxies."""
+    if count <= 0 or not candidates:
+        return []
+    lidar = sender_vm.perception_manager.lidar
+    remaining = set(candidates)
+    selected = []
+
+    def density(grid_id):
+        return lidar.get_grid_density(grid_id)
+
+    while remaining and len(selected) < count:
+        if not selected:
+            best_grid = max(
+                remaining,
+                key=lambda grid_id: (density(grid_id), str(grid_id)))
+        else:
+            best_grid = max(
+                remaining,
+                key=lambda grid_id: (
+                    density(grid_id) /
+                    (1.0 + min(grid_l1_distance(grid_id, selected_grid)
+                               for selected_grid in selected)),
+                    density(grid_id),
+                    str(grid_id)))
+        selected.append(best_grid)
+        remaining.remove(best_grid)
+    return selected
+
+
 def diversify_scheduled_grid_selection(world, clusters):
     """Replace selected grids with deterministic density-aware spatial cover."""
     for cluster in clusters:
@@ -340,6 +406,34 @@ def diversify_scheduled_grid_selection(world, clusters):
                 count)
         co_manager.clear_grid_selection()
         co_manager.set_grid_selection(diversified)
+
+
+def cluster_scheduled_grid_selection(world, clusters):
+    """Replace selected grids with compact high-density object proxies."""
+    for cluster in clusters:
+        head_id = int(cluster.head_id)
+        head_vm = world.get_vehicle_manager(head_id)
+        if head_vm is None:
+            continue
+        co_manager = head_vm.perception_manager.co_manager
+        current_selection = getattr(co_manager, 'grid_selection', {}) or {}
+        clustered = {}
+        for sender_id, grid_ids in current_selection.items():
+            sender_id = int(sender_id)
+            sender_vm = world.get_vehicle_manager(sender_id)
+            if sender_vm is None:
+                continue
+            candidates = sorted(candidate_grids_for_sender(head_vm, sender_vm))
+            if not candidates:
+                continue
+            count = min(len(grid_ids), len(candidates))
+            clustered[sender_id] = select_object_clustered_grids(
+                head_vm,
+                sender_vm,
+                candidates,
+                count)
+        co_manager.clear_grid_selection()
+        co_manager.set_grid_selection(clustered)
 
 
 def quality_ratio(stat):
@@ -561,7 +655,8 @@ def apply_sgcp_constraint(frame, protocol, ego_cav_id, resource_allocation,
                           fixed_cluster_templates=None,
                           head_rb_budget=None,
                           coverage_fallback='none',
-                          coverage_state=None):
+                          coverage_state=None,
+                          max_upload_points_per_source=None):
     clear_sgcp_globals()
     world = OfflineCavWorld(
         frame,
@@ -605,6 +700,8 @@ def apply_sgcp_constraint(frame, protocol, ego_cav_id, resource_allocation,
         randomize_scheduled_grid_selection(world, clusters, timestamp)
     elif grid_selection_mode == 'spatial_diverse':
         diversify_scheduled_grid_selection(world, clusters)
+    elif grid_selection_mode == 'object_clustered':
+        cluster_scheduled_grid_selection(world, clusters)
     coverage_fallback_replacements = 0
     if coverage_fallback in ['persistent', 'quality_persistent']:
         coverage_fallback_replacements = apply_persistent_coverage_fallback(
@@ -626,7 +723,8 @@ def apply_sgcp_constraint(frame, protocol, ego_cav_id, resource_allocation,
             frame,
             world,
             receiver_id,
-            upload_mode=upload_mode)
+            upload_mode=upload_mode,
+            max_upload_points_per_source=max_upload_points_per_source)
         metadata['cluster_count'] = len(clusters)
         metadata['resource_allocation'] = resource_allocation
         metadata['clustering'] = clustering
@@ -654,6 +752,8 @@ def apply_sgcp_constraint(frame, protocol, ego_cav_id, resource_allocation,
         metadata['coverage_fallback'] = coverage_fallback
         metadata['coverage_fallback_replacements'] = (
             coverage_fallback_replacements)
+        metadata['max_upload_points_per_source'] = (
+            max_upload_points_per_source or '')
         constrained_items.append((constrained_frame, metadata))
     update_coverage_state_from_items(coverage_state, constrained_items)
     return constrained_items
@@ -792,7 +892,8 @@ def apply_selective_sharing_baseline(frame, protocol, ego_cav_id,
                                      member_budget, grid_budget,
                                      t_min_stab=None, clustering='coalition_game',
                                      n_max=None, rho_th=None,
-                                     link_quality=None, timestamp=None):
+                                     link_quality=None, timestamp=None,
+                                     max_upload_points_per_source=None):
     clear_sgcp_globals()
     world = OfflineCavWorld(
         frame,
@@ -836,7 +937,8 @@ def apply_selective_sharing_baseline(frame, protocol, ego_cav_id,
         constrained_frame, metadata = build_constrained_frame(
             frame,
             world,
-            receiver_id)
+            receiver_id,
+            max_upload_points_per_source=max_upload_points_per_source)
         metadata['cluster_count'] = len(clusters)
         metadata['resource_allocation'] = (
             'selective_%s' % baseline_name)
@@ -853,6 +955,8 @@ def apply_selective_sharing_baseline(frame, protocol, ego_cav_id,
         metadata['selective_grid_budget'] = grid_budget
         metadata['ns3_link_quality_csv'] = (
             link_quality['path'] if link_quality else '')
+        metadata['max_upload_points_per_source'] = (
+            max_upload_points_per_source or '')
         constrained_items.append((constrained_frame, metadata))
     return constrained_items
 
@@ -983,6 +1087,189 @@ def write_trace_csv(path, rows):
             writer.writerow(row)
 
 
+def tensor_to_numpy(value):
+    if value is None:
+        return None
+    return common_utils.torch_tensor_to_numpy(value)
+
+
+def normalize_object_ids(object_ids, count):
+    if object_ids is None:
+        return [''] * count
+    normalized = [str(item) for item in object_ids]
+    if len(normalized) < count:
+        normalized.extend([''] * (count - len(normalized)))
+    return normalized[:count]
+
+
+def box_center(box):
+    if box is None or len(box) == 0:
+        return ('', '', '')
+    center = np.mean(box[:, :3], axis=0)
+    return ('%.4f' % center[0], '%.4f' % center[1], '%.4f' % center[2])
+
+
+def match_predictions_to_gt(gt_boxes, pred_boxes, pred_scores, iou_thresh):
+    """Return best and greedy matched prediction info for each canonical GT."""
+    if gt_boxes is None:
+        return []
+    gt_boxes_np = tensor_to_numpy(gt_boxes)
+    gt_count = gt_boxes_np.shape[0]
+    if gt_count == 0:
+        return []
+    matches = [
+        {
+            'matched': False,
+            'best_iou': 0.0,
+            'best_score': '',
+            'matched_score': '',
+        }
+        for _ in range(gt_count)
+    ]
+    if pred_boxes is None or pred_scores is None:
+        return matches
+
+    pred_boxes_np = tensor_to_numpy(pred_boxes)
+    pred_scores_np = tensor_to_numpy(pred_scores)
+    if pred_boxes_np is None or pred_scores_np is None:
+        return matches
+    if pred_boxes_np.shape[0] == 0:
+        return matches
+
+    pred_polygons = list(common_utils.convert_format(pred_boxes_np))
+    gt_polygons = list(common_utils.convert_format(gt_boxes_np))
+    score_order = np.argsort(-pred_scores_np)
+    unmatched_gt = set(range(gt_count))
+
+    for pred_index in score_order:
+        if not unmatched_gt:
+            break
+        pred_polygon = pred_polygons[pred_index]
+        ious = common_utils.compute_iou(pred_polygon, gt_polygons)
+        if len(ious) == 0:
+            continue
+        for gt_index, iou in enumerate(ious):
+            if iou > matches[gt_index]['best_iou']:
+                matches[gt_index]['best_iou'] = float(iou)
+                matches[gt_index]['best_score'] = (
+                    '%.6f' % float(pred_scores_np[pred_index]))
+        candidate_gt = max(unmatched_gt, key=lambda idx: ious[idx])
+        candidate_iou = float(ious[candidate_gt])
+        if candidate_iou < iou_thresh:
+            continue
+        matches[candidate_gt]['matched'] = True
+        matches[candidate_gt]['matched_score'] = (
+            '%.6f' % float(pred_scores_np[pred_index]))
+        unmatched_gt.remove(candidate_gt)
+    return matches
+
+
+def object_diagnostic_rows(scenario_id, timestamp, sample_label, metadata,
+                           canonical_gt_boxes, canonical_gt_ids,
+                           reference_pred_boxes, reference_scores,
+                           method_pred_boxes, method_scores, iou_thresh):
+    if canonical_gt_boxes is None:
+        return []
+    gt_boxes_np = tensor_to_numpy(canonical_gt_boxes)
+    if gt_boxes_np is None:
+        return []
+    gt_ids = normalize_object_ids(canonical_gt_ids, gt_boxes_np.shape[0])
+    reference_matches = match_predictions_to_gt(
+        canonical_gt_boxes,
+        reference_pred_boxes,
+        reference_scores,
+        iou_thresh)
+    method_matches = match_predictions_to_gt(
+        canonical_gt_boxes,
+        method_pred_boxes,
+        method_scores,
+        iou_thresh)
+    rows = []
+    metadata = metadata or {}
+    for gt_index, gt_box in enumerate(gt_boxes_np):
+        center_x, center_y, center_z = box_center(gt_box)
+        ref_match = reference_matches[gt_index]
+        method_match = method_matches[gt_index]
+        rows.append({
+            'scenario_id': scenario_id,
+            'timestamp': timestamp,
+            'sample_label': sample_label,
+            'receiver_id': metadata.get('receiver_id', ''),
+            'resource_allocation': metadata.get('resource_allocation', ''),
+            'clustering': metadata.get('clustering', ''),
+            'upload_mode': metadata.get('upload_mode', ''),
+            'grid_selection_mode': metadata.get('grid_selection_mode', ''),
+            'grid_score_mode': metadata.get('grid_score_mode', ''),
+            'num_channels': metadata.get('num_channels', ''),
+            'bandwidth_mhz': metadata.get('bandwidth_mhz', ''),
+            'communication_bytes': metadata.get('communication_bytes', ''),
+            'source_cav_ids': ';'.join(
+                str(item) for item in metadata.get('source_cav_ids', [])),
+            'uploaded_source_ids': ';'.join(
+                str(item) for item in metadata.get(
+                    'source_cav_ids', [])[1:]),
+            'selected_grid_counts_json': json.dumps(
+                metadata.get('selected_grid_counts', {}),
+                sort_keys=True),
+            'gt_index': gt_index,
+            'gt_object_id': gt_ids[gt_index],
+            'gt_center_x': center_x,
+            'gt_center_y': center_y,
+            'gt_center_z': center_z,
+            'full_reference_matched': int(ref_match['matched']),
+            'full_reference_best_iou': '%.6f' % ref_match['best_iou'],
+            'full_reference_best_score': ref_match['best_score'],
+            'method_matched': int(method_match['matched']),
+            'method_best_iou': '%.6f' % method_match['best_iou'],
+            'method_best_score': method_match['best_score'],
+            'full_detected_method_missed': int(
+                ref_match['matched'] and not method_match['matched']),
+        })
+    return rows
+
+
+def write_object_diagnostics_csv(path, rows):
+    if not path or not rows:
+        return
+    output_dir = os.path.dirname(os.path.abspath(path))
+    if output_dir and not os.path.exists(output_dir):
+        os.makedirs(output_dir)
+    fieldnames = [
+        'scenario_id',
+        'timestamp',
+        'sample_label',
+        'receiver_id',
+        'resource_allocation',
+        'clustering',
+        'upload_mode',
+        'grid_selection_mode',
+        'grid_score_mode',
+        'num_channels',
+        'bandwidth_mhz',
+        'communication_bytes',
+        'source_cav_ids',
+        'uploaded_source_ids',
+        'selected_grid_counts_json',
+        'gt_index',
+        'gt_object_id',
+        'gt_center_x',
+        'gt_center_y',
+        'gt_center_z',
+        'full_reference_matched',
+        'full_reference_best_iou',
+        'full_reference_best_score',
+        'method_matched',
+        'method_best_iou',
+        'method_best_score',
+        'full_detected_method_missed',
+    ]
+    with open(path, 'w', newline='') as stream:
+        writer = csv.DictWriter(stream, fieldnames=fieldnames)
+        writer.writeheader()
+        for row in rows:
+            writer.writerow(row)
+
+
 def main():
     args = parse_args()
     dataset = OPV2VFrameDataset(args.dataset_root)
@@ -993,6 +1280,7 @@ def main():
     manager = OpenCOODManager(coperception_params)
     sgcp_summaries = []
     sgcp_trace_rows = []
+    object_rows = []
     ns3_link_quality = load_ns3_link_quality(args.ns3_link_quality_csv)
     fixed_cluster_templates = []
     sgcp_coverage_state = defaultdict(dict)
@@ -1027,6 +1315,14 @@ def main():
                 ego_cav_id=args.ego_cav_id,
                 cav_count=args.cav_count,
                 cav_ids=args.cav_ids))
+        original_ego = next(cav for cav in frame.values() if cav['ego'])
+        target_ego_lidar_pose = original_ego['params']['lidar_pose']
+        canonical_ret = None
+        if args.object_diagnostics_output:
+            canonical_ret = run_opencood_inference(
+                manager,
+                frame,
+                target_ego_lidar_pose)
         frame_items = [(frame, None)]
         if args.selective_sharing_baseline is not None:
             protocol = load_protocol(dataset, scenario_id)
@@ -1044,7 +1340,9 @@ def main():
                 args.n_max,
                 args.rho_th,
                 link_quality=ns3_link_quality,
-                timestamp=timestamp)
+                timestamp=timestamp,
+                max_upload_points_per_source=(
+                    args.max_upload_points_per_source))
         elif args.sgcp_constrained:
             protocol = load_protocol(dataset, scenario_id)
             frame_items = apply_sgcp_constraint(
@@ -1069,10 +1367,10 @@ def main():
                     if args.clustering == 'fixed_first_frame' else None),
                 head_rb_budget=args.head_rb_budget,
                 coverage_fallback=args.sgcp_coverage_fallback,
-                coverage_state=sgcp_coverage_state)
+                coverage_state=sgcp_coverage_state,
+                max_upload_points_per_source=(
+                    args.max_upload_points_per_source))
         if args.sgcp_inter_cluster_late_fusion:
-            original_ego = next(cav for cav in frame.values() if cav['ego'])
-            target_ego_lidar_pose = original_ego['params']['lidar_pose']
             pred_tensors = []
             pred_scores = []
             gt_tensors = []
@@ -1169,6 +1467,50 @@ def main():
                       len(frame_items),
                       0 if fused_pred is None else fused_pred.shape[0],
                       0 if fused_gt is None else fused_gt.shape[0]))
+            if canonical_ret is not None:
+                aggregate_metadata = {
+                    'receiver_id': args.ego_cav_id,
+                    'resource_allocation': (
+                        'selective_%s' % args.selective_sharing_baseline
+                        if args.selective_sharing_baseline is not None
+                        else args.resource_allocation),
+                    'clustering': args.clustering,
+                    'upload_mode': args.sgcp_upload_mode,
+                    'grid_selection_mode': args.sgcp_grid_selection_mode,
+                    'grid_score_mode': args.sgcp_grid_score_mode,
+                    'num_channels': args.num_channels,
+                    'bandwidth_mhz': args.bandwidth_mhz,
+                    'communication_bytes': sum(
+                        int((metadata or {}).get('communication_bytes', 0))
+                        for _, metadata in frame_items),
+                    'source_cav_ids': sorted(set(
+                        source_id
+                        for _, metadata in frame_items
+                        for source_id in (
+                            (metadata or {}).get('source_cav_ids', [])))),
+                    'selected_grid_counts': {},
+                }
+                for _, metadata in frame_items:
+                    if not metadata:
+                        continue
+                    for key, value in metadata.get(
+                            'selected_grid_counts', {}).items():
+                        aggregate_metadata['selected_grid_counts'][key] = (
+                            aggregate_metadata[
+                                'selected_grid_counts'].get(key, 0) +
+                            value)
+                object_rows.extend(object_diagnostic_rows(
+                    scenario_id,
+                    timestamp,
+                    'inter_cluster_late_fusion',
+                    aggregate_metadata,
+                    canonical_ret[2],
+                    canonical_ret[3] if len(canonical_ret) > 3 else None,
+                    canonical_ret[0],
+                    canonical_ret[1],
+                    fused_pred,
+                    fused_score,
+                    args.object_diagnostics_iou))
             manager.submit_results(
                 fused_pred,
                 fused_score,
@@ -1224,6 +1566,23 @@ def main():
                   (coperception_params['fusion_method'], pred_count, gt_count))
             if pred_score is not None:
                 print('pred_scores_shape=%s' % (tuple(pred_score.shape),))
+            if canonical_ret is not None:
+                sample_label = (
+                    'full_reference'
+                    if sgcp_metadata is None
+                    else 'receiver_sample')
+                object_rows.extend(object_diagnostic_rows(
+                    scenario_id,
+                    timestamp,
+                    sample_label,
+                    sgcp_metadata,
+                    canonical_ret[2],
+                    canonical_ret[3] if len(canonical_ret) > 3 else None,
+                    canonical_ret[0],
+                    canonical_ret[1],
+                    pred_box_tensor,
+                    pred_score,
+                    args.object_diagnostics_iou))
             manager.submit_results(
                 pred_box_tensor,
                 pred_score,
@@ -1250,8 +1609,11 @@ def main():
                       avg_comm,
                       total_comm,
                       avg_sources,
-                      avg_selected_grids))
+                avg_selected_grids))
     write_trace_csv(args.sgcp_trace_output, sgcp_trace_rows)
+    write_object_diagnostics_csv(
+        args.object_diagnostics_output,
+        object_rows)
 
 
 if __name__ == '__main__':
