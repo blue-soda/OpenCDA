@@ -4381,3 +4381,47 @@ conda run -n opencda python -m opencda.tools.offline_ns3_replay --dataset-root D
 ### 结论
 
 PAPG 是当前最适合写入主表和机制章节的 SGCP 候选：相比 strong selective baseline，它用更低 Mbps 获得更高 AP@0.3/AP@0.5；相比 full 20-CAV upper reference，它明确低于上界但通信量约为一半。下一步只需补真实 NS3 socket replay / 在线短回归，并将论文中 `coverage-aware` 叙事升级为 perception-aware two-layer potential scheduling。
+
+## 2026-07-17 PAPG 真实 NS3 socket replay
+
+### 目的
+
+补齐 PAPG 主表候选的 NS3 request-level delivery 证据，确认 OpenCDA 指定的 10 个子信道请求在 ns-3 侧真实发送、接收并完成 application callback。
+
+### 关键命令
+
+ns-3 侧：
+
+```powershell
+wsl -d Ubuntu-22.04 -u sakakibara -- bash -lc "cd /home/sakakibara/workspace/carla-ns3-co-simulation/ns-3-dev && ./ns3 run 'scratch/vanet/main.cc --simTime=3.0 --enableTimeSync=true --carlaHost=auto --targetSubchannels=10'"
+```
+
+OpenCDA replay：
+
+```powershell
+conda run -n opencda python -m opencda.tools.offline_ns3_replay --dataset-root D:\Data\Carla --scenario-id 2026_07_15_01_26_56 --ego-cav-id 1 --max-frames 11 --resource-allocation perception_aware_potential_game --rho-th 3 --num-channels 10 --bandwidth-mhz 20 --head-rb-budget 2 --upload-plan-output docs\doc_workspace\SGCP\artifacts\papg_ns3_20260717_210304\upload_plan.csv --drain-seconds 0.3 --sync-timeout 30
+```
+
+解析：
+
+```powershell
+conda run -n opencda python -m opencda.tools.ns3_log_eval --ns3-stdout docs\doc_workspace\SGCP\artifacts\papg_ns3_20260717_210304\ns3_stdout_utf8.log --upload-plan docs\doc_workspace\SGCP\artifacts\papg_ns3_20260717_210304\upload_plan.csv --output-dir docs\doc_workspace\SGCP\artifacts\papg_ns3_20260717_210304\eval_utf8 --rsu-node-id 21 --max-frames 11
+```
+
+### 结果
+
+| Metric | Value |
+| --- | ---: |
+| planned requests | 110 |
+| application `cam_received` | 110 |
+| matched callback ratio | 1.000 |
+| RLC complete requests | 110 |
+| RLC partial / no-RX requests | 0 / 0 |
+| RLC TX / RX events | 2970 / 2970 |
+| RLC drops | 0 |
+| PHY decode failures | 0 |
+| avg / p95 callback delay | 23.91 / 24.00 ms |
+
+### 结论
+
+PAPG 的 11 帧真实 NS3 replay 已通过：带宽内、无冲突的 scheduled requests 均可完成 application callback 和 RLC request delivery。PowerShell `Start-Job` 捕获的 ns-3 stdout 是 UTF-16 LE，解析前已转为 `ns3_stdout_utf8.log`；该编码问题不影响 ns-3 结果，只影响离线解析器读日志。

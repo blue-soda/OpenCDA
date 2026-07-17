@@ -11,7 +11,7 @@
 - 数据：`D:\Data\Carla\2026_07_15_01_26_56`，41 帧，20 CAV。
 - 感知：OpenCOOD early-fusion checkpoint，SGCP inter-cluster late fusion evaluation path。
 - 通信量：点云 upload payload；Mbps 按 41 帧、0.1 s 协作周期换算，即 `payload_bytes * 8 / 4.1 s / 1e6`。
-- NS3：`spatial_diverse` 10ch (`rho_th=2/3`) 和 20ch 已完成 11 帧 request-level replay，均为 application/RLC complete。PAPG 当前完成 11 帧 upload-plan dry-run，真实 NS3 socket replay 待补。
+- NS3：`spatial_diverse` 10ch (`rho_th=2/3`) 和 20ch 已完成 11 帧 request-level replay，均为 application/RLC complete。PAPG 10ch `rho_th=3,B_h=2` 已完成 11 帧真实 socket replay，110/110 application callback 与 RLC request complete，PHY failures 为 0。
 
 ## 推荐主表
 
@@ -24,7 +24,7 @@
 | Selective density, 3m/117g | Fair V2V baseline | 0.80 | 0.76 | 0.40 | 37,710,864 | 73.58 | Not constrained | Payload-matched high-budget selective baseline |
 | SGCP original utility, 10ch | Previous SGCP | 0.77 | 0.73 | 0.35 | 26,916,208 | 52.52 | 110/110 complete | Original saturated-density utility |
 | SGCP coverage-aware, 10ch, `rho_th=2` | Proposed low-budget | 0.79 | 0.75 | 0.37 | 28,743,280 | 56.08 | 110/110 complete | Spatial-diverse grid selection |
-| SGCP PAPG, 10ch, `rho_th=3`, `B_h=2` | Proposed main | 0.81 | 0.78 | 0.39 | 32,049,872 | 62.54 | 11f dry-run | Perception-aware two-layer potential scheduling: coverage layer + target layer |
+| SGCP PAPG, 10ch, `rho_th=3`, `B_h=2` | Proposed main | 0.81 | 0.78 | 0.39 | 32,049,872 | 62.54 | 110/110 complete | Perception-aware two-layer potential scheduling: coverage layer + target layer |
 | SGCP target-aware PG, 10ch, `rho_th=3` | Proposed low-budget tuned | 0.80 | 0.76 | 0.39 | 31,069,968 | 60.62 | 11f request plan dry-run | New scheduler: original potential-game sender/RB stage + target-aware grid-action refinement |
 | SGCP coverage-aware, 10ch, `rho_th=3` | Previous grid-selection probe | 0.79 | 0.76 | 0.38 | 29,405,296 | 57.38 | 110/110 complete | Kept as ablation for the former post-processing style selection |
 | SGCP coverage-aware, 10ch, `rho_th=3`, point cap 3000 | Payload sensitivity | 0.74 | 0.70 | 0.33 | 19,510,848 | 38.07 | Not replayed | Effective payload knob, but AP drops; not recommended as main row yet |
@@ -56,5 +56,5 @@
 - Use PAPG `rho_th=3,B_h=2` as the current 10ch main row unless later forced-budget baselines overturn the table. It improves target-aware PG from `0.80/0.76/0.39` to `0.81/0.78/0.39`, with payload rising from 60.62 Mbps to 62.54 Mbps.
 - Decide whether the main table shows both SGCP 10ch and 20ch, or places 20ch in network-resource sensitivity.
 - `rho_th=3` NS3 replay is now complete: 110/110 application callbacks and 110/110 RLC-complete requests over the first 11 frames, with no PHY decode failures.
-- For PAPG, supplement the current dry-run with true NS3 socket replay before final paper submission. The algorithm uses 410 scheduled links over 41 frames and does not bypass subchannel budget.
+- PAPG 11-frame true NS3 socket replay is complete: 110/110 application callbacks, 110/110 RLC-complete requests, 0 PHY decode failures. The algorithm uses 410 scheduled links over 41 frames in the perception run and does not bypass subchannel budget.
 - Before declaring SGCP "lowest Mbps", rerun Random/Greedy under forced bandwidth utilization or identical point cap. The existing Random/MWS rows use only about 18-19 Mbps and therefore are weak ablations, not fair main baselines.

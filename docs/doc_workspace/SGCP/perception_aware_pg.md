@@ -70,6 +70,36 @@ conda run -n opencda python -m opencda.tools.sgcp_failure_diagnostics --dataset-
 
 ## 待验证
 
-- 启动 NS3 做真实 socket replay，检查 PAPG scheduled request 的 application callback、RLC completion 和 PHY diagnostics。
+- NS3 真实 socket replay 已完成 11 帧：110/110 scheduled requests application callback complete，RLC complete 110/110，PHY decode failures 0。日志路径：`docs/doc_workspace/SGCP/artifacts/papg_ns3_20260717_210304/`。
 - 做短在线 CARLA+NS3 smoke test，确认 deadline-aware CP delivery 与离线 final-delivery 口径差异。
 - 将 `main.tex` 中当前 coverage-aware 机制文字升级为 perception-aware two-layer potential scheduling，并把 PAPG 作为新的主表候选。
+
+## NS3 Replay
+
+启动 ns-3：
+
+```powershell
+wsl -d Ubuntu-22.04 -u sakakibara -- bash -lc "cd /home/sakakibara/workspace/carla-ns3-co-simulation/ns-3-dev && ./ns3 run 'scratch/vanet/main.cc --simTime=3.0 --enableTimeSync=true --carlaHost=auto --targetSubchannels=10'"
+```
+
+离线 replay：
+
+```powershell
+conda run -n opencda python -m opencda.tools.offline_ns3_replay --dataset-root D:\Data\Carla --scenario-id 2026_07_15_01_26_56 --ego-cav-id 1 --max-frames 11 --resource-allocation perception_aware_potential_game --rho-th 3 --num-channels 10 --bandwidth-mhz 20 --head-rb-budget 2 --upload-plan-output docs\doc_workspace\SGCP\artifacts\papg_ns3_20260717_210304\upload_plan.csv --drain-seconds 0.3 --sync-timeout 30
+```
+
+解析结果：
+
+| Metric | Value |
+| --- | ---: |
+| planned requests | 110 |
+| application `cam_received` | 110 |
+| matched callback ratio | 1.000 |
+| RLC complete requests | 110 |
+| RLC partial/no-RX requests | 0 / 0 |
+| RLC TX/RX events | 2970 / 2970 |
+| PHY decode failures | 0 |
+| average callback delay | 23.91 ms |
+| p95 callback delay | 24.00 ms |
+
+注意：PowerShell `Start-Job` 捕获的 ns-3 stdout 默认为 UTF-16 LE，需转成 UTF-8 后再交给 `opencda.tools.ns3_log_eval`，否则解析器会读到 0 条事件。
