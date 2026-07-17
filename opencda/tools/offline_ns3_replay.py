@@ -106,6 +106,14 @@ def parse_args():
                         help='Also send SGCP member->head requests without an '
                              'assigned subchannel. By default these are skipped '
                              'so NS3 cannot fall back to autonomous scheduling.')
+    parser.add_argument('--respect-slot-index', action='store_true',
+                        help='For LGCP upload plans with slot_index, send '
+                             'requests slot-by-slot and sync NS3 after each '
+                             'slot. Default keeps the historical one-batch '
+                             'per frame behavior.')
+    parser.add_argument('--slot-duration-seconds', type=float, default=0.01,
+                        help='NS3 time advanced per LGCP slot when '
+                             '--respect-slot-index is used.')
     parser.add_argument('--dry-run', action='store_true',
                         help='Build and print replay requests without opening '
                              'NS3 sockets.')
@@ -433,22 +441,39 @@ def build_lgcp_requests(upload_rows, rsu_node_id):
             'target': request_endpoint_to_int(row['target_id'], rsu_node_id),
             'size': int(float(row['bytes'])),
             'pkt_id': pkt_id,
+            'area_id': row.get('area_id', ''),
             'upload_type': row.get('upload_type', ''),
+            'stage': row.get('stage', ''),
+            'scheduled_delay_ms': row.get('scheduled_delay_ms', ''),
         }
         sc_start = row.get('sc_start', '')
         sc_num = row.get('sc_num', '')
         if sc_start != '' and sc_num != '':
             request['sc_start'] = int(float(sc_start))
             request['sc_num'] = int(float(sc_num))
+        slot_index = row.get('slot_index', '')
+        if slot_index != '':
+            request['slot_index'] = int(float(slot_index))
         requests.append(request)
     return requests
+
+
+def group_requests_by_slot(requests):
+    slots = defaultdict(list)
+    unslotted = []
+    for request in requests:
+        if 'slot_index' not in request:
+            unslotted.append(request)
+            continue
+        slots[int(request['slot_index'])].append(request)
+    return slots, unslotted
 
 
 def append_upload_plan_rows(rows, timestamp, requests, mode):
     for request in requests:
         rows.append({
             'timestamp': timestamp,
-            'area_id': '',
+            'area_id': request.get('area_id', ''),
             'source_id': request['source'],
             'target_id': request['target'],
             'bytes': request['size'],
@@ -456,6 +481,9 @@ def append_upload_plan_rows(rows, timestamp, requests, mode):
             'pkt_id': request.get('pkt_id', ''),
             'sc_start': request.get('sc_start', ''),
             'sc_num': request.get('sc_num', ''),
+            'slot_index': request.get('slot_index', ''),
+            'stage': request.get('stage', ''),
+            'scheduled_delay_ms': request.get('scheduled_delay_ms', ''),
         })
 
 
@@ -475,6 +503,9 @@ def write_upload_plan(path, rows):
         'pkt_id',
         'sc_start',
         'sc_num',
+        'slot_index',
+        'stage',
+        'scheduled_delay_ms',
     ]
     with open(path, 'w', newline='') as stream:
         writer = csv.DictWriter(stream, fieldnames=fieldnames)
@@ -484,6 +515,8 @@ def write_upload_plan(path, rows):
 
 def main():
     args = parse_args()
+    if args.slot_duration_seconds <= 0:
+        raise ValueError('--slot-duration-seconds must be positive')
     dataset = OPV2VFrameDataset(args.dataset_root)
     scenario_id = args.scenario_id or next(iter(dataset.scenarios.keys()))
     protocol = load_protocol(dataset, scenario_id)
@@ -515,6 +548,7 @@ def main():
         first_vehicle_data = None
         upload_plan_rows = []
         next_pkt_id = 1
+        last_sync_time = 0.0
         for index, timestamp in enumerate(timestamps):
             if lgcp_uploads is None and args.selective_sharing_baseline:
                 vehicle_data, requests, clusters, skipped_unscheduled = \
@@ -582,9 +616,15 @@ def main():
                 requests,
                 request_mode)
 
+            slot_groups, unslotted_requests = group_requests_by_slot(requests)
+            slot_count = len(slot_groups)
+            slotted_request_count = sum(len(items)
+                                        for items in slot_groups.values())
+
             if args.dry_run:
                 print('frame=%s/%s timestamp=%s mode=%s vehicles=%s '
-                      'requests=%s bytes=%s scheduled=%s skipped_unscheduled=%s '
+                      'requests=%s bytes=%s scheduled=%s slots=%s '
+                      'slotted_requests=%s skipped_unscheduled=%s '
                       'dry_run=true' % (
                           index + 1,
                           len(timestamps),
@@ -595,6 +635,8 @@ def main():
                           sum(item['size'] for item in requests),
                           sum(1 for item in requests
                               if 'sc_start' in item and 'sc_num' in item),
+                          slot_count,
+                          slotted_request_count,
                           skipped_unscheduled))
                 continue
 
@@ -608,11 +650,32 @@ def main():
                 raise RuntimeError(
                     'NS3 sync failed at timestamp %s, sim_time %.3fs' %
                     (timestamp, sim_time))
-            if requests:
+            last_sync_time = sim_time
+
+            if (args.respect_slot_index and lgcp_uploads is not None and
+                    slot_groups):
+                if unslotted_requests:
+                    raise RuntimeError(
+                        'LGCP slot replay requires every request to have '
+                        'slot_index; timestamp %s has %s unslotted requests' %
+                        (timestamp, len(unslotted_requests)))
+                for slot_index in sorted(slot_groups.keys()):
+                    slot_requests = slot_groups[slot_index]
+                    bridge.send_transfer_requests(slot_requests)
+                    slot_time = sim_time + (
+                        (int(slot_index) + 1) *
+                        args.slot_duration_seconds)
+                    if not bridge.sync_with_ns3(slot_time):
+                        raise RuntimeError(
+                            'NS3 sync failed at timestamp %s, slot %s, '
+                            'sim_time %.3fs' %
+                            (timestamp, slot_index, slot_time))
+                    last_sync_time = slot_time
+            elif requests:
                 bridge.send_transfer_requests(requests)
 
             print('frame=%s/%s timestamp=%s sim_time=%.3f mode=%s vehicles=%s '
-                  'clusters=%s requests=%s scheduled=%s '
+                  'clusters=%s requests=%s scheduled=%s slots=%s '
                   'skipped_unscheduled=%s bytes=%s' % (
                       index + 1,
                       len(timestamps),
@@ -624,10 +687,13 @@ def main():
                       len(requests),
                       sum(1 for item in requests
                           if 'sc_start' in item and 'sc_num' in item),
+                      slot_count,
                       skipped_unscheduled,
                       sum(item['size'] for item in requests)))
 
-        final_time = (len(timestamps) - 1) * frame_interval + args.drain_seconds
+        final_time = max(
+            (len(timestamps) - 1) * frame_interval,
+            last_sync_time) + args.drain_seconds
         if args.dry_run:
             print('offline_ns3_replay dry_run completed frames=%s' %
                   len(timestamps))

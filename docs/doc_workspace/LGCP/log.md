@@ -3000,3 +3000,79 @@ conda run -n opencda python -m opencda.tools.lgcp_schedule_upload_plan_eval --up
 - Top-30 raw-slice-aware plan 可在 `Z=10` 下完整排程，不需要 capacity gate。
 - 以 `10ms/slot` 估算，完整两级上传调度延迟为 `50ms/frame`。
 - 该结果补齐 full-plan scheduling proxy；live NS3 多 slot replay 仍需将 `slot_index` 接入 replay 时序。
+
+## 2026-07-18 - Multi-slot live NS3 replay smoke
+
+目标：
+
+- 将 multi-slot schedule 中的 `slot_index` 接入 `offline_ns3_replay.py`。
+- 验证 live ns-3 是否能按 slot 分批接收 LGCP transfer requests，并保持 request-level trace 可解析。
+
+代码变更：
+
+```text
+opencda/tools/offline_ns3_replay.py
+```
+
+关键变化：
+
+- 新增 `--respect-slot-index`：仅在显式开启时按 `slot_index` 分批发送 request。
+- 新增 `--slot-duration-seconds`：每个 slot 后推进的 ns-3 时间，默认 `0.01s`。
+- `upload_plan_output` 现在保留 `area_id/slot_index/stage/scheduled_delay_ms`，便于 request-level parser 和调度诊断回连。
+
+dry-run：
+
+```powershell
+conda run -n opencda python -m opencda.tools.offline_ns3_replay --dataset-root D:\Data\Carla --scenario-id 2026_07_15_02_33_21 --ego-cav-id 1 --max-frames 3 --lgcp-upload-plan docs\doc_workspace\LGCP\experiments\hierarchy_plan\20260718_lgcp_carla_raw_slice_multislot_schedule_z10\scheduled_upload_plan.csv --respect-slot-index --slot-duration-seconds 0.01 --dry-run --upload-plan-output docs\doc_workspace\LGCP\experiments\hierarchy_plan\20260718_lgcp_carla_raw_slice_multislot_replay_dryrun_z10\dry_run_upload_plan_replayed.csv
+```
+
+dry-run 输出：
+
+| Frame | Timestamp | Requests | Slots | Slotted requests |
+| ---: | --- | ---: | ---: | ---: |
+| 1 | `000060` | 46 | 5 | 46 |
+| 2 | `000062` | 46 | 5 | 46 |
+| 3 | `000064` | 45 | 5 | 45 |
+
+live ns-3 replay：
+
+```powershell
+conda run -n opencda python -m opencda.tools.offline_ns3_replay --dataset-root D:\Data\Carla --scenario-id 2026_07_15_02_33_21 --ego-cav-id 1 --max-frames 3 --lgcp-upload-plan docs\doc_workspace\LGCP\experiments\hierarchy_plan\20260718_lgcp_carla_raw_slice_multislot_schedule_z10\scheduled_upload_plan.csv --respect-slot-index --slot-duration-seconds 0.01 --rsu-node-id 21 --drain-seconds 0.3 --sync-timeout 20 --upload-plan-output docs\doc_workspace\LGCP\experiments\hierarchy_plan\20260718_lgcp_carla_raw_slice_multislot_replay_dryrun_z10\ns3_multislot_3f_rsu21\upload_plan_replayed_request.csv
+```
+
+parser：
+
+```powershell
+conda run -n opencda python -m opencda.tools.lgcp_ns3_log_eval --ns3-stdout docs\doc_workspace\LGCP\experiments\hierarchy_plan\20260718_lgcp_carla_raw_slice_multislot_replay_dryrun_z10\ns3_multislot_3f_rsu21\ns3_stdout_request.log --upload-plan docs\doc_workspace\LGCP\experiments\hierarchy_plan\20260718_lgcp_carla_raw_slice_multislot_replay_dryrun_z10\ns3_multislot_3f_rsu21\upload_plan_replayed_request.csv --output-dir docs\doc_workspace\LGCP\experiments\hierarchy_plan\20260718_lgcp_carla_raw_slice_multislot_replay_dryrun_z10\ns3_request_trace_3f_rsu21 --rsu-node-id 21 --max-frames 3
+```
+
+结果：
+
+| Metric | Value |
+| --- | ---: |
+| Planned requests | 137 |
+| Observed `cam_received` | 54 |
+| Bridge-observed delivery ratio | 0.394161 |
+| Planned bytes | 352400 |
+| Observed bytes | 120176 |
+| Avg delay | 68.333 ms |
+| P95 delay | 202.000 ms |
+| RLC TX events | 1013 |
+| RLC RX events | 737 |
+| Requests with RLC TX | 127 |
+| Requests with RLC RX | 110 |
+| Requests with PSSCH OK | 110 |
+| Requests with PSSCH FAIL | 0 |
+
+分类型：
+
+| Upload type | Planned | Observed app | Bridge ratio |
+| --- | ---: | ---: | ---: |
+| member_to_leader | 47 | 2 | 0.042553 |
+| leader_to_rsu | 90 | 52 | 0.577778 |
+
+结论：
+
+- `slot_index/sc_start/sc_num` 已经能够驱动 live ns-3 分 slot replay。
+- 相比 unscheduled raw-slice 3 帧 trace，bridge-observed delivery ratio 从 `0.043796` 提升到 `0.394161`，且 PSSCH FAIL 从 51 个 request 降到 0。
+- member-to-leader application callback 仍偏低；后续应检查 application completion timing、分片聚合或 drain duration。

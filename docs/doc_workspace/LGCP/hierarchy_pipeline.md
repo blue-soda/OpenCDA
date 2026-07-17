@@ -577,4 +577,17 @@ docs/doc_workspace/LGCP/experiments/hierarchy_plan/20260718_lgcp_carla_raw_slice
 
 该 multi-slot proxy 显示完整 Top-30 plan 可分为 2 个 member-to-leader slots 和 3 个 leader-to-RSU slots。它补齐了 full-plan scheduling 的离线机制，但还不是 live ns-3 multi-slot replay。
 
-下一步应把 multi-slot `slot_index` 接入 live replay 时序，或实现 leader local fusion 的离线近似。
+`offline_ns3_replay.py` 现已支持 `--respect-slot-index`，可将带 `slot_index` 的 LGCP upload plan 分 slot 发送到 ns-3，并在每个 slot 后按 `--slot-duration-seconds` 推进仿真时间。
+
+3-frame live multi-slot smoke：
+
+| Metric | Value |
+| --- | ---: |
+| Planned requests | 137 |
+| Observed `cam_received` | 54 |
+| Bridge-observed delivery ratio | 0.394161 |
+| Requests with RLC RX | 110 |
+| Requests with PSSCH OK | 110 |
+| Requests with PSSCH FAIL | 0 |
+
+该结果说明 `slot_index/sc_start/sc_num` 已经能驱动 live ns-3 分 slot 回放。下一步应检查 member-to-leader application callback 偏低的原因，或实现 leader local fusion 的离线近似。

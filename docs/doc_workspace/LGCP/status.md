@@ -70,6 +70,7 @@
 - 已新增 `opencda/tools/lgcp_schedule_upload_plan_eval.py`，可将 raw-slice-aware upload plan 转换为单 slot、capacity-gated scheduled smoke plan；Top-30 11 帧在 `Z=10` 下保留 110/504 条 request 和 543.41KB/1.31MB bytes。
 - `offline_ns3_replay.py` 现已保留 LGCP upload plan 中的 `sc_start/sc_num` 字段；3 帧 scheduled live ns-3 smoke 达到 30 planned requests、24 application callbacks、0 PHY decode failures，bridge-observed delivery ratio 为 `0.8`。
 - `opencda/tools/lgcp_schedule_upload_plan_eval.py` 已扩展 `--schedule-mode multi_slot`，可对完整 raw-slice-aware plan 输出 `slot_index/sc_start/sc_num/stage/scheduled_delay_ms`；Top-30 11 帧在 `Z=10`、`10ms/slot` 下 504/504 requests 全部排入 5 slots/frame，调度延迟 proxy 为 `50ms/frame`。
+- `offline_ns3_replay.py` 已新增 `--respect-slot-index`，可按 LGCP `slot_index` 分 slot 发送并同步 ns-3；3 帧 multi-slot live replay 覆盖 137/137 requests，54 application callbacks，110 requests with RLC RX / PSSCH OK，PSSCH FAIL 为 0。
 - 已新增 `opencda/tools/lgcp_feature_slice_manifest.py`，生成 raw LiDAR area-specific slice manifest；Top-40 11 帧 member upload slice 约 `6199` points/frame、`99.19 KB/frame`，为后续 neural feature slicing 提供接口和 byte proxy。
 - 已新增 LGCP 专用仿真入口 `opencda/scenario_testing/lgcp_carla.py` 和配置 `opencda/scenario_testing/config_yaml/lgcp_carla.yaml`。
 - 未修改 `v2xp_cluster_carla` 原始配置。
@@ -79,14 +80,14 @@
 
 1. 扩大 area confidence validation 到多 seed / 多场景，形成可进入论文的稳定相关性结果；OpenCOOD 评估入口、日志格式、远端数据路径和候选 checkpoint 已确认，下一步应在 `mindspore-186` 跑 400-frame gate。
 2. 推进 neural feature tensor slicing、leader local fusion 和 RSU global perception aggregation；当前已有 raw LiDAR slice manifest 与 hierarchy aggregation proxy，但还不是 model-level fusion。
-3. 若继续扩展 ablation，应优先把当前 multi-slot scheduling proxy 接入 live replay 时序，或开始推进 model-level leader/RSU fusion，而不是只增加 random seed。
+3. 若继续扩展 ablation，应优先诊断 multi-slot live replay 中 member-to-leader application callback 偏低的原因，或开始推进 model-level leader/RSU fusion，而不是只增加 random seed。
 4. 大规模 30 CAV 结果若短期只跑 latency，应在论文中收窄为 communication/computation scalability；若报告 perception scalability，只能报告已校准的 proxy，不能写成真实 AP。
 5. 下一步将 request-level PHY/RLC/HARQ trace 和 control-plane overhead 扩展到多 seed，或开始推进完整 LGCP local fusion / RSU aggregation。
 6. 以 `revision_matrix.md` 作为论文修改和实验补强的主索引；下一轮若进入论文源文件修改，应优先重导出 Fig. 7 x-axis 并加入低密度 latency 解释段。
 
 ## 当前阻塞点
 
-- 当前仓库已有 cluster-oriented cooperative perception / network co-simulation 管线，RSU 现在可以作为固定感知/注册实体启用；offline subset ablation、scalable quality proxy、hierarchy control-plane plan、11 帧 offline NS3 request-id bridge-observed replay、RLC request-id trace、PHY decode-failure breakdown、single-slot scheduled smoke 和 multi-slot scheduling proxy 已能支持部分 rebuttal 证据，但尚未实现真实 feature slicing、leader local fusion、RSU global perception aggregation 和 live multi-slot LGCP replay。
+- 当前仓库已有 cluster-oriented cooperative perception / network co-simulation 管线，RSU 现在可以作为固定感知/注册实体启用；offline subset ablation、scalable quality proxy、hierarchy control-plane plan、11 帧 offline NS3 request-id bridge-observed replay、RLC request-id trace、PHY decode-failure breakdown、single-slot scheduled smoke、multi-slot scheduling proxy 和 3 帧 live multi-slot replay 已能支持部分 rebuttal 证据，但尚未实现真实 feature slicing、leader local fusion 和 RSU global perception aggregation。
 - 本地 `C:\Workspace\OpenCOOD` 尚无 `dataset/`，不能直接做 OPV2V / V2XSet 多场景 inference；远端 `mindspore-186` 的 OPV2V 数据路径、Python 环境和 checkpoint/log store 已确认。
 - NS3 当前版本已可接收 LGCP upload plan transfer requests，`cam_received`、RLC TX/RX/DROP、PSSCH decode OK/FAIL 和 HARQ ACK/NACK 已可通过 `request_id` 精确映射回 upload request；HARQ trace 需要显式使用 `--enableSlHarq=true --psfchPeriod=4`。
 

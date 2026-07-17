@@ -1604,3 +1604,58 @@ Interpretation:
 - The Top-30 raw-slice plan can be fully scheduled with `Z=10` in five sequential slots per frame.
 - At the proxy value of `10 ms/slot`, the two-stage LGCP transfer plan adds `50 ms/frame` of scheduled communication latency before RSU aggregation.
 - This is the full-plan scheduler proxy; the current live NS3 proof remains the 3-frame single-slot scheduled smoke.
+
+## LGCP Multi-Slot Live Replay Smoke
+
+`offline_ns3_replay.py` now supports `--respect-slot-index`. For LGCP upload plans that contain `slot_index`, the replay sends requests slot-by-slot and advances NS3 time by `--slot-duration-seconds` after each slot. The default replay behavior is unchanged.
+
+Run directory:
+
+```text
+docs/doc_workspace/LGCP/experiments/hierarchy_plan/20260718_lgcp_carla_raw_slice_multislot_replay_dryrun_z10
+```
+
+Dry-run check:
+
+| Frame | Timestamp | Requests | Slots | Slotted requests |
+| ---: | --- | ---: | ---: | ---: |
+| 1 | `000060` | 46 | 5 | 46 |
+| 2 | `000062` | 46 | 5 | 46 |
+| 3 | `000064` | 45 | 5 | 45 |
+
+3-frame live multi-slot NS3 replay:
+
+| Metric | Value |
+| --- | ---: |
+| Planned requests | 137 |
+| Observed `cam_received` | 54 |
+| Bridge-observed delivery ratio | 0.394161 |
+| Planned bytes | 352400 |
+| Observed bytes | 120176 |
+| Avg delay | 68.333 ms |
+| P95 delay | 202.000 ms |
+| RLC TX events | 1013 |
+| RLC RX events | 737 |
+| Requests with RLC TX | 127 |
+| Requests with RLC RX | 110 |
+| Requests with PSSCH OK | 110 |
+| Requests with PSSCH FAIL | 0 |
+
+By upload type:
+
+| Upload type | Planned | Observed app | Bridge ratio | Planned bytes | Observed bytes |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| member_to_leader | 47 | 2 | 0.042553 | 172400 | 16176 |
+| leader_to_rsu | 90 | 52 | 0.577778 | 180000 | 104000 |
+
+PHY decode breakdown:
+
+| Channel | Status | Reason | Count | Channel ratio |
+| --- | --- | --- | ---: | ---: |
+| PSSCH | OK | - | 737 | 1.000000 |
+
+Interpretation:
+
+- Slot-indexed live replay preserves all 137 requests over 3 frames, rather than capacity-gating to 30 requests.
+- Compared with the unscheduled raw-slice 3-frame trace, bridge-observed delivery improves from `0.043796` to `0.394161`, and request-level PSSCH failures drop from 51 requests to 0.
+- Member-to-leader application callbacks are still low despite PSSCH/RLC success, so the next live-replay investigation should focus on application-level completion timing, fragmentation, or drain duration.
