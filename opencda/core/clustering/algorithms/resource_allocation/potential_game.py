@@ -272,8 +272,7 @@ class PotentialGame(ResourceAllocationAlgorithm):
         - 两轮调度：exclusive → reuse
         """
         h = cluster.head_id
-        # B_h = self.p.N_max  # 或者单独设一个 B_h
-        B_h = 1
+        B_h = max(1, int(getattr(self.p, 'head_rb_budget', 1)))
         schedule = []
 
         # ========= Step 0: 准备候选 grids =========

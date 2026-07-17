@@ -3592,3 +3592,52 @@ frames=41 trace_rows=246 total_payload_bytes=26325216 missing_channel_rows=0
 ### 结论
 
 固定首帧 cluster membership 的 AP `0.73/0.70/0.33` 低于动态 coalition 的 `0.77/0.73/0.35`，说明 topology-aware cluster 更新确实贡献精度；但二者差距小于 SGCP grid-constrained 与 full-cluster upload 的差距，主表结果修复仍应继续集中在 coverage-aware grid utility、member/grid budget 和 AP@0.7 定位质量。
+
+## 2026-07-17 - Per-head RB budget sensitivity
+
+### 目的
+
+检查 `PotentialGame.best_response()` 中写死的 `B_h=1` 是否过于保守。新增显式 probe 参数后，保持默认协议不变，只在离线机制实验中覆盖每个簇头最多使用的 RB 数。
+
+### 代码更新
+
+- `common.Params` 新增 `head_rb_budget=1`。
+- `PotentialGame.best_response()` 从 `self.p.head_rb_budget` 读取 `B_h`。
+- `opencda.tools.offline_inference` 新增：
+
+```text
+--head-rb-budget <int>
+```
+
+### 验证
+
+```powershell
+conda run -n opencda python -m py_compile opencda\core\clustering\utils\common.py opencda\core\clustering\algorithms\resource_allocation\potential_game.py opencda\tools\offline_inference.py
+```
+
+3 帧 smoke test：
+
+```powershell
+conda run -n opencda python -m opencda.tools.offline_inference --dataset-root D:\Data\Carla --scenario-id 2026_07_15_01_26_56 --ego-cav-id 1 --sgcp-constrained --sgcp-inter-cluster-late-fusion --resource-allocation potential_game --sgcp-grid-selection-mode spatial_diverse --head-rb-budget 2 --max-frames 3 --sgcp-trace-output docs\doc_workspace\SGCP\artifacts\mechanism_probe\spatial_diverse_bh2_3f_trace.csv
+```
+
+### 41 帧命令
+
+```powershell
+conda run -n opencda python -m opencda.tools.offline_inference --dataset-root D:\Data\Carla --scenario-id 2026_07_15_01_26_56 --ego-cav-id 1 --sgcp-constrained --sgcp-inter-cluster-late-fusion --resource-allocation potential_game --sgcp-grid-selection-mode spatial_diverse --head-rb-budget 2 --max-frames 0 --sgcp-trace-output docs\doc_workspace\SGCP\artifacts\mechanism_probe\spatial_diverse_bh2_41f_trace.csv
+
+conda run -n opencda python -m opencda.tools.offline_inference --dataset-root D:\Data\Carla --scenario-id 2026_07_15_01_26_56 --ego-cav-id 1 --sgcp-constrained --sgcp-inter-cluster-late-fusion --resource-allocation potential_game --sgcp-grid-selection-mode spatial_diverse --rho-th 3 --head-rb-budget 2 --max-frames 0 --sgcp-trace-output docs\doc_workspace\SGCP\artifacts\mechanism_probe\spatial_diverse_rho3_bh2_41f_trace.csv
+```
+
+### 结果
+
+| Variant | AP@0.3 | AP@0.5 | AP@0.7 | Payload | Mbps | Avg selected grids / receiver | Missing channel rows |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| `spatial_diverse,B_h=2,rho_th=2` | 0.75 | 0.72 | 0.41 | 27,086,400 | 52.85 | 89.10 | 0 |
+| `spatial_diverse,B_h=2,rho_th=3` | 0.76 | 0.72 | 0.42 | 27,962,864 | 54.56 | 90.74 | 0 |
+
+`rho_th=3,B_h=2` 帧级统计：41 帧、平均 16 个 fused CAV/frame、10 个 uploaded sources/frame、平均 payload 682,021.07 bytes/frame、平均 selected grids 544.44/frame、`missing_channel_rows=0`。
+
+### 结论
+
+`B_h=2` 能把 AP@0.7 提到 `0.42`，等于 full-cluster upload 的高 IoU 结果，且通信量仅 54.56 Mbps；但 AP@0.3/0.5 降到 `0.76/0.72`，不适合作为当前主表主行。它说明 member/RB budget 能调节定位质量与召回分布，是后续算法改造方向。由于 scheduled links 可能变化，`B_h=2` 结果进入论文主表前必须补离线 NS3 replay。

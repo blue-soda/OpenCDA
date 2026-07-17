@@ -10,6 +10,7 @@
 
 ```text
 --clustering {coalition_game,fixed_first_frame,singleton,all_in_one}
+--head-rb-budget <int>
 --sgcp-upload-mode {grid,head_only,full_cluster}
 --sgcp-grid-selection-mode {utility,random,spatial_diverse}
 --sgcp-grid-score-mode {utility,raw_density,density_distance}
@@ -19,6 +20,7 @@
 
 - `grid`：默认 SGCP 口径，只上传 PPS/grid selection 选中的 sender grid。
 - `fixed_first_frame` clustering：首帧运行 coalition game 得到固定 head/member 模板，后续帧复用该模板；每帧仍重新计算 grid density、PPS resource allocation 和 OpenCOOD 融合，用于拆分 cluster 更新的贡献。
+- `head_rb_budget`：覆盖 `PotentialGame` 中每个簇头最多使用的 RB 数 `B_h`。默认 `1`，保持原始 SGCP 协议；大于 1 仅作为 member/grid budget sensitivity，需要重新做 NS3 request-level 验证后才能进入主表。
 - `head_only`：每个 cluster head 只使用自身点云，随后做 inter-cluster late fusion。
 - `full_cluster`：每个 cluster head 接收本 cluster 所有成员的完整点云，随后做 inter-cluster late fusion。
 - `random` grid selection：保留 SGCP/PPS 已调度 sender link 和每条 link 的 grid 数量，但将具体 grid 替换为确定性随机候选 grid，用于判断 utility 排序是否有效。
@@ -65,6 +67,14 @@ Fixed first-frame cluster membership：
 conda run -n opencda python -m opencda.tools.offline_inference --dataset-root D:\Data\Carla --scenario-id 2026_07_15_01_26_56 --ego-cav-id 1 --sgcp-constrained --sgcp-inter-cluster-late-fusion --resource-allocation potential_game --clustering fixed_first_frame --max-frames 0 --sgcp-trace-output docs\doc_workspace\SGCP\artifacts\protocol_audit\fixed_first_frame_41f_trace.csv
 ```
 
+Per-head RB budget sensitivity：
+
+```powershell
+conda run -n opencda python -m opencda.tools.offline_inference --dataset-root D:\Data\Carla --scenario-id 2026_07_15_01_26_56 --ego-cav-id 1 --sgcp-constrained --sgcp-inter-cluster-late-fusion --resource-allocation potential_game --sgcp-grid-selection-mode spatial_diverse --head-rb-budget 2 --max-frames 0 --sgcp-trace-output docs\doc_workspace\SGCP\artifacts\mechanism_probe\spatial_diverse_bh2_41f_trace.csv
+
+conda run -n opencda python -m opencda.tools.offline_inference --dataset-root D:\Data\Carla --scenario-id 2026_07_15_01_26_56 --ego-cav-id 1 --sgcp-constrained --sgcp-inter-cluster-late-fusion --resource-allocation potential_game --sgcp-grid-selection-mode spatial_diverse --rho-th 3 --head-rb-budget 2 --max-frames 0 --sgcp-trace-output docs\doc_workspace\SGCP\artifacts\mechanism_probe\spatial_diverse_rho3_bh2_41f_trace.csv
+```
+
 ## 结果
 
 | Mode | AP@0.3 | AP@0.5 | AP@0.7 | Total Bytes | Avg. Bytes / Receiver | Avg. Sources | Avg. Uploaded Sources | Avg. Uploaded Points | Avg. Selected Grids |
@@ -76,6 +86,8 @@ conda run -n opencda python -m opencda.tools.offline_inference --dataset-root D:
 | Raw-density score | 0.74 | 0.70 | 0.37 | 29,290,768 | 119,068.16 | 2.67 | 1.67 | 7,441.76 | 88.55 |
 | Density-distance score | 0.74 | 0.71 | 0.37 | 29,219,088 | 118,776.78 | 2.67 | 1.67 | 7,423.55 | 88.00 |
 | Spatial-diverse grid, same scheduled links | 0.79 | 0.75 | 0.37 | 28,743,280 | 116,842.60 | 2.67 | 1.67 | 7,302.66 | 87.32 |
+| Spatial-diverse, `B_h=2`, `rho_th=2` | 0.75 | 0.72 | 0.41 | 27,086,400 | 110,107.32 | 2.67 | 1.67 | 6,878.55 | 89.10 |
+| Spatial-diverse, `B_h=2`, `rho_th=3` | 0.76 | 0.72 | 0.42 | 27,962,864 | 113,670.18 | 2.67 | 1.67 | 7,104.39 | 90.74 |
 | Full-cluster upload | 0.82 | 0.79 | 0.42 | 44,850,528 | 182,319.22 | 3.33 | 2.33 | 11,394.95 | 0.00 |
 
 ## Spatial-Diverse Channel Sweep
@@ -95,6 +107,7 @@ conda run -n opencda python -m opencda.tools.offline_inference --dataset-root D:
 - Random grid selection 在同一调度链路和相同 grid 数量下达到 `0.78/0.75/0.36`，略高于当前 utility selection 的 `0.77/0.73/0.35`。这说明当前 grid utility 对检测 AP 的排序能力不足，至少在该 dump 上没有优于简单随机候选。
 - `raw_density` 和 `density_distance` 提升 AP@0.7 到 `0.37`，但明显损失 AP@0.3/0.5，并增加 payload；单纯追高密度或近距离高密度不是稳健解。
 - `spatial_diverse` 在相同 scheduled links 和相同 grid count 下达到 `0.79/0.75/0.37`，高于原始 utility 和 random-grid，同时仍只使用 full-cluster payload 的约 64.1%。这说明覆盖多样性是比饱和密度 utility 更有希望的算法改造方向。
+- `B_h=2` sensitivity 显著提升高 IoU：`rho_th=3` 时 AP@0.7 达到 `0.42`，等于 full-cluster upload 的 AP@0.7，且 payload 只有 27,962,864 bytes、约 54.56 Mbps。但 AP@0.3/0.5 降至 `0.76/0.72`，说明更灵活的 per-head RB budget 改善了定位质量/高置信局部几何，却可能损失召回分布。该结果适合作为 high-IoU sensitivity 或后续算法调参线索；进入主表前必须补 NS3 request-level replay。
 - 子信道 sweep 显示 20 子信道 `spatial_diverse` 可达到 `0.80/0.76/0.41`，AP@0.7 已接近 full-cluster `0.42`，payload 约为 full-cluster 的 84.5%。10 子信道仍是更强的低通信主点，20 子信道适合作为 high-budget sensitivity。
 - 当前主表偏低的主要嫌疑从协议链路转移到 grid/PPS 选择质量：需要把 grid utility 从“密度饱和增益”改为“检测导向的覆盖/定位增益”，并继续处理 `B_h=1`、grid budget 和 AP@0.7 定位精度。
 

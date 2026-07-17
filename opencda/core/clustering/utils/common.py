@@ -198,6 +198,7 @@ class Params:
                  num_time_slots=1,
                  T_min_stab=1.0,
                  N_max=4,
+                 head_rb_budget=1,
                  ita=1.1
                  ):
         # 协作集合划分参数
@@ -209,6 +210,7 @@ class Params:
         # 信道参数
         self.num_channels = num_channels      # 子信道数量 K
         self.num_time_slots = num_time_slots    # 时隙数量 T
+        self.head_rb_budget = head_rb_budget  # 每个簇头最多使用的 RB 数 B_h
         self.channel_capacity = 2   # 每个子信道的并发容量 C
         self.bandwidth_all = bandwidth_all * (10**6)  # 总带宽 72 MHz
         self.bandwidth_per_channel = self.bandwidth_all / self.num_channels  # 每个子信道带宽
