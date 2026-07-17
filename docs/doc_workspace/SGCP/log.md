@@ -3842,3 +3842,44 @@ conda run -n opencda python -m opencda.tools.sgcp_trace_coverage_summary --label
 ### 结论
 
 `B_h=2` 在 10ch 下没有增加 fused CAV 总数，仍为 16/20 CAV；它主要改变了“谁被上传”。CAV 6 从 41 帧全程上传降到 7 帧，CAV 5/4/12 增加覆盖，但 fused GT 和低阈值 AP 下降。下一步算法应加入 coverage fairness / persistent contributor protection / target coverage fallback，而不是简单提高 `B_h`。
+
+## 2026-07-17 - Persistent coverage fallback negative probe
+
+### 目的
+
+把上一轮 coverage diagnostics 转成最小算法 probe：在 10ch `B_h=2,rho_th=3` 下，保持每帧 10 条上传链路不变，用历史 coverage deficit 将长期未调度成员替换进同簇调度，并复用被替换成员的子信道。验证“保护长期欠覆盖成员”是否能恢复 AP@0.3/0.5。
+
+### 代码更新
+
+`opencda.tools.offline_inference` 新增显式关闭默认的 probe 开关：
+
+```text
+--sgcp-coverage-fallback {none,persistent}
+```
+
+`persistent` 只在候选成员历史欠覆盖达到阈值、且候选 selected-grid density 不明显低于被替换成员时执行替换；替换复用原 subchannel 和 grid count，不增加 link count 或绕过 PPS。默认 `none` 保持既有结果不变。
+
+### 命令
+
+无 fallback 对照：
+
+```powershell
+conda run -n opencda python -m opencda.tools.offline_inference --dataset-root D:\Data\Carla --scenario-id 2026_07_15_01_26_56 --ego-cav-id 1 --sgcp-constrained --sgcp-inter-cluster-late-fusion --resource-allocation potential_game --sgcp-grid-selection-mode spatial_diverse --rho-th 3 --head-rb-budget 2 --max-frames 11 --sgcp-trace-output docs\doc_workspace\SGCP\artifacts\mechanism_probe\spatial_diverse_rho3_bh2_baseline_11f_trace.csv
+```
+
+Persistent fallback：
+
+```powershell
+conda run -n opencda python -m opencda.tools.offline_inference --dataset-root D:\Data\Carla --scenario-id 2026_07_15_01_26_56 --ego-cav-id 1 --sgcp-constrained --sgcp-inter-cluster-late-fusion --resource-allocation potential_game --sgcp-grid-selection-mode spatial_diverse --rho-th 3 --head-rb-budget 2 --sgcp-coverage-fallback persistent --max-frames 11 --sgcp-trace-output docs\doc_workspace\SGCP\artifacts\mechanism_probe\spatial_diverse_rho3_bh2_persistent_conservative_11f_trace.csv
+```
+
+### 结果
+
+| Variant | Frames | AP@0.3 | AP@0.5 | AP@0.7 | Total Bytes | Missing Channel Rows | Zero-Pred Rows | Frame Replacements |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| `B_h=2,rho3`, no fallback | 11 | 0.69 | 0.64 | 0.34 | 7,416,720 | 0 | 0 | 0 |
+| `B_h=2,rho3`, persistent fallback | 11 | 0.67 | 0.62 | 0.34 | 7,453,808 | 0 | 0 | 7 |
+
+### 结论
+
+Persistent fallback 没有修复 AP@0.3/0.5，反而略降。协议层仍正确：`missing_channel_rows=0`，替换复用了已有 subchannel，没有绕过 PPS。负面结果说明“历史欠覆盖公平性”不足以作为上传成员替换准则；下一步应把 fallback 与 detector-quality proxy / per-target coverage / uncertainty 或 frame-level object recall 绑定，而不是只按 CAV 级 coverage deficit 替换。

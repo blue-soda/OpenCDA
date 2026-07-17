@@ -109,6 +109,14 @@ conda run -n opencda python -m opencda.tools.sgcp_trace_coverage_summary --label
 conda run -n opencda python -m opencda.tools.sgcp_trace_coverage_summary --label spatial20-rho2-bh1 --trace-csv docs\doc_workspace\SGCP\artifacts\mechanism_probe\spatial_diverse_ch20_41f_trace.csv --output-cav-csv docs\doc_workspace\SGCP\artifacts\mechanism_probe\spatial_diverse_ch20_41f_cav_coverage.csv --output-frame-csv docs\doc_workspace\SGCP\artifacts\mechanism_probe\spatial_diverse_ch20_41f_frame_coverage.csv
 ```
 
+Persistent coverage fallback negative probe：
+
+```powershell
+conda run -n opencda python -m opencda.tools.offline_inference --dataset-root D:\Data\Carla --scenario-id 2026_07_15_01_26_56 --ego-cav-id 1 --sgcp-constrained --sgcp-inter-cluster-late-fusion --resource-allocation potential_game --sgcp-grid-selection-mode spatial_diverse --rho-th 3 --head-rb-budget 2 --max-frames 11 --sgcp-trace-output docs\doc_workspace\SGCP\artifacts\mechanism_probe\spatial_diverse_rho3_bh2_baseline_11f_trace.csv
+
+conda run -n opencda python -m opencda.tools.offline_inference --dataset-root D:\Data\Carla --scenario-id 2026_07_15_01_26_56 --ego-cav-id 1 --sgcp-constrained --sgcp-inter-cluster-late-fusion --resource-allocation potential_game --sgcp-grid-selection-mode spatial_diverse --rho-th 3 --head-rb-budget 2 --sgcp-coverage-fallback persistent --max-frames 11 --sgcp-trace-output docs\doc_workspace\SGCP\artifacts\mechanism_probe\spatial_diverse_rho3_bh2_persistent_conservative_11f_trace.csv
+```
+
 ## 结果
 
 | Mode | AP@0.3 | AP@0.5 | AP@0.7 | Total Bytes | Avg. Bytes / Receiver | Avg. Sources | Avg. Uploaded Sources | Avg. Uploaded Points | Avg. Selected Grids |
@@ -159,6 +167,15 @@ conda run -n opencda python -m opencda.tools.sgcp_trace_coverage_summary --label
 
 这说明 `B_h=2` 的 AP@0.7 提升伴随长期贡献成员的替换：CAV 6 从 41 帧全程上传变为仅 7 帧上传，CAV 5/4/12 的覆盖增加，但整体 fused GT 下降。后续算法改造不应简单增加 per-head RB budget，而应加入 coverage fairness / persistent contributor protection / target coverage fallback，避免同样 10 条链路下把关键成员系统性挤出。
 
+## Persistent Coverage Fallback Negative Probe
+
+| Variant | Frames | AP@0.3 | AP@0.5 | AP@0.7 | Total Bytes | Missing Channel Rows | Zero-Pred Rows | Frame Replacements |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| `B_h=2,rho3`, no fallback | 11 | 0.69 | 0.64 | 0.34 | 7,416,720 | 0 | 0 | 0 |
+| `B_h=2,rho3`, persistent fallback | 11 | 0.67 | 0.62 | 0.34 | 7,453,808 | 0 | 0 | 7 |
+
+该 probe 保持 link count 和 subchannel 约束不变，7 次 frame-level replacement 均未产生 missing channel rows；但 AP@0.3/0.5 下降。结论：CAV 级 history fairness 不是足够的替换准则。后续若要加入 fallback，应引入 detector-quality proxy、object/target-level coverage 或 uncertainty，而不是只保护长期未调度成员。
+
 ## Spatial-Diverse Channel Sweep
 
 | Num. Channels | AP@0.3 | AP@0.5 | AP@0.7 | Total Bytes | Avg. Bytes / Receiver | Avg. Uploaded Sources | Avg. Uploaded Points | Avg. Selected Grids | Payload vs Full-Cluster |
@@ -180,6 +197,7 @@ conda run -n opencda python -m opencda.tools.sgcp_trace_coverage_summary --label
 - Late NMS threshold probe 中，默认 `0.15` 的 `0.76/0.72/0.42` 优于 `0.05` 的 `0.73/0.70/0.40` 和 `0.30` 的 `0.75/0.71/0.41`。因此 `B_h=2` 的 AP@0.3/0.5 下降不是简单由 inter-cluster late NMS 阈值导致；后续应优先检查 member/grid selection、box score distribution 和 per-cluster detection quality。
 - Late-fusion box-count diagnostics 进一步说明：`B_h=2` 的 fused GT 覆盖少于 `B_h=1` 10ch 和 20ch，且 fused prediction 数量没有增加。这支持“覆盖分布变窄、定位质量变好”的解释；主表低通信推荐仍应优先使用 `B_h=1` coverage-aware 10ch/20ch，`B_h=2` 暂写成 high-IoU sensitivity。
 - CAV coverage diagnostics 显示 `B_h=2` 在 10ch 下并未增加 fused CAV 数，仍是每帧 16/20 CAV；主要变化是 CAV 6 被 CAV 5/4/12 替代。下一步算法修复应关注 member coverage fairness 和关键成员保护，而不是单独提高 `B_h`。
+- Persistent coverage fallback 的 11 帧负面 probe 显示，单纯按历史欠覆盖保护成员会轻微降低 AP@0.3/0.5。coverage repair 必须引入检测质量或目标覆盖约束；当前不建议把 `--sgcp-coverage-fallback persistent` 作为主表机制。
 - 子信道 sweep 显示 20 子信道 `spatial_diverse` 可达到 `0.80/0.76/0.41`，AP@0.7 已接近 full-cluster `0.42`，payload 约为 full-cluster 的 84.5%。10 子信道仍是更强的低通信主点，20 子信道适合作为 high-budget sensitivity。
 - 当前主表偏低的主要嫌疑从协议链路转移到 grid/PPS 选择质量：需要把 grid utility 从“密度饱和增益”改为“检测导向的覆盖/定位增益”，并继续处理 `B_h=1`、grid budget 和 AP@0.7 定位精度。
 

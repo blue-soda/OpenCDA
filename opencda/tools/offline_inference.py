@@ -83,6 +83,13 @@ def parse_args():
                         choices=['utility', 'raw_density',
                                  'density_distance'],
                         help='Grid scoring mode used by potential_game before optional grid selection replacement.')
+    parser.add_argument('--sgcp-coverage-fallback', default='none',
+                        choices=['none', 'persistent'],
+                        help='Optional SGCP member-coverage fallback probe. '
+                             'persistent replaces an already scheduled member '
+                             'with a repeatedly unscheduled cluster member '
+                             'while reusing the same subchannel and grid '
+                             'budget. Defaults to none.')
     parser.add_argument('--t-min-stab', type=float, default=None,
                         help='Override CoalitionGame Params.T_min_stab in seconds. Use 0 for no stability window.')
     parser.add_argument('--n-max', type=int, default=None,
@@ -333,6 +340,135 @@ def diversify_scheduled_grid_selection(world, clusters):
         co_manager.set_grid_selection(diversified)
 
 
+def apply_persistent_coverage_fallback(world, clusters, coverage_state):
+    """Swap in repeatedly unscheduled members without changing link count.
+
+    This is a diagnostic/algorithm probe for the 10ch case: global channel
+    capacity is already saturated, so a coverage repair must reuse an existing
+    subchannel rather than adding another request.
+    """
+    if coverage_state is None:
+        return 0
+    replacements = 0
+    for cluster in clusters:
+        head_id = int(cluster.head_id)
+        head_vm = world.get_vehicle_manager(head_id)
+        if head_vm is None:
+            continue
+        co_manager = head_vm.perception_manager.co_manager
+        current_selection = {
+            int(sender_id): list(grid_ids)
+            for sender_id, grid_ids in (
+                getattr(co_manager, 'grid_selection', {}) or {}).items()
+        }
+        if not current_selection:
+            continue
+        scheduler = head_vm.v2x_manager.scheduler
+        channel_allocation = getattr(scheduler, 'channel_allocation', {})
+        non_head_members = [
+            int(member_id) for member_id in sorted(cluster.members)
+            if int(member_id) != head_id
+        ]
+        unscheduled = [
+            member_id for member_id in non_head_members
+            if member_id not in current_selection
+        ]
+        if not unscheduled:
+            continue
+
+        def member_deficit(member_id):
+            stat = coverage_state.get(member_id, {})
+            return (
+                int(stat.get('unscheduled_frames', 0)) -
+                int(stat.get('uploaded_frames', 0)),
+                int(stat.get('unscheduled_frames', 0)),
+                -int(stat.get('uploaded_frames', 0)),
+                -member_id,
+            )
+
+        candidate_id = max(unscheduled, key=member_deficit)
+        candidate_deficit = member_deficit(candidate_id)
+        if candidate_deficit[0] < 2:
+            continue
+
+        def scheduled_score(member_id):
+            stat = coverage_state.get(member_id, {})
+            grid_count = len(current_selection.get(member_id, []))
+            return (
+                int(stat.get('uploaded_frames', 0)) -
+                int(stat.get('unscheduled_frames', 0)),
+                grid_count,
+                -member_id,
+            )
+
+        replaced_id = max(current_selection.keys(), key=scheduled_score)
+        if member_deficit(replaced_id)[0] >= candidate_deficit[0]:
+            continue
+        replaced_grids = current_selection.get(replaced_id, [])
+        if not replaced_grids:
+            continue
+        candidate_vm = world.get_vehicle_manager(candidate_id)
+        if candidate_vm is None:
+            continue
+        candidates = sorted(candidate_grids_for_sender(head_vm, candidate_vm))
+        if not candidates:
+            continue
+        grid_count = min(len(replaced_grids), len(candidates))
+        new_grids = select_spatially_diverse_grids(
+            head_vm,
+            candidate_vm,
+            candidates,
+            grid_count)
+        if not new_grids:
+            continue
+        replaced_vm = world.get_vehicle_manager(replaced_id)
+        replaced_density = 0.0
+        if replaced_vm is not None:
+            replaced_density = sum(
+                replaced_vm.perception_manager.lidar.get_grid_density(grid_id)
+                for grid_id in replaced_grids)
+        candidate_density = sum(
+            candidate_vm.perception_manager.lidar.get_grid_density(grid_id)
+            for grid_id in new_grids)
+        if (replaced_density > 0 and
+                candidate_density < 0.8 * replaced_density):
+            continue
+        old_channel = channel_allocation.pop((replaced_id, head_id), None)
+        if old_channel is None:
+            continue
+        channel_allocation[(candidate_id, head_id)] = old_channel
+        current_selection.pop(replaced_id, None)
+        current_selection[candidate_id] = new_grids
+        co_manager.clear_grid_selection()
+        co_manager.set_grid_selection(current_selection)
+        replacements += 1
+    return replacements
+
+
+def update_coverage_state_from_items(coverage_state, constrained_items):
+    if coverage_state is None:
+        return
+    for _, metadata in constrained_items:
+        receiver_id = int(metadata.get('receiver_id'))
+        members = set(int(item) for item in metadata.get(
+            'cluster_member_ids', []))
+        sources = set(int(item) for item in metadata.get(
+            'source_cav_ids', []))
+        uploaded = sources - {receiver_id}
+        for member_id in members:
+            stat = coverage_state.setdefault(member_id, {
+                'uploaded_frames': 0,
+                'unscheduled_frames': 0,
+                'fused_frames': 0,
+            })
+            if member_id in sources:
+                stat['fused_frames'] += 1
+            if member_id in uploaded:
+                stat['uploaded_frames'] += 1
+            elif member_id != receiver_id:
+                stat['unscheduled_frames'] += 1
+
+
 def cluster_templates_from_clusters(clusters):
     templates = []
     for cluster in clusters:
@@ -373,7 +509,9 @@ def apply_sgcp_constraint(frame, protocol, ego_cav_id, resource_allocation,
                           grid_score_mode='utility',
                           timestamp=None,
                           fixed_cluster_templates=None,
-                          head_rb_budget=None):
+                          head_rb_budget=None,
+                          coverage_fallback='none',
+                          coverage_state=None):
     clear_sgcp_globals()
     world = OfflineCavWorld(
         frame,
@@ -417,6 +555,12 @@ def apply_sgcp_constraint(frame, protocol, ego_cav_id, resource_allocation,
         randomize_scheduled_grid_selection(world, clusters, timestamp)
     elif grid_selection_mode == 'spatial_diverse':
         diversify_scheduled_grid_selection(world, clusters)
+    coverage_fallback_replacements = 0
+    if coverage_fallback == 'persistent':
+        coverage_fallback_replacements = apply_persistent_coverage_fallback(
+            world,
+            clusters,
+            coverage_state)
     if receiver_policy == 'all-cluster-heads':
         receiver_ids = sorted(int(cluster.head_id) for cluster in clusters)
     else:
@@ -456,7 +600,11 @@ def apply_sgcp_constraint(frame, protocol, ego_cav_id, resource_allocation,
         metadata['upload_mode'] = upload_mode
         metadata['grid_selection_mode'] = grid_selection_mode
         metadata['grid_score_mode'] = grid_score_mode
+        metadata['coverage_fallback'] = coverage_fallback
+        metadata['coverage_fallback_replacements'] = (
+            coverage_fallback_replacements)
         constrained_items.append((constrained_frame, metadata))
+    update_coverage_state_from_items(coverage_state, constrained_items)
     return constrained_items
 
 
@@ -724,6 +872,9 @@ def trace_row(scenario_id, timestamp, metadata, eval_frame,
         'upload_mode': metadata.get('upload_mode', ''),
         'grid_selection_mode': metadata.get('grid_selection_mode', ''),
         'grid_score_mode': metadata.get('grid_score_mode', ''),
+        'coverage_fallback': metadata.get('coverage_fallback', ''),
+        'coverage_fallback_replacements': metadata.get(
+            'coverage_fallback_replacements', ''),
         'clustering': metadata.get('clustering', ''),
         'cluster_count': metadata.get('cluster_count', ''),
         'cluster_member_ids': ';'.join(
@@ -758,6 +909,8 @@ def write_trace_csv(path, rows):
         'upload_mode',
         'grid_selection_mode',
         'grid_score_mode',
+        'coverage_fallback',
+        'coverage_fallback_replacements',
         'clustering',
         'cluster_count',
         'cluster_member_ids',
@@ -791,6 +944,7 @@ def main():
     sgcp_trace_rows = []
     ns3_link_quality = load_ns3_link_quality(args.ns3_link_quality_csv)
     fixed_cluster_templates = []
+    sgcp_coverage_state = defaultdict(dict)
 
     if args.timestamp is not None:
         if args.scenario_id is None:
@@ -862,7 +1016,9 @@ def main():
                 fixed_cluster_templates=(
                     fixed_cluster_templates
                     if args.clustering == 'fixed_first_frame' else None),
-                head_rb_budget=args.head_rb_budget)
+                head_rb_budget=args.head_rb_budget,
+                coverage_fallback=args.sgcp_coverage_fallback,
+                coverage_state=sgcp_coverage_state)
         if args.sgcp_inter_cluster_late_fusion:
             original_ego = next(cav for cav in frame.values() if cav['ego'])
             target_ego_lidar_pose = original_ego['params']['lidar_pose']

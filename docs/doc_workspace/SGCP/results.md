@@ -483,6 +483,8 @@ conda run -n opencda python -m opencda.tools.offline_inference --dataset-root D:
 
 `B_h=2` 在 10ch 下没有增加 fused CAV 数，仍只融合 16/20 个 CAV；它主要替换了具体上传成员。最明显的是 CAV 6 从 `B_h=1` 的 41 帧上传降到 `B_h=2,rho_th=3` 的 7 帧，而 CAV 5 从 6 帧升到 31 帧。该替换与 fused GT 下降一致，因此 `B_h=2` 更适合写为 high-IoU sensitivity，而不是当前主表默认行。
 
+Persistent coverage fallback 的 11 帧负面 probe 进一步说明，单纯按 CAV 历史欠覆盖替换成员不是有效修复：同一 11 帧上 `B_h=2,rho3` 无 fallback 为 AP `0.69/0.64/0.34`、7,416,720 bytes，persistent fallback 为 AP `0.67/0.62/0.34`、7,453,808 bytes，且 `missing_channel_rows=0`。因此后续 fallback 必须绑定 detector-quality 或 target-level coverage proxy。
+
 ## 离线 SGCP 回放稳定性与耗时
 
 命令：
