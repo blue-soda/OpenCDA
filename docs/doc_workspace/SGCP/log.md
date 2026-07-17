@@ -4284,3 +4284,52 @@ conda run -n opencda python -m opencda.tools.offline_ns3_replay --dataset-root D
 ### 结论
 
 新算法不是在旧结果上修补，而是把 target-aware coverage 纳入资源调度器本身。AP 有小幅稳定收益，且对象级诊断显示此前最主要的“target grid 只被其他 head 覆盖”问题减少。代价是 payload 从 57.38 Mbps 升到 60.62 Mbps；当前仍显著低于 FullPerception centralized 的 118.71 Mbps，但若论文要强调“最低 Mbps”，仍需继续做强制预算 Random/Greedy 或点数 cap 版 target-aware PG。
+
+## 2026-07-17 Target-grid case study 与 object-aware PG 分支
+
+### 目的
+
+用户要求选取若干帧仔细分析，定位当前漏检 GT 对应 grid，解释为什么调度算法没有选择这些 grid，并设计新的算法。重点不是继续修补旧 `spatial_diverse`，而是回到资源调度器本体。
+
+### 新增代码与文档
+
+```text
+opencda/tools/sgcp_grid_miss_analysis.py
+opencda/core/clustering/algorithms/resource_allocation/object_aware_potential_game.py
+docs/doc_workspace/SGCP/target_grid_case_study.md
+```
+
+新增资源分配入口：
+
+```text
+object_aware_potential_game
+object_aware_pg
+oapg
+```
+
+### 诊断命令
+
+```powershell
+conda run -n opencda python -m opencda.tools.sgcp_grid_miss_analysis --dataset-root D:\Data\Carla --scenario-id 2026_07_15_01_26_56 --ego-cav-id 1 --failure-gt-csv docs\doc_workspace\SGCP\artifacts\failure_diag_target_aware_pg_10ch_rho3_41f\gt_objects.csv --resource-allocation target_aware_potential_game --rho-th 3 --num-channels 10 --bandwidth-mhz 20 --max-objects 8 --max-rows-per-object 3 --output-csv docs\doc_workspace\SGCP\artifacts\grid_miss_analysis_target_aware_pg_top8.csv
+
+conda run -n opencda python -m opencda.tools.sgcp_grid_miss_analysis --dataset-root D:\Data\Carla --scenario-id 2026_07_15_01_26_56 --ego-cav-id 1 --failure-gt-csv docs\doc_workspace\SGCP\artifacts\failure_diag_target_aware_pg_10ch_rho3_41f\gt_objects.csv --resource-allocation object_aware_potential_game --rho-th 3 --num-channels 10 --bandwidth-mhz 20 --max-objects 8 --max-rows-per-object 3 --output-csv docs\doc_workspace\SGCP\artifacts\grid_miss_analysis_object_aware_pg_fill_top8.csv
+```
+
+### 关键发现
+
+- Object 438 / frame 000068：GT grid `3_0`，CAV12 有 424 点、rank=1，但 target-aware PG 调度了 CAV9，CAV9 在该 grid 为 0 点。OAPG 的 sender refinement 可在同一 RB 上把 head4 的 sender 从 CAV9 换成 CAV12。
+- Object 401 / frame 000066：GT grid `2_0`，CAV4 有 891 点、rank=4，但原调度选择 CAV7，CAV7 在该 grid 只有 7 点。OAPG 可调度 CAV4 并选中 `2_0`。
+- Object 350 / frame 000084：GT grid `1_-2`，CAV8 有 3371 点、rank=1，但原调度只发送 CAV2/CAV11 的 29/27 点。OAPG 可调度 CAV8 并选中该 grid。
+- Object 337 / frame 000062：head 自身 CAV1 在 `0_-3` 有 1453 点，但 peer view 未被当成 target-like candidate；这暴露了 head 近身/盲区目标需要 multi-view confirmation 的问题。
+
+### 11 帧快速实验
+
+```powershell
+conda run -n opencda python -m opencda.tools.offline_inference --dataset-root D:\Data\Carla --scenario-id 2026_07_15_01_26_56 --ego-cav-id 1 --max-frames 11 --sgcp-constrained --resource-allocation object_aware_potential_game --sgcp-inter-cluster-late-fusion --rho-th 3 --num-channels 10 --bandwidth-mhz 20 --sgcp-trace-output docs\doc_workspace\SGCP\artifacts\object_aware_pg_diverse_10ch_rho3_11f_trace.csv --object-diagnostics-output docs\doc_workspace\SGCP\artifacts\object_diag_object_aware_pg_diverse_10ch_rho3_11f.csv
+```
+
+结果：AP@0.3/0.5/0.7 = `0.74/0.69/0.30`，total payload `8,209,376` bytes，avg source CAVs `2.64`，avg selected grids `73.48`。
+
+### 结论
+
+OAPG 已经在 selected-frame 诊断层面修复“最佳视角 rank 高但未调度”的机制问题，但 11 帧 AP 尚未超过当前主表候选，尤其 AP@0.7 下降。该分支暂不写入主表；下一步需要 41 帧完整评估、限制每个 head 的 sender replacement 数量、加入 detector-quality gate，并对“target grid 已选中但仍漏检”的对象输出 pre-NMS boxes。

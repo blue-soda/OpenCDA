@@ -25,6 +25,7 @@
 - `protocol_audit.md`：主表修复阶段的离线协议审计，记录 cluster、grid selection、channel allocation 是否真实进入融合输入。
 - `mechanism_probe.md`：head-only、SGCP grid-constrained 和 full-cluster upload 的机制 probe，用于定位 AP 损失来源。
 - `failure_diagnostics.md`：对象级漏检诊断，记录 GT 坐标、CAV 坐标、分簇、调度覆盖和四类 AP 下降原因判断。
+- `target_grid_case_study.md`：逐帧 target-grid 漏检案例分析，记录关键 GT grid、最佳 CAV、未调度原因和 object-aware PG 设计。
 - `main_table_candidate.md`：论文主表候选，收束 FullPerception upper reference、payload-matched selective baseline、SGCP 10/20ch、Mbps 换算和主表/附表边界。
 - `rebuttal_draft.md`：按 reviewer concern 整理的 rebuttal 草稿，覆盖 FullPerception 公平性、`f(rho)`、runtime、topology trigger、NS3 delivery 和机制边界。
 - `rebuttal_short.md`：`rebuttal_draft.md` 的压缩版，用于最终 rebuttal 粘贴、字数控制和主张边界收束。

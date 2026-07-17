@@ -499,6 +499,25 @@ Detector-quality proxy 也支持这个判断：41 帧 `B_h=2,rho3` 的 receiver-
 
 Quality-persistent fallback 的 11 帧 safety probe 表明质量门槛可以阻止有害替换，但还不能带来收益：`B_h=2,rho3,quality_persistent` 为 AP `0.69/0.64/0.34`、7,416,720 bytes、0 次 replacement，等同 no fallback。下一步需要 object/target-aware 候选生成。
 
+### Target-grid case study / object-aware PG probe
+
+该结果用于机制诊断，不作为当前主表。目标是确认漏检 GT 对应的 grid、最佳 CAV 和调度 action 是否能被新算法打通。
+
+| Case | Frame | GT Grid | Original Failure | Object-aware PG Behavior |
+| --- | --- | --- | --- | --- |
+| Object 438 | `000068` | `3_0` | CAV12 有 424 点、rank=1，但 head4 调度 CAV9；CAV9 在该 grid 为 0 点 | 同 RB sender refinement 将 head4 sender 换为 CAV12，选中 `3_0` |
+| Object 401 | `000066` | `2_0` | CAV4 有 891 点、rank=4，但 head12 调度 CAV7；CAV7 仅 7 点 | 调度 CAV4 并选中 `2_0` |
+| Object 350 | `000084` | `1_-2` | CAV8 有 3371 点、rank=1，但 head1 只收到 CAV2/CAV11 的稀疏点 | 调度 CAV8 并选中 `1_-2` |
+| Object 337 | `000062` | `0_-3` | head 自身高密度但 peer view 未作为 target candidate，近身/盲区目标缺少 multi-view confirmation | OAPG 将 head 高密度 + peer 中等密度 grid 纳入 candidate，但仍需继续调优 sender diversity |
+
+11 帧快速检测结果：
+
+| Variant | Frames | AP@0.3 | AP@0.5 | AP@0.7 | Payload bytes | Avg. source CAVs | Avg. selected grids |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| `object_aware_potential_game`, 20MHz/10ch/rho3 | 11 | 0.74 | 0.69 | 0.30 | 8,209,376 | 2.64 | 73.48 |
+
+结论：OAPG 机制上修复了若干明确的“最佳视角未调度”失败，但当前 AP 尚未超过 `target_aware_potential_game` / `spatial_diverse` 主表候选。后续应继续做 41 帧评估、sender replacement 限制和 detector-quality gate；暂不把 OAPG 写入主表。
+
 ## Online CARLA/NS3 Alignment Check
 
 命令口径：
