@@ -37,6 +37,59 @@ conda run -n opencda python -m opencda.tools.offline_ns3_replay --dataset-root D
 
 第一轮修复让 FullPerception PCS 的协议语义更正确，但结果更弱，说明当前内置 PCS 在该 dump 上仍明显 under-schedule。下一步不应在旧结果上“修表”，而应继续校准 PCS 的 RSU/global receiver fusion、多 blind-spot link treatment、payload/utility scaling，并补 `fullperception_decentralized` 的真实 NS3 replay。
 
+## 2026-07-18 - FullPerception-Decentralized NS3 replay
+
+### 目的
+
+PAPG 和 forced-budget random 已有 11 帧真实 NS3 replay。为让强 V2V baseline 的链路证据对称，本轮补 `fullperception_decentralized` 的 scheduled-only socket replay。
+
+### 命令
+
+ns-3 启动：
+
+```powershell
+wsl -d Ubuntu-22.04 -u sakakibara -- bash -lc "cd /home/sakakibara/workspace/carla-ns3-co-simulation/ns-3-dev && ./ns3 run 'scratch/vanet/main.cc --simTime=5.0 --enableTimeSync=true --carlaHost=auto --targetSubchannels=10'"
+```
+
+OpenCDA replay：
+
+```powershell
+conda run -n opencda python -m opencda.tools.offline_ns3_replay --dataset-root D:\Data\Carla --scenario-id 2026_07_15_01_26_56 --ego-cav-id 1 --max-frames 11 --selective-sharing-baseline fullperception_decentralized --selective-member-budget 3 --selective-grid-budget 117 --rho-th 3 --num-channels 10 --bandwidth-mhz 20 --upload-plan-output docs\doc_workspace\SGCP\artifacts\fullperception_decentralized_ns3_20260718_007\upload_plan.csv --drain-seconds 0.3 --sync-timeout 30
+```
+
+评估：
+
+```powershell
+conda run -n opencda python -m opencda.tools.ns3_log_eval --ns3-stdout docs\doc_workspace\SGCP\artifacts\fullperception_decentralized_ns3_20260718_007\ns3_stdout.log --upload-plan docs\doc_workspace\SGCP\artifacts\fullperception_decentralized_ns3_20260718_007\upload_plan.csv --output-dir docs\doc_workspace\SGCP\artifacts\fullperception_decentralized_ns3_20260718_007\eval --rsu-node-id 21 --max-frames 11
+```
+
+### 结果
+
+| Metric | Value |
+| --- | ---: |
+| Planned / scheduled requests | 110 |
+| Application `cam_received` | 110 |
+| Matched callback ratio | 1.000 |
+| RLC complete requests | 110 / 110 |
+| RLC TX / RX events | 2970 / 2970 |
+| RLC drops | 0 |
+| PHY decode failures | 0 |
+| Avg / p95 callback delay | 23.91 / 24.00 ms |
+
+Artifact：
+
+```text
+docs\doc_workspace\SGCP\artifacts\fullperception_decentralized_ns3_20260718_007\
+```
+
+### 观察
+
+Windows `Get-NetTCPConnection` 看不到 WSL 内部监听的 5556 端口；需要用 WSL 内 `ss -ltnp | grep :5556` 确认 ns-3 是否已启动。本轮结束后已停止本次启动的 ns-3 进程，避免后台残留。
+
+### 结论
+
+FullPerception-Decentralized 的 11 帧链路交付与 PAPG、forced-budget random 一样完整。因此它作为强 V2V baseline 的 AP 差异不来自 NS3 丢包，而来自调度/点云选择策略本身。
+
 ## 2026-07-16 - 主表结果修复目标重开
 
 ### 目的

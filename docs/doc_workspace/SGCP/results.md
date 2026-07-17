@@ -29,7 +29,7 @@
 | Built-in FullPerception PCS, repaired scheduled receivers | 0.33 | 0.29 | 0.14 | 15.80 | TBD | Protocol-correct PCS pass: payload-based `c(q)`, real `sc_num`, 104 scheduled requests in NS3 dry-run; still under-scheduled |
 | FullPerception-RSU proxy | 0.84 | 0.80 | 0.46 | 109.71 | TBD | Virtual RSU/global candidate pool, 3 members/head, 117 grid budget; not a V2V-only fair baseline |
 | EdgeCooper-style proxy | 0.75 | 0.70 | 0.32 | 109.53 | TBD | Virtual edge/global candidate pool, blind-spot complementarity proxy; preliminary, not strict paper reproduction |
-| FullPerception-Decentralized proxy | 0.80 | 0.76 | 0.41 | 75.94 | TBD | CAV-side V2V only, cluster-local candidates, 3 members/head, 117 grid budget |
+| FullPerception-Decentralized proxy | 0.80 | 0.76 | 0.41 | 75.94 | TBD | CAV-side V2V only, cluster-local candidates, 3 members/head, 117 grid budget; NS3 110/110 complete |
 | Full-cluster reference | 0.82 | 0.79 | 0.42 | 87.51 | TBD | Full intra-cluster upload reference |
 | Selective V2V forced random | 0.77 | 0.73 | 0.38 | 61.68 | TBD | Same coalition path, 3 members/head, 117 grid budget |
 | Selective V2V communication-aware | 0.78 | 0.75 | 0.40 | 58.97 | TBD | 2 members/head, 87 grid budget |
@@ -63,7 +63,7 @@
 | Built-in FullPerception | PCS (`pcs.py`) repaired scheduled-receiver eval | 0.33 / 0.29 / 0.14 | No | `c(q)`、`sc_num` 和 scheduled links 已修复并进入 NS3 dry-run；payload 8,100,112 bytes / 15.80 Mbps，说明 PCS 当前仍 under-schedule |
 | RSU/edge-assisted | FullPerception-RSU proxy | 0.84 / 0.80 / 0.46 | No | 虚拟 RSU/global candidate pool；当前 dump 无真实 RSU sensor，不作为 V2V-only 公平主对比 |
 | RSU/edge-assisted | EdgeCooper-style proxy | 0.75 / 0.70 / 0.32 | No | 虚拟 edge/global candidate pool；当前是 blind-spot complementarity proxy，不是严格原论文 MCF/coloring 复现 |
-| V2V-only fair baseline | FullPerception-Decentralized proxy | 0.80 / 0.76 / 0.41 | Yes | cluster-local candidate pool，3 members/head，117 grid budget；强 decentralized baseline |
+| V2V-only fair baseline | FullPerception-Decentralized proxy | 0.80 / 0.76 / 0.41 | Yes | cluster-local candidate pool，3 members/head，117 grid budget；强 decentralized baseline；11 帧 NS3 replay 110/110 application/RLC complete |
 | SGCP main | SGCP PAPG 10ch | 0.81 / 0.78 / 0.39 | Yes | 当前主方法，62.54 Mbps，PAPG NS3 110/110 complete |
 | SGCP ablation | SGCP potential_game | 0.77 / 0.73 / 0.35 | Yes | 原始 PPS 消融 |
 | Same pipeline ablation | Random scheduler | 0.44 / 0.39 / 0.17 | No | payload 过低，只作 w/o-PPS 诊断 |
@@ -101,10 +101,10 @@ docs\doc_workspace\SGCP\artifacts\fullperception_baselines_20260717\
 | `fullperception_pcs` built-in, legacy cluster-head eval | PCS blind-spot scheduling | 0.44 | 0.39 | 0.17 | 12,684,880 | 24.75 | 1.66 | 630.66 | Pre-repair compatibility row; simplified `c(q)=1` |
 | `fullperception_pcs` built-in, repaired scheduled receivers | PCS blind-spot scheduling | 0.33 | 0.29 | 0.14 | 8,100,112 | 15.80 | 2.00 | 57.71 | Payload-based `c(q)` and real `sc_num`; protocol-correct but weaker, under-scheduled |
 | `fullperception_rsu` proxy | global / virtual RSU | 0.84 | 0.80 | 0.46 | 56,224,736 | 109.71 | 4.00 | 117.00 | Infrastructure-assisted global scheduler proxy |
-| `fullperception_decentralized` proxy | cluster-local V2V | 0.80 | 0.76 | 0.41 | 38,920,592 | 75.94 | 3.33 | 103.20 | Strong V2V-only decentralized FullPerception proxy |
+| `fullperception_decentralized` proxy | cluster-local V2V | 0.80 | 0.76 | 0.41 | 38,920,592 | 75.94 | 3.33 | 103.20 | Strong V2V-only decentralized FullPerception proxy; NS3 110/110 complete |
 | `fullperception_rsu`, ego receiver probe | ego virtual receiver | 0.71 | 0.70 | 0.49 | 26,350,784 | 51.42 | 9.54 | 332.93 | Diagnostic only; several frames fell back to ego-only |
 
-3-frame `offline_ns3_replay --dry-run` 已确认两个显式 FullPerception proxy 分支都会落入 scheduled-only request 计划：`fullperception_decentralized` 每帧 10 scheduled / 4 skipped，`fullperception_rsu` 每帧 10 scheduled / 8 skipped。修复后的 built-in `fullperception_pcs` 41 帧 dry-run 生成 104 条 scheduled request，`sc_num` 会按 required subchannels 写入 upload plan。下一步应对 `fullperception_decentralized` 做 11-frame true NS3 replay；`fullperception_pcs` 需要先继续校准调度强度和 RSU/global receiver 口径，再进入主表。
+`fullperception_decentralized` 已完成 11-frame true NS3 replay：110/110 scheduled requests 完成 application callback，110/110 RLC complete，RLC TX/RX events 2970/2970，PHY decode failures 0，avg/p95 callback delay 23.91/24.00 ms。`fullperception_rsu` 3-frame dry-run 每帧 10 scheduled / 8 skipped。修复后的 built-in `fullperception_pcs` 41 帧 dry-run 生成 104 条 scheduled request，`sc_num` 会按 required subchannels 写入 upload plan。下一步应优先校准 `fullperception_pcs` 的调度强度和 RSU/global receiver 口径，再进入主表。
 
 ### Same-Budget CAV-Only Selective Sharing
 
