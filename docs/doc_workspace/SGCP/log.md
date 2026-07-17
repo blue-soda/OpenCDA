@@ -4054,3 +4054,50 @@ python opencda.py -t v2xp_cluster_carla --apply_cp --apply_ml --debug --network
 ```
 
 验收标准：`cp_submit_frames` 应随 tick 数增长，不再只有 1--3 次；`online_upload_summary.json` 应同时给出 AP、CP wait 分布和 Mbps。若 application complete episode 仍为 0，则继续排查 NS3 callback 的 request_id/send_timestamp 分片合并语义。
+
+## 2026-07-17 用户在线重跑：CP 数增加但远端融合仍不足
+
+### 输入日志
+
+OpenCDA 日志：
+
+```text
+C:\Workspace\OpenCDA\opencda\log\opencda_20260717_163551.log
+```
+
+用户记录的 stdout 结果：
+
+```text
+pkts sent = 418
+cp counter = 4
+AP@0.3 / AP@0.5 / AP@0.7 = 0.51 / 0.48 / 0.41
+total_payload_mbps = 18.5054
+try_payload_mbps = 15.8301
+```
+
+### 诊断命令
+
+```powershell
+conda run -n opencda python -m opencda.tools.online_ns3_log_eval --opencda-stdout C:\Workspace\OpenCDA\opencda\log\opencda_20260717_163551.log --output-dir docs\doc_workspace\SGCP\artifacts\online_ns3_user_20260717_163551_eval
+```
+
+### 诊断结果
+
+| Metric | Value |
+| --- | ---: |
+| CP eval frames | 4 |
+| CP submit frames | 4 |
+| CP wait frames | 193 |
+| Upload episodes observed | 35 |
+| Application complete episodes | 26 |
+| Application partial episodes | 9 |
+| Combined message lines | 216 |
+| Success log lines | 26 |
+| Total counted traffic Mbps | 18.51 Mbps |
+| Try upload Mbps | 15.83 Mbps |
+
+### 结论
+
+该结果不能解释为“在线联合仿真中大部分包都发送失败”。日志中有大量 `cam_received` / `Combined message`，且解析出 26 个完整 application upload episode。真正的问题是 CP 消费窗口不足：4 次 CP submit 中，slot 0 和 slot 2 没有远端点云，slot 7 使用 `[2, 11]`，slot 15 仅在 `wait_exhausted=True` 后使用 `[2]`。因此 AP 下降主要来自在线 CP 没有稳定消费已发送/晚到的远端点云，而不是 NS3 完全丢包。
+
+这与离线仿真的差异在于：离线 request-level replay 通常统计“请求最终完成/链路可行”，而在线融合需要“当前 CP 截止前完整 payload 到达并被本帧消费”。后续离线/在线主表对齐应采用 deadline-aware delivery/cropping，或在线端改进 CP scheduling、fragment reassembly 和 late completion 处理。

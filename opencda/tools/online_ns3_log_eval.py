@@ -24,6 +24,11 @@ INCOMPLETE_PATTERN = re.compile(
 SUCCESS_PATTERN = re.compile(
     r'cav\s+(?P<src>\d+)\s+has uploaded its data to\s+(?P<dst>\d+)\s+'
     r'via network at\s+(?P<slot>\d+)\.')
+NS3_SUCCESS_PATTERN = re.compile(
+    r'cav\s+(?P<src>\d+)\s+data upload to\s+(?P<dst>\d+)\s+'
+    r'succeeded \(NS3 mode\)\. Received size:\s+'
+    r'(?P<received>\d+)\s+bytes, expected size:\s+'
+    r'(?P<expected>\d+)\s+bytes, cost time:\s+(?P<slot>-?\d+)\.')
 CAM_PATTERN = re.compile(r'cam_received')
 PSCCH_FAIL_PATTERN = re.compile(r'PSCCH_DECODE_FAIL')
 PSSCH_FAIL_PATTERN = re.compile(r'PSSCH_DECODE_FAIL')
@@ -124,6 +129,8 @@ def parse_opencda(path):
                 continue
 
             match = SUCCESS_PATTERN.search(line)
+            if match is None:
+                match = NS3_SUCCESS_PATTERN.search(line)
             if match:
                 src = int(match.group('src'))
                 dst = int(match.group('dst'))
@@ -132,6 +139,12 @@ def parse_opencda(path):
                 row = active_by_link.get(key)
                 if row is None or row['terminal_state'] == 'application_complete':
                     row = start_episode(src, dst)
+                if 'expected' in match.groupdict() and match.group('expected'):
+                    received = int(match.group('received'))
+                    expected = int(match.group('expected'))
+                    row['received_bytes_max'] = max(
+                        int(row['received_bytes_max']), received)
+                    update_expected(row, expected)
                 row['success_lines'] += 1
                 total_success_lines += 1
                 if row['first_success_line'] == '':
