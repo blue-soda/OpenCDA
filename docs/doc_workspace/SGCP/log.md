@@ -4169,3 +4169,60 @@ Object-level 诊断：
 - `object_clustered` 负面结果说明检测 AP 需要跨区域覆盖，而不是把点云集中在局部高密度目标块。
 - `--max-upload-points-per-source 3000` 是有效通信旋钮，把 SGCP `rho_th=3,10ch` 从 57.38 Mbps 降到 38.07 Mbps，但 AP 降为 `0.74/0.70/0.33`；它适合做 payload sensitivity，不宜直接作为最终主表主行。
 - 下一步若要满足“SGCP 最高 AP + 最少 Mbps”，必须先把 Random/Greedy baseline 改成强制使用相同带宽/相同 payload cap 的版本，或将主表切换为 payload-matched selective baseline；否则低 payload 的弱 Random/MWS 会破坏表格叙事。
+
+## 2026-07-17 对象级失败诊断：GT 坐标、分簇、调度覆盖
+
+### 目的
+
+用户要求通过打印真值框坐标、车辆分簇结果、车辆坐标等方式诊断 AP 低的原因，并区分四类问题：带宽过低、分簇效果差、资源调度/区块选择不当、最后跨簇晚期融合不当。
+
+### 代码与命令
+
+新增工具：
+
+```text
+opencda/tools/sgcp_failure_diagnostics.py
+```
+
+诊断命令：
+
+```powershell
+conda run -n opencda python -m opencda.tools.sgcp_failure_diagnostics --dataset-root D:\Data\Carla --scenario-id 2026_07_15_01_26_56 --ego-cav-id 1 --max-frames 0 --sgcp-grid-selection-mode spatial_diverse --rho-th 3 --num-channels 10 --bandwidth-mhz 20 --object-diagnostics-csv docs\doc_workspace\SGCP\artifacts\object_diag_sgcp_spatial_rho3_10ch_41f.csv --output-dir docs\doc_workspace\SGCP\artifacts\failure_diag_spatial_rho3_10ch_41f
+```
+
+输出：
+
+```text
+docs\doc_workspace\SGCP\artifacts\failure_diag_spatial_rho3_10ch_41f\vehicles.csv
+docs\doc_workspace\SGCP\artifacts\failure_diag_spatial_rho3_10ch_41f\clusters.csv
+docs\doc_workspace\SGCP\artifacts\failure_diag_spatial_rho3_10ch_41f\schedules.csv
+docs\doc_workspace\SGCP\artifacts\failure_diag_spatial_rho3_10ch_41f\gt_objects.csv
+docs\doc_workspace\SGCP\artifacts\failure_diag_spatial_rho3_10ch_41f\summary.json
+```
+
+### 关键发现
+
+10ch/rho3 下，`gt_objects.csv` 共 653 行 GT，其中 111 行为 full-reference 可检出但 SGCP 漏检：
+
+| Bucket | Rows | Meaning |
+| --- | ---: | --- |
+| Covered only by other cluster heads | 63 | 目标 grid 被某条链路上传，但没有发给最近/最相关 head |
+| Nearest head got dense points but no final box | 35 | 正确 head 收到不少点云，但检测/晚融合仍没形成匹配框 |
+| Nearest head got sparse object-grid points | 12 | 正确 head 收到目标 grid，但点数太少，sender/view 质量不足 |
+| No scheduled covering grid | 1 | 纯粹没有任何调度链路覆盖目标 grid |
+
+代表性打印样例：
+
+- Object `337`，frame `000062`，GT world `(8.000, -30.314)`，grid `0_-3`，nearest CAV `1`，nearest head `1`，nearest CAV 该 grid 点数 `1453`，但 nearest-head covering points `0`，full-reference IoU `0.869183`，SGCP IoU `0.000000`。
+- Object `401`，frame `000062`，GT world `(25.433, 4.033)`，grid `2_0`，nearest CAV `12`，nearest head `12`，nearest CAV 该 grid 点数 `2057`，但 nearest-head covering points `0`，full-reference IoU `0.886449`，SGCP IoU `0.000000`。
+- Object `374`，frame `000080`，GT world `(8.372, 18.164)`，grid `0_1`，nearest CAV `7`，nearest head `4`，nearest CAV 该 grid 点数 `1487`，但 nearest-head covering points `7`，full-reference IoU `0.679596`，SGCP IoU `0.000000`。
+- Object `419`，frame `000060`，GT world `(10.126, -25.023)`，grid `1_-3`，nearest CAV `1`，nearest head `11`，nearest-head covering points `148`，但 SGCP 仍无匹配框。
+
+### 结论
+
+- 带宽过低是 5ch stress AP 低的明确原因，但不是 10ch/rho3 剩余漏检的唯一原因。
+- 分簇层次不是完全失效；full-cluster / 20ch 结果说明 hierarchy 可用。但当前 cluster/head assignment 与资源调度没有保证目标 grid 发给最相关 head。
+- 当前首要问题是资源调度/区块选择缺少 target-aware receiver/sender 保护：很多关键 grid 有高点数，但没有送到最近/正确 head。
+- 晚期融合是 secondary 问题：35 个漏检已经有较密点云送到最近 head，但仍无最终框。下一步需要 dump per-head pre-NMS boxes，确认是 detector 未出框还是 inter-cluster late fusion/NMS 丢框。
+
+详细记录见 `failure_diagnostics.md`。

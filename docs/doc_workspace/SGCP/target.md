@@ -7,8 +7,8 @@
 
 - [ ] 新一轮主表重构：在统一 CAV 数、统一 backbone、统一 fusion/evaluation、统一 20MHz 或更低带宽预算下，生成一张 SGCP AP 最高、Mbps 最少且与 Random/Greedy/FullPerception 参数一致的主表；禁止使用未充分利用带宽的弱 baseline 来证明通信节省。
 - [ ] 强化 Random/Greedy baseline：实现 forced-budget / payload-cap 版本，使 Random 和 MWS/Greedy 在同一 CAV、同一子信道数、同一 bandwidth 或同一点数 cap 下尽可能用满预算；重新报告 AP、payload、Mbps，避免当前 18-19 Mbps 弱 baseline 破坏主表公平性。
-- [ ] 先运行 20 CAV 全融合/FullPerception 上界，确认当前 dump 的可达 AP 上限；随后做 object-level 漏检诊断，定位哪些 GT 在 full fusion 能检出但 SGCP/随机/贪心漏检。
-- [ ] 基于漏检 GT 反向改造分簇和区块选择：优先实现 target/object-aware grid selection、关键目标覆盖 fallback、quality-weighted coverage、detector-quality-aware member protection 或 detector/objectness-aware point sampling，并用统一带宽主表验证。
+- [x] 先运行 20 CAV 全融合/FullPerception 上界，确认当前 dump 的可达 AP 上限；随后做 object-level 漏检诊断，定位哪些 GT 在 full fusion 能检出但 SGCP/随机/贪心漏检。已新增 `failure_diagnostics.md` 和 `opencda.tools.sgcp_failure_diagnostics`：当前 full early 上界为 `0.85/0.83/0.48`；10ch/rho3 剩余 111 个 full-reference 可检出但 SGCP 漏检的 GT 中，63 个主要是目标 grid 只被其他 cluster head 覆盖，35 个是最近 head 已拿到较密点云但未形成最终框，12 个是最近 head 只拿到稀疏点，1 个完全没有调度覆盖。
+- [ ] 基于漏检 GT 反向改造分簇和区块选择：优先实现 target/object-aware grid selection、关键目标覆盖 fallback、quality-weighted coverage、detector-quality-aware member protection 或 detector/objectness-aware point sampling，并用统一带宽主表验证。优先级顺序更新为：先做 same-cluster target-grid covering sender protection，再做 per-head pre-NMS box dump，最后检查 late fusion/NMS。
 - [ ] 将新增 `--max-upload-points-per-source` 从随机点抽样升级为检测感知/空间均匀采样，目标是在 35-40 Mbps 附近恢复接近无 cap 的 `0.79/0.76/0.38` AP。
 - [ ] 将 20MHz、10MHz 或更低带宽作为主表公平约束候选：高通信量方法必须受相同子信道/带宽窗口限制，超出预算的 FullPerception/greedy 不得无约束融合；同时报告 NS3 request-level delivery 与 deadline-aware online smoke 结果。
 - [x] 审计离线 SGCP 测试链路，确认分簇结果是否真实决定每个 cluster head 的融合对象、成员集合和 inter-cluster late fusion 输入。已新增 `protocol_audit.md` 和 `--sgcp-trace-output`；41 帧输出 246 条 receiver trace，cluster head/member/source 列表与融合输入一致。
