@@ -1232,3 +1232,30 @@ Interpretation:
 - Top-40 hierarchy plan covers all GT-bearing quality areas in this 11-frame dump.
 - The new files materialize the missing hierarchy data products: `leader_local_results.csv`, `rsu_global_frame_summary.csv`, and `rsu_global_summary.csv`.
 - This is still not real feature-slice local fusion; it is a proxy that makes the full LGCP data interface explicit before implementing model-level fusion.
+
+## 2026-07-17：Feature Slice Manifest
+
+新增 `opencda/tools/lgcp_feature_slice_manifest.py`，基于 hierarchy assignment plan 生成 raw LiDAR area-slice manifest。
+
+Run:
+
+```text
+docs/doc_workspace/LGCP/experiments/hierarchy_plan/20260717_lgcp_carla_feature_slice_top40_11f
+```
+
+| Metric | Value |
+| --- | ---: |
+| Frames | 11 |
+| Areas / frame | 40.000000 |
+| Slice rows / frame | 61.454545 |
+| Total slice points / frame | 34993.636364 |
+| Member upload points / frame | 6199.181818 |
+| Leader self points / frame | 28794.454545 |
+| Member upload bytes / frame | 99186.909091 |
+| Leader self bytes / frame | 460711.272727 |
+
+Interpretation:
+
+- This materializes the area-specific slicing interface required by LGCP hierarchy.
+- The byte proxy is now variable and data-dependent, unlike the earlier fixed `10000 bytes` per feature packet.
+- It remains a raw LiDAR proxy; model-level feature tensor slicing is still the next implementation step.

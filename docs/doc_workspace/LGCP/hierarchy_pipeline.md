@@ -98,6 +98,48 @@ conda run -n opencda python -m opencda.tools.lgcp_hierarchy_aggregation_eval --a
 - 这仍是 proxy：leader local result 不是真实 feature slicing + OpenCOOD fusion，而是将现有 area-level quality 映射到 leader result 记录。
 - 该步骤的价值是补齐完整 hierarchy 的数据接口：area assignment -> leader local result -> RSU global summary。
 
+## Area-Specific Feature Slice Manifest
+
+2026-07-17 新增离线工具：
+
+```text
+opencda/tools/lgcp_feature_slice_manifest.py
+```
+
+该工具读取 `area_assignment_plan.csv` 和 OpenCDA dump 中的 CAV PCD，将每个参与者的 LiDAR 点云从 sensor frame 投到 CARLA world frame，再按 LGCP area cell 裁剪，输出每个 area-specific slice 的 point count 和 byte proxy。
+
+运行命令：
+
+```powershell
+conda run -n opencda python -m opencda.tools.lgcp_feature_slice_manifest --dataset-root D:\Data\Carla --scenario-id 2026_07_15_02_33_21 --assignment-plan docs\doc_workspace\LGCP\experiments\hierarchy_plan\20260715_lgcp_carla_hierarchy_plan_top40_11f\area_assignment_plan.csv --output-dir docs\doc_workspace\LGCP\experiments\hierarchy_plan\20260717_lgcp_carla_feature_slice_top40_11f --grid-size-x 10 --grid-size-y 6 --bytes-per-point 16
+```
+
+输出：
+
+- `feature_slice_manifest.csv`：每个 `(frame, area, agent)` 的 slice point count、slice ratio 和 byte proxy。
+- `feature_slice_area_summary.csv`：每个 `(frame, area)` 的 member upload / leader self slice 汇总。
+- `feature_slice_frame_summary.csv`：逐帧 slice point / byte 汇总。
+- `feature_slice_summary.csv`：跨帧 summary。
+
+当前 11 帧 Top-40 结果：
+
+| 指标 | 数值 |
+| --- | ---: |
+| frames | 11 |
+| areas / frame | 40.000000 |
+| slice rows / frame | 61.454545 |
+| total slice points / frame | 34993.636364 |
+| member upload points / frame | 6199.181818 |
+| leader self points / frame | 28794.454545 |
+| member upload bytes / frame | 99186.909091 |
+| leader self bytes / frame | 460711.272727 |
+
+注意：
+
+- 这是 raw LiDAR point slice proxy，不是 neural feature tensor。
+- 该结果显示固定 `feature_packet_bytes=10000` 的早期 proxy 偏粗：真实 area raw-point slice byte proxy 随 area / CAV 明显变化。
+- 下一步应将该 manifest 接入 OpenCOOD 中间特征或 BEV feature map slicing，替换 raw point proxy。
+
 ## Offline NS3 Replay 接入
 
 `opencda/tools/offline_ns3_replay.py` 已支持：
@@ -314,6 +356,7 @@ phy_decode_summary.csv
 这还不是完整 LGCP：
 
 - 还没有真正切分 area-specific feature slice。
+- 已有 raw LiDAR area slice manifest，但还没有切分 neural feature tensor。
 - leader local fusion 现在已有离线 result proxy，但仍未调用 OpenCOOD / model-level fusion。
 - RSU global aggregation 现在已有 coverage / quality proxy summary，但仍未生成真实 global perception result。
 - scheduling 仍未接入 LGCP 专用 subchannel / latency 优化；当前只是将 hierarchy upload plan 转换为 NS3 transfer requests，解析 request-id `cam_received`、RLC TX/RX/DROP 和 PHY decode diagnostics。

@@ -1,0 +1,2 @@
+frames,areas_mean,areas_max,slice_rows_mean,slice_rows_max,slice_points_total_mean,slice_points_total_max,member_upload_points_mean,member_upload_points_max,leader_self_points_mean,leader_self_points_max,member_upload_bytes_mean,member_upload_bytes_max,leader_self_bytes_mean,leader_self_bytes_max
+11,40.000000,40.000000,61.454545,63.000000,34993.636364,35915.000000,6199.181818,6815.000000,28794.454545,29451.000000,99186.909091,109040.000000,460711.272727,471216.000000

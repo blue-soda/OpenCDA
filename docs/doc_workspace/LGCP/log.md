@@ -2508,3 +2508,43 @@ conda run -n opencda python -m opencda.tools.lgcp_hierarchy_aggregation_eval --a
 - Top-40 hierarchy plan 覆盖了该 11 帧 dump 中所有 GT-bearing quality area。
 - `selected_area_ratio` 大于 1 是因为 plan 固定 Top-40，而 `area_quality.csv` 只记录有 quality 的 area；论文应优先报告 `selected_gt_ratio`。
 - 该工具补齐了 hierarchy 数据接口，但仍不是真实 feature slicing + OpenCOOD local fusion。
+
+## 2026-07-17 - Raw LiDAR feature slice manifest
+
+### 目标
+
+- 推进完整 LGCP hierarchy 管线中的 area-specific feature slicing。
+- 先实现 raw LiDAR point slice manifest，作为 neural feature tensor slicing 的前置接口和可变 byte proxy。
+
+### 代码
+
+新增：
+
+```text
+opencda/tools/lgcp_feature_slice_manifest.py
+```
+
+### 运行命令
+
+```powershell
+conda run -n opencda python -m opencda.tools.lgcp_feature_slice_manifest --dataset-root D:\Data\Carla --scenario-id 2026_07_15_02_33_21 --assignment-plan docs\doc_workspace\LGCP\experiments\hierarchy_plan\20260715_lgcp_carla_hierarchy_plan_top40_11f\area_assignment_plan.csv --output-dir docs\doc_workspace\LGCP\experiments\hierarchy_plan\20260717_lgcp_carla_feature_slice_top40_11f --grid-size-x 10 --grid-size-y 6 --bytes-per-point 16
+```
+
+### 结果
+
+| Metric | Value |
+| --- | ---: |
+| Frames | 11 |
+| Areas / frame | 40.000000 |
+| Slice rows / frame | 61.454545 |
+| Total slice points / frame | 34993.636364 |
+| Member upload points / frame | 6199.181818 |
+| Leader self points / frame | 28794.454545 |
+| Member upload bytes / frame | 99186.909091 |
+| Leader self bytes / frame | 460711.272727 |
+
+### 结论
+
+- 已生成 area-specific slice manifest，包含 `leader_self` 与 `member_to_leader` 两类 local fusion 输入。
+- 这是 raw LiDAR point slicing，不是 OpenCOOD neural feature slicing。
+- 后续应将该接口替换为 BEV / intermediate feature map slice，并让 leader 调用 model-level fusion。
