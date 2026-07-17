@@ -2746,3 +2746,37 @@ Dry-run replay 11 帧全部通过，每帧 requests 为 `45-48`，每帧 bytes �
 - Top-30 raw-slice-aware plan 将总 planned bytes 降到固定 proxy 的 `54.73%`。
 - 该 plan 已可作为 NS3 replay 输入，为后续 raw-slice-aware online replay / request-level trace 做准备。
 - 仍未完成 neural feature slicing 和 model-level leader local fusion。
+
+## 2026-07-17 - Raw-slice-aware upload plan live NS3 smoke
+
+### 目标
+
+- 验证 Top-30 raw-slice-aware upload plan 不只可 dry-run，也能被 live ns-3 bridge 接受。
+
+### 命令
+
+ns-3 使用 WSL 前台并行启动：
+
+```powershell
+wsl -d Ubuntu-22.04 -u sakakibara -- bash -lc "cd ~/workspace/carla-ns3-co-simulation/ns-3-dev && ./ns3 run 'scratch/vanet/main.cc --simTime=5.0 --enableTimeSync=true --carlaHost=auto --targetSubchannels=10'"
+```
+
+OpenCDA replay：
+
+```powershell
+conda run -n opencda python -m opencda.tools.offline_ns3_replay --dataset-root D:\Data\Carla --scenario-id 2026_07_15_02_33_21 --ego-cav-id 1 --max-frames 3 --lgcp-upload-plan docs\doc_workspace\LGCP\experiments\hierarchy_plan\20260717_lgcp_carla_raw_slice_upload_plan_area30\raw_slice_upload_plan.csv --rsu-node-id 21 --drain-seconds 0.3 --sync-timeout 10 --upload-plan-output docs\doc_workspace\LGCP\experiments\hierarchy_plan\20260717_lgcp_carla_raw_slice_upload_plan_area30\ns3_smoke_3f_rsu21\upload_plan_replayed.csv
+```
+
+### 结果
+
+| Frame | Timestamp | Requests | Bytes |
+| ---: | --- | ---: | ---: |
+| 1 | `000060` | 46 | 125888 |
+| 2 | `000062` | 46 | 121456 |
+| 3 | `000064` | 45 | 105056 |
+
+### 结论
+
+- Live bridge 接受 raw-slice-aware plan，并成功写出带 `pkt_id` 的 `upload_plan_replayed.csv`。
+- 本次 ns-3 stdout 没有作为完整 parser input 保存，因此不能报告 request-level delivery ratio。
+- 下一步若需要网络证据，应重新运行并保存完整 ns-3 stdout，再接 `lgcp_ns3_log_eval.py`。

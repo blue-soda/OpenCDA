@@ -64,6 +64,7 @@
 - 已完成 hierarchy area-budget sweep，`max_areas=10/20/30/40`；Top-30 在约 `222.1 KB/frame` 下达到 `0.953193` selected GT ratio，Top-40 达到 `1.0` 但 mean selected area recall 降到 `0.670455`。
 - 已完成 feature-slice budget sweep，将 raw LiDAR area-slice manifest 扩展到 `max_areas=10/20/30/40`；Top-30 的 raw member upload bytes 为 `59.42 KB/frame`，低于固定 local upload proxy `158.18 KB/frame`。
 - 已新增 `opencda/tools/lgcp_slice_upload_plan_eval.py`，可将 hierarchy fixed-byte upload plan 替换为 raw-slice-aware upload plan；Top-30 11 帧 member-to-leader bytes 从 `1.74 MB` 降到 `653.57 KB`，并通过 `offline_ns3_replay --dry-run`。
+- Top-30 raw-slice-aware upload plan 已完成 3 帧 live ns-3 replay smoke，输出 `upload_plan_replayed.csv`；本次只验证 bridge/replay 接受，不报告 request-level delivery ratio。
 - 已新增 `opencda/tools/lgcp_feature_slice_manifest.py`，生成 raw LiDAR area-specific slice manifest；Top-40 11 帧 member upload slice 约 `6199` points/frame、`99.19 KB/frame`，为后续 neural feature slicing 提供接口和 byte proxy。
 - 已新增 LGCP 专用仿真入口 `opencda/scenario_testing/lgcp_carla.py` 和配置 `opencda/scenario_testing/config_yaml/lgcp_carla.yaml`。
 - 未修改 `v2xp_cluster_carla` 原始配置。

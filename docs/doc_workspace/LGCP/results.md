@@ -1389,3 +1389,19 @@ Interpretation:
 - The hierarchy upload plan can now use data-dependent area-slice bytes without changing the replay bridge.
 - This reduces Top-30 total planned bytes by about `45.27%` versus the fixed-byte proxy.
 - This is still raw LiDAR slicing; neural feature tensor bytes and real leader fusion remain future work.
+
+3-frame live ns-3 replay smoke also completed:
+
+```text
+docs/doc_workspace/LGCP/experiments/hierarchy_plan/20260717_lgcp_carla_raw_slice_upload_plan_area30/ns3_smoke_3f_rsu21
+```
+
+| Frame | Timestamp | Requests | Bytes |
+| ---: | --- | ---: | ---: |
+| 1 | `000060` | 46 | 125888 |
+| 2 | `000062` | 46 | 121456 |
+| 3 | `000064` | 45 | 105056 |
+
+Boundary: this confirms live bridge acceptance and request emission, but does
+not replace request-level delivery parsing because a complete ns-3 stdout log
+was not captured for this smoke.

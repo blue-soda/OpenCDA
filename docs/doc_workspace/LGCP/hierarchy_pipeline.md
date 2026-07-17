@@ -233,6 +233,22 @@ Dry-run 结果：
 - 每帧 bytes 为 `105056-133680`。
 - 这说明 raw-slice-aware plan 已具备接入 NS3 replay 的格式条件。
 
+3-frame live replay smoke:
+
+```text
+docs/doc_workspace/LGCP/experiments/hierarchy_plan/20260717_lgcp_carla_raw_slice_upload_plan_area30/ns3_smoke_3f_rsu21/
+```
+
+结果：
+
+| Frame | Timestamp | Requests | Bytes |
+| ---: | --- | ---: | ---: |
+| 1 | `000060` | 46 | 125888 |
+| 2 | `000062` | 46 | 121456 |
+| 3 | `000064` | 45 | 105056 |
+
+该 smoke 生成 `upload_plan_replayed.csv`，确认 raw-slice-aware plan 可进入 live ns-3 bridge；但本次没有完整 ns-3 stdout parser 输入，因此不报告 delivery ratio。
+
 ## Offline NS3 Replay 接入
 
 `opencda/tools/offline_ns3_replay.py` 已支持：
