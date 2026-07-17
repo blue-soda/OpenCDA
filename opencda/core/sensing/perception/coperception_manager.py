@@ -249,6 +249,36 @@ class CoperceptionManager:
         )
         return ok
 
+    def upload_wait_exhausted(self):
+        """Return True when this CP round should stop waiting for NS3 uploads.
+
+        In online NS3 mode a fragmented upload may remain incomplete after the
+        application-level re-upload budget is consumed.  Blocking perception
+        forever on that sender makes the evaluation submit only a handful of CP
+        frames.  Once every still-pending sender has either timed out beyond the
+        configured re-upload budget or no sender is pending, the caller can run
+        CP with the partial data that actually arrived.
+        """
+        if not self.enable_network or self.cavs_num == 0:
+            return False
+        pending = [
+            cav_id for cav_id in self.cavs_need_to_upload
+            if cav_id not in self.uploaded_cavs
+        ]
+        if not pending:
+            return False
+        if not self.uploading_cavs:
+            return False
+        for cav_id in pending:
+            if self.cavs_timeout.get(cav_id, 0) <= self.max_reupload_attempts:
+                return False
+        logger.info(
+            f"{self.vid} upload_wait_exhausted, proceeding with partial CP: "
+            f"uploaded={len(self.uploaded_cavs)}/{self.cavs_num}, "
+            f"pending={pending}, timeouts={self.cavs_timeout}"
+        )
+        return True
+
     def clear_uploaded_and_uploading(self):
         self._reset_round_state_for_new_upload()
         self.uploading_data = None

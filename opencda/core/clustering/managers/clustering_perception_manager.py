@@ -219,8 +219,12 @@ class ClusteringPerceptionManager(PerceptionManager):
                     logger.debug(f"ego is not in cluster {self.vid}, skipped")
                     return objects
 
-                # do cp when perception_tick is called, no matter whether all data is uploaded
-                if self.do_cp_every_tick or self.co_manager.all_data_uploaded():
+                # In NS3 mode, do not block a CP frame forever on incomplete
+                # fragments.  After the upload timeout/re-upload budget is
+                # exhausted, evaluate with the data that actually arrived.
+                uploads_ready = self.co_manager.all_data_uploaded()
+                wait_exhausted = self.co_manager.upload_wait_exhausted()
+                if self.do_cp_every_tick or uploads_ready or wait_exhausted:
                     # reset tick
                     self.doing_cp = False
                     # collect ego data
@@ -251,7 +255,8 @@ class ClusteringPerceptionManager(PerceptionManager):
                             f"CP_EVAL_FRAME ego={self.vid} head_id={self.v2x_manager.cluster_state.get('head_id', None)} "
                             f"slot={cur_time} "
                             f"remote_ids={ClusteringPerceptionManager.ego_last_cp_remote_ids} "
-                            f"use_remote={ClusteringPerceptionManager.ego_last_cp_used_remote_uploads}"
+                            f"use_remote={ClusteringPerceptionManager.ego_last_cp_used_remote_uploads} "
+                            f"uploads_ready={uploads_ready} wait_exhausted={wait_exhausted}"
                         )
 
                     objects = self.inference(data, objects, with_submit=(not self.apply_late_fusion and self.is_ego), with_update=(self.apply_late_fusion or ego_in_cluster or self.is_ego))
@@ -362,7 +367,7 @@ class ClusteringPerceptionManager(PerceptionManager):
                 predict_box_tensor,
                 pred_score,
                 gt_box_tensor,
-                with_stats=ClusteringPerceptionManager.ego_last_cp_used_remote_uploads,
+                with_stats=True,
                 force=True,
             )
             

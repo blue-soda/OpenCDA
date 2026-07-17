@@ -424,6 +424,7 @@ docs\doc_workspace\SGCP\artifacts\runtime_breakdown_41f\offline_replay_runtime.l
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | --- |
 | `online_ns3_short_fixed_20260717_031703` | 35 | 38/38 | 158/0 | 137 | 14 / 8 | 1836 | 480 | 0.86 | 0.84 | 0.74 | Vehicle-registration gate fixed; scheduler stale strategy still present |
 | `online_ns3_short_strategyclear_20260717_041313` | 35 | 38/38 | 156/0 | 150 | 21 / 6 | 95 | 10 | 0.88 | 0.88 | 0.79 | Scheduler strategy clear fixed; remaining partial episodes each miss one 10000-byte fragment |
+| `opencda_20260717_161909.log` | 38 slots | observed to 1.90 s | N/A | N/A | 0 / 11 app episodes | N/A | N/A | 0.86 | 0.86 | 0.71 | User online run; AP is high but `cp counter=1`, parsed as 3 CP eval/submit frames and 185 CP wait frames. Total counted traffic 4,495,080 bytes = 9.46 Mbps over 3.8 s; try upload 3,367,776 bytes = 7.09 Mbps. Diagnostic only until fixed-tick rerun confirms stable CP count. |
 
 ## SGCP 约束感知评估
 

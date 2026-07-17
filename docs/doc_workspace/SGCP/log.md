@@ -3968,3 +3968,89 @@ conda run -n opencda python -m opencda.tools.offline_inference --dataset-root D:
 ### 结论
 
 Quality-persistent fallback 阻止了 plain persistent 的 7 次有害替换，结果回到 no-fallback baseline。这说明 detector-quality 门槛是必要安全条件；但当前规则过于保守，没有带来 AP 提升。下一步应改为 target-level/object-aware 候选生成，而不是只在 CAV 级别做 history/quality gate。
+
+## 2026-07-17 - Online CP-count and communication-accounting diagnosis
+
+### 目的
+
+排查真实在线 `v2xp_cluster_carla --network` 中 AP 高但 `cp counter` 过少的问题，并把在线通信量统计与离线主表的 payload/Mbps 口径对齐。
+
+### 输入日志
+
+用户在线实验命令：
+
+```powershell
+python opencda.py -t v2xp_cluster_carla --apply_cp --apply_ml --debug --network
+```
+
+OpenCDA 日志：
+
+```text
+C:\Workspace\OpenCDA\opencda\log\opencda_20260717_161909.log
+```
+
+用户记录的 stdout 结果：
+
+```text
+cp counter: 1
+AP@0.3/0.5/0.7 = 0.86 / 0.86 / 0.71
+total_volume_bytes = 4,495,080
+try_volume = 3,367,776
+total_slots = 38
+```
+
+### 诊断命令
+
+```powershell
+conda run -n opencda python -m opencda.tools.online_ns3_log_eval --opencda-stdout C:\Workspace\OpenCDA\opencda\log\opencda_20260717_161909.log --output-dir docs\doc_workspace\SGCP\artifacts\online_ns3_user_20260717_161909_eval
+```
+
+### 诊断结果
+
+解析输出：
+
+```text
+docs\doc_workspace\SGCP\artifacts\online_ns3_user_20260717_161909_eval\online_upload_summary.json
+```
+
+关键结果：
+
+| Metric | Value |
+| --- | ---: |
+| CP eval frames | 3 |
+| CP submit frames | 3 |
+| CP wait frames | 185 |
+| CP wait frames, ego=1 | 34 |
+| Upload episodes observed | 11 |
+| Application complete episodes | 0 |
+| Application partial episodes | 11 |
+| AP@0.3 / AP@0.5 / AP@0.7 | 0.86 / 0.86 / 0.71 |
+| Total counted traffic | 4,495,080 bytes |
+| Try upload traffic | 3,367,776 bytes |
+| Duration for Mbps accounting | 3.8 s |
+| Total counted traffic Mbps | 9.46 Mbps |
+| Try upload Mbps | 7.09 Mbps |
+
+### 结论
+
+在线 CP 次数过少不是分簇没有运行，而是 late-fusion 评价提交被 ego CP 阻塞：`submit_cp_results()` 需要 ego 本帧完成 CP 来提供 ego GT，但 ego 作为 cluster head 时长期处于 `CP_WAIT_FRAME`。日志中 ego=1 等待 34 次，且 11 个 online upload episode 均为 application partial，没有 complete episode。当前在线 AP 很高，但只有极少数 CP frame 进入统计，不能直接替换 41 帧离线主表。
+
+通信量口径已明确：在线日志中的 `total_volume_bytes` 是 `intra_upload + intra_download + inter_cluster` 的总计，按 `total_slots * time_slot` 换算为 9.46 Mbps；`try_volume` 是尝试发送的 intra-cluster upload，按同一时长换算为 7.09 Mbps。离线主表主要报告点云 upload payload，因此后续在线/离线对齐应同时报告 `total_payload_mbps` 和 `try_payload_mbps`，并标明是否包含 inter-cluster boxes / download。
+
+### 代码更新
+
+- `CoperceptionManager.upload_wait_exhausted()`：当 NS3 上传超过 timeout/re-upload 预算仍未完整到达时，允许本轮 CP 使用实际到达的 partial uploads 继续执行，避免在线评估长时间卡在等待状态。
+- `ClusteringPerceptionManager`：`CP_EVAL_FRAME` 日志新增 `uploads_ready` 和 `wait_exhausted`；late-fusion submit 不再因为没有 remote upload 而跳过统计，便于与离线“每帧提交一次”口径对齐。
+- `NetworkManager.get_communication_report()`：新增 `duration_s`、`total_payload_mbps`、`try_payload_mbps`。
+- `opencda.tools.online_ns3_log_eval`：新增 `CP_EVAL_FRAME`、`CP_SUBMIT_FRAME`、`CP_WAIT_FRAME` 和通信报告解析。
+
+### 下一步验证
+
+在当前 CARLA 实例可用时，建议用固定 tick 重跑：
+
+```powershell
+$env:OPENCDA_ONLINE_TICKS = "80"
+python opencda.py -t v2xp_cluster_carla --apply_cp --apply_ml --debug --network
+```
+
+验收标准：`cp_submit_frames` 应随 tick 数增长，不再只有 1--3 次；`online_upload_summary.json` 应同时给出 AP、CP wait 分布和 Mbps。若 application complete episode 仍为 0，则继续排查 NS3 callback 的 request_id/send_timestamp 分片合并语义。

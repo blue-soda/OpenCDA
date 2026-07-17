@@ -511,6 +511,12 @@ class NetworkManager:
         
         # Calculate traffic distribution percentages
         total_vol = hist_arrays['throughput'].sum()
+        try_vol = hist_arrays['try_volume'].sum()
+        duration_s = len(self.history) * self.time_slot
+        total_payload_mbps = (
+            total_vol * 8.0 / duration_s / 1e6 if duration_s > 0 else 0.0)
+        try_payload_mbps = (
+            try_vol * 8.0 / duration_s / 1e6 if duration_s > 0 else 0.0)
         dist = {}
         if total_vol > 0:
             dist = {
@@ -519,11 +525,19 @@ class NetworkManager:
                 'intra_download_pct(%)': 100 * hist_arrays['intra_download'].sum() / total_vol,
                 'inter_cluster_pct(%)': 100 * hist_arrays['inter_cluster'].sum() / total_vol,
                 'control_pct(%)': 100 * hist_arrays['control'].sum() / total_vol,
-                'try_volume': hist_arrays['try_volume'].sum()
+                'try_volume': try_vol,
+                'duration_s': duration_s,
+                'total_payload_mbps': total_payload_mbps,
+                'try_payload_mbps': try_payload_mbps
             }
         else:
             dist = {k: 0.0 for k in ['intra_upload_pct(%)', 'intra_download_pct(%)', 
                                     'inter_cluster_pct(%)', 'control_pct(%)', 'try_volume']}
+            dist.update({
+                'duration_s': duration_s,
+                'total_payload_mbps': total_payload_mbps,
+                'try_payload_mbps': try_payload_mbps
+            })
         
         return {
             # 'current': self.current_slot,
@@ -537,6 +551,9 @@ class NetworkManager:
                 'total_volume_bytes': float(hist_arrays['throughput'].sum()),
                 'max_throughput': float(np.max(hist_arrays['throughput'])),
                 'avg_try_volume': float(np.mean(hist_arrays['try_volume'])),
+                'duration_s': float(duration_s),
+                'total_payload_mbps': float(total_payload_mbps),
+                'try_payload_mbps': float(try_payload_mbps),
                 # 'throughput_trend': hist_arrays['throughput'].tolist()  # Full history
             },
         }
