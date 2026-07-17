@@ -97,6 +97,18 @@ conda run -n opencda python -m opencda.tools.sgcp_late_fusion_log_summary --labe
 conda run -n opencda python -m opencda.tools.sgcp_late_fusion_log_summary --label spatial20-rho2-bh1 --log docs\doc_workspace\SGCP\artifacts\mechanism_probe\spatial_diverse_ch20_41f_stdout.log --output-csv docs\doc_workspace\SGCP\artifacts\mechanism_probe\spatial_diverse_ch20_41f_late_summary.csv
 ```
 
+CAV coverage diagnostics：
+
+```powershell
+conda run -n opencda python -m opencda.tools.sgcp_trace_coverage_summary --label spatial10-rho2-bh1 --trace-csv docs\doc_workspace\SGCP\artifacts\mechanism_probe\spatial_diverse_grid_41f_trace.csv --output-cav-csv docs\doc_workspace\SGCP\artifacts\mechanism_probe\spatial_diverse_grid_41f_cav_coverage.csv --output-frame-csv docs\doc_workspace\SGCP\artifacts\mechanism_probe\spatial_diverse_grid_41f_frame_coverage.csv
+
+conda run -n opencda python -m opencda.tools.sgcp_trace_coverage_summary --label spatial10-rho2-bh2 --trace-csv docs\doc_workspace\SGCP\artifacts\mechanism_probe\spatial_diverse_bh2_41f_trace.csv --output-cav-csv docs\doc_workspace\SGCP\artifacts\mechanism_probe\spatial_diverse_bh2_41f_cav_coverage.csv --output-frame-csv docs\doc_workspace\SGCP\artifacts\mechanism_probe\spatial_diverse_bh2_41f_frame_coverage.csv
+
+conda run -n opencda python -m opencda.tools.sgcp_trace_coverage_summary --label spatial10-rho3-bh2 --trace-csv docs\doc_workspace\SGCP\artifacts\mechanism_probe\spatial_diverse_rho3_bh2_41f_trace.csv --output-cav-csv docs\doc_workspace\SGCP\artifacts\mechanism_probe\spatial_diverse_rho3_bh2_41f_cav_coverage.csv --output-frame-csv docs\doc_workspace\SGCP\artifacts\mechanism_probe\spatial_diverse_rho3_bh2_41f_frame_coverage.csv
+
+conda run -n opencda python -m opencda.tools.sgcp_trace_coverage_summary --label spatial20-rho2-bh1 --trace-csv docs\doc_workspace\SGCP\artifacts\mechanism_probe\spatial_diverse_ch20_41f_trace.csv --output-cav-csv docs\doc_workspace\SGCP\artifacts\mechanism_probe\spatial_diverse_ch20_41f_cav_coverage.csv --output-frame-csv docs\doc_workspace\SGCP\artifacts\mechanism_probe\spatial_diverse_ch20_41f_frame_coverage.csv
+```
+
 ## 结果
 
 | Mode | AP@0.3 | AP@0.5 | AP@0.7 | Total Bytes | Avg. Bytes / Receiver | Avg. Sources | Avg. Uploaded Sources | Avg. Uploaded Points | Avg. Selected Grids |
@@ -127,6 +139,26 @@ conda run -n opencda python -m opencda.tools.sgcp_late_fusion_log_summary --labe
 
 诊断结论：`B_h=2` 的 AP@0.7 提升不是由更多融合框数量带来的；相反，它的平均 fused GT 从 `B_h=1` 10ch 的 69.00 降到 64.83，平均 fused pred 也从 55.90 降到 53.71。放宽 late NMS 到 0.30 只把 fused GT 提到 65.83，AP@0.3/0.5 仍未恢复。因此低阈值 AP 下降更像是 head/member/grid 选择改变了覆盖对象分布，使剩余目标定位更准但召回面变窄；下一步应检查 per-cluster member selection、cluster-head 分布和 target coverage，而不是继续调 late NMS。
 
+## CAV Coverage Diagnostics
+
+| Variant | Avg. Fused CAVs / Frame | Avg. Uploaded CAVs / Frame | Avg. Unscheduled Members / Frame | Avg. Selected Grids / Frame | Avg. Uploaded Points / Frame |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| Spatial-diverse, 10ch, `rho_th=2`, `B_h=1` | 16.00 | 10.00 | 4.00 | 523.90 | 43,815.98 |
+| Spatial-diverse, 10ch, `rho_th=2`, `B_h=2` | 16.00 | 10.00 | 4.00 | 534.59 | 42,626.32 |
+| Spatial-diverse, 10ch, `rho_th=3`, `B_h=2` | 16.00 | 10.00 | 4.00 | 544.44 | 42,626.32 |
+| Spatial-diverse, 20ch, `rho_th=2`, `B_h=1` | 20.00 | 14.00 | 0.00 | 703.10 | 57,793.51 |
+
+`B_h=2` 没有增加 10ch 场景的 fused CAV 覆盖，仍然每帧只融合 16/20 个 CAV、10 个上传 CAV，并留下 4 个未调度成员。与 `B_h=1` 10ch 相比，主要 per-CAV 变化如下：
+
+| CAV | Uploaded Frames `B_h=1` | Uploaded Frames `B_h=2,rho3` | Fused Frames `B_h=1` | Fused Frames `B_h=2,rho3` | Unscheduled Frames `B_h=1` | Unscheduled Frames `B_h=2,rho3` | Uploaded Points `B_h=1` | Uploaded Points `B_h=2,rho3` |
+| ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| 4 | 29 | 32 | 38 | 41 | 3 | 0 | 109,102 | 131,425 |
+| 5 | 6 | 31 | 6 | 31 | 35 | 10 | 7,366 | 50,903 |
+| 6 | 41 | 7 | 41 | 7 | 0 | 34 | 187,287 | 32,597 |
+| 12 | 5 | 10 | 36 | 41 | 5 | 0 | 21,591 | 34,532 |
+
+这说明 `B_h=2` 的 AP@0.7 提升伴随长期贡献成员的替换：CAV 6 从 41 帧全程上传变为仅 7 帧上传，CAV 5/4/12 的覆盖增加，但整体 fused GT 下降。后续算法改造不应简单增加 per-head RB budget，而应加入 coverage fairness / persistent contributor protection / target coverage fallback，避免同样 10 条链路下把关键成员系统性挤出。
+
 ## Spatial-Diverse Channel Sweep
 
 | Num. Channels | AP@0.3 | AP@0.5 | AP@0.7 | Total Bytes | Avg. Bytes / Receiver | Avg. Uploaded Sources | Avg. Uploaded Points | Avg. Selected Grids | Payload vs Full-Cluster |
@@ -147,6 +179,7 @@ conda run -n opencda python -m opencda.tools.sgcp_late_fusion_log_summary --labe
 - `B_h=2` sensitivity 显著提升高 IoU：`rho_th=3` 时 AP@0.7 达到 `0.42`，等于 full-cluster upload 的 AP@0.7，且 payload 只有 27,962,864 bytes、约 54.56 Mbps。但 AP@0.3/0.5 降至 `0.76/0.72`，说明更灵活的 per-head RB budget 改善了定位质量/高置信局部几何，却可能损失召回分布。该结果适合作为 high-IoU sensitivity 或后续算法调参线索；11 帧 NS3 replay 已验证 110/110 request application/RLC complete。
 - Late NMS threshold probe 中，默认 `0.15` 的 `0.76/0.72/0.42` 优于 `0.05` 的 `0.73/0.70/0.40` 和 `0.30` 的 `0.75/0.71/0.41`。因此 `B_h=2` 的 AP@0.3/0.5 下降不是简单由 inter-cluster late NMS 阈值导致；后续应优先检查 member/grid selection、box score distribution 和 per-cluster detection quality。
 - Late-fusion box-count diagnostics 进一步说明：`B_h=2` 的 fused GT 覆盖少于 `B_h=1` 10ch 和 20ch，且 fused prediction 数量没有增加。这支持“覆盖分布变窄、定位质量变好”的解释；主表低通信推荐仍应优先使用 `B_h=1` coverage-aware 10ch/20ch，`B_h=2` 暂写成 high-IoU sensitivity。
+- CAV coverage diagnostics 显示 `B_h=2` 在 10ch 下并未增加 fused CAV 数，仍是每帧 16/20 CAV；主要变化是 CAV 6 被 CAV 5/4/12 替代。下一步算法修复应关注 member coverage fairness 和关键成员保护，而不是单独提高 `B_h`。
 - 子信道 sweep 显示 20 子信道 `spatial_diverse` 可达到 `0.80/0.76/0.41`，AP@0.7 已接近 full-cluster `0.42`，payload 约为 full-cluster 的 84.5%。10 子信道仍是更强的低通信主点，20 子信道适合作为 high-budget sensitivity。
 - 当前主表偏低的主要嫌疑从协议链路转移到 grid/PPS 选择质量：需要把 grid utility 从“密度饱和增益”改为“检测导向的覆盖/定位增益”，并继续处理 `B_h=1`、grid budget 和 AP@0.7 定位精度。
 

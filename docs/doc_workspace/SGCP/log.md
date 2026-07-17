@@ -3792,3 +3792,53 @@ conda run -n opencda python -m opencda.tools.sgcp_late_fusion_log_summary --labe
 ### 结论
 
 `B_h=2` 高 IoU 提升伴随 fused GT 覆盖减少，而不是融合框数量增加。当前更合理的解释是资源预算变化改变了 head/member/grid 覆盖对象分布，使剩余目标定位更准但低阈值召回面变窄。主表低通信候选仍优先保留 `B_h=1` coverage-aware 10ch/20ch；`B_h=2` 作为 high-IoU sensitivity，下一步检查 cluster-head/member selection 与 target coverage。
+
+## 2026-07-17 - CAV coverage diagnostics for `B_h=2`
+
+### 目的
+
+继续解释 `B_h=2` 的覆盖损失：上一轮已经确认 fused GT 下降，本轮检查每个 CAV 的 head/member/uploaded/fused/unscheduled 帧数，判断是 fused CAV 总数减少，还是具体成员替换导致覆盖分布变化。
+
+### 代码更新
+
+新增只读解析工具：
+
+```text
+opencda.tools.sgcp_trace_coverage_summary
+```
+
+它从 `--sgcp-trace-output` 生成的 receiver-level trace 中输出 per-CAV coverage CSV 和 per-frame coverage CSV。
+
+### 命令
+
+```powershell
+conda run -n opencda python -m opencda.tools.sgcp_trace_coverage_summary --label spatial10-rho2-bh1 --trace-csv docs\doc_workspace\SGCP\artifacts\mechanism_probe\spatial_diverse_grid_41f_trace.csv --output-cav-csv docs\doc_workspace\SGCP\artifacts\mechanism_probe\spatial_diverse_grid_41f_cav_coverage.csv --output-frame-csv docs\doc_workspace\SGCP\artifacts\mechanism_probe\spatial_diverse_grid_41f_frame_coverage.csv
+
+conda run -n opencda python -m opencda.tools.sgcp_trace_coverage_summary --label spatial10-rho2-bh2 --trace-csv docs\doc_workspace\SGCP\artifacts\mechanism_probe\spatial_diverse_bh2_41f_trace.csv --output-cav-csv docs\doc_workspace\SGCP\artifacts\mechanism_probe\spatial_diverse_bh2_41f_cav_coverage.csv --output-frame-csv docs\doc_workspace\SGCP\artifacts\mechanism_probe\spatial_diverse_bh2_41f_frame_coverage.csv
+
+conda run -n opencda python -m opencda.tools.sgcp_trace_coverage_summary --label spatial10-rho3-bh2 --trace-csv docs\doc_workspace\SGCP\artifacts\mechanism_probe\spatial_diverse_rho3_bh2_41f_trace.csv --output-cav-csv docs\doc_workspace\SGCP\artifacts\mechanism_probe\spatial_diverse_rho3_bh2_41f_cav_coverage.csv --output-frame-csv docs\doc_workspace\SGCP\artifacts\mechanism_probe\spatial_diverse_rho3_bh2_41f_frame_coverage.csv
+
+conda run -n opencda python -m opencda.tools.sgcp_trace_coverage_summary --label spatial20-rho2-bh1 --trace-csv docs\doc_workspace\SGCP\artifacts\mechanism_probe\spatial_diverse_ch20_41f_trace.csv --output-cav-csv docs\doc_workspace\SGCP\artifacts\mechanism_probe\spatial_diverse_ch20_41f_cav_coverage.csv --output-frame-csv docs\doc_workspace\SGCP\artifacts\mechanism_probe\spatial_diverse_ch20_41f_frame_coverage.csv
+```
+
+### 结果
+
+| Variant | Avg. Fused CAVs / Frame | Avg. Uploaded CAVs / Frame | Avg. Unscheduled Members / Frame | Avg. Selected Grids / Frame | Avg. Uploaded Points / Frame |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| `spatial10-rho2-bh1` | 16.00 | 10.00 | 4.00 | 523.90 | 43,815.98 |
+| `spatial10-rho2-bh2` | 16.00 | 10.00 | 4.00 | 534.59 | 42,626.32 |
+| `spatial10-rho3-bh2` | 16.00 | 10.00 | 4.00 | 544.44 | 42,626.32 |
+| `spatial20-rho2-bh1` | 20.00 | 14.00 | 0.00 | 703.10 | 57,793.51 |
+
+核心 per-CAV 差异：
+
+| CAV | Uploaded Frames `B_h=1` | Uploaded Frames `B_h=2,rho3` | Fused Frames `B_h=1` | Fused Frames `B_h=2,rho3` | Unscheduled Frames `B_h=1` | Unscheduled Frames `B_h=2,rho3` | Uploaded Points `B_h=1` | Uploaded Points `B_h=2,rho3` |
+| ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| 4 | 29 | 32 | 38 | 41 | 3 | 0 | 109,102 | 131,425 |
+| 5 | 6 | 31 | 6 | 31 | 35 | 10 | 7,366 | 50,903 |
+| 6 | 41 | 7 | 41 | 7 | 0 | 34 | 187,287 | 32,597 |
+| 12 | 5 | 10 | 36 | 41 | 5 | 0 | 21,591 | 34,532 |
+
+### 结论
+
+`B_h=2` 在 10ch 下没有增加 fused CAV 总数，仍为 16/20 CAV；它主要改变了“谁被上传”。CAV 6 从 41 帧全程上传降到 7 帧，CAV 5/4/12 增加覆盖，但 fused GT 和低阈值 AP 下降。下一步算法应加入 coverage fairness / persistent contributor protection / target coverage fallback，而不是简单提高 `B_h`。

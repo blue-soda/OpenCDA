@@ -471,6 +471,18 @@ conda run -n opencda python -m opencda.tools.offline_inference --dataset-root D:
 
 说明：`random` 与 `mws` 当前作为 “w/o PPS / baseline scheduler” 第一版结果。两者通信开销显著低于 `potential_game`，但 mAP 也明显下降；当前 `mws` 结果低于 `random`，后续进入论文前需要复核 MWS 效用定义与论文 baseline 是否一致。
 
+### SGCP coverage diagnostics
+
+说明：以下表格不作为 AP 主表，而是解释 `B_h=2` 为什么不能直接替换 10ch 主行。诊断来自 `opencda.tools.sgcp_late_fusion_log_summary` 和 `opencda.tools.sgcp_trace_coverage_summary`。
+
+| Variant | AP@0.3 | AP@0.5 | AP@0.7 | Avg. Fused CAVs / Frame | Avg. Uploaded CAVs / Frame | Avg. Fused GT | Avg. Fused Pred. | Avg. Uploaded Points / Frame |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| Spatial-diverse, 10ch, `rho_th=2`, `B_h=1` | 0.79 | 0.75 | 0.37 | 16.00 | 10.00 | 69.00 | 55.90 | 43,815.98 |
+| Spatial-diverse, 10ch, `rho_th=3`, `B_h=2` | 0.76 | 0.72 | 0.42 | 16.00 | 10.00 | 64.83 | 53.71 | 42,626.32 |
+| Spatial-diverse, 20ch, `rho_th=2`, `B_h=1` | 0.80 | 0.76 | 0.41 | 20.00 | 14.00 | 69.29 | 56.24 | 57,793.51 |
+
+`B_h=2` 在 10ch 下没有增加 fused CAV 数，仍只融合 16/20 个 CAV；它主要替换了具体上传成员。最明显的是 CAV 6 从 `B_h=1` 的 41 帧上传降到 `B_h=2,rho_th=3` 的 7 帧，而 CAV 5 从 6 帧升到 31 帧。该替换与 fused GT 下降一致，因此 `B_h=2` 更适合写为 high-IoU sensitivity，而不是当前主表默认行。
+
 ## 离线 SGCP 回放稳定性与耗时
 
 命令：
