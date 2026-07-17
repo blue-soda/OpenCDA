@@ -1359,3 +1359,33 @@ Interpretation:
 - Data-dependent raw member slice bytes are lower than the earlier fixed packet proxy in every budget setting.
 - Top-30 gives a useful operating point: `95.32%` selected GT ratio with `59.42 KB/frame` member upload raw slice bytes.
 - The result is a raw LiDAR proxy and should be described as a bridge toward neural feature slicing, not as completed model-level fusion.
+
+## 2026-07-17：Raw-Slice-Aware Upload Plan
+
+新增 `opencda/tools/lgcp_slice_upload_plan_eval.py`，将 Top-30 hierarchy upload plan 的 `member_to_leader` fixed bytes 替换为 raw LiDAR area-slice bytes。
+
+Run:
+
+```text
+docs/doc_workspace/LGCP/experiments/hierarchy_plan/20260717_lgcp_carla_raw_slice_upload_plan_area30
+```
+
+| Upload type | Requests | New bytes total | Original bytes total | Ratio vs original |
+| --- | ---: | ---: | ---: | ---: |
+| member_to_leader | 174 | 653568 | 1740000 | 0.375614 |
+| leader_to_rsu | 330 | 660000 | 660000 | 1.000000 |
+| all | 504 | 1313568 | 2400000 | 0.547320 |
+
+Dry-run with `offline_ns3_replay.py --lgcp-upload-plan` succeeded for 11 frames:
+
+| Metric | Value |
+| --- | ---: |
+| Requests / frame | 45-48 |
+| Bytes / frame | 105056-133680 |
+| Unmatched member rows | 0 |
+
+Interpretation:
+
+- The hierarchy upload plan can now use data-dependent area-slice bytes without changing the replay bridge.
+- This reduces Top-30 total planned bytes by about `45.27%` versus the fixed-byte proxy.
+- This is still raw LiDAR slicing; neural feature tensor bytes and real leader fusion remain future work.

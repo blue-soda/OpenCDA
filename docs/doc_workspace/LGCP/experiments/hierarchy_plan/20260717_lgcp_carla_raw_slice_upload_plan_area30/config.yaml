@@ -1,0 +1,8 @@
+upload_plan: C:\Workspace\OpenCDA\docs\doc_workspace\LGCP\experiments\hierarchy_plan\20260717_lgcp_carla_hierarchy_budget_sweep_density_distance\area30\upload_plan.csv
+feature_slice_manifest: C:\Workspace\OpenCDA\docs\doc_workspace\LGCP\experiments\hierarchy_plan\20260717_lgcp_carla_feature_slice_budget_sweep_density_distance\area30\feature_slice_manifest.csv
+min_member_bytes: 0
+slice_member_rows: 174
+duplicate_slice_keys: 0
+unmatched_member_rows: 0
+note: member_to_leader bytes use raw LiDAR area-slice byte_proxy; leader_to_rsu bytes
+  remain unchanged.

@@ -198,6 +198,41 @@ Interpretation:
 - The Top-30 setting reaches `95.32%` selected GT ratio with `59.42 KB/frame` raw member upload bytes.
 - This is still raw LiDAR slicing, not neural feature tensor slicing. Its value is to bound the next feature-slicing implementation and replace the earlier fixed-size proxy with data-dependent measurements.
 
+## Raw-Slice-Aware Upload Plan
+
+2026-07-17 新增离线工具：
+
+```text
+opencda/tools/lgcp_slice_upload_plan_eval.py
+```
+
+该工具将 hierarchy `upload_plan.csv` 与 `feature_slice_manifest.csv` 按 `(timestamp, area_id, source/member, leader)` 对齐，将 `member_to_leader` 的固定 bytes 替换为 raw LiDAR area-slice byte proxy；`leader_to_rsu` 的 result bytes 保持不变。输出可直接作为 `offline_ns3_replay.py --lgcp-upload-plan` 输入。
+
+Top-30 run：
+
+```text
+docs/doc_workspace/LGCP/experiments/hierarchy_plan/20260717_lgcp_carla_raw_slice_upload_plan_area30/
+```
+
+| Upload type | Requests | New bytes total | Original bytes total | Ratio vs original | Unmatched |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| member_to_leader | 174 | 653568 | 1740000 | 0.375614 | 0 |
+| leader_to_rsu | 330 | 660000 | 660000 | 1.000000 | - |
+| all | 504 | 1313568 | 2400000 | 0.547320 | - |
+
+Dry-run replay:
+
+```powershell
+conda run -n opencda python -m opencda.tools.offline_ns3_replay --dataset-root D:\Data\Carla --scenario-id 2026_07_15_02_33_21 --ego-cav-id 1 --max-frames 11 --lgcp-upload-plan docs\doc_workspace\LGCP\experiments\hierarchy_plan\20260717_lgcp_carla_raw_slice_upload_plan_area30\raw_slice_upload_plan.csv --dry-run
+```
+
+Dry-run 结果：
+
+- 11 帧全部可被 replay 管线读取。
+- 每帧 requests 为 `45-48`。
+- 每帧 bytes 为 `105056-133680`。
+- 这说明 raw-slice-aware plan 已具备接入 NS3 replay 的格式条件。
+
 ## Offline NS3 Replay 接入
 
 `opencda/tools/offline_ns3_replay.py` 已支持：

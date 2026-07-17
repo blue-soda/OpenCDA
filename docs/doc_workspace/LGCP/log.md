@@ -2697,3 +2697,52 @@ conda run -n opencda python -m opencda.tools.lgcp_feature_slice_manifest --datas
 - Top-30 在 `95.32%` selected GT ratio 下 raw member upload bytes 为 `59.42 KB/frame`。
 - Raw slice byte proxy 明显低于固定 packet proxy，说明后续 feature tensor slicing 不应继续使用固定大小估计作为唯一通信量证据。
 - 该结果仍是 raw LiDAR proxy，不是 neural feature slicing 或 model-level leader fusion。
+
+## 2026-07-17 - Raw-slice-aware upload plan dry-run
+
+### 目标
+
+- 将 raw LiDAR area-slice byte proxy 接回 LGCP hierarchy `upload_plan.csv`。
+- 生成可被 `offline_ns3_replay.py --lgcp-upload-plan` 直接读取的 data-dependent upload plan。
+
+### 代码
+
+新增：
+
+```text
+opencda/tools/lgcp_slice_upload_plan_eval.py
+```
+
+验证：
+
+```powershell
+conda run -n opencda python -m py_compile opencda\tools\lgcp_slice_upload_plan_eval.py
+```
+
+### 运行命令
+
+```powershell
+conda run -n opencda python -m opencda.tools.lgcp_slice_upload_plan_eval --upload-plan docs\doc_workspace\LGCP\experiments\hierarchy_plan\20260717_lgcp_carla_hierarchy_budget_sweep_density_distance\area30\upload_plan.csv --feature-slice-manifest docs\doc_workspace\LGCP\experiments\hierarchy_plan\20260717_lgcp_carla_feature_slice_budget_sweep_density_distance\area30\feature_slice_manifest.csv --output-dir docs\doc_workspace\LGCP\experiments\hierarchy_plan\20260717_lgcp_carla_raw_slice_upload_plan_area30
+```
+
+Dry-run：
+
+```powershell
+conda run -n opencda python -m opencda.tools.offline_ns3_replay --dataset-root D:\Data\Carla --scenario-id 2026_07_15_02_33_21 --ego-cav-id 1 --max-frames 11 --lgcp-upload-plan docs\doc_workspace\LGCP\experiments\hierarchy_plan\20260717_lgcp_carla_raw_slice_upload_plan_area30\raw_slice_upload_plan.csv --dry-run
+```
+
+### 结果
+
+| Upload type | Requests | New bytes total | Original bytes total | Ratio vs original |
+| --- | ---: | ---: | ---: | ---: |
+| member_to_leader | 174 | 653568 | 1740000 | 0.375614 |
+| leader_to_rsu | 330 | 660000 | 660000 | 1.000000 |
+| all | 504 | 1313568 | 2400000 | 0.547320 |
+
+Dry-run replay 11 帧全部通过，每帧 requests 为 `45-48`，每帧 bytes 为 `105056-133680`。
+
+### 结论
+
+- Top-30 raw-slice-aware plan 将总 planned bytes 降到固定 proxy 的 `54.73%`。
+- 该 plan 已可作为 NS3 replay 输入，为后续 raw-slice-aware online replay / request-level trace 做准备。
+- 仍未完成 neural feature slicing 和 model-level leader local fusion。

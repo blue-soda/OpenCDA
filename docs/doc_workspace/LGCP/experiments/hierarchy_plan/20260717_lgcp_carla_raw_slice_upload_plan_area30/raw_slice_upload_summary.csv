@@ -1,0 +1,4 @@
+upload_type,requests,bytes_total,bytes_mean,original_bytes_total,original_bytes_mean,byte_ratio_vs_original,unmatched_member_rows
+leader_to_rsu,330,660000.000000,2000.000000,660000.000000,2000.000000,1.000000,
+member_to_leader,174,653568.000000,3756.137931,1740000.000000,10000.000000,0.375614,0
+all,504,1313568.000000,2606.285714,2400000.000000,4761.904762,0.547320,

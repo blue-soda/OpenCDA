@@ -76,4 +76,4 @@
 - [x] 接入 ns-3 PSSCH request-level trace，将 PSSCH decode OK/FAIL 映射回 LGCP upload request。
 - [x] 将 HARQ feedback 进一步绑定到 LGCP upload request，并确认 replay 配置下 HARQ event 可观测。
 - [x] 扩大 request-level PSSCH / HARQ trace 到 11 帧 LGCP replay。
-- [ ] 实现 LGCP 专用 RSU area assignment、leader local fusion 和 RSU global aggregation 管线。（已完成 offline assignment / upload plan、hierarchy area-budget sweep、raw LiDAR feature-slice budget sweep 和 leader/RSU aggregation proxy；neural feature slicing + model-level fusion 仍待实现）
+- [ ] 实现 LGCP 专用 RSU area assignment、leader local fusion 和 RSU global aggregation 管线。（已完成 offline assignment / upload plan、hierarchy area-budget sweep、raw LiDAR feature-slice budget sweep、raw-slice-aware upload plan dry-run 和 leader/RSU aggregation proxy；neural feature slicing + model-level fusion 仍待实现）
