@@ -2,6 +2,41 @@
 
 本文件按时间顺序追加实验记录。每条记录应尽量包含：目的、代码版本、配置、命令、日志路径、关键结果、异常现象和下一步。
 
+## 2026-07-18 - FullPerception PCS protocol repair pass
+
+### 目的
+
+用户指出 FullPerception 原实现应对应 `opencda/core/clustering/algorithms/resource_allocation/pcs.py`。本轮在确认 `pcs.py` 与 FullPerception 论文 PCS 结构匹配后，修复第一批会导致协议口径不正确的工程简化，并重新运行 built-in PCS。
+
+### 代码改动
+
+- `PCS._get_link_required_subchannels()` 不再直接 `return 1`，改为根据 sender 覆盖 blind grids 的点云 payload、`bandwidth_all`、`lambda_subchannels` 和 `time_slot` 估计 required subchannels。
+- `PCS` 新增 `resource_sc_nums`，`update_resource_allocation_strategy()` 会把每条 scheduled link 的 `sc_num` 写入 `ClusteringScheduler.channel_allocation_sc_nums`。
+- `offline_inference` / `offline_replay` / `offline_ns3_replay` 会把 `--num-channels`、`--bandwidth-mhz` 和 world `time_slot` 同步给 PCS-like allocator。
+- `offline_inference` 新增 `--sgcp-receiver-policy all-scheduled-receivers`，用于评估 PCS 这类不一定只调度 coalition cluster head 的资源分配器。
+- `offline_ns3_replay` 在 scheduled-only 模式下直接遍历 `channel_allocation` 中的 scheduled links，不再用 coalition cluster membership 过滤 PCS 全局链路；upload plan 中的 `sc_num` 来自 PCS 的 required subchannels。
+
+### 命令
+
+```powershell
+$artifact='docs\doc_workspace\SGCP\artifacts\fullperception_pcs_20260718'
+conda run -n opencda python -m opencda.tools.offline_inference --dataset-root D:\Data\Carla --scenario-id 2026_07_15_01_26_56 --ego-cav-id 1 --max-frames 0 --sgcp-constrained --resource-allocation fullperception_pcs --sgcp-receiver-policy all-scheduled-receivers --sgcp-inter-cluster-late-fusion --rho-th 3 --num-channels 10 --bandwidth-mhz 20 --sgcp-trace-output "$artifact\pcs_scheduled_receivers_afterfix_trace.csv"
+conda run -n opencda python -m opencda.tools.offline_ns3_replay --dataset-root D:\Data\Carla --scenario-id 2026_07_15_01_26_56 --ego-cav-id 1 --max-frames 0 --resource-allocation fullperception_pcs --rho-th 3 --num-channels 10 --bandwidth-mhz 20 --dry-run --upload-plan-output "$artifact\pcs_dryrun_plan_afterfix_41f.csv"
+```
+
+### 结果
+
+| Variant | AP@0.3 | AP@0.5 | AP@0.7 | Payload bytes | Mbps | Scheduled receiver rows | Notes |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | --- |
+| Legacy PCS all-cluster-head eval | 0.44 | 0.39 | 0.17 | 12,684,880 | 24.75 | 246 | Pre-repair compatibility row |
+| Repaired PCS scheduled-receiver eval | 0.33 | 0.29 | 0.14 | 8,100,112 | 15.80 | 104 | Payload-based `c(q)`, real `sc_num` |
+
+`offline_ns3_replay --dry-run` 的 41 帧 upload plan 共 104 条 scheduled request，`sc_num` 不再恒为 1；3 帧 plan 中已观察到 `sc_num=2/3` 的多子信道请求。
+
+### 结论
+
+第一轮修复让 FullPerception PCS 的协议语义更正确，但结果更弱，说明当前内置 PCS 在该 dump 上仍明显 under-schedule。下一步不应在旧结果上“修表”，而应继续校准 PCS 的 RSU/global receiver fusion、多 blind-spot link treatment、payload/utility scaling，并补 `fullperception_decentralized` 的真实 NS3 replay。
+
 ## 2026-07-16 - 主表结果修复目标重开
 
 ### 目的

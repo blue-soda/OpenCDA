@@ -1,6 +1,6 @@
 # SGCP Baseline Reproduction Plan
 
-更新时间：2026-07-17
+更新时间：2026-07-18
 
 本文档记录审稿意见要求的额外 baseline 复现计划。目标是把 baseline 分成清晰层级：AP upper bound、RSU/edge-assisted、V2V-only decentralized、same-pipeline ablation，避免再把 full 20-CAV 上界、FullPerception-RSU 和公平 V2V baseline 混写。
 
@@ -19,7 +19,7 @@
 
 | Name | Information Scope | Scheduling Scope | Current Status |
 | --- | --- | --- | --- |
-| `fullperception_pcs` / `fullperception` | base-station / RSU-side PCS scheduling | PCS blind-spot link scheduling from `pcs.py` | Alias added; 41-frame result available |
+| `fullperception_pcs` / `fullperception` | base-station / RSU-side PCS scheduling | PCS blind-spot link scheduling from `pcs.py` | Alias added; first protocol repair complete; 41-frame legacy and repaired results available |
 | `fullperception_mws` | base-station / RSU-side greedy baseline | MWS from `mws.py`, inherited from PCS | Alias added; old MWS result available |
 | `fullperception_random` | base-station / RSU-side random schedule | RS from `random_ra.py`, inherited from PCS | Alias added; old random result available |
 | `fullperception_rsu` | virtual RSU / global CAV candidate pool | global density with mild distance cost, then grid-budgeted upload | Implemented; 41-frame proxy result available |
@@ -43,12 +43,13 @@ PCS/MWS/RS 通过 `--resource-allocation fullperception_pcs|fullperception_mws|f
 | Method | AP@0.3 | AP@0.5 | AP@0.7 | Payload bytes | Mbps | Avg. source CAVs | Avg. selected grids | Interpretation |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | --- |
 | Full 20-CAV early upper reference | 0.85 | 0.83 | 0.48 | 60,838,528 | 118.71 | 20.00 | N/A | Full-sharing AP upper reference, not a fair baseline |
-| `fullperception_pcs` / built-in PCS | 0.44 | 0.39 | 0.17 | 12,684,880 | 24.75 | 1.66 | 630.66 | Current built-in FullPerception PCS implementation; under-utilizes payload in this dump |
+| `fullperception_pcs` / built-in PCS, legacy eval | 0.44 | 0.39 | 0.17 | 12,684,880 | 24.75 | 1.66 | 630.66 | Pre-repair compatibility result; simplified `c(q)=1` |
+| `fullperception_pcs` / built-in PCS, repaired scheduled receivers | 0.33 | 0.29 | 0.14 | 8,100,112 | 15.80 | 2.00 | 57.71 | Payload-based `c(q)`, real `sc_num`, 104 scheduled NS3 dry-run requests; still under-scheduled |
 | `fullperception_rsu` proxy | 0.84 | 0.80 | 0.46 | 56,224,736 | 109.71 | 4.00 | 117.00 | Virtual RSU/global scheduler, strong but infrastructure-assisted |
 | `fullperception_decentralized` proxy | 0.80 | 0.76 | 0.41 | 38,920,592 | 75.94 | 3.33 | 103.20 | V2V-only decentralized FullPerception proxy |
 | `fullperception_rsu`, ego receiver probe | 0.71 | 0.70 | 0.49 | 26,350,784 | 51.42 | 9.54 | 332.93 | Diagnostic only; candidate fallback is unreliable |
 
-结论：`fullperception_rsu` 已不再等同 full 20-CAV early upper reference。它是一个 global/virtual-RSU scheduler proxy，通信量低于全量上传但仍拥有全局候选集合，因此只能放在 RSU/edge-assisted 层级。`fullperception_decentralized` 是更公平的 V2V-only FullPerception proxy，可作为强 decentralized baseline。
+结论：`pcs.py` 是仓库内置 FullPerception PCS，但第一轮修复后仍不是强 baseline；它目前更像“协议正确但调度/融合口径仍待校准”的 built-in reproduction。`fullperception_rsu` 已不再等同 full 20-CAV early upper reference，它是一个 global/virtual-RSU scheduler proxy，通信量低于全量上传但仍拥有全局候选集合，因此只能放在 RSU/edge-assisted 层级。`fullperception_decentralized` 是更公平的 V2V-only FullPerception proxy，可作为强 decentralized baseline。
 
 ## EdgeCooper Plan
 
@@ -92,7 +93,7 @@ PCS/MWS/RS 通过 `--resource-allocation fullperception_pcs|fullperception_mws|f
 
 ## Immediate Tasks
 
-- 先把 FullPerception-RSU / FullPerception-Decentralized 两个显式 baseline 纳入 `results.md` 和 `main_table_candidate.md`。
+- 继续校准 built-in `fullperception_pcs`：补 RSU/global receiver fusion 或更接近论文的 multi-blind-spot link treatment，然后重跑 PCS/MWS/RS。
 - 将 `fullperception_decentralized` 做 11-frame true NS3 replay，确认 10ch scheduled requests application/RLC complete。
-- 重构 EdgeCooper proxy：从 naive complementarity 改为 blind-spot-aware edge scheduling。
+- 重构 EdgeCooper proxy：从当前 blind-spot-aware per-receiver greedy 改为 minimum-cost-flow/global assignment 风格。
 - 选择一个 V2V-only SOTA proxy 优先实现，建议从 Where2comm-style confidence communication 或 PACP-style priority-aware sharing 开始。

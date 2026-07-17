@@ -189,12 +189,31 @@ def collect_channel_allocation(world):
     return channel_allocation
 
 
+def collect_channel_sc_nums(world):
+    channel_sc_nums = {}
+    for vehicle_manager in world.get_vehicle_managers().values():
+        scheduler = vehicle_manager.v2x_manager.scheduler
+        if scheduler is not None:
+            channel_sc_nums.update(
+                getattr(scheduler, 'channel_allocation_sc_nums', {}) or {})
+    return channel_sc_nums
+
+
 def apply_resource_overrides(resource_allocator, world, num_channels=None,
                              bandwidth_mhz=None, head_rb_budget=None):
     if num_channels is not None:
         if num_channels <= 0:
             raise ValueError('--num-channels must be positive')
         world.network_manager.subchannel_num = int(num_channels)
+        if hasattr(resource_allocator, 'lambda_subchannels'):
+            resource_allocator.lambda_subchannels = int(num_channels)
+    if bandwidth_mhz is not None and hasattr(resource_allocator, 'bandwidth_all'):
+        if bandwidth_mhz <= 0:
+            raise ValueError('--bandwidth-mhz must be positive')
+        resource_allocator.bandwidth_all = float(bandwidth_mhz) * (10 ** 6)
+    if hasattr(resource_allocator, 'time_slot'):
+        resource_allocator.time_slot = float(
+            getattr(world.network_manager, 'time_slot', 0.1))
     if not hasattr(resource_allocator, 'p'):
         return
     if num_channels is not None:
@@ -249,30 +268,51 @@ def build_world_and_requests(dataset, scenario_id, timestamp, ego_cav_id,
     resource_allocator.run()
 
     channel_allocation = collect_channel_allocation(world)
+    channel_sc_nums = collect_channel_sc_nums(world)
     requests = []
     pkt_id = 1
     skipped_unscheduled = 0
-    for cluster in clusters:
-        head_id = int(cluster.head_id)
-        for member_id in sorted(cluster.members):
+    scheduled_links = sorted(
+        (int(source), int(target))
+        for source, target in channel_allocation.keys())
+    if scheduled_links and not include_unscheduled:
+        for member_id, head_id in scheduled_links:
             member_id = int(member_id)
-            if member_id == head_id:
-                continue
             request = {
                 'source': member_id,
                 'target': head_id,
                 'size': int(packet_size),
                 'pkt_id': pkt_id,
             }
-            channel = channel_allocation.get((member_id, head_id))
-            if channel is not None:
-                request['sc_start'] = int(channel)
-                request['sc_num'] = 1
-            elif not include_unscheduled:
-                skipped_unscheduled += 1
-                continue
+            channel = channel_allocation[(member_id, head_id)]
+            request['sc_start'] = int(channel)
+            request['sc_num'] = int(
+                channel_sc_nums.get((member_id, head_id), 1))
             requests.append(request)
             pkt_id += 1
+    else:
+        for cluster in clusters:
+            head_id = int(cluster.head_id)
+            for member_id in sorted(cluster.members):
+                member_id = int(member_id)
+                if member_id == head_id:
+                    continue
+                request = {
+                    'source': member_id,
+                    'target': head_id,
+                    'size': int(packet_size),
+                    'pkt_id': pkt_id,
+                }
+                channel = channel_allocation.get((member_id, head_id))
+                if channel is not None:
+                    request['sc_start'] = int(channel)
+                    request['sc_num'] = int(
+                        channel_sc_nums.get((member_id, head_id), 1))
+                elif not include_unscheduled:
+                    skipped_unscheduled += 1
+                    continue
+                requests.append(request)
+                pkt_id += 1
 
     return vehicle_data, requests, clusters, ra_name, skipped_unscheduled
 

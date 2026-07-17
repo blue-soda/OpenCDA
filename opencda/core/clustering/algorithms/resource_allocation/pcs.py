@@ -22,9 +22,14 @@ class PCS(ResourceAllocationAlgorithm):
         self.all_links: List[Tuple[int, int, int]] = []  # 所有潜在链路
         self.link_conflicts: Dict[Tuple[int, int, int], Dict[str, Set[Tuple[int, int, int]]]] = {}  # 链路冲突缓存
         self.resource_strategy: Dict[Tuple[int, int], int] = {}  # 最终调度策略：(发送方vid, 接收方vid) -> 子信道起始索引
+        self.resource_sc_nums: Dict[Tuple[int, int], int] = {}  # 最终调度子信道数量：(发送方vid, 接收方vid) -> 连续子信道数量
         self.grid_selection: Dict[int, Dict[int, Set[str]]] = {}  # 网格选择：接收方vid -> 发送方vid -> 需要接收的网格ID集合
         self.grid_mAP_cache: Dict[int, Dict[int, float]] = {}  # 网格mAP缓存：vid -> grid_id -> mAP值（预计算）
         self.blind_spots_cache: Dict[int, Dict[int, Set[str]]] = {}  # 车辆盲 spot 缓存：vid -> 盲spot_id -> 网格集合
+        self.bandwidth_all = 20.0 * (10 ** 6)
+        self.time_slot = 0.1
+        self.feature_bytes_per_grid = 1024
+        self.point_bytes = 16
 
     def _get_vehicle_blind_spots(self, vid: int, min_division: int=1) -> Dict[int, Set[str]]:
         """
@@ -229,8 +234,6 @@ class PCS(ResourceAllocationAlgorithm):
         """
         计算链路所需子信道数量（论文公式2）
         """
-        return 1
-    
         sender_vid, receiver_vid, spot_id = link
         sender = common.global_vehicles.get(sender_vid)
         receiver = common.global_vehicles.get(receiver_vid)
@@ -240,19 +243,29 @@ class PCS(ResourceAllocationAlgorithm):
         # 获取盲spot网格集合
         receiver_blind_spots = self._get_vehicle_blind_spots(receiver_vid)
         spot_grids = receiver_blind_spots.get(spot_id, set())
-        fs = 4096  # 每个网格特征大小（4KB，可根据模型调整）
-        total_feature_size = len(spot_grids) * fs
-        
-        # 获取信道容量B_ij和传输时间D_ij
-        sender_vm = common.global_vms.get(sender_vid)
-        b_ij = sender_vm.get_channel_capacity(receiver_vid)  # 信道容量（bps）
-        d_ij = 0.01  # 传输时间（10ms，符合NR-V2X帧定义）
-        
-        # 计算所需子信道数（向上取整）
-        if b_ij == 0:
+        covered_grids = spot_grids & sender.sens_grids
+        if not covered_grids:
             return 1
-        required_subchannels = math.ceil(total_feature_size / (d_ij * b_ij * self.lambda_subchannels))
-        return max(1, required_subchannels)  # 至少1个subchannel
+
+        total_feature_bits = self._estimate_link_payload_bytes(
+            sender,
+            covered_grids) * 8.0
+        per_channel_capacity = (
+            float(self.bandwidth_all) / float(max(self.lambda_subchannels, 1)))
+        available_bits = max(per_channel_capacity * float(self.time_slot), 1.0)
+        required_subchannels = int(math.ceil(
+            total_feature_bits / available_bits))
+        return max(1, min(int(self.lambda_subchannels), required_subchannels))
+
+    def _estimate_link_payload_bytes(self, sender, covered_grids):
+        grid_points = getattr(sender, 'grid_local_points', None)
+        if grid_points is not None:
+            point_count = sum(
+                len(grid_points.get(grid_id, []))
+                for grid_id in covered_grids)
+            if point_count > 0:
+                return point_count * self.point_bytes
+        return len(covered_grids) * self.feature_bytes_per_grid
 
     def _build_conflict_graph(self):
         """
@@ -362,9 +375,13 @@ class PCS(ResourceAllocationAlgorithm):
             # 分配子信道并更新网格选择
             sender_q, receiver_q, spot_id = q_t
             self.resource_strategy[(sender_q, receiver_q)] = start_idx
+            self.resource_sc_nums[(sender_q, receiver_q)] = c_qt
             # 获取盲spot网格并记录
             receiver_blind_spots = self._get_vehicle_blind_spots(receiver_q)
+            sender = common.global_vehicles.get(sender_q)
             spot_grids = receiver_blind_spots.get(spot_id, set())
+            if sender:
+                spot_grids = spot_grids & sender.sens_grids
             if receiver_q not in self.grid_selection:
                 self.grid_selection[receiver_q] = {}
             if sender_q not in self.grid_selection[receiver_q]:
@@ -432,6 +449,11 @@ class PCS(ResourceAllocationAlgorithm):
             receiver_vm.perception_manager.do_not_skip_any_cav = True
             receiver_vm.perception_manager.co_manager.set_grid_selection({sender_q: self.grid_selection[receiver_q][sender_q]})
             receiver_vm.v2x_manager.scheduler.set_strategies({k: v})
+            receiver_vm.v2x_manager.scheduler.channel_allocation_sc_nums = (
+                getattr(receiver_vm.v2x_manager.scheduler,
+                        'channel_allocation_sc_nums', {}))
+            receiver_vm.v2x_manager.scheduler.channel_allocation_sc_nums[k] = (
+                self.resource_sc_nums.get(k, 1))
             receiver_vm.v2x_manager.cluster_state['head_id'] = receiver_q
             receiver_vm.v2x_manager.cluster_state['member_ids'].add(sender_q)
             sender_vm.v2x_manager.cluster_state['head_id'] = receiver_q
@@ -442,6 +464,7 @@ class PCS(ResourceAllocationAlgorithm):
         self.all_links.clear()
         self.link_utilities.clear()
         self.resource_strategy.clear()
+        self.resource_sc_nums.clear()
         self.grid_selection.clear()
         self.link_conflicts.clear()
         self.blind_spots_cache.clear()

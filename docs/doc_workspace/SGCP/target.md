@@ -1,6 +1,6 @@
 # SGCP 任务清单
 
-更新时间：2026-07-17
+更新时间：2026-07-18
 最终目标：解决所有C:\Workspace\icdcs-paper\SGCP中的审稿意见，并使 SGCP 主表在严格实验协议下以较少通信量获得较高 AP。
 
 ## P-1：最高优先级 - 主表结果修复与论文落地
@@ -87,7 +87,8 @@
 - [x] 核查并实现显式命名的 FullPerception-RSU baseline：不要再把 full 20-CAV early fusion 混写为 FullPerception；若采用虚拟 RSU，需在代码、文档和表格中明确其拥有 global/oracle scheduling information，并报告其与 full 20-CAV AP upper bound 的区别。已重新确认 `pcs.py` 是 FullPerception 论文 PCS 内置实现，并新增 `fullperception_pcs` alias；当前 PCS 41 帧结果为 `0.44/0.39/0.17`、12,684,880 bytes / 24.75 Mbps，说明内置实现 under-schedule。另保留 `fullperception_rsu` proxy，41 帧结果为 `0.84/0.80/0.46`、56,224,736 bytes / 109.71 Mbps，和 full 20-CAV upper reference `0.85/0.83/0.48`、118.71 Mbps 分开记录。
 - [x] 仿照 FullPerception-RSU 实现 FullPerception-Decentralized：只使用 CAV-side V2V 信息，不使用 RSU/全局 oracle；统一 backbone、数据帧、通信预算、late-fusion 口径和 NS3 request-level delivery。已新增 `fullperception_decentralized`，使用 cluster-local V2V candidates；41 帧结果为 `0.80/0.76/0.41`、38,920,592 bytes / 75.94 Mbps；3 帧 NS3 dry-run 已确认进入 scheduled-only request plan。
 - [ ] 复现 EdgeCooper baseline：参考本地论文 `C:\Users\sakakibara\OneDrive\Papers\Cooperative Perception\EdgeCooper_Network-Aware_Cooperative_LiDAR_Perception_for_Enhanced_Vehicular_Awareness.pdf`，实现 edge/virtual-RSU assisted complementarity-enhanced、redundancy-minimized raw LiDAR scheduling proxy；优先使用同一 20MHz/10ch scheduled-only NS3 口径验证。已完成 blind-spot-aware first proxy，41 帧结果 `0.75/0.70/0.32`、56,134,048 bytes / 109.53 Mbps；下一步需从逐 receiver 贪心升级为 minimum-cost-flow/global assignment 风格，并补 NS3 replay。
-- [ ] 修复/校准内置 FullPerception PCS：`pcs.py` 当前对应原论文 PCS，但存在 `c(q)=1` 简化、带宽参数未进入 required subchannels、同 sender-receiver 多 blind spot 策略折叠、payload 利用率过低等风险；需先修复这些工程偏差，再重跑 PCS/MWS/RS 主表和 NS3 replay。
+- [x] 修复/校准内置 FullPerception PCS 第一轮：已确认 `pcs.py` 对应原论文 PCS，并修复 `c(q)=1` 死代码、`--bandwidth-mhz/--num-channels` 未进入 required subchannels、`sc_num` 未传入 NS3 replay、PCS 全局 scheduled links 被 coalition cluster 过滤、以及 receiver policy 只能固定为 cluster head 的问题。修复后协议正确 41 帧 `fullperception_pcs` scheduled-receiver 结果为 `0.33/0.29/0.14`、8,100,112 bytes / 15.80 Mbps；NS3 dry-run 生成 104 条真实 scheduled requests，`sc_num` 不再恒为 1。结论是内置 PCS 当前仍明显 under-schedule，应作为需要论文口径谨慎说明的 built-in baseline，而不是强 FullPerception 结果。
+- [ ] 继续校准 FullPerception PCS/MWS/RS：下一步需决定是否为 PCS 增加 base-station/global receiver fusion 口径、合并多 blind-spot link 的 payload/utility、或实现更贴近论文的 RSU-side global assignment；完成后重跑 PCS/MWS/RS 41 帧与 NS3 replay。
 - [x] 搜索并选择若干最新且适合作为审稿回复的 decentralized / V2V-only collaborative perception baselines，优先考虑 Where2comm/PACP/What2comm/CoBEVT/V2VNet 中可用当前 dump 和 OpenCOOD backbone 复现或近似实现的机制；每个 baseline 必须说明是否为真实复现、proxy 复现或不适合当前数据/模型。已新增 `baseline_reproduction_plan.md`，当前优先候选为 Where2comm-style confidence communication 与 PACP-style priority-aware sharing。
 - [x] 重构主表 baseline 分层：AP upper bound（full 20-CAV early）、RSU/edge-assisted baselines（FullPerception-RSU、EdgeCooper）、V2V-only decentralized baselines（FullPerception-Decentralized、forced random、density/communication-aware、selected SOTA proxy）和 SGCP PAPG 分开呈现。已同步 `results.md`、`baseline_fairness.md`、`fullperception_baseline_revision.md` 和 `main_table_candidate.md`。
 - [x] 搜索并选择至少一个 V2V-only/decentralized collaborative perception baseline。已实现 `nearest` / `density` selective-sharing baseline，但仍需按审稿意见补更接近 SOTA 的 decentralized baseline。

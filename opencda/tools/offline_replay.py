@@ -155,6 +155,15 @@ def apply_resource_overrides(resource_allocator, world, num_channels=None,
         if num_channels <= 0:
             raise ValueError('--num-channels must be positive')
         world.network_manager.subchannel_num = int(num_channels)
+        if hasattr(resource_allocator, 'lambda_subchannels'):
+            resource_allocator.lambda_subchannels = int(num_channels)
+    if bandwidth_mhz is not None and hasattr(resource_allocator, 'bandwidth_all'):
+        if bandwidth_mhz <= 0:
+            raise ValueError('--bandwidth-mhz must be positive')
+        resource_allocator.bandwidth_all = float(bandwidth_mhz) * (10 ** 6)
+    if hasattr(resource_allocator, 'time_slot'):
+        resource_allocator.time_slot = float(
+            getattr(world.network_manager, 'time_slot', 0.1))
     if not hasattr(resource_allocator, 'p'):
         return
     if num_channels is not None:

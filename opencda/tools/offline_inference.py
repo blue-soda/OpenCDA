@@ -67,9 +67,10 @@ def parse_args():
                         help='Clustering algorithm for SGCP constrained inference.')
     parser.add_argument('--sgcp-receiver-policy',
                         choices=['ego', 'ego-cluster-head',
-                                 'all-cluster-heads'],
+                                 'all-cluster-heads',
+                                 'all-scheduled-receivers'],
                         default='ego-cluster-head',
-                        help='Receiver for constrained perception. all-cluster-heads evaluates every cluster head per frame.')
+                        help='Receiver for constrained perception. all-cluster-heads evaluates every cluster head per frame; all-scheduled-receivers evaluates receivers that actually receive scheduled uploads.')
     parser.add_argument('--sgcp-inter-cluster-late-fusion',
                         action='store_true',
                         help='Late-fuse predictions from all SGCP cluster heads into the requested ego pose and submit one AP sample per frame.')
@@ -226,6 +227,13 @@ def apply_resource_overrides(resource_allocator, world, num_channels=None,
         world.network_manager.subchannel_num = int(num_channels)
         if hasattr(resource_allocator, 'lambda_subchannels'):
             resource_allocator.lambda_subchannels = int(num_channels)
+    if bandwidth_mhz is not None and hasattr(resource_allocator, 'bandwidth_all'):
+        if bandwidth_mhz <= 0:
+            raise ValueError('--bandwidth-mhz must be positive')
+        resource_allocator.bandwidth_all = float(bandwidth_mhz) * (10 ** 6)
+    if hasattr(resource_allocator, 'time_slot'):
+        resource_allocator.time_slot = float(
+            getattr(world.network_manager, 'time_slot', 0.1))
     if not hasattr(resource_allocator, 'p'):
         return
     if num_channels is not None:
@@ -657,6 +665,22 @@ def build_fixed_clusters(world, cluster_templates):
     return clusters
 
 
+def scheduled_receiver_ids(world, fallback_clusters=None):
+    receiver_ids = set()
+    for vm in world.get_vehicle_managers().values():
+        scheduler = getattr(vm.v2x_manager, 'scheduler', None)
+        channel_allocation = getattr(scheduler, 'channel_allocation', {})
+        for link in channel_allocation.keys():
+            try:
+                _, target_id = link
+            except (TypeError, ValueError):
+                continue
+            receiver_ids.add(int(target_id))
+    if not receiver_ids and fallback_clusters:
+        receiver_ids.update(int(cluster.head_id) for cluster in fallback_clusters)
+    return sorted(receiver_ids)
+
+
 def apply_sgcp_constraint(frame, protocol, ego_cav_id, resource_allocation,
                           receiver_policy, t_min_stab=None,
                           clustering='coalition_game', n_max=None,
@@ -724,6 +748,8 @@ def apply_sgcp_constraint(frame, protocol, ego_cav_id, resource_allocation,
             quality_aware=coverage_fallback == 'quality_persistent')
     if receiver_policy == 'all-cluster-heads':
         receiver_ids = sorted(int(cluster.head_id) for cluster in clusters)
+    elif receiver_policy == 'all-scheduled-receivers':
+        receiver_ids = scheduled_receiver_ids(world, clusters)
     else:
         receiver_ids = [select_sgcp_receiver_id(
             world,
@@ -1476,6 +1502,10 @@ def main():
                 frame,
                 target_ego_lidar_pose)
         frame_items = [(frame, None)]
+        late_receiver_policy = (
+            args.sgcp_receiver_policy
+            if args.sgcp_receiver_policy == 'all-scheduled-receivers'
+            else 'all-cluster-heads')
         if args.selective_sharing_baseline is not None:
             protocol = load_protocol(dataset, scenario_id)
             frame_items = apply_selective_sharing_baseline(
@@ -1483,7 +1513,7 @@ def main():
                 protocol,
                 args.ego_cav_id,
                 args.selective_sharing_baseline,
-                'all-cluster-heads' if args.sgcp_inter_cluster_late_fusion
+                late_receiver_policy if args.sgcp_inter_cluster_late_fusion
                 else args.sgcp_receiver_policy,
                 args.selective_member_budget,
                 args.selective_grid_budget,
@@ -1502,7 +1532,7 @@ def main():
                 protocol,
                 args.ego_cav_id,
                 args.resource_allocation,
-                'all-cluster-heads' if args.sgcp_inter_cluster_late_fusion
+                late_receiver_policy if args.sgcp_inter_cluster_late_fusion
                 else args.sgcp_receiver_policy,
                 args.t_min_stab,
                 args.clustering,

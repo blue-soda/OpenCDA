@@ -1,6 +1,6 @@
 # FullPerception Baseline Revision
 
-更新时间：2026-07-17
+更新时间：2026-07-18
 
 本文档用于把 FullPerception baseline 的实现细节、公平性边界和论文/rebuttal 写法收束成可直接迁移到 SGCP 论文的材料。核心目标是避免把集中式 upper reference、全量共享 reference 和同通信预算 V2V baseline 混成同一个比较对象。
 
@@ -28,7 +28,7 @@
 
 同时，`mws.py` 和 `random_ra.py` 继承 `PCS`，对应 FullPerception 论文中的 MWS 和 RS heuristic baselines。已新增 alias：`--resource-allocation fullperception_pcs|fullperception_mws|fullperception_random`。
 
-当前 41 帧 `fullperception_pcs` 复现结果为 `0.44/0.39/0.17`，payload 12,684,880 bytes / 24.75 Mbps。这个结果远低于论文旧表和 full-sharing upper reference，原因是当前 `pcs.py` 工程实现存在 under-scheduling / simplification 风险，例如 `_get_link_required_subchannels()` 直接返回 1、`bandwidth_mhz` 尚未影响 `c(q)`、同一 sender-receiver 多 blind spot 会合并到一个 scheduler strategy。因此它应写为“built-in PCS implementation result / needs repair”，不能继续用 custom proxy 代替论文 PCS。
+当前 41 帧 `fullperception_pcs` 有两条记录。旧的 legacy cluster-head evaluation 为 `0.44/0.39/0.17`，payload 12,684,880 bytes / 24.75 Mbps；它来自 `_get_link_required_subchannels()` 直接返回 1 的简化实现。第一轮协议修复后，`c(q)` 已由 sender 覆盖 blind grids 的点云 payload、20 MHz/10ch 和 0.1 s slot 计算，`sc_num` 会写入 OpenCDA scheduler 与 NS3 replay，receiver policy 也可以只评估实际 scheduled receivers。修复后的 protocol-correct scheduled-receiver 结果为 `0.33/0.29/0.14`，payload 8,100,112 bytes / 15.80 Mbps，NS3 dry-run 生成 104 条 scheduled requests。这个结果更严格但更弱，说明当前内置 PCS 仍 under-schedule，不能继续用 custom proxy 代替论文 PCS，也不能把它写成强 FullPerception 复现。
 
 ## FullPerception-RSU 实现口径
 
@@ -111,3 +111,4 @@ Full 20-CAV early fusion assumes all vehicles can upload complete point clouds t
 - PAPG 已完成 11 帧真实 NS3 replay：110/110 scheduled request application/RLC complete，RLC drops=0，PHY decode failures=0。
 - 若后续重新打开 CARLA，可导出带 RSU sensor 的真实 FullPerception-RSU 数据，但它仍应标注为 infrastructure-assisted upper reference。
 - 当前显式 baseline 代码已接入 `offline_ns3_replay --selective-sharing-baseline` dry-run。下一步优先对 `fullperception_decentralized` 做 11-frame true NS3 replay，使其链路证据与 PAPG/forced random 对称。
+- 对 built-in `fullperception_pcs`，下一步不是继续修表，而是补更贴近论文的 base-station/global receiver fusion、多 blind-spot link 处理和 payload/utility calibration；修复后再重跑 PCS/MWS/RS。
