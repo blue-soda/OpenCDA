@@ -5315,3 +5315,46 @@ Object diagnostics in this run produced 90 `full_detected_method_missed` rows, h
 | PAPG + merged routing hints | 11 | 9 frame-level replacements | 2 / 110 | 0.75 | 0.71 | 0.35 | 8,563,440 | 62.28 |
 
 结果与 whole-list hint 基本一致，甚至 `full_detected_method_missed` 从 90 增至 91。结论进一步收窄：问题不是简单由 hint 替换丢失上下文造成；coarse object-grid / object-box support 本身仍不足以预测 detector 是否会出框。下一步若继续算法改造，应直接引入 head-local detector-benefit proxy，例如快速评估替换前后的 head-local pred/GT proxy、objectness proxy 或多视角形状完整性 proxy；否则应停止在 routing probe 上继续扩张，把当前 PAPG 主线作为论文可写结果。
+
+## 2026-07-18 Detector-benefit post-hoc comparison
+
+### 目的
+
+为避免继续盲目调 routing trigger，本轮重跑 11 帧 PAPG 无 hint 基线，使用同一 object diagnostics 口径与 merged routing hints 逐 GT 对比，统计 routing hint 到底修复了哪些目标、又破坏了哪些目标。
+
+### 命令
+
+```powershell
+conda run -n opencda python -m opencda.tools.offline_inference --dataset-root D:\Data\Carla --scenario-id 2026_07_15_01_26_56 --ego-cav-id 1 --max-frames 11 --sgcp-constrained --sgcp-receiver-policy all-cluster-heads --sgcp-inter-cluster-late-fusion --resource-allocation perception_aware_potential_game --rho-th 3 --num-channels 10 --bandwidth-mhz 20 --head-rb-budget 2 --sgcp-trace-output docs\doc_workspace\SGCP\artifacts\papg_11f_object_compare_20260718\trace.csv --object-diagnostics-output docs\doc_workspace\SGCP\artifacts\papg_11f_object_compare_20260718\objects.csv
+```
+
+### 结果
+
+PAPG 11 帧基线：AP `0.76/0.73/0.34`，payload `8,598,224 bytes`。
+
+Merged routing hints vs PAPG 逐 GT 对比：
+
+| Metric | Value |
+| --- | ---: |
+| Common GT rows | 782 |
+| Same hit | 582 |
+| Same miss | 181 |
+| Hint gained GTs | 4 |
+| Hint lost GTs | 15 |
+| PAPG full-detected method-missed rows | 82 |
+| Hint full-detected method-missed rows | 91 |
+
+Gained GTs:
+
+| Timestamp | Object | PAPG IoU | Hint IoU | Full IoU |
+| --- | ---: | ---: | ---: | ---: |
+| 000060 | 417 | 0.000000 | 0.730017 | 0.756145 |
+| 000060 | 419 | 0.000000 | 0.835617 | 0.889417 |
+| 000060 | 443 | 0.000000 | 0.771785 | 0.875052 |
+| 000078 | 377 | 0.000000 | 0.861020 | 0.845149 |
+
+Lost GTs concentrate on persistent/context-sensitive objects: object `337` lost 3 rows, object `432` lost 3 rows, object `400` lost 2 rows, plus several single-row losses. Receiver-level trace showed total pred/GT counts changed little (`pred_delta_sum=-1`, `gt_delta_sum=-1`), so aggregate pred/GT count is not enough to predict benefit.
+
+### 结论
+
+Routing hints do fix some diagnosed objects, proving the underlying target-to-head idea can work. But the cost is larger: 4 gained GTs vs 15 lost GTs. The detector-benefit trigger therefore needs to protect the already-covered object set, not merely preserve total pred/GT count or selected-grid density. A usable non-oracle mechanism would need a local objectness/proposal-level estimate before replacement: only replace if the candidate route is likely to add a new object without suppressing currently covered object prototypes.
