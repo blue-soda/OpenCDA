@@ -2432,3 +2432,31 @@ docs/doc_workspace/LGCP/experiments/ablation/20260717_lgcp_carla_offline_subset_
 - Random baseline 的多 seed 波动已量化，明显低于 strong selective baselines。
 - `comm_aware_topk` 仍略强于当前 `area_aware_union`，所以 LGCP 的论文主张应继续依赖完整 hierarchy / scheduling，而不是只依赖 offline subset AP。
 - `target.md` 中 offline subset ablation 多 seed 项已标记完成。
+
+## 2026-07-17 - Greedy O3 larger 6-agent smoke
+
+### 目标
+
+- 推进 greedy optimality gap 的 “更大 instance” 部分。
+- 在已有 O3 objective 基础上，将 candidate agents 从 5 扩大到 6，保持 exhaustive search 仍可运行。
+
+### 运行命令
+
+```powershell
+conda run -n opencda python -m opencda.tools.lgcp_greedy_gap_eval --input-dir docs\doc_workspace\LGCP\experiments\area_confidence\20260715_lgcp_carla_area_ap_11f_detector_score --output-dir docs\doc_workspace\LGCP\experiments\greedy_optimality_gap\20260717_lgcp_carla_greedy_gap_o3_6agents_11f --confidence-field density_linear --max-agents 6 --max-areas 3 --max-group-size 3 --delta-g "0.05,0.075,0.1,0.125" --lambda-size 0.02 --enable-o3 --o3-t-delta 1.0 --o3-packet-weight 0.05 --o3-load-weight 0.1
+```
+
+### 结果
+
+| Objective | Delta_g | Instances | Mean relative gap | P90 relative gap | Max relative gap | Greedy packets | Optimal packets |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| O3 | 0.050 | 11 | 0.050486 | 0.063671 | 0.128245 | 3.000000 | 3.454545 |
+| O3 | 0.075 | 11 | 0.050486 | 0.063671 | 0.128245 | 3.000000 | 3.454545 |
+| O3 | 0.100 | 11 | 0.050486 | 0.063671 | 0.128245 | 3.000000 | 3.454545 |
+| O3 | 0.125 | 11 | 0.050486 | 0.063671 | 0.128245 | 3.000000 | 3.454545 |
+
+### 结论
+
+- 6-agent O3 mean relative gap 为 `5.05%`，max 为 `12.82%`。
+- Gap 比 5-agent setting 增大，但仍可作为 online heuristic 的经验 small-scale gap 证据。
+- `target.md` 仍保持未完成，因为还缺多 seed / 多场景。

@@ -246,6 +246,23 @@ Interpretation:
 - Current evidence supports the wording “efficient heuristic with small empirical optimality gap” for this smoke setting, but not a theoretical approximation guarantee.
 - This is still single-scenario / 11-frame evidence. The target item remains open until multi-seed or multi-scenario O3 results are available.
 
+### Larger 6-Agent O3 Smoke
+
+2026-07-17 进一步扩大到 `max_agents=6`、`max_areas=3`、`max_group_size=3`：
+
+```text
+docs/doc_workspace/LGCP/experiments/greedy_optimality_gap/20260717_lgcp_carla_greedy_gap_o3_6agents_11f
+```
+
+| Objective | Delta_g | Instances | Mean relative gap | P90 relative gap | Max relative gap | Greedy packets | Optimal packets |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| O3 | 0.050 | 11 | 0.050486 | 0.063671 | 0.128245 | 3.000000 | 3.454545 |
+| O3 | 0.075 | 11 | 0.050486 | 0.063671 | 0.128245 | 3.000000 | 3.454545 |
+| O3 | 0.100 | 11 | 0.050486 | 0.063671 | 0.128245 | 3.000000 | 3.454545 |
+| O3 | 0.125 | 11 | 0.050486 | 0.063671 | 0.128245 | 3.000000 | 3.454545 |
+
+The larger setting increases O3 mean gap from `2.19%` to `5.05%`, and worst-case gap from `6.90%` to `12.82%`. This is still moderate for an online heuristic, but the paper should report it as empirical evidence rather than a guarantee.
+
 ## 论文写法建议
 
 如果结果显示 gap 较小：

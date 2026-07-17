@@ -1184,3 +1184,24 @@ Interpretation:
 - 多 seed random baseline 明显低于 confidence / area-aware / communication-aware selective baselines。
 - `comm_aware_topk` 仍略高于当前 `area_aware_union`，说明 LGCP 论文不能只靠 offline area-aware subset AP 证明优于强 selective baseline。
 - 更稳妥的 claim 是：当前 offline subset ablation 证明 strong selective baselines 必须纳入；完整 LGCP 增益需要由 hierarchy、leader local fusion、RSU aggregation 和 scheduling latency 共同支撑。
+
+## 2026-07-17：Greedy Gap Larger O3 Instance
+
+在原 5-agent O3 smoke 之后，进一步运行 `max_agents=6`、`max_areas=3`、`max_group_size=3`：
+
+```text
+docs/doc_workspace/LGCP/experiments/greedy_optimality_gap/20260717_lgcp_carla_greedy_gap_o3_6agents_11f
+```
+
+| Objective | Delta_g | Instances | Mean relative gap | P90 relative gap | Max relative gap | Mean greedy packets | Mean optimal packets |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| O3 | 0.050 | 11 | 0.050486 | 0.063671 | 0.128245 | 3.000000 | 3.454545 |
+| O3 | 0.075 | 11 | 0.050486 | 0.063671 | 0.128245 | 3.000000 | 3.454545 |
+| O3 | 0.100 | 11 | 0.050486 | 0.063671 | 0.128245 | 3.000000 | 3.454545 |
+| O3 | 0.125 | 11 | 0.050486 | 0.063671 | 0.128245 | 3.000000 | 3.454545 |
+
+Interpretation:
+
+- O1 / O2 group-member gap and leader load gap remain `0.0` in this setting.
+- O3 gap increases with candidate agents, which is expected because holistic optimal selection has more alternatives.
+- This strengthens the rebuttal evidence by showing the heuristic gap under a larger enumerable setting, while preserving the limitation that it is still single-scenario / 11-frame evidence.

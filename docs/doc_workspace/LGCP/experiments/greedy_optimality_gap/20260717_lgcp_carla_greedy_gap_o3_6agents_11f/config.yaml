@@ -1,0 +1,18 @@
+input_dir: C:\Workspace\OpenCDA\docs\doc_workspace\LGCP\experiments\area_confidence\20260715_lgcp_carla_area_ap_11f_detector_score
+confidence_field: density_linear
+max_agents: 6
+max_areas: 3
+max_group_size: 3
+delta_g:
+- 0.05
+- 0.075
+- 0.1
+- 0.125
+lambda_size: 0.02
+enable_o3: true
+o3_t_delta: 1.0
+o3_packet_weight: 0.05
+o3_load_weight: 0.1
+instances: 11
+note: Group-member exhaustive gap, leader assignment exhaustive load gap, and optional
+  holistic O3 latency-aware exhaustive gap.
