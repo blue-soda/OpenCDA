@@ -1,0 +1,2 @@
+channel,status,reason,count,channel_ratio,avg_sinr,avg_sinr_min,avg_tbler
+PSSCH,OK,,737,1.0,0.0,100000000000.0,1.3025210084033614e-05

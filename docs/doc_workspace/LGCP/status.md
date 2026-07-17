@@ -71,6 +71,7 @@
 - `offline_ns3_replay.py` 现已保留 LGCP upload plan 中的 `sc_start/sc_num` 字段；3 帧 scheduled live ns-3 smoke 达到 30 planned requests、24 application callbacks、0 PHY decode failures，bridge-observed delivery ratio 为 `0.8`。
 - `opencda/tools/lgcp_schedule_upload_plan_eval.py` 已扩展 `--schedule-mode multi_slot`，可对完整 raw-slice-aware plan 输出 `slot_index/sc_start/sc_num/stage/scheduled_delay_ms`；Top-30 11 帧在 `Z=10`、`10ms/slot` 下 504/504 requests 全部排入 5 slots/frame，调度延迟 proxy 为 `50ms/frame`。
 - `offline_ns3_replay.py` 已新增 `--respect-slot-index`，可按 LGCP `slot_index` 分 slot 发送并同步 ns-3；3 帧 multi-slot live replay 覆盖 137/137 requests，54 application callbacks，110 requests with RLC RX / PSSCH OK，PSSCH FAIL 为 0。
+- 已新增 `opencda/tools/lgcp_lifecycle_diagnostics.py`，对 multi-slot replay lifecycle 按 stage / slot / target / terminal state 归因；长 drain 复现实验确认 member-to-leader 低 callback 不是 drain 不足，而是 `47 planned / 40 RLC TX / 28 RLC RX / 2 application received` 的链路与应用层混合瓶颈。
 - 已新增 `opencda/tools/lgcp_feature_slice_manifest.py`，生成 raw LiDAR area-specific slice manifest；Top-40 11 帧 member upload slice 约 `6199` points/frame、`99.19 KB/frame`，为后续 neural feature slicing 提供接口和 byte proxy。
 - 已新增 LGCP 专用仿真入口 `opencda/scenario_testing/lgcp_carla.py` 和配置 `opencda/scenario_testing/config_yaml/lgcp_carla.yaml`。
 - 未修改 `v2xp_cluster_carla` 原始配置。
@@ -80,7 +81,7 @@
 
 1. 扩大 area confidence validation 到多 seed / 多场景，形成可进入论文的稳定相关性结果；OpenCOOD 评估入口、日志格式、远端数据路径和候选 checkpoint 已确认，下一步应在 `mindspore-186` 跑 400-frame gate。
 2. 推进 neural feature tensor slicing、leader local fusion 和 RSU global perception aggregation；当前已有 raw LiDAR slice manifest 与 hierarchy aggregation proxy，但还不是 model-level fusion。
-3. 若继续扩展 ablation，应优先诊断 multi-slot live replay 中 member-to-leader application callback 偏低的原因，或开始推进 model-level leader/RSU fusion，而不是只增加 random seed。
+3. 若继续扩展 ablation，应优先诊断 member slots 的 RLC/PSSCH 到达率和非 RSU receiver 的 CAM application completion，或开始推进 model-level leader/RSU fusion，而不是只增加 random seed。
 4. 大规模 30 CAV 结果若短期只跑 latency，应在论文中收窄为 communication/computation scalability；若报告 perception scalability，只能报告已校准的 proxy，不能写成真实 AP。
 5. 下一步将 request-level PHY/RLC/HARQ trace 和 control-plane overhead 扩展到多 seed，或开始推进完整 LGCP local fusion / RSU aggregation。
 6. 以 `revision_matrix.md` 作为论文修改和实验补强的主索引；下一轮若进入论文源文件修改，应优先重导出 Fig. 7 x-axis 并加入低密度 latency 解释段。

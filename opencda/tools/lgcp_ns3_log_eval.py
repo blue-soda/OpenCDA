@@ -121,6 +121,7 @@ def parse_cam_received(path, frame_interval_ms):
 
 
 def parse_value(value):
+    value = str(value).strip().rstrip(',;')
     try:
         if any(char in value for char in ('.', 'e', 'E')):
             return float(value)

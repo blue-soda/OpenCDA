@@ -1659,3 +1659,48 @@ Interpretation:
 - Slot-indexed live replay preserves all 137 requests over 3 frames, rather than capacity-gating to 30 requests.
 - Compared with the unscheduled raw-slice 3-frame trace, bridge-observed delivery improves from `0.043796` to `0.394161`, and request-level PSSCH failures drop from 51 requests to 0.
 - Member-to-leader application callbacks are still low despite PSSCH/RLC success, so the next live-replay investigation should focus on application-level completion timing, fragmentation, or drain duration.
+
+## LGCP Multi-Slot Lifecycle Diagnostics
+
+`opencda/tools/lgcp_lifecycle_diagnostics.py` joins `request_lifecycle.csv` with the replayed upload plan, exposing stage / slot / endpoint lifecycle ratios. A second 3-frame live replay with `--drain-seconds 1.0` produced the same delivery summary as the 0.3s drain run, so the low member-to-leader application callback is not explained by too-short drain time.
+
+Run directory:
+
+```text
+docs/doc_workspace/LGCP/experiments/hierarchy_plan/20260718_lgcp_carla_raw_slice_multislot_replay_drain1_z10
+```
+
+Stage summary:
+
+| Stage | Planned | RLC TX | RLC RX | PSSCH OK | PSSCH fail | CAM ratio |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| member-to-leader | 47 | 40 | 28 | 28 | 0 | 0.042553 |
+| leader-to-RSU | 90 | 87 | 82 | 82 | 0 | 0.577778 |
+
+Slot summary:
+
+| Stage | Slot | Planned | RLC RX | PSSCH OK |
+| --- | ---: | ---: | ---: | ---: |
+| member-to-leader | 0 | 30 | 21 | 21 |
+| member-to-leader | 1 | 17 | 7 | 7 |
+| leader-to-RSU | 2 | 30 | 24 | 24 |
+| leader-to-RSU | 3 | 30 | 29 | 29 |
+| leader-to-RSU | 4 | 30 | 29 | 29 |
+
+Terminal-state breakdown:
+
+| Upload type | Terminal state | Requests |
+| --- | --- | ---: |
+| member-to-leader | application_received | 2 |
+| member-to-leader | rlc_rx_only | 26 |
+| member-to-leader | rlc_tx_no_rx | 12 |
+| member-to-leader | planned_only | 7 |
+| leader-to-RSU | application_received | 52 |
+| leader-to-RSU | rlc_rx_only | 32 |
+| leader-to-RSU | rlc_tx_no_rx | 6 |
+
+Interpretation:
+
+- The scheduler path itself is working: no PSSCH failures are observed in either stage.
+- The member-to-leader bottleneck is split between RLC/PSSCH non-arrival and application-level non-callback after RLC RX.
+- Next debugging should inspect manual resource timing / HARQ for member slots and CAM application completion for non-RSU receivers.

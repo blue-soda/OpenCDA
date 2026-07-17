@@ -1,0 +1,3 @@
+stage,planned_requests,planned_bytes,requests_with_rlc_tx,requests_with_rlc_rx,requests_with_pssch_ok,requests_with_pssch_fail,requests_with_cam_received,rlc_rx_ratio,pssch_ok_ratio,cam_received_ratio
+leader_to_rsu,90,180000,87,82,82,0,52,0.911111,0.911111,0.577778
+member_to_leader,47,172400,40,28,28,0,2,0.595745,0.595745,0.042553

@@ -591,3 +591,11 @@ docs/doc_workspace/LGCP/experiments/hierarchy_plan/20260718_lgcp_carla_raw_slice
 | Requests with PSSCH FAIL | 0 |
 
 该结果说明 `slot_index/sc_start/sc_num` 已经能驱动 live ns-3 分 slot 回放。下一步应检查 member-to-leader application callback 偏低的原因，或实现 leader local fusion 的离线近似。
+
+补充诊断：
+
+- 将 `--drain-seconds` 从 `0.3` 增加到 `1.0` 后，3 帧 multi-slot replay 的 `cam_received` 仍为 `54/137`，说明低 callback 不是 drain 不足。
+- lifecycle diagnostics 显示 member-to-leader 为 `47 planned / 40 RLC TX / 28 RLC RX / 28 PSSCH OK / 2 application received`。
+- leader-to-RSU 为 `90 planned / 87 RLC TX / 82 RLC RX / 82 PSSCH OK / 52 application received`。
+
+因此下一步 live-replay 调试应聚焦 member slots 的 RLC/PSSCH 到达率，以及非 RSU receiver 的 CAM application completion。

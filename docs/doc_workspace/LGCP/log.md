@@ -3076,3 +3076,72 @@ conda run -n opencda python -m opencda.tools.lgcp_ns3_log_eval --ns3-stdout docs
 - `slot_index/sc_start/sc_num` 已经能够驱动 live ns-3 分 slot replay。
 - 相比 unscheduled raw-slice 3 帧 trace，bridge-observed delivery ratio 从 `0.043796` 提升到 `0.394161`，且 PSSCH FAIL 从 51 个 request 降到 0。
 - member-to-leader application callback 仍偏低；后续应检查 application completion timing、分片聚合或 drain duration。
+
+## 2026-07-18 - Multi-slot lifecycle diagnostics and drain check
+
+目标：
+
+- 解释 multi-slot live replay 中 member-to-leader application callback 偏低的原因。
+- 排除 `drain-seconds=0.3` 太短导致 callback 未吐出的可能。
+- 增加可复用 lifecycle diagnostics 工具。
+
+代码变更：
+
+```text
+opencda/tools/lgcp_ns3_log_eval.py
+opencda/tools/lgcp_lifecycle_diagnostics.py
+```
+
+修复：
+
+- `lgcp_ns3_log_eval.py::parse_value()` 现在会清理字段末尾的 `,` / `;`。长 drain stdout 中出现过多线程日志拼接，导致 `request_id=21,`，此前会触发 `ValueError`。
+- 新增 `lgcp_lifecycle_diagnostics.py`，将 `request_lifecycle.csv` 与 replayed upload plan 按 `(timestamp, pkt_id)` 对齐，输出 `by_stage.csv`、`by_stage_slot.csv`、`by_type_terminal.csv`、`by_upload_type_target.csv` 和 `lifecycle_enriched.csv`。
+
+长 drain replay：
+
+```powershell
+conda run -n opencda python -m opencda.tools.offline_ns3_replay --dataset-root D:\Data\Carla --scenario-id 2026_07_15_02_33_21 --ego-cav-id 1 --max-frames 3 --lgcp-upload-plan docs\doc_workspace\LGCP\experiments\hierarchy_plan\20260718_lgcp_carla_raw_slice_multislot_schedule_z10\scheduled_upload_plan.csv --respect-slot-index --slot-duration-seconds 0.01 --rsu-node-id 21 --drain-seconds 1.0 --sync-timeout 20 --upload-plan-output docs\doc_workspace\LGCP\experiments\hierarchy_plan\20260718_lgcp_carla_raw_slice_multislot_replay_drain1_z10\ns3_multislot_3f_rsu21\upload_plan_replayed_request.csv
+```
+
+解析结果与 `drain=0.3` 一致：
+
+| Metric | Value |
+| --- | ---: |
+| Planned requests | 137 |
+| Observed `cam_received` | 54 |
+| Bridge-observed delivery ratio | 0.394161 |
+| RLC TX events | 1013 |
+| RLC RX events | 737 |
+| Requests with PSSCH OK | 110 |
+| Requests with PSSCH FAIL | 0 |
+
+diagnostics：
+
+```powershell
+conda run -n opencda python -m opencda.tools.lgcp_lifecycle_diagnostics --request-lifecycle docs\doc_workspace\LGCP\experiments\hierarchy_plan\20260718_lgcp_carla_raw_slice_multislot_replay_drain1_z10\ns3_request_trace_3f_rsu21\request_lifecycle.csv --upload-plan docs\doc_workspace\LGCP\experiments\hierarchy_plan\20260718_lgcp_carla_raw_slice_multislot_replay_drain1_z10\ns3_multislot_3f_rsu21\upload_plan_replayed_request.csv --output-dir docs\doc_workspace\LGCP\experiments\hierarchy_plan\20260718_lgcp_carla_raw_slice_multislot_replay_drain1_z10\lifecycle_diagnostics_3f
+```
+
+stage summary：
+
+| Stage | Planned | RLC TX | RLC RX | PSSCH OK | CAM ratio |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| member-to-leader | 47 | 40 | 28 | 28 | 0.042553 |
+| leader-to-RSU | 90 | 87 | 82 | 82 | 0.577778 |
+
+terminal states：
+
+| Upload type | State | Requests |
+| --- | --- | ---: |
+| member-to-leader | application_received | 2 |
+| member-to-leader | rlc_rx_only | 26 |
+| member-to-leader | rlc_tx_no_rx | 12 |
+| member-to-leader | planned_only | 7 |
+| leader-to-RSU | application_received | 52 |
+| leader-to-RSU | rlc_rx_only | 32 |
+| leader-to-RSU | rlc_tx_no_rx | 6 |
+
+结论：
+
+- 延长 drain 不改变 delivery，说明 callback 低不是简单等待时间不足。
+- member-to-leader 瓶颈同时包含 RLC/PSSCH 未到达和 RLC RX 后 application callback 未出现。
+- 下一步应检查 member slot manual resource timing / HARQ，以及非 RSU receiver 的 CAM application completion。
