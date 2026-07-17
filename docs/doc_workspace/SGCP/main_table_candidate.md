@@ -49,6 +49,18 @@
 | Full 20-CAV late checkpoint | 0.91 / 0.85 / 0.51 | Different late-fusion checkpoint; use only as upper reference. |
 | True RSU-sensor FullPerception | N/A | Current dump is RSU-free; needs a new RSU-enabled export. Existing `fullperception_rsu` is a virtual-RSU proxy, not a real RSU-sensor replay. |
 
+## Recent Routing Probes Not Used In Main Table
+
+近期围绕漏检真值框做了三类更激进的目标格/跨簇路由探针。结论是：它们能解释 PAPG 的 AP@0.7 边界，但目前不适合作为主算法行。
+
+| Probe | Result | Interpretation |
+| --- | --- | --- |
+| Instance-support PG (`ispg`) | 41f `0.80/0.78/0.39`, 32,046,336 bytes / 62.53 Mbps | 把目标实例支持项直接加入簇内 utility 后，与 PAPG 持平或略差，说明单纯强调已知漏检目标附近点数不足以提升整体检测。 |
+| Cross-cluster instance routing (`ccispg`) | 11f naive `0.68/0.64/0.37`; layered `0.75/0.71/0.33`; cap1 `0.75/0.72/0.33` | 跨簇 sender repair 可提高少数高 IoU 个例，但会牺牲原本稳定覆盖的区域；在 V2V-only 同预算下不宜写成主机制。 |
+| PAPG + object-grid routing hints | 11f `0.75/0.71/0.35`, 9/11 frames changed; post-hoc comparison gains 4 GT rows but loses 15 GT rows | Oracle 式目标格提示能够修复个别漏检框，但破坏更多已命中的框，表明缺口主要来自 detector context/proposal quality，而不是简单“把漏检框所在 grid 传过去”。 |
+
+这些结果建议作为内部诊断或附录讨论：PAPG 仍是当前最稳定的 V2V-only 主算法；EdgeCooper-HD 的 AP@0.7 优势应解释为 edge/global assignment 带来的结构性能力，而不是用临时跨簇修补去追赶。
+
 ## Recommended Paper Story
 
 1. Full 20-CAV early fusion and full-cluster upload define upper references, not fair decentralized baselines.
@@ -62,6 +74,7 @@
 9. `B_h=2` coverage-aware sensitivity remains useful for explaining localization-quality tradeoff (`0.76/0.72/0.42` at 54.56 Mbps), but PAPG recovers AP@0.3/AP@0.5 without relying on that tradeoff.
 10. `--max-upload-points-per-source 3000` confirms payload is tunable down to 38.07 Mbps, but current deterministic sampling loses AP. It is evidence for a communication knob, not a final algorithm row.
 11. PAPG `B_h=3` is a negative sensitivity row: it keeps roughly the same payload as PAPG `B_h=2` and raises AP@0.7 only to 0.40 while lowering AP@0.3. The next high-IoU improvement should protect high-quality sources and target-grid coverage rather than merely relaxing per-head RB count.
+12. Recent object-grid and cross-cluster routing probes should stay out of the main table. They support a conservative claim boundary: PAPG improves decentralized V2V AP/payload tradeoff, while edge-assisted global schedulers can still have an AP@0.7 advantage because they can coordinate cross-cluster object views without disrupting local context.
 
 ## Next Decisions
 
@@ -71,3 +84,4 @@
 - PAPG 11-frame true NS3 socket replay is complete: 110/110 application callbacks, 110/110 RLC-complete requests, 0 PHY decode failures. The algorithm uses 410 scheduled links over 41 frames in the perception run and does not bypass subchannel budget.
 - Forced-budget random has been rerun under the same coalition path with 3 uploaded members/head and 117 grid budget: `0.77/0.73/0.38`, 31,613,424 bytes / 61.68 Mbps. Existing RandomRA/MWS rows still remain weak scheduler ablations because they use only about 18-19 Mbps.
 - Built-in FullPerception PCS is now identified, aliased as `fullperception_pcs`, and partially repaired: `c(q)`, `sc_num`, scheduled links and scheduled-receiver evaluation are wired through. The repaired 41-frame result is `0.33/0.29/0.14` at 15.80 Mbps with 104 dry-run NS3 requests, so PCS still needs algorithm/receiver calibration before it can stand as the main FullPerception baseline. FullPerception-Decentralized now has symmetric NS3 evidence with PAPG and forced random: 110/110 application/RLC complete and 0 PHY failures. EdgeCooper-global-HD also has 110/110 NS3 delivery and better AP@0.7, so the next SGCP decision is whether to separate RSU/edge-assisted baselines from V2V-only baselines in the paper table, or improve PAPG high-IoU recall.
+- Stop expanding routing-hint variants unless a principled proposal/objectness trigger is added. Current object-level comparison shows routing hints gain 4 GT rows but lose 15, so the paper should treat this as diagnostic evidence for detector-context sensitivity rather than a main algorithm path.
