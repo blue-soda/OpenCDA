@@ -2548,3 +2548,41 @@ conda run -n opencda python -m opencda.tools.lgcp_feature_slice_manifest --datas
 - 已生成 area-specific slice manifest，包含 `leader_self` 与 `member_to_leader` 两类 local fusion 输入。
 - 这是 raw LiDAR point slicing，不是 OpenCOOD neural feature slicing。
 - 后续应将该接口替换为 BEV / intermediate feature map slice，并让 leader 调用 model-level fusion。
+
+## 2026-07-17 - OpenCOOD multi-scene area confidence resource audit
+
+### 目标
+
+- 推进 `target.md` 中 “扩大 area confidence validation 到多 seed / 多场景” 的前置闭环。
+- 确认 OpenCOOD 侧数据、checkpoint、协议入口和可执行命令边界，避免把本地单场景 smoke 当作论文级多场景结果。
+
+### 检查内容
+
+```powershell
+Get-Content C:\Workspace\OpenCOOD\agent-doc\environment.md
+Get-Content C:\Workspace\OpenCOOD\checkpoints\manifest.md
+Get-ChildItem C:\Workspace\OpenCOOD\dataset -Force
+rg -n "OPV2V\(Culver\)|my_opv2v|test_culver_city|max_cav|comm_range|binomial_n|num_sweep_frames" C:\Workspace\OpenCOOD\agent-doc\protocol_notes.md
+rg -n "^(root_dir|validate_dir|test_dir):" C:\Workspace\OpenCOOD\opencood\hypes_yaml\opv2v\lidar_only -g "*.yaml"
+```
+
+### 结果
+
+- 本地 `C:\Workspace\OpenCOOD` 没有 `dataset/` 目录，不能直接跑 OPV2V / V2XSet 多场景 inference。
+- 远端 `mindspore-186` 已记录 OPV2V 数据路径：`/data1/wql/gzc/dataset/opv2v/{train,val,test}`。
+- 远端 OpenCOOD 工作区为 `/data1/wql/gzc/workspace/OpenCOOD`，Python 为 `/data1/wql/yyq/anaconda3/envs/opencood-gzc/bin/python`。
+- 多数模板 YAML 仍使用 `dataset/OPV2V/{train,validate,test}`；OpenCOOD 当前论文可比协议文档则指向 `my_opv2v/test_culver_city`、`num_sweep_frames=2`、`binomial_n=10`、`max_cav=5`、`comm_range=70`。
+- 本地 checkpoint inventory 中 B-D07 为 `max_cav=5`，更适合作为 LGCP area confidence 多场景第一轮候选；A-D20/A-D23-A-D26 多为 `max_cav=3`，C-D05 为 `max_cav=2`。
+
+### 文档
+
+新增：
+
+```text
+docs/doc_workspace/LGCP/opencood_multiscene_area_confidence.md
+```
+
+### 结论
+
+- 该任务尚未完成，因为还没有实际多 seed / 多场景 area-level AP / recall 结果。
+- 下一步应在 `mindspore-186` 选择固定 checkpoint family，跑 400-frame gate 多 seed，并导出 postprocessed prediction / GT 供 LGCP area slicer 统计。

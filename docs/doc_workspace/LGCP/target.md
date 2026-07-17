@@ -53,7 +53,7 @@
 - [x] 扩展 area confidence 离线评估脚本，接入 prediction slicing 与 area-level recall smoke test。
 - [x] 扩展 area confidence 离线评估脚本，累计 area-level AP 并统计 confidence-vs-AP/recall 相关性 smoke test。
 - [x] 扩大 area confidence validation 到完整 `lgcp_carla` dump 帧，并补充 detector-score confidence 对照。
-- [ ] 扩大 area confidence validation 到多 seed / 多场景，形成可进入论文的稳定相关性结果。
+- [ ] 扩大 area confidence validation 到多 seed / 多场景，形成可进入论文的稳定相关性结果。（已完成 OpenCOOD 远端资源 / 协议 / checkpoint 审计；本地无 `dataset/`，下一步在 `mindspore-186` 跑 400-frame gate 多 seed）
 - [x] 实现 greedy group-member selection exhaustive-search gap smoke test。
 - [x] 扩展 greedy optimality gap 到 leader assignment / load balancing。
 - [ ] 扩大 greedy optimality gap 到多 seed / 更大 instance，并接入 latency-aware O3 objective。（O3 objective 已接入并完成 5-agent / 6-agent 11 帧 smoke；仍需多 seed / 多场景）

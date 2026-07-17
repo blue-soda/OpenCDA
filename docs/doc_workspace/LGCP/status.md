@@ -52,6 +52,7 @@
 - 已新增 `manuscript_language_audit.md`，定位 TeX 中 stage 编号不一致和 `approximate solution` 高风险表述，并给出替换段落、rebuttal wording 和论文编辑 checklist。
 - 已新增 `latency_figure_audit.md`，完成 Fig. 7 轴标核查和低 CAV 数 latency 接近原因解释；当前 Fig. 7 y-axis 语义正确，建议将 x-axis 从 `Number of vehicles` 改为 `Number of CAVs`。
 - 已新增 `opencood_eval_entry.md`，确认 OpenCOOD OPV2V / V2XSet 评估主入口为 `opencood/tools/inference.py`，整体 AP 输出到 checkpoint `eval.yaml`，`--save_npy` 输出 prediction / GT 文件但 GT 后缀为 `.npy_test`。
+- 已新增 `opencood_multiscene_area_confidence.md`，完成 OpenCOOD 多场景 area confidence validation 的资源审计：本地 `C:\Workspace\OpenCOOD` 无 `dataset/`，论文级多场景应在 `mindspore-186:/data1/wql/gzc/workspace/OpenCOOD` 跑；模板 OPV2V split 与 `OPV2V(Culver) regular-history` 入口需要分开记录。
 - 已新增 `grid_size_sensitivity.md`，并在不修改 `lgcp_carla.yaml` 的前提下完成 `5m x 3m`、`10m x 6m`、`20m x 12m` 三组 11 帧 grid-size sensitivity smoke；当前 default `10m x 6m` 在 area-frame noisy-or vs recall@0.5 上 Spearman 最高。
 - 已新增 `localization_error_sensitivity.md`，完成 `0.0m / 0.2m / 0.5m / 1.0m` CAV xy pose noise 的 11 帧 localization sensitivity smoke；area-frame noisy-or vs recall@0.5 Spearman 在 1.0m 噪声下仍约 `0.55`。
 - 已新增 `opencda/tools/lgcp_stale_assignment_eval.py` 和 `stale_assignment_sensitivity.md`，完成 `0/1/2/3` 帧 stale assignment smoke；lag 1/2 帧 ranking 仍较稳定，lag 3 帧 Spearman 降到 `0.447925`。
@@ -66,7 +67,7 @@
 
 ## 近期建议焦点
 
-1. 扩大 area confidence validation 到多 seed / 多场景，形成可进入论文的稳定相关性结果；OpenCOOD 评估入口和日志格式已确认。
+1. 扩大 area confidence validation 到多 seed / 多场景，形成可进入论文的稳定相关性结果；OpenCOOD 评估入口、日志格式、远端数据路径和候选 checkpoint 已确认，下一步应在 `mindspore-186` 跑 400-frame gate。
 2. 推进 neural feature tensor slicing、leader local fusion 和 RSU global perception aggregation；当前已有 raw LiDAR slice manifest 与 hierarchy aggregation proxy，但还不是 model-level fusion。
 3. 若继续扩展 ablation，应优先做完整 hierarchy / scheduling，而不是只增加 random seed。
 4. 大规模 30 CAV 结果若短期只跑 latency，应在论文中收窄为 communication/computation scalability；若报告 perception scalability，只能报告已校准的 proxy，不能写成真实 AP。
@@ -76,7 +77,7 @@
 ## 当前阻塞点
 
 - 当前仓库已有 cluster-oriented cooperative perception / network co-simulation 管线，RSU 现在可以作为固定感知/注册实体启用；offline subset ablation、scalable quality proxy、hierarchy control-plane plan、11 帧 offline NS3 request-id bridge-observed replay、RLC request-id trace 和 PHY decode-failure breakdown 已能支持部分 rebuttal 证据，但尚未实现真实 feature slicing、leader local fusion、RSU global perception aggregation 和 LGCP 专用 NS3 scheduling。
-- 尚未确认 OPV2V / V2XSet 数据集、本地模型 checkpoint 和可用 conda 环境的位置。
+- 本地 `C:\Workspace\OpenCOOD` 尚无 `dataset/`，不能直接做 OPV2V / V2XSet 多场景 inference；远端 `mindspore-186` 的 OPV2V 数据路径、Python 环境和 checkpoint/log store 已确认。
 - NS3 当前版本已可接收 LGCP upload plan transfer requests，`cam_received`、RLC TX/RX/DROP、PSSCH decode OK/FAIL 和 HARQ ACK/NACK 已可通过 `request_id` 精确映射回 upload request；HARQ trace 需要显式使用 `--enableSlHarq=true --psfchPeriod=4`。
 
 ## 场景配置判断
