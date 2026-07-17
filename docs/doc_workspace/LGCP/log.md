@@ -3272,3 +3272,24 @@ by type：
 - 观察：
   - Top-30 首帧完整 area budget 可运行，且重复 leader/group 被缓存为 23 次模型调用。
   - 单帧结果只用于验证 adapter 的完整 area-budget 路径，下一步应扩大到 3 帧 / 11 帧，并与 flat selective-sharing baselines 对齐。
+
+## Box-level hierarchy Top-30 three-frame run
+
+- 命令：
+  - `conda run -n opencda python -m opencda.tools.lgcp_hierarchy_late_fusion_eval --dataset-root D:\Data\Carla --scenario-id 2026_07_15_02_33_21 --assignment-plan docs\doc_workspace\LGCP\experiments\hierarchy_plan\20260717_lgcp_carla_hierarchy_budget_sweep_density_distance\area30\area_assignment_plan.csv --output-dir docs\doc_workspace\LGCP\experiments\hierarchy_plan\20260718_lgcp_carla_hierarchy_late_fusion_top30_3f --max-frames 3 --fusion-method late`
+- 输出目录：
+  - `docs/doc_workspace/LGCP/experiments/hierarchy_plan/20260718_lgcp_carla_hierarchy_late_fusion_top30_3f`
+- 结果：
+  - frames: `3`
+  - assignment rows: `90`
+  - cached group inference calls: `68`
+  - mean RSU fused pred / GT boxes per frame: `35.666667 / 35.666667`
+  - AP@0.3 / AP@0.5 / AP@0.7: `0.584564 / 0.584564 / 0.508387`
+  - GT total / pred samples: `107 / 107`
+- 分帧：
+  - `000060`: groups `23`, RSU pred / GT `35 / 35`
+  - `000062`: groups `23`, RSU pred / GT `36 / 35`
+  - `000064`: groups `22`, RSU pred / GT `36 / 37`
+- 结论：
+  - Top-30 box-level hierarchy adapter 已通过连续 3 帧验证。
+  - 下一步应扩大到 11 帧，并和既有 flat selective-sharing baseline 的 11 帧 AP / byte proxy 做同帧对照。

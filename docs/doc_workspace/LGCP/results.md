@@ -1823,3 +1823,36 @@ Interpretation:
 - This verifies that the adapter can handle a complete Top-30 area budget for a frame, not only a two-area smoke.
 - Caching reduced 30 area rows to 23 unique OpenCOOD group inference calls.
 - Because this is one frame only, it should remain a method-validation result until expanded to 3/11 frames and compared with the existing flat selective-sharing baselines.
+
+## Box-Level Hierarchy Top-30 Three-Frame
+
+2026-07-18 将 Top-30 box-level hierarchy late-fusion 扩大到 3 帧：
+
+```text
+docs/doc_workspace/LGCP/experiments/hierarchy_plan/20260718_lgcp_carla_hierarchy_late_fusion_top30_3f
+```
+
+| Metric | Value |
+| --- | ---: |
+| Frames | 3 |
+| Assignment rows | 90 |
+| Cached group inference calls | 68 |
+| Mean RSU fused pred boxes / frame | 35.666667 |
+| Mean RSU fused GT boxes / frame | 35.666667 |
+| AP@0.3 | 0.584564 |
+| AP@0.5 | 0.584564 |
+| AP@0.7 | 0.508387 |
+| GT total | 107 |
+
+Per-frame:
+
+| Timestamp | Planned areas | Groups | RSU pred / GT |
+| --- | ---: | ---: | ---: |
+| `000060` | 30 | 23 | 35 / 35 |
+| `000062` | 30 | 23 | 36 / 35 |
+| `000064` | 30 | 22 | 36 / 37 |
+
+Interpretation:
+
+- The 3-frame result confirms the adapter is not limited to a single timestamp and can cache repeated leader/group plans across a full Top-30 area budget.
+- It remains a method-validation result until expanded to the full 11-frame local dump and compared against flat selective-sharing baselines under the same frame range.

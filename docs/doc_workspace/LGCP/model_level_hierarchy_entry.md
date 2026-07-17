@@ -240,3 +240,46 @@ conda run -n opencda python -m opencda.tools.lgcp_hierarchy_late_fusion_eval --d
 - 这是首个完整 Top-30 area budget 的 box-level hierarchy run。
 - 30 个 area 中有重复 leader/group，因此缓存后只需 23 次 OpenCOOD inference。
 - 结果仍只有单帧，主要用于确认 Top-30 local-to-global adapter 可运行；下一步应扩大到 3 帧和 11 帧，并与 flat selective-sharing baselines 对齐。
+
+## 2026-07-18 Top-30 Three-Frame Run
+
+运行目录：
+
+```text
+docs/doc_workspace/LGCP/experiments/hierarchy_plan/20260718_lgcp_carla_hierarchy_late_fusion_top30_3f
+```
+
+命令：
+
+```powershell
+conda run -n opencda python -m opencda.tools.lgcp_hierarchy_late_fusion_eval --dataset-root D:\Data\Carla --scenario-id 2026_07_15_02_33_21 --assignment-plan docs\doc_workspace\LGCP\experiments\hierarchy_plan\20260717_lgcp_carla_hierarchy_budget_sweep_density_distance\area30\area_assignment_plan.csv --output-dir docs\doc_workspace\LGCP\experiments\hierarchy_plan\20260718_lgcp_carla_hierarchy_late_fusion_top30_3f --max-frames 3 --fusion-method late
+```
+
+结果：
+
+| Metric | Value |
+| --- | ---: |
+| Frames | 3 |
+| Assignment rows | 90 |
+| Cached group inference calls | 68 |
+| Mean planned areas / frame | 30.000000 |
+| Mean RSU fused pred boxes / frame | 35.666667 |
+| Mean RSU fused GT boxes / frame | 35.666667 |
+| AP@0.3 | 0.584564 |
+| AP@0.5 | 0.584564 |
+| AP@0.7 | 0.508387 |
+| GT total | 107 |
+
+Per-frame summary:
+
+| Timestamp | Groups | Local pred / GT | RSU pred / GT |
+| --- | ---: | ---: | ---: |
+| `000060` | 23 | 38 / 35 | 35 / 35 |
+| `000062` | 23 | 38 / 35 | 36 / 35 |
+| `000064` | 22 | 36 / 37 | 36 / 37 |
+
+解释：
+
+- 3 帧 Top-30 run 说明 box-level hierarchy adapter 在连续帧上可稳定运行。
+- AP@0.5 从单帧的 `0.606851` 到 3 帧的 `0.584564`，未出现明显链路崩溃。
+- 下一步应扩大到 11 帧，并将结果与 existing full / confidence_topk / comm_aware_topk / area_aware_union subset ablation 做同帧口径对齐。
