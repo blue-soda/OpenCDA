@@ -711,6 +711,56 @@ def hinted_grid_selection(head_vm, sender_vm, object_grid_id, count):
     return selected
 
 
+def merge_hinted_grid_selection(head_vm, sender_vm, object_grid_id,
+                                existing_grids):
+    """Preserve detector context while forcing a small target-grid hint."""
+    count = len(existing_grids)
+    if count <= 0:
+        return []
+    sender_lidar = sender_vm.perception_manager.lidar
+    candidates = set(candidate_grids_for_sender(head_vm, sender_vm))
+    if not candidates:
+        candidates = set(sender_lidar.sens_grids)
+    hint_grids = []
+    for grid_id in neighboring_grid_ids(object_grid_id, radius=1):
+        if grid_id in candidates and sender_lidar.get_grid_density(grid_id) > 0:
+            hint_grids.append(grid_id)
+        if len(hint_grids) >= min(3, count):
+            break
+    if not hint_grids:
+        return list(existing_grids)
+    selected = []
+    selected_set = set()
+    for grid_id in hint_grids:
+        if grid_id not in selected_set:
+            selected.append(grid_id)
+            selected_set.add(grid_id)
+    preserved = sorted(
+        [grid for grid in existing_grids if grid not in selected_set],
+        key=lambda grid: (
+            sender_lidar.get_grid_density(grid),
+            str(grid)),
+        reverse=True)
+    for grid_id in preserved:
+        selected.append(grid_id)
+        selected_set.add(grid_id)
+        if len(selected) >= count:
+            return selected
+    remaining = sorted(
+        [grid for grid in candidates if grid not in selected_set],
+        key=lambda grid: (
+            sender_lidar.get_grid_density(grid),
+            str(grid)),
+        reverse=True)
+    for grid_id in remaining:
+        if sender_lidar.get_grid_density(grid_id) <= 0:
+            continue
+        selected.append(grid_id)
+        if len(selected) >= count:
+            break
+    return selected
+
+
 def apply_diagnostic_routing_hints(world, timestamp, routing_hints,
                                    max_per_frame=1):
     """Apply oracle/debug target-to-head route replacements."""
@@ -746,12 +796,11 @@ def apply_diagnostic_routing_hints(world, timestamp, routing_hints,
         scheduler = receiver_vm.v2x_manager.scheduler
         channel_allocation = getattr(scheduler, 'channel_allocation', {})
         if sender_id in current_selection:
-            count = max(1, len(current_selection[sender_id]))
-            new_grids = hinted_grid_selection(
+            new_grids = merge_hinted_grid_selection(
                 receiver_vm,
                 sender_vm,
                 hint['object_grid_id'],
-                count)
+                current_selection[sender_id])
             if not new_grids:
                 continue
             current_selection[sender_id] = new_grids

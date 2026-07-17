@@ -5305,3 +5305,13 @@ Object diagnostics in this run produced 90 `full_detected_method_missed` rows, h
 ### 结论
 
 即使用 GT/full-reference 诊断生成 routing hints，“把 best raw object-support source 的 object grid 送到 nearest head”也不是充分条件。它可以微弱改善高 IoU，但会破坏 detector 所需的上下文或低阈值召回。下一步机制不应只追 object-box 点数或 object grid 命中，而应引入 detector-benefit proxy：例如预测某次替换是否保持 receiver fused GT/pred context、是否保护稳定 coverage source、是否提升 head-local objectness，而不是只按 full-reference support gap 触发。
+
+### Context-preserving merge follow-up
+
+为排除“整组替换 selected grids 破坏上下文”的可能，本轮将已调度 sender 的 hint 行为从 whole-list replacement 改为 merge replacement：最多插入 3 个 object-neighborhood grids，其余位置保留该 sender 原 selected grids 中密度最高的上下文 grids。
+
+| Variant | Frames | Hint replacements | External links | AP@0.3 | AP@0.5 | AP@0.7 | Payload bytes | Mbps |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| PAPG + merged routing hints | 11 | 9 frame-level replacements | 2 / 110 | 0.75 | 0.71 | 0.35 | 8,563,440 | 62.28 |
+
+结果与 whole-list hint 基本一致，甚至 `full_detected_method_missed` 从 90 增至 91。结论进一步收窄：问题不是简单由 hint 替换丢失上下文造成；coarse object-grid / object-box support 本身仍不足以预测 detector 是否会出框。下一步若继续算法改造，应直接引入 head-local detector-benefit proxy，例如快速评估替换前后的 head-local pred/GT proxy、objectness proxy 或多视角形状完整性 proxy；否则应停止在 routing probe 上继续扩张，把当前 PAPG 主线作为论文可写结果。
