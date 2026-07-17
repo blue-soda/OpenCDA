@@ -103,6 +103,16 @@ def parse_args():
                              'candidate member to have comparable historical '
                              'detector-quality proxy. Both reuse the same '
                              'subchannel and grid budget. Defaults to none.')
+    parser.add_argument('--sgcp-routing-hints-csv', default=None,
+                        help='Optional oracle/debug CSV from '
+                             'sgcp_object_point_association. When set, '
+                             'SGCP replaces at most N existing scheduled '
+                             'links per frame with hinted target-to-head '
+                             'routes under the same RB budget.')
+    parser.add_argument('--sgcp-routing-hints-max-per-frame', type=int,
+                        default=1,
+                        help='Maximum diagnostic routing-hint replacements '
+                             'per frame. Defaults to 1.')
     parser.add_argument('--t-min-stab', type=float, default=None,
                         help='Override CoalitionGame Params.T_min_stab in seconds. Use 0 for no stability window.')
     parser.add_argument('--n-max', type=int, default=None,
@@ -588,6 +598,210 @@ def apply_persistent_coverage_fallback(world, clusters, coverage_state,
     return replacements
 
 
+def load_sgcp_routing_hints(path):
+    """Load diagnostic target-to-head routing hints.
+
+    This is intentionally an offline/debug probe. It consumes diagnostics that
+    may include GT-derived object ids or full-reference comparisons, so it must
+    not be reported as a deployable algorithm.
+    """
+    if not path:
+        return None
+    hints = defaultdict(list)
+    with open(path, newline='') as stream:
+        for row in csv.DictReader(stream):
+            timestamp = str(row.get('timestamp', ''))
+            object_grid = str(row.get('object_grid_id', '')).strip()
+            if not timestamp or not object_grid:
+                continue
+            try:
+                receiver_id = int(float(row.get('nearest_head', '')))
+            except (TypeError, ValueError):
+                continue
+            sender_value = (
+                row.get('best_raw_cav_id_m0p0') or
+                row.get('best_raw_cav_id_m2p0') or
+                row.get('nearest_cav'))
+            try:
+                sender_id = int(float(sender_value))
+            except (TypeError, ValueError):
+                continue
+            try:
+                ratio = float(row.get('sgcp_full_box_point_ratio_m0p0', 1.0)
+                              or 1.0)
+            except (TypeError, ValueError):
+                ratio = 1.0
+            try:
+                full_points = int(float(
+                    row.get('full_reference_box_points_m0p0', 0) or 0))
+            except (TypeError, ValueError):
+                full_points = 0
+            try:
+                raw_points = int(float(
+                    row.get('best_raw_cav_box_points_m0p0', 0) or 0))
+            except (TypeError, ValueError):
+                raw_points = 0
+            hints[timestamp].append({
+                'timestamp': timestamp,
+                'receiver_id': receiver_id,
+                'sender_id': sender_id,
+                'object_grid_id': object_grid,
+                'object_id': row.get('object_id', ''),
+                'ratio': ratio,
+                'full_points': full_points,
+                'raw_points': raw_points,
+                'score': (
+                    (1.0 - min(max(ratio, 0.0), 1.0)) *
+                    max(full_points, 1) +
+                    0.2 * raw_points),
+            })
+    for timestamp in list(hints.keys()):
+        hints[timestamp] = sorted(
+            hints[timestamp],
+            key=lambda item: (
+                item['score'],
+                item['full_points'],
+                item['raw_points'],
+                -item['sender_id']),
+            reverse=True)
+    return hints
+
+
+def neighboring_grid_ids(grid_id, radius=1):
+    index = grid_index_from_id(grid_id)
+    if index is None:
+        return [grid_id]
+    gx, gy = index
+    grids = []
+    for dist in range(radius + 1):
+        for dx in range(-dist, dist + 1):
+            for dy in range(-dist, dist + 1):
+                if abs(dx) + abs(dy) != dist:
+                    continue
+                grids.append('%d_%d' % (gx + dx, gy + dy))
+    return grids
+
+
+def hinted_grid_selection(head_vm, sender_vm, object_grid_id, count):
+    sender_lidar = sender_vm.perception_manager.lidar
+    candidates = set(candidate_grids_for_sender(head_vm, sender_vm))
+    if not candidates:
+        candidates = set(sender_lidar.sens_grids)
+    selected = []
+    for grid_id in neighboring_grid_ids(object_grid_id, radius=2):
+        if grid_id in candidates and sender_lidar.get_grid_density(grid_id) > 0:
+            selected.append(grid_id)
+        if len(selected) >= count:
+            return selected
+    remaining = [
+        grid for grid in candidates
+        if grid not in selected and sender_lidar.get_grid_density(grid) > 0
+    ]
+    remaining = sorted(
+        remaining,
+        key=lambda grid: (
+            -grid_l1_distance(grid, object_grid_id),
+            sender_lidar.get_grid_density(grid),
+            str(grid)),
+        reverse=True)
+    for grid_id in remaining:
+        selected.append(grid_id)
+        if len(selected) >= count:
+            break
+    return selected
+
+
+def apply_diagnostic_routing_hints(world, timestamp, routing_hints,
+                                   max_per_frame=1):
+    """Apply oracle/debug target-to-head route replacements."""
+    if not routing_hints or max_per_frame <= 0:
+        return 0
+    hints = routing_hints.get(str(timestamp), [])
+    if not hints:
+        return 0
+    applied = 0
+    used_receivers = set()
+    used_senders = set()
+    for hint in hints:
+        if applied >= max_per_frame:
+            break
+        receiver_id = int(hint['receiver_id'])
+        sender_id = int(hint['sender_id'])
+        if receiver_id in used_receivers or sender_id in used_senders:
+            continue
+        if receiver_id == sender_id:
+            continue
+        receiver_vm = world.get_vehicle_manager(receiver_id)
+        sender_vm = world.get_vehicle_manager(sender_id)
+        if receiver_vm is None or sender_vm is None:
+            continue
+        co_manager = receiver_vm.perception_manager.co_manager
+        current_selection = {
+            int(src): list(grids)
+            for src, grids in (
+                getattr(co_manager, 'grid_selection', {}) or {}).items()
+        }
+        if not current_selection:
+            continue
+        scheduler = receiver_vm.v2x_manager.scheduler
+        channel_allocation = getattr(scheduler, 'channel_allocation', {})
+        if sender_id in current_selection:
+            count = max(1, len(current_selection[sender_id]))
+            new_grids = hinted_grid_selection(
+                receiver_vm,
+                sender_vm,
+                hint['object_grid_id'],
+                count)
+            if not new_grids:
+                continue
+            current_selection[sender_id] = new_grids
+            co_manager.clear_grid_selection()
+            co_manager.set_grid_selection(current_selection)
+            applied += 1
+            used_receivers.add(receiver_id)
+            used_senders.add(sender_id)
+            continue
+
+        def replace_score(src_id):
+            grids = current_selection.get(src_id, [])
+            src_vm = world.get_vehicle_manager(src_id)
+            if src_vm is None:
+                return (float('inf'), src_id)
+            density_sum = sum(
+                src_vm.perception_manager.lidar.get_grid_density(grid)
+                for grid in grids)
+            return (density_sum, src_id)
+
+        replaceable = [
+            src_id for src_id in current_selection.keys()
+            if (src_id, receiver_id) in channel_allocation
+        ]
+        if not replaceable:
+            continue
+        replaced_id = min(replaceable, key=replace_score)
+        replaced_grids = current_selection.get(replaced_id, [])
+        count = max(1, len(replaced_grids))
+        new_grids = hinted_grid_selection(
+            receiver_vm,
+            sender_vm,
+            hint['object_grid_id'],
+            count)
+        if not new_grids:
+            continue
+        old_channel = channel_allocation.pop((replaced_id, receiver_id), None)
+        if old_channel is None:
+            continue
+        channel_allocation[(sender_id, receiver_id)] = old_channel
+        current_selection.pop(replaced_id, None)
+        current_selection[sender_id] = new_grids
+        co_manager.clear_grid_selection()
+        co_manager.set_grid_selection(current_selection)
+        applied += 1
+        used_receivers.add(receiver_id)
+        used_senders.add(sender_id)
+    return applied
+
+
 def update_coverage_state_from_items(coverage_state, constrained_items):
     if coverage_state is None:
         return
@@ -698,7 +912,9 @@ def apply_sgcp_constraint(frame, protocol, ego_cav_id, resource_allocation,
                           head_rb_budget=None,
                           coverage_fallback='none',
                           coverage_state=None,
-                          max_upload_points_per_source=None):
+                          max_upload_points_per_source=None,
+                          routing_hints=None,
+                          routing_hints_max_per_frame=1):
     clear_sgcp_globals()
     world = OfflineCavWorld(
         frame,
@@ -751,6 +967,11 @@ def apply_sgcp_constraint(frame, protocol, ego_cav_id, resource_allocation,
             clusters,
             coverage_state,
             quality_aware=coverage_fallback == 'quality_persistent')
+    routing_hint_replacements = apply_diagnostic_routing_hints(
+        world,
+        timestamp,
+        routing_hints,
+        max_per_frame=routing_hints_max_per_frame)
     if receiver_policy == 'all-cluster-heads':
         receiver_ids = sorted(int(cluster.head_id) for cluster in clusters)
     elif receiver_policy == 'all-scheduled-receivers':
@@ -796,6 +1017,9 @@ def apply_sgcp_constraint(frame, protocol, ego_cav_id, resource_allocation,
         metadata['coverage_fallback'] = coverage_fallback
         metadata['coverage_fallback_replacements'] = (
             coverage_fallback_replacements)
+        metadata['routing_hint_replacements'] = routing_hint_replacements
+        metadata['routing_hints_csv'] = (
+            '' if not routing_hints else 'enabled')
         metadata['max_upload_points_per_source'] = (
             max_upload_points_per_source or '')
         constrained_items.append((constrained_frame, metadata))
@@ -1275,6 +1499,9 @@ def trace_row(scenario_id, timestamp, metadata, eval_frame,
         'coverage_fallback': metadata.get('coverage_fallback', ''),
         'coverage_fallback_replacements': metadata.get(
             'coverage_fallback_replacements', ''),
+        'routing_hint_replacements': metadata.get(
+            'routing_hint_replacements', ''),
+        'routing_hints_csv': metadata.get('routing_hints_csv', ''),
         'clustering': metadata.get('clustering', ''),
         'cluster_count': metadata.get('cluster_count', ''),
         'cluster_member_ids': ';'.join(
@@ -1311,6 +1538,8 @@ def write_trace_csv(path, rows):
         'grid_score_mode',
         'coverage_fallback',
         'coverage_fallback_replacements',
+        'routing_hint_replacements',
+        'routing_hints_csv',
         'clustering',
         'cluster_count',
         'cluster_member_ids',
@@ -1527,6 +1756,8 @@ def main():
     sgcp_trace_rows = []
     object_rows = []
     ns3_link_quality = load_ns3_link_quality(args.ns3_link_quality_csv)
+    sgcp_routing_hints = load_sgcp_routing_hints(
+        args.sgcp_routing_hints_csv)
     fixed_cluster_templates = []
     sgcp_coverage_state = defaultdict(dict)
 
@@ -1618,7 +1849,10 @@ def main():
                 coverage_fallback=args.sgcp_coverage_fallback,
                 coverage_state=sgcp_coverage_state,
                 max_upload_points_per_source=(
-                    args.max_upload_points_per_source))
+                    args.max_upload_points_per_source),
+                routing_hints=sgcp_routing_hints,
+                routing_hints_max_per_frame=(
+                    args.sgcp_routing_hints_max_per_frame))
         if args.sgcp_inter_cluster_late_fusion:
             pred_tensors = []
             pred_scores = []

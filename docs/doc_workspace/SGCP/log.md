@@ -5274,3 +5274,34 @@ opencda/core/clustering/algorithms/resource_allocation/builder.py
 跨簇 routing 能改变高 IoU 定位：naive CCISPG 的 AP@0.7 到 0.37，但 AP@0.3/0.5 明显下降，原因是 94.55% 上传链路变成 external，稳定 coverage layer 被破坏。Layered 和 Cap1 版本把 external 限制到 target layer 或每帧 1 条，AP@0.3/0.5 仍未恢复到 PAPG，说明仅靠在线 density/object proxy 自动触发跨簇路由不够稳。
 
 下一步不应继续放宽 cross-cluster routing，而应改成 diagnostic-triggered / persistent-target-triggered routing：只有当目标区域在历史或当前诊断中满足“full-reference 可检、PAPG 漏检、nearest/best raw source 不在相关 head 输入中”时，才用 1 条 target-layer RB 做跨簇实例补偿。这样可以保留论文中的势博弈叙事，同时避免全局外部 sender 替换稳定覆盖源。
+
+## 2026-07-18 Diagnostic routing-hint oracle probe
+
+### 目的
+
+上一轮 CCISPG 表明自动 external sender 过强。本轮新增 `offline_inference --sgcp-routing-hints-csv`，只作为 oracle/debug probe：读取 `sgcp_object_point_association` 的 dense-miss top40 诊断 CSV，在同一 20 MHz / 10 ch / `rho_th=3` / `B_h=2` 预算下，每帧最多替换 1 条既有 scheduled route 或重排 1 个已调度 sender 的 grids，优先把 best raw object-support source 的 object grid/邻域送到 nearest head。
+
+### 代码
+
+```text
+opencda/tools/offline_inference.py
+```
+
+### 命令
+
+```powershell
+conda run -n opencda python -m opencda.tools.offline_inference --dataset-root D:\Data\Carla --scenario-id 2026_07_15_01_26_56 --ego-cav-id 1 --max-frames 11 --sgcp-constrained --sgcp-receiver-policy all-cluster-heads --sgcp-inter-cluster-late-fusion --resource-allocation perception_aware_potential_game --rho-th 3 --num-channels 10 --bandwidth-mhz 20 --head-rb-budget 2 --sgcp-routing-hints-csv docs\doc_workspace\SGCP\artifacts\object_point_assoc_papg_dense_20260718\object_point_assoc_dense_top40.csv --sgcp-routing-hints-max-per-frame 1 --sgcp-trace-output docs\doc_workspace\SGCP\artifacts\routing_hints_papg_11f_20260718\trace.csv --object-diagnostics-output docs\doc_workspace\SGCP\artifacts\routing_hints_papg_11f_20260718\objects.csv
+```
+
+### 结果
+
+| Variant | Frames | Hint replacements | External links | AP@0.3 | AP@0.5 | AP@0.7 | Payload bytes | Mbps |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| PAPG + diagnostic routing hints | 11 | 9 frame-level replacements | 2 / 110 | 0.75 | 0.71 | 0.35 | 8,521,936 | 61.98 |
+| PAPG short reference | 11 | 0 | 0 / 110 | 0.76 | 0.73 | 0.34 | about 8.60M | about 62.5 |
+
+Object diagnostics in this run produced 90 `full_detected_method_missed` rows, higher than the earlier PAPG short-run failure count used in the dense-miss branch. The probe reduced payload slightly and improved AP@0.7 by about 0.01, but AP@0.3/AP@0.5 dropped.
+
+### 结论
+
+即使用 GT/full-reference 诊断生成 routing hints，“把 best raw object-support source 的 object grid 送到 nearest head”也不是充分条件。它可以微弱改善高 IoU，但会破坏 detector 所需的上下文或低阈值召回。下一步机制不应只追 object-box 点数或 object grid 命中，而应引入 detector-benefit proxy：例如预测某次替换是否保持 receiver fused GT/pred context、是否保护稳定 coverage source、是否提升 head-local objectness，而不是只按 full-reference support gap 触发。
