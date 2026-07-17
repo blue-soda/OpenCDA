@@ -5053,3 +5053,31 @@ conda run -n opencda python -m opencda.tools.offline_inference --dataset-root D:
 - baseline 列表新增 `EdgeCooper-HD`，明确其为 virtual edge-assisted reference。
 - 主表新增 `EdgeCooper-HD (edge-assisted) = 0.81/0.78/0.42, 65.40 Mbps`。
 - 正文说明 EdgeCooper-HD 使用 global edge-side information，不作为 fully decentralized SGCP 的公平 V2V baseline；PAPG 与 V2V baselines 的比较仍限定在 RSU-free V2V 设置下。
+
+## 2026-07-18 Balanced PAPG source-diversity probe
+
+### 目的
+
+针对 PAPG / `B_h=3` 中源车多样性没有提升的问题，新增独立算法分支 `balanced_perception_aware_potential_game`（alias: `bpapg`）。该分支不修改原 PAPG，而是在同一 coverage layer + target layer 势函数中加入 source-diversity marginal term，并进一步试验跨帧 source-history credit，用于验证“欠服务源车保护”是否能修复高 IoU 漏检。
+
+### 代码
+
+- `opencda/core/clustering/algorithms/resource_allocation/balanced_perception_aware_potential_game.py`
+- `opencda/core/clustering/algorithms/resource_allocation/builder.py`
+
+### 命令与结果
+
+```powershell
+conda run -n opencda python -m opencda.tools.offline_inference --dataset-root D:\Data\Carla --scenario-id 2026_07_15_01_26_56 --ego-cav-id 1 --max-frames 0 --sgcp-constrained --resource-allocation balanced_perception_aware_potential_game --sgcp-inter-cluster-late-fusion --rho-th 3 --num-channels 10 --bandwidth-mhz 20 --head-rb-budget 2 --sgcp-trace-output docs\doc_workspace\SGCP\artifacts\bpapg_rho3_10ch_20260718\bpapg_trace_41f.csv
+```
+
+| Variant | Frames | AP@0.3 | AP@0.5 | AP@0.7 | Payload bytes | Mbps | Avg. source CAVs | Avg. selected grids |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| BPAPG source-balanced | 41 | 0.81 | 0.78 | 0.39 | 32,049,872 | 62.54 | 2.67 | 97.22 |
+| BPAPG + source-history credit | 11 | 0.75 | 0.71 | 0.33 | 8,601,424 | 62.56 | 2.67 | 95.12 |
+
+Trace coverage summary confirms that the first BPAPG variant kept the same per-CAV upload distribution as PAPG: 41-frame avg fused CAVs = 16/20, avg uploaded CAVs = 10/20, avg unscheduled members = 4/20, and per-CAV uploaded frame counts were unchanged. The history-credit variant did change selected senders in early frames, but AP dropped, indicating that naive fairness/rotation can replace stable high-quality views with lower-quality context.
+
+### 结论
+
+BPAPG is a useful negative branch, not a new main method. The high-IoU fix should not be a generic under-served-CAV rotation. It needs detector-quality / target-quality gating: only protect a low-frequency source if it covers a diagnosed target grid with comparable object-prototype quality, otherwise source fairness hurts AP.

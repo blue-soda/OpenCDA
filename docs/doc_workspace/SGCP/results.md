@@ -38,6 +38,7 @@
 | Selective V2V density high-budget | 0.80 | 0.76 | 0.40 | 73.58 | TBD | 3 members/head, 117 grid budget |
 | SGCP PAPG, 10ch, `rho_th=3`, `B_h=2` | 0.81 | 0.78 | 0.39 | 62.54 | TBD | Current main method; 110/110 PAPG NS3 replay complete |
 | SGCP PAPG, 10ch, `rho_th=3`, `B_h=3` | 0.80 | 0.78 | 0.40 | 62.54 | TBD | Negative high-IoU probe; avg source CAVs drops to 2.67, so per-head RB relaxation is not enough |
+| SGCP BPAPG source-balanced, 10ch, `rho_th=3` | 0.81 | 0.78 | 0.39 | 62.54 | TBD | Negative branch; source-diversity marginal term did not change PAPG per-CAV upload distribution |
 | SGCP coverage-aware, 10ch, `rho_th=3` | 0.79 | 0.76 | 0.38 | 57.38 | TBD | PAPG predecessor/ablation |
 | SGCP coverage-aware, 20ch | 0.80 | 0.76 | 0.41 | 73.98 | TBD | Resource-sensitivity row |
 
@@ -71,6 +72,7 @@
 | V2V-only fair baseline | FullPerception-Decentralized proxy | 0.80 / 0.76 / 0.41 | Yes | cluster-local candidate pool，3 members/head，117 grid budget；强 decentralized baseline；11 帧 NS3 replay 110/110 application/RLC complete |
 | SGCP main | SGCP PAPG 10ch | 0.81 / 0.78 / 0.39 | Yes | 当前主方法，62.54 Mbps，PAPG NS3 110/110 complete |
 | SGCP sensitivity | SGCP PAPG 10ch, `B_h=3` | 0.80 / 0.78 / 0.40 | No | 简单放宽 per-head RB 上限，未形成更多有效 source diversity；作为负面 sensitivity |
+| SGCP negative branch | SGCP BPAPG source-balanced | 0.81 / 0.78 / 0.39 | No | source-diversity marginal term 不足以改变最终 upload distribution；history-credit 11 帧会伤 AP |
 | SGCP ablation | SGCP potential_game | 0.77 / 0.73 / 0.35 | Yes | 原始 PPS 消融 |
 | Same pipeline ablation | Random scheduler | 0.44 / 0.39 / 0.17 | No | payload 过低，只作 w/o-PPS 诊断 |
 | Same pipeline ablation | MWS scheduler | 0.31 / 0.26 / 0.11 | No | payload 过低，只作 w/o-PPS 诊断 |
