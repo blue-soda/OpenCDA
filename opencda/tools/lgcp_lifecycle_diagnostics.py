@@ -21,6 +21,8 @@ def parse_args():
     parser.add_argument('--upload-plan', required=True,
                         help='Replayed upload_plan.csv with pkt_id/slot fields.')
     parser.add_argument('--output-dir', required=True)
+    parser.add_argument('--byte-bins', default='0,1000,2000,4000,8000,16000,32000',
+                        help='Comma separated planned-byte bin edges.')
     return parser.parse_args()
 
 
@@ -128,7 +130,32 @@ def terminal_summary(rows):
     return summarize_group(rows, ['upload_type', 'terminal_state'])
 
 
-def write_notes(path, by_stage_slot, by_stage, unmatched_count):
+def parse_bins(value):
+    bins = [int(item.strip()) for item in value.split(',') if item.strip()]
+    bins = sorted(set(bins))
+    if not bins or bins[0] != 0:
+        bins.insert(0, 0)
+    return bins
+
+
+def byte_bin_label(byte_count, bins):
+    for lower, upper in zip(bins[:-1], bins[1:]):
+        if lower <= byte_count < upper:
+            return '%d-%d' % (lower, upper)
+    return '%d+' % bins[-1]
+
+
+def summarize_by_byte_bin(rows, bins):
+    binned = []
+    for row in rows:
+        item = OrderedDict(row)
+        item['planned_byte_bin'] = byte_bin_label(
+            as_int(row, 'planned_bytes'), bins)
+        binned.append(item)
+    return summarize_group(binned, ['upload_type', 'planned_byte_bin'])
+
+
+def write_notes(path, by_stage_slot, by_stage, by_size_bin, unmatched_count):
     with open(path, 'w') as stream:
         stream.write('# LGCP Lifecycle Diagnostics\n\n')
         stream.write('This diagnostic joins request lifecycle records with ')
@@ -154,6 +181,16 @@ def write_notes(path, by_stage_slot, by_stage, unmatched_count):
                 row['planned_requests'],
                 row['rlc_rx_ratio'],
                 row['cam_received_ratio']))
+        stream.write('\n## Size-Bin Summary\n\n')
+        stream.write('| Upload type | Byte bin | Planned | RLC RX ratio | CAM ratio |\n')
+        stream.write('| --- | ---: | ---: | ---: | ---: |\n')
+        for row in by_size_bin:
+            stream.write('| %s | %s | %s | %s | %s |\n' % (
+                row.get('upload_type', ''),
+                row.get('planned_byte_bin', ''),
+                row['planned_requests'],
+                row['rlc_rx_ratio'],
+                row['cam_received_ratio']))
 
 
 def main():
@@ -163,11 +200,13 @@ def main():
     lifecycle_rows = read_csv(args.request_lifecycle)
     plan_rows = read_csv(args.upload_plan)
     enriched, unmatched = enrich_lifecycle(lifecycle_rows, plan_rows)
+    byte_bins = parse_bins(args.byte_bins)
 
     by_stage = summarize_group(enriched, ['stage'])
     by_stage_slot = summarize_group(enriched, ['stage', 'slot_index'])
     by_type_terminal = terminal_summary(enriched)
     by_target = summarize_group(enriched, ['upload_type', 'target_node'])
+    by_size_bin = summarize_by_byte_bin(enriched, byte_bins)
 
     if enriched:
         write_csv(os.path.join(args.output_dir, 'lifecycle_enriched.csv'),
@@ -184,10 +223,14 @@ def main():
     if by_target:
         write_csv(os.path.join(args.output_dir, 'by_upload_type_target.csv'),
                   list(by_target[0].keys()), by_target)
+    if by_size_bin:
+        write_csv(os.path.join(args.output_dir, 'by_upload_type_size_bin.csv'),
+                  list(by_size_bin[0].keys()), by_size_bin)
     write_notes(
         os.path.join(args.output_dir, 'notes.md'),
         by_stage_slot,
         by_stage,
+        by_size_bin,
         len(unmatched))
 
     print('lifecycle_rows=%s unmatched=%s stages=%s' % (

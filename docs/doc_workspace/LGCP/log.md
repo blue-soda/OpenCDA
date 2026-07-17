@@ -3140,8 +3140,20 @@ terminal states：
 | leader-to-RSU | rlc_rx_only | 32 |
 | leader-to-RSU | rlc_tx_no_rx | 6 |
 
+size-bin diagnostics：
+
+| Upload type | Planned bytes | Planned | RLC RX | PSSCH OK | CAM ratio |
+| --- | --- | ---: | ---: | ---: | ---: |
+| member-to-leader | 0-1000 | 7 | 4 | 4 | 0.000000 |
+| member-to-leader | 1000-2000 | 9 | 2 | 2 | 0.000000 |
+| member-to-leader | 2000-4000 | 21 | 12 | 12 | 0.047619 |
+| member-to-leader | 4000-8000 | 4 | 4 | 4 | 0.000000 |
+| member-to-leader | 8000-16000 | 6 | 6 | 6 | 0.166667 |
+| leader-to-RSU | 2000-4000 | 90 | 82 | 82 | 0.577778 |
+
 结论：
 
 - 延长 drain 不改变 delivery，说明 callback 低不是简单等待时间不足。
 - member-to-leader 瓶颈同时包含 RLC/PSSCH 未到达和 RLC RX 后 application callback 未出现。
-- 下一步应检查 member slot manual resource timing / HARQ，以及非 RSU receiver 的 CAM application completion。
+- member-to-leader 大包不是主要瓶颈；`8000-16000` bytes bin 反而全部达到 RLC/PSSCH。
+- 下一步应检查 member slot timing / target receiver setup，以及非 RSU receiver 的 CAM application completion。

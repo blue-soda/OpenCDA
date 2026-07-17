@@ -597,5 +597,6 @@ docs/doc_workspace/LGCP/experiments/hierarchy_plan/20260718_lgcp_carla_raw_slice
 - 将 `--drain-seconds` 从 `0.3` 增加到 `1.0` 后，3 帧 multi-slot replay 的 `cam_received` 仍为 `54/137`，说明低 callback 不是 drain 不足。
 - lifecycle diagnostics 显示 member-to-leader 为 `47 planned / 40 RLC TX / 28 RLC RX / 28 PSSCH OK / 2 application received`。
 - leader-to-RSU 为 `90 planned / 87 RLC TX / 82 RLC RX / 82 PSSCH OK / 52 application received`。
+- size-bin diagnostics 显示 member-to-leader 的大包不是主要瓶颈：`8000-16000` bytes bin 为 `6/6` RLC RX / PSSCH OK；较弱的是 `1000-4000` bytes bins 和 member slot 1。
 
-因此下一步 live-replay 调试应聚焦 member slots 的 RLC/PSSCH 到达率，以及非 RSU receiver 的 CAM application completion。
+因此下一步 live-replay 调试应聚焦 member slots 的时序 / target receiver setup，以及非 RSU receiver 的 CAM application completion。

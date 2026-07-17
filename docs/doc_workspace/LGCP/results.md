@@ -1699,8 +1699,19 @@ Terminal-state breakdown:
 | leader-to-RSU | rlc_rx_only | 32 |
 | leader-to-RSU | rlc_tx_no_rx | 6 |
 
+Member-to-leader size-bin diagnostics:
+
+| Planned bytes | Planned | RLC RX | PSSCH OK | CAM ratio |
+| --- | ---: | ---: | ---: | ---: |
+| 0-1000 | 7 | 4 | 4 | 0.000000 |
+| 1000-2000 | 9 | 2 | 2 | 0.000000 |
+| 2000-4000 | 21 | 12 | 12 | 0.047619 |
+| 4000-8000 | 4 | 4 | 4 | 0.000000 |
+| 8000-16000 | 6 | 6 | 6 | 0.166667 |
+
 Interpretation:
 
 - The scheduler path itself is working: no PSSCH failures are observed in either stage.
 - The member-to-leader bottleneck is split between RLC/PSSCH non-arrival and application-level non-callback after RLC RX.
-- Next debugging should inspect manual resource timing / HARQ for member slots and CAM application completion for non-RSU receivers.
+- The bottleneck is not simply caused by large raw slices: the largest member-to-leader bin (`8000-16000` bytes) reaches RLC/PSSCH for all 6 requests, while the `1000-4000` byte bins are weaker.
+- Next debugging should inspect member slot timing / target receiver setup and CAM application completion for non-RSU receivers.
