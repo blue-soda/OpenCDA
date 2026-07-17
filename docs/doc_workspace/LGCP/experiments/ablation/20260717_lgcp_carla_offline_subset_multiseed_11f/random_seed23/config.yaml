@@ -1,0 +1,26 @@
+dataset_root: D:\Data\Carla
+scenario_id: '2026_07_15_02_33_21'
+area_records: C:\Workspace\OpenCDA\docs\doc_workspace\LGCP\experiments\area_confidence\20260715_lgcp_carla_area_ap_11f_detector_score\area_records.csv
+area_quality: C:\Workspace\OpenCDA\docs\doc_workspace\LGCP\experiments\area_confidence\20260715_lgcp_carla_area_ap_11f_detector_score\area_quality.csv
+confidence_field: density_distance
+budgets:
+- 5
+- 10
+methods:
+- random
+random_seed: 23
+feature_packet_bytes: 10000
+frames:
+- '000060'
+- '000062'
+- '000064'
+- '000066'
+- 000068
+- '000070'
+- '000072'
+- '000074'
+- '000076'
+- 000078
+- 000080
+fusion_method: early
+note: Perception-only subset ablation; no real feature-slice local fusion or RSU aggregation.

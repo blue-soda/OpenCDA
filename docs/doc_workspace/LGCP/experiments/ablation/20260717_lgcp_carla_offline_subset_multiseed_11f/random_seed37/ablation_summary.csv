@@ -1,0 +1,3 @@
+method,budget,frames,selected_mean,non_ego_selected_mean,non_ego_packet_total,byte_proxy_total,ap_03,ap_05,ap_07,gt_total,pred_samples
+random,5,11,5.000000,4.000000,44,440000,0.309317,0.294912,0.161562,555,272
+random,10,11,10.000000,9.000000,99,990000,0.614157,0.593413,0.342475,718,486

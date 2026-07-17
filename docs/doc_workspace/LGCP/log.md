@@ -2379,3 +2379,56 @@ conda run -n opencda python -m opencda.tools.lgcp_greedy_gap_eval --input-dir do
 - 当前 11 帧 smoke 中，O3 mean relative gap 为 `2.19%`，max 为 `6.90%`。
 - O1 / O2 和 leader load gap 在同一配置下仍为 `0.0`。
 - `target.md` 对应项仍保持未完成，因为还需要多 seed / 多场景扩展。
+
+## 2026-07-17 - Offline subset ablation random multiseed
+
+### 目标
+
+- 推进 `target.md` 中“扩大 offline subset ablation 到多 seed”。
+- 避免重复运行 deterministic 方法，只补跑受 seed 影响的 `random` selective-sharing baseline。
+
+### 代码
+
+`opencda/tools/lgcp_subset_ablation_eval.py` 新增：
+
+```text
+--methods
+```
+
+可只运行 `random`，用于快速补多 seed。
+
+### 运行命令模板
+
+```powershell
+conda run -n opencda python -m opencda.tools.lgcp_subset_ablation_eval --dataset-root D:\Data\Carla --scenario-id 2026_07_15_02_33_21 --area-records docs\doc_workspace\LGCP\experiments\area_confidence\20260715_lgcp_carla_area_ap_11f_detector_score\area_records.csv --area-quality docs\doc_workspace\LGCP\experiments\area_confidence\20260715_lgcp_carla_area_ap_11f_detector_score\area_quality.csv --output-dir docs\doc_workspace\LGCP\experiments\ablation\20260717_lgcp_carla_offline_subset_multiseed_11f\random_seed11 --ego-cav-id 1 --fusion-method early --max-frames 11 --start-index 0 --budgets "5,10" --methods random --confidence-field density_distance --random-seed 11
+```
+
+实际补跑 seeds：`11`、`23`、`37`，并与原 seed `7` 汇总。
+
+### 输出
+
+```text
+docs/doc_workspace/LGCP/experiments/ablation/20260717_lgcp_carla_offline_subset_multiseed_11f/
+  config.yaml
+  notes.md
+  method_summary.csv
+  random_seed_summary.csv
+  random_seed11/
+  random_seed23/
+  random_seed37/
+```
+
+### 结果
+
+| Method | Budget | Seeds | AP@0.7 mean | AP@0.7 std |
+| --- | ---: | --- | ---: | ---: |
+| random | 5 | 7,11,23,37 | 0.163843 | 0.026394 |
+| random | 10 | 7,11,23,37 | 0.328993 | 0.038178 |
+| comm_aware_topk | 5 | deterministic | 0.296352 | 0.000000 |
+| comm_aware_topk | 10 | deterministic | 0.545736 | 0.000000 |
+
+### 结论
+
+- Random baseline 的多 seed 波动已量化，明显低于 strong selective baselines。
+- `comm_aware_topk` 仍略强于当前 `area_aware_union`，所以 LGCP 的论文主张应继续依赖完整 hierarchy / scheduling，而不是只依赖 offline subset AP。
+- `target.md` 中 offline subset ablation 多 seed 项已标记完成。

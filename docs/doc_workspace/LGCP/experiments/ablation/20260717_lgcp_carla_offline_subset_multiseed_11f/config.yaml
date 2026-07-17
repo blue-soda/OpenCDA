@@ -1,0 +1,8 @@
+﻿dataset_root: D:\Data\Carla
+scenario_id: 2026_07_15_02_33_21
+frames: 11
+budgets: [5, 10]
+fusion_method: early
+confidence_field: density_distance
+random_seeds: [7, 11, 23, 37]
+note: Random-only extra seeds reuse deterministic rows from 20260715_lgcp_carla_comm_aware_baseline_11f.

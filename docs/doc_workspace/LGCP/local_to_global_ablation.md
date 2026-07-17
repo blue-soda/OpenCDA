@@ -97,6 +97,20 @@
 
 该阶段无法完整证明 local fusion / RSU aggregation，但能先回答：area-aware group selection 是否比 non-hierarchical selective sharing 更会选 agent。
 
+### Current Multiseed Offline Status
+
+2026-07-17 已完成 random-only multiseed 扩展：
+
+```text
+docs/doc_workspace/LGCP/experiments/ablation/20260717_lgcp_carla_offline_subset_multiseed_11f
+```
+
+该结果主要用于稳定 random partial-sharing baseline。Deterministic 的 confidence / communication-aware / area-aware 方法仍复用同一 11 帧结果。当前观察：
+
+- random AP@0.7 mean/std：budget=5 为 `0.163843 ± 0.026394`，budget=10 为 `0.328993 ± 0.038178`。
+- `comm_aware_topk` 仍高于 `area_aware_union`。
+- 因此 offline 第一阶段已经证明 random baseline 不够强，但尚未证明 LGCP hierarchy 本身优于 strong communication-aware selective sharing。
+
 ## Online / Mechanism 第二阶段实现方案
 
 第二阶段需要真正实现 LGCP pipeline：

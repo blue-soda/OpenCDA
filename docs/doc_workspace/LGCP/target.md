@@ -66,7 +66,7 @@
 - [x] 实现 LGCP 离线 RSU area assignment / leader upload plan 导出。
 - [x] 将 LGCP upload plan 接入 offline NS3 replay dry-run。
 - [x] 运行 LGCP upload plan offline NS3 联机 smoke test。
-- [ ] 扩大 offline subset ablation 到多 seed。
+- [x] 扩大 offline subset ablation 到多 seed。（已完成 random-only seeds 7/11/23/37 汇总；deterministic strong baselines 复用 11 帧结果）
 - [x] 扩大 LGCP upload plan offline NS3 replay 到 11 帧，并解析 request-level bridge-observed delivery ratio / delay summary。
 - [x] 接入 ns-3 PHY decode trace，补充 decode-failure breakdown。
 - [x] 接入 ns-3 application request-id trace，将 `cam_received` 精确映射回 LGCP upload request。

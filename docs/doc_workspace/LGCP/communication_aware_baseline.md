@@ -44,11 +44,23 @@ utility(v) = confidence(v) / (1 + distance(v, ego) / 100)
 - 当前 offline proxy 不能证明 LGCP area-aware selection 已优于所有强 selective-sharing baseline。
 - LGCP 的核心主张应继续通过完整 hierarchy、leader local fusion、RSU aggregation 和 scheduling latency 来支撑，而不是只依赖当前 area-aware union subset AP。
 
+## Multiseed Random Baseline
+
+2026-07-17 已补跑 random-only seeds `11 / 23 / 37`，并与原 seed `7` 汇总：
+
+| Method | Budget | AP@0.7 mean | AP@0.7 std |
+| --- | ---: | ---: | ---: |
+| random | 5 | 0.163843 | 0.026394 |
+| random | 10 | 0.328993 | 0.038178 |
+| comm_aware_topk | 5 | 0.296352 | 0.000000 |
+| comm_aware_topk | 10 | 0.545736 | 0.000000 |
+
+结论保持不变：随机 partial sharing 不是足够强的 baseline；communication-aware top-k 是当前必须保留的强 baseline。
+
 ## 下一步
 
-1. 将 communication-aware top-k 接入多 seed offline ablation。
-2. 用 NS3 或离线链路模型替换距离 proxy。
-3. 在完整 LGCP 管线完成后，对比：
+1. 用 NS3 或离线链路模型替换距离 proxy。
+2. 在完整 LGCP 管线完成后，对比：
    - communication-aware top-k without hierarchy；
    - LGCP without scheduling；
    - full LGCP。

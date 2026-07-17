@@ -57,6 +57,7 @@
 - 已新增 `opencda/tools/lgcp_stale_assignment_eval.py` 和 `stale_assignment_sensitivity.md`，完成 `0/1/2/3` 帧 stale assignment smoke；lag 1/2 帧 ranking 仍较稳定，lag 3 帧 Spearman 降到 `0.447925`。
 - 已新增 `opencda/tools/lgcp_subchannel_sensitivity_eval.py` 和 `subchannel_sensitivity.md`，完成 `Z=5/10/15/20` 的 11 帧 scheduling-capacity proxy；mean slots/frame 从 `12.73` 降到 `3.73`。
 - 已新增 `opencda/tools/lgcp_compute_capacity_eval.py` 和 `compute_capacity_sensitivity.md`，完成 CAV leader local-fusion / RSU aggregation compute capacity proxy；代表性均衡容量下 compute mean 从 `8.41ms` 降到 `1.05ms`。
+- 已完成 offline subset ablation random-only multiseed 扩展，汇总 seeds `7/11/23/37`；random AP@0.7 均值低于 confidence / area-aware / communication-aware selective baselines，但 `comm_aware_topk` 仍略高于当前 `area_aware_union`。
 - 已新增 LGCP 专用仿真入口 `opencda/scenario_testing/lgcp_carla.py` 和配置 `opencda/scenario_testing/config_yaml/lgcp_carla.yaml`。
 - 未修改 `v2xp_cluster_carla` 原始配置。
 - 已补齐 RSU 首次启用所需的基础运行路径：固定基础设施感知初始化、RSU 注册/访问、最近感知结果保存、销毁路径。
@@ -64,8 +65,8 @@
 ## 近期建议焦点
 
 1. 扩大 area confidence validation 到多 seed / 多场景，形成可进入论文的稳定相关性结果；OpenCOOD 评估入口和日志格式已确认。
-2. 扩大 offline subset ablation 到多 seed，确认 `comm_aware_topk` 与 area-aware union 的相对关系是否稳定。
-3. 推进完整 LGCP hierarchy 机制；当前 offline proxy 显示强 communication-aware baseline 已非常有竞争力，LGCP 后续主张需要靠 local fusion / RSU aggregation / scheduling 共同支撑。
+2. 推进完整 LGCP hierarchy 机制；当前 offline proxy 显示强 communication-aware baseline 已非常有竞争力，LGCP 后续主张需要靠 local fusion / RSU aggregation / scheduling 共同支撑。
+3. 若继续扩展 ablation，应优先做完整 hierarchy / scheduling，而不是只增加 random seed。
 4. 大规模 30 CAV 结果若短期只跑 latency，应在论文中收窄为 communication/computation scalability；若报告 perception scalability，只能报告已校准的 proxy，不能写成真实 AP。
 5. 下一步将 request-level PHY/RLC/HARQ trace 和 control-plane overhead 扩展到多 seed，或开始推进完整 LGCP local fusion / RSU aggregation。
 6. 以 `revision_matrix.md` 作为论文修改和实验补强的主索引；下一轮若进入论文源文件修改，应优先重导出 Fig. 7 x-axis 并加入低密度 latency 解释段。

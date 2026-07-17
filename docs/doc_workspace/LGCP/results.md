@@ -1157,3 +1157,30 @@ Additional observations:
 - Greedy leader min-max load gap remains `0.0`.
 - O3 shows a small non-zero gap: the exhaustive optimum sometimes selects slightly more packets (`3.45` vs `3.00` mean) to improve confidence enough to offset the latency proxy.
 - This supports an empirical small-gap claim for the smoke setup, but the paper should still avoid theoretical approximation wording.
+
+## 2026-07-17：Offline Subset Ablation Multiseed Random Baseline
+
+在 `20260715_lgcp_carla_comm_aware_baseline_11f` 的 11 帧结果基础上，补跑 random-only seeds `11 / 23 / 37`，并与原 seed `7` 汇总。Deterministic 方法复用原 11 帧结果。
+
+Run:
+
+```text
+docs/doc_workspace/LGCP/experiments/ablation/20260717_lgcp_carla_offline_subset_multiseed_11f
+```
+
+| Method | Budget | Seeds | AP@0.3 mean | AP@0.5 mean | AP@0.7 mean | AP@0.7 std | Non-ego packets |
+| --- | ---: | --- | ---: | ---: | ---: | ---: | ---: |
+| random | 5 | 7,11,23,37 | 0.321267 | 0.302982 | 0.163843 | 0.026394 | 44 |
+| confidence_topk | 5 | deterministic | 0.358450 | 0.345556 | 0.221396 | 0.000000 | 44 |
+| area_aware_union | 5 | deterministic | 0.405018 | 0.396807 | 0.251957 | 0.000000 | 44 |
+| comm_aware_topk | 5 | deterministic | 0.452105 | 0.443572 | 0.296352 | 0.000000 | 44 |
+| random | 10 | 7,11,23,37 | 0.587821 | 0.571077 | 0.328993 | 0.038178 | 99 |
+| confidence_topk | 10 | deterministic | 0.629379 | 0.624088 | 0.436000 | 0.000000 | 99 |
+| area_aware_union | 10 | deterministic | 0.678388 | 0.676678 | 0.538273 | 0.000000 | 99 |
+| comm_aware_topk | 10 | deterministic | 0.688703 | 0.686146 | 0.545736 | 0.000000 | 99 |
+
+Interpretation:
+
+- 多 seed random baseline 明显低于 confidence / area-aware / communication-aware selective baselines。
+- `comm_aware_topk` 仍略高于当前 `area_aware_union`，说明 LGCP 论文不能只靠 offline area-aware subset AP 证明优于强 selective baseline。
+- 更稳妥的 claim 是：当前 offline subset ablation 证明 strong selective baselines 必须纳入；完整 LGCP 增益需要由 hierarchy、leader local fusion、RSU aggregation 和 scheduling latency 共同支撑。

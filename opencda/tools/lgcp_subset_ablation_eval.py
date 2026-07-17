@@ -38,6 +38,8 @@ def parse_args():
     parser.add_argument('--start-index', type=int, default=0)
     parser.add_argument('--budgets', default='5,10',
                         help='Comma-separated source-agent budgets.')
+    parser.add_argument('--methods', default='full,random,confidence_topk,comm_aware_topk,area_aware_union',
+                        help='Comma-separated methods to run.')
     parser.add_argument('--confidence-field', default='density_distance')
     parser.add_argument('--random-seed', type=int, default=7)
     parser.add_argument('--feature-packet-bytes', type=int, default=10000,
@@ -249,13 +251,18 @@ def main():
     manager = OpenCOODManager(coperception_params)
     rng = np.random.RandomState(args.random_seed)
 
-    methods = [
+    valid_methods = {
         'full',
         'random',
         'confidence_topk',
         'comm_aware_topk',
         'area_aware_union',
-    ]
+    }
+    methods = [method.strip() for method in args.methods.split(',')
+               if method.strip()]
+    unknown = sorted(set(methods) - valid_methods)
+    if unknown:
+        raise ValueError('Unknown methods: %s' % ', '.join(unknown))
     method_stats = {}
     frame_rows = []
     for budget in budgets:
@@ -383,6 +390,8 @@ def main():
         else os.path.abspath(args.area_quality),
         'confidence_field': args.confidence_field,
         'budgets': budgets,
+        'methods': methods,
+        'random_seed': args.random_seed,
         'feature_packet_bytes': args.feature_packet_bytes,
         'frames': selected_timestamps,
         'fusion_method': coperception_params['fusion_method'],
