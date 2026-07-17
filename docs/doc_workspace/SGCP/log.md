@@ -4588,3 +4588,76 @@ conda run -n opencda python -m opencda.tools.ns3_log_eval --ns3-stdout docs\doc_
 ### 结论
 
 forced-budget random baseline 在同一 20 MHz / 10ch scheduled-only replay 口径下也能 110/110 完成交付。因此 PAPG 相对 forced random 的 AP 增益不来自 NS3 链路失败差异，而来自 perception-aware scheduling 本身。
+
+## 2026-07-17 FullPerception baseline code audit and implementation
+
+### 目的
+
+按审稿意见重新核查 FullPerception baseline。用户提醒当前可能是假设虚拟 RSU 的 FullPerception-RSU，因此本轮不再把 full 20-CAV early fusion 和 FullPerception 混写，而是进入实际代码确认是否存在算法分支，并实现显式的 FullPerception-RSU / FullPerception-Decentralized。
+
+### 代码审计
+
+仓库中此前没有显式命名的 `FullPerception` 算法模块或 scheduler 分支。历史结果中的 FullPerception 口径主要来自 full 20-CAV early fusion / full-sharing upper reference，而不是一个可切换 baseline。已在 `opencda.tools.offline_inference` 中新增：
+
+```text
+--selective-sharing-baseline fullperception_rsu
+--selective-sharing-baseline fullperception_decentralized
+--selective-sharing-baseline edgecooper
+```
+
+`fullperception_rsu` 使用全局 CAV 候选池，表示 virtual RSU/global scheduler proxy；`fullperception_decentralized` 只使用当前 cluster 内 CAV 候选，表示 V2V-only decentralized proxy；`edgecooper` first proxy 使用 complementarity minus redundancy 的 edge-assisted 选择，但尚未达到可写主表的效果。
+
+### FullPerception-RSU proxy
+
+```powershell
+conda run -n opencda python -m opencda.tools.offline_inference --dataset-root D:\Data\Carla --scenario-id 2026_07_15_01_26_56 --ego-cav-id 1 --max-frames 0 --selective-sharing-baseline fullperception_rsu --selective-member-budget 3 --selective-grid-budget 117 --sgcp-inter-cluster-late-fusion --rho-th 3 --num-channels 10 --bandwidth-mhz 20 --sgcp-trace-output docs\doc_workspace\SGCP\artifacts\fullperception_baselines_20260717\fullperception_rsu_trace.csv
+```
+
+结果：
+
+| Metric | Value |
+| --- | ---: |
+| AP@0.3 / AP@0.5 / AP@0.7 | 0.84 / 0.80 / 0.46 |
+| Total payload | 56,224,736 bytes |
+| Mbps | 109.71 |
+| Avg. source CAVs | 4.00 |
+| Avg. selected grids | 117.00 |
+
+### FullPerception-Decentralized proxy
+
+```powershell
+conda run -n opencda python -m opencda.tools.offline_inference --dataset-root D:\Data\Carla --scenario-id 2026_07_15_01_26_56 --ego-cav-id 1 --max-frames 0 --selective-sharing-baseline fullperception_decentralized --selective-member-budget 3 --selective-grid-budget 117 --sgcp-inter-cluster-late-fusion --rho-th 3 --num-channels 10 --bandwidth-mhz 20 --sgcp-trace-output docs\doc_workspace\SGCP\artifacts\fullperception_baselines_20260717\fullperception_decentralized_trace.csv
+```
+
+结果：
+
+| Metric | Value |
+| --- | ---: |
+| AP@0.3 / AP@0.5 / AP@0.7 | 0.80 / 0.76 / 0.41 |
+| Total payload | 38,920,592 bytes |
+| Mbps | 75.94 |
+| Avg. source CAVs | 3.33 |
+| Avg. selected grids | 103.20 |
+
+### NS3 dry-run
+
+```powershell
+conda run -n opencda python -m opencda.tools.offline_ns3_replay --dataset-root D:\Data\Carla --scenario-id 2026_07_15_01_26_56 --ego-cav-id 1 --max-frames 3 --selective-sharing-baseline fullperception_decentralized --selective-member-budget 3 --selective-grid-budget 117 --rho-th 3 --num-channels 10 --bandwidth-mhz 20 --dry-run
+conda run -n opencda python -m opencda.tools.offline_ns3_replay --dataset-root D:\Data\Carla --scenario-id 2026_07_15_01_26_56 --ego-cav-id 1 --max-frames 3 --selective-sharing-baseline fullperception_rsu --selective-member-budget 3 --selective-grid-budget 117 --rho-th 3 --num-channels 10 --bandwidth-mhz 20 --dry-run
+```
+
+结果：`fullperception_decentralized` 每帧 10 scheduled requests、4 skipped unscheduled demands；`fullperception_rsu` 每帧 10 scheduled requests、8 skipped unscheduled demands。说明两个显式 baseline 都可以进入 scheduled-only NS3 replay 口径，下一步应优先对 `fullperception_decentralized` 做 11-frame true NS3 replay。
+
+### Baseline search
+
+已查找并整理 EdgeCooper、Where2comm、PACP、What2comm、CoBEVT、V2VNet、RACooper 等候选，新增 `baseline_reproduction_plan.md`。EdgeCooper 本地 PDF 指向 edge server 聚合、complementarity/redundancy-aware raw LiDAR sharing、minimum-cost flow 与二维图着色冲突处理；当前 first proxy 3-frame smoke test 仅 `0.54/0.46/0.15`，说明 naive complementarity 会偏向少数高密度车辆，需改成 blind-spot-aware edge scheduling。
+
+### 结论
+
+FullPerception 口径已拆开：
+
+- full 20-CAV early fusion：AP upper reference，`0.85/0.83/0.48`，118.71 Mbps。
+- FullPerception-RSU proxy：RSU/edge-assisted reference，`0.84/0.80/0.46`，109.71 Mbps。
+- FullPerception-Decentralized proxy：V2V-only strong baseline，`0.80/0.76/0.41`，75.94 Mbps。
+
+PAPG 当前仍是主方法：`0.81/0.78/0.39`，62.54 Mbps。相对 FullPerception-Decentralized，它以更低 payload 获得更高 AP@0.3/AP@0.5，但 AP@0.7 仍略低；后续应继续优化 PAPG 的高 IoU 定位，同时补 EdgeCooper/Where2comm/PACP proxy。

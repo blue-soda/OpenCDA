@@ -26,7 +26,9 @@
 | 虚拟 RSU 聚合全 CAV 数据 | 否 | 当前 20-CAV full early/late fusion 更接近这个口径；应标注为 centralized oracle/reference。 |
 | 只在表中说明不复现 | 是，作为说明 | 若主贡献是 RSU-free decentralized CP，可以不把 RSU baseline 放入主结果表。 |
 
-当前 `D:\Data\Carla\2026_07_15_01_26_56` dump 不包含 RSU 目录，因此不应把 FullPerception-RSU 填成真实主实验结果。已完成的 full 20-CAV early fusion `0.85/0.83/0.48` 和 full 20-CAV late checkpoint `0.91/0.85/0.51` 只能写成 full-sharing reference。若把 full 20-CAV early fusion 解释为 virtual centralized FullPerception，其 41 帧 non-ego CAV 点云上传 payload 为 60,838,528 bytes。
+当前 `D:\Data\Carla\2026_07_15_01_26_56` dump 不包含 RSU 目录，因此不能声称复现了真实 RSU sensor 版 FullPerception。已完成的 full 20-CAV early fusion `0.85/0.83/0.48` 和 full 20-CAV late checkpoint `0.91/0.85/0.51` 只能写成 full-sharing reference。若把 full 20-CAV early fusion 解释为 centralized upper reference，其 41 帧 non-ego CAV 点云上传 payload 为 60,838,528 bytes。
+
+新增实现：`opencda.tools.offline_inference --selective-sharing-baseline fullperception_rsu`。该分支使用虚拟 RSU/global candidate pool：每个 cluster head 可以从全局 CAV 中选择 sender，但仍受 3 members/head、117 grid budget 和 20MHz/10ch request plan 约束。41 帧结果为 `0.84/0.80/0.46`，payload 56,224,736 bytes / 109.71 Mbps。该行应写为 RSU/edge-assisted proxy，不作为 V2V-only 公平主对比。
 
 ## FullPerception-Decentralized 实现口径
 
@@ -36,9 +38,9 @@
 
 - 数据：`D:\Data\Carla\2026_07_15_01_26_56`，41 帧，20 CAV。
 - 感知：复用 OpenCOOD checkpoint 和 SGCP inter-cluster late-fusion evaluation path。
-- 结构：复用 SGCP coalition/cluster head 结构，但不使用 PPS。
+- 结构：复用 SGCP coalition/cluster head 结构，不使用 RSU/全局 oracle。
 - 通信：主公平随机 baseline 强制每个 cluster head 最多选 3 个非 head 成员，grid budget 为 117，使 payload 与 PAPG 主方法接近；强 selective baseline 同样使用 3 members/head + 117 grid budget。
-- 策略：`random`、`nearest`、`density`、`communication_aware`。
+- 策略：`random`、`nearest`、`density`、`communication_aware`、`fullperception_decentralized`。
 - NS3 扩展：`communication_aware` 可读取 `rlc_by_request.csv`，用 request-level `rlc_complete` 作为链路质量权重。
 
 主表可采用如下解释：
@@ -51,6 +53,7 @@
 | Selective communication-aware | 0.78 / 0.75 / 0.40 | 30,222,256 bytes | 当前最强 V2V baseline，高 payload |
 | Selective forced random | 0.77 / 0.73 / 0.38 | 31,613,424 bytes | 3 members/head, 117 grid budget, payload 接近 PAPG |
 | Selective density high-budget | 0.80 / 0.76 / 0.40 | 37,710,864 bytes | 3 members/head, 117 grid budget |
+| FullPerception-Decentralized proxy | 0.80 / 0.76 / 0.41 | 38,920,592 bytes | cluster-local V2V candidates, 3 members/head, 117 grid budget |
 | SGCP coverage-aware 10ch | 0.79 / 0.76 / 0.38 | 29,405,296 bytes | PAPG 前身/消融，NS3 110/110 complete |
 | SGCP PAPG 10ch | 0.81 / 0.78 / 0.39 | 32,049,872 bytes | 当前主方法，NS3 110/110 complete |
 | SGCP coverage-aware 20ch | 0.80 / 0.76 / 0.41 | 37,912,544 bytes | 资源敏感性/高预算附表 |
@@ -91,3 +94,4 @@ Full 20-CAV early fusion assumes all vehicles can upload complete point clouds t
 - 主表使用 SGCP PAPG、forced-budget random、density/communication-aware selective sharing 和 centralized FullPerception upper reference；旧 random/MWS scheduler 只进入 w/o-PPS 消融或诊断表。
 - PAPG 已完成 11 帧真实 NS3 replay：110/110 scheduled request application/RLC complete，RLC drops=0，PHY decode failures=0。
 - 若后续重新打开 CARLA，可导出带 RSU sensor 的真实 FullPerception-RSU 数据，但它仍应标注为 infrastructure-assisted upper reference。
+- 当前显式 baseline 代码已接入 `offline_ns3_replay --selective-sharing-baseline` dry-run。下一步优先对 `fullperception_decentralized` 做 11-frame true NS3 replay，使其链路证据与 PAPG/forced random 对称。

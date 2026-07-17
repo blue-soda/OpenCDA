@@ -125,8 +125,11 @@ def parse_args():
                              'unchanged while probing payload/AP tradeoff.')
     parser.add_argument('--selective-sharing-baseline', default=None,
                         choices=['random', 'nearest', 'density',
-                                 'greedy_density', 'communication_aware'],
-                        help='Run a CAV-only selective-sharing baseline instead of SGCP PPS.')
+                                 'greedy_density', 'communication_aware',
+                                 'fullperception_rsu',
+                                 'fullperception_decentralized',
+                                 'edgecooper'],
+                        help='Run a selective-sharing or RSU/edge-assisted baseline instead of SGCP PPS.')
     parser.add_argument('--selective-member-budget', type=int, default=2,
                         help='Maximum uploaded non-head members per receiver for selective baseline.')
     parser.add_argument('--selective-grid-budget', type=int, default=87,
@@ -805,14 +808,69 @@ def ns3_link_quality(link_quality, timestamp, source_id, target_id):
     return link_quality['pair'].get((int(source_id), int(target_id)))
 
 
+def candidate_member_ids(world, cluster, baseline_name):
+    head_id = int(cluster.head_id)
+    if baseline_name in ['fullperception_rsu', 'edgecooper']:
+        return [
+            int(member_id)
+            for member_id in sorted(world.get_vehicle_managers().keys())
+            if int(member_id) != head_id
+        ]
+    return [
+        int(member_id) for member_id in sorted(cluster.members)
+        if int(member_id) != head_id
+    ]
+
+
+def density_score_for_member(head_vm, sender_vm):
+    candidate_grids = candidate_grids_for_sender(head_vm, sender_vm)
+    return sum(
+        sender_vm.perception_manager.lidar.get_grid_density(grid_id)
+        for grid_id in candidate_grids)
+
+
+def select_edgecooper_members(world, head_vm, members, member_budget):
+    selected = []
+    covered = set()
+    remaining = set(members)
+    while remaining and len(selected) < member_budget:
+        best = None
+        for member_id in sorted(remaining):
+            sender_vm = world.get_vehicle_manager(member_id)
+            candidate_grids = set(candidate_grids_for_sender(head_vm, sender_vm))
+            if not candidate_grids:
+                continue
+            new_grids = candidate_grids - covered
+            redundant_grids = candidate_grids & covered
+            lidar = sender_vm.perception_manager.lidar
+            complementarity = sum(
+                lidar.get_grid_density(grid_id)
+                for grid_id in new_grids)
+            redundancy = sum(
+                lidar.get_grid_density(grid_id)
+                for grid_id in redundant_grids)
+            distance = vehicle_distance(head_vm, sender_vm)
+            score = (
+                complementarity -
+                0.35 * redundancy -
+                0.01 * distance)
+            item = (-score, distance, member_id, candidate_grids)
+            if best is None or item < best:
+                best = item
+        if best is None:
+            break
+        _, _, member_id, candidate_grids = best
+        selected.append(member_id)
+        covered.update(candidate_grids)
+        remaining.remove(member_id)
+    return selected
+
+
 def select_baseline_members(world, cluster, baseline_name, member_budget,
                             link_quality=None, timestamp=None):
     head_id = int(cluster.head_id)
     head_vm = world.get_vehicle_manager(head_id)
-    members = [
-        int(member_id) for member_id in sorted(cluster.members)
-        if int(member_id) != head_id
-    ]
+    members = candidate_member_ids(world, cluster, baseline_name)
     if member_budget <= 0 or not members:
         return []
 
@@ -830,15 +888,22 @@ def select_baseline_members(world, cluster, baseline_name, member_budget,
         ]
         return [member_id for _, member_id in sorted(scored)[:member_budget]]
 
-    if baseline_name in ['density', 'greedy_density', 'communication_aware']:
+    if baseline_name == 'edgecooper':
+        return select_edgecooper_members(
+            world,
+            head_vm,
+            members,
+            member_budget)
+
+    if baseline_name in ['density', 'greedy_density', 'communication_aware',
+                         'fullperception_rsu',
+                         'fullperception_decentralized']:
         scored = []
         for member_id in members:
             sender_vm = world.get_vehicle_manager(member_id)
-            candidate_grids = candidate_grids_for_sender(head_vm, sender_vm)
-            density_sum = sum(
-                sender_vm.perception_manager.lidar.get_grid_density(grid_id)
-                for grid_id in candidate_grids)
-            if baseline_name == 'communication_aware':
+            density_sum = density_score_for_member(head_vm, sender_vm)
+            if baseline_name in ['communication_aware',
+                                 'fullperception_decentralized']:
                 distance = vehicle_distance(head_vm, sender_vm)
                 quality = ns3_link_quality(
                     link_quality,
@@ -850,6 +915,9 @@ def select_baseline_members(world, cluster, baseline_name, member_budget,
                 else:
                     density_sum = (
                         density_sum * quality / (1.0 + distance / 100.0))
+            elif baseline_name == 'fullperception_rsu':
+                distance = vehicle_distance(head_vm, sender_vm)
+                density_sum = density_sum / (1.0 + distance / 200.0)
             scored.append((-density_sum, member_id))
         return [member_id for _, member_id in sorted(scored)[:member_budget]]
 

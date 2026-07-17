@@ -25,8 +25,10 @@ SGCP 工作与仓库中以下部分关系最紧密：
 - 当前可复现主结果：PAPG 41 帧 AP@0.3/0.5/0.7 = `0.81/0.78/0.39`，payload `32,049,872 bytes` / `62.54 Mbps`，410 scheduled links。
 - 公平随机 baseline 已改为 forced-budget random：`0.77/0.73/0.38`，`31,613,424 bytes` / `61.68 Mbps`。旧 RandomRA/MWS payload 过低，只保留为 w/o-PPS 诊断。
 - FullPerception/full 20-CAV early fusion 作为 centralized upper reference：`0.85/0.83/0.48`，`118.71 Mbps`，不作为同通信预算公平主对比。
+- 已核查代码：仓库此前没有显式命名的 FullPerception 算法分支；现已新增 `fullperception_rsu` 和 `fullperception_decentralized` selective baseline。FullPerception-RSU proxy 41 帧为 `0.84/0.80/0.46`、`109.71 Mbps`，FullPerception-Decentralized proxy 为 `0.80/0.76/0.41`、`75.94 Mbps`。
+- EdgeCooper 已建立 first proxy 和复现计划，但 3-frame smoke test 暂时较差，下一步需要改为 blind-spot-aware edge scheduling 后再进入主表候选。
 - PAPG 真实 NS3 replay 已完成 11 帧：110/110 scheduled requests application callback 和 RLC request complete，RLC drops=0，PHY decode failures=0。
-- `main.tex`、`main_table_candidate.md`、`results.md`、`baseline_fairness.md`、`fullperception_baseline_revision.md`、`rebuttal_draft.md` 和 `rebuttal_short.md` 当前应以 PAPG 主线为准；早期 coverage-aware 10ch/20ch 只作为消融或资源敏感性结果。
+- `main.tex`、`main_table_candidate.md`、`results.md`、`baseline_fairness.md`、`fullperception_baseline_revision.md`、`baseline_reproduction_plan.md`、`rebuttal_draft.md` 和 `rebuttal_short.md` 当前应以 PAPG 主线和显式 baseline 分层为准；早期 coverage-aware 10ch/20ch 只作为消融或资源敏感性结果。
 
 ## 论文当前主要问题
 

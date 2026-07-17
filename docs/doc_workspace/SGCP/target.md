@@ -84,9 +84,12 @@
 
 ## P2：补充公平 baseline
 
-- [x] 明确 FullPerception-RSU 设置，作为集中式参考或 upper reference。已新增 `baseline_fairness.md`，不将其作为同通信预算公平主对比。
-- [x] 实现或整理 FullPerception-Decentralized 设置，只使用与 SGCP 相同的 V2V 信息。已完成 same-budget CAV-only selective-sharing first version。
-- [x] 搜索并选择至少一个 V2V-only/decentralized collaborative perception baseline。已实现 `nearest` / `density` selective-sharing baseline。
+- [x] 核查并实现显式命名的 FullPerception-RSU baseline：不要再把 full 20-CAV early fusion 混写为 FullPerception；若采用虚拟 RSU，需在代码、文档和表格中明确其拥有 global/oracle scheduling information，并报告其与 full 20-CAV AP upper bound 的区别。已确认仓库此前没有显式 FullPerception 算法分支；现新增 `fullperception_rsu` proxy，41 帧结果为 `0.84/0.80/0.46`、56,224,736 bytes / 109.71 Mbps，和 full 20-CAV upper reference `0.85/0.83/0.48`、118.71 Mbps 分开记录。
+- [x] 仿照 FullPerception-RSU 实现 FullPerception-Decentralized：只使用 CAV-side V2V 信息，不使用 RSU/全局 oracle；统一 backbone、数据帧、通信预算、late-fusion 口径和 NS3 request-level delivery。已新增 `fullperception_decentralized`，使用 cluster-local V2V candidates；41 帧结果为 `0.80/0.76/0.41`、38,920,592 bytes / 75.94 Mbps；3 帧 NS3 dry-run 已确认进入 scheduled-only request plan。
+- [ ] 复现 EdgeCooper baseline：参考本地论文 `C:\Users\sakakibara\OneDrive\Papers\Cooperative Perception\EdgeCooper_Network-Aware_Cooperative_LiDAR_Perception_for_Enhanced_Vehicular_Awareness.pdf`，实现 edge/virtual-RSU assisted complementarity-enhanced、redundancy-minimized raw LiDAR scheduling proxy；优先使用同一 20MHz/10ch scheduled-only NS3 口径验证。已实现 first proxy，但 3-frame smoke test 较差，需改为 blind-spot-aware edge scheduling 后再进入主表。
+- [x] 搜索并选择若干最新且适合作为审稿回复的 decentralized / V2V-only collaborative perception baselines，优先考虑 Where2comm/PACP/What2comm/CoBEVT/V2VNet 中可用当前 dump 和 OpenCOOD backbone 复现或近似实现的机制；每个 baseline 必须说明是否为真实复现、proxy 复现或不适合当前数据/模型。已新增 `baseline_reproduction_plan.md`，当前优先候选为 Where2comm-style confidence communication 与 PACP-style priority-aware sharing。
+- [x] 重构主表 baseline 分层：AP upper bound（full 20-CAV early）、RSU/edge-assisted baselines（FullPerception-RSU、EdgeCooper）、V2V-only decentralized baselines（FullPerception-Decentralized、forced random、density/communication-aware、selected SOTA proxy）和 SGCP PAPG 分开呈现。已同步 `results.md`、`baseline_fairness.md`、`fullperception_baseline_revision.md` 和 `main_table_candidate.md`。
+- [x] 搜索并选择至少一个 V2V-only/decentralized collaborative perception baseline。已实现 `nearest` / `density` selective-sharing baseline，但仍需按审稿意见补更接近 SOTA 的 decentralized baseline。
 - [x] 统一 backbone、场景、通信资源、评价指标和 late fusion 设置。当前 selective baseline 复用同一 dump、OpenCOOD early checkpoint、SGCP clustering 和 inter-cluster late fusion 评价口径，并匹配 grid budget。
 - [x] 在 `results.md` 中单独记录 baseline 公平性说明。
 - [x] 实现 same-budget CAV-only selective-sharing baseline，例如 nearest/top-k density/communication-aware top-k，匹配 SGCP 的 payload 或 source CAV 数。已完成 nearest/density/communication-aware grid-budget baseline；communication-aware baseline 为当前最强竞争 baseline。

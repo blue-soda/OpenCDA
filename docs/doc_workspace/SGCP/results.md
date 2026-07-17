@@ -24,7 +24,9 @@
 | Method | mAP@0.3 | mAP@0.5 | mAP@0.7 | Comm. Overhead (Mbps) | Runtime / Cycle (ms) | Notes |
 | --- | ---: | ---: | ---: | ---: | ---: | --- |
 | NC | TBD | TBD | TBD | TBD | TBD | No cooperation |
-| FullPerception centralized full early | 0.85 | 0.83 | 0.48 | 118.71 | TBD | Full 20-CAV point-cloud sharing upper reference; upload non-ego CAV payload 60,838,528 bytes |
+| Full 20-CAV early upper reference | 0.85 | 0.83 | 0.48 | 118.71 | TBD | Full point-cloud sharing AP upper bound; upload non-ego CAV payload 60,838,528 bytes |
+| FullPerception-RSU proxy | 0.84 | 0.80 | 0.46 | 109.71 | TBD | Virtual RSU/global candidate pool, 3 members/head, 117 grid budget; not a V2V-only fair baseline |
+| FullPerception-Decentralized proxy | 0.80 | 0.76 | 0.41 | 75.94 | TBD | CAV-side V2V only, cluster-local candidates, 3 members/head, 117 grid budget |
 | Full-cluster reference | 0.82 | 0.79 | 0.42 | 87.51 | TBD | Full intra-cluster upload reference |
 | Selective V2V forced random | 0.77 | 0.73 | 0.38 | 61.68 | TBD | Same coalition path, 3 members/head, 117 grid budget |
 | Selective V2V communication-aware | 0.78 | 0.75 | 0.40 | 58.97 | TBD | 2 members/head, 87 grid budget |
@@ -54,7 +56,8 @@
 | --- | --- | --- | --- | --- |
 | Upper reference | Full 20-CAV early / virtual FullPerception centralized | 0.85 / 0.83 / 0.48 | No | 全点云共享，无 SGCP 通信约束；non-ego upload payload 60,838,528 bytes |
 | Upper reference | Full 20-CAV late checkpoint | 0.91 / 0.85 / 0.51 | No | 使用独立 late checkpoint，不能直接作为同 checkpoint 消融 |
-| Upper reference | FullPerception-RSU | N/A on current dump | No | `v2xp_cluster_carla` 当前未启用 RSU；真实 RSU baseline 需重新导出带 RSU sensor 的场景 |
+| RSU/edge-assisted | FullPerception-RSU proxy | 0.84 / 0.80 / 0.46 | No | 虚拟 RSU/global candidate pool；当前 dump 无真实 RSU sensor，不作为 V2V-only 公平主对比 |
+| V2V-only fair baseline | FullPerception-Decentralized proxy | 0.80 / 0.76 / 0.41 | Yes | cluster-local candidate pool，3 members/head，117 grid budget；强 decentralized baseline |
 | SGCP main | SGCP PAPG 10ch | 0.81 / 0.78 / 0.39 | Yes | 当前主方法，62.54 Mbps，PAPG NS3 110/110 complete |
 | SGCP ablation | SGCP potential_game | 0.77 / 0.73 / 0.35 | Yes | 原始 PPS 消融 |
 | Same pipeline ablation | Random scheduler | 0.44 / 0.39 / 0.17 | No | payload 过低，只作 w/o-PPS 诊断 |
@@ -69,6 +72,31 @@
 | Reference only | Singleton full late-fusion reference | 0.82 / 0.76 / 0.37 | No | late-fuse 全部 20 CAV，当前未计 detection-box exchange overhead |
 
 论文写作建议：FullPerception-RSU 和 full 20-CAV early/late fusion 只能作为 upper/reference，不应放入“同通信预算公平主对比”结论。公平主对比应使用同数据、同 backbone、同 AP 口径，并尽量匹配通信预算或显式报告 payload。旧 `RandomRA/MWS` 的 payload 只有约 9.7/9.9 MB，未充分利用 10 子信道资源，不宜作为“SGCP 降低通信量”的主证据；它们更适合作 w/o PPS 消融。主公平 baseline 使用 forced-budget random、density/communication-aware selective sharing；SGCP 主方法使用 PAPG。
+
+### Explicit FullPerception Baselines
+
+代码状态：仓库此前没有显式命名的 FullPerception 算法分支；当前新增 `--selective-sharing-baseline fullperception_rsu` 和 `--selective-sharing-baseline fullperception_decentralized`。二者都使用 41 帧同一 dump、同一 OpenCOOD early checkpoint、同一 inter-cluster late-fusion evaluation path，并限制为 3 members/head 与 117 selected grids。
+
+命令模板：
+
+```powershell
+conda run -n opencda python -m opencda.tools.offline_inference --dataset-root D:\Data\Carla --scenario-id 2026_07_15_01_26_56 --ego-cav-id 1 --max-frames 0 --selective-sharing-baseline fullperception_rsu --selective-member-budget 3 --selective-grid-budget 117 --sgcp-inter-cluster-late-fusion --rho-th 3 --num-channels 10 --bandwidth-mhz 20 --sgcp-trace-output docs\doc_workspace\SGCP\artifacts\fullperception_baselines_20260717\fullperception_rsu_trace.csv
+```
+
+Artifact：
+
+```text
+docs\doc_workspace\SGCP\artifacts\fullperception_baselines_20260717\
+```
+
+| Baseline | Candidate Scope | AP@0.3 | AP@0.5 | AP@0.7 | Payload bytes | Mbps | Avg. Source CAVs | Avg. Selected Grids | Notes |
+| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | --- |
+| Full 20-CAV early upper reference | all CAVs, full upload | 0.85 | 0.83 | 0.48 | 60,838,528 | 118.71 | 20.00 | N/A | AP upper bound, not budgeted scheduling |
+| `fullperception_rsu` proxy | global / virtual RSU | 0.84 | 0.80 | 0.46 | 56,224,736 | 109.71 | 4.00 | 117.00 | Infrastructure-assisted global scheduler proxy |
+| `fullperception_decentralized` proxy | cluster-local V2V | 0.80 | 0.76 | 0.41 | 38,920,592 | 75.94 | 3.33 | 103.20 | Strong V2V-only decentralized FullPerception proxy |
+| `fullperception_rsu`, ego receiver probe | ego virtual receiver | 0.71 | 0.70 | 0.49 | 26,350,784 | 51.42 | 9.54 | 332.93 | Diagnostic only; several frames fell back to ego-only |
+
+3-frame `offline_ns3_replay --dry-run` 已确认两个显式 FullPerception 分支都会落入 scheduled-only request 计划：`fullperception_decentralized` 每帧 10 scheduled / 4 skipped，`fullperception_rsu` 每帧 10 scheduled / 8 skipped。下一步应对 `fullperception_decentralized` 做 11-frame true NS3 replay；`fullperception_rsu` 若作为 RSU/edge-assisted baseline，可单独报告或放入 upper-reference 表。
 
 ### Same-Budget CAV-Only Selective Sharing
 
