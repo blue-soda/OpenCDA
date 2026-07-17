@@ -563,4 +563,18 @@ docs/doc_workspace/LGCP/experiments/hierarchy_plan/20260718_lgcp_carla_raw_slice
 
 该结果说明 `sc_start/sc_num` 已能从 LGCP CSV 进入 offline replay 并驱动 ns-3 manual resource allocation；它是 scheduled bridge smoke，不是完整多 slot / latency-aware LGCP scheduler。
 
-下一步应把 single-slot smoke 扩展为多 slot / latency-aware scheduling，或实现 leader local fusion 的离线近似。
+`lgcp_schedule_upload_plan_eval.py` 还支持 `--schedule-mode multi_slot`，用于完整计划的分阶段调度 proxy。当前 Top-30 raw-slice-aware 11 帧计划在 `Z=10`、`10ms/slot` 下：
+
+| Metric | Value |
+| --- | ---: |
+| Scheduled requests | 504 / 504 |
+| Capacity-gated requests | 0 |
+| Scheduled bytes | 1313568 / 1313568 |
+| Mean slots / frame | 5.000000 |
+| Max slots / frame | 5 |
+| Mean frame scheduling latency | 50.000 ms |
+| Max frame scheduling latency | 50.000 ms |
+
+该 multi-slot proxy 显示完整 Top-30 plan 可分为 2 个 member-to-leader slots 和 3 个 leader-to-RSU slots。它补齐了 full-plan scheduling 的离线机制，但还不是 live ns-3 multi-slot replay。
+
+下一步应把 multi-slot `slot_index` 接入 live replay 时序，或实现 leader local fusion 的离线近似。

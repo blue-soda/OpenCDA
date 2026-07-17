@@ -1555,3 +1555,52 @@ Interpretation:
 - The scheduled smoke sharply reduces visible decode failures compared with the unscheduled raw-slice replay.
 - This validates the `sc_start/sc_num` path and motivates a full LGCP scheduler.
 - It is a single-slot capacity-gated smoke; do not report it as final end-to-end LGCP throughput or perception performance.
+
+## LGCP Multi-Slot Scheduling Proxy
+
+`opencda/tools/lgcp_schedule_upload_plan_eval.py` now also supports `--schedule-mode multi_slot`. Unlike the single-slot NS3 smoke input, this mode schedules every raw-slice-aware request into sequential member-to-leader and leader-to-RSU slots. It produces a full-plan scheduling proxy with `slot_index`, `sc_start`, `sc_num`, `stage`, and `scheduled_delay_ms` for every request.
+
+Run directory:
+
+```text
+docs/doc_workspace/LGCP/experiments/hierarchy_plan/20260718_lgcp_carla_raw_slice_multislot_schedule_z10
+```
+
+Configuration:
+
+| Field | Value |
+| --- | ---: |
+| Subchannels per slot | 10 |
+| Slot duration | 10 ms |
+| Schedule mode | `multi_slot` |
+| Priority mode | `hierarchy_bytes` |
+
+Summary:
+
+| Metric | Value |
+| --- | ---: |
+| Input requests | 504 |
+| Scheduled requests | 504 |
+| Capacity-gated requests | 0 |
+| Scheduled request ratio | 1.000000 |
+| Input bytes | 1313568 |
+| Scheduled bytes | 1313568 |
+| Scheduled byte ratio | 1.000000 |
+| Mean slots / frame | 5.000000 |
+| Max slots / frame | 5 |
+| Mean frame scheduling latency | 50.000 ms |
+| Max frame scheduling latency | 50.000 ms |
+
+Per-frame structure is stable across the 11-frame local dump:
+
+| Stage | Requests / frame | Slots / frame |
+| --- | ---: | ---: |
+| member-to-leader | 15-18 | 2 |
+| leader-to-RSU | 30 | 3 |
+| total | 45-48 | 5 |
+
+Interpretation:
+
+- The Top-30 raw-slice plan can be fully scheduled with `Z=10` in five sequential slots per frame.
+- At the proxy value of `10 ms/slot`, the two-stage LGCP transfer plan adds `50 ms/frame` of scheduled communication latency before RSU aggregation.
+- This is the full-plan scheduler proxy; the current live NS3 proof remains the 3-frame single-slot scheduled smoke.

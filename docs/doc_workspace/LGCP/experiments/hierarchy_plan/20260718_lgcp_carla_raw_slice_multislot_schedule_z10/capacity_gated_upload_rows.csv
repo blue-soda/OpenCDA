@@ -1,0 +1,1 @@
+timestamp,area_id,source_id,target_id,upload_type,bytes,original_bytes,byte_source,raw_point_count,slice_point_count,slice_ratio,sc_start,sc_num,slot_index,stage,schedule_status,schedule_reason,scheduled_delay_ms

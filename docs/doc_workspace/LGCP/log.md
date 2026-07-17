@@ -2950,3 +2950,53 @@ conda run -n opencda python -m opencda.tools.lgcp_ns3_log_eval --ns3-stdout docs
 - LGCP `sc_start/sc_num` CSV 字段现在可以进入 offline replay，并触发 ns-3 manual resource allocation。
 - 与 unscheduled raw-slice 3 帧 trace 相比，scheduled smoke 的 bridge-observed delivery ratio 从 `0.043796` 提升到 `0.800000`，且 PHY decode failures 为 0。
 - 该结果是 single-slot capacity-gated smoke，不是最终多 slot scheduling 或完整 LGCP throughput；下一步应实现 latency-aware 多 slot LGCP scheduler。
+
+## 2026-07-18 - Raw-slice multi-slot scheduling proxy
+
+目标：
+
+- 将上一轮 single-slot smoke 扩展为完整 raw-slice-aware upload plan 的 multi-slot scheduling proxy。
+- 为每条 request 输出 `slot_index/sc_start/sc_num/stage/scheduled_delay_ms`，避免为了 NS3 smoke 丢弃 394 条 request。
+- 给 transmission scheduling 写作提供稳定的 slots/frame 与 latency proxy。
+
+代码变更：
+
+```text
+opencda/tools/lgcp_schedule_upload_plan_eval.py
+```
+
+命令：
+
+```powershell
+conda run -n opencda python -m py_compile opencda\tools\lgcp_schedule_upload_plan_eval.py
+conda run -n opencda python -m opencda.tools.lgcp_schedule_upload_plan_eval --upload-plan docs\doc_workspace\LGCP\experiments\hierarchy_plan\20260717_lgcp_carla_raw_slice_upload_plan_area30\raw_slice_upload_plan.csv --output-dir docs\doc_workspace\LGCP\experiments\hierarchy_plan\20260718_lgcp_carla_raw_slice_multislot_schedule_z10 --subchannels 10 --schedule-mode multi_slot --slot-duration-ms 10
+```
+
+结果：
+
+| Metric | Value |
+| --- | ---: |
+| Frames | 11 |
+| Input requests | 504 |
+| Scheduled requests | 504 |
+| Capacity-gated requests | 0 |
+| Scheduled request ratio | 1.000000 |
+| Input bytes | 1313568 |
+| Scheduled bytes | 1313568 |
+| Scheduled byte ratio | 1.000000 |
+| Mean slots / frame | 5.000000 |
+| Max slots / frame | 5 |
+| Mean frame scheduling latency | 50.000 ms |
+| Max frame scheduling latency | 50.000 ms |
+
+每帧结构：
+
+- member-to-leader：15-18 requests，对应 2 slots。
+- leader-to-RSU：30 requests，对应 3 slots。
+- total：45-48 requests，对应 5 slots。
+
+结论：
+
+- Top-30 raw-slice-aware plan 可在 `Z=10` 下完整排程，不需要 capacity gate。
+- 以 `10ms/slot` 估算，完整两级上传调度延迟为 `50ms/frame`。
+- 该结果补齐 full-plan scheduling proxy；live NS3 多 slot replay 仍需将 `slot_index` 接入 replay 时序。
