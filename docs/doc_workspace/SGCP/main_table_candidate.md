@@ -33,6 +33,7 @@
 | SGCP original utility, 10ch | Previous SGCP | 0.77 | 0.73 | 0.35 | 26,916,208 | 52.52 | 110/110 complete | Original saturated-density utility |
 | SGCP coverage-aware, 10ch, `rho_th=2` | Proposed low-budget | 0.79 | 0.75 | 0.37 | 28,743,280 | 56.08 | 110/110 complete | Spatial-diverse grid selection |
 | SGCP PAPG, 10ch, `rho_th=3`, `B_h=2` | Proposed main | 0.81 | 0.78 | 0.39 | 32,049,872 | 62.54 | 110/110 complete | Perception-aware two-layer potential scheduling: coverage layer + target layer |
+| SGCP PAPG, 10ch, `rho_th=3`, `B_h=3` | Sensitivity | 0.80 | 0.78 | 0.40 | 32,051,792 | 62.54 | Not replayed | Negative high-IoU probe: per-head RB relaxation lowers source diversity and does not catch EdgeCooper-HD |
 | SGCP target-aware PG, 10ch, `rho_th=3` | Proposed low-budget tuned | 0.80 | 0.76 | 0.39 | 31,069,968 | 60.62 | 11f request plan dry-run | New scheduler: original potential-game sender/RB stage + target-aware grid-action refinement |
 | SGCP coverage-aware, 10ch, `rho_th=3` | Previous grid-selection probe | 0.79 | 0.76 | 0.38 | 29,405,296 | 57.38 | 110/110 complete | Kept as ablation for the former post-processing style selection |
 | SGCP coverage-aware, 10ch, `rho_th=3`, point cap 3000 | Payload sensitivity | 0.74 | 0.70 | 0.33 | 19,510,848 | 38.07 | Not replayed | Effective payload knob, but AP drops; not recommended as main row yet |
@@ -60,6 +61,7 @@
 8. Target-aware PG `0.80/0.76/0.39` at 60.62 Mbps is now best treated as an ablation: it proves that moving target-aware utility into the allocator helps, while PAPG adds the missing coverage layer.
 9. `B_h=2` coverage-aware sensitivity remains useful for explaining localization-quality tradeoff (`0.76/0.72/0.42` at 54.56 Mbps), but PAPG recovers AP@0.3/AP@0.5 without relying on that tradeoff.
 10. `--max-upload-points-per-source 3000` confirms payload is tunable down to 38.07 Mbps, but current deterministic sampling loses AP. It is evidence for a communication knob, not a final algorithm row.
+11. PAPG `B_h=3` is a negative sensitivity row: it keeps roughly the same payload as PAPG `B_h=2` and raises AP@0.7 only to 0.40 while lowering AP@0.3. The next high-IoU improvement should protect high-quality sources and target-grid coverage rather than merely relaxing per-head RB count.
 
 ## Next Decisions
 

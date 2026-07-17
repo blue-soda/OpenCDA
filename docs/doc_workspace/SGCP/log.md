@@ -5024,3 +5024,32 @@ NS3 11-frame diagnostics for `edgecooper_global_hd`：
 ### 当前判断
 
 半双工约束把 EdgeCooper global proxy 从“离线强但 NS3 不完整”修复为“离线强且 NS3 完整”。这条 baseline 很有价值，但也会改变论文叙事压力：它是 virtual edge/RSU-assisted global scheduler，信息条件强于 PAPG；如果和 PAPG 混在同一公平主表，PAPG 不再是 AP@0.7 最高。因此后续论文表格应分层呈现 RSU/edge-assisted 与 V2V-only decentralized baselines，或者继续改造 PAPG 以提升 AP@0.7。
+
+## 2026-07-18 PAPG high-IoU pressure follow-up
+
+### 目的
+
+EdgeCooper-global-HD 达到 `0.81/0.78/0.42`、65.40 Mbps 且 110/110 NS3 complete，对 PAPG 的 AP@0.7 形成压力。本轮先测试不改代码的 PAPG `head_rb_budget=3`，判断是否能通过更宽松的 per-head RB 上限提升高 IoU。
+
+### 命令
+
+```powershell
+conda run -n opencda python -m opencda.tools.offline_inference --dataset-root D:\Data\Carla --scenario-id 2026_07_15_01_26_56 --ego-cav-id 1 --max-frames 0 --sgcp-constrained --resource-allocation perception_aware_potential_game --sgcp-inter-cluster-late-fusion --rho-th 3 --num-channels 10 --bandwidth-mhz 20 --head-rb-budget 3 --sgcp-trace-output docs\doc_workspace\SGCP\artifacts\papg_bh3_rho3_10ch_20260718\papg_bh3_trace_41f.csv
+```
+
+### 结果
+
+| Variant | AP@0.3 | AP@0.5 | AP@0.7 | Payload bytes | Mbps | Avg. source CAVs | Avg. selected grids |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| PAPG, `B_h=2` | 0.81 | 0.78 | 0.39 | 32,049,872 | 62.54 | 3.33 | TBD |
+| PAPG, `B_h=3` | 0.80 | 0.78 | 0.40 | 32,051,792 | 62.54 | 2.67 | 97.09 |
+
+结论：简单提高 `B_h` 不是有效修复。`B_h=3` 在同样 10-channel 总预算下没有增加有效多视角覆盖，反而使 avg source CAVs 降至 2.67，只把更多 grid 压到更少的 source 上；AP@0.7 仅从 0.39 到 0.40，仍低于 EdgeCooper-HD 的 0.42。下一步若继续提升 PAPG，应针对高质量 source / target-grid coverage 做机制级改造，而不是继续调 per-head RB 上限。
+
+### 论文同步
+
+已更新 `C:\Workspace\icdcs-paper\SGCP\main.tex`：
+
+- baseline 列表新增 `EdgeCooper-HD`，明确其为 virtual edge-assisted reference。
+- 主表新增 `EdgeCooper-HD (edge-assisted) = 0.81/0.78/0.42, 65.40 Mbps`。
+- 正文说明 EdgeCooper-HD 使用 global edge-side information，不作为 fully decentralized SGCP 的公平 V2V baseline；PAPG 与 V2V baselines 的比较仍限定在 RSU-free V2V 设置下。
