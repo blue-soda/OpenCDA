@@ -1759,3 +1759,15 @@ Interpretation:
 - Source-unique packing avoids same-source same-slot transmissions and increases member-to-leader application callbacks from `2/47` to `5/47`.
 - It does not improve total delivery versus the previous multi-slot replay (`52/137` vs `54/137`) and lowers member-to-leader RLC RX from `28/47` to `25/47`.
 - Therefore source uniqueness is a useful half-duplex constraint to retain in the scheduler design, but it is not sufficient to solve the member-to-leader path by itself.
+## Model-Level Hierarchy Boundary
+
+2026-07-18 完成模型级 hierarchy 入口审计，结论如下：
+
+| Item | Status | Paper-safe interpretation |
+| --- | --- | --- |
+| RSU assignment / upload plan / scheduler | Implemented | 可作为 LGCP control-plane 与 network scheduling 证据 |
+| Leader local result / RSU aggregation proxy | Implemented as proxy | 可说明接口、coverage 和 byte/quality proxy，不能声称真实模型级融合 AP |
+| Box-level hierarchy late fusion | Next implementation target | 可作为 local-to-global hierarchy ablation 的真实 OpenCOOD 推理版本 |
+| Neural feature slicing | Pending | 只有完成 PointPillar intermediate feature slice 后，才能称为完整 LGCP model-level feature hierarchy |
+
+该结论记录在 `model_level_hierarchy_entry.md`，用于约束后续论文表述和实现优先级。

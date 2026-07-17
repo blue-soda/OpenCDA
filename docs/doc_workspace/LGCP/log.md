@@ -3210,3 +3210,22 @@ by type：
 - source-unique packing 让 member-to-leader application callbacks 从 `2/47` 提高到 `5/47`。
 - 但总 delivery 从 `54/137` 降到 `52/137`，member-to-leader RLC RX 也从 `28/47` 降到 `25/47`。
 - 因此同 source 同 slot 多发是一个真实约束，应保留在调度机制中，但不是 member-to-leader 瓶颈的充分解释。
+# 2026-07-18
+
+## Model-level hierarchy entry audit
+
+- 目标：继续推进 `target.md` 中 local-to-global ablation 和 RSU / leader / global aggregation 管线的剩余缺口，避免继续只扩展 NS3 网络诊断。
+- 阅读入口：
+  - `opencda/core/ml_libs/opencood_manager.py`
+  - `opencood/opencood/tools/inference_utils.py`
+  - `opencood/opencood/data_utils/datasets/intermediate_fusion_dataset.py`
+  - `opencda/tools/offline_inference.py`
+  - `opencda/core/common/offline_dataset.py`
+- 结论：
+  - 现有 hierarchy aggregation 仍是 proxy，不能写成完整 model-level LGCP AP。
+  - 仓库已有 `OpenCOODManager.naive_late_fusion(...)` 和 SGCP inter-cluster late-fusion 路径，可复用为 LGCP box-level hierarchy adapter。
+  - Neural feature slicing 需要改 OpenCOOD intermediate fusion 的 dataset / collate / model feature tensor 暴露，不能只靠 LGCP CSV 完成。
+- 新增文档：
+  - `docs/doc_workspace/LGCP/model_level_hierarchy_entry.md`
+- 下一步：
+  - 实现 `lgcp_hierarchy_late_fusion_eval.py`，按 `(timestamp, area_id, leader_id, group_members)` 真实调用 OpenCOOD，输出 leader local prediction 与 RSU global late-fusion AP。
