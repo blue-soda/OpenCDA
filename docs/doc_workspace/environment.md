@@ -1,6 +1,6 @@
 # 实验环境
 
-更新时间：2026-07-16
+更新时间：2026-07-17
 
 ## Conda 环境
 
@@ -90,6 +90,34 @@ C:\Programs\Carla\WindowsNoEditor\CarlaUE4.exe
 ```powershell
 Start-Process "C:\Programs\Carla\WindowsNoEditor\CarlaUE4.exe"
 ```
+
+在线 CARLA 实验前必须先确认 CARLA Python RPC 可用。仅 `2000` 端口可连接不等同于 `get_world()` 可用；当前已出现端口 ready 但 `client.get_world()` 持续 timeout 的情况。推荐先用目标地图启动 CARLA，再运行 probe：
+
+```powershell
+Start-Process "C:\Programs\Carla\WindowsNoEditor\CarlaUE4.exe" `
+  -ArgumentList @('/Game/Carla/Maps/Town03','-quality-level=Low') `
+  -WindowStyle Hidden
+
+conda run -n opencda python -m opencda.tools.carla_rpc_probe --expect-map Town03 --timeout 30 --wait 180
+```
+
+只有看到类似以下输出时，才继续在线 OpenCDA / NS3：
+
+```text
+CARLA_RPC_READY map=Carla/Maps/Town03
+```
+
+在线回归常用保护开关：
+
+```powershell
+$env:OPENCDA_CLEAN_WORLD_ON_INIT = "1"
+$env:OPENCDA_CARLA_CLIENT_TIMEOUT = "180"
+$env:OPENCDA_USE_CURRENT_CARLA_WORLD = "1"
+```
+
+- `OPENCDA_CLEAN_WORLD_ON_INIT`：创建 CAV 前清理已有 `vehicle/sensor/walker/controller` 动态 actor，避免固定 spawn 点被占用。
+- `OPENCDA_CARLA_CLIENT_TIMEOUT`：覆盖 CARLA Python API timeout。
+- `OPENCDA_USE_CURRENT_CARLA_WORLD`：CARLA 已经加载目标地图时跳过 `client.load_world(town)`，复用当前 world。
 
 SGCP 在线 CARLA 仿真：
 

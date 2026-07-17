@@ -134,6 +134,7 @@ SGCP 工作与仓库中以下部分关系最紧密：
 - 已新增 `OPENCDA_USE_CURRENT_CARLA_WORLD=1`，用于 CARLA 已经以目标地图启动时跳过 `client.load_world(town)`，避免本轮反复出现的 `load_world('Town03')` RPC 超时。
 - 已确认当前在线 clean rerun 的最新 blocker 是 CARLA RPC readiness：直接用 Town03 参数启动 CARLA 并等待 120 秒后，`carla.Client(...).get_world()` 在 180 秒 timeout 下仍超时。2000 端口 ready 不代表 CARLA Python API 可用；继续 NS3/reupload 前必须先恢复 CARLA smoke test。
 - 已新增 `opencda.tools.carla_rpc_probe`，在线 OpenCDA/NS3 前必须先通过 `conda run -n opencda python -m opencda.tools.carla_rpc_probe --expect-map Town03 --timeout 30 --wait 180`。
+- 已将 CARLA RPC probe 和在线保护开关补充到全局 `docs/doc_workspace/environment.md`，作为 SGCP/LGCP 共用前置检查。
 - 已完成 SGCP 11 帧离线 NS3 request-level replay：154 条 SGCP intra-cluster request，CAM callback delivery ratio 0.558442，request with any RLC RX event ratio 0.974026。后者仅表示 request_id 至少出现一个 RLC RX 片段/事件，不代表完整 request delivery。
 - 已确认当前可运行环境版本快照，并记录到 `docs/doc_workspace/environment.md`：OpenCDA HEAD `fcc29fdc9ee9a9fe694c12e1fb6792b4d41bccac`，Python 3.7.10，CARLA Python API 0.9.11，PyTorch 1.10.0+cu113，Open3D 0.10.0.0，ns-3 wrapper `ns-3-dev-v2x-v1.1-dirty`。
 - 已修复在线 CARLA-NS3 时间流速不一致问题：`NetworkManager.time_slot` 不再将 `world.fixed_delta_seconds` 除以 5，`current_sim_time`、`current_time_slot` 与 CARLA tick 统一推进。
