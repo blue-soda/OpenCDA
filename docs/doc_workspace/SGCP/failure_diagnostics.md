@@ -112,7 +112,7 @@ This points to resource scheduling needing target-aware receiver/sender protecti
 
 ### 4. Inter-Cluster Late Fusion
 
-Evidence strength: secondary.
+Evidence strength: low for the dense-grid miss bucket, secondary elsewhere.
 
 35/111 missed rows have dense points delivered to the nearest head but still no final matched box. That cannot be solved purely by channel count or grid selection. It may involve:
 
@@ -122,9 +122,21 @@ Evidence strength: secondary.
 
 Earlier NMS sweeps showed default `0.15` is better than `0.05/0.30`, so this is not a simple NMS-threshold fix. The next useful debug is to dump per-head pre-NMS boxes around the persistent missed GT objects and verify whether a box exists before inter-cluster fusion.
 
+Follow-up `sgcp_head_box_diagnostics` on the PAPG dense-miss top40 found:
+
+| Metric | Value |
+| --- | ---: |
+| Dense missed objects analyzed | 40 |
+| Nearest-head pre-late-fusion matched @0.5 | 0 / 40 |
+| Any-head pre-late-fusion matched @0.5 | 0 / 40 |
+| Late-fused matched @0.5 | 0 / 40 |
+| Full-reference matched @0.5 | 40 / 40 |
+
+This shifts the interpretation: for this bucket, late fusion/NMS is not suppressing an already-correct head-local detection. The relevant heads produce detector boxes, but none overlap the missed target. Therefore grid-level point count is too coarse; the next diagnosis must check whether uploaded points inside the selected grid actually fall inside or around the target 3D box.
+
 ## Next Actions
 
-1. Add target-grid diagnostics to `offline_inference --object-diagnostics-output` or a companion tool: for every missed GT, record per-head pre-NMS best IoU, score, and source CAVs.
+1. Add target-grid diagnostics to `offline_inference --object-diagnostics-output` or a companion tool: for every missed GT, record per-head pre-NMS best IoU, score, and source CAVs. First follow-up completed via `sgcp_head_box_diagnostics`; next step is true object-level point association inside the GT 3D box.
 2. Implement target-aware scheduling probe: persistent missed grids get a same-cluster, high-quality covering sender if one exists, replacing the lowest utility scheduled grid/link under the same channel budget.
 3. Add CAV-body GT audit: mark GT objects whose centers overlap a CAV body, and decide whether paper AP should include them under the same convention as OPV2V/OpenCOOD.
 4. Re-run 10ch/rho3 and 20ch with the target-aware probe; accept only if AP improves without increasing Mbps.

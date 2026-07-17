@@ -5109,3 +5109,48 @@ BPAPG is a useful negative branch, not a new main method. The high-IoU fix shoul
 ### 结论
 
 QG-PAPG 仍然会因 source-history credit 替换稳定视角而伤 AP；说明即便有 object-quality gate，跨帧 source fairness 也不适合作为主线。HU-PAPG 去掉 source history 后恢复到 PAPG 主行水平，但没有突破 AP@0.7，`B_h=3` 的短评估也没有改变有效链路集合。下一步不应继续调 source/head fairness 系数，而应进入 detector/pre-NMS 级诊断：确认“nearest head 已收到 dense target grid 但无 final box”的 35 行里，问题发生在 detector 无框、NMS 抑制，还是 grid 内点云没有落到目标实体。
+
+## 2026-07-18 Head-local detector box diagnostics
+
+### 目的
+
+针对 failure diagnostics 中的 secondary bucket：nearest head 已经收到 dense target grid points，但 final late-fused result 仍然漏检。本轮新增 per-head box diagnostic，导出每个 cluster head 在 inter-cluster late fusion 前的 detector 输出 best IoU/score，判断问题发生在 head-local detector、late fusion/NMS，还是坐标/匹配链路。
+
+### 代码
+
+```text
+opencda/tools/sgcp_head_box_diagnostics.py
+```
+
+### 命令
+
+```powershell
+conda run -n opencda python -m opencda.tools.sgcp_head_box_diagnostics --dataset-root D:\Data\Carla --scenario-id 2026_07_15_01_26_56 --ego-cav-id 1 --failure-gt-csv docs\doc_workspace\SGCP\artifacts\failure_diag_papg_bh2_rho3_41f\gt_objects.csv --output-csv docs\doc_workspace\SGCP\artifacts\head_box_diag_papg_dense_20260718\head_box_diag_dense_top40.csv --resource-allocation perception_aware_potential_game --rho-th 3 --num-channels 10 --bandwidth-mhz 20 --head-rb-budget 2 --max-rows 40 --min-nearest-head-points 30
+```
+
+### 结果
+
+Dense-miss top40 统计：
+
+| Metric | Value |
+| --- | ---: |
+| Dense missed objects analyzed | 40 |
+| Nearest-head pre-late-fusion matched @0.5 | 0 / 40 |
+| Any-head pre-late-fusion matched @0.5 | 0 / 40 |
+| Late-fused matched @0.5 | 0 / 40 |
+| Full-reference matched @0.5 | 40 / 40 |
+| Best any-head IoU mean / max | 0.0000 / 0.0000 |
+
+Representative rows:
+
+| Timestamp | Object | Nearest head | Nearest-head points | Head pred boxes | Head best IoU | Full-reference IoU |
+| --- | --- | ---: | ---: | ---: | ---: | ---: |
+| 000060 | 419 | 11 | 148 | 21 | 0.000000 | 0.889081 |
+| 000062 | 444 | 1 | 46 | 23 | 0.000000 | 0.833448 |
+| 000064 | 337 | 1 | 119 | 21 | 0.000000 | 0.818634 |
+| 000066 | 337 | 1 | 119 | 21 | 0.000000 | 0.919990 |
+| 000066 | 406 | 12 | 87 | 13 | 0.000000 | 0.747779 |
+
+### 结论
+
+这批 dense target-grid miss 不是 inter-cluster late fusion/NMS 抑制已有正确框，也不是单纯 receiver 没有出任何框；nearest head 有正常数量的 detector boxes，但目标 best IoU 仍为 0。下一步算法不应继续只按 grid id/point count 调度，而要进入 object-level point association：确认 grid 内上传点是否真的落在目标 3D box 内，并设计 box-aware/instance-aware grid scoring 或 point selection。
