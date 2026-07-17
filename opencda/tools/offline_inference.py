@@ -38,6 +38,9 @@ from opencda.core.clustering.algorithms.resource_allocation import (
 from opencda.core.ml_libs.opencood_manager import OpenCOODManager
 
 
+EDGECOOPER_GLOBAL_COMM_RANGE_M = 35.0
+
+
 def parse_args():
     parser = argparse.ArgumentParser(
         description='Run OpenCOOD inference from dumped OPV2V-style data.')
@@ -129,7 +132,8 @@ def parse_args():
                                  'greedy_density', 'communication_aware',
                                  'fullperception_rsu',
                                  'fullperception_decentralized',
-                                 'edgecooper'],
+                                 'edgecooper',
+                                 'edgecooper_global'],
                         help='Run a selective-sharing or RSU/edge-assisted baseline instead of SGCP PPS.')
     parser.add_argument('--selective-member-budget', type=int, default=2,
                         help='Maximum uploaded non-head members per receiver for selective baseline.')
@@ -852,6 +856,17 @@ def candidate_member_ids(world, cluster, baseline_name):
             for member_id in sorted(world.get_vehicle_managers().keys())
             if int(member_id) != head_id
         ]
+    if baseline_name == 'edgecooper_global':
+        head_vm = world.get_vehicle_manager(head_id)
+        feasible_members = []
+        for member_id in sorted(world.get_vehicle_managers().keys()):
+            member_id = int(member_id)
+            if member_id == head_id:
+                continue
+            sender_vm = world.get_vehicle_manager(member_id)
+            if vehicle_distance(head_vm, sender_vm) <= EDGECOOPER_GLOBAL_COMM_RANGE_M:
+                feasible_members.append(member_id)
+        return feasible_members
     return [
         int(member_id) for member_id in sorted(cluster.members)
         if int(member_id) != head_id
@@ -886,13 +901,30 @@ def edgecooper_grid_score(head_vm, sender_vm, grid_id, covered_grids=None):
         0.25 * redundancy_penalty)
 
 
-def select_edgecooper_members(world, head_vm, members, member_budget):
+def edgecooper_global_sender_capacity(world, member_budget):
+    vehicle_count = max(1, len(world.get_vehicle_managers()))
+    cluster_count = max(1, int(getattr(
+        world,
+        '_edgecooper_global_cluster_count',
+        len(world.get_vehicle_managers()))))
+    total_slots = max(1, cluster_count * max(1, member_budget))
+    return max(1, int(math.ceil(total_slots / float(vehicle_count))))
+
+
+def select_edgecooper_members(world, head_vm, members, member_budget,
+                              global_sender_loads=None,
+                              sender_capacity=None):
     selected = []
     covered = set()
     remaining = set(members)
     while remaining and len(selected) < member_budget:
         best = None
         for member_id in sorted(remaining):
+            sender_load = 0
+            if global_sender_loads is not None:
+                sender_load = int(global_sender_loads.get(member_id, 0))
+                if sender_capacity is not None and sender_load >= sender_capacity:
+                    continue
             sender_vm = world.get_vehicle_manager(member_id)
             candidate_grids = set(edgecooper_candidate_grids(
                 head_vm,
@@ -910,8 +942,9 @@ def select_edgecooper_members(world, head_vm, members, member_budget):
                 sender_vm.perception_manager.lidar.get_grid_density(grid_id)
                 for grid_id in candidate_grids & covered)
             distance = vehicle_distance(head_vm, sender_vm)
+            load_penalty = 1.0 + float(sender_load)
             score = (
-                complementarity / (1.0 + distance / 50.0) -
+                complementarity / ((1.0 + distance / 50.0) * load_penalty) -
                 0.35 * redundancy)
             item = (-score, distance, member_id, candidate_grids)
             if best is None or item < best:
@@ -920,6 +953,9 @@ def select_edgecooper_members(world, head_vm, members, member_budget):
             break
         _, _, member_id, candidate_grids = best
         selected.append(member_id)
+        if global_sender_loads is not None:
+            global_sender_loads[member_id] = (
+                int(global_sender_loads.get(member_id, 0)) + 1)
         covered.update(candidate_grids)
         remaining.remove(member_id)
     return selected
@@ -970,12 +1006,27 @@ def select_baseline_members(world, cluster, baseline_name, member_budget,
         ]
         return [member_id for _, member_id in sorted(scored)[:member_budget]]
 
-    if baseline_name == 'edgecooper':
+    if baseline_name in ['edgecooper', 'edgecooper_global']:
+        sender_loads = None
+        sender_capacity = None
+        if baseline_name == 'edgecooper_global':
+            sender_loads = getattr(
+                world,
+                '_edgecooper_global_sender_loads',
+                None)
+            if sender_loads is None:
+                sender_loads = {}
+                world._edgecooper_global_sender_loads = sender_loads
+            sender_capacity = edgecooper_global_sender_capacity(
+                world,
+                member_budget)
         return select_edgecooper_members(
             world,
             head_vm,
             members,
-            member_budget)
+            member_budget,
+            global_sender_loads=sender_loads,
+            sender_capacity=sender_capacity)
 
     if baseline_name in ['density', 'greedy_density', 'communication_aware',
                          'fullperception_rsu',
@@ -1031,7 +1082,7 @@ def assign_selective_grid_selection(world, cluster, baseline_name,
         if remaining <= 0:
             break
         sender_vm = world.get_vehicle_manager(member_id)
-        if baseline_name == 'edgecooper':
+        if baseline_name in ['edgecooper', 'edgecooper_global']:
             candidate_grids = edgecooper_candidate_grids(head_vm, sender_vm)
         else:
             candidate_grids = candidate_grids_for_sender(head_vm, sender_vm)
@@ -1043,7 +1094,7 @@ def assign_selective_grid_selection(world, cluster, baseline_name,
                 member_id,
                 grid_budget))
             rng.shuffle(grids)
-        elif baseline_name == 'edgecooper':
+        elif baseline_name in ['edgecooper', 'edgecooper_global']:
             grids = select_edgecooper_grids(
                 head_vm,
                 sender_vm,
@@ -1059,7 +1110,7 @@ def assign_selective_grid_selection(world, cluster, baseline_name,
         selected = grids[:min(per_member_budget, remaining)]
         if selected:
             grid_selection[member_id] = selected
-            if baseline_name == 'edgecooper':
+            if baseline_name in ['edgecooper', 'edgecooper_global']:
                 covered_edge_grids.update(selected)
             remaining -= len(selected)
     head_vm.perception_manager.co_manager.set_grid_selection(grid_selection)
@@ -1092,6 +1143,9 @@ def apply_selective_sharing_baseline(frame, protocol, ego_cav_id,
         clustering_algorithm.p.N_max = n_max
     clusters = clustering_algorithm.run()
     apply_cluster_state(world, clusters)
+    if baseline_name == 'edgecooper_global':
+        world._edgecooper_global_sender_loads = {}
+        world._edgecooper_global_cluster_count = len(clusters)
     for cluster in clusters:
         assign_selective_grid_selection(
             world,

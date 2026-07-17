@@ -345,6 +345,9 @@ def build_selective_world_and_requests(dataset, scenario_id, timestamp,
         world.network_manager.subchannel_num = int(num_channels)
 
     clusters = CoalitionGame(world).run()
+    if baseline_name == 'edgecooper_global':
+        world._edgecooper_global_sender_loads = {}
+        world._edgecooper_global_cluster_count = len(clusters)
     candidate_requests = []
     for cluster in sorted(clusters, key=lambda item: int(item.head_id)):
         head_id = int(cluster.head_id)

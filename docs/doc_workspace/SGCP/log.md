@@ -4893,3 +4893,61 @@ PCS 是内置 FullPerception 实现，但当前工程结果明显 under-schedule
 - 当前 late-fusion evaluation 仍沿用 SGCP cluster-head receiver path；PCS 原论文是 base-station/RSU 全局调度，需要进一步对齐接收/融合口径。
 
 下一步应先修复/校准 `pcs.py`，再把它作为 FullPerception 主 baseline；上一轮新增的 `fullperception_rsu` 和 `fullperception_decentralized` 应改写为 proxy/diagnostic，不再抢占 FullPerception 正名。
+
+## 2026-07-18 EdgeCooper global assignment proxy
+
+### 目的
+
+上一版 `edgecooper` 只做逐 receiver 的 blind-spot complementarity 贪心选择，41 帧结果为 `0.75/0.70/0.32`、56,134,048 bytes / 109.53 Mbps，既不强，也没有体现 EdgeCooper 论文中 edge-side 全局调度的核心优势。本轮新增 `edgecooper_global`，作为更接近 edge/virtual-RSU assisted global assignment 的 proxy。
+
+### 代码改动
+
+- `opencda.tools.offline_inference --selective-sharing-baseline` 新增 `edgecooper_global`。
+- `edgecooper_global` 使用全局 CAV 候选池，但加入 35 m V2V feasibility gate，避免调度明显不可达的 sender。
+- sender 选择继承 blind-spot complementarity / redundancy utility，并新增 global sender-load penalty 与 sender capacity，避免多个 receiver 重复争抢同一高密度 sender。
+- grid selection 仍使用 EdgeCooper-style blind-grid utility：优先发送 sender 可观测、receiver/head 低密度、能补盲区的 grid。
+- `offline_ns3_replay` 对 `edgecooper_global` 初始化同一全局 sender-load 状态，使离线 AP 和 NS3 request replay 使用一致选择逻辑。
+
+### 命令
+
+41-frame offline AP：
+
+```powershell
+conda run -n opencda python -m opencda.tools.offline_inference --dataset-root D:\Data\Carla --scenario-id 2026_07_15_01_26_56 --ego-cav-id 1 --max-frames 0 --selective-sharing-baseline edgecooper_global --selective-member-budget 3 --selective-grid-budget 117 --sgcp-inter-cluster-late-fusion --rho-th 3 --num-channels 10 --bandwidth-mhz 20 --sgcp-trace-output docs\doc_workspace\SGCP\artifacts\edgecooper_global_35m_probe_20260718\edgecooper_global_35m_trace_41f.csv
+```
+
+11-frame true NS3 replay：
+
+```powershell
+conda run -n opencda python -m opencda.tools.offline_ns3_replay --dataset-root D:\Data\Carla --scenario-id 2026_07_15_01_26_56 --max-frames 11 --selective-sharing-baseline edgecooper_global --selective-member-budget 3 --selective-grid-budget 117 --num-channels 10 --bandwidth-mhz 20 --ns3-host 127.0.0.1 --ns3-port 9999 --output-dir docs\doc_workspace\SGCP\artifacts\edgecooper_global_35m_probe_ns3_20260718 --real-ns3 --analyze
+```
+
+### 结果
+
+| Method | AP@0.3 | AP@0.5 | AP@0.7 | Payload bytes | Mbps | Avg. source CAVs | Avg. selected grids | NS3 |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | --- |
+| EdgeCooper blind-spot proxy | 0.75 | 0.70 | 0.32 | 56,134,048 | 109.53 | 4.00 | 117.00 | Not replayed |
+| EdgeCooper-global 35 m proxy | 0.81 | 0.77 | 0.42 | 38,223,408 | 74.58 | 3.26 | 98.75 | 73/110 complete |
+
+NS3 11-frame diagnostics for `edgecooper_global`：
+
+| Metric | Value |
+| --- | ---: |
+| Application callbacks | 73 / 110 |
+| RLC complete requests | 73 / 110 |
+| RLC TX/RX events | 2970 / 1971 |
+| RLC `tx_no_rx` requests | 37 |
+| PHY decode failures | 0 |
+
+Artifact：
+
+```text
+docs\doc_workspace\SGCP\artifacts\edgecooper_global_35m_probe_20260718\
+docs\doc_workspace\SGCP\artifacts\edgecooper_global_35m_probe_ns3_20260718\
+```
+
+### 当前判断
+
+`edgecooper_global` 显著强于第一版 blind-spot proxy，离线 AP@0.7 达到 `0.42`，接近 full-cluster reference，并且 payload 从 109.53 Mbps 降到 74.58 Mbps。这个结果说明 edge/global assignment 方向有价值，也可作为审稿意见中“补更强 baseline”的重要材料。
+
+但该结果不能直接替代 PAPG 主线：`edgecooper_global` 属于 virtual edge/RSU-assisted baseline，使用全局候选池；且真实 NS3 replay 只有 73/110 request complete，而 PAPG 在同一 11 帧口径下为 110/110 complete、0 PHY failures、62.54 Mbps。论文写作应把它放入 RSU/edge-assisted diagnostic baseline 或补充实验表，而不是 V2V-only 公平主表。下一步若要严格复现 EdgeCooper，应继续实现 MCF/conflict-coloring 或 deadline-aware global assignment，使 high-AP proxy 也具备 request-level delivery guarantee。
