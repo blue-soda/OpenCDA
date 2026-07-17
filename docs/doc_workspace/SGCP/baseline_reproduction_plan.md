@@ -60,14 +60,19 @@
 当前 proxy：
 
 - 假设存在虚拟 RSU/edge server；
-- 对每个 receiver 从全局 CAV 候选池中迭代选择 complementarity 高、与已覆盖 grid redundancy 低的 sender；
+- 对每个 receiver 从全局 CAV 候选池中迭代选择能补齐 receiver blind grids 的 sender；
+- 候选 grid 限定为 sender 可观测且 receiver/head 低密度的 blind-spot grids，不再 fallback 到 sender 全视野；
+- member score 使用 blind-spot complementarity、selected-sender redundancy 和 distance/network cost；
 - 使用相同 grid budget 和 inter-cluster late-fusion 口径；
-- 3-frame smoke test 为 `0.54/0.46/0.15`，说明 naive complementarity proxy 过度偏向少数高密度车辆，不能作为最终 EdgeCooper baseline。
+- naive 3-frame smoke test 为 `0.54/0.46/0.15`，说明原始 complementarity proxy 过度偏向少数高密度车辆，不能作为最终 EdgeCooper baseline。
+- blind-spot-aware 3-frame smoke test 恢复到 `0.76/0.72/0.33`；41-frame full run 为 `0.75/0.70/0.32`，payload 56,134,048 bytes / 109.53 Mbps。
+
+当前结论：EdgeCooper proxy 已经可复现并可进入 artifact 记录，但不是强 baseline。它的通信量接近 FullPerception-RSU proxy，AP 却明显更低，说明当前 raw-LiDAR blind-grid proxy 还没有捕捉 EdgeCooper 原论文中 minimum-cost flow / conflict coloring 的全局调度收益。论文主表若加入该行，应标注为 `EdgeCooper-style proxy`，不宜声称完成了严格原论文复现。
 
 下一步实现方向：
 
-- 引入 per-receiver blind-spot target grids，而不是只按 sender 自身新增 grid 计 complementarity；
 - 加入 global conflict/capacity term，避免所有 receiver 竞争同一高密度 sender；
+- 进一步实现 minimum-cost-flow-style global assignment，而不是逐 receiver 贪心；
 - 若继续保持虚拟 RSU，表格中必须将其归入 RSU/edge-assisted baseline，而不是 V2V-only decentralized baseline。
 
 ## Additional Candidate Baselines

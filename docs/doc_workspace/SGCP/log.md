@@ -4661,3 +4661,66 @@ FullPerception 口径已拆开：
 - FullPerception-Decentralized proxy：V2V-only strong baseline，`0.80/0.76/0.41`，75.94 Mbps。
 
 PAPG 当前仍是主方法：`0.81/0.78/0.39`，62.54 Mbps。相对 FullPerception-Decentralized，它以更低 payload 获得更高 AP@0.3/AP@0.5，但 AP@0.7 仍略低；后续应继续优化 PAPG 的高 IoU 定位，同时补 EdgeCooper/Where2comm/PACP proxy。
+
+## 2026-07-17 EdgeCooper-style proxy refinement
+
+### 目的
+
+上一轮 EdgeCooper first proxy 使用全局 candidate pool 和 complementarity-minus-redundancy 评分，但 3-frame smoke test 仅 `0.54/0.46/0.15`。本轮定位问题并改为更贴近 EdgeCooper 叙事的 blind-spot-aware edge scheduling proxy。
+
+### 问题定位
+
+naive proxy 的 complementarity 是相对于“已选 sender 覆盖”计算的，不是相对于 receiver/head 的盲区计算的；同时当 receiver blind candidate 为空时会 fallback 到 sender 全视野。这导致多个 cluster head 反复选择 CAV 14/18/10 等全局高密度 sender，通信量很高但融合视角单一。
+
+### 代码改动
+
+`opencda.tools.offline_inference` 中新增/修改：
+
+```text
+receiver_blind_grids()
+edgecooper_candidate_grids()
+edgecooper_grid_score()
+select_edgecooper_members()
+select_edgecooper_grids()
+```
+
+新 proxy 的语义：
+
+- candidate grid 限定为 sender 可观测且 receiver/head 低密度的 blind grids；
+- member utility 使用 blind-grid complementarity、selected-sender redundancy 和 distance/network cost；
+- grid selection 同步使用 EdgeCooper 专属 blind-grid utility；
+- 不再把 blind candidate 为空的 sender fallback 到全视野上传。
+
+### Smoke test
+
+```powershell
+conda run -n opencda python -m opencda.tools.offline_inference --dataset-root D:\Data\Carla --scenario-id 2026_07_15_01_26_56 --ego-cav-id 1 --max-frames 3 --selective-sharing-baseline edgecooper --selective-member-budget 3 --selective-grid-budget 117 --sgcp-inter-cluster-late-fusion --rho-th 3 --num-channels 10 --bandwidth-mhz 20
+```
+
+结果从 naive proxy 的 `0.42/0.36/0.16` 修复到 `0.76/0.72/0.33`，sender 不再被少数车辆垄断。
+
+### 41-frame run
+
+Artifact：
+
+```text
+docs\doc_workspace\SGCP\artifacts\edgecooper_proxy_20260717\
+```
+
+命令：
+
+```powershell
+conda run -n opencda python -m opencda.tools.offline_inference --dataset-root D:\Data\Carla --scenario-id 2026_07_15_01_26_56 --ego-cav-id 1 --max-frames 0 --selective-sharing-baseline edgecooper --selective-member-budget 3 --selective-grid-budget 117 --sgcp-inter-cluster-late-fusion --rho-th 3 --num-channels 10 --bandwidth-mhz 20 --sgcp-trace-output docs\doc_workspace\SGCP\artifacts\edgecooper_proxy_20260717\edgecooper_trace.csv
+```
+
+| Metric | Value |
+| --- | ---: |
+| AP@0.3 / AP@0.5 / AP@0.7 | 0.75 / 0.70 / 0.32 |
+| Total payload | 56,134,048 bytes |
+| Mbps | 109.53 |
+| Avg. source CAVs | 4.00 |
+| Avg. selected grids | 117.00 |
+
+### 结论
+
+EdgeCooper-style proxy 已可复现，但不是强 baseline：它的通信量接近 FullPerception-RSU proxy，AP 却明显低于 PAPG 和 FullPerception-RSU。当前结果应写为 preliminary proxy，而不是严格复现 EdgeCooper 原论文。下一步若继续推进 EdgeCooper，应实现 minimum-cost-flow/global-assignment 风格调度，并加入 conflict/coloring 或 sender capacity 约束。

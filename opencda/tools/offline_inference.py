@@ -252,6 +252,14 @@ def candidate_grids_for_sender(head_vm, sender_vm):
     return candidates
 
 
+def receiver_blind_grids(head_vm):
+    head_lidar = head_vm.perception_manager.lidar
+    blind_grids = head_lidar.req_grids - head_lidar.high_density_grids
+    if not blind_grids:
+        blind_grids = head_lidar.req_grids
+    return blind_grids
+
+
 def randomize_scheduled_grid_selection(world, clusters, timestamp):
     """Replace selected grids while preserving SGCP scheduled links/counts."""
     for cluster in clusters:
@@ -829,6 +837,27 @@ def density_score_for_member(head_vm, sender_vm):
         for grid_id in candidate_grids)
 
 
+def edgecooper_candidate_grids(head_vm, sender_vm):
+    sender_lidar = sender_vm.perception_manager.lidar
+    return sender_lidar.sens_grids & receiver_blind_grids(head_vm)
+
+
+def edgecooper_grid_score(head_vm, sender_vm, grid_id, covered_grids=None):
+    sender_lidar = sender_vm.perception_manager.lidar
+    head_lidar = head_vm.perception_manager.lidar
+    blind_grids = receiver_blind_grids(head_vm)
+    sender_density = sender_lidar.get_grid_density(grid_id)
+    head_density = head_lidar.get_grid_density(grid_id)
+    blind_bonus = 1.0 if grid_id in blind_grids else 0.25
+    novelty_bonus = 1.0
+    if covered_grids is not None and grid_id in covered_grids:
+        novelty_bonus = 0.35
+    redundancy_penalty = min(sender_density, head_density)
+    return (
+        sender_density * blind_bonus * novelty_bonus -
+        0.25 * redundancy_penalty)
+
+
 def select_edgecooper_members(world, head_vm, members, member_budget):
     selected = []
     covered = set()
@@ -837,23 +866,25 @@ def select_edgecooper_members(world, head_vm, members, member_budget):
         best = None
         for member_id in sorted(remaining):
             sender_vm = world.get_vehicle_manager(member_id)
-            candidate_grids = set(candidate_grids_for_sender(head_vm, sender_vm))
+            candidate_grids = set(edgecooper_candidate_grids(
+                head_vm,
+                sender_vm))
             if not candidate_grids:
                 continue
-            new_grids = candidate_grids - covered
-            redundant_grids = candidate_grids & covered
-            lidar = sender_vm.perception_manager.lidar
             complementarity = sum(
-                lidar.get_grid_density(grid_id)
-                for grid_id in new_grids)
+                max(0.0, edgecooper_grid_score(
+                    head_vm,
+                    sender_vm,
+                    grid_id,
+                    covered_grids=covered))
+                for grid_id in candidate_grids)
             redundancy = sum(
-                lidar.get_grid_density(grid_id)
-                for grid_id in redundant_grids)
+                sender_vm.perception_manager.lidar.get_grid_density(grid_id)
+                for grid_id in candidate_grids & covered)
             distance = vehicle_distance(head_vm, sender_vm)
             score = (
-                complementarity -
-                0.35 * redundancy -
-                0.01 * distance)
+                complementarity / (1.0 + distance / 50.0) -
+                0.35 * redundancy)
             item = (-score, distance, member_id, candidate_grids)
             if best is None or item < best:
                 best = item
@@ -863,6 +894,29 @@ def select_edgecooper_members(world, head_vm, members, member_budget):
         selected.append(member_id)
         covered.update(candidate_grids)
         remaining.remove(member_id)
+    return selected
+
+
+def select_edgecooper_grids(head_vm, sender_vm, candidates, count,
+                            covered_grids=None):
+    if count <= 0 or not candidates:
+        return []
+    covered_grids = set() if covered_grids is None else set(covered_grids)
+    remaining = set(candidates)
+    selected = []
+    while remaining and len(selected) < count:
+        best = max(
+            remaining,
+            key=lambda grid_id: (
+                edgecooper_grid_score(
+                    head_vm,
+                    sender_vm,
+                    grid_id,
+                    covered_grids=covered_grids | set(selected)),
+                sender_vm.perception_manager.lidar.get_grid_density(grid_id),
+                str(grid_id)))
+        selected.append(best)
+        remaining.remove(best)
     return selected
 
 
@@ -944,11 +998,15 @@ def assign_selective_grid_selection(world, cluster, baseline_name,
         int(math.ceil(grid_budget / float(len(selected_members)))))
     grid_selection = {}
     remaining = int(grid_budget)
+    covered_edge_grids = set()
     for member_id in selected_members:
         if remaining <= 0:
             break
         sender_vm = world.get_vehicle_manager(member_id)
-        candidate_grids = candidate_grids_for_sender(head_vm, sender_vm)
+        if baseline_name == 'edgecooper':
+            candidate_grids = edgecooper_candidate_grids(head_vm, sender_vm)
+        else:
+            candidate_grids = candidate_grids_for_sender(head_vm, sender_vm)
         if baseline_name == 'random':
             grids = list(candidate_grids)
             rng = random.Random('%s_%s_%s_%s' % (
@@ -957,6 +1015,13 @@ def assign_selective_grid_selection(world, cluster, baseline_name,
                 member_id,
                 grid_budget))
             rng.shuffle(grids)
+        elif baseline_name == 'edgecooper':
+            grids = select_edgecooper_grids(
+                head_vm,
+                sender_vm,
+                candidate_grids,
+                min(per_member_budget, remaining),
+                covered_grids=covered_edge_grids)
         else:
             grids = sorted(
                 candidate_grids,
@@ -966,6 +1031,8 @@ def assign_selective_grid_selection(world, cluster, baseline_name,
         selected = grids[:min(per_member_budget, remaining)]
         if selected:
             grid_selection[member_id] = selected
+            if baseline_name == 'edgecooper':
+                covered_edge_grids.update(selected)
             remaining -= len(selected)
     head_vm.perception_manager.co_manager.set_grid_selection(grid_selection)
 
