@@ -1,6 +1,6 @@
 # SGCP Mechanism Probe
 
-更新时间：2026-07-16
+更新时间：2026-07-17
 
 本文档记录主表修复阶段的第二轮机制 probe，用同一套 cluster 和 inter-cluster late fusion 评估 head-only、SGCP grid-constrained 和 full-cluster upload，定位当前 AP 损失来自哪里。
 
@@ -9,6 +9,7 @@
 `opencda.tools.offline_inference` 新增：
 
 ```text
+--clustering {coalition_game,fixed_first_frame,singleton,all_in_one}
 --sgcp-upload-mode {grid,head_only,full_cluster}
 --sgcp-grid-selection-mode {utility,random,spatial_diverse}
 --sgcp-grid-score-mode {utility,raw_density,density_distance}
@@ -17,6 +18,7 @@
 含义：
 
 - `grid`：默认 SGCP 口径，只上传 PPS/grid selection 选中的 sender grid。
+- `fixed_first_frame` clustering：首帧运行 coalition game 得到固定 head/member 模板，后续帧复用该模板；每帧仍重新计算 grid density、PPS resource allocation 和 OpenCOOD 融合，用于拆分 cluster 更新的贡献。
 - `head_only`：每个 cluster head 只使用自身点云，随后做 inter-cluster late fusion。
 - `full_cluster`：每个 cluster head 接收本 cluster 所有成员的完整点云，随后做 inter-cluster late fusion。
 - `random` grid selection：保留 SGCP/PPS 已调度 sender link 和每条 link 的 grid 数量，但将具体 grid 替换为确定性随机候选 grid，用于判断 utility 排序是否有效。
@@ -57,11 +59,18 @@ Spatial-diverse grid selection：
 conda run -n opencda python -m opencda.tools.offline_inference --dataset-root D:\Data\Carla --scenario-id 2026_07_15_01_26_56 --ego-cav-id 1 --sgcp-constrained --sgcp-inter-cluster-late-fusion --resource-allocation potential_game --sgcp-grid-selection-mode spatial_diverse --max-frames 0 --sgcp-trace-output docs\doc_workspace\SGCP\artifacts\mechanism_probe\spatial_diverse_grid_41f_trace.csv
 ```
 
+Fixed first-frame cluster membership：
+
+```powershell
+conda run -n opencda python -m opencda.tools.offline_inference --dataset-root D:\Data\Carla --scenario-id 2026_07_15_01_26_56 --ego-cav-id 1 --sgcp-constrained --sgcp-inter-cluster-late-fusion --resource-allocation potential_game --clustering fixed_first_frame --max-frames 0 --sgcp-trace-output docs\doc_workspace\SGCP\artifacts\protocol_audit\fixed_first_frame_41f_trace.csv
+```
+
 ## 结果
 
 | Mode | AP@0.3 | AP@0.5 | AP@0.7 | Total Bytes | Avg. Bytes / Receiver | Avg. Sources | Avg. Uploaded Sources | Avg. Uploaded Points | Avg. Selected Grids |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
 | Head-only | 0.26 | 0.22 | 0.09 | 0 | 0.00 | 1.00 | 0.00 | 0.00 | 0.00 |
+| Fixed first-frame cluster, SGCP grid-constrained | 0.73 | 0.70 | 0.33 | 26,325,216 | 107,013.07 | 2.67 | 1.67 | 6,688.32 | 88.09 |
 | SGCP grid-constrained | 0.77 | 0.73 | 0.35 | 26,916,208 | 109,415.48 | 2.67 | 1.67 | 6,838.47 | 87.32 |
 | Random grid, same scheduled links | 0.78 | 0.75 | 0.36 | 27,908,560 | 113,449.43 | 2.67 | 1.67 | 7,090.59 | 87.32 |
 | Raw-density score | 0.74 | 0.70 | 0.37 | 29,290,768 | 119,068.16 | 2.67 | 1.67 | 7,441.76 | 88.55 |
@@ -80,6 +89,7 @@ conda run -n opencda python -m opencda.tools.offline_inference --dataset-root D:
 ## 结论
 
 - Cluster-head local-only perception 很弱，说明协同上传对 AP 有显著贡献。
+- 固定首帧 cluster membership 的 AP 为 `0.73/0.70/0.33`，低于动态 coalition 的 `0.77/0.73/0.35`，而 payload 略低。这说明 cluster 更新本身有可观贡献，不能把所有周期都固定为首帧拓扑；但差距小于 grid-constrained 与 full-cluster 的差距，主表修复仍应优先改进 grid/PPS 选择质量。
 - Full-cluster upload 在同一 cluster 和 inter-cluster late fusion 结构下达到 `0.82/0.79/0.42`，说明 cluster formation 和 late fusion 主体并没有崩。
 - SGCP grid-constrained 使用约 60.0% 的 full-cluster payload，AP@0.5 保留约 92.4% 的 full-cluster AP，但 AP@0.7 损失明显。
 - Random grid selection 在同一调度链路和相同 grid 数量下达到 `0.78/0.75/0.36`，略高于当前 utility selection 的 `0.77/0.73/0.35`。这说明当前 grid utility 对检测 AP 的排序能力不足，至少在该 dump 上没有优于简单随机候选。
@@ -90,6 +100,6 @@ conda run -n opencda python -m opencda.tools.offline_inference --dataset-root D:
 
 ## 下一步
 
-- 增加 fixed-cluster / all-in-one / singleton 的同 upload-mode 对照，拆分 cluster 质量影响。
+- 如需进一步拆 cluster 质量，可补 all-in-one 的同 upload-mode 对照；fixed-first-frame 与 singleton 已说明动态 coalition 不是主表异常的主要来源。
 - 检查 `PotentialGame.best_response()` 中 `B_h=1` 和 `max_grids_per_rb` 的实际约束，评估是否需要更灵活的 per-head member budget。
 - 将 `spatial_diverse` 进一步整理为论文可解释的 coverage-aware grid utility，并补 payload-matched sweep，目标是在约 60-65% full-cluster payload 下稳定超过 random-grid。

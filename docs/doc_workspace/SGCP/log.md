@@ -3529,3 +3529,66 @@ frames=41 trace_rows=246 total_payload_bytes=26916208 missing_channel_rows=0 out
 ### 结论
 
 离线多帧协议链路现在有 receiver-level 和 frame-level 两层可检查输出。现有 OpenCOOD AP 是 41 帧全局累计指标，不能从当前 trace 严谨拆成逐帧 AP；因此文档和论文中保留全局 AP，并用帧级 CSV 解释 protocol variables 与 pred/GT count。
+
+## 2026-07-17 - Fixed first-frame cluster membership probe
+
+### 目的
+
+补齐 P-1 中 fixed cluster membership 机制 probe：首帧使用 coalition game 生成 cluster head/member 模板，后续 40 帧固定该模板；每帧仍重新计算点云密度、PPS resource allocation、grid selection 和 OpenCOOD inter-cluster late fusion。该 probe 用于拆分 cluster 更新贡献与 grid/PPS 选择贡献。
+
+### 代码更新
+
+`opencda.tools.offline_inference` 新增：
+
+```text
+--clustering fixed_first_frame
+```
+
+### Smoke test
+
+```powershell
+conda run -n opencda python -m py_compile opencda\tools\offline_inference.py
+
+conda run -n opencda python -m opencda.tools.offline_inference --dataset-root D:\Data\Carla --scenario-id 2026_07_15_01_26_56 --ego-cav-id 1 --sgcp-constrained --sgcp-inter-cluster-late-fusion --resource-allocation potential_game --clustering fixed_first_frame --max-frames 3 --sgcp-trace-output docs\doc_workspace\SGCP\artifacts\protocol_audit\fixed_first_frame_3f_trace.csv
+```
+
+3 帧 smoke test 正常结束，AP@0.3/0.5/0.7 = 0.65/0.62/0.26。
+
+### 41 帧命令
+
+```powershell
+conda run -n opencda python -m opencda.tools.offline_inference --dataset-root D:\Data\Carla --scenario-id 2026_07_15_01_26_56 --ego-cav-id 1 --sgcp-constrained --sgcp-inter-cluster-late-fusion --resource-allocation potential_game --clustering fixed_first_frame --max-frames 0 --sgcp-trace-output docs\doc_workspace\SGCP\artifacts\protocol_audit\fixed_first_frame_41f_trace.csv
+```
+
+日志：
+
+```text
+docs\doc_workspace\SGCP\artifacts\protocol_audit\fixed_first_frame_41f_stdout.log
+docs\doc_workspace\SGCP\artifacts\protocol_audit\fixed_first_frame_41f_trace.csv
+docs\doc_workspace\SGCP\artifacts\protocol_audit\fixed_first_frame_41f_frame_summary.csv
+```
+
+### 结果
+
+```text
+cp counter: 41
+AP@0.3 / AP@0.5 / AP@0.7 = 0.73 / 0.70 / 0.33
+sgcp_summary frames=246 avg_comm_bytes=107013.07 total_comm_bytes=26325216 avg_source_cavs=2.67 avg_selected_grids=88.09
+frames=41 trace_rows=246 total_payload_bytes=26325216 missing_channel_rows=0
+```
+
+帧级统计：
+
+- 每帧 receiver count：6。
+- 平均 fused CAV ids / frame：16.00。
+- 平均 uploaded source ids / frame：10.00。
+- 平均 payload / frame：642,078.44 bytes。
+- Payload 范围：549,824 到 717,488 bytes/frame。
+- 平均 selected grids / frame：528.54。
+- 平均 pred boxes sum / frame：62.10。
+- 平均 GT boxes sum / frame：163.66。
+- `missing_channel_rows`：0。
+
+### 结论
+
+固定首帧 cluster membership 的 AP `0.73/0.70/0.33` 低于动态 coalition 的 `0.77/0.73/0.35`，说明 topology-aware cluster 更新确实贡献精度；但二者差距小于 SGCP grid-constrained 与 full-cluster upload 的差距，主表结果修复仍应继续集中在 coverage-aware grid utility、member/grid budget 和 AP@0.7 定位质量。

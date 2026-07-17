@@ -59,7 +59,8 @@ def parse_args():
     parser.add_argument('--resource-allocation', default='potential_game',
                         help='SGCP resource allocation algorithm for constrained inference.')
     parser.add_argument('--clustering', default='coalition_game',
-                        choices=['coalition_game', 'singleton', 'all_in_one'],
+                        choices=['coalition_game', 'fixed_first_frame',
+                                 'singleton', 'all_in_one'],
                         help='Clustering algorithm for SGCP constrained inference.')
     parser.add_argument('--sgcp-receiver-policy',
                         choices=['ego', 'ego-cluster-head',
@@ -321,6 +322,37 @@ def diversify_scheduled_grid_selection(world, clusters):
         co_manager.set_grid_selection(diversified)
 
 
+def cluster_templates_from_clusters(clusters):
+    templates = []
+    for cluster in clusters:
+        templates.append({
+            'head_id': int(cluster.head_id),
+            'member_ids': sorted(int(member_id)
+                                 for member_id in cluster.members),
+        })
+    return templates
+
+
+def build_fixed_clusters(world, cluster_templates):
+    common.Vehicle_Grid.initialize(world)
+    clusters = []
+    for template in cluster_templates:
+        member_ids = [
+            int(member_id)
+            for member_id in template['member_ids']
+            if world.get_vehicle_manager(int(member_id)) is not None
+        ]
+        if not member_ids:
+            continue
+        cluster = common.Cluster(set(member_ids))
+        fixed_head = int(template['head_id'])
+        if world.get_vehicle_manager(fixed_head) is not None:
+            cluster.head_id = fixed_head
+            cluster.grid_bits = cluster.compute_grid_bits()
+        clusters.append(cluster)
+    return clusters
+
+
 def apply_sgcp_constraint(frame, protocol, ego_cav_id, resource_allocation,
                           receiver_policy, t_min_stab=None,
                           clustering='coalition_game', n_max=None,
@@ -328,14 +360,15 @@ def apply_sgcp_constraint(frame, protocol, ego_cav_id, resource_allocation,
                           bandwidth_mhz=None, upload_mode='grid',
                           grid_selection_mode='utility',
                           grid_score_mode='utility',
-                          timestamp=None):
+                          timestamp=None,
+                          fixed_cluster_templates=None):
     clear_sgcp_globals()
     world = OfflineCavWorld(
         frame,
         ego_id=ego_cav_id,
         protocol=protocol,
         density_threshold=rho_th)
-    if clustering == 'coalition_game':
+    if clustering in ['coalition_game', 'fixed_first_frame']:
         clustering_algorithm = CoalitionGame(world)
     elif clustering == 'singleton':
         clustering_algorithm = NaiveCluster(world, all_in_one=False)
@@ -347,7 +380,15 @@ def apply_sgcp_constraint(frame, protocol, ego_cav_id, resource_allocation,
         clustering_algorithm.p.T_min_stab = t_min_stab
     if n_max is not None and hasattr(clustering_algorithm, 'p'):
         clustering_algorithm.p.N_max = n_max
-    clusters = clustering_algorithm.run()
+    if clustering == 'fixed_first_frame' and fixed_cluster_templates:
+        clusters = build_fixed_clusters(world, fixed_cluster_templates)
+    else:
+        clusters = clustering_algorithm.run()
+        if (clustering == 'fixed_first_frame' and
+                fixed_cluster_templates is not None and
+                not fixed_cluster_templates):
+            fixed_cluster_templates.extend(
+                cluster_templates_from_clusters(clusters))
     apply_cluster_state(world, clusters)
     allocator = build_resource_allocator(resource_allocation, world)
     if hasattr(allocator, 'grid_score_mode'):
@@ -733,6 +774,7 @@ def main():
     sgcp_summaries = []
     sgcp_trace_rows = []
     ns3_link_quality = load_ns3_link_quality(args.ns3_link_quality_csv)
+    fixed_cluster_templates = []
 
     if args.timestamp is not None:
         if args.scenario_id is None:
@@ -800,7 +842,10 @@ def main():
                 args.sgcp_upload_mode,
                 args.sgcp_grid_selection_mode,
                 args.sgcp_grid_score_mode,
-                timestamp)
+                timestamp,
+                fixed_cluster_templates=(
+                    fixed_cluster_templates
+                    if args.clustering == 'fixed_first_frame' else None))
         if args.sgcp_inter_cluster_late_fusion:
             original_ego = next(cav for cav in frame.values() if cav['ego'])
             target_ego_lidar_pose = original_ego['params']['lidar_pose']
