@@ -5154,3 +5154,46 @@ Representative rows:
 ### 结论
 
 这批 dense target-grid miss 不是 inter-cluster late fusion/NMS 抑制已有正确框，也不是单纯 receiver 没有出任何框；nearest head 有正常数量的 detector boxes，但目标 best IoU 仍为 0。下一步算法不应继续只按 grid id/point count 调度，而要进入 object-level point association：确认 grid 内上传点是否真的落在目标 3D box 内，并设计 box-aware/instance-aware grid scoring 或 point selection。
+
+## 2026-07-18 Object-level point association
+
+### 目的
+
+上一轮 head-local box diagnostics 说明 dense-miss top40 中 nearest head / any head / late-fused 都没有与 GT 重叠的检测框，但 full-reference 全部可检出。本轮进一步检查：这些被调度到 nearest head 的点是否真的落入 GT object box，而不仅仅是落在同一个 coarse grid 内。
+
+### 代码
+
+```text
+opencda/tools/sgcp_object_point_association.py
+```
+
+### 命令
+
+```powershell
+conda run -n opencda python -m opencda.tools.sgcp_object_point_association --dataset-root D:\Data\Carla --scenario-id 2026_07_15_01_26_56 --ego-cav-id 1 --failure-gt-csv docs\doc_workspace\SGCP\artifacts\failure_diag_papg_bh2_rho3_41f\gt_objects.csv --output-csv docs\doc_workspace\SGCP\artifacts\object_point_assoc_papg_dense_20260718\object_point_assoc_dense_top40.csv --resource-allocation perception_aware_potential_game --rho-th 3 --num-channels 10 --bandwidth-mhz 20 --head-rb-budget 2 --max-rows 40 --min-nearest-head-points 30 --margins '0,1,2,4'
+```
+
+### 结果
+
+Dense-miss top40 统计：
+
+| Metric | Min | Avg | Max | Zero rows |
+| --- | ---: | ---: | ---: | ---: |
+| Receiver points inside GT BEV box | 0 | 64.30 | 327 | 3 / 40 |
+| Uploaded points inside GT BEV box | 0 | 34.17 | 350 | 1 / 40 |
+| Total SGCP points inside GT BEV box | 0 | 98.48 | 350 | 1 / 40 |
+| Total SGCP points inside GT BEV box + 1 m | 1 | 142.72 | 653 | 0 / 40 |
+| Total SGCP points inside GT BEV box + 2 m | 3 | 285.18 | 1612 | 0 / 40 |
+| Nearest CAV raw points inside GT BEV box | 0 | 107.82 | 344 | 5 / 40 |
+| Nearest CAV uploaded points inside GT BEV box | 0 | 20.68 | 344 | 31 / 40 |
+
+Lowest exact-box support examples include object `419` at frame `000060` with 0 exact-box points but 148 nearest-head coarse-grid points, and object `377` at frames `000076/000078` with only 4/5 exact-box points.
+
+### 结论
+
+这批 dense-miss 不能解释为“目标附近完全没有点”。在 exact BEV box 内，39/40 行已有 SGCP 支撑点；扩展到 2 m 邻域后，40/40 行都有点。但 nearest CAV 的 object-box 点大多没有被直接上传到 nearest head：31/40 行的 `nearest_cav_uploaded_box_points_m0p0=0`。因此当前失败更像是两类问题叠加：
+
+- coarse grid 覆盖不等价于目标实例级覆盖，部分 grid 点并不形成足够完整的目标形状；
+- 即使有目标附近点，SGCP constrained input 的多视角密度/形状上下文仍不足以让 head-local detector 出框。
+
+下一步应比较 full-reference 与 SGCP 在这些 GT box/near-box 内的点数差距，并把调度 utility 从 grid-density 进一步推进到 instance-support / box-support aware，而不是继续调普通 source fairness 或 late-fusion NMS。
