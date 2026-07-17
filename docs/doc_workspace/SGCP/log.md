@@ -5207,3 +5207,42 @@ Lowest exact-box support examples include object `419` at frame `000060` with 0 
 - 即使有目标附近点，SGCP constrained input 的多视角密度/形状上下文仍不足以让 head-local detector 出框。
 
 下一步应把调度 utility 从 grid-density 进一步推进到 instance-support / box-support aware：在不增加 RB 数的前提下，优先保护最佳实例视角到相关 cluster head 的传输，再由 target layer 选择能补全目标形状的 grid。
+
+## 2026-07-18 Instance-support PPS probe
+
+### 目的
+
+基于 object-level point association 的结论，新增 `instance_support_potential_game`。该分支不使用 GT box，而是在 PAPG 的 coverage layer / target layer 内加入实例支撑 proxy：紧凑高密度 grid component、head weak-view gain、unique-best-view gain。目标是在同一 20 MHz / 10 ch / `rho_th=3` / `B_h=2` 预算下，让最佳实例视角更容易成为 sender，并优先选择能补全目标形状的 grid。
+
+### 代码
+
+```text
+opencda/core/clustering/algorithms/resource_allocation/instance_support_potential_game.py
+opencda/core/clustering/algorithms/resource_allocation/builder.py
+```
+
+### 命令
+
+11 帧快速 probe：
+
+```powershell
+conda run -n opencda python -m opencda.tools.offline_inference --dataset-root D:\Data\Carla --scenario-id 2026_07_15_01_26_56 --ego-cav-id 1 --max-frames 11 --sgcp-constrained --sgcp-receiver-policy all-cluster-heads --sgcp-inter-cluster-late-fusion --resource-allocation instance_support_potential_game --rho-th 3 --num-channels 10 --bandwidth-mhz 20 --head-rb-budget 2 --sgcp-trace-output docs\doc_workspace\SGCP\artifacts\ispg_11f_20260718\trace.csv --object-diagnostics-output docs\doc_workspace\SGCP\artifacts\ispg_11f_20260718\objects.csv
+```
+
+41 帧完整 probe：
+
+```powershell
+conda run -n opencda python -m opencda.tools.offline_inference --dataset-root D:\Data\Carla --scenario-id 2026_07_15_01_26_56 --ego-cav-id 1 --max-frames 0 --sgcp-constrained --sgcp-receiver-policy all-cluster-heads --sgcp-inter-cluster-late-fusion --resource-allocation instance_support_potential_game --rho-th 3 --num-channels 10 --bandwidth-mhz 20 --head-rb-budget 2 --sgcp-trace-output docs\doc_workspace\SGCP\artifacts\ispg_41f_20260718\trace.csv --object-diagnostics-output docs\doc_workspace\SGCP\artifacts\ispg_41f_20260718\objects.csv
+```
+
+### 结果
+
+| Variant | Frames | AP@0.3 | AP@0.5 | AP@0.7 | Payload bytes | Mbps | Avg. fused CAVs | Avg. uploaded CAVs | Avg. selected grids |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| ISPG | 11 | 0.76 | 0.73 | 0.34 | 8,608,016 | 62.60 | 16.00 / 20 | 10.00 / 20 | 95.55 |
+| ISPG | 41 | 0.80 | 0.78 | 0.39 | 32,046,336 | 62.53 | 16.00 / 20 | 10.00 / 20 | 97.39 |
+| PAPG main reference | 41 | 0.81 | 0.78 | 0.39 | 32,049,872 | 62.54 | 16.00 / 20 | 10.00 / 20 | 97.22 |
+
+### 结论
+
+ISPG 是中性/负面 probe：它保持了 PAPG 的 AP@0.5/AP@0.7 和通信量，但 AP@0.3 低 0.01，且覆盖结构没有变化，仍为每帧 16/20 fused、10/20 uploaded、4/20 unscheduled。这说明实例支撑 proxy 只放进簇内 sender/grid utility 不足以突破当前瓶颈。下一步应把实例支撑推进到更高一层：跨簇 receiver assignment / target-to-head routing，确保最佳实例视角能送到真正负责该目标的 head，而不是只在现有 cluster 内重排 grid。

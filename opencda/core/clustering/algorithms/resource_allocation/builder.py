@@ -28,6 +28,9 @@ from opencda.core.clustering.algorithms.resource_allocation.quality_gated_percep
 from opencda.core.clustering.algorithms.resource_allocation.head_urgent_perception_aware_potential_game import (
     HeadUrgentPerceptionAwarePotentialGame,
 )
+from opencda.core.clustering.algorithms.resource_allocation.instance_support_potential_game import (
+    InstanceSupportPotentialGame,
+)
 
 
 RESOURCE_ALLOCATION_ALGORITHMS = {
@@ -57,6 +60,9 @@ RESOURCE_ALLOCATION_ALGORITHMS = {
     'head_urgent_perception_aware_pg':
         HeadUrgentPerceptionAwarePotentialGame,
     'hupapg': HeadUrgentPerceptionAwarePotentialGame,
+    'instance_support_potential_game': InstanceSupportPotentialGame,
+    'instance_support_pg': InstanceSupportPotentialGame,
+    'ispg': InstanceSupportPotentialGame,
     'pcs': PCS,
     'fullperception': PCS,
     'fullperception_pcs': PCS,
