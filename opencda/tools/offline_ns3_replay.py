@@ -75,6 +75,10 @@ def parse_args():
                         help='Override SGCP resource allocation channel count.')
     parser.add_argument('--bandwidth-mhz', type=float, default=None,
                         help='Override SGCP total bandwidth in MHz.')
+    parser.add_argument('--head-rb-budget', type=int, default=None,
+                        help='Override PotentialGame per-head RB budget B_h. '
+                             'Defaults to 1 to preserve the original SGCP '
+                             'protocol.')
     parser.add_argument('--rho-th', type=float, default=None,
                         help='Override lidar density_threshold / rho_th for '
                              'SGCP grid candidate construction.')
@@ -176,7 +180,7 @@ def collect_channel_allocation(world):
 
 
 def apply_resource_overrides(resource_allocator, world, num_channels=None,
-                             bandwidth_mhz=None):
+                             bandwidth_mhz=None, head_rb_budget=None):
     if num_channels is not None:
         if num_channels <= 0:
             raise ValueError('--num-channels must be positive')
@@ -189,6 +193,10 @@ def apply_resource_overrides(resource_allocator, world, num_channels=None,
         if bandwidth_mhz <= 0:
             raise ValueError('--bandwidth-mhz must be positive')
         resource_allocator.p.bandwidth_all = float(bandwidth_mhz) * (10 ** 6)
+    if head_rb_budget is not None:
+        if head_rb_budget <= 0:
+            raise ValueError('--head-rb-budget must be positive')
+        resource_allocator.p.head_rb_budget = int(head_rb_budget)
     if num_channels is not None or bandwidth_mhz is not None:
         resource_allocator.p.bandwidth_per_channel = (
             resource_allocator.p.bandwidth_all /
@@ -199,7 +207,8 @@ def build_world_and_requests(dataset, scenario_id, timestamp, ego_cav_id,
                              protocol, packet_size, resource_allocation=None,
                              include_unscheduled=False, num_channels=None,
                              bandwidth_mhz=None,
-                             grid_score_mode='utility', rho_th=None):
+                             grid_score_mode='utility', rho_th=None,
+                             head_rb_budget=None):
     frame = dataset.load_frame(
         scenario_id,
         timestamp,
@@ -224,7 +233,8 @@ def build_world_and_requests(dataset, scenario_id, timestamp, ego_cav_id,
         resource_allocator,
         world,
         num_channels=num_channels,
-        bandwidth_mhz=bandwidth_mhz)
+        bandwidth_mhz=bandwidth_mhz,
+        head_rb_budget=head_rb_budget)
     resource_allocator.set_clusters(clusters)
     resource_allocator.run()
 
@@ -386,7 +396,8 @@ def main():
                     num_channels=args.num_channels,
                     bandwidth_mhz=args.bandwidth_mhz,
                     grid_score_mode=args.sgcp_grid_score_mode,
-                    rho_th=args.rho_th)
+                    rho_th=args.rho_th,
+                    head_rb_budget=args.head_rb_budget)
                 cluster_count = len(clusters)
                 request_mode = 'sgcp_%s_%s_%s' % (
                     ra_name,

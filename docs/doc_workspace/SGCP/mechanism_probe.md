@@ -20,7 +20,7 @@
 
 - `grid`：默认 SGCP 口径，只上传 PPS/grid selection 选中的 sender grid。
 - `fixed_first_frame` clustering：首帧运行 coalition game 得到固定 head/member 模板，后续帧复用该模板；每帧仍重新计算 grid density、PPS resource allocation 和 OpenCOOD 融合，用于拆分 cluster 更新的贡献。
-- `head_rb_budget`：覆盖 `PotentialGame` 中每个簇头最多使用的 RB 数 `B_h`。默认 `1`，保持原始 SGCP 协议；大于 1 仅作为 member/grid budget sensitivity，需要重新做 NS3 request-level 验证后才能进入主表。
+- `head_rb_budget`：覆盖 `PotentialGame` 中每个簇头最多使用的 RB 数 `B_h`。默认 `1`，保持原始 SGCP 协议；大于 1 用作 member/grid budget sensitivity。当前 `B_h=2,rho_th=3` 已完成 11 帧 NS3 request-level replay。
 - `head_only`：每个 cluster head 只使用自身点云，随后做 inter-cluster late fusion。
 - `full_cluster`：每个 cluster head 接收本 cluster 所有成员的完整点云，随后做 inter-cluster late fusion。
 - `random` grid selection：保留 SGCP/PPS 已调度 sender link 和每条 link 的 grid 数量，但将具体 grid 替换为确定性随机候选 grid，用于判断 utility 排序是否有效。
@@ -107,7 +107,7 @@ conda run -n opencda python -m opencda.tools.offline_inference --dataset-root D:
 - Random grid selection 在同一调度链路和相同 grid 数量下达到 `0.78/0.75/0.36`，略高于当前 utility selection 的 `0.77/0.73/0.35`。这说明当前 grid utility 对检测 AP 的排序能力不足，至少在该 dump 上没有优于简单随机候选。
 - `raw_density` 和 `density_distance` 提升 AP@0.7 到 `0.37`，但明显损失 AP@0.3/0.5，并增加 payload；单纯追高密度或近距离高密度不是稳健解。
 - `spatial_diverse` 在相同 scheduled links 和相同 grid count 下达到 `0.79/0.75/0.37`，高于原始 utility 和 random-grid，同时仍只使用 full-cluster payload 的约 64.1%。这说明覆盖多样性是比饱和密度 utility 更有希望的算法改造方向。
-- `B_h=2` sensitivity 显著提升高 IoU：`rho_th=3` 时 AP@0.7 达到 `0.42`，等于 full-cluster upload 的 AP@0.7，且 payload 只有 27,962,864 bytes、约 54.56 Mbps。但 AP@0.3/0.5 降至 `0.76/0.72`，说明更灵活的 per-head RB budget 改善了定位质量/高置信局部几何，却可能损失召回分布。该结果适合作为 high-IoU sensitivity 或后续算法调参线索；进入主表前必须补 NS3 request-level replay。
+- `B_h=2` sensitivity 显著提升高 IoU：`rho_th=3` 时 AP@0.7 达到 `0.42`，等于 full-cluster upload 的 AP@0.7，且 payload 只有 27,962,864 bytes、约 54.56 Mbps。但 AP@0.3/0.5 降至 `0.76/0.72`，说明更灵活的 per-head RB budget 改善了定位质量/高置信局部几何，却可能损失召回分布。该结果适合作为 high-IoU sensitivity 或后续算法调参线索；11 帧 NS3 replay 已验证 110/110 request application/RLC complete。
 - 子信道 sweep 显示 20 子信道 `spatial_diverse` 可达到 `0.80/0.76/0.41`，AP@0.7 已接近 full-cluster `0.42`，payload 约为 full-cluster 的 84.5%。10 子信道仍是更强的低通信主点，20 子信道适合作为 high-budget sensitivity。
 - 当前主表偏低的主要嫌疑从协议链路转移到 grid/PPS 选择质量：需要把 grid utility 从“密度饱和增益”改为“检测导向的覆盖/定位增益”，并继续处理 `B_h=1`、grid budget 和 AP@0.7 定位精度。
 

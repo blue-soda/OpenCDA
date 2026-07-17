@@ -3641,3 +3641,73 @@ conda run -n opencda python -m opencda.tools.offline_inference --dataset-root D:
 ### 结论
 
 `B_h=2` 能把 AP@0.7 提到 `0.42`，等于 full-cluster upload 的高 IoU 结果，且通信量仅 54.56 Mbps；但 AP@0.3/0.5 降到 `0.76/0.72`，不适合作为当前主表主行。它说明 member/RB budget 能调节定位质量与召回分布，是后续算法改造方向。由于 scheduled links 可能变化，`B_h=2` 结果进入论文主表前必须补离线 NS3 replay。
+
+## 2026-07-17 - `B_h=2,rho_th=3` offline NS3 replay
+
+### 目的
+
+补齐 `B_h=2,rho_th=3` high-IoU sensitivity 的 NS3 request-level delivery。该设置改变 PPS 参数，不能沿用此前 `B_h=1` 的 110/110 replay 结论。
+
+### 代码更新
+
+`opencda.tools.offline_ns3_replay` 新增：
+
+```text
+--head-rb-budget <int>
+```
+
+与 `offline_inference --head-rb-budget` 使用同一 `PotentialGame.p.head_rb_budget`。
+
+### Dry-run
+
+```powershell
+conda run -n opencda python -m py_compile opencda\tools\offline_ns3_replay.py
+
+conda run -n opencda python -m opencda.tools.offline_ns3_replay --dataset-root D:\Data\Carla --scenario-id 2026_07_15_01_26_56 --ego-cav-id 1 --max-frames 11 --sgcp-grid-selection-mode spatial_diverse --rho-th 3 --head-rb-budget 2 --dry-run --upload-plan-output docs\doc_workspace\SGCP\artifacts\sgcp_ns3_spatial_bh2_rho3_11f\upload_plan_dry.csv
+```
+
+Dry-run 结果：11 帧，每帧 10 条 scheduled request、4 条 skipped unscheduled demand；`sc_start=0..9` 各 11 条。
+
+### NS3 replay
+
+ns-3：
+
+```powershell
+wsl -d Ubuntu-22.04 -u sakakibara -- bash -lc "cd ~/workspace/carla-ns3-co-simulation/ns-3-dev && timeout 90s stdbuf -oL -eL ./ns3 run 'scratch/vanet/main.cc --simTime=2.5 --enableTimeSync=true --carlaHost=auto --targetSubchannels=10'"
+```
+
+OpenCDA replay：
+
+```powershell
+conda run -n opencda python -m opencda.tools.offline_ns3_replay --dataset-root D:\Data\Carla --scenario-id 2026_07_15_01_26_56 --ego-cav-id 1 --max-frames 11 --sgcp-grid-selection-mode spatial_diverse --rho-th 3 --head-rb-budget 2 --drain-seconds 1.0 --sync-timeout 20 --upload-plan-output docs\doc_workspace\SGCP\artifacts\sgcp_ns3_spatial_bh2_rho3_11f\upload_plan.csv
+```
+
+Eval：
+
+```powershell
+conda run -n opencda python -m opencda.tools.ns3_log_eval --ns3-stdout docs\doc_workspace\SGCP\artifacts\sgcp_ns3_spatial_bh2_rho3_11f\ns3_stdout.log --upload-plan docs\doc_workspace\SGCP\artifacts\sgcp_ns3_spatial_bh2_rho3_11f\upload_plan.csv --output-dir docs\doc_workspace\SGCP\artifacts\sgcp_ns3_spatial_bh2_rho3_11f\eval --max-frames 11
+```
+
+### 结果
+
+```text
+planned_requests=110
+observed_cam_received=110
+bridge_observed_delivery_ratio=1.000000
+avg_delay_ms=23.909
+p95_delay_ms=24.000
+phy_decode_failures=0
+rlc_tx_events=2970
+rlc_rx_events=2970
+rlc_complete_requests=110
+rlc_partial_requests=0
+rlc_no_rx_requests=0
+MANUAL_RESOURCE_APPLY=2970
+MANUAL_CMD_REJECT=0
+PSCCH_DECODE_FAIL=0
+PSSCH_DECODE_FAIL=0
+```
+
+### 结论
+
+`B_h=2,rho_th=3` 的 high-IoU sensitivity 在 10 子信道暴露窗口内可以完整收发：110/110 request application callback complete，110/110 RLC complete，PHY failures 为 0。该结果移除了 NS3 pending 标记；但由于 AP@0.3/0.5 下降，它仍更适合写成定位质量/高 IoU tradeoff，而不是直接替换低预算主行。

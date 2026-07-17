@@ -23,7 +23,7 @@
 | SGCP original utility, 10ch | Previous SGCP | 0.77 | 0.73 | 0.35 | 26,916,208 | 52.52 | 110/110 complete | Original saturated-density utility |
 | SGCP coverage-aware, 10ch, `rho_th=2` | Proposed low-budget | 0.79 | 0.75 | 0.37 | 28,743,280 | 56.08 | 110/110 complete | Spatial-diverse grid selection |
 | SGCP coverage-aware, 10ch, `rho_th=3` | Proposed low-budget tuned | 0.79 | 0.76 | 0.38 | 29,405,296 | 57.38 | 110/110 complete | Better threshold setting; same channel budget |
-| SGCP coverage-aware, 10ch, `rho_th=3`, `B_h=2` | High-IoU sensitivity | 0.76 | 0.72 | 0.42 | 27,962,864 | 54.56 | Pending | Matches full-cluster AP@0.7 at lower payload, but AP@0.3/0.5 drops; not a main row until NS3 replay is added |
+| SGCP coverage-aware, 10ch, `rho_th=3`, `B_h=2` | High-IoU sensitivity | 0.76 | 0.72 | 0.42 | 27,962,864 | 54.56 | 110/110 complete | Matches full-cluster AP@0.7 at lower payload, but AP@0.3/0.5 drops; use as sensitivity unless recall is recovered |
 | SGCP coverage-aware, 20ch, `rho_th=2` | Proposed high-budget | 0.80 | 0.76 | 0.41 | 37,912,544 | 73.98 | 154/154 complete | Near full-cluster AP@0.7 with 84.5% full-cluster payload |
 
 ## 不建议放入主公平表的行
@@ -42,11 +42,11 @@
 3. The fair baseline should be payload-matched selective sharing. In high-budget mode, selective density reaches `0.80/0.76/0.40` at 73.58 Mbps.
 4. SGCP coverage-aware 20ch reaches `0.80/0.76/0.41` at 73.98 Mbps, slightly improving AP@0.7 over the payload-matched selective baseline while retaining PPS feasibility and verified NS3 delivery.
 5. SGCP coverage-aware 10ch `rho_th=3` is the low-budget main point: `0.79/0.76/0.38` at 57.38 Mbps, far below centralized FullPerception's 118.71 Mbps.
-6. `B_h=2` is a useful high-IoU sensitivity: `0.76/0.72/0.42` at 54.56 Mbps. It should be discussed as a localization-quality tradeoff unless request-level NS3 replay and AP@0.3/0.5 recovery are completed.
+6. `B_h=2` is a useful high-IoU sensitivity: `0.76/0.72/0.42` at 54.56 Mbps, with 110/110 NS3 request-level delivery over the first 11 frames. It should be discussed as a localization-quality tradeoff unless AP@0.3/0.5 recall is recovered.
 
 ## Next Decisions
 
 - Use `rho_th=3` or `rho_th=2` as the 10ch main row. `rho_th=3` gives better AP with small payload increase; `rho_th=2` is closer to the original calibrated default.
 - Decide whether the main table shows both SGCP 10ch and 20ch, or places 20ch in network-resource sensitivity.
 - `rho_th=3` NS3 replay is now complete: 110/110 application callbacks and 110/110 RLC-complete requests over the first 11 frames, with no PHY decode failures.
-- If using `B_h=2`, first extend `offline_ns3_replay` to accept `--head-rb-budget` and validate the changed request plan; previous 110/110 replay does not apply because the scheduled links can change.
+- If using `B_h=2` in the main table, add a short note that it improves AP@0.7 but reduces AP@0.3/0.5; the 11-frame NS3 replay is complete, but the AP tradeoff still needs a paper-story decision.
