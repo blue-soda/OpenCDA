@@ -31,6 +31,7 @@ SGCP 工作与仓库中以下部分关系最紧密：
 - PAPG `B_h=3` 已完成 41 帧 probe：`0.80/0.78/0.40`、32,051,792 bytes / `62.54 Mbps`，avg source CAVs 降至 2.67。结论是简单提高 per-head RB 上限不能追平 EdgeCooper-HD 的 AP@0.7；下一步若继续提升 PAPG，应做高质量 source / target-grid coverage 保护。
 - 已同步 `C:\Workspace\icdcs-paper\SGCP\main.tex`：主表加入 `EdgeCooper-HD (edge-assisted)` 行，并在正文明确它是 virtual edge-assisted reference，不属于 fully decentralized RSU-free V2V 公平 baseline。
 - 已新增 `balanced_perception_aware_potential_game` / `bpapg` 独立分支，用 source-diversity marginal potential 和 source-history credit 验证“欠服务源车保护”方向。41 帧 source-balanced 结果为 `0.81/0.78/0.39`、62.54 Mbps，与 PAPG 主行 AP/通信量相同且 per-CAV upload distribution 未改变；11 帧 source-history credit 降至 `0.75/0.71/0.33`。结论：不能做朴素 source fairness，下一步必须用 detector-quality / target-quality 门控保护低频但关键的 source。
+- 已新增 `quality_gated_perception_aware_potential_game` 和 `head_urgent_perception_aware_potential_game` 两个后续分支。QG-PAPG 11 帧为 `0.75/0.72/0.33`，说明有 quality gate 的 source-history 仍会伤 AP；HU-PAPG 41 帧为 `0.81/0.78/0.39`、62.54 Mbps，安全但无增益，`B_h=3` 11 帧也未改变结果。当前结论：不要继续调 source/head fairness 系数，下一步转向 detector/pre-NMS 级证据和目标点级关联。
 - PAPG 真实 NS3 replay 已完成 11 帧：110/110 scheduled requests application callback 和 RLC request complete，RLC drops=0，PHY decode failures=0。
 - `main.tex`、`main_table_candidate.md`、`results.md`、`baseline_fairness.md`、`fullperception_baseline_revision.md`、`baseline_reproduction_plan.md`、`rebuttal_draft.md` 和 `rebuttal_short.md` 当前应以 PAPG 主线和显式 baseline 分层为准；早期 coverage-aware 10ch/20ch 只作为消融或资源敏感性结果。
 

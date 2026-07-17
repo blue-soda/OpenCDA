@@ -5081,3 +5081,31 @@ Trace coverage summary confirms that the first BPAPG variant kept the same per-C
 ### 结论
 
 BPAPG is a useful negative branch, not a new main method. The high-IoU fix should not be a generic under-served-CAV rotation. It needs detector-quality / target-quality gating: only protect a low-frequency source if it covers a diagnosed target grid with comparable object-prototype quality, otherwise source fairness hurts AP.
+
+## 2026-07-18 Quality-gated and head-urgent PAPG probes
+
+### 目的
+
+上一轮 BPAPG 说明普通 source fairness 无效。本轮继续做两个更收敛的机制分支：
+
+- `quality_gated_perception_aware_potential_game` / `qgpapg`：仅当低频 source 的 object/peak/coverage 接近本簇最佳候选时才给 source-history credit。
+- `head_urgent_perception_aware_potential_game` / `hupapg`：完全去掉 source-history，改成 receiver/head 侧 target urgency，把额外 RB 倾向分配给 coverage layer 后仍有强 target-prototype candidate 的 head。
+
+### 代码
+
+- `opencda/core/clustering/algorithms/resource_allocation/quality_gated_perception_aware_potential_game.py`
+- `opencda/core/clustering/algorithms/resource_allocation/head_urgent_perception_aware_potential_game.py`
+- `opencda/core/clustering/algorithms/resource_allocation/builder.py`
+
+### 结果
+
+| Variant | Frames | `B_h` | AP@0.3 | AP@0.5 | AP@0.7 | Payload bytes | Mbps | Avg. source CAVs | Avg. selected grids |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| QG-PAPG | 11 | 2 | 0.75 | 0.72 | 0.33 | 8,602,400 | 62.56 | 2.67 | 95.23 |
+| HU-PAPG | 11 | 2 | 0.76 | 0.73 | 0.34 | 8,598,224 | 62.53 | 2.67 | 95.24 |
+| HU-PAPG | 41 | 2 | 0.81 | 0.78 | 0.39 | 32,049,872 | 62.54 | 2.67 | 97.22 |
+| HU-PAPG | 11 | 3 | 0.76 | 0.73 | 0.34 | 8,598,224 | 62.53 | 2.67 | 95.24 |
+
+### 结论
+
+QG-PAPG 仍然会因 source-history credit 替换稳定视角而伤 AP；说明即便有 object-quality gate，跨帧 source fairness 也不适合作为主线。HU-PAPG 去掉 source history 后恢复到 PAPG 主行水平，但没有突破 AP@0.7，`B_h=3` 的短评估也没有改变有效链路集合。下一步不应继续调 source/head fairness 系数，而应进入 detector/pre-NMS 级诊断：确认“nearest head 已收到 dense target grid 但无 final box”的 35 行里，问题发生在 detector 无框、NMS 抑制，还是 grid 内点云没有落到目标实体。
