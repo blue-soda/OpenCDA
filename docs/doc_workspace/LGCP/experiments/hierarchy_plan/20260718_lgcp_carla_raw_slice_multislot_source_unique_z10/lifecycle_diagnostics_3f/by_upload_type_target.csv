@@ -1,0 +1,14 @@
+upload_type,target_node,planned_requests,planned_bytes,requests_with_rlc_tx,requests_with_rlc_rx,requests_with_pssch_ok,requests_with_pssch_fail,requests_with_cam_received,rlc_rx_ratio,pssch_ok_ratio,cam_received_ratio
+leader_to_rsu,21,90,180000,90,84,84,0,39,0.933333,0.933333,0.433333
+member_to_leader,1,6,16320,5,4,4,0,0,0.666667,0.666667,0.000000
+member_to_leader,10,3,9216,2,2,2,0,0,0.666667,0.666667,0.000000
+member_to_leader,11,3,5872,3,3,3,0,2,1.000000,1.000000,0.666667
+member_to_leader,12,6,10384,4,2,2,0,0,0.333333,0.333333,0.000000
+member_to_leader,16,2,24304,1,1,1,0,0,0.500000,0.500000,0.000000
+member_to_leader,19,3,18960,3,3,3,0,1,1.000000,1.000000,0.333333
+member_to_leader,20,3,6464,3,0,0,0,0,0.000000,0.000000,0.000000
+member_to_leader,4,9,26368,7,5,5,0,0,0.555556,0.555556,0.000000
+member_to_leader,5,3,39552,3,3,3,0,2,1.000000,1.000000,0.666667
+member_to_leader,7,3,2368,3,2,2,0,0,0.666667,0.666667,0.000000
+member_to_leader,8,3,5856,3,0,0,0,0,0.000000,0.000000,0.000000
+member_to_leader,9,3,6736,3,0,0,0,0,0.000000,0.000000,0.000000

@@ -1,0 +1,8 @@
+upload_type,terminal_state,planned_requests,planned_bytes,requests_with_rlc_tx,requests_with_rlc_rx,requests_with_pssch_ok,requests_with_pssch_fail,requests_with_cam_received,rlc_rx_ratio,pssch_ok_ratio,cam_received_ratio
+leader_to_rsu,application_received,39,78000,39,39,39,0,39,1.000000,1.000000,1.000000
+leader_to_rsu,rlc_rx_only,45,90000,45,45,45,0,0,1.000000,1.000000,0.000000
+leader_to_rsu,rlc_tx_no_rx,6,12000,6,0,0,0,0,0.000000,0.000000,0.000000
+member_to_leader,application_received,5,36656,5,5,5,0,5,1.000000,1.000000,1.000000
+member_to_leader,planned_only,7,22720,0,0,0,0,0,0.000000,0.000000,0.000000
+member_to_leader,rlc_rx_only,20,79488,20,20,20,0,0,1.000000,1.000000,0.000000
+member_to_leader,rlc_tx_no_rx,15,33536,15,0,0,0,0,0.000000,0.000000,0.000000

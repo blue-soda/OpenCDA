@@ -36,6 +36,9 @@ def parse_args():
                              'sequential stage slots.')
     parser.add_argument('--slot-duration-ms', type=float, default=10.0,
                         help='Latency proxy duration per scheduled slot.')
+    parser.add_argument('--enforce-source-unique', action='store_true',
+                        help='For multi_slot mode, place at most one request '
+                             'from the same source in each slot.')
     return parser.parse_args()
 
 
@@ -193,8 +196,57 @@ def build_scheduled_plan(rows, subchannels, leader_reserve, priority_mode):
     return scheduled_rows, gated_rows, frame_summary
 
 
+def pack_rows_source_unique(rows, subchannels):
+    slots = []
+    for row in rows:
+        source_id = row.get('source_id', '')
+        placed = False
+        for slot in slots:
+            if len(slot['rows']) >= subchannels:
+                continue
+            if source_id in slot['sources']:
+                continue
+            slot['rows'].append(row)
+            slot['sources'].add(source_id)
+            placed = True
+            break
+        if not placed:
+            slots.append({'rows': [row], 'sources': {source_id}})
+    return [slot['rows'] for slot in slots]
+
+
 def schedule_rows_to_slots(rows, subchannels, start_slot, stage,
-                           priority_mode, slot_duration_ms):
+                           priority_mode, slot_duration_ms,
+                           enforce_source_unique=False):
+    scheduled = []
+    sorted_rows = sorted(rows, key=lambda row: row_priority(row, priority_mode))
+    if enforce_source_unique:
+        slot_rows = pack_rows_source_unique(sorted_rows, subchannels)
+    else:
+        slot_rows = [
+            sorted_rows[index:index + subchannels]
+            for index in range(0, len(sorted_rows), subchannels)
+        ]
+    for slot_offset, rows_in_slot in enumerate(slot_rows):
+        for channel, row in enumerate(rows_in_slot):
+            slot_index = start_slot + slot_offset
+            item = OrderedDict(row)
+            item['sc_start'] = channel
+            item['sc_num'] = 1
+            item['slot_index'] = slot_index
+            item['stage'] = stage
+            item['schedule_status'] = 'scheduled'
+            item['schedule_reason'] = (
+                'multi_slot_source_unique'
+                if enforce_source_unique else 'multi_slot_stage')
+            item['scheduled_delay_ms'] = '%.6f' % (
+                (slot_index + 1) * slot_duration_ms)
+            scheduled.append(item)
+    return scheduled, len(slot_rows)
+
+
+def _old_schedule_rows_to_slots(rows, subchannels, start_slot, stage,
+                                priority_mode, slot_duration_ms):
     scheduled = []
     sorted_rows = sorted(rows, key=lambda row: row_priority(row, priority_mode))
     for index, row in enumerate(sorted_rows):
@@ -216,7 +268,8 @@ def schedule_rows_to_slots(rows, subchannels, start_slot, stage,
     return scheduled, slot_count
 
 
-def build_multi_slot_plan(rows, subchannels, priority_mode, slot_duration_ms):
+def build_multi_slot_plan(rows, subchannels, priority_mode, slot_duration_ms,
+                          enforce_source_unique=False):
     frames = group_by_timestamp(rows)
     scheduled_rows = []
     gated_rows = []
@@ -241,21 +294,24 @@ def build_multi_slot_plan(rows, subchannels, priority_mode, slot_duration_ms):
             0,
             'member_to_leader',
             priority_mode,
-            slot_duration_ms)
+            slot_duration_ms,
+            enforce_source_unique=enforce_source_unique)
         scheduled_leaders, leader_slots = schedule_rows_to_slots(
             leader_rows,
             subchannels,
             member_slots,
             'leader_to_rsu',
             priority_mode,
-            slot_duration_ms)
+            slot_duration_ms,
+            enforce_source_unique=enforce_source_unique)
         scheduled_other, other_slots = schedule_rows_to_slots(
             other_rows,
             subchannels,
             member_slots + leader_slots,
             'other',
             priority_mode,
-            slot_duration_ms)
+            slot_duration_ms,
+            enforce_source_unique=enforce_source_unique)
         frame_scheduled_rows = (
             scheduled_members + scheduled_leaders + scheduled_other)
         scheduled_rows.extend(frame_scheduled_rows)
@@ -359,7 +415,11 @@ def main():
             rows, args.subchannels, args.leader_reserve, args.priority_mode)
     else:
         scheduled_rows, gated_rows, frame_summary = build_multi_slot_plan(
-            rows, args.subchannels, args.priority_mode, args.slot_duration_ms)
+            rows,
+            args.subchannels,
+            args.priority_mode,
+            args.slot_duration_ms,
+            enforce_source_unique=args.enforce_source_unique)
     summary_rows = summarize(frame_summary, args.slot_duration_ms)
 
     scheduled_fieldnames = extend_fieldnames(scheduled_rows or rows)
@@ -381,6 +441,7 @@ def main():
             'priority_mode': args.priority_mode,
             'schedule_mode': args.schedule_mode,
             'slot_duration_ms': args.slot_duration_ms,
+            'enforce_source_unique': args.enforce_source_unique,
             'note': 'Scheduled LGCP upload-plan input/proxy.',
         }, stream, sort_keys=False)
     write_notes(

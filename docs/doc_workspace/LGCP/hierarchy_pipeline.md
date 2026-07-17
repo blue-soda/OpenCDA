@@ -600,3 +600,9 @@ docs/doc_workspace/LGCP/experiments/hierarchy_plan/20260718_lgcp_carla_raw_slice
 - size-bin diagnostics 显示 member-to-leader 的大包不是主要瓶颈：`8000-16000` bytes bin 为 `6/6` RLC RX / PSSCH OK；较弱的是 `1000-4000` bytes bins 和 member slot 1。
 
 因此下一步 live-replay 调试应聚焦 member slots 的时序 / target receiver setup，以及非 RSU receiver 的 CAM application completion。
+
+半双工/source-unique 敏感性：
+
+- 新增 `lgcp_schedule_upload_plan_eval.py --enforce-source-unique`，避免同一 CAV 在同一 slot 同时向多个 target 发射。
+- Top-30 11 帧完整计划仍可排入 504/504 requests，但 mean slots/frame 从 `5.0` 增加到 `7.36`，mean scheduling latency proxy 从 `50ms` 增加到 `73.64ms`。
+- 3 帧 live replay 中 member-to-leader application callbacks 从 `2/47` 增加到 `5/47`，但总 delivery 从 `54/137` 小幅降到 `52/137`；该约束有助于设计更真实的 scheduler，但不足以单独解决 member-to-leader 瓶颈。

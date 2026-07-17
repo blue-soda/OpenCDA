@@ -1,0 +1,10 @@
+stage,slot_index,planned_requests,planned_bytes,requests_with_rlc_tx,requests_with_rlc_rx,requests_with_pssch_ok,requests_with_pssch_fail,requests_with_cam_received,rlc_rx_ratio,pssch_ok_ratio,cam_received_ratio
+leader_to_rsu,2,20,40000,20,14,14,0,5,0.700000,0.700000,0.250000
+leader_to_rsu,3,24,48000,24,24,24,0,14,1.000000,1.000000,0.583333
+leader_to_rsu,4,21,42000,21,21,21,0,14,1.000000,1.000000,0.666667
+leader_to_rsu,5,14,28000,14,14,14,0,4,1.000000,1.000000,0.285714
+leader_to_rsu,6,8,16000,8,8,8,0,0,1.000000,1.000000,0.000000
+leader_to_rsu,7,3,6000,3,3,3,0,2,1.000000,1.000000,0.666667
+member_to_leader,0,28,118464,28,14,14,0,5,0.500000,0.500000,0.178571
+member_to_leader,1,18,53152,11,10,10,0,0,0.555556,0.555556,0.000000
+member_to_leader,2,1,784,1,1,1,0,0,1.000000,1.000000,0.000000

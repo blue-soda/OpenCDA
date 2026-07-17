@@ -1,0 +1,2 @@
+frames,input_requests,scheduled_requests,capacity_gated_requests,scheduled_request_ratio,input_bytes,scheduled_bytes,capacity_gated_bytes,scheduled_byte_ratio,slot_duration_ms,total_slots_mean,total_slots_max,frame_latency_ms_mean,frame_latency_ms_max
+11,504,504,0,1.000000,1313568,1313568,0,1.000000,10.000000,7.363636,8,73.636364,80.000000

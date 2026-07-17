@@ -3157,3 +3157,56 @@ size-bin diagnostics：
 - member-to-leader 瓶颈同时包含 RLC/PSSCH 未到达和 RLC RX 后 application callback 未出现。
 - member-to-leader 大包不是主要瓶颈；`8000-16000` bytes bin 反而全部达到 RLC/PSSCH。
 - 下一步应检查 member slot timing / target receiver setup，以及非 RSU receiver 的 CAM application completion。
+
+## 2026-07-18 - Source-unique multi-slot scheduling sensitivity
+
+目标：
+
+- 验证同一 source 在同一 slot 多目的地发射是否解释 member-to-leader callback 偏低。
+- 在 multi-slot scheduler 中加入 source-unique packing，作为半双工敏感性。
+
+代码变更：
+
+```text
+opencda/tools/lgcp_schedule_upload_plan_eval.py
+```
+
+命令：
+
+```powershell
+conda run -n opencda python -m opencda.tools.lgcp_schedule_upload_plan_eval --upload-plan docs\doc_workspace\LGCP\experiments\hierarchy_plan\20260717_lgcp_carla_raw_slice_upload_plan_area30\raw_slice_upload_plan.csv --output-dir docs\doc_workspace\LGCP\experiments\hierarchy_plan\20260718_lgcp_carla_raw_slice_multislot_source_unique_z10 --subchannels 10 --schedule-mode multi_slot --slot-duration-ms 10 --enforce-source-unique
+```
+
+schedule proxy：
+
+| Metric | Value |
+| --- | ---: |
+| Scheduled requests | 504 / 504 |
+| Mean slots / frame | 7.363636 |
+| Max slots / frame | 8 |
+| Mean scheduling latency | 73.636 ms |
+| Max scheduling latency | 80.000 ms |
+
+3-frame live replay summary：
+
+| Metric | Value |
+| --- | ---: |
+| Planned requests | 137 |
+| Observed `cam_received` | 52 |
+| Bridge-observed delivery ratio | 0.379562 |
+| Avg delay | 59.769 ms |
+| P95 delay | 111.000 ms |
+| PSSCH FAIL requests | 0 |
+
+by type：
+
+| Upload type | Planned | Observed app | RLC RX |
+| --- | ---: | ---: | ---: |
+| member-to-leader | 47 | 5 | 25 |
+| leader-to-RSU | 90 | 45 | 84 |
+
+结论：
+
+- source-unique packing 让 member-to-leader application callbacks 从 `2/47` 提高到 `5/47`。
+- 但总 delivery 从 `54/137` 降到 `52/137`，member-to-leader RLC RX 也从 `28/47` 降到 `25/47`。
+- 因此同 source 同 slot 多发是一个真实约束，应保留在调度机制中，但不是 member-to-leader 瓶颈的充分解释。

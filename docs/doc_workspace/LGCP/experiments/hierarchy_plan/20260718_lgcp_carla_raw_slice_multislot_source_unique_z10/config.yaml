@@ -1,0 +1,8 @@
+upload_plan: C:\Workspace\OpenCDA\docs\doc_workspace\LGCP\experiments\hierarchy_plan\20260717_lgcp_carla_raw_slice_upload_plan_area30\raw_slice_upload_plan.csv
+subchannels: 10
+leader_reserve: 3
+priority_mode: hierarchy_bytes
+schedule_mode: multi_slot
+slot_duration_ms: 10.0
+enforce_source_unique: true
+note: Scheduled LGCP upload-plan input/proxy.

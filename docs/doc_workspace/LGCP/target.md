@@ -77,4 +77,5 @@
 - [x] 将 HARQ feedback 进一步绑定到 LGCP upload request，并确认 replay 配置下 HARQ event 可观测。
 - [x] 扩大 request-level PSSCH / HARQ trace 到 11 帧 LGCP replay。
 - [x] 接入 LGCP multi-slot replay lifecycle diagnostics，定位 scheduled replay 中 member-to-leader callback 偏低的阶段原因。
+- [x] 增加 LGCP source-unique / half-duplex scheduling sensitivity，验证同 source 同 slot 多发不是 member-to-leader 瓶颈的充分解释。
 - [ ] 实现 LGCP 专用 RSU area assignment、leader local fusion 和 RSU global aggregation 管线。（已完成 offline assignment / upload plan、hierarchy area-budget sweep、raw LiDAR feature-slice budget sweep、raw-slice-aware upload plan dry-run / 3 帧与 11 帧 request-level NS3 trace、single-slot scheduled NS3 smoke、multi-slot scheduling proxy、3 帧 live multi-slot replay 和 leader/RSU aggregation proxy；neural feature slicing + model-level fusion 仍待实现）

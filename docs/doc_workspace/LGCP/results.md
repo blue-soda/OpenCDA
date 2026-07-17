@@ -1715,3 +1715,47 @@ Interpretation:
 - The member-to-leader bottleneck is split between RLC/PSSCH non-arrival and application-level non-callback after RLC RX.
 - The bottleneck is not simply caused by large raw slices: the largest member-to-leader bin (`8000-16000` bytes) reaches RLC/PSSCH for all 6 requests, while the `1000-4000` byte bins are weaker.
 - Next debugging should inspect member slot timing / target receiver setup and CAM application completion for non-RSU receivers.
+
+## LGCP Source-Unique Multi-Slot Sensitivity
+
+`lgcp_schedule_upload_plan_eval.py` now supports `--enforce-source-unique`, which prevents a CAV from sending more than one request in the same slot. This tests whether member-to-leader losses are caused by a single source being scheduled to multiple leaders simultaneously.
+
+Run directory:
+
+```text
+docs/doc_workspace/LGCP/experiments/hierarchy_plan/20260718_lgcp_carla_raw_slice_multislot_source_unique_z10
+```
+
+Schedule proxy:
+
+| Metric | Value |
+| --- | ---: |
+| Scheduled requests | 504 / 504 |
+| Mean slots / frame | 7.363636 |
+| Max slots / frame | 8 |
+| Mean frame scheduling latency | 73.636 ms |
+| Max frame scheduling latency | 80.000 ms |
+
+3-frame live replay:
+
+| Metric | Value |
+| --- | ---: |
+| Planned requests | 137 |
+| Observed `cam_received` | 52 |
+| Bridge-observed delivery ratio | 0.379562 |
+| Avg delay | 59.769 ms |
+| P95 delay | 111.000 ms |
+| Requests with PSSCH FAIL | 0 |
+
+By upload type:
+
+| Upload type | Planned | Observed app | Bridge ratio | Requests with RLC RX |
+| --- | ---: | ---: | ---: | ---: |
+| member-to-leader | 47 | 5 | 0.106383 | 25 |
+| leader-to-RSU | 90 | 45 | 0.500000 | 84 |
+
+Interpretation:
+
+- Source-unique packing avoids same-source same-slot transmissions and increases member-to-leader application callbacks from `2/47` to `5/47`.
+- It does not improve total delivery versus the previous multi-slot replay (`52/137` vs `54/137`) and lowers member-to-leader RLC RX from `28/47` to `25/47`.
+- Therefore source uniqueness is a useful half-duplex constraint to retain in the scheduler design, but it is not sufficient to solve the member-to-leader path by itself.
