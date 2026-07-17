@@ -4333,3 +4333,51 @@ conda run -n opencda python -m opencda.tools.offline_inference --dataset-root D:
 ### 结论
 
 OAPG 已经在 selected-frame 诊断层面修复“最佳视角 rank 高但未调度”的机制问题，但 11 帧 AP 尚未超过当前主表候选，尤其 AP@0.7 下降。该分支暂不写入主表；下一步需要 41 帧完整评估、限制每个 head 的 sender replacement 数量、加入 detector-quality gate，并对“target grid 已选中但仍漏检”的对象输出 pre-NMS boxes。
+
+## 2026-07-17 Perception-aware potential game 主表候选
+
+### 目的
+
+用户要求继续按 target-grid 诊断方式调优，但最终算法必须完整、可写入论文叙事，不能表现为在旧结果上缝补。上一轮 OAPG 虽能修复若干单帧最佳视角未调度问题，但 11 帧 AP 下降，说明只追逐 object peak 会牺牲上下文和 source diversity。
+
+### 代码改动
+
+新增算法：
+
+```text
+opencda/core/clustering/algorithms/resource_allocation/perception_aware_potential_game.py
+```
+
+注册入口：
+
+```text
+perception_aware_potential_game
+perception_aware_pg
+papg
+```
+
+机制：两层 perception-aware potential-guided scheduling。第一层为每个 cluster head 分配一个高质量外部视角，保护低 IoU recall 和空间覆盖；第二层把剩余 RB 分配给 object-prototype marginal gain 最高的链路。两层使用统一 grid utility/object prototype，不使用外部 `spatial_diverse` 后处理或逐案 fallback。
+
+### 关键命令
+
+```powershell
+conda run -n opencda python -m opencda.tools.offline_inference --dataset-root D:\Data\Carla --scenario-id 2026_07_15_01_26_56 --ego-cav-id 1 --max-frames 0 --sgcp-constrained --resource-allocation perception_aware_potential_game --sgcp-inter-cluster-late-fusion --rho-th 3 --num-channels 10 --bandwidth-mhz 20 --head-rb-budget 2 --sgcp-trace-output docs\doc_workspace\SGCP\artifacts\papg_bh2_rho3_41f_trace.csv --object-diagnostics-output docs\doc_workspace\SGCP\artifacts\object_diag_papg_bh2_rho3_41f.csv
+
+conda run -n opencda python -m opencda.tools.sgcp_failure_diagnostics --dataset-root D:\Data\Carla --scenario-id 2026_07_15_01_26_56 --ego-cav-id 1 --max-frames 0 --resource-allocation perception_aware_potential_game --rho-th 3 --num-channels 10 --bandwidth-mhz 20 --head-rb-budget 2 --object-diagnostics-csv docs\doc_workspace\SGCP\artifacts\object_diag_papg_bh2_rho3_41f.csv --output-dir docs\doc_workspace\SGCP\artifacts\failure_diag_papg_bh2_rho3_41f
+
+conda run -n opencda python -m opencda.tools.offline_ns3_replay --dataset-root D:\Data\Carla --scenario-id 2026_07_15_01_26_56 --ego-cav-id 1 --max-frames 11 --resource-allocation perception_aware_potential_game --rho-th 3 --num-channels 10 --bandwidth-mhz 20 --head-rb-budget 2 --upload-plan-output docs\doc_workspace\SGCP\artifacts\papg_bh2_rho3_ns3_11f_upload_plan.csv --dry-run
+```
+
+### 结果
+
+| Method | Frames | AP@0.3 | AP@0.5 | AP@0.7 | Payload bytes | Mbps | Scheduled links | Avg. selected grids |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| `perception_aware_potential_game`, 20MHz/10ch/rho3/`B_h=2` | 41 | 0.81 | 0.78 | 0.39 | 32,049,872 | 62.54 | 410 | 97.22 |
+
+11 帧快速 probe 中，PAPG 为 `0.76/0.73/0.34`，优于 target-aware/OAPG 的 `B_h=2` probe；late NMS 0.05/0.30 均未超过默认 0.15，说明收益主要来自调度层，而非 NMS 调参。`rho_th=4` 的 11 帧结果与 `rho_th=3` 基本一致，说明不是单纯阈值 trick。
+
+对象级诊断：PAPG 将 target-aware PG 下 106 个 full-reference detected but SGCP-missed rows 降到 59。41 帧每帧固定调度 10 条链路，总计 410 条，说明结果没有绕过子信道预算。
+
+### 结论
+
+PAPG 是当前最适合写入主表和机制章节的 SGCP 候选：相比 strong selective baseline，它用更低 Mbps 获得更高 AP@0.3/AP@0.5；相比 full 20-CAV upper reference，它明确低于上界但通信量约为一半。下一步只需补真实 NS3 socket replay / 在线短回归，并将论文中 `coverage-aware` 叙事升级为 perception-aware two-layer potential scheduling。

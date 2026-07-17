@@ -16,6 +16,9 @@ from opencda.core.clustering.algorithms.resource_allocation.target_aware_potenti
 from opencda.core.clustering.algorithms.resource_allocation.object_aware_potential_game import (
     ObjectAwarePotentialGame,
 )
+from opencda.core.clustering.algorithms.resource_allocation.perception_aware_potential_game import (
+    PerceptionAwarePotentialGame,
+)
 
 
 RESOURCE_ALLOCATION_ALGORITHMS = {
@@ -28,6 +31,9 @@ RESOURCE_ALLOCATION_ALGORITHMS = {
     'object_aware_potential_game': ObjectAwarePotentialGame,
     'object_aware_pg': ObjectAwarePotentialGame,
     'oapg': ObjectAwarePotentialGame,
+    'perception_aware_potential_game': PerceptionAwarePotentialGame,
+    'perception_aware_pg': PerceptionAwarePotentialGame,
+    'papg': PerceptionAwarePotentialGame,
     'pcs': PCS,
     'mws': MWS,
     'random': RandomRA,

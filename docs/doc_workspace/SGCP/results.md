@@ -193,8 +193,13 @@ Target-aware potential-game scheduler:
 | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | --- |
 | `potential_game + spatial_diverse` | 10ch / 20 MHz | 3.0 | 0.79 | 0.76 | 0.38 | 29,405,296 | 57.38 | 89.72 | Former low-budget tuned row; grid action was replaced outside the allocator |
 | `target_aware_potential_game` | 10ch / 20 MHz | 3.0 | 0.80 | 0.76 | 0.39 | 31,069,968 | 60.62 | 89.72 | New allocator: original PotentialGame sender/RB stage plus target-aware grid-action refinement |
+| `perception_aware_potential_game`, `B_h=2` | 10ch / 20 MHz | 3.0 | 0.81 | 0.78 | 0.39 | 32,049,872 | 62.54 | 97.22 | Two-layer allocator: coverage layer guarantees one external view per head, target layer assigns remaining RBs to object-prototype gains |
 
 Object-level diagnostics show the new scheduler reduces full-reference-detected but SGCP-missed GT rows from 111 to 106. The main targeted bucket, “covered only by other cluster heads,” drops from 63 to 56, and nearest-head covering point mean rises from 69.4 to 79.0. This supports the mechanism change: AP gain comes from moving key target grids toward the relevant cluster head, not from adding more scheduled links.
+
+Perception-aware PG is the current best coherent main-table candidate. It improves over target-aware PG on AP@0.3/AP@0.5 (`0.81/0.78` vs. `0.80/0.76`) while retaining AP@0.7 (`0.39`). Compared with the strong high-budget selective baseline (`0.80/0.76/0.40`, 37,710,864 bytes / 73.58 Mbps), PAPG uses about 15.0% less payload and improves AP@0.3/AP@0.5, with AP@0.7 lower by 0.01. It remains below the full 20-CAV early upper reference (`0.85/0.83/0.48`, 118.71 Mbps), which is the desired claim boundary.
+
+PAPG object-level diagnostics reduce full-reference-detected but SGCP-missed rows from 106 under target-aware PG to 59, with 410 scheduled links over 41 frames (10 links/frame, no extra unscheduled source bypass). The dominant remaining missed grids are `0_-2`, `3_-1`, `0_1`, and `2_-2`; these should drive the next object-level paper figure or online validation, not another ad-hoc fallback.
 
 ### CAV Count Scaling
 
