@@ -1856,3 +1856,31 @@ Interpretation:
 
 - The 3-frame result confirms the adapter is not limited to a single timestamp and can cache repeated leader/group plans across a full Top-30 area budget.
 - It remains a method-validation result until expanded to the full 11-frame local dump and compared against flat selective-sharing baselines under the same frame range.
+
+## Box-Level Hierarchy Top-30 Eleven-Frame
+
+2026-07-18 完成 Top-30 box-level hierarchy late-fusion 的完整 11 帧本地 dump 运行：
+
+```text
+docs/doc_workspace/LGCP/experiments/hierarchy_plan/20260718_lgcp_carla_hierarchy_late_fusion_top30_11f
+```
+
+| Metric | Value |
+| --- | ---: |
+| Frames | 11 |
+| Assignment rows | 330 |
+| Cached group inference calls | 245 |
+| Mean RSU fused pred boxes / frame | 34.909091 |
+| Mean RSU fused GT boxes / frame | 37.090909 |
+| AP@0.3 | 0.602748 |
+| AP@0.5 | 0.602748 |
+| AP@0.7 | 0.506345 |
+| GT total | 408 |
+| Pred samples | 384 |
+
+Interpretation:
+
+- This is the first complete 11-frame model-calling local-to-global hierarchy result on the local `lgcp_carla` dump.
+- It supports the local-to-global ablation direction more directly than the previous quality proxy because OpenCOOD is actually invoked for each leader area-task group.
+- It remains box-level late fusion. It should be described separately from future neural feature slicing / intermediate fusion.
+- The next table should align this result with the existing 11-frame flat selective-sharing baselines and report both perception AP and communication byte proxy.

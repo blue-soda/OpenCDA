@@ -283,3 +283,41 @@ Per-frame summary:
 - 3 帧 Top-30 run 说明 box-level hierarchy adapter 在连续帧上可稳定运行。
 - AP@0.5 从单帧的 `0.606851` 到 3 帧的 `0.584564`，未出现明显链路崩溃。
 - 下一步应扩大到 11 帧，并将结果与 existing full / confidence_topk / comm_aware_topk / area_aware_union subset ablation 做同帧口径对齐。
+
+## 2026-07-18 Top-30 Eleven-Frame Run
+
+运行目录：
+
+```text
+docs/doc_workspace/LGCP/experiments/hierarchy_plan/20260718_lgcp_carla_hierarchy_late_fusion_top30_11f
+```
+
+命令：
+
+```powershell
+conda run -n opencda python -m opencda.tools.lgcp_hierarchy_late_fusion_eval --dataset-root D:\Data\Carla --scenario-id 2026_07_15_02_33_21 --assignment-plan docs\doc_workspace\LGCP\experiments\hierarchy_plan\20260717_lgcp_carla_hierarchy_budget_sweep_density_distance\area30\area_assignment_plan.csv --output-dir docs\doc_workspace\LGCP\experiments\hierarchy_plan\20260718_lgcp_carla_hierarchy_late_fusion_top30_11f --max-frames 11 --fusion-method late
+```
+
+结果：
+
+| Metric | Value |
+| --- | ---: |
+| Frames | 11 |
+| Assignment rows | 330 |
+| Cached group inference calls | 245 |
+| Mean planned areas / frame | 30.000000 |
+| Mean RSU fused pred boxes / frame | 34.909091 |
+| Mean RSU fused GT boxes / frame | 37.090909 |
+| AP@0.3 | 0.602748 |
+| AP@0.5 | 0.602748 |
+| AP@0.7 | 0.506345 |
+| GT total | 408 |
+| Pred samples | 384 |
+
+逐帧 `unique_group_inference_calls` 为 `21-23`，说明 Top-30 area rows 中存在稳定的 leader/group 复用。
+
+解释：
+
+- 这是当前本地 `lgcp_carla` dump 上第一个完整 11 帧 box-level hierarchy result。
+- 该结果可作为 local-to-global hierarchy ablation 的模型调用版本，但仍属于 box-level late fusion，不是 neural feature slicing。
+- 下一步应把它与 `lgcp_subset_ablation_eval.py` 已有 11 帧 full / confidence_topk / comm_aware_topk / area_aware_union 结果做同表对齐，并补充 byte proxy：Top-30 raw member upload `59.42 KB/frame`，scheduled latency proxy `50 ms/frame`。

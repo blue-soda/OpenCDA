@@ -3293,3 +3293,25 @@ by type：
 - 结论：
   - Top-30 box-level hierarchy adapter 已通过连续 3 帧验证。
   - 下一步应扩大到 11 帧，并和既有 flat selective-sharing baseline 的 11 帧 AP / byte proxy 做同帧对照。
+
+## Box-level hierarchy Top-30 eleven-frame run
+
+- 命令：
+  - `conda run -n opencda python -m opencda.tools.lgcp_hierarchy_late_fusion_eval --dataset-root D:\Data\Carla --scenario-id 2026_07_15_02_33_21 --assignment-plan docs\doc_workspace\LGCP\experiments\hierarchy_plan\20260717_lgcp_carla_hierarchy_budget_sweep_density_distance\area30\area_assignment_plan.csv --output-dir docs\doc_workspace\LGCP\experiments\hierarchy_plan\20260718_lgcp_carla_hierarchy_late_fusion_top30_11f --max-frames 11 --fusion-method late`
+- 输出目录：
+  - `docs/doc_workspace/LGCP/experiments/hierarchy_plan/20260718_lgcp_carla_hierarchy_late_fusion_top30_11f`
+- 结果：
+  - frames: `11`
+  - assignment rows: `330`
+  - cached group inference calls: `245`
+  - mean RSU fused pred / GT boxes per frame: `34.909091 / 37.090909`
+  - AP@0.3 / AP@0.5 / AP@0.7: `0.602748 / 0.602748 / 0.506345`
+  - GT total / pred samples: `408 / 384`
+- 逐帧：
+  - unique group calls per frame: `21-23`
+  - RSU fused pred boxes per frame: `32-36`
+  - RSU fused GT boxes per frame: `35-38`
+- 结论：
+  - 本地 `lgcp_carla` 11 帧 box-level hierarchy late-fusion 已跑通。
+  - 该结果是真实 OpenCOOD model-calling hierarchy ablation，但仍是 box-level late fusion，不是 neural feature slicing。
+  - 下一步应整理与 full / confidence_topk / comm_aware_topk / area_aware_union 的同帧 11 帧对照表。
