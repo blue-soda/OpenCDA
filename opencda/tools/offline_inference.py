@@ -70,6 +70,9 @@ def parse_args():
     parser.add_argument('--sgcp-inter-cluster-late-fusion',
                         action='store_true',
                         help='Late-fuse predictions from all SGCP cluster heads into the requested ego pose and submit one AP sample per frame.')
+    parser.add_argument('--sgcp-late-nms-thresh', type=float, default=0.15,
+                        help='NMS IoU threshold for SGCP inter-cluster late '
+                             'fusion. Defaults to the previous value 0.15.')
     parser.add_argument('--sgcp-upload-mode', default='grid',
                         choices=['grid', 'head_only', 'full_cluster'],
                         help='Upload mode for SGCP constrained replay. grid uses PPS-selected grids; head_only keeps only each receiver; full_cluster uploads all cluster member point clouds for protocol probes.')
@@ -937,8 +940,12 @@ def main():
 
             fused_pred, fused_score = manager.naive_late_fusion(
                 pred_tensors,
-                pred_scores)
-            fused_gt, _ = manager.naive_late_fusion(gt_tensors, None)
+                pred_scores,
+                iou_threshold=args.sgcp_late_nms_thresh)
+            fused_gt, _ = manager.naive_late_fusion(
+                gt_tensors,
+                None,
+                iou_threshold=args.sgcp_late_nms_thresh)
             print('sgcp_late_fusion frame=%s/%s scenario=%s timestamp=%s '
                   'sources=%s fused_pred_boxes=%s fused_gt_boxes=%s' % (
                       index,

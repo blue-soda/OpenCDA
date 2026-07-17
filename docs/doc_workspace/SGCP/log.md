@@ -3711,3 +3711,41 @@ PSSCH_DECODE_FAIL=0
 ### 结论
 
 `B_h=2,rho_th=3` 的 high-IoU sensitivity 在 10 子信道暴露窗口内可以完整收发：110/110 request application callback complete，110/110 RLC complete，PHY failures 为 0。该结果移除了 NS3 pending 标记；但由于 AP@0.3/0.5 下降，它仍更适合写成定位质量/高 IoU tradeoff，而不是直接替换低预算主行。
+
+## 2026-07-17 - Late NMS threshold probe
+
+### 目的
+
+排查 `B_h=2,rho_th=3` 虽然 AP@0.7 达到 full-cluster 水平，但 AP@0.3/0.5 下降的问题是否由 inter-cluster late fusion NMS 阈值导致。
+
+### 代码更新
+
+`opencda.tools.offline_inference` 新增：
+
+```text
+--sgcp-late-nms-thresh <float>
+```
+
+默认值仍为 `0.15`，保持历史结果不变。
+
+### 命令
+
+```powershell
+conda run -n opencda python -m py_compile opencda\tools\offline_inference.py
+
+conda run -n opencda python -m opencda.tools.offline_inference --dataset-root D:\Data\Carla --scenario-id 2026_07_15_01_26_56 --ego-cav-id 1 --sgcp-constrained --sgcp-inter-cluster-late-fusion --resource-allocation potential_game --sgcp-grid-selection-mode spatial_diverse --rho-th 3 --head-rb-budget 2 --sgcp-late-nms-thresh 0.05 --max-frames 0 --sgcp-trace-output docs\doc_workspace\SGCP\artifacts\mechanism_probe\spatial_diverse_rho3_bh2_nms005_41f_trace.csv
+
+conda run -n opencda python -m opencda.tools.offline_inference --dataset-root D:\Data\Carla --scenario-id 2026_07_15_01_26_56 --ego-cav-id 1 --sgcp-constrained --sgcp-inter-cluster-late-fusion --resource-allocation potential_game --sgcp-grid-selection-mode spatial_diverse --rho-th 3 --head-rb-budget 2 --sgcp-late-nms-thresh 0.30 --max-frames 0 --sgcp-trace-output docs\doc_workspace\SGCP\artifacts\mechanism_probe\spatial_diverse_rho3_bh2_nms030_41f_trace.csv
+```
+
+### 结果
+
+| Late NMS IoU | AP@0.3 | AP@0.5 | AP@0.7 | Payload | Missing channel rows |
+| ---: | ---: | ---: | ---: | ---: | ---: |
+| 0.05 | 0.73 | 0.70 | 0.40 | 27,962,864 | 0 |
+| 0.15 | 0.76 | 0.72 | 0.42 | 27,962,864 | 0 |
+| 0.30 | 0.75 | 0.71 | 0.41 | 27,962,864 | 0 |
+
+### 结论
+
+默认 late NMS `0.15` 是三档中最好结果。放宽到 `0.30` 没有恢复 AP@0.3/0.5，收紧到 `0.05` 更差。因此 `B_h=2` 的召回/AP@0.3/0.5 下降不是简单由 inter-cluster late NMS 阈值造成；下一步应检查 member/grid selection、box score distribution 和 per-cluster detection quality。

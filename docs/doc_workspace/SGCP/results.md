@@ -462,6 +462,8 @@ conda run -n opencda python -m opencda.tools.offline_inference --dataset-root D:
 | `D:\Data\Carla\2026_07_15_01_26_56` | `potential_game`, `fixed_first_frame clustering` | 41 | 6 | 0.73 | 0.70 | 0.33 | 107013.07 | 26325216 | 2.67 |
 | `D:\Data\Carla\2026_07_15_01_26_56` | `potential_game`, `spatial_diverse`, `B_h=2`, `rho_th=2` | 41 | 6 | 0.75 | 0.72 | 0.41 | 110107.32 | 27086400 | 2.67 |
 | `D:\Data\Carla\2026_07_15_01_26_56` | `potential_game`, `spatial_diverse`, `B_h=2`, `rho_th=3` | 41 | 6 | 0.76 | 0.72 | 0.42 | 113670.18 | 27962864 | 2.67 |
+| `D:\Data\Carla\2026_07_15_01_26_56` | `potential_game`, `spatial_diverse`, `B_h=2`, `rho_th=3`, late NMS 0.05 | 41 | 6 | 0.73 | 0.70 | 0.40 | 113670.18 | 27962864 | 2.67 |
+| `D:\Data\Carla\2026_07_15_01_26_56` | `potential_game`, `spatial_diverse`, `B_h=2`, `rho_th=3`, late NMS 0.30 | 41 | 6 | 0.75 | 0.71 | 0.41 | 113670.18 | 27962864 | 2.67 |
 | `D:\Data\Carla\2026_07_15_01_26_56` | `potential_game`, `T_min_stab=0` | 41 | 6 | 0.77 | 0.73 | 0.35 | 109415.48 | 26916208 | 2.67 |
 | `D:\Data\Carla\2026_07_15_01_26_56` | `potential_game`, `singleton clustering` | 41 | 20 | 0.82 | 0.76 | 0.37 | 0.00 | 0 | 1.00 |
 | `D:\Data\Carla\2026_07_15_01_26_56` | `random` | 41 | 6 | 0.44 | 0.39 | 0.17 | 39534.05 | 9725376 | 1.51 |
