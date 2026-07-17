@@ -1,6 +1,6 @@
 # FullPerception Baseline Revision
 
-更新时间：2026-07-16
+更新时间：2026-07-17
 
 本文档用于把 FullPerception baseline 的实现细节、公平性边界和论文/rebuttal 写法收束成可直接迁移到 SGCP 论文的材料。核心目标是避免把集中式 upper reference、全量共享 reference 和同通信预算 V2V baseline 混成同一个比较对象。
 
@@ -37,29 +37,32 @@
 - 数据：`D:\Data\Carla\2026_07_15_01_26_56`，41 帧，20 CAV。
 - 感知：复用 OpenCOOD checkpoint 和 SGCP inter-cluster late-fusion evaluation path。
 - 结构：复用 SGCP coalition/cluster head 结构，但不使用 PPS。
-- 通信：每个 cluster head 最多选 2 个非 head 成员，grid budget 为 87，接近 SGCP `avg_selected_grids=87.32`。
-- 策略：`nearest`、`density`、`communication_aware`。
+- 通信：主公平随机 baseline 强制每个 cluster head 最多选 3 个非 head 成员，grid budget 为 117，使 payload 与 PAPG 主方法接近；强 selective baseline 同样使用 3 members/head + 117 grid budget。
+- 策略：`random`、`nearest`、`density`、`communication_aware`。
 - NS3 扩展：`communication_aware` 可读取 `rlc_by_request.csv`，用 request-level `rlc_complete` 作为链路质量权重。
 
 主表可采用如下解释：
 
 | Method | AP@0.3 / AP@0.5 / AP@0.7 | Payload | 公平性 |
 | --- | --- | --- | --- |
-| SGCP potential_game | 0.77 / 0.73 / 0.35 | 26,916,208 bytes | 主方法 |
+| SGCP potential_game | 0.77 / 0.73 / 0.35 | 26,916,208 bytes | 原始 PPS 消融 |
 | Selective nearest | 0.76 / 0.73 / 0.37 | 28,026,832 bytes | 同数据、同评估口径、略高 payload |
 | Selective density | 0.77 / 0.74 / 0.39 | 30,574,368 bytes | 强 V2V baseline，高 payload |
 | Selective communication-aware | 0.78 / 0.75 / 0.40 | 30,222,256 bytes | 当前最强 V2V baseline，高 payload |
+| Selective forced random | 0.77 / 0.73 / 0.38 | 31,613,424 bytes | 3 members/head, 117 grid budget, payload 接近 PAPG |
 | Selective density high-budget | 0.80 / 0.76 / 0.40 | 37,710,864 bytes | 3 members/head, 117 grid budget |
-| SGCP coverage-aware 20ch | 0.80 / 0.76 / 0.41 | 37,912,544 bytes | Payload-matched high-budget SGCP candidate |
+| SGCP coverage-aware 10ch | 0.79 / 0.76 / 0.38 | 29,405,296 bytes | PAPG 前身/消融，NS3 110/110 complete |
+| SGCP PAPG 10ch | 0.81 / 0.78 / 0.39 | 32,049,872 bytes | 当前主方法，NS3 110/110 complete |
+| SGCP coverage-aware 20ch | 0.80 / 0.76 / 0.41 | 37,912,544 bytes | 资源敏感性/高预算附表 |
 
-这个结果要求论文叙事保持诚实：在当前短 41 帧 dump 上，原始 SGCP 不是 AP 全面领先。coverage-aware SGCP 后，20ch high-budget 版本在 AP@0.7 上略高于 payload-matched selective baseline，并且具备 PPS 子信道可行性和 NS3 完整交付证据。更稳妥的贡献表述是 SGCP 在接近通信预算下提供 cluster stability、PPS 子信道可行性、NS3 可验证的无冲突传输、控制开销可解释和分层 early/late fusion，而 naive density-based selective sharing 是强竞争基线。
+这个结果要求论文叙事保持诚实：Full 20-CAV early fusion 是 centralized upper reference，不是公平主对比；旧 RandomRA/MWS 因 payload 过低只能作为 w/o-PPS 消融；公平随机 baseline 应使用 forced-budget random。当前可写入主表的 SGCP 主方法是 PAPG 10ch：它在接近 forced-budget random 的通信量下提升 AP，并且相对 high-budget density baseline 在 AP@0.3/AP@0.5 更高、通信量更低。coverage-aware 10ch/20ch 应保留为消融或资源敏感性结果，而不再作为主算法行。
 
 ## 论文正文建议
 
 建议在 Experiment Setup 的 baseline 段替换为：
 
 ```tex
-We separate centralized full-sharing references from fair decentralized baselines. Full early/late fusion and FullPerception-RSU assume either infrastructure support or an oracle aggregator that can access all CAV observations; therefore, they are reported only as upper references. The main fair comparisons use CAV-only selective sharing under the same CARLA dump, OpenCOOD backbone, evaluation protocol, cluster-head late fusion path, and a matched grid budget. We instantiate nearest-neighbor, density-based, and communication-aware selective-sharing baselines, where the last variant penalizes distant or NS3-unreliable links using request-level RLC completion traces.
+We separate centralized full-sharing references from fair decentralized baselines. Full early/late fusion and FullPerception-RSU assume either infrastructure support or an oracle aggregator that can access all CAV observations; therefore, they are reported only as upper references. The main fair comparisons use CAV-only selective sharing under the same CARLA dump, OpenCOOD backbone, evaluation protocol, cluster-head late fusion path, and matched source/grid budgets. We instantiate forced-random, density-based, and communication-aware selective-sharing baselines, where the communication-aware variant penalizes distant or NS3-unreliable links using request-level RLC completion traces.
 ```
 
 建议在主结果表注释中增加：
@@ -73,7 +76,7 @@ FullPerception-RSU and full 20-CAV fusion are not included in the fair-budget ra
 可直接回应 reviewer：
 
 ```text
-Thank you for pointing out the ambiguity of FullPerception. In the revision, we explicitly distinguish centralized full-sharing references from decentralized fair baselines. Since our evaluated v2xp_cluster_carla setting is RSU-free, FullPerception-RSU is treated as an infrastructure-assisted upper reference rather than the main fair comparison. For the fair comparison, we add CAV-only selective-sharing baselines that use the same CARLA dump, OpenCOOD backbone, cluster-head late-fusion evaluation path, and a matched grid budget. We further include a communication-aware variant that incorporates NS3 request-level RLC completion traces, so the baseline is constrained by link feasibility instead of only selecting perceptually dense grids.
+Thank you for pointing out the ambiguity of FullPerception. In the revision, we explicitly distinguish centralized full-sharing references from decentralized fair baselines. Since our evaluated v2xp_cluster_carla setting is RSU-free, FullPerception-RSU is treated as an infrastructure-assisted upper reference rather than the main fair comparison. For the fair comparison, we add CAV-only selective-sharing baselines that use the same CARLA dump, OpenCOOD backbone, cluster-head late-fusion evaluation path, and matched source/grid budgets. We include a forced-budget random baseline to avoid under-utilized random scheduling, and a communication-aware variant that incorporates NS3 request-level RLC completion traces, so the baseline is constrained by link feasibility instead of only selecting perceptually dense grids.
 ```
 
 如果 reviewer 追问为什么不把 full 20-CAV early fusion 当作主 baseline：
@@ -85,6 +88,6 @@ Full 20-CAV early fusion assumes all vehicles can upload complete point clouds t
 ## 后续补强
 
 - 若论文版面允许，保留一个 small upper-reference table，单列 full early fusion、full late fusion 和 FullPerception-RSU。
-- 主表使用 SGCP、random/MWS scheduler ablation、nearest/density/communication-aware selective sharing。
-- 完整 41 帧 NS3-aware selective-sharing 仍需补做；当前只有 11 帧受限 5-subchannel 诊断结果。
+- 主表使用 SGCP PAPG、forced-budget random、density/communication-aware selective sharing 和 centralized FullPerception upper reference；旧 random/MWS scheduler 只进入 w/o-PPS 消融或诊断表。
+- PAPG 已完成 11 帧真实 NS3 replay：110/110 scheduled request application/RLC complete，RLC drops=0，PHY decode failures=0。
 - 若后续重新打开 CARLA，可导出带 RSU sensor 的真实 FullPerception-RSU 数据，但它仍应标注为 infrastructure-assisted upper reference。

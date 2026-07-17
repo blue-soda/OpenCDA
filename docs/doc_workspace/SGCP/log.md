@@ -4494,3 +4494,19 @@ PAPG `0.81/0.78/0.39` at 62.54 Mbps 明显优于 forced-budget random `0.77/0.73
 ### 结论
 
 rebuttal、`main.tex`、`main_table_candidate.md` 当前已经使用同一条主线：PAPG 是主算法，forced-budget random 和 selective density 是公平 V2V baseline，FullPerception centralized 是 upper reference。
+
+## 2026-07-17 Baseline fairness 文档口径清理
+
+### 目的
+
+`baseline_fairness.md` 和 `fullperception_baseline_revision.md` 仍有部分旧口径，把 coverage-aware 20ch 写成 payload-matched SGCP 主候选，容易和当前 PAPG 主表、forced-budget random 公平 baseline 产生冲突。
+
+### 修改
+
+- `baseline_fairness.md` 的分层表更新为：FullPerception/full 20-CAV early 为 centralized upper reference；SGCP PAPG 10ch 为主方法；old RandomRA/MWS 因 payload 过低只作为 w/o-PPS 诊断；forced-budget random 作为公平随机 baseline。
+- `fullperception_baseline_revision.md` 的 same-budget baseline 说明从 2 members/head + 87 grid budget 调整为当前主公平设置：3 members/head + 117 grid budget，并补入 PAPG `0.81/0.78/0.39`、62.54 Mbps 与 NS3 110/110 complete。
+- coverage-aware 10ch/20ch 保留为 PAPG 前身、消融或资源敏感性结果，不再作为主算法行。
+
+### 结论
+
+FullPerception baseline、主表候选和 rebuttal 的公平性口径已进一步对齐：主表应使用 PAPG、forced-budget random、density/communication-aware selective baseline 和 centralized FullPerception upper reference。
