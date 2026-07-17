@@ -1,6 +1,6 @@
 # SGCP Offline Protocol Audit
 
-更新时间：2026-07-16
+更新时间：2026-07-17
 
 本文档记录主表修复阶段的第一轮离线协议审计，目标是确认分簇、点云选择和子信道分配是否真实影响 OpenCOOD 融合输入。
 
@@ -89,6 +89,47 @@ docs\doc_workspace\SGCP\artifacts\protocol_audit\sgcp_41f_trace.csv
 - 分簇结果真实决定 receiver / cluster head 列表和每个 receiver 的 member set。
 - `PotentialGame` 输出的 grid selection 真实裁剪 sender 点云，并进入 OpenCOOD early-fusion 输入。
 - 离线融合样本中的 uploaded sender 均有对应 channel allocation，未发现“未调度 member 绕过 PPS 进入融合”的协议错误。
+
+## 41 帧帧级汇总
+
+新增只读汇总工具：
+
+```powershell
+conda run -n opencda python -m opencda.tools.sgcp_protocol_trace_summary --trace-csv docs\doc_workspace\SGCP\artifacts\protocol_audit\sgcp_41f_trace.csv --output-csv docs\doc_workspace\SGCP\artifacts\protocol_audit\sgcp_41f_frame_summary.csv
+```
+
+输出：
+
+```text
+frames=41 trace_rows=246 total_payload_bytes=26916208 missing_channel_rows=0 output=docs\doc_workspace\SGCP\artifacts\protocol_audit\sgcp_41f_frame_summary.csv
+```
+
+帧级字段包括：
+
+- `receiver_ids` / `cluster_member_sets`
+- `fused_cav_ids` / `uploaded_source_ids`
+- `total_communication_bytes`
+- `total_selected_grids`
+- `total_uploaded_points` / `total_local_points`
+- `channel_allocation_links`
+- `missing_channel_rows` / `missing_channel_sources`
+- `pred_boxes_sum/min/max`
+- `gt_boxes_sum/min/max`
+
+汇总统计：
+
+- Frames：41
+- Receiver count：每帧固定 6 个 cluster head。
+- PPS channel links：每帧 10 条。
+- Avg fused CAV ids / frame：16.00。
+- Avg uploaded source ids / frame：10.00。
+- Avg payload / frame：656,492.88 bytes；范围 550,256 到 698,944 bytes。
+- Avg selected grids / frame：523.90。
+- Avg pred boxes sum / frame：66.78。
+- Avg GT boxes sum / frame：174.90。
+- Missing channel rows：0。
+
+说明：现有 OpenCOOD evaluator 的 AP 是全局累计指标，不是逐帧稳定指标。因此帧级 CSV 记录 protocol variables、prediction count 和 GT count；AP 仍使用 41 帧全局 `0.77 / 0.73 / 0.35`。论文和 rebuttal 中不应把单帧 pred/GT count 误写为逐帧 AP。
 
 ## 当前判断
 

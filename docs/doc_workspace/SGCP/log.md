@@ -3488,3 +3488,44 @@ CARLA_RPC_READY map=Carla/Maps/Town03
 ### 结论
 
 当前 blocker 已经前移到 CARLA 进程本身的 RPC readiness：2000 端口可以被探测到，但 CARLA Python API 无法稳定返回 `get_world()`。因此本轮不能继续评价 NS3/reupload。下一步应先恢复 CARLA 服务可用性，例如前台启动观察窗口日志、确认 GPU/渲染模式、确认 Town03 cooked map 可加载，或者重启 CARLA/系统后先通过 `client.get_world().get_map().name` smoke test，再跑 OpenCDA+NS3。
+
+## 2026-07-17 - SGCP frame-level protocol trace summary
+
+### 目的
+
+在 CARLA RPC blocker 尚未解除时，继续补强离线协议证据链：把 receiver-level SGCP trace 汇总为 frame-level CSV，便于逐帧检查 cluster、grid selection、channel allocation、fused CAV ids、payload、prediction count 和 GT count 是否自洽。
+
+### 新增工具
+
+```powershell
+conda run -n opencda python -m opencda.tools.sgcp_protocol_trace_summary --trace-csv docs\doc_workspace\SGCP\artifacts\protocol_audit\sgcp_41f_trace.csv --output-csv docs\doc_workspace\SGCP\artifacts\protocol_audit\sgcp_41f_frame_summary.csv
+```
+
+### 验证
+
+```powershell
+conda run -n opencda python -m py_compile opencda\tools\sgcp_protocol_trace_summary.py
+```
+
+### 结果
+
+```text
+frames=41 trace_rows=246 total_payload_bytes=26916208 missing_channel_rows=0 output=docs\doc_workspace\SGCP\artifacts\protocol_audit\sgcp_41f_frame_summary.csv
+```
+
+帧级统计：
+
+- 每帧 receiver count：6。
+- 每帧 PPS channel links：10。
+- 平均 fused CAV ids / frame：16.00。
+- 平均 uploaded source ids / frame：10.00。
+- 平均 payload / frame：656,492.88 bytes。
+- Payload 范围：550,256 到 698,944 bytes/frame。
+- 平均 selected grids / frame：523.90。
+- 平均 pred boxes sum / frame：66.78。
+- 平均 GT boxes sum / frame：174.90。
+- `missing_channel_rows`：0。
+
+### 结论
+
+离线多帧协议链路现在有 receiver-level 和 frame-level 两层可检查输出。现有 OpenCOOD AP 是 41 帧全局累计指标，不能从当前 trace 严谨拆成逐帧 AP；因此文档和论文中保留全局 AP，并用帧级 CSV 解释 protocol variables 与 pred/GT count。
