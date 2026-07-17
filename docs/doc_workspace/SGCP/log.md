@@ -3430,3 +3430,35 @@ $env:OPENCDA_USE_CURRENT_CARLA_WORLD = "1"
 ```
 
 这样可以同时规避固定 spawn 点残留、短 timeout 和 `load_world` RPC 卡死。
+
+## 2026-07-17 - CARLA RPC readiness blocker
+
+### 目的
+
+验证直接用 Town03 启动 CARLA 后，是否可以通过 `OPENCDA_USE_CURRENT_CARLA_WORLD=1` 跳过 `load_world()` 并继续 clean online reupload。
+
+### 测试
+
+启动命令：
+
+```powershell
+Start-Process "C:\Programs\Carla\WindowsNoEditor\CarlaUE4.exe" `
+  -ArgumentList @('/Game/Carla/Maps/Town03','-quality-level=Low') `
+  -WindowStyle Hidden
+```
+
+探测命令：
+
+```powershell
+conda run -n opencda python -c "import carla; c=carla.Client('localhost',2000); c.set_timeout(180); w=c.get_world(); print(repr(w.get_map().name))"
+```
+
+结果：即使等待 120 秒，并将 CARLA Python API timeout 提高到 180 秒，`client.get_world()` 仍超时：
+
+```text
+RuntimeError: time-out of 180000ms while waiting for the simulator
+```
+
+### 结论
+
+当前 blocker 已经前移到 CARLA 进程本身的 RPC readiness：2000 端口可以被探测到，但 CARLA Python API 无法稳定返回 `get_world()`。因此本轮不能继续评价 NS3/reupload。下一步应先恢复 CARLA 服务可用性，例如前台启动观察窗口日志、确认 GPU/渲染模式、确认 Town03 cooked map 可加载，或者重启 CARLA/系统后先通过 `client.get_world().get_map().name` smoke test，再跑 OpenCDA+NS3。
