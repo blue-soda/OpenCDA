@@ -59,6 +59,7 @@
 - 已新增 `opencda/tools/lgcp_subchannel_sensitivity_eval.py` 和 `subchannel_sensitivity.md`，完成 `Z=5/10/15/20` 的 11 帧 scheduling-capacity proxy；mean slots/frame 从 `12.73` 降到 `3.73`。
 - 已新增 `opencda/tools/lgcp_compute_capacity_eval.py` 和 `compute_capacity_sensitivity.md`，完成 CAV leader local-fusion / RSU aggregation compute capacity proxy；代表性均衡容量下 compute mean 从 `8.41ms` 降到 `1.05ms`。
 - 已完成 offline subset ablation random-only multiseed 扩展，汇总 seeds `7/11/23/37`；random AP@0.7 均值低于 confidence / area-aware / communication-aware selective baselines，但 `comm_aware_topk` 仍略高于当前 `area_aware_union`。
+- `opencda/tools/lgcp_greedy_gap_eval.py` 已支持 `--sample-seeds` 和 sampled candidate pool；已完成 5-agent O3 sampled multiseed smoke，seeds `7/11/23/37` 共 44 个 instance，O3 mean relative gap 为 `0.043650` 到 `0.060727`。
 - 已新增 `opencda/tools/lgcp_hierarchy_aggregation_eval.py`，将 hierarchy assignment plan 转换为 leader local result proxy 和 RSU global aggregation proxy；Top-40 11 帧 selected GT ratio 为 `1.0`，mean selected area recall@0.5 为 `0.670455`。
 - 已新增 `opencda/tools/lgcp_feature_slice_manifest.py`，生成 raw LiDAR area-specific slice manifest；Top-40 11 帧 member upload slice 约 `6199` points/frame、`99.19 KB/frame`，为后续 neural feature slicing 提供接口和 byte proxy。
 - 已新增 LGCP 专用仿真入口 `opencda/scenario_testing/lgcp_carla.py` 和配置 `opencda/scenario_testing/config_yaml/lgcp_carla.yaml`。

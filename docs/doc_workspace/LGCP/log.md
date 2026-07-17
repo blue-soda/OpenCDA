@@ -2586,3 +2586,52 @@ docs/doc_workspace/LGCP/opencood_multiscene_area_confidence.md
 
 - 该任务尚未完成，因为还没有实际多 seed / 多场景 area-level AP / recall 结果。
 - 下一步应在 `mindspore-186` 选择固定 checkpoint family，跑 400-frame gate 多 seed，并导出 postprocessed prediction / GT 供 LGCP area slicer 统计。
+
+## 2026-07-17 - Greedy O3 multiseed sampled smoke
+
+### 目标
+
+- 推进 `target.md` 中 greedy optimality gap 的多 seed 部分。
+- 在保持原 deterministic Top-M / Top-N 结果可复现的前提下，新增 seed-controlled sampled instance construction。
+
+### 代码
+
+更新：
+
+```text
+opencda/tools/lgcp_greedy_gap_eval.py
+```
+
+新增参数：
+
+```text
+--sample-seeds
+--candidate-pool-factor
+```
+
+### 验证
+
+```powershell
+conda run -n opencda python -m py_compile opencda\tools\lgcp_greedy_gap_eval.py
+```
+
+### 运行命令
+
+```powershell
+conda run -n opencda python -m opencda.tools.lgcp_greedy_gap_eval --input-dir docs\doc_workspace\LGCP\experiments\area_confidence\20260715_lgcp_carla_area_ap_11f_detector_score --output-dir docs\doc_workspace\LGCP\experiments\greedy_optimality_gap\20260717_lgcp_carla_greedy_gap_o3_multiseed_sampled_5agents_11f --confidence-field density_linear --max-agents 5 --max-areas 3 --max-group-size 3 --delta-g "0.05,0.075,0.1,0.125" --lambda-size 0.02 --enable-o3 --o3-t-delta 1.0 --o3-packet-weight 0.05 --o3-load-weight 0.1 --sample-seeds "7,11,23,37" --candidate-pool-factor 2
+```
+
+### 结果
+
+| Objective | Delta_g | Instances | Mean relative gap | P90 relative gap | Max relative gap | Greedy packets | Optimal packets |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| O3 | 0.050 | 44 | 0.060727 | 0.136821 | 0.187994 | 3.795455 | 3.227273 |
+| O3 | 0.075 | 44 | 0.052953 | 0.116843 | 0.137931 | 3.568182 | 3.227273 |
+| O3 | 0.100 | 44 | 0.047440 | 0.124867 | 0.137931 | 3.295455 | 3.227273 |
+| O3 | 0.125 | 44 | 0.043650 | 0.124867 | 0.137931 | 3.159091 | 3.227273 |
+
+### 结论
+
+- 多 seed sampled setting 下，O3 mean relative gap 保持在 `4.37%` 到 `6.07%`。
+- 该结果补齐了单场景多 seed smoke，但还不是多场景论文级结论。
+- 尝试 6-agent multiseed sampled exhaustive run 时超过本机 100s timeout；当前保留 6-agent deterministic larger-instance 结果和 5-agent multiseed sampled 结果。

@@ -263,6 +263,36 @@ docs/doc_workspace/LGCP/experiments/greedy_optimality_gap/20260717_lgcp_carla_gr
 
 The larger setting increases O3 mean gap from `2.19%` to `5.05%`, and worst-case gap from `6.90%` to `12.82%`. This is still moderate for an online heuristic, but the paper should report it as empirical evidence rather than a guarantee.
 
+### Multiseed Sampled O3 Smoke
+
+2026-07-17 新增 `--sample-seeds` 和 `--candidate-pool-factor`，默认关闭；不传 seed 时仍复现原 deterministic Top-M / Top-N instance construction。传入 seed 后，每帧从 ranked candidate pool 中抽样 agents / areas，形成 seed-controlled sampled instances。
+
+运行配置：
+
+```text
+input: docs/doc_workspace/LGCP/experiments/area_confidence/20260715_lgcp_carla_area_ap_11f_detector_score
+output: docs/doc_workspace/LGCP/experiments/greedy_optimality_gap/20260717_lgcp_carla_greedy_gap_o3_multiseed_sampled_5agents_11f
+max_agents: 5
+max_areas: 3
+max_group_size: 3
+sample_seeds: 7,11,23,37
+candidate_pool_factor: 2
+instances: 44
+```
+
+| Objective | Delta_g | Instances | Mean relative gap | P90 relative gap | Max relative gap | Greedy packets | Optimal packets |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| O3 | 0.050 | 44 | 0.060727 | 0.136821 | 0.187994 | 3.795455 | 3.227273 |
+| O3 | 0.075 | 44 | 0.052953 | 0.116843 | 0.137931 | 3.568182 | 3.227273 |
+| O3 | 0.100 | 44 | 0.047440 | 0.124867 | 0.137931 | 3.295455 | 3.227273 |
+| O3 | 0.125 | 44 | 0.043650 | 0.124867 | 0.137931 | 3.159091 | 3.227273 |
+
+Interpretation:
+
+- O3 mean relative gap remains in the `4.37%` to `6.07%` range across sampled seeds.
+- O1 / O2 group-member gaps remain smaller than O3, with worst-case O1/O2 gaps below `10.25%` / `9.87%`.
+- This closes the single-scenario multiseed smoke portion, but not the multi-scenario requirement. A 6-agent multiseed exhaustive run was attempted and exceeded the local 100s timeout, so the current evidence should be reported as 6-agent deterministic plus 5-agent multiseed sampled.
+
 ## 论文写法建议
 
 如果结果显示 gap 较小：

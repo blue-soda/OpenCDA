@@ -1206,6 +1206,55 @@ Interpretation:
 - O3 gap increases with candidate agents, which is expected because holistic optimal selection has more alternatives.
 - This strengthens the rebuttal evidence by showing the heuristic gap under a larger enumerable setting, while preserving the limitation that it is still single-scenario / 11-frame evidence.
 
+## 2026-07-17：Greedy Gap O3 Multiseed Sampled Smoke
+
+新增 `--sample-seeds` 和 sampled candidate pool 后，在同一 `lgcp_carla` 11 帧 dump 上对 agents / areas 做 seed-controlled sampling。该实验不是多场景结果，但补足了 greedy O3 gap 的多 seed smoke。
+
+Run:
+
+```text
+docs/doc_workspace/LGCP/experiments/greedy_optimality_gap/20260717_lgcp_carla_greedy_gap_o3_multiseed_sampled_5agents_11f
+```
+
+Config:
+
+```text
+max_agents=5
+max_areas=3
+max_group_size=3
+sample_seeds=7,11,23,37
+candidate_pool_factor=2
+instances=44
+```
+
+O3 summary:
+
+| Objective | Delta_g | Instances | Mean relative gap | P90 relative gap | Max relative gap | Mean greedy packets | Mean optimal packets |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| O3 | 0.050 | 44 | 0.060727 | 0.136821 | 0.187994 | 3.795455 | 3.227273 |
+| O3 | 0.075 | 44 | 0.052953 | 0.116843 | 0.137931 | 3.568182 | 3.227273 |
+| O3 | 0.100 | 44 | 0.047440 | 0.124867 | 0.137931 | 3.295455 | 3.227273 |
+| O3 | 0.125 | 44 | 0.043650 | 0.124867 | 0.137931 | 3.159091 | 3.227273 |
+
+O1 / O2 summary:
+
+| Objective | Delta_g | Mean relative gap | P90 relative gap | Max relative gap |
+| --- | ---: | ---: | ---: | ---: |
+| O1 | 0.050 | 0.003516 | 0.014923 | 0.023611 |
+| O1 | 0.075 | 0.008585 | 0.029008 | 0.048208 |
+| O1 | 0.100 | 0.016768 | 0.037787 | 0.062837 |
+| O1 | 0.125 | 0.022444 | 0.046197 | 0.102492 |
+| O2 | 0.050 | 0.002552 | 0.012942 | 0.020422 |
+| O2 | 0.075 | 0.007322 | 0.026460 | 0.043580 |
+| O2 | 0.100 | 0.015180 | 0.035296 | 0.059038 |
+| O2 | 0.125 | 0.020702 | 0.043054 | 0.098617 |
+
+Interpretation:
+
+- 多 seed sampled setting 下，O3 mean gap 约 `4.37%` 到 `6.07%`，仍属于可作为 online heuristic rebuttal 的经验 gap 证据。
+- 低 `Delta_g` 下 greedy packet count 高于 optimal，说明 holistic O3 oracle 会在部分 sampled instances 中选择更紧凑的 groups。
+- 6-agent multiseed sampled exhaustive run 超过本机 100s timeout；当前保留 6-agent deterministic larger-instance 证据和 5-agent multiseed sampled 证据，target 仍保持 open，等待多场景扩展。
+
 ## 2026-07-17：Hierarchy Aggregation Proxy
 
 新增 `opencda/tools/lgcp_hierarchy_aggregation_eval.py`，将 hierarchy assignment plan 转换为 leader local result proxy 和 RSU global aggregation proxy。

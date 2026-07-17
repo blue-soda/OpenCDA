@@ -46,6 +46,12 @@ def parse_args():
                         help='Leader max-load weight for O3 proxy.')
     parser.add_argument('--max-instances', type=int, default=0,
                         help='Limit timestamps. 0 means all timestamps.')
+    parser.add_argument('--sample-seeds', default='',
+                        help='Comma-separated seeds for sampled agent/area '
+                             'instances. Empty keeps deterministic top-k.')
+    parser.add_argument('--candidate-pool-factor', type=int, default=2,
+                        help='Sample from top max_agents/max_areas multiplied '
+                             'by this factor when --sample-seeds is set.')
     return parser.parse_args()
 
 
@@ -124,8 +130,28 @@ def load_area_quality(input_dir):
     return quality
 
 
+def parse_seed_list(value):
+    if not value.strip():
+        return []
+    return [int(item.strip()) for item in value.split(',') if item.strip()]
+
+
+def select_ranked_or_sampled(items, limit, seed, pool_factor):
+    if len(items) <= limit:
+        return list(items)
+    if seed is None:
+        return list(items[:limit])
+
+    pool_size = min(len(items), max(limit, limit * max(1, pool_factor)))
+    pool = list(items[:pool_size])
+    rng = np.random.default_rng(seed)
+    indices = rng.choice(len(pool), size=limit, replace=False)
+    return [pool[index] for index in sorted(indices)]
+
+
 def build_instances(area_records, quality_rows, confidence_field,
-                    max_agents, max_areas, max_instances):
+                    max_agents, max_areas, max_instances, sample_seeds,
+                    candidate_pool_factor):
     by_timestamp_area = defaultdict(dict)
     agent_totals = defaultdict(lambda: defaultdict(float))
     area_scores = defaultdict(lambda: defaultdict(float))
@@ -150,35 +176,47 @@ def build_instances(area_records, quality_rows, confidence_field,
         timestamps = timestamps[:max_instances]
 
     instances = []
-    for timestamp in timestamps:
-        agents = [
+    seed_values = sample_seeds if sample_seeds else [None]
+    for timestamp_index, timestamp in enumerate(timestamps):
+        ranked_agents = [
             agent for agent, _ in sorted(
                 agent_totals[timestamp].items(),
                 key=lambda item: item[1],
-                reverse=True)[:max_agents]
+                reverse=True)
         ]
-        candidate_areas = [
+        ranked_areas = [
             area for area, _ in sorted(
                 area_scores[timestamp].items(),
                 key=lambda item: item[1],
-                reverse=True)[:max_areas]
+                reverse=True)
         ]
-        if not agents or not candidate_areas:
-            continue
+        for sample_seed in seed_values:
+            derived_seed = (
+                None if sample_seed is None
+                else sample_seed + timestamp_index * 1009)
+            agents = select_ranked_or_sampled(
+                ranked_agents, max_agents, derived_seed,
+                candidate_pool_factor)
+            area_seed = None if derived_seed is None else derived_seed + 97
+            candidate_areas = select_ranked_or_sampled(
+                ranked_areas, max_areas, area_seed, candidate_pool_factor)
+            if not agents or not candidate_areas:
+                continue
 
-        area_conf = OrderedDict()
-        for area_id in candidate_areas:
-            values = by_timestamp_area.get((timestamp, area_id), {})
-            area_conf[area_id] = {
-                agent_id: values.get(agent_id, 0.0)
-                for agent_id in agents
-            }
-        instances.append({
-            'timestamp': timestamp,
-            'agents': agents,
-            'areas': candidate_areas,
-            'area_conf': area_conf,
-        })
+            area_conf = OrderedDict()
+            for area_id in candidate_areas:
+                values = by_timestamp_area.get((timestamp, area_id), {})
+                area_conf[area_id] = {
+                    agent_id: values.get(agent_id, 0.0)
+                    for agent_id in agents
+                }
+            instances.append({
+                'timestamp': timestamp,
+                'sample_seed': 'topk' if sample_seed is None else sample_seed,
+                'agents': agents,
+                'areas': candidate_areas,
+                'area_conf': area_conf,
+            })
     return instances
 
 
@@ -217,6 +255,7 @@ def evaluate_instance(instance, delta_g, objective, lambda_size, max_group_size)
 
     return OrderedDict({
         'timestamp': instance['timestamp'],
+        'sample_seed': instance.get('sample_seed', 'topk'),
         'agent_count': len(instance['agents']),
         'area_count': area_count,
         'delta_g': '%.6f' % delta_g,
@@ -298,6 +337,7 @@ def evaluate_leader_assignment(instance, delta_g):
 
     return OrderedDict({
         'timestamp': instance['timestamp'],
+        'sample_seed': instance.get('sample_seed', 'topk'),
         'agent_count': len(instance['agents']),
         'area_count': len(instance['areas']),
         'group_count': len(groups),
@@ -384,6 +424,7 @@ def evaluate_o3_instance(instance, delta_g, max_group_size, t_delta,
 
     return OrderedDict({
         'timestamp': instance['timestamp'],
+        'sample_seed': instance.get('sample_seed', 'topk'),
         'agent_count': len(instance['agents']),
         'area_count': len(instance['areas']),
         'delta_g': '%.6f' % delta_g,
@@ -480,9 +521,11 @@ def main():
     quality_rows = load_area_quality(args.input_dir)
     deltas = [float(value.strip()) for value in args.delta_g.split(',')
               if value.strip()]
+    sample_seeds = parse_seed_list(args.sample_seeds)
     instances = build_instances(
         area_records, quality_rows, args.confidence_field,
-        args.max_agents, args.max_areas, args.max_instances)
+        args.max_agents, args.max_areas, args.max_instances, sample_seeds,
+        args.candidate_pool_factor)
 
     rows = []
     leader_rows = []
@@ -501,10 +544,11 @@ def main():
                     args.max_group_size))
 
     instance_fields = [
-        'timestamp', 'agent_count', 'area_count', 'delta_g', 'objective',
-        'greedy_value', 'optimal_value', 'absolute_gap', 'relative_gap',
-        'greedy_mean_conf', 'optimal_mean_conf', 'greedy_total_size',
-        'optimal_total_size', 'greedy_mean_size', 'optimal_mean_size',
+        'timestamp', 'sample_seed', 'agent_count', 'area_count', 'delta_g',
+        'objective', 'greedy_value', 'optimal_value', 'absolute_gap',
+        'relative_gap', 'greedy_mean_conf', 'optimal_mean_conf',
+        'greedy_total_size', 'optimal_total_size', 'greedy_mean_size',
+        'optimal_mean_size',
     ]
     write_csv(os.path.join(args.output_dir, 'instance_records.csv'),
               instance_fields, rows)
@@ -519,10 +563,10 @@ def main():
               summary_fields, summary_rows)
 
     leader_fields = [
-        'timestamp', 'agent_count', 'area_count', 'group_count', 'delta_g',
-        'total_group_load', 'greedy_max_load', 'optimal_max_load',
-        'absolute_gap', 'relative_gap', 'greedy_loads', 'optimal_loads',
-        'greedy_assignments', 'optimal_assignments',
+        'timestamp', 'sample_seed', 'agent_count', 'area_count',
+        'group_count', 'delta_g', 'total_group_load', 'greedy_max_load',
+        'optimal_max_load', 'absolute_gap', 'relative_gap', 'greedy_loads',
+        'optimal_loads', 'greedy_assignments', 'optimal_assignments',
     ]
     write_csv(os.path.join(args.output_dir, 'leader_records.csv'),
               leader_fields, leader_rows)
@@ -539,9 +583,10 @@ def main():
     o3_summary_rows = []
     if args.enable_o3:
         o3_fields = [
-            'timestamp', 'agent_count', 'area_count', 'delta_g', 'objective',
-            'greedy_value', 'optimal_value', 'absolute_gap', 'relative_gap',
-            'greedy_mean_conf', 'optimal_mean_conf', 'greedy_packet_count',
+            'timestamp', 'sample_seed', 'agent_count', 'area_count',
+            'delta_g', 'objective', 'greedy_value', 'optimal_value',
+            'absolute_gap', 'relative_gap', 'greedy_mean_conf',
+            'optimal_mean_conf', 'greedy_packet_count',
             'optimal_packet_count', 'greedy_max_load', 'optimal_max_load',
             'candidate_combinations',
         ]
@@ -570,6 +615,8 @@ def main():
         'o3_t_delta': args.o3_t_delta,
         'o3_packet_weight': args.o3_packet_weight,
         'o3_load_weight': args.o3_load_weight,
+        'sample_seeds': sample_seeds,
+        'candidate_pool_factor': args.candidate_pool_factor,
         'instances': len(instances),
         'note': 'Group-member exhaustive gap, leader assignment exhaustive load gap, and optional holistic O3 latency-aware exhaustive gap.',
     }

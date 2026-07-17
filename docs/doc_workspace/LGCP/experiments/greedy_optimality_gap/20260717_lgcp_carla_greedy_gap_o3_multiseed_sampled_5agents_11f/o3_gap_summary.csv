@@ -1,0 +1,5 @@
+objective,delta_g,instances,mean_relative_gap,median_relative_gap,p90_relative_gap,max_relative_gap,mean_absolute_gap,mean_greedy_packet_count,mean_optimal_packet_count
+O3_confidence_latency_ratio,0.050000,44,0.060727,0.069761,0.136821,0.187994,0.043787,3.795455,3.227273
+O3_confidence_latency_ratio,0.075000,44,0.052953,0.065436,0.116843,0.137931,0.038641,3.568182,3.227273
+O3_confidence_latency_ratio,0.100000,44,0.047440,0.054106,0.124867,0.137931,0.035511,3.295455,3.227273
+O3_confidence_latency_ratio,0.125000,44,0.043650,0.028685,0.124867,0.137931,0.033107,3.159091,3.227273
