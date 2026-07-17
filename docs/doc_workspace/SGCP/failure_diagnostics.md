@@ -128,3 +128,19 @@ Earlier NMS sweeps showed default `0.15` is better than `0.05/0.30`, so this is 
 2. Implement target-aware scheduling probe: persistent missed grids get a same-cluster, high-quality covering sender if one exists, replacing the lowest utility scheduled grid/link under the same channel budget.
 3. Add CAV-body GT audit: mark GT objects whose centers overlap a CAV body, and decide whether paper AP should include them under the same convention as OPV2V/OpenCOOD.
 4. Re-run 10ch/rho3 and 20ch with the target-aware probe; accept only if AP improves without increasing Mbps.
+
+## Target-Aware PG Follow-Up
+
+已新增 `target_aware_potential_game`，不再作为离线后处理修补，而是资源调度器内的两阶段算法：
+
+1. 保留原 PotentialGame 的 sender/subchannel best-response。
+2. 在 allocator 内部用 target-aware multi-view utility 重选每条链路的 grid action。
+
+41 帧 20MHz/10ch/rho3 对照：
+
+| Method | AP@0.3 | AP@0.5 | AP@0.7 | Payload | Missed Rows | Covered Only By Other Heads |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| `potential_game + spatial_diverse` | 0.79 | 0.76 | 0.38 | 29,405,296 | 111 | 63 |
+| `target_aware_potential_game` | 0.80 | 0.76 | 0.39 | 31,069,968 | 106 | 56 |
+
+结论：target-aware PG 确实减少了此前诊断出的主失败桶，但代价是 payload 增加。下一步应在该算法内部加入 byte-aware grid utility 或 target-aware point cap，目标是在保住 `0.80/0.76/0.39` 附近 AP 的同时降低 Mbps。

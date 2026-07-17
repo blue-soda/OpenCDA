@@ -265,6 +265,38 @@ class PotentialGame(ResourceAllocationAlgorithm):
         gain = max(late_score, early_score_if_upload) - max(late_score, early_score)
         return gain
 
+    def candidate_grids_for_cluster(self, cluster):
+        """Return grids considered by the best-response step.
+
+        The base SGCP utility treats grids that have already reached the
+        density threshold inside the cluster as covered, matching the original
+        implementation and preserving it as a reproducible baseline.
+        """
+        j_req = cluster.req_grids
+        j_eff = self.compute_grids_uploading_inside_cluster(cluster)
+        return j_req - j_eff
+
+    def member_candidate_grids(self, cluster, member_id, candidate_grids,
+                               current_head_links=None):
+        grids_m = common.global_vehicles[member_id].sens_grids & candidate_grids
+        if current_head_links is not None:
+            for (mid, sc, t, grids) in current_head_links:
+                if mid == member_id:
+                    grids_m -= set(grids)
+                    break
+        return grids_m
+
+    def member_score(self, cluster, member_id, member_grids,
+                     member_grid_scores):
+        return sum(member_grid_scores[grid] for grid in member_grids)
+
+    def sort_member_grids(self, cluster, member_id, member_grids,
+                          member_grid_scores, max_grids):
+        return sorted(
+            list(member_grids),
+            key=lambda grid: member_grid_scores[grid],
+            reverse=True)
+
     def best_response(self, cluster, strategies, global_rb_used):
         """
         近似最优 best-response
@@ -279,14 +311,9 @@ class PotentialGame(ResourceAllocationAlgorithm):
 
         # 本簇可选 grids
         logger.info(f"Cluster head {h} req grids: {len(cluster.req_grids)}")
-        # print("Cluster head", h, "req grids:", (cluster.req_grids))
-        # candidate_grids = cluster.req_grids.copy()
-        # candidate_grids -= self.grids_ch_sens 
-        # candidate_grids -= self.grids_uploading
-        J_req = cluster.req_grids #J_h^req
-        J_eff = self.compute_grids_uploading_inside_cluster(cluster) #J_h^eff
-        # 下面挑选grids扩充 J_eff
-        candidate_grids = J_req - J_eff
+        J_req = cluster.req_grids
+        J_eff = self.compute_grids_uploading_inside_cluster(cluster)
+        candidate_grids = self.candidate_grids_for_cluster(cluster)
 
         logger.info(f"Cluster head {h} candidate grids: {len(candidate_grids)}")
         # print("Cluster head", h, "grids_ch_sens grids:", (vehicles[h].sens_grids))
@@ -305,12 +332,11 @@ class PotentialGame(ResourceAllocationAlgorithm):
         for m in cluster.members:
             if m == h:
                 continue
-            grids_m = common.global_vehicles[m].sens_grids & candidate_grids
-            if cur_h_links is not None:
-                for (mid, sc, t, grids) in cur_h_links:
-                    if mid == m:
-                        grids_m -= set(grids) # 已经调度的网格都不算
-                        break
+            grids_m = self.member_candidate_grids(
+                cluster,
+                m,
+                candidate_grids,
+                current_head_links=cur_h_links)
             if grids_m and len(grids_m) > 0:
                 member_grid_map[m] = grids_m
 
@@ -323,8 +349,11 @@ class PotentialGame(ResourceAllocationAlgorithm):
 
         members_sorted = sorted(
             member_grid_map.keys(),
-            # key=lambda m: avg_grids_score(m, member_grid_map[m]),
-            key=lambda m: sum([member_grid_score_map[m][grid] for grid in member_grid_map[m]]),
+            key=lambda m: self.member_score(
+                cluster,
+                m,
+                member_grid_map[m],
+                member_grid_score_map[m]),
             reverse=True
         )
 
@@ -345,11 +374,12 @@ class PotentialGame(ResourceAllocationAlgorithm):
                     continue
 
                 # 按照优先级分配 grid
-                member_grids_sorted = sorted(
-                    list(member_grid_map[m]),
-                    key=lambda grid: member_grid_score_map[m][grid],
-                    reverse=True
-                )
+                member_grids_sorted = self.sort_member_grids(
+                    cluster,
+                    m,
+                    member_grid_map[m],
+                    member_grid_score_map[m],
+                    self.max_grids_per_rb)
                 grids = member_grids_sorted[:self.max_grids_per_rb]
                 # grids = common.global_vehicles[m].sens_grids
                 if not grids:
@@ -515,11 +545,12 @@ class PotentialGame(ResourceAllocationAlgorithm):
             #     vehicles[best_m].sens_grids & candidate_grids
             # )[: best_gain]
             # 按照优先级分配 grid
-            member_grids_sorted = sorted(
-                list(member_grid_map[best_m]),
-                key=lambda grid: member_grid_score_map[best_m][grid],
-                reverse=True
-            )
+            member_grids_sorted = self.sort_member_grids(
+                cluster,
+                best_m,
+                member_grid_map[best_m],
+                member_grid_score_map[best_m],
+                best_gain)
             grids = member_grids_sorted[: best_gain]
 
             if not grids:

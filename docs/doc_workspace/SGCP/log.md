@@ -4226,3 +4226,61 @@ docs\doc_workspace\SGCP\artifacts\failure_diag_spatial_rho3_10ch_41f\summary.jso
 - 晚期融合是 secondary 问题：35 个漏检已经有较密点云送到最近 head，但仍无最终框。下一步需要 dump per-head pre-NMS boxes，确认是 detector 未出框还是 inter-cluster late fusion/NMS 丢框。
 
 详细记录见 `failure_diagnostics.md`。
+
+## 2026-07-17 目标感知势博弈调度器：直接算法改造
+
+### 目的
+
+用户要求不要再在旧结果上做后处理修补，而是直接改资源调度/区块选择算法，同时尽量保留论文中的势博弈叙事。
+
+### 代码改动
+
+新增算法：
+
+```text
+opencda/core/clustering/algorithms/resource_allocation/target_aware_potential_game.py
+```
+
+注册入口：
+
+```text
+target_aware_potential_game
+target_aware_pg
+tapg
+```
+
+机制：第一阶段完全复用原 `PotentialGame` 的 sender / subchannel best-response，保留原势博弈资源竞争叙事；第二阶段在 allocator 内部执行 target-aware grid-action refinement，不再依赖 `offline_inference --sgcp-grid-selection-mode spatial_diverse` 这种外部后处理。新 grid utility 对 head weak grids、member high-density target-like grids、多 CAV 可见区域和 multi-view value 保留正边际效用，避免“单视角 density 超过 `rho_th` 就不再请求”的饱和问题。
+
+### 关键命令
+
+```powershell
+conda run -n opencda python -m opencda.tools.offline_inference --dataset-root D:\Data\Carla --scenario-id 2026_07_15_01_26_56 --ego-cav-id 1 --max-frames 0 --sgcp-constrained --resource-allocation target_aware_potential_game --sgcp-inter-cluster-late-fusion --rho-th 3 --num-channels 10 --bandwidth-mhz 20 --sgcp-trace-output docs\doc_workspace\SGCP\artifacts\target_aware_pg_10ch_rho3_41f_trace.csv --object-diagnostics-output docs\doc_workspace\SGCP\artifacts\object_diag_target_aware_pg_10ch_rho3_41f.csv
+
+conda run -n opencda python -m opencda.tools.sgcp_failure_diagnostics --dataset-root D:\Data\Carla --scenario-id 2026_07_15_01_26_56 --ego-cav-id 1 --max-frames 0 --resource-allocation target_aware_potential_game --rho-th 3 --num-channels 10 --bandwidth-mhz 20 --object-diagnostics-csv docs\doc_workspace\SGCP\artifacts\object_diag_target_aware_pg_10ch_rho3_41f.csv --output-dir docs\doc_workspace\SGCP\artifacts\failure_diag_target_aware_pg_10ch_rho3_41f
+
+conda run -n opencda python -m opencda.tools.offline_ns3_replay --dataset-root D:\Data\Carla --scenario-id 2026_07_15_01_26_56 --ego-cav-id 1 --max-frames 11 --resource-allocation target_aware_potential_game --rho-th 3 --num-channels 10 --bandwidth-mhz 20 --upload-plan-output docs\doc_workspace\SGCP\artifacts\target_aware_pg_ns3_10ch_rho3_11f_upload_plan.csv --dry-run
+```
+
+### 结果
+
+| Method | AP@0.3 | AP@0.5 | AP@0.7 | Payload bytes | Mbps | Avg. selected grids |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| `potential_game + spatial_diverse`, 10ch/rho3 | 0.79 | 0.76 | 0.38 | 29,405,296 | 57.38 | 89.72 |
+| `target_aware_potential_game`, 10ch/rho3 | 0.80 | 0.76 | 0.39 | 31,069,968 | 60.62 | 89.72 |
+
+对象级诊断对比：
+
+| Metric | Old spatial/rho3 | Target-aware PG |
+| --- | ---: | ---: |
+| Full-reference detected but SGCP missed rows | 111 | 106 |
+| Covered only by other cluster heads | 63 | 56 |
+| Nearest head got dense points but no final box | 35 | 36 |
+| Nearest head got sparse object-grid points | 12 | 12 |
+| No scheduled covering grid | 1 | 2 |
+| Nearest-head covering point mean | 69.4 | 79.0 |
+
+11 帧 NS3 dry-run 结果：每帧 10 条 scheduled request，4 条 unscheduled demand 被跳过，生成 `target_aware_pg_ns3_10ch_rho3_11f_upload_plan.csv`。尚未做真实 NS3 socket replay；下一步若要写入论文主表，需要启动 NS3 后确认 application/RLC complete。
+
+### 结论
+
+新算法不是在旧结果上修补，而是把 target-aware coverage 纳入资源调度器本身。AP 有小幅稳定收益，且对象级诊断显示此前最主要的“target grid 只被其他 head 覆盖”问题减少。代价是 payload 从 57.38 Mbps 升到 60.62 Mbps；当前仍显著低于 FullPerception centralized 的 118.71 Mbps，但若论文要强调“最低 Mbps”，仍需继续做强制预算 Random/Greedy 或点数 cap 版 target-aware PG。

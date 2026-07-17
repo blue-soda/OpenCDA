@@ -187,6 +187,15 @@ Coverage-aware spatial-diverse under the same `rho_th` sweep:
 
 Observation: `rho_th` is the main point-cloud threshold knob for this pipeline. For `spatial_diverse`, increasing `rho_th` from 2.0 to 3.0 improves AP@0.5/AP@0.7 from `0.75/0.37` to `0.76/0.38` with payload rising from 28.74 MB to 29.41 MB. This is a better paper parameter sweep than claiming Random/MWS reduce communication, because it shows an actual AP/payload threshold tradeoff inside the proposed method.
 
+Target-aware potential-game scheduler:
+
+| Method | Channels / BW | `rho_th` | AP@0.3 | AP@0.5 | AP@0.7 | Total Bytes | Mbps | Avg. Selected Grids | Notes |
+| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | --- |
+| `potential_game + spatial_diverse` | 10ch / 20 MHz | 3.0 | 0.79 | 0.76 | 0.38 | 29,405,296 | 57.38 | 89.72 | Former low-budget tuned row; grid action was replaced outside the allocator |
+| `target_aware_potential_game` | 10ch / 20 MHz | 3.0 | 0.80 | 0.76 | 0.39 | 31,069,968 | 60.62 | 89.72 | New allocator: original PotentialGame sender/RB stage plus target-aware grid-action refinement |
+
+Object-level diagnostics show the new scheduler reduces full-reference-detected but SGCP-missed GT rows from 111 to 106. The main targeted bucket, “covered only by other cluster heads,” drops from 63 to 56, and nearest-head covering point mean rises from 69.4 to 79.0. This supports the mechanism change: AP gain comes from moving key target grids toward the relevant cluster head, not from adding more scheduled links.
+
 ### CAV Count Scaling
 
 实验口径：`D:\Data\Carla\2026_07_15_01_26_56`，41 帧，`potential_game`，SGCP inter-cluster late fusion。该表使用同一 20-CAV dump 的数值排序前 `N` 个 CAV 子集，并固定 `ego_cav_id=1`；这是离线规模敏感性 smoke test，不等同于重新生成的不同交通密度场景。
