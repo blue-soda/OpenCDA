@@ -3749,3 +3749,46 @@ conda run -n opencda python -m opencda.tools.offline_inference --dataset-root D:
 ### 结论
 
 默认 late NMS `0.15` 是三档中最好结果。放宽到 `0.30` 没有恢复 AP@0.3/0.5，收紧到 `0.05` 更差。因此 `B_h=2` 的召回/AP@0.3/0.5 下降不是简单由 inter-cluster late NMS 阈值造成；下一步应检查 member/grid selection、box score distribution 和 per-cluster detection quality。
+
+## 2026-07-17 - Late-fusion box-count diagnostics
+
+### 目的
+
+解释 `B_h=2,rho_th=3` 为什么 AP@0.7 提升到 `0.42`，但 AP@0.3/0.5 降到 `0.76/0.72`。本轮不重跑 detector，只解析已有 offline inference stdout 中的 per-cluster source box count 和 inter-cluster late-fusion box count。
+
+### 代码更新
+
+新增只读解析工具：
+
+```text
+opencda.tools.sgcp_late_fusion_log_summary
+```
+
+输出逐帧 CSV：source prediction sum、fused prediction boxes、suppressed boxes、source/fused GT boxes、payload 和全局 AP。
+
+### 命令
+
+```powershell
+conda run -n opencda python -m opencda.tools.sgcp_late_fusion_log_summary --label spatial10-rho2-bh1 --log docs\doc_workspace\SGCP\artifacts\mechanism_probe\spatial_diverse_grid_41f_stdout.log --output-csv docs\doc_workspace\SGCP\artifacts\mechanism_probe\spatial_diverse_grid_41f_late_summary.csv
+
+conda run -n opencda python -m opencda.tools.sgcp_late_fusion_log_summary --label spatial10-rho2-bh2 --log docs\doc_workspace\SGCP\artifacts\mechanism_probe\spatial_diverse_bh2_41f_stdout.log --output-csv docs\doc_workspace\SGCP\artifacts\mechanism_probe\spatial_diverse_bh2_41f_late_summary.csv
+
+conda run -n opencda python -m opencda.tools.sgcp_late_fusion_log_summary --label spatial10-rho3-bh2 --log docs\doc_workspace\SGCP\artifacts\mechanism_probe\spatial_diverse_rho3_bh2_41f_stdout.log --output-csv docs\doc_workspace\SGCP\artifacts\mechanism_probe\spatial_diverse_rho3_bh2_41f_late_summary.csv
+
+conda run -n opencda python -m opencda.tools.sgcp_late_fusion_log_summary --label spatial20-rho2-bh1 --log docs\doc_workspace\SGCP\artifacts\mechanism_probe\spatial_diverse_ch20_41f_stdout.log --output-csv docs\doc_workspace\SGCP\artifacts\mechanism_probe\spatial_diverse_ch20_41f_late_summary.csv
+```
+
+### 结果
+
+| Variant | AP@0.3 | AP@0.5 | AP@0.7 | Total Bytes | Avg. Source Pred. | Avg. Fused Pred. | Avg. Suppressed Pred. | Avg. Fused GT |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| `spatial10-rho2-bh1` | 0.79 | 0.75 | 0.37 | 28,743,280 | 68.37 | 55.90 | 12.46 | 69.00 |
+| `spatial10-rho2-bh2` | 0.75 | 0.72 | 0.41 | 27,086,400 | 67.37 | 53.51 | 13.85 | 64.83 |
+| `spatial10-rho3-bh2` | 0.76 | 0.72 | 0.42 | 27,962,864 | 67.93 | 53.71 | 14.22 | 64.83 |
+| `spatial20-rho2-bh1` | 0.80 | 0.76 | 0.41 | 37,912,544 | 73.22 | 56.24 | 16.98 | 69.29 |
+
+补充 NMS probe：`B_h=2,rho_th=3,NMS=0.05` 的 avg fused GT 为 63.10，`NMS=0.30` 为 65.83，但 AP 仍低于默认 0.15。
+
+### 结论
+
+`B_h=2` 高 IoU 提升伴随 fused GT 覆盖减少，而不是融合框数量增加。当前更合理的解释是资源预算变化改变了 head/member/grid 覆盖对象分布，使剩余目标定位更准但低阈值召回面变窄。主表低通信候选仍优先保留 `B_h=1` coverage-aware 10ch/20ch；`B_h=2` 作为 high-IoU sensitivity，下一步检查 cluster-head/member selection 与 target coverage。

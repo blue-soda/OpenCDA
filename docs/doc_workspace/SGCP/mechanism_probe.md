@@ -85,6 +85,18 @@ conda run -n opencda python -m opencda.tools.offline_inference --dataset-root D:
 conda run -n opencda python -m opencda.tools.offline_inference --dataset-root D:\Data\Carla --scenario-id 2026_07_15_01_26_56 --ego-cav-id 1 --sgcp-constrained --sgcp-inter-cluster-late-fusion --resource-allocation potential_game --sgcp-grid-selection-mode spatial_diverse --rho-th 3 --head-rb-budget 2 --sgcp-late-nms-thresh 0.30 --max-frames 0 --sgcp-trace-output docs\doc_workspace\SGCP\artifacts\mechanism_probe\spatial_diverse_rho3_bh2_nms030_41f_trace.csv
 ```
 
+Late-fusion box-count diagnostics：
+
+```powershell
+conda run -n opencda python -m opencda.tools.sgcp_late_fusion_log_summary --label spatial10-rho2-bh1 --log docs\doc_workspace\SGCP\artifacts\mechanism_probe\spatial_diverse_grid_41f_stdout.log --output-csv docs\doc_workspace\SGCP\artifacts\mechanism_probe\spatial_diverse_grid_41f_late_summary.csv
+
+conda run -n opencda python -m opencda.tools.sgcp_late_fusion_log_summary --label spatial10-rho2-bh2 --log docs\doc_workspace\SGCP\artifacts\mechanism_probe\spatial_diverse_bh2_41f_stdout.log --output-csv docs\doc_workspace\SGCP\artifacts\mechanism_probe\spatial_diverse_bh2_41f_late_summary.csv
+
+conda run -n opencda python -m opencda.tools.sgcp_late_fusion_log_summary --label spatial10-rho3-bh2 --log docs\doc_workspace\SGCP\artifacts\mechanism_probe\spatial_diverse_rho3_bh2_41f_stdout.log --output-csv docs\doc_workspace\SGCP\artifacts\mechanism_probe\spatial_diverse_rho3_bh2_41f_late_summary.csv
+
+conda run -n opencda python -m opencda.tools.sgcp_late_fusion_log_summary --label spatial20-rho2-bh1 --log docs\doc_workspace\SGCP\artifacts\mechanism_probe\spatial_diverse_ch20_41f_stdout.log --output-csv docs\doc_workspace\SGCP\artifacts\mechanism_probe\spatial_diverse_ch20_41f_late_summary.csv
+```
+
 ## 结果
 
 | Mode | AP@0.3 | AP@0.5 | AP@0.7 | Total Bytes | Avg. Bytes / Receiver | Avg. Sources | Avg. Uploaded Sources | Avg. Uploaded Points | Avg. Selected Grids |
@@ -101,6 +113,19 @@ conda run -n opencda python -m opencda.tools.offline_inference --dataset-root D:
 | Spatial-diverse, `B_h=2`, `rho_th=3`, late NMS 0.05 | 0.73 | 0.70 | 0.40 | 27,962,864 | 113,670.18 | 2.67 | 1.67 | 7,104.39 | 90.74 |
 | Spatial-diverse, `B_h=2`, `rho_th=3`, late NMS 0.30 | 0.75 | 0.71 | 0.41 | 27,962,864 | 113,670.18 | 2.67 | 1.67 | 7,104.39 | 90.74 |
 | Full-cluster upload | 0.82 | 0.79 | 0.42 | 44,850,528 | 182,319.22 | 3.33 | 2.33 | 11,394.95 | 0.00 |
+
+## Late-Fusion Box Count Diagnostics
+
+| Variant | AP@0.3 | AP@0.5 | AP@0.7 | Total Bytes | Avg. Source Pred. | Avg. Fused Pred. | Avg. Suppressed Pred. | Avg. Fused GT |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| Spatial-diverse, 10ch, `rho_th=2`, `B_h=1` | 0.79 | 0.75 | 0.37 | 28,743,280 | 68.37 | 55.90 | 12.46 | 69.00 |
+| Spatial-diverse, 10ch, `rho_th=2`, `B_h=2` | 0.75 | 0.72 | 0.41 | 27,086,400 | 67.37 | 53.51 | 13.85 | 64.83 |
+| Spatial-diverse, 10ch, `rho_th=3`, `B_h=2` | 0.76 | 0.72 | 0.42 | 27,962,864 | 67.93 | 53.71 | 14.22 | 64.83 |
+| Spatial-diverse, 20ch, `rho_th=2`, `B_h=1` | 0.80 | 0.76 | 0.41 | 37,912,544 | 73.22 | 56.24 | 16.98 | 69.29 |
+| Spatial-diverse, 10ch, `rho_th=3`, `B_h=2`, NMS 0.05 | 0.73 | 0.70 | 0.40 | 27,962,864 | 67.93 | 52.93 | 15.00 | 63.10 |
+| Spatial-diverse, 10ch, `rho_th=3`, `B_h=2`, NMS 0.30 | 0.75 | 0.71 | 0.41 | 27,962,864 | 67.93 | 53.88 | 14.05 | 65.83 |
+
+诊断结论：`B_h=2` 的 AP@0.7 提升不是由更多融合框数量带来的；相反，它的平均 fused GT 从 `B_h=1` 10ch 的 69.00 降到 64.83，平均 fused pred 也从 55.90 降到 53.71。放宽 late NMS 到 0.30 只把 fused GT 提到 65.83，AP@0.3/0.5 仍未恢复。因此低阈值 AP 下降更像是 head/member/grid 选择改变了覆盖对象分布，使剩余目标定位更准但召回面变窄；下一步应检查 per-cluster member selection、cluster-head 分布和 target coverage，而不是继续调 late NMS。
 
 ## Spatial-Diverse Channel Sweep
 
@@ -121,6 +146,7 @@ conda run -n opencda python -m opencda.tools.offline_inference --dataset-root D:
 - `spatial_diverse` 在相同 scheduled links 和相同 grid count 下达到 `0.79/0.75/0.37`，高于原始 utility 和 random-grid，同时仍只使用 full-cluster payload 的约 64.1%。这说明覆盖多样性是比饱和密度 utility 更有希望的算法改造方向。
 - `B_h=2` sensitivity 显著提升高 IoU：`rho_th=3` 时 AP@0.7 达到 `0.42`，等于 full-cluster upload 的 AP@0.7，且 payload 只有 27,962,864 bytes、约 54.56 Mbps。但 AP@0.3/0.5 降至 `0.76/0.72`，说明更灵活的 per-head RB budget 改善了定位质量/高置信局部几何，却可能损失召回分布。该结果适合作为 high-IoU sensitivity 或后续算法调参线索；11 帧 NS3 replay 已验证 110/110 request application/RLC complete。
 - Late NMS threshold probe 中，默认 `0.15` 的 `0.76/0.72/0.42` 优于 `0.05` 的 `0.73/0.70/0.40` 和 `0.30` 的 `0.75/0.71/0.41`。因此 `B_h=2` 的 AP@0.3/0.5 下降不是简单由 inter-cluster late NMS 阈值导致；后续应优先检查 member/grid selection、box score distribution 和 per-cluster detection quality。
+- Late-fusion box-count diagnostics 进一步说明：`B_h=2` 的 fused GT 覆盖少于 `B_h=1` 10ch 和 20ch，且 fused prediction 数量没有增加。这支持“覆盖分布变窄、定位质量变好”的解释；主表低通信推荐仍应优先使用 `B_h=1` coverage-aware 10ch/20ch，`B_h=2` 暂写成 high-IoU sensitivity。
 - 子信道 sweep 显示 20 子信道 `spatial_diverse` 可达到 `0.80/0.76/0.41`，AP@0.7 已接近 full-cluster `0.42`，payload 约为 full-cluster 的 84.5%。10 子信道仍是更强的低通信主点，20 子信道适合作为 high-budget sensitivity。
 - 当前主表偏低的主要嫌疑从协议链路转移到 grid/PPS 选择质量：需要把 grid utility 从“密度饱和增益”改为“检测导向的覆盖/定位增益”，并继续处理 `B_h=1`、grid budget 和 AP@0.7 定位精度。
 
