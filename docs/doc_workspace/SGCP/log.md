@@ -3934,3 +3934,37 @@ Key uploaded-CAV proxy deltas between 41f `B_h=1` and 41f `B_h=2,rho3`:
 ### 结论
 
 `B_h=2` 的 receiver-level quality proxy 高于 `B_h=1`，这解释了 AP@0.7 上升；但它把高质量长期贡献者 CAV 6 的上传从 41 行降到 7 行，并增加了 CAV 5 等较低 ratio 成员。因此下一步不是普通 coverage fairness，而是 quality-weighted coverage：只有当候选成员能提供足够 detector-quality / target-level coverage 时才替换当前成员。
+
+## 2026-07-17 - Quality-persistent fallback safety probe
+
+### 目的
+
+将 plain persistent fallback 扩展为质量约束版本：只有候选成员具备至少 2 条历史 quality sample，且历史 pred/GT ratio 不低于被替换成员的 90% 且不低于 0.25 时，才允许复用原 subchannel 替换当前上传成员。验证质量门槛能否避免上一轮 plain persistent 的负面替换。
+
+### 代码更新
+
+`opencda.tools.offline_inference --sgcp-coverage-fallback` 新增：
+
+```text
+quality_persistent
+```
+
+默认仍为 `none`，不改变既有主表结果。`quality_persistent` 使用前序帧 receiver-level `pred_boxes/gt_boxes` 作为 detector-quality proxy。
+
+### 命令
+
+```powershell
+conda run -n opencda python -m opencda.tools.offline_inference --dataset-root D:\Data\Carla --scenario-id 2026_07_15_01_26_56 --ego-cav-id 1 --sgcp-constrained --sgcp-inter-cluster-late-fusion --resource-allocation potential_game --sgcp-grid-selection-mode spatial_diverse --rho-th 3 --head-rb-budget 2 --sgcp-coverage-fallback quality_persistent --max-frames 11 --sgcp-trace-output docs\doc_workspace\SGCP\artifacts\mechanism_probe\spatial_diverse_rho3_bh2_quality_persistent_11f_trace.csv
+```
+
+### 结果
+
+| Variant | Frames | AP@0.3 | AP@0.5 | AP@0.7 | Total Bytes | Missing Channel Rows | Zero-Pred Rows | Frame Replacements |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| `B_h=2,rho3`, no fallback | 11 | 0.69 | 0.64 | 0.34 | 7,416,720 | 0 | 0 | 0 |
+| `B_h=2,rho3`, persistent fallback | 11 | 0.67 | 0.62 | 0.34 | 7,453,808 | 0 | 0 | 7 |
+| `B_h=2,rho3`, quality-persistent fallback | 11 | 0.69 | 0.64 | 0.34 | 7,416,720 | 0 | 0 | 0 |
+
+### 结论
+
+Quality-persistent fallback 阻止了 plain persistent 的 7 次有害替换，结果回到 no-fallback baseline。这说明 detector-quality 门槛是必要安全条件；但当前规则过于保守，没有带来 AP 提升。下一步应改为 target-level/object-aware 候选生成，而不是只在 CAV 级别做 history/quality gate。

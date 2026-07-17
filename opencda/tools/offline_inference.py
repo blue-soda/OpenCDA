@@ -84,12 +84,14 @@ def parse_args():
                                  'density_distance'],
                         help='Grid scoring mode used by potential_game before optional grid selection replacement.')
     parser.add_argument('--sgcp-coverage-fallback', default='none',
-                        choices=['none', 'persistent'],
+                        choices=['none', 'persistent',
+                                 'quality_persistent'],
                         help='Optional SGCP member-coverage fallback probe. '
-                             'persistent replaces an already scheduled member '
-                             'with a repeatedly unscheduled cluster member '
-                             'while reusing the same subchannel and grid '
-                             'budget. Defaults to none.')
+                             'persistent uses coverage history only; '
+                             'quality_persistent additionally requires the '
+                             'candidate member to have comparable historical '
+                             'detector-quality proxy. Both reuse the same '
+                             'subchannel and grid budget. Defaults to none.')
     parser.add_argument('--t-min-stab', type=float, default=None,
                         help='Override CoalitionGame Params.T_min_stab in seconds. Use 0 for no stability window.')
     parser.add_argument('--n-max', type=int, default=None,
@@ -340,7 +342,15 @@ def diversify_scheduled_grid_selection(world, clusters):
         co_manager.set_grid_selection(diversified)
 
 
-def apply_persistent_coverage_fallback(world, clusters, coverage_state):
+def quality_ratio(stat):
+    gt_sum = float(stat.get('quality_gt_sum', 0))
+    if gt_sum <= 0:
+        return None
+    return float(stat.get('quality_pred_sum', 0)) / gt_sum
+
+
+def apply_persistent_coverage_fallback(world, clusters, coverage_state,
+                                       quality_aware=False):
     """Swap in repeatedly unscheduled members without changing link count.
 
     This is a diagnostic/algorithm probe for the 10ch case: global channel
@@ -404,6 +414,19 @@ def apply_persistent_coverage_fallback(world, clusters, coverage_state):
         replaced_id = max(current_selection.keys(), key=scheduled_score)
         if member_deficit(replaced_id)[0] >= candidate_deficit[0]:
             continue
+        if quality_aware:
+            candidate_stat = coverage_state.get(candidate_id, {})
+            replaced_stat = coverage_state.get(replaced_id, {})
+            candidate_quality = quality_ratio(candidate_stat)
+            replaced_quality = quality_ratio(replaced_stat)
+            if (candidate_quality is None or
+                    int(candidate_stat.get('quality_rows', 0)) < 2):
+                continue
+            if (replaced_quality is not None and
+                    candidate_quality < 0.9 * replaced_quality):
+                continue
+            if candidate_quality < 0.25:
+                continue
         replaced_grids = current_selection.get(replaced_id, [])
         if not replaced_grids:
             continue
@@ -460,6 +483,9 @@ def update_coverage_state_from_items(coverage_state, constrained_items):
                 'uploaded_frames': 0,
                 'unscheduled_frames': 0,
                 'fused_frames': 0,
+                'quality_rows': 0,
+                'quality_pred_sum': 0,
+                'quality_gt_sum': 0,
             })
             if member_id in sources:
                 stat['fused_frames'] += 1
@@ -467,6 +493,30 @@ def update_coverage_state_from_items(coverage_state, constrained_items):
                 stat['uploaded_frames'] += 1
             elif member_id != receiver_id:
                 stat['unscheduled_frames'] += 1
+
+
+def update_coverage_quality_state(coverage_state, metadata, pred_count,
+                                  gt_count):
+    if coverage_state is None or metadata is None:
+        return
+    if gt_count is None or gt_count <= 0:
+        return
+    receiver_id = int(metadata.get('receiver_id'))
+    source_ids = set(int(item) for item in metadata.get(
+        'source_cav_ids', []))
+    uploaded_ids = source_ids - {receiver_id}
+    for source_id in uploaded_ids:
+        stat = coverage_state.setdefault(source_id, {
+            'uploaded_frames': 0,
+            'unscheduled_frames': 0,
+            'fused_frames': 0,
+            'quality_rows': 0,
+            'quality_pred_sum': 0,
+            'quality_gt_sum': 0,
+        })
+        stat['quality_rows'] += 1
+        stat['quality_pred_sum'] += int(pred_count or 0)
+        stat['quality_gt_sum'] += int(gt_count or 0)
 
 
 def cluster_templates_from_clusters(clusters):
@@ -556,11 +606,12 @@ def apply_sgcp_constraint(frame, protocol, ego_cav_id, resource_allocation,
     elif grid_selection_mode == 'spatial_diverse':
         diversify_scheduled_grid_selection(world, clusters)
     coverage_fallback_replacements = 0
-    if coverage_fallback == 'persistent':
+    if coverage_fallback in ['persistent', 'quality_persistent']:
         coverage_fallback_replacements = apply_persistent_coverage_fallback(
             world,
             clusters,
-            coverage_state)
+            coverage_state,
+            quality_aware=coverage_fallback == 'quality_persistent')
     if receiver_policy == 'all-cluster-heads':
         receiver_ids = sorted(int(cluster.head_id) for cluster in clusters)
     else:
@@ -1065,6 +1116,13 @@ def main():
                 if gt_box_tensor is not None:
                     gt_tensors.append(gt_box_tensor)
                 if sgcp_metadata is not None:
+                    update_coverage_quality_state(
+                        sgcp_coverage_state,
+                        sgcp_metadata,
+                        0 if pred_box_tensor is None else
+                        pred_box_tensor.shape[0],
+                        0 if gt_box_tensor is None else
+                        gt_box_tensor.shape[0])
                     sgcp_summaries.append(sgcp_metadata)
                     sgcp_trace_rows.append(trace_row(
                         scenario_id,
@@ -1140,6 +1198,11 @@ def main():
                       timestamp,
                       list(eval_frame.keys())))
             if sgcp_metadata is not None:
+                update_coverage_quality_state(
+                    sgcp_coverage_state,
+                    sgcp_metadata,
+                    pred_count,
+                    gt_count)
                 sgcp_summaries.append(sgcp_metadata)
                 sgcp_trace_rows.append(trace_row(
                     scenario_id,

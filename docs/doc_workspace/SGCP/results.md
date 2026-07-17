@@ -487,6 +487,8 @@ Persistent coverage fallback 的 11 帧负面 probe 进一步说明，单纯按 
 
 Detector-quality proxy 也支持这个判断：41 帧 `B_h=2,rho3` 的 receiver-level average pred/GT ratio 为 0.4461，高于 `B_h=1` 10ch 的 0.3928，解释了高 IoU 提升；但 CAV 6 这一高质量长期贡献者的上传从 41 行降到 7 行，其 avg pred/GT ratio 为 0.6341/0.5746，明显高于被增加的 CAV 5 的 0.3129/0.3893。因此后续算法应采用 quality-weighted coverage，而不是 plain coverage fairness。
 
+Quality-persistent fallback 的 11 帧 safety probe 表明质量门槛可以阻止有害替换，但还不能带来收益：`B_h=2,rho3,quality_persistent` 为 AP `0.69/0.64/0.34`、7,416,720 bytes、0 次 replacement，等同 no fallback。下一步需要 object/target-aware 候选生成。
+
 ## 离线 SGCP 回放稳定性与耗时
 
 命令：

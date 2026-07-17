@@ -115,6 +115,8 @@ Persistent coverage fallback negative probe：
 conda run -n opencda python -m opencda.tools.offline_inference --dataset-root D:\Data\Carla --scenario-id 2026_07_15_01_26_56 --ego-cav-id 1 --sgcp-constrained --sgcp-inter-cluster-late-fusion --resource-allocation potential_game --sgcp-grid-selection-mode spatial_diverse --rho-th 3 --head-rb-budget 2 --max-frames 11 --sgcp-trace-output docs\doc_workspace\SGCP\artifacts\mechanism_probe\spatial_diverse_rho3_bh2_baseline_11f_trace.csv
 
 conda run -n opencda python -m opencda.tools.offline_inference --dataset-root D:\Data\Carla --scenario-id 2026_07_15_01_26_56 --ego-cav-id 1 --sgcp-constrained --sgcp-inter-cluster-late-fusion --resource-allocation potential_game --sgcp-grid-selection-mode spatial_diverse --rho-th 3 --head-rb-budget 2 --sgcp-coverage-fallback persistent --max-frames 11 --sgcp-trace-output docs\doc_workspace\SGCP\artifacts\mechanism_probe\spatial_diverse_rho3_bh2_persistent_conservative_11f_trace.csv
+
+conda run -n opencda python -m opencda.tools.offline_inference --dataset-root D:\Data\Carla --scenario-id 2026_07_15_01_26_56 --ego-cav-id 1 --sgcp-constrained --sgcp-inter-cluster-late-fusion --resource-allocation potential_game --sgcp-grid-selection-mode spatial_diverse --rho-th 3 --head-rb-budget 2 --sgcp-coverage-fallback quality_persistent --max-frames 11 --sgcp-trace-output docs\doc_workspace\SGCP\artifacts\mechanism_probe\spatial_diverse_rho3_bh2_quality_persistent_11f_trace.csv
 ```
 
 Detector-quality proxy summary：
@@ -181,8 +183,11 @@ conda run -n opencda python -m opencda.tools.sgcp_source_quality_summary --label
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
 | `B_h=2,rho3`, no fallback | 11 | 0.69 | 0.64 | 0.34 | 7,416,720 | 0 | 0 | 0 |
 | `B_h=2,rho3`, persistent fallback | 11 | 0.67 | 0.62 | 0.34 | 7,453,808 | 0 | 0 | 7 |
+| `B_h=2,rho3`, quality-persistent fallback | 11 | 0.69 | 0.64 | 0.34 | 7,416,720 | 0 | 0 | 0 |
 
 该 probe 保持 link count 和 subchannel 约束不变，7 次 frame-level replacement 均未产生 missing channel rows；但 AP@0.3/0.5 下降。结论：CAV 级 history fairness 不是足够的替换准则。后续若要加入 fallback，应引入 detector-quality proxy、object/target-level coverage 或 uncertainty，而不是只保护长期未调度成员。
+
+Quality-persistent fallback 阻止了 plain persistent 的有害替换，结果与 no fallback 一致。该安全门是必要的，但仍过于保守；真正的提升需要 target-level/object-aware 候选生成。
 
 ## Detector-Quality Proxy Summary
 
@@ -226,6 +231,7 @@ conda run -n opencda python -m opencda.tools.sgcp_source_quality_summary --label
 - CAV coverage diagnostics 显示 `B_h=2` 在 10ch 下并未增加 fused CAV 数，仍是每帧 16/20 CAV；主要变化是 CAV 6 被 CAV 5/4/12 替代。下一步算法修复应关注 member coverage fairness 和关键成员保护，而不是单独提高 `B_h`。
 - Persistent coverage fallback 的 11 帧负面 probe 显示，单纯按历史欠覆盖保护成员会轻微降低 AP@0.3/0.5。coverage repair 必须引入检测质量或目标覆盖约束；当前不建议把 `--sgcp-coverage-fallback persistent` 作为主表机制。
 - Detector-quality proxy 显示 CAV 6 是高质量长期贡献者，`B_h=2` 将其上传从 41 行降到 7 行是低阈值 AP 下降的重要线索。后续算法应是 quality-weighted coverage。
+- Quality-persistent fallback 目前只起到安全门作用，阻止有害替换但不提升 AP。下一步应把候选生成从 CAV 级 history gate 升级到 target/object-aware coverage。
 - 子信道 sweep 显示 20 子信道 `spatial_diverse` 可达到 `0.80/0.76/0.41`，AP@0.7 已接近 full-cluster `0.42`，payload 约为 full-cluster 的 84.5%。10 子信道仍是更强的低通信主点，20 子信道适合作为 high-budget sensitivity。
 - 当前主表偏低的主要嫌疑从协议链路转移到 grid/PPS 选择质量：需要把 grid utility 从“密度饱和增益”改为“检测导向的覆盖/定位增益”，并继续处理 `B_h=1`、grid budget 和 AP@0.7 定位精度。
 
