@@ -2,6 +2,22 @@
 
 本文件按时间顺序追加实验记录。每条记录应尽量包含：目的、代码版本、配置、命令、日志路径、关键结果、异常现象和下一步。
 
+## 2026-07-18 - Paper main-table LaTeX structure sanity check
+
+### 目的
+
+`C:\Workspace\icdcs-paper\SGCP\main.tex` 已改为分组主表。由于本机未检测到 `latexmk/pdflatex`，本轮做轻量 LaTeX 结构检查，避免表格列数或 begin/end 配对错误。
+
+### 检查结果
+
+- 未检测到 `latexmk` / `pdflatex`，因此仍未完成 PDF 编译验证。
+- `table/table*` begin/end：3/3。
+- `tabular` begin/end：3/3。
+- `tab:mAP` 主表普通数据行均为 5 列，即 4 个 `&`。
+- 分组行使用 `\multicolumn{5}{...}`，与 `|l|ccc|c|` 的 5 列结构匹配。
+
+结论：主表分组布局通过轻量结构检查；后续若安装 LaTeX 工具链，应再做完整 PDF 编译和版面检查。
+
 ## 2026-07-18 - FullPerception MWS/RS heuristic sanity pass
 
 ### 目的
