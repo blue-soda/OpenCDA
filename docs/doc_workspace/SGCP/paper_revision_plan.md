@@ -192,6 +192,12 @@ The coalition formation stage is guided by a stability-aware utility and empiric
 - 结果段补充 PAPG 与 communication-aware selective V2V 的精确 tradeoff：PAPG 的 mAP@0.3/0.5 高 `0.03/0.03`，但上传流量高 6.1%，mAP@0.7 低 0.01。
 - 结果段加入 object-routing probe 边界：routing hints 可修复少数目标，但会打掉更多已覆盖目标，因此只作为 failure analysis。
 - 结论改为 “improves low- and medium-IoU accuracy” 和 “edge-assisted global assignment remains a distinct high-IoU reference”，避免无条件声称 SGCP 全面击败所有 capacity-matched heuristic。
+2026-07-18 追加更新：修正 FullPerception 命名问题并重跑 PAPG / EdgeCooper-HD：
+
+- `FullPerception-centralized` 改为 `Full 20-CAV early fusion`，因为 `0.85/0.83/0.48, 118.71 Mbps` 是 full 20-CAV point-cloud sharing upper reference。
+- 新增 `FullPerception-PCS (built-in)` 行，对应仓库 `pcs.py` 的 FullPerception PCS baseline；修复 scheduled-receiver 协议后的结果为 `0.33/0.29/0.14, 15.80 Mbps`。
+- 41 帧 repeat 确认 PAPG 为 `0.81/0.78/0.39, 62.54 Mbps`，EdgeCooper-HD 为 `0.81/0.78/0.42, 65.40 Mbps`。两者接近是稳定结果，不应写成随机波动或实现误差。
+- Selective V2V 三个主表 baseline 已在 `results.md` 定义：forced random、communication-aware density/distance、density high-budget。
 
 剩余应优先推进：
 

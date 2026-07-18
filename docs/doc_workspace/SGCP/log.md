@@ -5399,3 +5399,66 @@ PAPG 仍作为当前稳定 V2V-only SGCP 主算法：41 帧 `0.81/0.78/0.39`，6
 ### 结论
 
 这次修改降低了主表和结论被审稿人质疑“选择性加粗/过度声明”的风险。当前正文口径与 `main_table_candidate.md`、`results.md` 和 `rebuttal_short.md` 基本一致：PAPG 是 V2V-only 主线，EdgeCooper-HD 是 edge-assisted reference，routing hints 是失败分析。
+
+## 2026-07-18 FullPerception naming fix and EdgeCooper/PAPG repeat
+
+### 目的
+
+回应当前主表审阅中的三个问题：
+
+1. `FullPerception-centralized` 命名错误；`0.85/0.83/0.48` 实际是 full 20-CAV early-fusion upper reference，不是 FullPerception baseline。
+2. EdgeCooper-HD 与 PAPG AP 过近，需要重新跑实验确认。
+3. Selective V2V 系列 baseline 名字需要对应到具体算法。
+
+### 代码核查
+
+`opencda/core/clustering/algorithms/resource_allocation/builder.py` 中：
+
+```text
+fullperception / fullperception_pcs -> PCS
+fullperception_mws -> MWS
+fullperception_random -> RandomRA
+```
+
+因此 FullPerception 在仓库里对应 `opencda/core/clustering/algorithms/resource_allocation/pcs.py` 的 blind-spot PCS 调度；full 20-CAV early fusion 只能称为 centralized full-sharing upper reference。
+
+`opencda/tools/offline_inference.py` 中 Selective V2V baseline 为同一 coalition/late-fusion pipeline 下的启发式替换：
+
+- forced random：固定预算随机 sender/grid；
+- communication-aware：density gain 除以距离代价，可选 NS3 delivery quality；
+- density high-budget：density-only greedy sender/grid，使用 3 members/head、117 grid budget。
+
+### 重跑命令
+
+PAPG 41 帧：
+
+```powershell
+conda run -n opencda python -m opencda.tools.offline_inference --dataset-root D:\Data\Carla --scenario-id 2026_07_15_01_26_56 --ego-cav-id 1 --max-frames 0 --sgcp-constrained --sgcp-receiver-policy all-cluster-heads --sgcp-inter-cluster-late-fusion --resource-allocation perception_aware_potential_game --rho-th 3 --num-channels 10 --bandwidth-mhz 20 --head-rb-budget 2 --sgcp-trace-output docs\doc_workspace\SGCP\artifacts\repeat_check_20260718\papg_41f_r1_trace.csv
+```
+
+EdgeCooper-HD 41 帧：
+
+```powershell
+conda run -n opencda python -m opencda.tools.offline_inference --dataset-root D:\Data\Carla --scenario-id 2026_07_15_01_26_56 --ego-cav-id 1 --max-frames 0 --selective-sharing-baseline edgecooper_global_hd --selective-member-budget 3 --selective-grid-budget 117 --sgcp-receiver-policy all-cluster-heads --sgcp-inter-cluster-late-fusion --rho-th 3 --num-channels 10 --bandwidth-mhz 20 --sgcp-trace-output docs\doc_workspace\SGCP\artifacts\repeat_check_20260718\edgecooper_hd_41f_r1_trace.csv
+```
+
+### 结果
+
+| Method | Frames | AP@0.3 | AP@0.5 | AP@0.7 | Payload bytes | Mbps |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| PAPG repeat | 11 | 0.76 | 0.73 | 0.34 | 8,598,224 | 62.53 |
+| EdgeCooper-HD repeat | 11 | 0.77 | 0.73 | 0.37 | 9,097,008 | 66.16 |
+| PAPG repeat | 41 | 0.81 | 0.78 | 0.39 | 32,049,872 | 62.54 |
+| EdgeCooper-HD repeat | 41 | 0.81 | 0.78 | 0.42 | 33,519,040 | 65.40 |
+
+### 论文修订
+
+已直接修改 `C:\Workspace\icdcs-paper\SGCP\main.tex`：
+
+- `FullPerception-centralized` 改为 `Full 20-CAV early fusion`；
+- 新增 `FullPerception-PCS (built-in)` 行，结果 `0.33/0.29/0.14, 15.80 Mbps`；
+- 正文说明 FullPerception-PCS 是仓库 `pcs.py` baseline，full 20-CAV early fusion 是 AP upper reference。
+
+### 结论
+
+EdgeCooper-HD 与 PAPG 接近不是随机波动，而是当前实现和数据集上的稳定结果。论文应继续分层：EdgeCooper-HD 是 edge-assisted/global assignment reference，PAPG 是 V2V-only decentralized main method。PAPG 不应声称全面超过 EdgeCooper-HD；可主张其在无 RSU/无 edge global assignment 下达到相同 AP@0.3/AP@0.5、更低 payload，但 AP@0.7 仍低于 EdgeCooper-HD。

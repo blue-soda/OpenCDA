@@ -62,7 +62,7 @@
 
 | Layer | Method | Current Result | Main Fair Baseline? | Notes |
 | --- | --- | --- | --- | --- |
-| Upper reference | Full 20-CAV early / virtual FullPerception centralized | 0.85 / 0.83 / 0.48 | No | 全点云共享，无 SGCP 通信约束；non-ego upload payload 60,838,528 bytes |
+| Upper reference | Full 20-CAV early fusion | 0.85 / 0.83 / 0.48 | No | 全点云共享，无 SGCP 通信约束；不是 FullPerception baseline；non-ego upload payload 60,838,528 bytes |
 | Upper reference | Full 20-CAV late checkpoint | 0.91 / 0.85 / 0.51 | No | 使用独立 late checkpoint，不能直接作为同 checkpoint 消融 |
 | Built-in FullPerception | PCS (`pcs.py`) legacy eval | 0.44 / 0.39 / 0.17 | No | 仓库内置 PCS 对应 FullPerception 论文调度算法；旧评估 payload 为 12,684,880 bytes / 24.75 Mbps |
 | Built-in FullPerception | PCS (`pcs.py`) repaired scheduled-receiver eval | 0.33 / 0.29 / 0.14 | No | `c(q)`、`sc_num` 和 scheduled links 已修复并进入 NS3 dry-run；payload 8,100,112 bytes / 15.80 Mbps，说明 PCS 当前仍 under-schedule |
@@ -120,6 +120,12 @@ docs\doc_workspace\SGCP\artifacts\fullperception_baselines_20260717\
 
 实验口径：`D:\Data\Carla\2026_07_15_01_26_56`，41 帧，20 CAV。复用 SGCP coalition formation 和 inter-cluster late fusion 评价口径，但不使用 PPS；每个 cluster head 最多选择 2 个非 head 成员，总 grid budget 为 87，接近 SGCP 默认 `avg_selected_grids=87.32`。
 
+算法定义：
+
+- `Selective forced random`：复用 SGCP coalition 和 inter-cluster late fusion，但不使用 SGCP/PPS utility；每个 cluster head 随机选择固定预算内的 sender 和 grid。主表使用强制预算版 `3 members/head + 117 grids`，避免旧 RandomRA 因 payload 过低变成弱 baseline。
+- `Selective communication-aware`：候选 sender 先按其可补充给 receiver weak/blind grids 的 density sum 打分，再除以距离代价 `1 + distance / 100`；如果提供 NS3 link-quality CSV，则再乘以 request-level delivery quality。主表低预算版使用 `2 members/head + 87 grids`。
+- `Selective density high-budget`：候选 sender 只按 weak/blind grids 上的 density sum 贪心选择，grid 也按 sender 局部 density 从高到低选取；主表高预算版使用 `3 members/head + 117 grids`，用于和 PAPG/20ch 等高预算设置比较。
+
 命令模板：
 
 ```powershell
@@ -136,6 +142,19 @@ conda run -n opencda python -m opencda.tools.offline_inference --dataset-root D:
 | Selective communication-aware high-budget | 0.80 | 0.76 | 0.40 | 153296.20 | 37710864 | 3.33 | 102.18 | Same result as density on this dump without external NS3 quality CSV |
 
 观察：communication-aware selective-sharing 是强公平 baseline。低预算 2-member/87-grid 设置中，它的 AP@0.7 高于原始 SGCP；高预算 3-member/117-grid 设置中，它达到 `0.80/0.76/0.40`，与 SGCP spatial-diverse 20ch 的 `0.80/0.76/0.41` 接近但 AP@0.7 略低，payload 也接近。因此论文中不应依赖低通信 Random/MWS 来证明通信节省，而应报告 payload-matched selective baselines，并强调 SGCP 的 PPS 子信道可行性、NS3 完整交付和 coverage-aware grid selection。
+
+### PAPG / EdgeCooper-HD Repeat Check
+
+实验口径：同一 41 帧 dump、20 CAV、OpenCOOD early checkpoint、inter-cluster late fusion。PAPG 使用 `perception_aware_potential_game --rho-th 3 --num-channels 10 --bandwidth-mhz 20 --head-rb-budget 2`；EdgeCooper-HD 使用 `--selective-sharing-baseline edgecooper_global_hd --selective-member-budget 3 --selective-grid-budget 117`。本轮重跑用于确认两者 AP 接近是否为随机波动。
+
+| Method | Frames | AP@0.3 | AP@0.5 | AP@0.7 | Total Upload bytes | Mbps | Log / Trace |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | --- |
+| PAPG repeat | 11 | 0.76 | 0.73 | 0.34 | 8,598,224 | 62.53 | `docs/doc_workspace/SGCP/artifacts/repeat_check_20260718/papg_11f_r1_trace.csv` |
+| EdgeCooper-HD repeat | 11 | 0.77 | 0.73 | 0.37 | 9,097,008 | 66.16 | `docs/doc_workspace/SGCP/artifacts/repeat_check_20260718/edgecooper_hd_11f_r1_trace.csv` |
+| PAPG repeat | 41 | 0.81 | 0.78 | 0.39 | 32,049,872 | 62.54 | `docs/doc_workspace/SGCP/artifacts/repeat_check_20260718/papg_41f_r1.log` |
+| EdgeCooper-HD repeat | 41 | 0.81 | 0.78 | 0.42 | 33,519,040 | 65.40 | `docs/doc_workspace/SGCP/artifacts/repeat_check_20260718/edgecooper_hd_41f_r1.log` |
+
+结论：全 41 帧结果与既有主表完全一致，说明 EdgeCooper-HD 与 PAPG 的接近是稳定结果。论文中必须按能力边界解释：EdgeCooper-HD 有 edge/global assignment，因此 AP@0.7 更强；PAPG 是 V2V-only 去中心化主线，重点主张是低/中 IoU AP 与 payload tradeoff、子信道可行性和不依赖 RSU。
 
 ### NS3 Link-Quality-Aware Selective Sharing
 

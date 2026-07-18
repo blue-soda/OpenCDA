@@ -2,7 +2,7 @@
 
 更新时间：2026-07-18
 
-本文档把当前可复现结果收束为论文主表候选。目标是避免三类混淆：把 FullPerception upper reference 当作公平主对比、用低 payload 的 Random/MWS 证明通信量降低、只给单一 SGCP 设置而不展示 AP/payload tradeoff。
+本文档把当前可复现结果收束为论文主表候选。目标是避免三类混淆：把 Full 20-CAV upper reference 误写成 FullPerception baseline、用低 payload 的 Random/MWS 证明通信量降低、只给单一 SGCP 设置而不展示 AP/payload tradeoff。FullPerception 在本仓库中对应 `pcs.py` 的 PCS 调度算法；full 20-CAV early fusion 只是全点云共享上界，不应命名为 FullPerception。
 
 当前表的主候选已从 coverage-aware grid post-processing 收束为 `perception_aware_potential_game`。PAPG 在同一 20MHz/10ch 约束下，以 62.54 Mbps 达到 `0.81/0.78/0.39`，高于当前强 selective baseline 的 AP@0.3/AP@0.5，并低于 full 20-CAV upper reference。后续仍需要把 Random/Greedy 改成强制使用统一带宽或统一 payload cap 的强 baseline，避免用低 payload 弱 baseline 支撑通信量主张。
 
@@ -39,6 +39,19 @@
 | SGCP coverage-aware, 10ch, `rho_th=3`, point cap 3000 | Payload sensitivity | 0.74 | 0.70 | 0.33 | 19,510,848 | 38.07 | Not replayed | Effective payload knob, but AP drops; not recommended as main row yet |
 | SGCP coverage-aware, 10ch, `rho_th=3`, `B_h=2` | High-IoU sensitivity | 0.76 | 0.72 | 0.42 | 27,962,864 | 54.56 | 110/110 complete | Matches full-cluster AP@0.7 at lower payload, but AP@0.3/0.5 drops; use as sensitivity unless recall is recovered |
 | SGCP coverage-aware, 20ch, `rho_th=2` | Proposed high-budget | 0.80 | 0.76 | 0.41 | 37,912,544 | 73.98 | 154/154 complete | Near full-cluster AP@0.7 with 84.5% full-cluster payload |
+
+## 2026-07-18 Repeat Check
+
+为回应 EdgeCooper-HD 与 PAPG AP 过近的问题，重新跑了 11 帧快速复核和 41 帧完整复核。两者均复现当前主表结果，说明接近不是随机波动。
+
+| Method | Frames | AP@0.3 | AP@0.5 | AP@0.7 | Payload bytes | Mbps | Artifact |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | --- |
+| PAPG repeat | 11 | 0.76 | 0.73 | 0.34 | 8,598,224 | 62.53 | `artifacts/repeat_check_20260718/papg_11f_r1_trace.csv` |
+| EdgeCooper-HD repeat | 11 | 0.77 | 0.73 | 0.37 | 9,097,008 | 66.16 | `artifacts/repeat_check_20260718/edgecooper_hd_11f_r1_trace.csv` |
+| PAPG repeat | 41 | 0.81 | 0.78 | 0.39 | 32,049,872 | 62.54 | `artifacts/repeat_check_20260718/papg_41f_r1.log` |
+| EdgeCooper-HD repeat | 41 | 0.81 | 0.78 | 0.42 | 33,519,040 | 65.40 | `artifacts/repeat_check_20260718/edgecooper_hd_41f_r1.log` |
+
+结论：EdgeCooper-HD 与 PAPG 在 AP@0.3/AP@0.5 上确实接近，AP@0.7 EdgeCooper-HD 更高。当前合理叙事不是“SGCP 全面超过 EdgeCooper”，而是“PAPG 在 V2V-only 去中心化约束下达到接近 edge-assisted global assignment 的低/中 IoU AP，并用更低 payload；EdgeCooper-HD 作为 edge/global assignment reference 保留高 IoU 优势”。
 
 ## 不建议放入主公平表的行
 

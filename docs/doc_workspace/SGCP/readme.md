@@ -28,7 +28,7 @@
 - `failure_diagnostics.md`：对象级漏检诊断，记录 GT 坐标、CAV 坐标、分簇、调度覆盖和四类 AP 下降原因判断。
 - `target_grid_case_study.md`：逐帧 target-grid 漏检案例分析，记录关键 GT grid、最佳 CAV、未调度原因和 object-aware PG 设计。
 - `perception_aware_pg.md`：perception-aware potential game 的完整机制说明、主表候选结果和后续验证项。
-- `main_table_candidate.md`：论文主表候选，收束 FullPerception upper reference、payload-matched selective baseline、SGCP 10/20ch、Mbps 换算和主表/附表边界。
+- `main_table_candidate.md`：论文主表候选，区分 full 20-CAV upper reference、FullPerception-PCS baseline、payload-matched selective baseline、SGCP 10/20ch、Mbps 换算和主表/附表边界。
 - `rebuttal_draft.md`：按 reviewer concern 整理的 rebuttal 草稿，覆盖 FullPerception 公平性、`f(rho)`、runtime、topology trigger、NS3 delivery 和机制边界。
 - `rebuttal_short.md`：`rebuttal_draft.md` 的压缩版，用于最终 rebuttal 粘贴、字数控制和主张边界收束。
 - `../environment.md`：全局环境文档，统一维护 Conda 环境、数据路径、CARLA 路径、启动命令和通用工具入口；运行实验前优先查看这里。
