@@ -2,6 +2,29 @@
 
 本文件按时间顺序追加实验记录。每条记录应尽量包含：目的、代码版本、配置、命令、日志路径、关键结果、异常现象和下一步。
 
+## 2026-07-19 - EdgeCooper writing reference for P9
+
+### 目的
+
+完成 `target.md` P9 中“阅读并参考 EdgeCooper 写作方式”的未完成项，重点核查 network-level evaluation、V2V+/edge scheduling 叙事边界，并确认不引入 satisfaction rate。
+
+### 输入
+
+```text
+C:\Users\sakakibara\OneDrive\Papers\Cooperative Perception\EdgeCooper_Network-Aware_Cooperative_LiDAR_Perception_for_Enhanced_Vehicular_Awareness.pdf
+```
+
+### 结果
+
+- 新增 `docs/doc_workspace/SGCP/edgecooper_writing_reference.md`。
+- 更新 `readme.md`、`target.md`、`status.md`。
+- 提炼 EdgeCooper 实验章节结构：dataset/simulation architecture、object detection model、communication settings、comparison algorithms、qualitative evaluation、quantitative evaluation。
+- 映射到 SGCP 当前图表：protocol-native comparison、fusion scaffold ablation、Pareto、SGCP-compatible scheduler comparison、parameter sensitivity、appendix support。
+
+### 结论
+
+SGCP 可以借鉴 EdgeCooper 的系统化实验组织，但不能沿用 satisfaction rate 作为主指标。SGCP 修订稿应继续使用 aggregate AP + Mbps，并严格区分 Full 20-CAV upper reference、EdgeCooper-HD edge-assisted reference、FullPerception-PCS baseline、Pure late prediction-sharing reference 和 SGCP-compatible scheduler comparison。
+
 ## 2026-07-19 - P8 appendix support consolidation
 
 ### 目的

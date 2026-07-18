@@ -203,7 +203,7 @@
 
 ## P9：论文 LaTeX 修改
 
-- [ ] 阅读并参考 EdgeCooper 写作方式，特别是 network-level evaluation、V2V+ / edge scheduling 的叙事边界；不额外引入 satisfaction rate，统一使用 aggregate AP。
+- [x] 阅读并参考 EdgeCooper 写作方式，特别是 network-level evaluation、V2V+ / edge scheduling 的叙事边界；不额外引入 satisfaction rate，统一使用 aggregate AP。已新增 `edgecooper_writing_reference.md`，将 EdgeCooper 的实验章节组织映射到 SGCP 的 protocol-native table、fusion ablation、Pareto、scheduler comparison 和 appendix support。
 - [x] 修改 `C:\Workspace\icdcs-paper\SGCP\main.tex` 的实验章节结构，使其按以下顺序组织：protocol-native comparison、fusion scaffold ablation、Pareto curve、scheduler-compatible comparison、parameter sensitivity。第一版已完成。
 - [x] 重写 baseline 说明，明确 FullPerception-PCS、EdgeCooperV2V+、PACP-style LiDAR proxy、SGCP-compatible scheduler comparison 的信息条件和公平性边界。当前已在主表、Pareto caption 和 scheduler comparison 中分层说明。
 - [x] 修改图表 caption：每个图表必须说明回答的问题、统一资源设置、是否 protocol-native、是否 SGCP-compatible。
