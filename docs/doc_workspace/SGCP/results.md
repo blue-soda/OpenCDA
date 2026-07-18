@@ -2,7 +2,7 @@
 
 本文件只记录经过确认、可复现或准备进入论文/rebuttal 的核心结果。探索性现象先记录在 `log.md`，稳定后再整理到这里。
 
-更新时间：2026-07-18
+更新时间：2026-07-19
 
 ## 结果记录规范
 
@@ -41,6 +41,23 @@
 | SGCP HUPAPG head-urgent, 10ch, `rho_th=3` | 0.81 | 0.78 | 0.39 | 62.54 | TBD | Safe but no-gain branch; receiver target urgency preserves PAPG but does not improve AP@0.7 |
 | SGCP coverage-aware, 10ch, `rho_th=3` | 0.79 | 0.76 | 0.38 | 57.38 | TBD | PAPG predecessor/ablation |
 | SGCP coverage-aware, 20ch | 0.80 | 0.76 | 0.41 | 73.98 | TBD | Resource-sensitivity row |
+
+## Table 1 Protocol-Native Manifest
+
+统一 source CSV：
+
+`docs\doc_workspace\SGCP\artifacts\table1_protocol_20260719\protocol_native_manifest.csv`
+
+| Method | Aggregate AP@0.3 | AP@0.5 | AP@0.7 | Evaluated Samples | Trace Rows | Receiver Policy | Late Fusion | Payload bytes | Mbps | Artifact |
+| --- | ---: | ---: | ---: | ---: | ---: | --- | --- | ---: | ---: | --- |
+| Head-only | 0.26 | 0.22 | 0.09 | 41 | 246 | all-cluster-heads | yes | 0 | 0.00 | `mechanism_probe/head_only_41f_stdout.log` |
+| Pure late, singleton 20-CAV | 0.82 | 0.76 | 0.37 | 41 | 820 | all-cluster-heads | yes | 0 | 0.00 | `table1_protocol_20260719/pure_late_singleton_41f.log` |
+| FullPerception-PCS tuned | 0.59 | 0.53 | 0.22 | 41 | 281 | all-scheduled-receivers | yes | 12,959,840 | 25.29 | `pcs_tuning_20260718/pcs_41f_tuned_div12_ov0.log` |
+| EdgeCooper-HD proxy | 0.81 | 0.78 | 0.42 | 41 | 246 | all-cluster-heads | yes | 33,519,040 | 65.40 | `repeat_check_20260718/edgecooper_hd_41f_r1.log` |
+| SGCP-PAPG full | 0.81 | 0.78 | 0.39 | 41 | 246 | all-cluster-heads | yes | 32,049,872 | 62.54 | `repeat_check_20260718/papg_41f_r1.log` |
+| Full 20-CAV early upper reference | 0.85 | 0.83 | 0.48 | 41 | 41 | full-20-cav | no | 60,838,528 | 118.71 | `table1_protocol_20260719/full20_early_41f.log` |
+
+解释边界：Pure late 在 aggregate AP@0.3 上已经达到 0.82，说明 late-fusion 覆盖本身很强；主文不能把 SGCP 的 AP@0.3 优势只归因于 late fusion。若该行进入 protocol-native comparison，必须同时报告或估算 detection-box exchange overhead，或者标注为 prediction-sharing reference。SGCP 的主张应集中在：在不依赖 edge/global assignment 的 V2V 点云预算下，通过分簇 + PAPG 点云选择 + 两层融合，在 62.54 Mbps 达到接近 EdgeCooper-HD 的 AP@0.3/AP@0.5，同时保留 NS3 子信道可行性。
 
 ## 消融实验
 

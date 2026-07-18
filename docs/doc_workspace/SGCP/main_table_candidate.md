@@ -1,6 +1,6 @@
 # SGCP Main Table Candidate
 
-更新时间：2026-07-18
+更新时间：2026-07-19
 
 本文档把当前可复现结果收束为论文主表候选。目标是避免三类混淆：把 Full 20-CAV upper reference 误写成 FullPerception baseline、用低 payload 的 Random/MWS 证明通信量降低、只给单一 SGCP 设置而不展示 AP/payload tradeoff。FullPerception 在本仓库中对应 `pcs.py` 的 PCS 调度算法；full 20-CAV early fusion 只是全点云共享上界，不应命名为 FullPerception。
 
@@ -20,6 +20,7 @@
 | Method | Type | AP@0.3 | AP@0.5 | AP@0.7 | Payload | Mbps | NS3 Delivery | Notes |
 | --- | --- | ---: | ---: | ---: | ---: | ---: | --- | --- |
 | Head-only | Lower reference | 0.26 | 0.22 | 0.09 | 0 | 0.00 | N/A | Cluster heads detect alone with no point-cloud uploads, then late-fuse |
+| Pure late, singleton 20-CAV | Prediction-sharing reference | 0.82 | 0.76 | 0.37 | 0 point-cloud bytes | 0.00 point-cloud Mbps | N/A | All CAVs run local detection and late-fuse boxes; needs detection-box exchange overhead before fair communication claims |
 | Full 20-CAV early fusion | Upper reference | 0.85 | 0.83 | 0.48 | 60,838,528 | 118.71 | Not constrained | Full point-cloud sharing AP upper bound |
 | FullPerception PCS (`pcs.py`), tuned | Built-in FullPerception | 0.59 | 0.53 | 0.22 | 12,959,840 | 25.29 | 11f dry-run: 55/55 scheduled | Current formal FullPerception baseline; payload-based `c(q)`, real `sc_num`, schedulable blind-spot units |
 | Global selective proxy | RSU/edge-assisted | 0.84 | 0.80 | 0.46 | 56,224,736 | 109.71 | Dry-run only | Virtual/global candidate pool, not FullPerception PCS |
@@ -53,6 +54,21 @@
 | EdgeCooper-HD repeat | 41 | 0.81 | 0.78 | 0.42 | 33,519,040 | 65.40 | `artifacts/repeat_check_20260718/edgecooper_hd_41f_r1.log` |
 
 结论：EdgeCooper-HD 与 PAPG 在 AP@0.3/AP@0.5 上确实接近，AP@0.7 EdgeCooper-HD 更高。当前合理叙事不是“SGCP 全面超过 EdgeCooper”，而是“PAPG 在 V2V-only 去中心化约束下达到接近 edge-assisted global assignment 的低/中 IoU AP，并用更低 payload；EdgeCooper-HD 作为 edge/global assignment reference 保留高 IoU 优势”。
+
+## 2026-07-19 Protocol-Native Manifest
+
+统一 source CSV：`artifacts/table1_protocol_20260719/protocol_native_manifest.csv`。
+
+| Method | AP@0.3 | AP@0.5 | AP@0.7 | Evaluated Samples | Receiver Scope | Payload bytes | Mbps |
+| --- | ---: | ---: | ---: | ---: | --- | ---: | ---: |
+| Head-only | 0.26 | 0.22 | 0.09 | 41 | 6 cluster heads/frame, late-fused | 0 | 0.00 |
+| Pure late, singleton 20-CAV | 0.82 | 0.76 | 0.37 | 41 | 20 CAV local detections/frame, late-fused | 0 point-cloud bytes | 0.00 point-cloud Mbps |
+| FullPerception-PCS tuned | 0.59 | 0.53 | 0.22 | 41 | scheduled receivers, late-fused | 12,959,840 | 25.29 |
+| EdgeCooper-HD proxy | 0.81 | 0.78 | 0.42 | 41 | 6 cluster heads/frame, late-fused | 33,519,040 | 65.40 |
+| SGCP-PAPG full | 0.81 | 0.78 | 0.39 | 41 | 6 cluster heads/frame, late-fused | 32,049,872 | 62.54 |
+| Full 20-CAV early upper reference | 0.85 | 0.83 | 0.48 | 41 | all CAV point clouds fused as one sample | 60,838,528 | 118.71 |
+
+Pure late 的 AP@0.3 很强，因此后续论文不能把 SGCP 写成“只因 late fusion 带来覆盖率提升”。更稳的写法是：late fusion 是 coverage scaffold，PAPG/point-cloud early fusion 是在同一覆盖 scaffold 下提升可用局部融合并控制 raw LiDAR payload；Pure late 若进入主表，必须补 detection-box exchange overhead 或清楚标为 prediction-sharing reference。
 
 ## 不建议放入主公平表的行
 

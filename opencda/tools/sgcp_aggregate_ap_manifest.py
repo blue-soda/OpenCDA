@@ -25,6 +25,33 @@ SGCP_SUMMARY_PATTERN = re.compile(
     r'total_comm_bytes=(?P<total_comm>\d+)\s+'
     r'avg_source_cavs=(?P<avg_sources>[0-9.]+)\s+'
     r'avg_selected_grids=(?P<avg_grids>[0-9.]+)')
+FIELDNAMES = [
+    'label',
+    'ap_03',
+    'ap_05',
+    'ap_07',
+    'aggregate_ap_scope',
+    'evaluated_samples',
+    'trace_rows',
+    'unique_timestamps',
+    'receiver_policy',
+    'inter_cluster_late_fusion',
+    'fusion_method',
+    'resource_allocation',
+    'clustering',
+    'upload_mode',
+    'grid_selection_mode',
+    'grid_score_mode',
+    'cluster_count_mode',
+    'payload_bytes',
+    'mbps',
+    'avg_comm_bytes_per_trace_row',
+    'avg_source_cavs',
+    'avg_selected_grids',
+    'log_path',
+    'trace_path',
+    'notes',
+]
 
 
 def parse_args():
@@ -40,6 +67,9 @@ def parse_args():
                              'Defaults to 0.1 for 10 Hz CP.')
     parser.add_argument('--notes', default='',
                         help='Optional note copied to every row.')
+    parser.add_argument('--override', action='append', default=[],
+                        help='Override a manifest field with '
+                             'label.field=value. May be repeated.')
     return parser.parse_args()
 
 
@@ -53,6 +83,28 @@ def split_run_spec(spec):
     if not label.strip() or not log_path:
         raise ValueError('--run must include non-empty label and log path')
     return label.strip(), log_path, trace_path
+
+
+def split_override_spec(spec):
+    if '=' not in spec or '.' not in spec.split('=', 1)[0]:
+        raise ValueError('--override must use label.field=value')
+    left, value = spec.split('=', 1)
+    label, field = left.split('.', 1)
+    label = label.strip()
+    field = field.strip()
+    if not label or not field:
+        raise ValueError('--override must include non-empty label and field')
+    if field not in FIELDNAMES:
+        raise ValueError('Unknown manifest field in override: %s' % field)
+    return label, field, value
+
+
+def parse_overrides(specs):
+    overrides = {}
+    for spec in specs:
+        label, field, value = split_override_spec(spec)
+        overrides.setdefault(label, {})[field] = value
+    return overrides
 
 
 def read_text(path):
@@ -162,11 +214,13 @@ def parse_trace(path):
 def compute_mbps(total_bytes, evaluated_samples, frame_interval_s):
     total_bytes = parse_int(total_bytes)
     evaluated_samples = parse_int(evaluated_samples)
-    if total_bytes <= 0 or evaluated_samples <= 0:
+    if evaluated_samples <= 0:
         return ''
     duration_s = evaluated_samples * frame_interval_s
     if duration_s <= 0:
         return ''
+    if total_bytes <= 0:
+        return 0.0
     return total_bytes * 8.0 / duration_s / 1e6
 
 
@@ -220,39 +274,23 @@ def row_for_run(label, log_path, trace_path, frame_interval_s, notes):
     return row
 
 
+def apply_overrides(row, overrides, frame_interval_s):
+    for field, value in overrides.items():
+        row[field] = value
+    if 'payload_bytes' in overrides or 'evaluated_samples' in overrides:
+        row['mbps'] = compute_mbps(
+            row.get('payload_bytes', ''),
+            row.get('evaluated_samples', ''),
+            frame_interval_s)
+    return row
+
+
 def write_rows(path, rows):
     output_dir = os.path.dirname(os.path.abspath(path))
     if output_dir and not os.path.exists(output_dir):
         os.makedirs(output_dir)
-    fieldnames = [
-        'label',
-        'ap_03',
-        'ap_05',
-        'ap_07',
-        'aggregate_ap_scope',
-        'evaluated_samples',
-        'trace_rows',
-        'unique_timestamps',
-        'receiver_policy',
-        'inter_cluster_late_fusion',
-        'fusion_method',
-        'resource_allocation',
-        'clustering',
-        'upload_mode',
-        'grid_selection_mode',
-        'grid_score_mode',
-        'cluster_count_mode',
-        'payload_bytes',
-        'mbps',
-        'avg_comm_bytes_per_trace_row',
-        'avg_source_cavs',
-        'avg_selected_grids',
-        'log_path',
-        'trace_path',
-        'notes',
-    ]
     with open(path, 'w', newline='') as stream:
-        writer = csv.DictWriter(stream, fieldnames=fieldnames)
+        writer = csv.DictWriter(stream, fieldnames=FIELDNAMES)
         writer.writeheader()
         for row in rows:
             writer.writerow(row)
@@ -260,15 +298,21 @@ def write_rows(path, rows):
 
 def main():
     args = parse_args()
+    overrides = parse_overrides(args.override)
     rows = []
     for spec in args.run:
         label, log_path, trace_path = split_run_spec(spec)
-        rows.append(row_for_run(
+        row = row_for_run(
             label,
             log_path,
             trace_path,
             args.frame_interval_s,
-            args.notes))
+            args.notes)
+        row = apply_overrides(
+            row,
+            overrides.get(label, {}),
+            args.frame_interval_s)
+        rows.append(row)
     write_rows(args.output_csv, rows)
     for row in rows:
         print('label=%s AP=%s/%s/%s samples=%s trace_rows=%s '

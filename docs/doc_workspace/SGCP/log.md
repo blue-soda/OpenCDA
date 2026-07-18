@@ -5730,3 +5730,44 @@ conda run -n opencda python -m opencda.tools.sgcp_aggregate_ap_manifest --run "P
 ### 结论
 
 P0 的 aggregate AP 口径已经可以落地到表格源数据。下一步应对 Table 1 protocol-native comparison 的所有候选行补齐 stdout log + trace CSV + manifest row，优先处理 Head-only、Pure late fusion、FullPerception-PCS、EdgeCooperV2V+、SGCP full 和 Full 20-CAV upper reference。
+
+## 2026-07-19 Table 1 protocol-native manifest first pass
+
+### 目的
+
+推进 `target.md` P1：把 protocol-native comparison 的核心候选行统一到 aggregate AP manifest，消除 FullPerception、full-sharing upper reference、pure late 和 SGCP-compatible scheduler comparison 混写的问题。
+
+### 新跑实验
+
+Full 20-CAV early upper reference：
+
+```powershell
+conda run -n opencda python -m opencda.tools.offline_inference --dataset-root D:\Data\Carla --scenario-id 2026_07_15_01_26_56 --ego-cav-id 1 --max-frames 0 2>&1 | Tee-Object -FilePath docs\doc_workspace\SGCP\artifacts\table1_protocol_20260719\full20_early_41f.log
+```
+
+Pure late singleton 20-CAV：
+
+```powershell
+conda run -n opencda python -m opencda.tools.offline_inference --dataset-root D:\Data\Carla --scenario-id 2026_07_15_01_26_56 --ego-cav-id 1 --max-frames 0 --sgcp-constrained --clustering singleton --sgcp-upload-mode head_only --sgcp-receiver-policy all-cluster-heads --sgcp-inter-cluster-late-fusion --sgcp-trace-output docs\doc_workspace\SGCP\artifacts\table1_protocol_20260719\pure_late_singleton_41f_trace.csv 2>&1 | Tee-Object -FilePath docs\doc_workspace\SGCP\artifacts\table1_protocol_20260719\pure_late_singleton_41f.log
+```
+
+Manifest：
+
+```powershell
+conda run -n opencda python -m opencda.tools.sgcp_aggregate_ap_manifest --run "Full20Early=docs\doc_workspace\SGCP\artifacts\table1_protocol_20260719\full20_early_41f.log," --run "HeadOnly=docs\doc_workspace\SGCP\artifacts\mechanism_probe\head_only_41f_stdout.log,docs\doc_workspace\SGCP\artifacts\mechanism_probe\head_only_41f_trace.csv" --run "PureLate=docs\doc_workspace\SGCP\artifacts\table1_protocol_20260719\pure_late_singleton_41f.log,docs\doc_workspace\SGCP\artifacts\table1_protocol_20260719\pure_late_singleton_41f_trace.csv" --run "FullPerceptionPCS=docs\doc_workspace\SGCP\artifacts\pcs_tuning_20260718\pcs_41f_tuned_div12_ov0.log,docs\doc_workspace\SGCP\artifacts\pcs_tuning_20260718\pcs_41f_tuned_div12_ov0_trace.csv" --run "EdgeCooperHD=docs\doc_workspace\SGCP\artifacts\repeat_check_20260718\edgecooper_hd_41f_r1.log,docs\doc_workspace\SGCP\artifacts\repeat_check_20260718\edgecooper_hd_41f_r1_trace.csv" --run "SGCP_PAPG=docs\doc_workspace\SGCP\artifacts\repeat_check_20260718\papg_41f_r1.log,docs\doc_workspace\SGCP\artifacts\repeat_check_20260718\papg_41f_r1_trace.csv" --override "Full20Early.payload_bytes=60838528" --override "Full20Early.receiver_policy=full-20-cav" --override "Full20Early.trace_rows=41" --override "Full20Early.unique_timestamps=41" --override "Full20Early.inter_cluster_late_fusion=no" --override "Full20Early.resource_allocation=full_sharing_upper_reference" --override "Full20Early.clustering=none" --override "Full20Early.upload_mode=full_point_cloud" --override "Full20Early.avg_source_cavs=20.00" --override "Full20Early.avg_selected_grids=N/A" --output-csv docs\doc_workspace\SGCP\artifacts\table1_protocol_20260719\protocol_native_manifest.csv --notes "P1 protocol-native manifest first pass"
+```
+
+### 结果
+
+| Method | Aggregate AP@0.3 | AP@0.5 | AP@0.7 | Evaluated Samples | Trace Rows | Payload bytes | Mbps |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| Head-only | 0.26 | 0.22 | 0.09 | 41 | 246 | 0 | 0.00 |
+| Pure late singleton 20-CAV | 0.82 | 0.76 | 0.37 | 41 | 820 | 0 point-cloud bytes | 0.00 point-cloud Mbps |
+| FullPerception-PCS tuned | 0.59 | 0.53 | 0.22 | 41 | 281 | 12,959,840 | 25.29 |
+| EdgeCooper-HD proxy | 0.81 | 0.78 | 0.42 | 41 | 246 | 33,519,040 | 65.40 |
+| SGCP-PAPG full | 0.81 | 0.78 | 0.39 | 41 | 246 | 32,049,872 | 62.54 |
+| Full 20-CAV early upper | 0.85 | 0.83 | 0.48 | 41 | 41 | 60,838,528 | 118.71 |
+
+### 结论
+
+P1 核心行已有统一 manifest artifact。Pure late singleton 20-CAV 的 AP@0.3 很高，说明 SGCP 叙事不能只强调 late fusion 覆盖；应把 pure late 写成 prediction-sharing reference，并补 detection-box exchange overhead，或者明确它不是 raw point-cloud communication baseline。SGCP-PAPG 的优势应放在 V2V-only 点云预算、PAPG 调度、NS3 子信道可行性和接近 edge/global assignment 的低/中 IoU AP 上。

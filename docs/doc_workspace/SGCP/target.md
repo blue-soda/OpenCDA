@@ -36,25 +36,26 @@
 
 必须包含：
 
-- [ ] Head-only：单车感知下界。
-- [ ] Pure late fusion：所有 CAV 本地检测框 late fusion，不做点云共享；用于展示 late fusion 覆盖能力。
-- [ ] FullPerception-PCS V2V：`pcs.py` / `fullperception_pcs`，按论文 PCS 口径运行，必要时继续修正 PCS 复现质量。
-- [ ] EdgeCooperV2V+：V2V 数据共享、edge/RSU 只调度；不能使用 SGCP 分簇作为原生设置，若使用 proxy 必须标注。
-- [ ] SGCP full：分簇 + PAPG/PPS 点云划分 + 簇内 early fusion + 簇间 late fusion。
-- [ ] Full 20-CAV early fusion upper reference：只作上界，不作为 baseline。
+- [x] Head-only：单车感知下界。
+- [x] Pure late fusion：所有 CAV 本地检测框 late fusion，不做点云共享；用于展示 late fusion 覆盖能力。
+- [x] FullPerception-PCS V2V：`pcs.py` / `fullperception_pcs`，按论文 PCS 口径运行，必要时继续修正 PCS 复现质量。
+- [x] EdgeCooperV2V+：V2V 数据共享、edge/RSU 只调度；不能使用 SGCP 分簇作为原生设置，若使用 proxy 必须标注。
+- [x] SGCP full：分簇 + PAPG/PPS 点云划分 + 簇内 early fusion + 簇间 late fusion。
+- [x] Full 20-CAV early fusion upper reference：只作上界，不作为 baseline。
 
 指标：
 
-- [ ] Network AP@0.3 / AP@0.5 / AP@0.7。
-- [ ] Evaluated sample count and receiver-frame scope。
-- [ ] Mbps / payload bytes。
-- [ ] 必要时补 delivery sanity 一句话，不做单独 NS3 表格。
+- [x] Network AP@0.3 / AP@0.5 / AP@0.7。
+- [x] Evaluated sample count and receiver-frame scope。
+- [x] Mbps / payload bytes。
+- [x] 必要时补 delivery sanity 一句话，不做单独 NS3 表格。
 
 验收标准：
 
 - [ ] 表格必须清晰解释 SGCP 的完整系统优势，尤其是 aggregate AP@0.3 的大场景覆盖收益和 AP@0.7 的局部精度收益。
 - [ ] 若 SGCP 只靠 late fusion 在 AP@0.3 大幅领先，需要在正文明确这是系统协议优势，不把它写成单纯 scheduler 优势。
 - [ ] 若 FullPerception-PCS 或 EdgeCooperV2V+ 复现结果异常低，先核查算法、参数和场景，不直接拿弱结果进主表。
+- [ ] Pure late fusion 当前 `0.82/0.76/0.37` 且 0 点云 payload 很强；论文写作必须计入 detection-box exchange overhead 或将其明确为 prediction-sharing reference，否则会削弱 SGCP 通信优势叙事。
 
 ## P2：Table 2 - Fusion Scaffold Ablation
 
