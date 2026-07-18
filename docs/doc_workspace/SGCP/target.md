@@ -55,7 +55,7 @@
 - [ ] 表格必须清晰解释 SGCP 的完整系统优势，尤其是 aggregate AP@0.3 的大场景覆盖收益和 AP@0.7 的局部精度收益。
 - [ ] 若 SGCP 只靠 late fusion 在 AP@0.3 大幅领先，需要在正文明确这是系统协议优势，不把它写成单纯 scheduler 优势。
 - [ ] 若 FullPerception-PCS 或 EdgeCooperV2V+ 复现结果异常低，先核查算法、参数和场景，不直接拿弱结果进主表。
-- [ ] Pure late fusion 当前 `0.82/0.76/0.37` 且 0 点云 payload 很强；论文写作必须计入 detection-box exchange overhead 或将其明确为 prediction-sharing reference，否则会削弱 SGCP 通信优势叙事。
+- [x] Pure late fusion 当前 `0.82/0.76/0.37` 且 0 点云 payload 很强；论文写作必须计入 detection-box exchange overhead 或将其明确为 prediction-sharing reference，否则会削弱 SGCP 通信优势叙事。已新增 `late_fusion_box_comm.md` 与 `opencda.tools.sgcp_late_box_comm_budget`：20MHz/10ch 下 detection-box broadcast 约 `0.74-1.13 Mbps`，scheduled all-to-all unicast 约 `14.04-21.52 Mbps` 且 100 ms 内可完成；只有 unscheduled all-to-all 随机抢信道模型会因碰撞失败。
 
 ## P2：Table 2 - Fusion Scaffold Ablation
 
@@ -129,6 +129,7 @@
 - [ ] PACP-LiDAR：member/grid budget 或 priority threshold。
 - [ ] FullPerception-PCS：blind-spot granularity、candidate threshold 或 PCS 原生参数，不改主带宽。
 - [ ] EdgeCooperV2V+ / EdgeCooper-inspired：sender cap、assignment budget、half-duplex constraint。
+- [ ] Pure late prediction-box reference：在 Pareto 图或附注中加入 broadcast/all-to-all detection-box overhead；若要声称通信受限，必须补 NS3 synthetic late-box deadline replay，而不是只按 raw-LiDAR payload 记为 0 Mbps。
 
 验收标准：
 

@@ -769,3 +769,23 @@ conda run -n opencda python -m opencda.tools.sgcp_aggregate_ap_manifest --run "P
 | EdgeCooper-HD | 0.81 | 0.78 | 0.42 | 41 | 246 | all-cluster-heads | yes | 33,519,040 | 65.40 |
 
 生成的 manifest 路径：`docs\doc_workspace\SGCP\artifacts\aggregate_ap_manifest_20260719\repeat_check_manifest.csv`。后续 Table 1 / Table 2 / Table 3 / Pareto 图均应使用该 manifest 口径沉淀源数据。
+
+## Pure late prediction-box communication budget
+
+Pure late fusion 41 帧结果 `0.82/0.76/0.37` 不能继续只写作 `0 Mbps`，因为它不传 raw LiDAR，但需要传本地检测框。已新增 `opencda.tools.sgcp_late_box_comm_budget`，从 `pure_late_singleton_41f_trace.csv` 统计 detection-box payload、调度完成时间和无调度随机子信道冲突 proxy。
+
+命令：
+
+```powershell
+conda run -n opencda python -m opencda.tools.sgcp_late_box_comm_budget --trace-csv docs\doc_workspace\SGCP\artifacts\table1_protocol_20260719\pure_late_singleton_41f_trace.csv --output-dir docs\doc_workspace\SGCP\artifacts\late_box_comm_20260719 --box-bytes 80 --message-overhead-bytes 64 --packet-overhead-bytes 48 --mtu-bytes 1200 --total-bandwidth-mhz 20 --subchannels 10 --spectral-efficiency 6 --deadline-ms 100
+conda run -n opencda python -m opencda.tools.sgcp_late_box_comm_budget --trace-csv docs\doc_workspace\SGCP\artifacts\table1_protocol_20260719\pure_late_singleton_41f_trace.csv --output-dir docs\doc_workspace\SGCP\artifacts\late_box_comm_20260719_box128 --box-bytes 128 --message-overhead-bytes 64 --packet-overhead-bytes 48 --mtu-bytes 1200 --total-bandwidth-mhz 20 --subchannels 10 --spectral-efficiency 6 --deadline-ms 100
+```
+
+| Assumption | Mode | Mean Mbps | Max Mbps | Mean Scheduled Completion | Deadline OK | Random-Access Full Success |
+| --- | --- | ---: | ---: | ---: | ---: | ---: |
+| `80 B/box` | broadcast | 0.739 | 0.823 | 1.153 ms | 100% | 100% |
+| `80 B/box` | all-to-all unicast | 14.043 | 15.638 | 19.102 ms | 100% | 0% |
+| `128 B/box` | broadcast | 1.132 | 1.265 | 1.560 ms | 100% | 100% |
+| `128 B/box` | all-to-all unicast | 21.515 | 24.028 | 27.336 ms | 100% | 0% |
+
+结论：当前场景下，预测框交换不能靠 payload rate 或调度传输时延自然压低；有调度 all-to-all unicast 在 100 ms deadline 内也可完成。只有完全无调度的 all-to-all 随机抢信道会因碰撞失败。论文中应把 Pure late 写成 strong prediction-sharing reference，并显式说明它的低 payload 与信息内容限制，而不是声称 20-CAV late fusion 必然 broadcast storm。

@@ -5851,3 +5851,30 @@ conda run -n opencda python -m opencda.tools.sgcp_aggregate_ap_manifest --run "R
 ### 结论
 
 PAPG 的优势是 AP-Mbps tradeoff，不是 AP@0.7 单点最优。它与 EdgeCooper-HD 在 AP@0.3/AP@0.5 持平但 payload 更低，与 PACP-LiDAR AP@0.3 持平但 payload 低约 27.8%；PACP-LiDAR 和 EdgeCooper-HD 的 AP@0.7 更高，必须在论文中解释为高预算/stronger-prior scheduler 的边界。Density 和 link-aware density 在 high-budget 设置下选择相同，说明该预算点下距离/link penalty 没有实际改变 action，后续 P4 Pareto 需要扫描预算才能更公平展示边界。
+
+## 2026-07-19 Pure late prediction-box communication budget
+
+### 目的
+
+回应 Pure late fusion 过强且 raw-LiDAR payload 为 0 的公平性问题：检查 20-CAV 全局 late fusion 的 detection-box exchange 是否会被 20MHz/10ch/100ms deadline、收发延迟或子信道冲突自然限制。
+
+### 新增工具
+
+`opencda.tools.sgcp_late_box_comm_budget`：输入 offline trace，按每帧每 CAV 的 `pred_boxes` 估算 broadcast 与 all-to-all unicast prediction-box payload、贪心调度完成时间，以及 unscheduled random subchannel contention delivery proxy。
+
+### 命令
+
+```powershell
+conda run -n opencda python -m opencda.tools.sgcp_late_box_comm_budget --trace-csv docs\doc_workspace\SGCP\artifacts\table1_protocol_20260719\pure_late_singleton_41f_trace.csv --output-dir docs\doc_workspace\SGCP\artifacts\late_box_comm_20260719 --box-bytes 80 --message-overhead-bytes 64 --packet-overhead-bytes 48 --mtu-bytes 1200 --total-bandwidth-mhz 20 --subchannels 10 --spectral-efficiency 6 --deadline-ms 100
+conda run -n opencda python -m opencda.tools.sgcp_late_box_comm_budget --trace-csv docs\doc_workspace\SGCP\artifacts\table1_protocol_20260719\pure_late_singleton_41f_trace.csv --output-dir docs\doc_workspace\SGCP\artifacts\late_box_comm_20260719_box128 --box-bytes 128 --message-overhead-bytes 64 --packet-overhead-bytes 48 --mtu-bytes 1200 --total-bandwidth-mhz 20 --subchannels 10 --spectral-efficiency 6 --deadline-ms 100
+```
+
+### 结果
+
+- `80 B/box`：broadcast mean/max `0.739/0.823 Mbps`、scheduled mean `1.153 ms`；all-to-all unicast mean/max `14.043/15.638 Mbps`、scheduled mean `19.102 ms`。
+- `128 B/box`：broadcast mean/max `1.132/1.265 Mbps`、scheduled mean `1.560 ms`；all-to-all unicast mean/max `21.515/24.028 Mbps`、scheduled mean `27.336 ms`。
+- Unscheduled random subchannel contention proxy：broadcast full success 为 100%，all-to-all unicast full success 为 0%。该结果说明只有“无调度 all-to-all 同步抢信道”假设会明显限制 Pure late，不能把 prediction-box sharing 的低 payload 直接写成 broadcast storm。
+
+### 结论
+
+Pure late fusion 应作为 strong prediction-sharing reference 写入论文，主表需显式报告 detection-box overhead 或标注 `0 raw-LiDAR Mbps`。SGCP 的优势应强调 raw LiDAR early fusion 能恢复本地 detector 漏检和高 IoU 几何质量，并通过分簇/PPS 控制 raw point-cloud payload；不能声称有调度的 20-CAV prediction-box late fusion 在当前场景下无法 100 ms 内完成。
