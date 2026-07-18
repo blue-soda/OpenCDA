@@ -5699,3 +5699,34 @@ conda run -n opencda python -m opencda.tools.sgcp_satisfaction_summary --satisfa
 ### 2026-07-19 correction
 
 用户明确要求主文只使用 aggregate AP，不额外引入 satisfaction metric。上述工具与文档随后已删除，`target.md` 已改为 aggregate AP + Mbps 口径。保留本日志仅作为一次已废弃探索记录，不作为后续实验目标或论文指标。
+
+## 2026-07-19 Aggregate AP manifest first pass
+
+### 目的
+
+继续推进 `target.md` P0：删除 satisfaction metric 后，用 aggregate AP + Mbps 作为统一实验口径，并为后续主表、消融和 Pareto 图建立可复现 manifest。
+
+### 代码与文档
+
+- 新增 `opencda.tools.sgcp_aggregate_ap_manifest`。
+- 新增 `aggregate_ap_protocol.md`，明确 aggregate AP 是 OpenCOOD pooled evaluator AP，不是 per-CAV AP 平均。
+- 更新 `target.md`、`status.md`、`results.md` 和 `readme.md`。
+
+### 验证命令
+
+```powershell
+conda run -n opencda python -m py_compile opencda\tools\sgcp_aggregate_ap_manifest.py
+
+conda run -n opencda python -m opencda.tools.sgcp_aggregate_ap_manifest --run "PAPG=docs\doc_workspace\SGCP\artifacts\repeat_check_20260718\papg_41f_r1.log,docs\doc_workspace\SGCP\artifacts\repeat_check_20260718\papg_41f_r1_trace.csv" --run "EdgeCooperHD=docs\doc_workspace\SGCP\artifacts\repeat_check_20260718\edgecooper_hd_41f_r1.log,docs\doc_workspace\SGCP\artifacts\repeat_check_20260718\edgecooper_hd_41f_r1_trace.csv" --output-csv docs\doc_workspace\SGCP\artifacts\aggregate_ap_manifest_20260719\repeat_check_manifest.csv --notes "repeat check for aggregate AP manifest"
+```
+
+### 结果
+
+| Method | Aggregate AP@0.3 | AP@0.5 | AP@0.7 | Evaluated Samples | Trace Rows | Late Fusion | Payload bytes | Mbps |
+| --- | ---: | ---: | ---: | ---: | ---: | --- | ---: | ---: |
+| PAPG | 0.81 | 0.78 | 0.39 | 41 | 246 | yes | 32,049,872 | 62.54 |
+| EdgeCooper-HD | 0.81 | 0.78 | 0.42 | 41 | 246 | yes | 33,519,040 | 65.40 |
+
+### 结论
+
+P0 的 aggregate AP 口径已经可以落地到表格源数据。下一步应对 Table 1 protocol-native comparison 的所有候选行补齐 stdout log + trace CSV + manifest row，优先处理 Head-only、Pure late fusion、FullPerception-PCS、EdgeCooperV2V+、SGCP full 和 Full 20-CAV upper reference。

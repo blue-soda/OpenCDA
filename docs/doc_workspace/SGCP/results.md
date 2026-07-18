@@ -699,3 +699,20 @@ conda run -n opencda python -m opencda.tools.offline_replay --dataset-root D:\Da
 | `D:\Data\Carla\2026_07_15_01_26_56`, `pose_delta`, threshold 5 m/s | 41 | 40 | 37 | 11 | 9 | 2 | 28 | `relative_speed_risk`: 37; `neighbor_set_change`: 12 |
 
 观察：`pose_delta` 速度源解决了单位歧义，但单靠 relative-speed trigger 仍偏敏感。在线 gate 不宜直接采用“relative speed 任意超阈即重构”，更适合与 neighbor-set change、utility drop 和 `T_min_stab` 滞回组合使用。
+
+## Aggregate AP manifest protocol
+
+用户已明确主文不引入 satisfaction rate，后续结果统一使用 aggregate AP + Mbps。Aggregate AP 是 OpenCOOD pooled evaluator AP，即把所有 evaluated receiver-frame samples 累计到同一个 evaluator 后计算 AP，不是 per-CAV AP 的简单平均。
+
+新增 manifest 工具：
+
+```powershell
+conda run -n opencda python -m opencda.tools.sgcp_aggregate_ap_manifest --run "PAPG=docs\doc_workspace\SGCP\artifacts\repeat_check_20260718\papg_41f_r1.log,docs\doc_workspace\SGCP\artifacts\repeat_check_20260718\papg_41f_r1_trace.csv" --run "EdgeCooperHD=docs\doc_workspace\SGCP\artifacts\repeat_check_20260718\edgecooper_hd_41f_r1.log,docs\doc_workspace\SGCP\artifacts\repeat_check_20260718\edgecooper_hd_41f_r1_trace.csv" --output-csv docs\doc_workspace\SGCP\artifacts\aggregate_ap_manifest_20260719\repeat_check_manifest.csv --notes "repeat check for aggregate AP manifest"
+```
+
+| Method | Aggregate AP@0.3 | AP@0.5 | AP@0.7 | Evaluated Samples | Trace Rows | Receiver Policy | Late Fusion | Payload bytes | Mbps |
+| --- | ---: | ---: | ---: | ---: | ---: | --- | --- | ---: | ---: |
+| PAPG | 0.81 | 0.78 | 0.39 | 41 | 246 | all-cluster-heads | yes | 32,049,872 | 62.54 |
+| EdgeCooper-HD | 0.81 | 0.78 | 0.42 | 41 | 246 | all-cluster-heads | yes | 33,519,040 | 65.40 |
+
+生成的 manifest 路径：`docs\doc_workspace\SGCP\artifacts\aggregate_ap_manifest_20260719\repeat_check_manifest.csv`。后续 Table 1 / Table 2 / Table 3 / Pareto 图均应使用该 manifest 口径沉淀源数据。

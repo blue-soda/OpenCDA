@@ -1,6 +1,6 @@
 # SGCP 当前状态
 
-更新时间：2026-07-18
+更新时间：2026-07-19
 
 ## 运行环境
 
@@ -21,6 +21,7 @@ SGCP 工作与仓库中以下部分关系最紧密：
 
 ## 当前主线快照
 
+- 已按用户最新要求移除 satisfaction rate 作为论文主指标，固定使用 aggregate AP + Mbps。新增 `aggregate_ap_protocol.md` 和 `opencda.tools.sgcp_aggregate_ap_manifest`，把 OpenCOOD pooled evaluator AP 与 evaluated sample count、receiver policy、inter-cluster late fusion、scheduler、payload/Mbps 和 artifact 路径合并成 manifest CSV。已用 PAPG / EdgeCooper-HD 41 帧 repeat 日志完成 smoke：PAPG `0.81/0.78/0.39`、62.54 Mbps；EdgeCooper-HD `0.81/0.78/0.42`、65.40 Mbps。
 - 当前论文主方法为 `perception_aware_potential_game`（PAPG），主配置为 20 MHz / 10 subchannels / `rho_th=3` / `head_rb_budget=2` / inter-cluster late fusion。
 - 当前可复现主结果：PAPG 41 帧 AP@0.3/0.5/0.7 = `0.81/0.78/0.39`，payload `32,049,872 bytes` / `62.54 Mbps`，410 scheduled links。
 - 公平随机 baseline 已改为 forced-budget random：`0.77/0.73/0.38`，`31,613,424 bytes` / `61.68 Mbps`。旧 RandomRA/MWS payload 过低，只保留为 w/o-PPS 诊断。
