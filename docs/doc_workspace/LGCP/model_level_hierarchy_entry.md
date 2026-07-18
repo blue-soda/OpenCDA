@@ -492,4 +492,36 @@ python -m opencda.tools.lgcp_pointpillar_rsu_feature_assembly --leader-root docs
 
 - 这是第一个 RSU-side neural feature assembly smoke：多个 leader-local area slices 已能放回统一 PointPillar scatter canvas。
 - 当前 overlap 使用简单 average，不是训练后的 RSU aggregation module。
-- 仍未接入 detection head / postprocess，因此只能说明 model-level data path，不能报告最终 AP。
+- 当前 assembly 仍是 index-space smoke：各 leader slice 来自不同 leader-local coordinate frame，尚未做 world / RSU 坐标系重投影，因此只能说明 model-level data path，不能报告最终 AP。
+
+## 2026-07-18 RSU Detection Head Probe
+
+运行目录：
+
+```text
+docs/doc_workspace/LGCP/experiments/hierarchy_plan/20260718_lgcp_pointpillar_rsu_head_probe_area23_1f
+```
+
+命令：
+
+```powershell
+conda run -n opencda python -m opencda.tools.lgcp_pointpillar_rsu_head_probe --rsu-root docs\doc_workspace\LGCP\experiments\hierarchy_plan\20260718_lgcp_pointpillar_rsu_feature_assembly_area23_1f --rsu-frame-manifest docs\doc_workspace\LGCP\experiments\hierarchy_plan\20260718_lgcp_pointpillar_rsu_feature_assembly_area23_1f\rsu_feature_frame_manifest.csv --output-dir docs\doc_workspace\LGCP\experiments\hierarchy_plan\20260718_lgcp_pointpillar_rsu_head_probe_area23_1f --fusion-method intermediate_attentive --top-k 20
+```
+
+结果：
+
+| Metric | Value |
+| --- | ---: |
+| Input canvas | `1 x 64 x 200 x 704` |
+| Backbone output | `1 x 384 x 100 x 352` |
+| `psm` shape | `1 x 2 x 100 x 352` |
+| `rm` shape | `1 x 14 x 100 x 352` |
+| Score max / mean | `0.220411 / 0.002679` |
+| Postprocess threshold | `0.2` |
+| Postprocess pred boxes | 2 |
+
+解释：
+
+- 该 probe 证明 assembled RSU feature canvas 可以技术上接回 PointPillar backbone、classification/regression heads 和 voxel postprocess。
+- 这仍不是有效 AP：当前 RSU canvas 尚未做跨 leader 坐标统一，postprocess 只验证接口可运行和输出张量维度。
+- 下一步若要形成论文级 model-level AP，必须把 area slices 重投影到统一 world/RSU coordinate canvas，或把论文结果限制为 feature-level path / byte / coverage proxy。

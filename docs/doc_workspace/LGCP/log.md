@@ -3553,3 +3553,32 @@ by type：
 - 结论：
   - LGCP model-level hierarchy data path 已覆盖 feature crop、leader-local fusion 和 RSU-side canvas assembly。
   - 仍未接 detection head / postprocess，因此不能报告 neural feature hierarchy AP；下一步应研究 assembled canvas 到 PointPillar detection head 的可行入口，或定义 feature-level coverage/byte proxy。
+
+## PointPillar RSU detection head probe
+
+- 新增脚本：
+  - `opencda/tools/lgcp_pointpillar_rsu_head_probe.py`
+- 目标：
+  - 将 assembled RSU scatter canvas 接回 PointPillar backbone、`cls_head`、`reg_head` 和 voxel postprocess。
+  - 区分接口可运行性与有效模型级 AP。
+- 命令：
+  - `python -m py_compile opencda\tools\lgcp_pointpillar_rsu_head_probe.py`
+  - `conda run -n opencda python -m opencda.tools.lgcp_pointpillar_rsu_head_probe --rsu-root docs\doc_workspace\LGCP\experiments\hierarchy_plan\20260718_lgcp_pointpillar_rsu_feature_assembly_area23_1f --rsu-frame-manifest docs\doc_workspace\LGCP\experiments\hierarchy_plan\20260718_lgcp_pointpillar_rsu_feature_assembly_area23_1f\rsu_feature_frame_manifest.csv --output-dir docs\doc_workspace\LGCP\experiments\hierarchy_plan\20260718_lgcp_pointpillar_rsu_head_probe_area23_1f --fusion-method intermediate_attentive --top-k 20`
+- 输出目录：
+  - `docs/doc_workspace/LGCP/experiments/hierarchy_plan/20260718_lgcp_pointpillar_rsu_head_probe_area23_1f`
+- 结果：
+  - input canvas: `1 x 64 x 200 x 704`
+  - backbone output: `1 x 384 x 100 x 352`
+  - `psm`: `1 x 2 x 100 x 352`
+  - `rm`: `1 x 14 x 100 x 352`
+  - score min / mean / max: `0.000000 / 0.002679 / 0.220411`
+  - score p95: `0.003571`
+  - postprocess threshold: `0.2`
+  - postprocess pred boxes: `2`
+  - top scores: `0.220411`, `0.200373`, `0.199972`
+- 观察：
+  - Assembled canvas 与 PointPillar heads/postprocessor 技术兼容。
+  - 但当前 RSU assembly 是 index-space smoke，多个 leader-local feature slices 尚未重投影到统一 world/RSU coordinate frame。
+- 结论：
+  - detection-head 可行性已验证，但不能报告有效 AP。
+  - 下一步必须实现跨 leader 坐标对齐，或将论文口径收窄为 feature-level coverage / byte proxy。

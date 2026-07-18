@@ -1874,7 +1874,32 @@ Interpretation:
 
 - The neural hierarchy path now covers feature crop, leader-local fusion, and RSU-side canvas assembly.
 - This is still not a trained RSU aggregation head and does not produce AP.
-- The next model-level step is connecting the assembled canvas to a detection head/postprocess or defining a paper-safe proxy around feature coverage/bytes.
+- The current canvas is an index-space assembly smoke; leader-local slices are not yet reprojected into a unified world/RSU coordinate frame.
+
+## RSU Detection Head Probe
+
+2026-07-18 新增 `opencda/tools/lgcp_pointpillar_rsu_head_probe.py`，将 assembled RSU canvas 接回 PointPillar backbone、classification/regression heads 和 voxel postprocess：
+
+```text
+docs/doc_workspace/LGCP/experiments/hierarchy_plan/20260718_lgcp_pointpillar_rsu_head_probe_area23_1f
+```
+
+| Item | Value |
+| --- | ---: |
+| Input canvas | `1 x 64 x 200 x 704` |
+| Backbone output | `1 x 384 x 100 x 352` |
+| `psm` | `1 x 2 x 100 x 352` |
+| `rm` | `1 x 14 x 100 x 352` |
+| Score max | 0.220411 |
+| Score mean | 0.002679 |
+| Postprocess threshold | 0.2 |
+| Postprocess pred boxes | 2 |
+
+Interpretation:
+
+- The assembled canvas is technically compatible with the downstream PointPillar heads and voxel postprocessor.
+- Because the current assembly is not world-aligned across leaders, these boxes are interface evidence, not valid model-level AP.
+- The next publishable path is either world/RSU-frame feature reprojection before postprocess, or a clearly scoped feature-level coverage/byte proxy.
 
 ## Box-Level Hierarchy Late-Fusion Smoke
 

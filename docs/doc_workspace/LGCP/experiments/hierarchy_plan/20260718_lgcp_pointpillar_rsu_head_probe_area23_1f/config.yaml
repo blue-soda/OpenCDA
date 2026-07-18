@@ -1,0 +1,6 @@
+rsu_root: C:\Workspace\OpenCDA\docs\doc_workspace\LGCP\experiments\hierarchy_plan\20260718_lgcp_pointpillar_rsu_feature_assembly_area23_1f
+rsu_frame_manifest: C:\Workspace\OpenCDA\docs\doc_workspace\LGCP\experiments\hierarchy_plan\20260718_lgcp_pointpillar_rsu_feature_assembly_area23_1f\rsu_feature_frame_manifest.csv
+fusion_method: intermediate_attentive
+top_k: 20
+score_threshold: null
+note: Detection-head feasibility probe; no GT/AP evaluation.
