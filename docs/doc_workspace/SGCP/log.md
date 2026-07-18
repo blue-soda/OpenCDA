@@ -2,6 +2,33 @@
 
 本文件按时间顺序追加实验记录。每条记录应尽量包含：目的、代码版本、配置、命令、日志路径、关键结果、异常现象和下一步。
 
+## 2026-07-19 - Paper artifact index for P0
+
+### 目的
+
+推进 `target.md` P0：为当前论文草稿中的主文图表和附录材料建立统一 artifact 索引，确保每个进入论文的结果都有 source CSV/manifest、脚本或命令、log/trace、git commit 和 claim boundary。
+
+### 输出
+
+- `docs/doc_workspace/SGCP/paper_artifact_index.md`
+- `docs/doc_workspace/SGCP/artifacts/paper_artifact_index_20260719/paper_artifact_index.csv`
+
+### 覆盖范围
+
+- Table 1 Protocol-Native System Comparison。
+- Figure 1 AP-Mbps Pareto。
+- Figure 2 Protocol Breakdown。
+- Figure 3 Fusion Contribution。
+- Table 3 SGCP-Compatible Scheduler Comparison。
+- Table 4 Parameter Sensitivity。
+- P8 runtime/control/NS3 appendix。
+- P8 qualitative case study。
+- P9 EdgeCooper writing reference。
+
+### 结论
+
+当前论文草稿第一版 artifact 追踪已补齐；`target.md` P0 的 artifact 要求可标记为完成。但该完成状态只覆盖当前结果版本。若 early-fusion checkpoint 回收、新导出 CARLA 场景、替换主表数值或升级 BEV qualitative figure，必须新增 artifact 版本并更新索引。
+
 ## 2026-07-19 - EdgeCooper writing reference for P9
 
 ### 目的

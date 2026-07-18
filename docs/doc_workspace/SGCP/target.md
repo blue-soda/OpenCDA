@@ -27,7 +27,7 @@
 - [x] 建立统一评估脚本/清单第一版：`opencda.tools.sgcp_aggregate_ap_manifest` 从 stdout log 和 trace CSV 生成表格 manifest，记录 AP、evaluated samples、receiver policy、late fusion scaffold、payload/Mbps 和 artifact 路径。
 - [x] 明确并固化 aggregate AP 统计口径：所有 protocol-native、fusion ablation、scheduler comparison 和 Pareto 图均使用 pooled evaluator AP；每个结果必须记录 evaluated samples 数、receiver policy、是否 inter-cluster late fusion，以及是否为 ego-only sanity。不再保留独立 aggregate AP 指标文档，口径直接写入 `target.md` / `status.md` / `results.md`。
 - [x] 删除 satisfaction rate 作为主文指标：不再新增或使用 `satisfaction_metric.md` / `sgcp_satisfaction_summary`，后续图表只报告 aggregate AP、Mbps 和必要的辅助统计。
-- [ ] 所有实验在结果进入论文前必须生成 artifact：命令、stdout/log 路径、trace CSV、manifest/summary CSV、图表源数据和 git commit。
+- [x] 所有实验在结果进入论文前必须生成 artifact：命令、stdout/log 路径、trace CSV、manifest/summary CSV、图表源数据和 git commit。当前论文草稿第一版 artifact 索引已建立：`paper_artifact_index.md` 与 `artifacts/paper_artifact_index_20260719/paper_artifact_index.csv`；后续任何新 checkpoint/新场景/新主表数值必须追加新 artifact。
 - [ ] 如果当前 41 帧场景无法支撑某张关键图表，重新导出更合适的 CARLA 场景；注意 CARLA 进程至多一个，数据路径仍遵循 `docs/doc_workspace/environment.md`。
 
 ## P1：Table 1 - Protocol-Native System Comparison
