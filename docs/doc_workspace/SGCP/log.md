@@ -5816,3 +5816,38 @@ conda run -n opencda python -m opencda.tools.sgcp_aggregate_ap_manifest --run "H
 ### 结论
 
 该表有效支撑 two-layer fusion 叙事：同样 32.05 MB payload 下，clustered early-only 覆盖严重不足，而 Full SGCP 通过簇间 late fusion 恢复到接近 full-sharing upper reference 的 AP@0.3/AP@0.5。AP@0.7 仍低于 full-sharing，说明点云预算和分簇限制会损失局部几何质量；这恰好为 PAPG/Pareto 和参数敏感性留出解释空间。
+
+## 2026-07-19 Table 3 scheduler comparison first pass
+
+### 目的
+
+推进 `target.md` P3：在同一 SGCP-compatible scaffold 下比较 sender/grid scheduler，避免把 scheduler comparison 混写成 protocol-native baseline comparison。
+
+### 新跑实验
+
+PACP-style LiDAR high-budget 缺 stdout，因此重跑：
+
+```powershell
+conda run -n opencda python -m opencda.tools.offline_inference --dataset-root D:\Data\Carla --scenario-id 2026_07_15_01_26_56 --ego-cav-id 1 --max-frames 0 --selective-sharing-baseline pacp_lidar --selective-member-budget 3 --selective-grid-budget 117 --sgcp-receiver-policy all-cluster-heads --sgcp-inter-cluster-late-fusion --rho-th 3 --num-channels 10 --bandwidth-mhz 20 --sgcp-trace-output docs\doc_workspace\SGCP\artifacts\scheduler_comparison_20260719\pacp_lidar_3m117g_41f_trace.csv
+```
+
+Manifest：
+
+```powershell
+conda run -n opencda python -m opencda.tools.sgcp_aggregate_ap_manifest --run "RandomBudget=docs\doc_workspace\SGCP\artifacts\random_forced_3m117g_41f_stdout.log,docs\doc_workspace\SGCP\artifacts\random_forced_3m117g_41f_trace.csv" --run "DensityGreedy=docs\doc_workspace\SGCP\artifacts\selective_high_budget_41f\density_m3_g117_stdout.log,docs\doc_workspace\SGCP\artifacts\selective_high_budget_41f\density_m3_g117_trace.csv" --run "LinkAwareDensity=docs\doc_workspace\SGCP\artifacts\selective_high_budget_41f\communication_aware_m3_g117_stdout.log,docs\doc_workspace\SGCP\artifacts\selective_high_budget_41f\communication_aware_m3_g117_trace.csv" --run "PACP_LiDAR=docs\doc_workspace\SGCP\artifacts\scheduler_comparison_20260719\pacp_lidar_3m117g_41f.log,docs\doc_workspace\SGCP\artifacts\scheduler_comparison_20260719\pacp_lidar_3m117g_41f_trace.csv" --run "EdgeCooperHD=docs\doc_workspace\SGCP\artifacts\repeat_check_20260718\edgecooper_hd_41f_r1.log,docs\doc_workspace\SGCP\artifacts\repeat_check_20260718\edgecooper_hd_41f_r1_trace.csv" --run "SGCP_PAPG=docs\doc_workspace\SGCP\artifacts\repeat_check_20260718\papg_41f_r1.log,docs\doc_workspace\SGCP\artifacts\repeat_check_20260718\papg_41f_r1_trace.csv" --output-csv docs\doc_workspace\SGCP\artifacts\scheduler_comparison_20260719\scheduler_comparison_manifest.csv --notes "P3 SGCP-compatible scheduler comparison manifest"
+```
+
+### 结果
+
+| Scheduler | AP@0.3 | AP@0.5 | AP@0.7 | Payload bytes | Mbps | Avg. Source CAVs | Avg. Selected Grids |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| Random budgeted | 0.77 | 0.73 | 0.38 | 31,613,424 | 61.68 | 3.33 | 103.20 |
+| Density-greedy | 0.80 | 0.76 | 0.40 | 37,710,864 | 73.58 | 3.33 | 102.18 |
+| Link-aware density | 0.80 | 0.76 | 0.40 | 37,710,864 | 73.58 | 3.33 | 102.18 |
+| PACP-style LiDAR proxy | 0.81 | 0.79 | 0.42 | 44,361,424 | 86.56 | 3.33 | 104.93 |
+| EdgeCooper-HD proxy | 0.81 | 0.78 | 0.42 | 33,519,040 | 65.40 | 3.00 | 89.02 |
+| SGCP-PAPG | 0.81 | 0.78 | 0.39 | 32,049,872 | 62.54 | 2.67 | 97.22 |
+
+### 结论
+
+PAPG 的优势是 AP-Mbps tradeoff，不是 AP@0.7 单点最优。它与 EdgeCooper-HD 在 AP@0.3/AP@0.5 持平但 payload 更低，与 PACP-LiDAR AP@0.3 持平但 payload 低约 27.8%；PACP-LiDAR 和 EdgeCooper-HD 的 AP@0.7 更高，必须在论文中解释为高预算/stronger-prior scheduler 的边界。Density 和 link-aware density 在 high-budget 设置下选择相同，说明该预算点下距离/link penalty 没有实际改变 action，后续 P4 Pareto 需要扫描预算才能更公平展示边界。

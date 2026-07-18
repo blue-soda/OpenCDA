@@ -76,6 +76,25 @@
 
 核心结论：同一 PAPG payload 下，clustered early-only 只有 `0.38/0.36/0.20`，加入簇间 late fusion 后 Full SGCP 达到 `0.81/0.78/0.39`，证明 two-layer fusion 的覆盖贡献非常明显。另一方面，Full SGCP 仍低于 one-cluster/full-sharing upper reference `0.85/0.83/0.48`，但只用约 52.7% 的 raw point-cloud Mbps；这为“通信受限下接近 full-sharing 上界”的叙事提供了更稳的主线。
 
+## Table 3 SGCP-Compatible Scheduler Comparison
+
+统一 source CSV：
+
+`docs\doc_workspace\SGCP\artifacts\scheduler_comparison_20260719\scheduler_comparison_manifest.csv`
+
+固定 scaffold：coalition clustering、raw LiDAR grid upload、all-cluster-head receiver policy、inter-cluster late fusion、20 MHz / 10 subchannels、41 frames。该表只比较同一 SGCP-compatible scaffold 中的 sender/grid scheduler，不代表 protocol-native baseline comparison。
+
+| Scheduler | Aggregate AP@0.3 | AP@0.5 | AP@0.7 | Payload bytes | Mbps | Avg. Source CAVs | Avg. Selected Grids | Notes |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | --- |
+| Random budgeted | 0.77 | 0.73 | 0.38 | 31,613,424 | 61.68 | 3.33 | 103.20 | Forced budget random baseline |
+| Density-greedy | 0.80 | 0.76 | 0.40 | 37,710,864 | 73.58 | 3.33 | 102.18 | High-budget density-only scheduler |
+| Link-aware density | 0.80 | 0.76 | 0.40 | 37,710,864 | 73.58 | 3.33 | 102.18 | Same result as density at this budget; link penalty did not change selected set |
+| PACP-style LiDAR proxy | 0.81 | 0.79 | 0.42 | 44,361,424 | 86.56 | 3.33 | 104.93 | RGB/BEV PACP idea migrated to LiDAR grid priority; not strict PACP |
+| EdgeCooper-HD proxy | 0.81 | 0.78 | 0.42 | 33,519,040 | 65.40 | 3.00 | 89.02 | Edge/global half-duplex assignment proxy; stronger information condition |
+| SGCP-PAPG | 0.81 | 0.78 | 0.39 | 32,049,872 | 62.54 | 2.67 | 97.22 | Proposed scheduler: coverage layer + target layer |
+
+解释边界：PAPG 不是 AP@0.7 最优；PACP-LiDAR 和 EdgeCooper-HD 的高 IoU 更强。但 PAPG 在同一 scaffold 下以更少 payload 达到最优 AP@0.3，并与 EdgeCooper-HD 持平 AP@0.5；相比 density/link-aware 少约 15.0% payload 且 AP@0.3/AP@0.5 更高，相比 PACP-LiDAR 少约 27.8% payload且 AP@0.3 持平。该表应写成 AP-Mbps scheduler tradeoff，而不是“SGCP 全面最高 AP”的单点主张。
+
 ## 消融实验
 
 | Variant | mAP@0.3 | mAP@0.5 | mAP@0.7 | Comm. Overhead (Mbps) | Reconfig. Count | Notes |

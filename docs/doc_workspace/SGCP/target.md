@@ -94,24 +94,24 @@
 
 必须包含：
 
-- [ ] Random budgeted scheduler。
-- [ ] Density-greedy scheduler。
-- [ ] Link-aware density scheduler。
-- [ ] PACP-style LiDAR priority scheduler：明确为 proxy，PACP 原文是 RGB/BEV 方法。
-- [ ] EdgeCooper-inspired V2V complementarity scheduler：明确为 inspired/proxy，不写成原版 EdgeCooper。
-- [ ] SGCP-PAPG scheduler。
+- [x] Random budgeted scheduler。
+- [x] Density-greedy scheduler。
+- [x] Link-aware density scheduler。
+- [x] PACP-style LiDAR priority scheduler：明确为 proxy，PACP 原文是 RGB/BEV 方法。
+- [x] EdgeCooper-inspired V2V complementarity scheduler：明确为 inspired/proxy，不写成原版 EdgeCooper。
+- [x] SGCP-PAPG scheduler。
 
 指标：
 
-- [ ] Network AP@0.3 / AP@0.5 / AP@0.7。
-- [ ] Mbps / payload bytes。
-- [ ] Avg selected CAVs、avg selected grids、avg fused CAVs。
-- [ ] Evaluated sample count、receiver policy、是否 inter-cluster late fusion。
+- [x] Network AP@0.3 / AP@0.5 / AP@0.7。
+- [x] Mbps / payload bytes。
+- [x] Avg selected CAVs、avg selected grids、avg fused CAVs。
+- [x] Evaluated sample count、receiver policy、是否 inter-cluster late fusion。
 
 验收标准：
 
-- [ ] 该表必须显示 PAPG 在同一 scaffold 中具有可解释的 AP-Mbps 优势，至少在 AP@0.3/AP@0.5 或 AP@0.7/Mbps 的某个叙事维度上形成优势。
-- [ ] 若 EdgeCooper-inspired 或 PACP-style 高预算超过 SGCP，必须通过 Pareto 曲线和信息条件说明边界，或继续改造 SGCP 调度。
+- [x] 该表必须显示 PAPG 在同一 scaffold 中具有可解释的 AP-Mbps 优势，至少在 AP@0.3/AP@0.5 或 AP@0.7/Mbps 的某个叙事维度上形成优势：PAPG 与 EdgeCooper-HD 同 AP@0.3/0.5 但少 4.4% payload；相比 density/link-aware AP@0.3/0.5 更高且少 15.0% payload；相比 PACP-LiDAR AP@0.3 持平但少 27.8% payload。
+- [x] 若 EdgeCooper-inspired 或 PACP-style 高预算超过 SGCP，必须通过 Pareto 曲线和信息条件说明边界，或继续改造 SGCP 调度：PACP-LiDAR 与 EdgeCooper-HD 在 AP@0.7 更高，已记录为高 IoU / stronger-prior boundary，需在 P4 Pareto 和正文边界中解释。
 
 ## P4：Figure 1 - AP-Mbps Pareto Curve
 
