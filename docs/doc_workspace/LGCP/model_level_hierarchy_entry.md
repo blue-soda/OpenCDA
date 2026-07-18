@@ -606,3 +606,34 @@ conda run -n opencda python -m opencda.tools.lgcp_pointpillar_rsu_head_probe --r
 - 相比 nearest-resize diagnostic，coordinate warp 避免了 target bbox 内的重复 overlap，所有 world-area target cells 都能反查到 leader-local source slice。
 - Head response 进一步增强，但当前仍是 nearest-neighbor feature sampling，没有双线性采样、feature rotation calibration 或训练后的 aggregation。
 - 该结果可以作为 coordinate-aware model-level path 的 feasibility evidence；不能直接作为论文 AP，下一步才应做 GT/AP smoke 或定义 feature-level proxy。
+
+## 2026-07-18 Coordinate-Warp AP Probe
+
+运行目录：
+
+```text
+docs/doc_workspace/LGCP/experiments/hierarchy_plan/20260718_lgcp_pointpillar_coordinate_warp_ap_probe_area23_1f_ref1
+```
+
+命令：
+
+```powershell
+conda run -n opencda python -m opencda.tools.lgcp_pointpillar_warp_ap_probe --dataset-root D:\Data\Carla --scenario-id 2026_07_15_02_33_21 --warped-root docs\doc_workspace\LGCP\experiments\hierarchy_plan\20260718_lgcp_pointpillar_coordinate_warp_assembly_area23_1f_ref1 --warped-frame-manifest docs\doc_workspace\LGCP\experiments\hierarchy_plan\20260718_lgcp_pointpillar_coordinate_warp_assembly_area23_1f_ref1\coordinate_warp_frame_manifest.csv --output-dir docs\doc_workspace\LGCP\experiments\hierarchy_plan\20260718_lgcp_pointpillar_coordinate_warp_ap_probe_area23_1f_ref1 --reference-cav-id 1 --fusion-method intermediate_attentive --frame-file-column warped_frame_file --canvas-key warped_canvas
+```
+
+结果：
+
+| Metric | Value |
+| --- | ---: |
+| Frames | 1 |
+| Pred boxes | 30 |
+| GT boxes | 16 |
+| AP@0.3 | 0.010000 |
+| AP@0.5 | 0.010000 |
+| AP@0.7 | 0.000000 |
+
+解释：
+
+- 该 probe 首次闭合了 coordinate-warp canvas -> PointPillar head/postprocess -> reference-frame GT/AP 的评价链路。
+- 结果很低，说明当前 nearest-neighbor coordinate warp 虽然技术可运行，但不能支撑论文级 model-level detection claim。
+- 短期论文安全选择是将 neural feature hierarchy 写作限制为 data-path feasibility / feature coverage / byte proxy；若要报告 AP，需要 bilinear/affine warp、feature normalization/calibration，甚至重新训练 aggregation head。

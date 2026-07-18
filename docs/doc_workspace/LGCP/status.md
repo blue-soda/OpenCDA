@@ -83,6 +83,7 @@
 - 已新增 `opencda/tools/lgcp_pointpillar_rsu_head_probe.py`，确认 assembled RSU canvas 可接回 PointPillar backbone/head/postprocess：`psm=1 x 2 x 100 x 352`、`rm=1 x 14 x 100 x 352`，默认阈值下 postprocess 输出 2 个 boxes。
 - 已新增 `opencda/tools/lgcp_pointpillar_reference_aligned_assembly.py`，完成 reference-frame alignment diagnostic：以 CAV 1 为参考时 coverage ratio `0.065263`，postprocess 输出 18 boxes，但 mean abs yaw delta 为 `93.41 deg`，说明仍需 rotation / affine warp / learned alignment 才能报告 AP。
 - 已新增 `opencda/tools/lgcp_pointpillar_coordinate_warp_assembly.py`，完成 Top-23 首帧 coordinate-aware warp smoke：逐 target cell 执行 `reference -> world -> leader` 反查采样，sample ratio `1.0`，coverage ratio `0.060724`，postprocess 输出 30 boxes，最高 score `0.893363`。
+- 已新增 `opencda/tools/lgcp_pointpillar_warp_ap_probe.py`，完成 coordinate-warp canvas 到 reference-frame GT/AP 的首个评价链路 smoke：单帧 30 pred / 16 GT，AP@0.5 `0.010000`、AP@0.7 `0.000000`，说明 nearest-neighbor warp 不能支撑论文级 AP claim。
 - 已新增 `opencda/tools/lgcp_hierarchy_late_fusion_eval.py`，实现 box-level hierarchy late-fusion adapter；1 帧 2 area smoke 已完成，能够真实调用 OpenCOOD late model，输出 leader local prediction、RSU global late-fusion summary 和 AP。
 - `lgcp_hierarchy_late_fusion_eval.py` 已扩大到 Top-30 首帧完整 area：30 assignment rows、23 次唯一 group inference、RSU fused pred / GT boxes 为 `35 / 35`，AP@0.5 为 `0.606851`；仍需扩大到 3 帧 / 11 帧后才能作为论文级对照。
 - `lgcp_hierarchy_late_fusion_eval.py` 已完成 Top-30 3 帧连续运行：90 assignment rows、68 次唯一 group inference、mean RSU fused pred / GT boxes 均为 `35.666667`，AP@0.5 为 `0.584564`；下一步扩大到 11 帧并与 flat selective-sharing baseline 对齐。
@@ -99,7 +100,7 @@
 ## 近期建议焦点
 
 1. 扩大 area confidence validation 到多 seed / 多场景，形成可进入论文的稳定相关性结果；OpenCOOD 评估入口、日志格式、远端数据路径和候选 checkpoint 已确认，下一步应在 `mindspore-186` 跑 400-frame gate。
-2. 基于已完成的 selected-agent raw-byte、area-slice accounting、PointPillar feature geometry probe、feature crop export smoke、leader-local feature fusion smoke、RSU feature assembly smoke、detection-head probe、reference-frame alignment diagnostic 和 coordinate-warp smoke，下一步优先做 GT/AP smoke 与 bilinear/affine warp 校准，或把论文口径收窄为 feature-level coverage/byte proxy。
+2. 基于已完成的 selected-agent raw-byte、area-slice accounting、PointPillar feature geometry probe、feature crop export smoke、leader-local feature fusion smoke、RSU feature assembly smoke、detection-head probe、reference-frame alignment diagnostic、coordinate-warp smoke 和 coordinate-warp AP probe，下一步不应继续扩大 nearest-neighbor AP；应优先做 bilinear/affine warp 校准，或把论文口径收窄为 feature-level coverage/byte proxy。
 3. 若继续扩展 ablation，应将 source-unique 作为更真实 scheduler 约束保留，同时继续诊断 member slots 的 target receiver setup 和非 RSU receiver 的 CAM application completion；另一条主线是推进 model-level leader/RSU fusion。
 4. 大规模 30 CAV 结果若短期只跑 latency，应在论文中收窄为 communication/computation scalability；若报告 perception scalability，只能报告已校准的 proxy，不能写成真实 AP。
 5. 下一步将 request-level PHY/RLC/HARQ trace 和 control-plane overhead 扩展到多 seed，或开始推进完整 LGCP local fusion / RSU aggregation。
@@ -107,7 +108,7 @@
 
 ## 当前阻塞点
 
-- 当前仓库已有 cluster-oriented cooperative perception / network co-simulation 管线，RSU 现在可以作为固定感知/注册实体启用；offline subset ablation、scalable quality proxy、hierarchy control-plane plan、11 帧 offline NS3 request-id bridge-observed replay、RLC request-id trace、PHY decode-failure breakdown、single-slot scheduled smoke、multi-slot scheduling proxy、3 帧 live multi-slot replay、PointPillar feature geometry probe、feature crop export smoke、leader-local feature fusion smoke、RSU feature assembly smoke、detection-head probe、reference-frame alignment diagnostic 和 coordinate-warp smoke 已能支持部分 rebuttal 证据；但 coordinate warp 仍是 nearest-neighbor smoke，尚未完成 GT/AP 校准。
+- 当前仓库已有 cluster-oriented cooperative perception / network co-simulation 管线，RSU 现在可以作为固定感知/注册实体启用；offline subset ablation、scalable quality proxy、hierarchy control-plane plan、11 帧 offline NS3 request-id bridge-observed replay、RLC request-id trace、PHY decode-failure breakdown、single-slot scheduled smoke、multi-slot scheduling proxy、3 帧 live multi-slot replay、PointPillar feature geometry probe、feature crop export smoke、leader-local feature fusion smoke、RSU feature assembly smoke、detection-head probe、reference-frame alignment diagnostic、coordinate-warp smoke 和 coordinate-warp AP probe 已能支持部分 rebuttal 证据；但 nearest-neighbor feature warp AP 很低，尚不能作为模型级性能结果。
 - 本地 `C:\Workspace\OpenCOOD` 尚无 `dataset/`，不能直接做 OPV2V / V2XSet 多场景 inference；远端 `mindspore-186` 的 OPV2V 数据路径、Python 环境和 checkpoint/log store 已确认。
 - NS3 当前版本已可接收 LGCP upload plan transfer requests，`cam_received`、RLC TX/RX/DROP、PSSCH decode OK/FAIL 和 HARQ ACK/NACK 已可通过 `request_id` 精确映射回 upload request；HARQ trace 需要显式使用 `--enableSlHarq=true --psfchPeriod=4`。
 

@@ -1957,6 +1957,29 @@ Interpretation:
 - It is still nearest-neighbor feature sampling, not a trained or calibrated feature warp.
 - Do not report AP from this path until a GT/AP smoke and geometric calibration are done.
 
+## Coordinate-Warp AP Probe
+
+2026-07-18 新增 `opencda/tools/lgcp_pointpillar_warp_ap_probe.py`，闭合 warped feature canvas 到 reference-frame GT/AP 的评价链路：
+
+```text
+docs/doc_workspace/LGCP/experiments/hierarchy_plan/20260718_lgcp_pointpillar_coordinate_warp_ap_probe_area23_1f_ref1
+```
+
+| Item | Value |
+| --- | ---: |
+| Frames | 1 |
+| Pred boxes | 30 |
+| GT boxes | 16 |
+| AP@0.3 | 0.010000 |
+| AP@0.5 | 0.010000 |
+| AP@0.7 | 0.000000 |
+
+Interpretation:
+
+- The evaluation chain is technically closed, but nearest-neighbor coordinate warp produces very weak AP.
+- This should be treated as a negative smoke result and a boundary for paper claims.
+- Near-term paper-safe usage is feature-level feasibility/coverage/byte evidence, unless a calibrated bilinear/affine warp or retrained aggregation head is implemented.
+
 ## Box-Level Hierarchy Late-Fusion Smoke
 
 2026-07-18 新增 `opencda/tools/lgcp_hierarchy_late_fusion_eval.py`，并完成最小 model-calling smoke：

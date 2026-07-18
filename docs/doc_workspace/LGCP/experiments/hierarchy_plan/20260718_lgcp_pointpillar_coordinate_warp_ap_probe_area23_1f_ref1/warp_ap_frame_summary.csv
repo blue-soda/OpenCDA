@@ -1,0 +1,2 @@
+timestamp,reference_cav_id,source_frame_file,canvas_key,input_canvas_shape,backbone_spatial_features_2d_shape,psm_shape,rm_shape,pred_boxes,gt_boxes,score_max
+000060,1,warped_frames/000060_leader_scatter_mean_ref1.npz,warped_canvas,1x64x200x704,1x384x100x352,1x2x100x352,1x14x100x352,30,16,0.893363

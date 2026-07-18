@@ -3646,3 +3646,27 @@ by type：
 - 结论：
   - Coordinate-aware model-level path 已从 diagnostic 推进到可运行 warp smoke。
   - 下一步应做 GT/AP smoke，并比较 nearest-neighbor vs bilinear/affine warp；若 AP 不稳定，论文口径应收窄为 feature-level coverage / byte / feasibility proxy。
+
+## PointPillar coordinate-warp AP probe
+
+- 新增脚本：
+  - `opencda/tools/lgcp_pointpillar_warp_ap_probe.py`
+- 目标：
+  - 闭合 coordinate-warp canvas -> PointPillar head/postprocess -> reference-frame GT/AP 的评价链路。
+  - 判断 nearest-neighbor coordinate warp 是否能支撑模型级 AP。
+- 命令：
+  - `python -m py_compile opencda\tools\lgcp_pointpillar_warp_ap_probe.py`
+  - `conda run -n opencda python -m opencda.tools.lgcp_pointpillar_warp_ap_probe --dataset-root D:\Data\Carla --scenario-id 2026_07_15_02_33_21 --warped-root docs\doc_workspace\LGCP\experiments\hierarchy_plan\20260718_lgcp_pointpillar_coordinate_warp_assembly_area23_1f_ref1 --warped-frame-manifest docs\doc_workspace\LGCP\experiments\hierarchy_plan\20260718_lgcp_pointpillar_coordinate_warp_assembly_area23_1f_ref1\coordinate_warp_frame_manifest.csv --output-dir docs\doc_workspace\LGCP\experiments\hierarchy_plan\20260718_lgcp_pointpillar_coordinate_warp_ap_probe_area23_1f_ref1 --reference-cav-id 1 --fusion-method intermediate_attentive --frame-file-column warped_frame_file --canvas-key warped_canvas`
+- 输出目录：
+  - `docs/doc_workspace/LGCP/experiments/hierarchy_plan/20260718_lgcp_pointpillar_coordinate_warp_ap_probe_area23_1f_ref1`
+- 结果：
+  - frames: `1`
+  - pred boxes: `30`
+  - GT boxes: `16`
+  - AP@0.3 / AP@0.5 / AP@0.7: `0.010000 / 0.010000 / 0.000000`
+- 观察：
+  - AP 评价链路已经跑通。
+  - 但 nearest-neighbor coordinate warp 的 AP 极低，说明当前 model-level feature path 仍是 feasibility evidence，不是有效性能结果。
+- 结论：
+  - 不应扩大 nearest-neighbor warp AP 当作论文结果。
+  - 下一步应做 bilinear/affine warp 校准或 retrained aggregation；短期 rebuttal 更安全的口径是 feature-level coverage / byte / feasibility proxy。
