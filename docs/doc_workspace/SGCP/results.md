@@ -921,3 +921,19 @@ conda run -n opencda python -m opencda.tools.offline_inference --dataset-root D:
 | SGCP PAPG mainline | 41 | `pointpillar_early_fusion` raw point-cloud early fusion | `naive_late_fusion()` | 0.81 | 0.78 | 0.39 | 62.54 | Actual SGCP protocol |
 
 结论：如果都用 late checkpoint 的 local detector，SGCP 不能超过 Pure late；同时 forced SGCP late-detector row 不再代表论文中的 “簇内 early fusion + 簇间 late fusion”。因此主文公平策略应是：主线所有 raw point-cloud fusion baseline 统一使用 `pointpillar_early_fusion`；Pure late 作为 prediction-sharing reference 明确单列，或在 controlled ablation 中使用 `pointpillar_early_fusion` singleton detector + `naive_late_fusion()`。
+
+## Pareto source second-pass consolidation
+
+本轮未重跑新实验，而是将此前已经复现但未进入 Figure 1 源表的代表点补入 `docs\doc_workspace\SGCP\artifacts\pareto_20260719\pareto_source.csv`，用于支撑 AP-Mbps Pareto 曲线的 first-pass 参数覆盖。
+
+新增源表点：
+
+| Method | AP@0.3 | AP@0.5 | AP@0.7 | Mbps | Role |
+| --- | ---: | ---: | ---: | ---: | --- |
+| SGCPCoverage5ch20MHz | 0.56 | 0.53 | 0.27 | 28.91 | low-bandwidth stress |
+| SGCPCoverage10chRho3Bh2 | 0.76 | 0.72 | 0.42 | 54.56 | SGCP B_h sensitivity |
+| SelectiveCommunicationAwareLowBudget | 0.78 | 0.75 | 0.40 | 58.97 | V2V scheduler low-budget point |
+| SGCP_PAPG_Bh3 | 0.80 | 0.78 | 0.40 | 62.54 | PAPG B_h sensitivity |
+| PACP_LiDAR_LowBudget | 0.76 | 0.73 | 0.37 | 67.31 | PACP-style proxy low-budget point |
+
+结论：当前 Pareto 源表已经足够支持“SGCP/PAPG 在 raw-LiDAR V2V 中等通信区间具有竞争力”的图形判断，但仍不能写成所有 baseline 全预算最优。正式论文 caption 需要分层解释 raw-LiDAR frontier、prediction-sharing Pure late reference 和 edge-assisted/global reference。

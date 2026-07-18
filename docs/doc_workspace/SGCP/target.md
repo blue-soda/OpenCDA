@@ -129,11 +129,11 @@
 
 必须扫描：
 
-- [ ] SGCP：`rho_th`、`B_h`、channel count、可选 point cap。
-- [ ] Random / Density / Link-aware：member budget、grid budget。
-- [ ] PACP-LiDAR：member/grid budget 或 priority threshold。
-- [ ] FullPerception-PCS：blind-spot granularity、candidate threshold 或 PCS 原生参数，不改主带宽。
-- [ ] EdgeCooperV2V+ / EdgeCooper-inspired：sender cap、assignment budget、half-duplex constraint。
+- [x] SGCP：`rho_th`、`B_h`、channel count、可选 point cap。当前 `pareto_source.csv` 已覆盖 5ch stress、10ch rho2/rho3、20ch rho2、cap=3000、B_h=2/3；early checkpoint 回收后需重跑同一组关键点。
+- [ ] Random / Density / Link-aware：member budget、grid budget。当前已有 forced random、density high-budget、communication-aware low/high 代表点，但还缺完整预算 sweep。
+- [x] PACP-LiDAR：member/grid budget 或 priority threshold。当前已纳入 high-budget `86.56 Mbps` 和 low-budget `67.31 Mbps` 两个代表点，足够支撑 proxy baseline 边界；若进附录可继续补 priority threshold。
+- [ ] FullPerception-PCS：blind-spot granularity、candidate threshold 或 PCS 原生参数，不改主带宽。当前 tuned PCS 已进源表，但还未形成完整 PCS 参数曲线。
+- [ ] EdgeCooperV2V+ / EdgeCooper-inspired：sender cap、assignment budget、half-duplex constraint。当前 EdgeCooper-HD proxy 已进源表，仍需补 sender cap/assignment sweep。
 - [x] Pure late prediction-box reference：在 Pareto 图或附注中加入 broadcast/all-to-all detection-box overhead；若要声称通信受限，必须补 NS3 synthetic late-box deadline replay，而不是只按 raw-LiDAR payload 记为 0 Mbps。第一版已加入 80B/box broadcast 与 all-to-all 两个点。
 
 验收标准：

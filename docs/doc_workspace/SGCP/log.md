@@ -6202,3 +6202,25 @@ conda run -n opencda python -m opencda.tools.sgcp_aggregate_ap_manifest --run "S
 ### 结论
 
 如果所有方法都强制使用 late checkpoint 的 local detector，Pure late 仍最强，SGCP forced late-detector 版本接近但不超过它。这说明当前场景下 late detector + prediction sharing 的 reference 很强。为了公平且保持 SGCP 论文语义，主线实验应统一使用 `pointpillar_early_fusion` 作为 raw point-cloud-to-box checkpoint；Pure late 可以作为 `pointpillar_early_fusion` singleton detector + `naive_late_fusion()` 的 controlled ablation，actual-late 则单独作为 prediction-sharing reference。
+
+## 2026-07-19 Pareto source second pass
+
+### 目的
+
+继续推进 `target.md` P4，把已经复现但未进入 Figure 1 源表的低预算、带宽压力和敏感性点补入 Pareto source，避免 AP-Mbps 图只依赖少数手工点。
+
+### 操作
+
+- 更新 `docs\doc_workspace\SGCP\artifacts\pareto_20260719\pareto_source.csv`，新增 5 个源表点：`SGCPCoverage5ch20MHz`、`SGCPCoverage10chRho3Bh2`、`SelectiveCommunicationAwareLowBudget`、`SGCP_PAPG_Bh3`、`PACP_LiDAR_LowBudget`。
+- 更新 `pareto_notes.md`：明确当前 SGCP 已覆盖 `5ch/10ch/20ch`、`rho2/rho3`、`B_h=2/3`、`cap=3000` first pass；Pure late 必须作为 prediction-sharing reference 分层解释。
+- 更新 `target.md`：P4 中 SGCP 和 PACP-LiDAR first-pass 扫描标为完成；Random/Density/Link-aware、FullPerception-PCS、EdgeCooper-HD 的系统 sweep 保持未完成。
+
+### 结果
+
+| Method | AP@0.3 | AP@0.5 | AP@0.7 | Mbps |
+| --- | ---: | ---: | ---: | ---: |
+| SGCPCoverage5ch20MHz | 0.56 | 0.53 | 0.27 | 28.91 |
+| SGCPCoverage10chRho3Bh2 | 0.76 | 0.72 | 0.42 | 54.56 |
+| SelectiveCommunicationAwareLowBudget | 0.78 | 0.75 | 0.40 | 58.97 |
+| SGCP_PAPG_Bh3 | 0.80 | 0.78 | 0.40 | 62.54 |
+| PACP_LiDAR_LowBudget | 0.76 | 0.73 | 0.37 | 67.31 |
