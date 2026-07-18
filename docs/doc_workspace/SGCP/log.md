@@ -2,6 +2,20 @@
 
 本文件按时间顺序追加实验记录。每条记录应尽量包含：目的、代码版本、配置、命令、日志路径、关键结果、异常现象和下一步。
 
+## 2026-07-18 - Novelty and claim-boundary wording pass
+
+### 目的
+
+继续检查 `main.tex` 的 abstract / introduction / conclusion 是否与当前 reviewer response matrix 的保守口径一致，避免 novelty 和机制保证写得过强。
+
+### 结果
+
+- 将 introduction 中 `To the best of our knowledge, no prior work...` 改为 `SGCP targets the less explored combination...`，避免与 Smartform、Where2Comm/PACP 或其他 decentralized CP 工作产生不必要的绝对 novelty 冲突。
+- 将方法概述中的 `preserves one strong external view` 改为 `prioritizes a strong external view`，与 PAPG coverage layer 的调度偏好一致，避免被误读成每帧每 head 的硬保证。
+- 复查 potential-guided scheduling 段已经限定为 fixed cluster/candidate/hard feasibility assumptions，并说明 implementation uses the potential as a scheduling guide；该段无需进一步降调。
+
+下一步：若继续 final freeze，优先检查 `results.md` 首页是否还有 `NC = TBD` 或旧主表索引会误导后续写作。
+
 ## 2026-07-18 - Main-table lower reference cleanup
 
 ### 目的
