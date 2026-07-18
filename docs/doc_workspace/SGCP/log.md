@@ -2,6 +2,21 @@
 
 本文件按时间顺序追加实验记录。每条记录应尽量包含：目的、代码版本、配置、命令、日志路径、关键结果、异常现象和下一步。
 
+## 2026-07-18 - Paper citation key sanity check
+
+### 目的
+
+继续推进 final paper freeze 前的论文一致性检查，重点排查 `main.tex` 中旧结果、旧 baseline 命名和 BibTeX citation key 不一致问题。
+
+### 检查结果
+
+- `main.tex` 未发现旧 `22.33 Mbps`、旧 `0.85/0.84/0.69` 主表口径、`FullPerception-centralized`、`fullperception_rsu` 或 `fullperception_decentralized` 残留。
+- 发现并修复 4 个 BibTeX key 大小写不一致问题：`arnold2020nmslate -> arnold2020nmsLate`、`liu2019fusioneyelate -> liu2019fusioneyeLate`、`li2023hetsdn -> li2023hetSDN`、`zhao2025multidrl -> zhao2025multiDRL`。
+- 清理 optimization problem 中旧注释掉的 `\ref{eq:power_constraint}` / `\ref{eq:instant_power}`，避免后续静态 label 检查误报。
+- 复查通过：28 个 unique cite keys 全部匹配 `Reference.bib`；28 个 labels 与 14 个 unique refs 全部匹配；正文中未检出旧主表数值或旧 baseline 名称。
+
+下一步：本机仍缺 `latexmk/pdflatex`，无法完整 PDF 编译；若后续安装 LaTeX 工具链，应优先做版面和参考文献编译检查。
+
 ## 2026-07-18 - Reviewer response coverage matrix
 
 ### 目的
