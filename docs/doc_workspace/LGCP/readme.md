@@ -25,6 +25,7 @@
 - `opencood_eval_entry.md`：OpenCOOD OPV2V / V2XSet 评估入口、`eval.yaml` / `npy` 输出格式和 LGCP 复用边界。
 - `opencood_multiscene_area_confidence.md`：OpenCOOD 多 seed / 多场景 area confidence validation 的远端资源、协议入口、checkpoint inventory 和待跑矩阵。
 - `model_level_hierarchy_entry.md`：LGCP 从 hierarchy proxy 推进到 box-level / neural feature model-level hierarchy 的代码入口、实现阶段和论文边界。
+- `neural_feature_proxy.md`：PointPillar neural feature hierarchy 的 feature-path feasibility、coverage、byte proxy 和低 AP 边界。
 - `grid_size_sensitivity.md`：LGCP ROI grid / area size sensitivity 的单场景 11 帧 smoke 结果。
 - `localization_error_sensitivity.md`：LGCP CAV pose localization error sensitivity 的单场景 11 帧 smoke 结果。
 - `stale_assignment_sensitivity.md`：LGCP update frequency / stale assignment sensitivity 的单场景 11 帧 smoke 结果。

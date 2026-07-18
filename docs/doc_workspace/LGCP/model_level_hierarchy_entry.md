@@ -671,3 +671,32 @@ docs/doc_workspace/LGCP/experiments/hierarchy_plan/20260718_lgcp_pointpillar_coo
 - 这说明问题不只是 nearest-neighbor 的离散化误差，而是预训练 PointPillar head 对这种跨 leader 裁剪、均值融合、重投影 feature canvas 没有校准。
 - 后续若要报告 model-level AP，需要 affine/grid-sample 级特征旋转校准、feature normalization、训练后的 aggregation head 或端到端 fine-tuning。
 - 短期论文更安全的口径是将 neural feature hierarchy 收窄为 feature-level data path、coverage 和 byte proxy，把 box-level hierarchy late fusion 作为真实 OpenCOOD model-calling local-to-global ablation。
+
+## 2026-07-18 Neural Feature Proxy Summary
+
+新增统一 proxy 汇总工具：
+
+```text
+opencda/tools/lgcp_neural_feature_proxy_summary.py
+```
+
+运行目录：
+
+```text
+docs/doc_workspace/LGCP/experiments/hierarchy_plan/20260718_lgcp_neural_feature_proxy_summary_area23
+```
+
+关键结果：
+
+| Stage | Bytes / frame | Ratio vs raw member area23 | Ratio vs comm-aware area23 slice | AP@0.5 / AP@0.7 |
+| --- | ---: | ---: | ---: | --- |
+| PointPillar feature crop | 810688.00 | 16.894453 | 3.202652 |  |
+| Leader scatter fusion | 936298.00 | 19.512121 | 3.698879 |  |
+| Coordinate warp nearest | 110883.00 | 2.310763 | 0.438047 | `0.010000 / 0.000000` |
+| Coordinate warp bilinear | 149700.00 | 3.119695 | 0.591395 | `0.011364 / 0.003472` |
+
+解释：
+
+- 该表把 neural feature path 明确收束为 proxy evidence，而不是性能主结果。
+- 未优化 PointPillar feature crop 的通信体积高于 raw area-slice reference，因此不能简单声称 feature slicing automatically reduces communication。
+- 若论文需要短期稳定版本，应把 neural hierarchy 写成 feasibility / limitation，把可报告感知质量放在 box-level late-fusion local-to-global ablation。

@@ -3702,3 +3702,34 @@ by type：
   - 简单采样方式不是主要瓶颈。
   - 当前跨 leader 裁剪、均值融合、重投影后的 feature canvas 与预训练 PointPillar head 缺少校准。
   - 短期不应继续扩大 nearest/bilinear AP；要么实现 affine/grid-sample + feature calibration / retrained aggregation，要么将 neural hierarchy 口径收窄为 feature-level coverage / byte proxy。
+
+## Neural feature proxy summary
+
+- 新增脚本：
+  - `opencda/tools/lgcp_neural_feature_proxy_summary.py`
+- 新增文档：
+  - `docs/doc_workspace/LGCP/neural_feature_proxy.md`
+- 目标：
+  - 将 raw member area-slice reference、flat comm-aware area-slice reference、PointPillar feature crop、leader feature fusion、RSU canvas、nearest/bilinear coordinate warp 和 AP boundary 放到同一张表。
+  - 明确当前 neural feature hierarchy 只能作为 feasibility / coverage / byte boundary，不能作为论文级 model AP。
+- 命令：
+  - `python -m py_compile opencda\tools\lgcp_neural_feature_proxy_summary.py`
+  - `python -m opencda.tools.lgcp_neural_feature_proxy_summary --output-dir docs\doc_workspace\LGCP\experiments\hierarchy_plan\20260718_lgcp_neural_feature_proxy_summary_area23`
+- 输出目录：
+  - `docs/doc_workspace/LGCP/experiments/hierarchy_plan/20260718_lgcp_neural_feature_proxy_summary_area23`
+- 结果：
+  - raw member area23 bytes/frame: `47985.454545`
+  - comm-aware flat area23 slice bytes/frame: `253130.181818`
+  - PointPillar feature crop compressed bytes/frame: `810688`
+  - leader scatter fusion compressed bytes/frame: `936298`
+  - coordinate warp nearest compressed bytes/frame: `110883`
+  - coordinate warp bilinear compressed bytes/frame: `149700`
+  - PointPillar feature crop vs raw member area23 ratio: `16.894453`
+  - PointPillar feature crop vs comm-aware flat area23 slice ratio: `3.202652`
+  - nearest / bilinear AP@0.5: `0.010000 / 0.011364`
+- 观察：
+  - 未优化 feature crop 并不天然节省通信，反而明显大于 raw member area-slice reference。
+  - RSU canvas / coordinate-warp canvas 更小，但它们是聚合后的中间产物，不是 leader upload 通信负载。
+- 结论：
+  - 短期论文安全口径应是 feature-path feasibility、coverage 和 byte boundary。
+  - 感知质量主证据继续使用 box-level hierarchy late-fusion；若坚持 neural AP，需要 affine/grid-sample 校准、feature normalization 或 retrained aggregation head。

@@ -2190,3 +2190,29 @@ docs/doc_workspace/LGCP/experiments/hierarchy_plan/20260718_lgcp_pointpillar_coo
 - Bilinear 只带来极小 AP 改善，仍不能支撑 model-level LGCP AP claim。
 - 当前问题不只是采样方式，而是跨 leader feature slice 的裁剪、均值融合、重投影 canvas 与预训练 PointPillar detection head 缺少校准。
 - 论文近期可用口径应是 feature-level data-path / coverage / byte proxy，加上 box-level hierarchy late-fusion 的真实 OpenCOOD model-calling ablation；若要报告 neural feature AP，需要 affine warp calibration、feature normalization 或 retrained aggregation head。
+
+### 2026-07-18：Neural Feature Proxy Summary
+
+本次结果将 raw-slice reference、PointPillar feature crop、leader feature fusion、RSU canvas、nearest/bilinear coordinate warp 和 AP boundary 汇总到同一表，避免把低 AP 或未优化 feature bytes 误写成论文主张。
+
+输出目录：
+
+```text
+docs/doc_workspace/LGCP/experiments/hierarchy_plan/20260718_lgcp_neural_feature_proxy_summary_area23
+```
+
+| Stage | Bytes / frame | Ratio vs raw member area23 | Ratio vs comm-aware area23 slice | Coverage | AP@0.5 | AP@0.7 |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| Raw member area slice | 47,985.45 | 1.000000 | 0.189568 |  |  |  |
+| Flat comm-aware area slice | 253,130.18 | 5.275144 | 1.000000 |  |  |  |
+| PointPillar feature crop | 810,688.00 | 16.894453 | 3.202652 |  |  |  |
+| Leader scatter fusion | 936,298.00 | 19.512121 | 3.698879 |  |  |  |
+| RSU index canvas | 82,974.00 | 1.729149 | 0.327792 | 0.033161 |  |  |
+| Coordinate warp nearest | 110,883.00 | 2.310763 | 0.438047 | 0.060724 | 0.010000 | 0.000000 |
+| Coordinate warp bilinear | 149,700.00 | 3.119695 | 0.591395 | 0.060625 | 0.011364 | 0.003472 |
+
+结论：
+
+- 未优化 PointPillar feature crop 不比 raw area-slice 省通信；Top23 首帧压缩 feature crop 是 raw member area23 均值的 `16.89x`。
+- RSU canvas / coordinate-warp canvas 较小，但它们是聚合后中间产物，不能当作 leader upload 负载。
+- 当前 neural feature hierarchy 只能安全写作 data-path feasibility / coverage / byte boundary；感知质量主证据应继续使用 box-level hierarchy late-fusion 或等待校准 / 重训练后的 neural AP。

@@ -85,6 +85,7 @@
 - 已新增 `opencda/tools/lgcp_pointpillar_coordinate_warp_assembly.py`，完成 Top-23 首帧 coordinate-aware warp smoke：逐 target cell 执行 `reference -> world -> leader` 反查采样，sample ratio `1.0`，coverage ratio `0.060724`，postprocess 输出 30 boxes，最高 score `0.893363`。
 - 已新增 `opencda/tools/lgcp_pointpillar_warp_ap_probe.py`，完成 coordinate-warp canvas 到 reference-frame GT/AP 的首个评价链路 smoke：单帧 30 pred / 16 GT，AP@0.5 `0.010000`、AP@0.7 `0.000000`，说明 nearest-neighbor warp 不能支撑论文级 AP claim。
 - `lgcp_pointpillar_coordinate_warp_assembly.py` 已新增 `--sampling nearest|bilinear`，并完成同一 Top-23 首帧 bilinear 对照：sample ratio `0.998363`、coverage ratio `0.060625`、postprocess 输出 29 boxes，AP@0.5 `0.011364`、AP@0.7 `0.003472`；结论是简单 bilinear 也不能支撑论文级 model-level AP claim。
+- 已新增 `opencda/tools/lgcp_neural_feature_proxy_summary.py` 和 `neural_feature_proxy.md`，将 raw area-slice、PointPillar feature crop、leader feature fusion、RSU canvas、nearest/bilinear warp 与 AP boundary 汇总为统一 proxy 表；当前未优化 feature crop 为 raw member area23 均值的 `16.89x`，只能作为 feature-path feasibility / byte boundary。
 - 已新增 `opencda/tools/lgcp_hierarchy_late_fusion_eval.py`，实现 box-level hierarchy late-fusion adapter；1 帧 2 area smoke 已完成，能够真实调用 OpenCOOD late model，输出 leader local prediction、RSU global late-fusion summary 和 AP。
 - `lgcp_hierarchy_late_fusion_eval.py` 已扩大到 Top-30 首帧完整 area：30 assignment rows、23 次唯一 group inference、RSU fused pred / GT boxes 为 `35 / 35`，AP@0.5 为 `0.606851`；仍需扩大到 3 帧 / 11 帧后才能作为论文级对照。
 - `lgcp_hierarchy_late_fusion_eval.py` 已完成 Top-30 3 帧连续运行：90 assignment rows、68 次唯一 group inference、mean RSU fused pred / GT boxes 均为 `35.666667`，AP@0.5 为 `0.584564`；下一步扩大到 11 帧并与 flat selective-sharing baseline 对齐。
@@ -101,7 +102,7 @@
 ## 近期建议焦点
 
 1. 扩大 area confidence validation 到多 seed / 多场景，形成可进入论文的稳定相关性结果；OpenCOOD 评估入口、日志格式、远端数据路径和候选 checkpoint 已确认，下一步应在 `mindspore-186` 跑 400-frame gate。
-2. 基于已完成的 selected-agent raw-byte、area-slice accounting、PointPillar feature geometry probe、feature crop export smoke、leader-local feature fusion smoke、RSU feature assembly smoke、detection-head probe、reference-frame alignment diagnostic、nearest/bilinear coordinate-warp smoke 和 AP probe，下一步不应继续扩大简单 warp AP；应优先选择 affine/grid-sample 校准或把论文口径收窄为 feature-level coverage/byte proxy。
+2. 基于已完成的 selected-agent raw-byte、area-slice accounting、PointPillar feature geometry probe、feature crop export smoke、leader-local feature fusion smoke、RSU feature assembly smoke、detection-head probe、reference-frame alignment diagnostic、nearest/bilinear coordinate-warp smoke、AP probe 和 neural feature proxy summary，下一步不应继续扩大简单 warp AP；应优先选择 affine/grid-sample 校准 / retraining，或在论文中明确收窄为 feature-level feasibility / byte boundary。
 3. 若继续扩展 ablation，应将 source-unique 作为更真实 scheduler 约束保留，同时继续诊断 member slots 的 target receiver setup 和非 RSU receiver 的 CAM application completion；另一条主线是推进 model-level leader/RSU fusion。
 4. 大规模 30 CAV 结果若短期只跑 latency，应在论文中收窄为 communication/computation scalability；若报告 perception scalability，只能报告已校准的 proxy，不能写成真实 AP。
 5. 下一步将 request-level PHY/RLC/HARQ trace 和 control-plane overhead 扩展到多 seed，或开始推进完整 LGCP local fusion / RSU aggregation。
