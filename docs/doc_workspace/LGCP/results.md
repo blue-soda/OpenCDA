@@ -1911,3 +1911,25 @@ Interpretation:
 - LGCP Top-30 的 AP@0.5 接近 random 10-agent flat selection，但低于 strong flat top-k baselines；AP@0.7 明显优于 random，并接近 area-aware / communication-aware flat baselines。
 - Byte proxy 不是完全同口径：flat baselines 使用固定 selected-agent packet proxy，LGCP 使用 raw-slice-aware scheduled upload bytes。论文表格必须显式标注 proxy 类型，不能直接宣称通信量绝对公平。
 - 当前结果支持谨慎结论：local-to-global mechanism path 已经被真实模型调用验证，但若要主张 perception AP 超过强 flat selective-sharing baseline，还需要 neural feature slicing 或更严格的统一 byte accounting。
+
+### Unified Raw-Byte Accounting
+
+2026-07-18 新增 flat baseline raw PCD byte accounting：
+
+```text
+docs/doc_workspace/LGCP/experiments/ablation/20260718_lgcp_flat_raw_byte_accounting_11f
+docs/doc_workspace/LGCP/experiments/ablation/20260718_lgcp_local_to_global_ablation_alignment/unified_raw_byte_accounting_summary.csv
+```
+
+| Method | AP@0.5 | AP@0.7 | Raw bytes / frame | Byte ratio vs comm-aware top-k |
+| --- | ---: | ---: | ---: | ---: |
+| Comm-aware top-k, 10 agents | 0.686146 | 0.545736 | 741029.818182 | 1.000000 |
+| Area-aware union, 10 agents | 0.676678 | 0.538273 | 743892.363636 | 1.003863 |
+| LGCP Top-23 box late fusion | 0.554762 | 0.460461 | 93985.454545 | 0.126831 |
+| LGCP Top-30 box late fusion | 0.602748 | 0.506345 | 119415.272727 | 0.161148 |
+
+Interpretation:
+
+- 若 flat baselines 按完整 selected-agent raw PCD 计算，10-agent communication-aware baseline 约为 `741.03KB/frame`。
+- LGCP Top-30 约为 `119.42KB/frame`，仅为 comm-aware top-k raw bytes 的 `16.11%`，同时保留 `87.85%` 的 AP@0.5 和 `92.78%` 的 AP@0.7。
+- 这不能证明当前 box-level LGCP 的 AP 超过强 baseline，但可以更公平地支撑“以较低通信量保留大部分感知质量”的 rebuttal 口径。

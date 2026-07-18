@@ -1,0 +1,7 @@
+dataset_root: D:\Data\Carla
+scenario_id: '2026_07_15_02_33_21'
+subset_frame_records: C:\Workspace\OpenCDA\docs\doc_workspace\LGCP\experiments\ablation\20260715_lgcp_carla_comm_aware_baseline_11f\subset_frame_records.csv
+ablation_summary: C:\Workspace\OpenCDA\docs\doc_workspace\LGCP\experiments\ablation\20260715_lgcp_carla_comm_aware_baseline_11f\ablation_summary.csv
+ego_cav_id: '1'
+bytes_per_point: 16
+note: Raw LiDAR bytes for existing flat selected-agent decisions.

@@ -3377,3 +3377,24 @@ by type：
   - Top-23 是当前最接近 flat 10-agent `90KB/frame` 的 LGCP 实测点。
   - AP@0.5 仍低于 random / confidence_topk / area_aware_union / comm_aware_topk，说明 box-level hierarchy 不能支持“公平预算下质量优于强 baseline”的强 claim。
   - 可在 rebuttal 中诚实表述：当前补充实验验证 LGCP hierarchy path 和 budget-quality tradeoff；真正质量提升仍应依赖 neural feature slicing 或更公平的 raw-slice accounting baseline。
+
+## Flat selected-agent raw-byte accounting
+
+- 新增脚本：
+  - `opencda/tools/lgcp_flat_raw_byte_accounting.py`
+- 目标：
+  - 保留既有 flat selective-sharing baseline 的 selected-agent 决策，不重跑模型。
+  - 按实际 PCD point count 和 `16 bytes/point` 估算 selected non-ego agents 的 raw LiDAR upload bytes。
+- 命令：
+  - `conda run -n opencda python -m opencda.tools.lgcp_flat_raw_byte_accounting --dataset-root D:\Data\Carla --scenario-id 2026_07_15_02_33_21 --subset-frame-records docs\doc_workspace\LGCP\experiments\ablation\20260715_lgcp_carla_comm_aware_baseline_11f\subset_frame_records.csv --ablation-summary docs\doc_workspace\LGCP\experiments\ablation\20260715_lgcp_carla_comm_aware_baseline_11f\ablation_summary.csv --output-dir docs\doc_workspace\LGCP\experiments\ablation\20260718_lgcp_flat_raw_byte_accounting_11f --ego-cav-id 1 --bytes-per-point 16`
+- 输出：
+  - `flat_raw_byte_frame_records.csv`
+  - `flat_raw_byte_summary.csv`
+  - `unified_raw_byte_accounting_summary.csv`
+- 关键结果：
+  - comm-aware top-k 10 agents: AP@0.5 / AP@0.7 `0.686146 / 0.545736`, raw bytes/frame `741029.818182`
+  - area-aware union 10 agents: AP@0.5 / AP@0.7 `0.676678 / 0.538273`, raw bytes/frame `743892.363636`
+  - LGCP Top-30: AP@0.5 / AP@0.7 `0.602748 / 0.506345`, raw scheduled bytes/frame `119415.272727`
+- 结论：
+  - 按 raw selected-agent bytes 计，LGCP Top-30 使用约 `16.11%` 的 comm-aware top-k bytes，保留 `87.85%` AP@0.5 和 `92.78%` AP@0.7。
+  - 这是目前回应 baseline fairness 最清楚的本地证据：不声称 AP 更高，而是强调 much lower communication with bounded quality loss。
