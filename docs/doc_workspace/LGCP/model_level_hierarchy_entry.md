@@ -562,3 +562,47 @@ conda run -n opencda python -m opencda.tools.lgcp_pointpillar_rsu_head_probe --r
 - 将 world-coordinate area cells 映射到统一 reference CAV frame 后，coverage ratio 从 index-space assembly 的 `0.033161` 提高到 `0.065263`，head/postprocess 也出现更强响应。
 - 但 leader 与 reference 的 yaw 差很大，平均约 `93.41 deg`，最大约 `175.82 deg`。当前实现只做 nearest resize，没有 feature rotation / affine warp / learned alignment。
 - 因此这仍是 alignment diagnostic，不是 AP 结果。论文安全口径应是：model-level data path is feasible, while valid AP requires coordinate-aware feature warping or retrained aggregation.
+
+## 2026-07-18 Coordinate-Warp Feature Assembly Smoke
+
+运行目录：
+
+```text
+docs/doc_workspace/LGCP/experiments/hierarchy_plan/20260718_lgcp_pointpillar_coordinate_warp_assembly_area23_1f_ref1
+docs/doc_workspace/LGCP/experiments/hierarchy_plan/20260718_lgcp_pointpillar_coordinate_warp_head_probe_area23_1f_ref1
+```
+
+命令：
+
+```powershell
+conda run -n opencda python -m opencda.tools.lgcp_pointpillar_coordinate_warp_assembly --dataset-root D:\Data\Carla --scenario-id 2026_07_15_02_33_21 --assignment-plan docs\doc_workspace\LGCP\experiments\hierarchy_plan\20260718_lgcp_carla_hierarchy_plan_area23_11f\area_assignment_plan.csv --leader-root docs\doc_workspace\LGCP\experiments\hierarchy_plan\20260718_lgcp_pointpillar_leader_feature_fusion_area23_1f --leader-feature-manifest docs\doc_workspace\LGCP\experiments\hierarchy_plan\20260718_lgcp_pointpillar_leader_feature_fusion_area23_1f\leader_feature_manifest.csv --output-dir docs\doc_workspace\LGCP\experiments\hierarchy_plan\20260718_lgcp_pointpillar_coordinate_warp_assembly_area23_1f_ref1 --reference-cav-id 1 --feature-key leader_scatter_mean --grid-size-x 10 --grid-size-y 6 --dtype float16
+conda run -n opencda python -m opencda.tools.lgcp_pointpillar_rsu_head_probe --rsu-root docs\doc_workspace\LGCP\experiments\hierarchy_plan\20260718_lgcp_pointpillar_coordinate_warp_assembly_area23_1f_ref1 --rsu-frame-manifest docs\doc_workspace\LGCP\experiments\hierarchy_plan\20260718_lgcp_pointpillar_coordinate_warp_assembly_area23_1f_ref1\coordinate_warp_frame_manifest.csv --output-dir docs\doc_workspace\LGCP\experiments\hierarchy_plan\20260718_lgcp_pointpillar_coordinate_warp_head_probe_area23_1f_ref1 --fusion-method intermediate_attentive --top-k 20 --frame-file-column warped_frame_file --canvas-key warped_canvas
+```
+
+方法：
+
+- 对 reference canvas 内的每个 target cell，计算 cell center 的 reference-local 坐标。
+- 使用 reference pose 映射到 world coordinate。
+- 再使用 leader pose 映射回 leader-local coordinate。
+- 在 leader-local feature slice 内做 nearest-neighbor sampling，并放回 reference canvas。
+
+结果：
+
+| Metric | Value |
+| --- | ---: |
+| Reference CAV | 1 |
+| Input / used leader slices | 23 / 23 |
+| Target / sampled cells | `8550 / 8550` |
+| Sample ratio | 1.000000 |
+| Coverage cells / ratio | `8550 / 0.060724` |
+| Overlap cells / max overlap | `0 / 1` |
+| Mean / max abs yaw delta | `93.412838 / 175.817131 deg` |
+| Head `psm` / `rm` | `1 x 2 x 100 x 352` / `1 x 14 x 100 x 352` |
+| Head score max / mean | `0.893363 / 0.003926` |
+| Postprocess pred boxes | 30 |
+
+解释：
+
+- 相比 nearest-resize diagnostic，coordinate warp 避免了 target bbox 内的重复 overlap，所有 world-area target cells 都能反查到 leader-local source slice。
+- Head response 进一步增强，但当前仍是 nearest-neighbor feature sampling，没有双线性采样、feature rotation calibration 或训练后的 aggregation。
+- 该结果可以作为 coordinate-aware model-level path 的 feasibility evidence；不能直接作为论文 AP，下一步才应做 GT/AP smoke 或定义 feature-level proxy。

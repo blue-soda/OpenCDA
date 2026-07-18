@@ -1928,6 +1928,35 @@ Interpretation:
 - The large yaw deltas prove that nearest resize is not a valid geometric feature warp.
 - This should be reported only as a diagnostic toward coordinate-aware feature alignment, not as model-level detection performance.
 
+## Coordinate-Warp Feature Assembly Smoke
+
+2026-07-18 新增 `opencda/tools/lgcp_pointpillar_coordinate_warp_assembly.py`，对 reference-frame target cells 执行 `reference -> world -> leader` 反查采样，并复用 head probe：
+
+```text
+docs/doc_workspace/LGCP/experiments/hierarchy_plan/20260718_lgcp_pointpillar_coordinate_warp_assembly_area23_1f_ref1
+docs/doc_workspace/LGCP/experiments/hierarchy_plan/20260718_lgcp_pointpillar_coordinate_warp_head_probe_area23_1f_ref1
+```
+
+| Item | Value |
+| --- | ---: |
+| Used leader slices | 23 |
+| Target / sampled cells | `8550 / 8550` |
+| Sample ratio | 1.000000 |
+| Coverage ratio | 0.060724 |
+| Overlap cells | 0 |
+| Max overlap | 1 |
+| Mean abs yaw delta | 93.412838 deg |
+| Max abs yaw delta | 175.817131 deg |
+| Head score max | 0.893363 |
+| Head score mean | 0.003926 |
+| Postprocess pred boxes | 30 |
+
+Interpretation:
+
+- Coordinate-warp assembly is a stronger feasibility result than nearest resize: every target cell is sampled through the leader-local coordinate frame.
+- It is still nearest-neighbor feature sampling, not a trained or calibrated feature warp.
+- Do not report AP from this path until a GT/AP smoke and geometric calibration are done.
+
 ## Box-Level Hierarchy Late-Fusion Smoke
 
 2026-07-18 新增 `opencda/tools/lgcp_hierarchy_late_fusion_eval.py`，并完成最小 model-calling smoke：

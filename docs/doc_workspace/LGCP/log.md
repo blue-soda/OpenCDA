@@ -3615,3 +3615,34 @@ by type：
 - 结论：
   - 坐标对齐问题已被量化，不能把 reference-frame smoke 当作 AP。
   - 下一步要么实现 coordinate-aware feature warp，要么将论文中的 neural feature hierarchy 结果收窄为 coverage / byte / feasibility proxy。
+
+## PointPillar coordinate-warp feature assembly smoke
+
+- 新增脚本：
+  - `opencda/tools/lgcp_pointpillar_coordinate_warp_assembly.py`
+- 目标：
+  - 对 reference-frame target cell 逐格执行 `reference -> world -> leader` 反查采样。
+  - 比 nearest-resize reference diagnostic 更接近真实 coordinate-aware feature warp。
+- 命令：
+  - `python -m py_compile opencda\tools\lgcp_pointpillar_coordinate_warp_assembly.py`
+  - `conda run -n opencda python -m opencda.tools.lgcp_pointpillar_coordinate_warp_assembly --dataset-root D:\Data\Carla --scenario-id 2026_07_15_02_33_21 --assignment-plan docs\doc_workspace\LGCP\experiments\hierarchy_plan\20260718_lgcp_carla_hierarchy_plan_area23_11f\area_assignment_plan.csv --leader-root docs\doc_workspace\LGCP\experiments\hierarchy_plan\20260718_lgcp_pointpillar_leader_feature_fusion_area23_1f --leader-feature-manifest docs\doc_workspace\LGCP\experiments\hierarchy_plan\20260718_lgcp_pointpillar_leader_feature_fusion_area23_1f\leader_feature_manifest.csv --output-dir docs\doc_workspace\LGCP\experiments\hierarchy_plan\20260718_lgcp_pointpillar_coordinate_warp_assembly_area23_1f_ref1 --reference-cav-id 1 --feature-key leader_scatter_mean --grid-size-x 10 --grid-size-y 6 --dtype float16`
+  - `conda run -n opencda python -m opencda.tools.lgcp_pointpillar_rsu_head_probe --rsu-root docs\doc_workspace\LGCP\experiments\hierarchy_plan\20260718_lgcp_pointpillar_coordinate_warp_assembly_area23_1f_ref1 --rsu-frame-manifest docs\doc_workspace\LGCP\experiments\hierarchy_plan\20260718_lgcp_pointpillar_coordinate_warp_assembly_area23_1f_ref1\coordinate_warp_frame_manifest.csv --output-dir docs\doc_workspace\LGCP\experiments\hierarchy_plan\20260718_lgcp_pointpillar_coordinate_warp_head_probe_area23_1f_ref1 --fusion-method intermediate_attentive --top-k 20 --frame-file-column warped_frame_file --canvas-key warped_canvas`
+- 输出目录：
+  - `docs/doc_workspace/LGCP/experiments/hierarchy_plan/20260718_lgcp_pointpillar_coordinate_warp_assembly_area23_1f_ref1`
+  - `docs/doc_workspace/LGCP/experiments/hierarchy_plan/20260718_lgcp_pointpillar_coordinate_warp_head_probe_area23_1f_ref1`
+- 结果：
+  - input / used leader slices: `23 / 23`
+  - target / sampled cells: `8550 / 8550`
+  - sample ratio: `1.000000`
+  - coverage cells / ratio: `8550 / 0.060724`
+  - overlap cells / max overlap: `0 / 1`
+  - mean / max abs yaw delta: `93.412838 / 175.817131 deg`
+  - head `psm` / `rm`: `1 x 2 x 100 x 352` / `1 x 14 x 100 x 352`
+  - head score max / mean: `0.893363 / 0.003926`
+  - postprocess pred boxes: `30`
+- 观察：
+  - 所有 target cells 都能在 leader-local feature slice 中找到对应采样点，说明 coordinate path 是闭合的。
+  - 该方法消除了 nearest-resize diagnostic 中的 bbox overlap，但仍是 nearest-neighbor sampling。
+- 结论：
+  - Coordinate-aware model-level path 已从 diagnostic 推进到可运行 warp smoke。
+  - 下一步应做 GT/AP smoke，并比较 nearest-neighbor vs bilinear/affine warp；若 AP 不稳定，论文口径应收窄为 feature-level coverage / byte / feasibility proxy。
