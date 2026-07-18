@@ -88,6 +88,26 @@ conda run -n opencda python docs\doc_workspace\SGCP\artifacts\figures_20260719\p
 
 该表不是最终补实验的替代品。若论文必须强论证稳定窗口，需要重新导出更长或更动态的 CARLA 场景；当前表只能支持“短序列中稳定窗口不敏感，默认值按 10 Hz sensing cycle 的保守滞回设置”。
 
+## 2026-07-19 - Paper experiment section first sync
+
+### 目的
+
+推进 `target.md` P9，将 P1--P7 的最新图表和边界口径同步到 `C:\Workspace\icdcs-paper\SGCP\main.tex`。
+
+### 修改
+
+- 复制 Figure 1/2/3 的 PDF 到 `C:\Workspace\icdcs-paper\SGCP\fig\sgcp_*.pdf`。
+- `tab:mAP` 加入 Pure late prediction-sharing reference，并在 caption/正文中说明 raw-LiDAR payload 与 detection-box overhead 的区别。
+- 新增 `fig:protocol_breakdown`、`fig:fusion_contribution`、`fig:pareto`。
+- 新增 `tab:scheduler_comparison`，将 SGCP-compatible scheduler comparison 从 protocol-native system comparison 中分离出来。
+- 将旧 density-only sensitivity 表替换为合并后的 `tab:param_sensitivity`，主文只保留 `rho_th` 和 channel count，`N_max/T_min^stab` 作为弱结论边界说明。
+
+### 验证
+
+- `where.exe latexmk`、`where.exe pdflatex`、`where.exe bibtex` 均未找到，因此未能编译 PDF。
+- 轻量 LaTeX 结构检查通过：3 个 `table`、1 个 `table*`、2 个 `figure`、4 个 `figure*`、4 个 `tabular` 的 begin/end 全部配对。
+- label/ref 检查通过：32 个 label 均唯一，正文 refs 无缺失。
+
 ## 2026-07-18 - Results index baseline naming sync
 
 ### 目的

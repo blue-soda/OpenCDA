@@ -147,6 +147,23 @@ Figure 3 当前用途：支撑 two-layer fusion 分工。Clustered early-only �
 
 `N_max` 和 `T_min^stab` 已有 sweep，但当前 41 帧短序列结论较弱：`N_max` 证明容量约束真实生效但 AP 非单调；`T_min^stab=100--1000 ms` 完全不敏感。因此建议放附录或 rebuttal，正文只保留保守一句话。
 
+## Paper Experiment Section Update
+
+论文文件：
+
+`C:\Workspace\icdcs-paper\SGCP\main.tex`
+
+2026-07-19 已完成第一版实验章节同步：
+
+- 主表 `tab:mAP` 加入 Pure late prediction-sharing reference，报告 `0.82/0.76/0.37` 和 80B/box broadcast overhead `0.74 Mbps`。
+- 新增 `fig:protocol_breakdown`，引用 `fig/sgcp_protocol_breakdown.pdf`。
+- 新增 `fig:fusion_contribution`，引用 `fig/sgcp_fusion_contribution.pdf`。
+- 新增 `fig:pareto`，同时引用 `fig/sgcp_pareto_ap03.pdf` 和 `fig/sgcp_pareto_ap07.pdf`。
+- 新增 `tab:scheduler_comparison`，明确它是 SGCP-compatible scheduler comparison，不是 protocol-native system ranking。
+- 将旧 `tab:rho_sensitivity` 替换为 `tab:param_sensitivity`，主文只放 `rho_th` 与 channel count 两组强结论；`N_max/T_min^stab` 写成附录/边界说明。
+
+验证：本机未检测到 `latexmk` / `pdflatex` / `bibtex`，无法编译 PDF。轻量结构检查通过：table/figure/tabular begin-end 配对正常，新增 label/ref 无缺失。
+
 ## 消融实验
 
 | Variant | mAP@0.3 | mAP@0.5 | mAP@0.7 | Comm. Overhead (Mbps) | Reconfig. Count | Notes |
