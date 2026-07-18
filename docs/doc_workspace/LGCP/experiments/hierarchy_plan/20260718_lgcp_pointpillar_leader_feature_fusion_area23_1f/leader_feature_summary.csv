@@ -1,0 +1,2 @@
+rows,compressed_npz_bytes,uncompressed_bytes,mean_compressed_npz_bytes,mean_uncompressed_bytes
+23,936298,7189760,40708.608696,312598.260870

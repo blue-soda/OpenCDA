@@ -411,3 +411,85 @@ docs/doc_workspace/LGCP/experiments/hierarchy_plan/20260718_lgcp_pointpillar_fea
 - 这是第一个真实保存 neural feature crop 的 LGCP smoke，不再只是坐标映射。
 - 当前导出的 `scatter` slice 是 per-CAV/group tensor，`fused` slice 是 attentive backbone 已融合后的 leader tensor；二者都保存是为了比较后续 local fusion 的切入层。
 - 该 smoke 仍未实现 leader-local feature fusion 或 RSU global aggregation，因此不能作为最终 model-level AP 结果。
+
+## 2026-07-18 Leader-Local Feature Fusion Smoke
+
+运行目录：
+
+```text
+docs/doc_workspace/LGCP/experiments/hierarchy_plan/20260718_lgcp_pointpillar_leader_feature_fusion_area23_1f
+```
+
+命令：
+
+```powershell
+python -m opencda.tools.lgcp_pointpillar_leader_feature_fusion --slice-root docs\doc_workspace\LGCP\experiments\hierarchy_plan\20260718_lgcp_pointpillar_feature_slice_export_area23_1f --feature-slice-manifest docs\doc_workspace\LGCP\experiments\hierarchy_plan\20260718_lgcp_pointpillar_feature_slice_export_area23_1f\feature_slice_manifest.csv --output-dir docs\doc_workspace\LGCP\experiments\hierarchy_plan\20260718_lgcp_pointpillar_leader_feature_fusion_area23_1f --fusion-methods mean,max --dtype float16 --keep-model-fused
+```
+
+输出：
+
+| File | Meaning |
+| --- | --- |
+| `leader_feature_manifest.csv` | 每个 area leader-local feature slice 的 shape、source slice、fusion method 和 byte count |
+| `leader_feature_summary.csv` | 汇总 leader-local fused feature bytes |
+| `leader_slices/*.npz` | `leader_scatter_mean`、`leader_scatter_max` 和可选 `model_fused_reference` |
+
+结果：
+
+| Metric | Value |
+| --- | ---: |
+| Rows | 23 |
+| Fusion methods | `mean,max` |
+| Dtype | `float16` |
+| Leader scatter shape examples | `1 x 64 x 22-30 x 16-30` |
+| Model fused reference shape examples | `1 x 384 x 11-16 x 9-16` |
+| Uncompressed bytes | 7189760 |
+| Compressed `.npz` bytes | 936298 |
+| Mean compressed bytes / area | 40708.608696 |
+
+解释：
+
+- 这是第一个 leader-local neural feature fusion smoke：group 内 per-CAV `scatter` slices 已被融合为 leader-side feature slice。
+- 当前 `mean/max` 是机制占位的 deterministic fusion，不等价于训练好的 OpenCOOD attentive fusion；`model_fused_reference` 用于后续比较或作为 teacher/reference。
+- 下一步应实现 RSU global feature assembly，把多个 leader-local area slices 放回全局/RSU feature canvas，并定义跨 area overlap 的融合规则。
+
+## 2026-07-18 RSU Feature Assembly Smoke
+
+运行目录：
+
+```text
+docs/doc_workspace/LGCP/experiments/hierarchy_plan/20260718_lgcp_pointpillar_rsu_feature_assembly_area23_1f
+```
+
+命令：
+
+```powershell
+python -m opencda.tools.lgcp_pointpillar_rsu_feature_assembly --leader-root docs\doc_workspace\LGCP\experiments\hierarchy_plan\20260718_lgcp_pointpillar_leader_feature_fusion_area23_1f --leader-feature-manifest docs\doc_workspace\LGCP\experiments\hierarchy_plan\20260718_lgcp_pointpillar_leader_feature_fusion_area23_1f\leader_feature_manifest.csv --output-dir docs\doc_workspace\LGCP\experiments\hierarchy_plan\20260718_lgcp_pointpillar_rsu_feature_assembly_area23_1f --feature-key leader_scatter_mean --canvas-height 200 --canvas-width 704 --channels 64 --dtype float16
+```
+
+输出：
+
+| File | Meaning |
+| --- | --- |
+| `rsu_feature_frame_manifest.csv` | 每帧 RSU canvas 的输入 area 数、coverage、overlap 和 byte count |
+| `rsu_feature_summary.csv` | RSU assembly 汇总 |
+| `rsu_frames/*.npz` | `rsu_canvas` 与 `coverage_count` |
+
+结果：
+
+| Metric | Value |
+| --- | ---: |
+| Frames | 1 |
+| Input / used rows | 23 / 23 |
+| Canvas shape | `1 x 64 x 200 x 704` |
+| Covered cells | 4669 |
+| Coverage ratio | 0.033161 |
+| Overlap cells | 2835 |
+| Max overlap | 16 |
+| Compressed `.npz` bytes | 82974 |
+
+解释：
+
+- 这是第一个 RSU-side neural feature assembly smoke：多个 leader-local area slices 已能放回统一 PointPillar scatter canvas。
+- 当前 overlap 使用简单 average，不是训练后的 RSU aggregation module。
+- 仍未接入 detection head / postprocess，因此只能说明 model-level data path，不能报告最终 AP。

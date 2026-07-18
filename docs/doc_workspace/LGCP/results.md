@@ -1828,6 +1828,54 @@ Interpretation:
 - The saved `.npz` files contain cropped `scatter` and `fused` tensors plus bounds and group metadata.
 - This is still an interface result, not leader-local fusion or RSU global AP.
 
+## Leader-Local Feature Fusion Smoke
+
+2026-07-18 新增 `opencda/tools/lgcp_pointpillar_leader_feature_fusion.py`，读取 Top-23 首帧 feature-slice manifest，并将 group 内 per-CAV `scatter` slices 融合为 leader-local feature slices：
+
+```text
+docs/doc_workspace/LGCP/experiments/hierarchy_plan/20260718_lgcp_pointpillar_leader_feature_fusion_area23_1f
+```
+
+| Item | Value |
+| --- | ---: |
+| Rows | 23 |
+| Fusion methods | `mean,max` |
+| Dtype | `float16` |
+| Uncompressed bytes | 7189760 |
+| Compressed `.npz` bytes | 936298 |
+| Mean compressed bytes / area | 40708.608696 |
+
+Interpretation:
+
+- This moves the neural hierarchy path from feature crop/export to leader-local feature fusion.
+- The current `mean/max` scatter fusion is a deterministic smoke, not a trained attentive fusion replacement.
+- RSU global feature assembly and AP evaluation remain pending.
+
+## RSU Feature Assembly Smoke
+
+2026-07-18 新增 `opencda/tools/lgcp_pointpillar_rsu_feature_assembly.py`，将 Top-23 首帧 leader-local feature slices 装配回统一 PointPillar scatter canvas：
+
+```text
+docs/doc_workspace/LGCP/experiments/hierarchy_plan/20260718_lgcp_pointpillar_rsu_feature_assembly_area23_1f
+```
+
+| Item | Value |
+| --- | ---: |
+| Frames | 1 |
+| Input / used leader slices | 23 / 23 |
+| Canvas shape | `1 x 64 x 200 x 704` |
+| Covered cells | 4669 |
+| Coverage ratio | 0.033161 |
+| Overlap cells | 2835 |
+| Max overlap | 16 |
+| Compressed `.npz` bytes | 82974 |
+
+Interpretation:
+
+- The neural hierarchy path now covers feature crop, leader-local fusion, and RSU-side canvas assembly.
+- This is still not a trained RSU aggregation head and does not produce AP.
+- The next model-level step is connecting the assembled canvas to a detection head/postprocess or defining a paper-safe proxy around feature coverage/bytes.
+
 ## Box-Level Hierarchy Late-Fusion Smoke
 
 2026-07-18 新增 `opencda/tools/lgcp_hierarchy_late_fusion_eval.py`，并完成最小 model-calling smoke：

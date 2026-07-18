@@ -1,0 +1,8 @@
+slice_root: C:\Workspace\OpenCDA\docs\doc_workspace\LGCP\experiments\hierarchy_plan\20260718_lgcp_pointpillar_feature_slice_export_area23_1f
+feature_slice_manifest: C:\Workspace\OpenCDA\docs\doc_workspace\LGCP\experiments\hierarchy_plan\20260718_lgcp_pointpillar_feature_slice_export_area23_1f\feature_slice_manifest.csv
+fusion_methods:
+- mean
+- max
+dtype: float16
+keep_model_fused: true
+note: Leader-local feature fusion smoke; no RSU assembly yet.

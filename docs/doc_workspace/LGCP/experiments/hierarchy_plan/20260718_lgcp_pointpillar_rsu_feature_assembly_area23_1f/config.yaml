@@ -1,0 +1,8 @@
+leader_root: C:\Workspace\OpenCDA\docs\doc_workspace\LGCP\experiments\hierarchy_plan\20260718_lgcp_pointpillar_leader_feature_fusion_area23_1f
+leader_feature_manifest: C:\Workspace\OpenCDA\docs\doc_workspace\LGCP\experiments\hierarchy_plan\20260718_lgcp_pointpillar_leader_feature_fusion_area23_1f\leader_feature_manifest.csv
+feature_key: leader_scatter_mean
+canvas_height: 200
+canvas_width: 704
+channels: 64
+dtype: float16
+note: RSU feature assembly smoke; no detection head/AP yet.

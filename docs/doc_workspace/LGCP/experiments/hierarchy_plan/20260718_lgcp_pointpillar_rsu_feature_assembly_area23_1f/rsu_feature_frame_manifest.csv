@@ -1,0 +1,2 @@
+timestamp,rsu_frame_file,feature_key,dtype,canvas_shape,input_rows,used_rows,skipped_rows,coverage_cells,coverage_ratio,overlap_cells,max_overlap,uncompressed_bytes,compressed_npz_bytes
+000060,rsu_frames/000060_leader_scatter_mean.npz,leader_scatter_mean,float16,1x64x200x704,23,23,0,4669,0.033161,2835,16,18304000,82974

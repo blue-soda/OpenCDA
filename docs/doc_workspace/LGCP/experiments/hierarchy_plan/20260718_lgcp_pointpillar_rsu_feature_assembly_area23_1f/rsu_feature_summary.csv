@@ -1,0 +1,2 @@
+frames,compressed_npz_bytes,uncompressed_bytes,mean_coverage_ratio,mean_overlap_cells,max_overlap
+1,82974,18304000,0.033161,2835.000000,16
