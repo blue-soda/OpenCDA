@@ -2,6 +2,20 @@
 
 本文件按时间顺序追加实验记录。每条记录应尽量包含：目的、代码版本、配置、命令、日志路径、关键结果、异常现象和下一步。
 
+## 2026-07-18 - Main-table lower reference cleanup
+
+### 目的
+
+继续核对 `main.tex` 主表与当前可复现结果文档的一致性，重点检查旧 NC 行是否仍混入当前 PAPG 主表。
+
+### 结果
+
+- 发现 `main.tex` 主表中 `NC = 0.13/0.12/0.10` 仍来自旧论文表。`reproducibility_manifest.md` 已记录旧主表缺少原始日志、种子和代码版本，因此该行不应作为当前可复现主表行。
+- 当前可复现 lower reference 是 `Head-only = 0.26/0.22/0.09`：cluster heads 不接收点云 upload，只做本地检测并走同一 inter-cluster late-fusion path。
+- 已将 `main.tex` 的 baseline 定义和主表首行从 `NC` 改为 `Head-only`，并同步 `main_table_candidate.md` 的命名，避免把旧 NC 与 head-only ablation 混写。
+
+下一步：继续保持旧 NC 仅在 `reproducibility_manifest.md` 中作为历史不可复现主表记录，不进入当前论文主表。
+
 ## 2026-07-18 - Paper citation key sanity check
 
 ### 目的

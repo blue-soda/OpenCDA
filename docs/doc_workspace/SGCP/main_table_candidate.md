@@ -19,14 +19,14 @@
 
 | Method | Type | AP@0.3 | AP@0.5 | AP@0.7 | Payload | Mbps | NS3 Delivery | Notes |
 | --- | --- | ---: | ---: | ---: | ---: | ---: | --- | --- |
-| No cooperation / Head-only | Lower reference | 0.26 | 0.22 | 0.09 | 0 | 0.00 | N/A | Cluster heads detect alone, then late-fuse |
+| Head-only | Lower reference | 0.26 | 0.22 | 0.09 | 0 | 0.00 | N/A | Cluster heads detect alone with no point-cloud uploads, then late-fuse |
 | Full 20-CAV early fusion | Upper reference | 0.85 | 0.83 | 0.48 | 60,838,528 | 118.71 | Not constrained | Full point-cloud sharing AP upper bound |
 | FullPerception PCS (`pcs.py`), tuned | Built-in FullPerception | 0.59 | 0.53 | 0.22 | 12,959,840 | 25.29 | 11f dry-run: 55/55 scheduled | Current formal FullPerception baseline; payload-based `c(q)`, real `sc_num`, schedulable blind-spot units |
-| Global selective proxy | RSU/edge-assisted | 0.84 | 0.80 | 0.46 | 56,224,736 | 109.71 | Dry-run only | Former `fullperception_rsu`; virtual/global candidate pool, not FullPerception PCS |
+| Global selective proxy | RSU/edge-assisted | 0.84 | 0.80 | 0.46 | 56,224,736 | 109.71 | Dry-run only | Virtual/global candidate pool, not FullPerception PCS |
 | EdgeCooper-style proxy | RSU/edge-assisted | 0.75 | 0.70 | 0.32 | 56,134,048 | 109.53 | Not replayed | Virtual edge/global candidate pool with blind-spot complementarity; preliminary proxy, not strict MCF/coloring reproduction |
 | EdgeCooper-global network-aware proxy | RSU/edge-assisted | 0.81 | 0.77 | 0.42 | 38,223,408 | 74.58 | 73/110 complete | Global blind-spot assignment proxy with sender-load balancing and 35 m V2V feasibility gate; high offline AP, but incomplete NS3 deadline delivery |
 | EdgeCooper-global-HD proxy | RSU/edge-assisted | 0.81 | 0.78 | 0.42 | 33,519,040 | 65.40 | 110/110 complete | Adds half-duplex exclusion so cluster-head receivers are not selected as senders in the same slot; strongest edge-assisted proxy |
-| Cluster-local selective proxy | Fair V2V baseline | 0.80 | 0.76 | 0.41 | 38,920,592 | 75.94 | 110/110 complete | Former `fullperception_decentralized`; cluster-local V2V candidate pool, 3 members/head, 117 grid budget |
+| Cluster-local selective proxy | Fair V2V baseline | 0.80 | 0.76 | 0.41 | 38,920,592 | 75.94 | 110/110 complete | Cluster-local V2V candidate pool, 3 members/head, 117 grid budget |
 | Full-cluster intra-cluster upload | Upper reference | 0.82 | 0.79 | 0.42 | 44,850,528 | 87.51 | Not tested | Each cluster head receives all cluster-member point clouds |
 | Selective random, 3m/117g | Fair V2V baseline | 0.77 | 0.73 | 0.38 | 31,613,424 | 61.68 | Not replayed | Forced-budget random baseline; same coalition path, 3 members/head, 117 grid budget |
 | Selective communication-aware, 2m/87g | Fair V2V baseline | 0.78 | 0.75 | 0.40 | 30,222,256 | 58.97 | 11f diagnostic only | Strong low-budget selective baseline |
