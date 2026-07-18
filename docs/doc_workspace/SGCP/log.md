@@ -30,6 +30,24 @@
 - 继续推进 target 中的实验图表和论文结构，同时轮询 `/data2/gzc/sgcp_early_train/logs/train_gpu_waiter.log`。
 - 训练完成后回收 step checkpoint，先做本地 11 帧 smoke，再重跑 41 帧 SGCP-PAPG 与 Pure late controlled baseline，确保二者使用同一个 early checkpoint。
 
+## 2026-07-19 - Pareto source data first pass
+
+### 目的
+
+训练等待 GPU 空闲期间，继续推进 `target.md` P4：先把已复现的 41 帧结果整理为 AP-Mbps Pareto 曲线源数据。
+
+### 结果
+
+- 新增 `docs/doc_workspace/SGCP/artifacts/pareto_20260719/pareto_source.csv`。
+- 新增 `docs/doc_workspace/SGCP/artifacts/pareto_20260719/pareto_notes.md`。
+- 数据点覆盖 Head-only、Pure late detection-box broadcast/all-to-all、FullPerception-PCS、SGCP coverage/target-aware/PAPG 参数点、forced random、Density/Link-aware、EdgeCooper-HD、PACP-LiDAR、cluster-local/global selective proxy 和 Full20Early upper reference。
+
+### 当前解释
+
+- PAPG 在 `62.54 Mbps` 达到 `0.81/0.78/0.39`，相比 forced random 近似同 payload 提升 AP，相比 density/link-aware 少约 15% raw-LiDAR payload 并提升 AP@0.3/AP@0.5。
+- EdgeCooper-HD / PACP-LiDAR proxy 在 AP@0.7 更强，应作为 edge/global 或 proxy boundary，而不是 V2V-only SGCP 的直接失败。
+- Pure late prediction sharing payload 很低，必须作为 prediction-sharing reference 单独解释，不能再写成 0 Mbps 同类 baseline。
+
 ## 2026-07-18 - Results index baseline naming sync
 
 ### 目的

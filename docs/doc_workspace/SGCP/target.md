@@ -120,6 +120,8 @@
 
 目的：避免单点预算争议，展示通信-精度前沿。
 
+- [x] 已建立第一版 Pareto 源数据：`docs/doc_workspace/SGCP/artifacts/pareto_20260719/pareto_source.csv`，汇总已复现 41 帧 protocol-native、SGCP-compatible、edge-assisted reference、Pure late box-overhead 和 full-sharing upper reference 点。
+
 必须绘制：
 
 - [ ] AP@0.3 vs Mbps：coverage / recall / large-scene utility。
