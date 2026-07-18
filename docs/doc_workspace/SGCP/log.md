@@ -2,6 +2,34 @@
 
 本文件按时间顺序追加实验记录。每条记录应尽量包含：目的、代码版本、配置、命令、日志路径、关键结果、异常现象和下一步。
 
+## 2026-07-19 - Remote early-fusion checkpoint fine-tune setup
+
+### 目的
+
+按用户要求将 SGCP 最大风险项转为可执行训练任务：提升 `pointpillar_early_fusion` checkpoint，使 SGCP 和 Pure late controlled baseline 都使用同一个 raw point-cloud-to-box checkpoint。
+
+### 远程约束
+
+- SSH：`mindspore-187`
+- 远程工作目录：`/data2/gzc/sgcp_early_train/`
+- conda 环境：`opencood-gzc`
+- 远程代码：`/data2/gzc/code/OpenCOOD`
+
+### 执行结果
+
+- 已上传当前 early checkpoint：`/data2/gzc/sgcp_early_train/checkpoints/latest.pth`。
+- 已建立远程训练配置：`/data2/gzc/sgcp_early_train/configs/pointpillar_early_ckpt_compat_onecav.yaml`。
+- 远程默认 OPV2V train/val 数据不完整；先用 `/data2/gzc/dataset/opv2v/test/2021_08_24_20_49_54/216` 建立 one-CAV symlink split，`find -L` 可见 train/val 各 124 个 `.pcd`。
+- 第一次 smoke 使用远程默认 early yaml 失败：checkpoint head 为 384 channel，远程默认模型 head 为 256 channel。
+- 改用 checkpoint 配套 config 后，checkpoint 已在远程 OpenCOOD 中加载成功：`0 missing keys, 0 unexpected keys`。
+- 当前训练阻塞不是代码或 checkpoint，而是 GPU 资源：8 张 RTX 3090 均被 `VLLM::Worker` 占用约 22.2GB，PointPillar smoke 在卷积处报 cuDNN 无可用算法。
+- 已启动后台 watcher：`/data2/gzc/sgcp_early_train/runs/start_train_when_gpu_free.sh`，PID `1532887`，日志 `/data2/gzc/sgcp_early_train/logs/train_gpu_waiter.log`。任一 GPU 显存低于 6000 MiB 后会自动使用 `opencood-gzc`、batch size 1、`--max_steps 200`、`--save_step_freq 50` 启动 fine-tune。
+
+### 下一步
+
+- 继续推进 target 中的实验图表和论文结构，同时轮询 `/data2/gzc/sgcp_early_train/logs/train_gpu_waiter.log`。
+- 训练完成后回收 step checkpoint，先做本地 11 帧 smoke，再重跑 41 帧 SGCP-PAPG 与 Pure late controlled baseline，确保二者使用同一个 early checkpoint。
+
 ## 2026-07-18 - Results index baseline naming sync
 
 ### 目的
@@ -5709,7 +5737,7 @@ conda run -n opencda python -m opencda.tools.sgcp_satisfaction_summary --satisfa
 ### 代码与文档
 
 - 新增 `opencda.tools.sgcp_aggregate_ap_manifest`。
-- 新增 `aggregate_ap_protocol.md`，明确 aggregate AP 是 OpenCOOD pooled evaluator AP，不是 per-CAV AP 平均。
+- 曾短暂新增 `aggregate_ap_protocol.md` 记录 aggregate AP 口径；按用户后续要求该独立文档已删除，口径改为直接维护在 `target.md` / `status.md` / `results.md` 中。
 - 更新 `target.md`、`status.md`、`results.md` 和 `readme.md`。
 
 ### 验证命令
