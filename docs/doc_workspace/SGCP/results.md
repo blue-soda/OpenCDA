@@ -664,21 +664,6 @@ Dry-run NS3 plan:
 
 结论：PACP priority idea 可以迁移到点云通信场景，但 raw LiDAR grid payload 显著高于原 RGB feature/image-compression setting。高预算版本 AP@0.7 强，但 Mbps 高于 PAPG 与 EdgeCooper-HD；低预算版本接近公平通信量时 AP 低于 PAPG。因此它可作为近年 V2V priority-aware proxy baseline，不宜作为“严格 PACP”或 SGCP 主线替代。
 
-## Network-level satisfaction first metric
-
-工具：`opencda.tools.sgcp_satisfaction_summary`。定义见 `satisfaction_metric.md`。该指标按 receiver-frame 统计 full-reference-detectable GT recovery，并用阈值 `tau` 计算 satisfaction rate。
-
-41 帧已有 object diagnostics first sanity：
-
-| Method | Mean Recovery | P10 Recovery | Satisfaction@0.85 | Satisfaction@0.90 | Payload bytes |
-| --- | ---: | ---: | ---: | ---: | ---: |
-| Full reference | 1.000 | 1.000 | 1.000 | 1.000 | 0 |
-| Spatial-diverse 10ch | 0.877 | 0.807 | 0.707 | 0.366 | 29,405,296 |
-| Target-aware PG | 0.885 | 0.825 | 0.756 | 0.415 | 31,069,968 |
-| PAPG | 0.924 | 0.855 | 0.927 | 0.756 | 32,049,872 |
-
-解释：`tau=0.70` 对当前强方法过宽，所有方法均为 1.000；`tau=0.85` 具有较好区分度。PAPG 的 p10 recovery 达到 0.855，说明它不是只提升均值，而是改善 receiver-frame 尾部覆盖稳定性。这一结果适合作 Figure 2 satisfaction / coverage distribution 的 first evidence。最终 protocol-native table 仍需为 FullPerception-PCS、EdgeCooperV2V+、pure late fusion 和最终 SGCP 统一生成 object diagnostics。
-
 ## 离线 SGCP 回放稳定性与耗时
 
 命令：

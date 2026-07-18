@@ -1,12 +1,12 @@
 # SGCP 任务清单
 
-更新时间：2026-07-18
+更新时间：2026-07-19
 
-最终目标：完成 SGCP 论文审稿意见响应与实验重构，使所有图表有效、可解释、保护论文叙事，并能证明 SGCP 在大规模 V2V 协同感知中以合理通信量获得更好的 network-level 感知效果。
+最终目标：完成 SGCP 论文审稿意见响应与实验重构，使所有图表有效、可解释、保护论文叙事，并能证明 SGCP 在大规模 V2V 协同感知中以合理通信量获得更好的 aggregate AP。
 
 ## 当前原则
 
-- 主指标不再只依赖 ego AP；主文优先使用 network-level AP、mean satisfaction rate / coverage satisfaction、Mbps、必要的 delivery sanity。
+- 主指标统一为 aggregate AP@0.3 / AP@0.5 / AP@0.7 和 Mbps。Aggregate AP 指把所有 evaluated receiver-frame samples 的预测框和 GT 框累计进同一个 evaluator 后统一计算 AP，不是 per-CAV AP 的简单平均；ego-only AP 只作为附录 sanity。
 - SGCP 的叙事是大规模多 CAV 协议：分簇降低点云通信复杂度，簇内 early fusion 支撑 AP@0.7，簇间 late fusion 支撑覆盖率和 AP@0.3，PAPG/PPS 在通信受限时选择关键 sender/grid。
 - FullPerception 与 EdgeCooperV2V+ 在本文复现中只允许 RSU/edge 做调度，不允许使用 RSU 点云；它们属于 V2V data-sharing baseline。
 - `SGCP-compatible scheduler comparison` 只能说明“在同一 clustered two-layer fusion scaffold 中哪个调度器更好”，不能混写成完整系统比较。
@@ -25,8 +25,8 @@
 ## P0：实验协议重构与主图表落地
 
 - [ ] 建立统一评估脚本/清单，保证所有图表使用同一数据集、CAV 数、OpenCOOD checkpoint、IoU 阈值、Mbps 换算、帧范围和随机种子记录。
-- [ ] 明确 network-level AP 的统计口径：优先按所有 receiver / cluster head / active CAV-frame 汇总，而不是只报告 ego AP；若保留 ego AP，只作为附录 sanity。
-- [x] 定义并实现/确认 satisfaction rate：已新增 `opencda.tools.sgcp_satisfaction_summary` 和 `satisfaction_metric.md`。第一版定义为 receiver-frame 的 full-reference-detectable GT recovery；`tau=0.85` 在已有 41 帧结果中具有区分度，PAPG mean recovery 0.924、satisfaction@0.85 0.927，高于 spatial-diverse / target-aware PG。
+- [ ] 明确并固化 aggregate AP 统计口径：所有 protocol-native、fusion ablation、scheduler comparison 和 Pareto 图均使用 pooled evaluator AP；每个结果必须记录 evaluated samples 数、receiver policy、是否 inter-cluster late fusion，以及是否为 ego-only sanity。
+- [x] 删除 satisfaction rate 作为主文指标：不再新增或使用 `satisfaction_metric.md` / `sgcp_satisfaction_summary`，后续图表只报告 aggregate AP、Mbps 和必要的辅助统计。
 - [ ] 所有实验在结果进入论文前必须生成 artifact：命令、stdout/log 路径、trace CSV、summary CSV、图表源数据和 git commit。
 - [ ] 如果当前 41 帧场景无法支撑某张关键图表，重新导出更合适的 CARLA 场景；注意 CARLA 进程至多一个，数据路径仍遵循 `docs/doc_workspace/environment.md`。
 
@@ -46,13 +46,13 @@
 指标：
 
 - [ ] Network AP@0.3 / AP@0.5 / AP@0.7。
-- [ ] Mean satisfaction rate / coverage satisfaction。
+- [ ] Evaluated sample count and receiver-frame scope。
 - [ ] Mbps / payload bytes。
 - [ ] 必要时补 delivery sanity 一句话，不做单独 NS3 表格。
 
 验收标准：
 
-- [ ] 表格必须清晰解释 SGCP 的完整系统优势，尤其是大场景 coverage / satisfaction。
+- [ ] 表格必须清晰解释 SGCP 的完整系统优势，尤其是 aggregate AP@0.3 的大场景覆盖收益和 AP@0.7 的局部精度收益。
 - [ ] 若 SGCP 只靠 late fusion 在 AP@0.3 大幅领先，需要在正文明确这是系统协议优势，不把它写成单纯 scheduler 优势。
 - [ ] 若 FullPerception-PCS 或 EdgeCooperV2V+ 复现结果异常低，先核查算法、参数和场景，不直接拿弱结果进主表。
 
@@ -76,8 +76,8 @@
 验收标准：
 
 - [ ] AP@0.7 的提升应能解释为点云 early fusion / 高质量局部融合贡献。
-- [ ] AP@0.3 / satisfaction 的提升应能解释为 late fusion / 多区域覆盖贡献。
-- [ ] Full SGCP 必须在通信量远低于 one-cluster/full-sharing 设置时保持有竞争力的 AP 和 satisfaction。
+- [ ] AP@0.3 的提升应能解释为 late fusion / 多区域覆盖贡献。
+- [ ] Full SGCP 必须在通信量远低于 one-cluster/full-sharing 设置时保持有竞争力的 aggregate AP。
 - [ ] 若该表不能证明分簇或两层融合有效，优先修改算法、场景或评估口径，再进入论文。
 
 ## P3：Table 3 - SGCP-Compatible Scheduler Comparison
@@ -105,11 +105,11 @@
 - [ ] Network AP@0.3 / AP@0.5 / AP@0.7。
 - [ ] Mbps / payload bytes。
 - [ ] Avg selected CAVs、avg selected grids、avg fused CAVs。
-- [ ] Satisfaction rate。
+- [ ] Evaluated sample count、receiver policy、是否 inter-cluster late fusion。
 
 验收标准：
 
-- [ ] 该表必须显示 PAPG 在同一 scaffold 中具有可解释的 AP-Mbps 优势，至少在 AP@0.3/AP@0.5 或 satisfaction/Mbps 上形成优势。
+- [ ] 该表必须显示 PAPG 在同一 scaffold 中具有可解释的 AP-Mbps 优势，至少在 AP@0.3/AP@0.5 或 AP@0.7/Mbps 的某个叙事维度上形成优势。
 - [ ] 若 EdgeCooper-inspired 或 PACP-style 高预算超过 SGCP，必须通过 Pareto 曲线和信息条件说明边界，或继续改造 SGCP 调度。
 
 ## P4：Figure 1 - AP-Mbps Pareto Curve
@@ -131,23 +131,23 @@
 
 验收标准：
 
-- [ ] SGCP 应在中低通信区间形成清晰 Pareto 优势，或至少在同等 Mbps 下获得更高 satisfaction / AP@0.3。
+- [ ] SGCP 应在中低通信区间形成清晰 Pareto 优势，或至少在同等 Mbps 下获得更高 aggregate AP@0.3 / AP@0.5。
 - [ ] 若 SGCP 不在 Pareto frontier 上，优先分析瓶颈并修改算法；必要时选择更能体现大规模分簇优势的场景。
 
-## P5：Figure 2 - Satisfaction / Coverage Distribution
+## P5：Figure 2 - Aggregate AP Protocol/Fusion Breakdown
 
-目的：对齐 EdgeCooper/FullPerception 等 network-level 论文指标，避免只看 ego AP。
+目的：用 aggregate AP 展示 protocol-native、two-layer fusion 和 scheduler contribution 的关系，避免额外引入 satisfaction 指标。
 
 必须包含：
 
-- [ ] Per-CAV-frame satisfaction CDF 或分布图。
-- [ ] Mean satisfaction vs Mbps 或方法柱状图。
+- [ ] Aggregate AP@0.3 / AP@0.5 / AP@0.7 grouped bar 或折线图。
 - [ ] 至少比较 Head-only、Pure late、FullPerception-PCS、EdgeCooperV2V+、SGCP。
+- [ ] 明确每个方法的 evaluated samples 数、receiver policy 和 fusion scaffold。
 
 验收标准：
 
-- [ ] 图中必须能说明 SGCP 不只是少数 ego 帧 AP 高，而是 road-level / CAV-level coverage 更稳定。
-- [ ] 若 satisfaction 定义不能区分方法，重新定义 coverage/recovery 阈值或使用 per-region satisfaction。
+- [ ] 图中必须能说明 SGCP 的 aggregate AP 优势不是 ego-only 偶然结果，而来自多 receiver-frame / 多 cluster 的 pooled evaluation。
+- [ ] 若该图无法区分方法，优先检查 protocol-native baseline 是否正确、late fusion 是否一致、场景是否足够大，而不是新增自定义指标。
 
 ## P6：Figure 3 - Fusion Contribution by IoU Threshold
 
@@ -196,7 +196,7 @@
 
 ## P9：论文 LaTeX 修改
 
-- [ ] 阅读并参考 EdgeCooper 写作方式，特别是 satisfaction rate、network-level evaluation、V2V+ / edge scheduling 的叙事边界。
+- [ ] 阅读并参考 EdgeCooper 写作方式，特别是 network-level evaluation、V2V+ / edge scheduling 的叙事边界；不额外引入 satisfaction rate，统一使用 aggregate AP。
 - [ ] 修改 `C:\Workspace\icdcs-paper\SGCP\main.tex` 的实验章节结构，使其按以下顺序组织：protocol-native comparison、fusion scaffold ablation、Pareto curve、scheduler-compatible comparison、parameter sensitivity。
 - [ ] 重写 baseline 说明，明确 FullPerception-PCS、EdgeCooperV2V+、PACP-style LiDAR proxy、SGCP-compatible scheduler comparison 的信息条件和公平性边界。
 - [ ] 修改图表 caption：每个图表必须说明回答的问题、统一资源设置、是否 protocol-native、是否 SGCP-compatible。

@@ -5695,3 +5695,7 @@ conda run -n opencda python -m opencda.tools.sgcp_satisfaction_summary --satisfa
 ### 结论
 
 `tau=0.70` 对当前强方法过宽，无法区分；`tau=0.85` 与 `mean recovery` 可以支撑 Figure 2 / satisfaction distribution。PAPG 的 p10 recovery 达到 0.855，说明其优势体现在 receiver-frame 尾部覆盖稳定性，而不仅是 aggregate AP。下一步需要为 FullPerception-PCS、EdgeCooperV2V+、pure late fusion 和最终 SGCP protocol-native rows 统一生成 object diagnostics。
+
+### 2026-07-19 correction
+
+用户明确要求主文只使用 aggregate AP，不额外引入 satisfaction metric。上述工具与文档随后已删除，`target.md` 已改为 aggregate AP + Mbps 口径。保留本日志仅作为一次已废弃探索记录，不作为后续实验目标或论文指标。
