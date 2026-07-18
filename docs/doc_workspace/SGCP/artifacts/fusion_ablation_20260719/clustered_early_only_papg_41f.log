@@ -1,0 +1,2639 @@
+﻿conda.exe : C:\Users\sakakibara\miniconda3\envs\opencda\lib\site-packages\torch\nn\functional.py:1806: UserWarning: nn.
+functional.sigmoid is deprecated. Use torch.sigmoid instead.
+At C:\Users\sakakibara\miniconda3\shell\condabin\Conda.psm1:194 char:17
++ ...             & $Env:CONDA_EXE $Env:_CE_M $Env:_CE_CONDA $Command @Othe ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (C:\Users\sakaki...igmoid instead.:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+  warnings.warn("nn.functional.sigmoid is deprecated. Use torch.sigmoid instead.")
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+resuming by loading epoch 10000
+frame=1/41 receiver_sample=1/6 scenario=2026_07_15_01_26_56 timestamp=000060 cavs=[4, 12]
+sgcp_constrained receiver=4 policy=all-cluster-heads sources=[4, 12] clusters=6 ra=perception_aware_potential_game comm_bytes=78256 selected_grids={12: 61}
+fusion_method=early pred_boxes=11 gt_boxes=29
+pred_scores_shape=(11,)
+frame=1/41 receiver_sample=2/6 scenario=2026_07_15_01_26_56 timestamp=000060 cavs=[11, 10, 2]
+sgcp_constrained receiver=11 policy=all-cluster-heads sources=[11, 10, 2] clusters=6 ra=perception_aware_potential_game comm_bytes=157056 selected_grids={10: 57, 2: 55}
+fusion_method=early pred_boxes=20 gt_boxes=51
+pred_scores_shape=(20,)
+frame=1/41 receiver_sample=3/6 scenario=2026_07_15_01_26_56 timestamp=000060 cavs=[13, 14, 9]
+sgcp_constrained receiver=13 policy=all-cluster-heads sources=[13, 14, 9] clusters=6 ra=perception_aware_potential_game comm_bytes=158432 selected_grids={14: 53, 9: 50}
+fusion_method=early pred_boxes=15 gt_boxes=31
+pred_scores_shape=(15,)
+frame=1/41 receiver_sample=4/6 scenario=2026_07_15_01_26_56 timestamp=000060 cavs=[15, 6]
+sgcp_constrained receiver=15 policy=all-cluster-heads sources=[15, 6] clusters=6 ra=perception_aware_potential_game comm_bytes=72896 selected_grids={6: 57}
+fusion_method=early pred_boxes=12 gt_boxes=17
+pred_scores_shape=(12,)
+frame=1/41 receiver_sample=5/6 scenario=2026_07_15_01_26_56 timestamp=000060 cavs=[16, 20, 7]
+sgcp_constrained receiver=16 policy=all-cluster-heads sources=[16, 20, 7] clusters=6 ra=perception_aware_potential_game comm_bytes=157072 selected_grids={20: 54, 7: 56}
+fusion_method=early pred_boxes=17 gt_boxes=27
+pred_scores_shape=(17,)
+frame=1/41 receiver_sample=6/6 scenario=2026_07_15_01_26_56 timestamp=000060 cavs=[17, 3, 18]
+sgcp_constrained receiver=17 policy=all-cluster-heads sources=[17, 3, 18] clusters=6 ra=perception_aware_potential_game comm_bytes=159680 selected_grids={3: 60, 18: 61}
+fusion_method=early pred_boxes=19 gt_boxes=25
+pred_scores_shape=(19,)
+frame=2/41 receiver_sample=1/6 scenario=2026_07_15_01_26_56 timestamp=000062 cavs=[1, 2, 11]
+sgcp_constrained receiver=1 policy=all-cluster-heads sources=[1, 2, 11] clusters=6 ra=perception_aware_potential_game comm_bytes=156336 selected_grids={2: 53, 11: 56}
+fusion_method=early pred_boxes=24 gt_boxes=40
+pred_scores_shape=(24,)
+frame=2/41 receiver_sample=2/6 scenario=2026_07_15_01_26_56 timestamp=000062 cavs=[12, 4]
+sgcp_constrained receiver=12 policy=all-cluster-heads sources=[12, 4] clusters=6 ra=perception_aware_potential_game comm_bytes=77568 selected_grids={4: 60}
+fusion_method=early pred_boxes=15 gt_boxes=32
+pred_scores_shape=(15,)
+frame=2/41 receiver_sample=3/6 scenario=2026_07_15_01_26_56 timestamp=000062 cavs=[15, 6]
+sgcp_constrained receiver=15 policy=all-cluster-heads sources=[15, 6] clusters=6 ra=perception_aware_potential_game comm_bytes=72976 selected_grids={6: 57}
+fusion_method=early pred_boxes=14 gt_boxes=17
+pred_scores_shape=(14,)
+frame=2/41 receiver_sample=4/6 scenario=2026_07_15_01_26_56 timestamp=000062 cavs=[16, 20, 7]
+sgcp_constrained receiver=16 policy=all-cluster-heads sources=[16, 20, 7] clusters=6 ra=perception_aware_potential_game comm_bytes=157024 selected_grids={20: 54, 7: 57}
+fusion_method=early pred_boxes=16 gt_boxes=27
+pred_scores_shape=(16,)
+frame=2/41 receiver_sample=5/6 scenario=2026_07_15_01_26_56 timestamp=000062 cavs=[17, 3, 14]
+sgcp_constrained receiver=17 policy=all-cluster-heads sources=[17, 3, 14] clusters=6 ra=perception_aware_potential_game comm_bytes=160288 selected_grids={3: 61, 14: 54}
+fusion_method=early pred_boxes=15 gt_boxes=19
+pred_scores_shape=(15,)
+frame=2/41 receiver_sample=6/6 scenario=2026_07_15_01_26_56 timestamp=000062 cavs=[19, 10, 13]
+sgcp_constrained receiver=19 policy=all-cluster-heads sources=[19, 10, 13] clusters=6 ra=perception_aware_potential_game comm_bytes=155968 selected_grids={10: 56, 13: 55}
+fusion_method=early pred_boxes=15 gt_boxes=38
+pred_scores_shape=(15,)
+frame=3/41 receiver_sample=1/6 scenario=2026_07_15_01_26_56 timestamp=000064 cavs=[1, 2, 11]
+sgcp_constrained receiver=1 policy=all-cluster-heads sources=[1, 2, 11] clusters=6 ra=perception_aware_potential_game comm_bytes=156640 selected_grids={2: 55, 11: 57}
+fusion_method=early pred_boxes=21 gt_boxes=40
+pred_scores_shape=(21,)
+frame=3/41 receiver_sample=2/6 scenario=2026_07_15_01_26_56 timestamp=000064 cavs=[12, 4]
+sgcp_constrained receiver=12 policy=all-cluster-heads sources=[12, 4] clusters=6 ra=perception_aware_potential_game comm_bytes=77952 selected_grids={4: 60}
+fusion_method=early pred_boxes=11 gt_boxes=32
+pred_scores_shape=(11,)
+frame=3/41 receiver_sample=3/6 scenario=2026_07_15_01_26_56 timestamp=000064 cavs=[15, 6]
+sgcp_constrained receiver=15 policy=all-cluster-heads sources=[15, 6] clusters=6 ra=perception_aware_potential_game comm_bytes=73520 selected_grids={6: 59}
+fusion_method=early pred_boxes=15 gt_boxes=17
+pred_scores_shape=(15,)
+frame=3/41 receiver_sample=4/6 scenario=2026_07_15_01_26_56 timestamp=000064 cavs=[16, 20, 7]
+sgcp_constrained receiver=16 policy=all-cluster-heads sources=[16, 20, 7] clusters=6 ra=perception_aware_potential_game comm_bytes=157104 selected_grids={20: 53, 7: 58}
+fusion_method=early pred_boxes=16 gt_boxes=27
+pred_scores_shape=(16,)
+frame=3/41 receiver_sample=5/6 scenario=2026_07_15_01_26_56 timestamp=000064 cavs=[17, 3, 14]
+sgcp_constrained receiver=17 policy=all-cluster-heads sources=[17, 3, 14] clusters=6 ra=perception_aware_potential_game comm_bytes=160576 selected_grids={3: 61, 14: 55}
+fusion_method=early pred_boxes=15 gt_boxes=19
+pred_scores_shape=(15,)
+frame=3/41 receiver_sample=6/6 scenario=2026_07_15_01_26_56 timestamp=000064 cavs=[19, 10, 13]
+sgcp_constrained receiver=19 policy=all-cluster-heads sources=[19, 10, 13] clusters=6 ra=perception_aware_potential_game comm_bytes=155872 selected_grids={10: 57, 13: 55}
+fusion_method=early pred_boxes=12 gt_boxes=37
+pred_scores_shape=(12,)
+frame=4/41 receiver_sample=1/6 scenario=2026_07_15_01_26_56 timestamp=000066 cavs=[1, 2, 11]
+sgcp_constrained receiver=1 policy=all-cluster-heads sources=[1, 2, 11] clusters=6 ra=perception_aware_potential_game comm_bytes=156656 selected_grids={2: 56, 11: 58}
+fusion_method=early pred_boxes=21 gt_boxes=41
+pred_scores_shape=(21,)
+frame=4/41 receiver_sample=2/6 scenario=2026_07_15_01_26_56 timestamp=000066 cavs=[12, 4, 7]
+sgcp_constrained receiver=12 policy=all-cluster-heads sources=[12, 4, 7] clusters=6 ra=perception_aware_potential_game comm_bytes=156288 selected_grids={4: 61, 7: 59}
+fusion_method=early pred_boxes=18 gt_boxes=36
+pred_scores_shape=(18,)
+frame=4/41 receiver_sample=3/6 scenario=2026_07_15_01_26_56 timestamp=000066 cavs=[15, 6]
+sgcp_constrained receiver=15 policy=all-cluster-heads sources=[15, 6] clusters=6 ra=perception_aware_potential_game comm_bytes=73440 selected_grids={6: 58}
+fusion_method=early pred_boxes=15 gt_boxes=17
+pred_scores_shape=(15,)
+frame=4/41 receiver_sample=4/6 scenario=2026_07_15_01_26_56 timestamp=000066 cavs=[16, 20]
+sgcp_constrained receiver=16 policy=all-cluster-heads sources=[16, 20] clusters=6 ra=perception_aware_potential_game comm_bytes=78544 selected_grids={20: 53}
+fusion_method=early pred_boxes=13 gt_boxes=24
+pred_scores_shape=(13,)
+frame=4/41 receiver_sample=5/6 scenario=2026_07_15_01_26_56 timestamp=000066 cavs=[17, 3, 14]
+sgcp_constrained receiver=17 policy=all-cluster-heads sources=[17, 3, 14] clusters=6 ra=perception_aware_potential_game comm_bytes=160384 selected_grids={3: 64, 14: 57}
+fusion_method=early pred_boxes=13 gt_boxes=19
+pred_scores_shape=(13,)
+frame=4/41 receiver_sample=6/6 scenario=2026_07_15_01_26_56 timestamp=000066 cavs=[19, 10, 13]
+sgcp_constrained receiver=19 policy=all-cluster-heads sources=[19, 10, 13] clusters=6 ra=perception_aware_potential_game comm_bytes=155840 selected_grids={10: 56, 13: 55}
+fusion_method=early pred_boxes=16 gt_boxes=37
+pred_scores_shape=(16,)
+frame=5/41 receiver_sample=1/6 scenario=2026_07_15_01_26_56 timestamp=000068 cavs=[1, 2, 11]
+sgcp_constrained receiver=1 policy=all-cluster-heads sources=[1, 2, 11] clusters=6 ra=perception_aware_potential_game comm_bytes=156496 selected_grids={2: 57, 11: 58}Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+
+fusion_method=early pred_boxes=21 gt_boxes=42
+pred_scores_shape=(21,)
+frame=5/41 receiver_sample=2/6 scenario=2026_07_15_01_26_56 timestamp=000068 cavs=[4, 12, 9]
+sgcp_constrained receiver=4 policy=all-cluster-heads sources=[4, 12, 9] clusters=6 ra=perception_aware_potential_game comm_bytes=155840 selected_grids={12: 57, 9: 52}
+fusion_method=early pred_boxes=8 gt_boxes=37
+pred_scores_shape=(8,)
+frame=5/41 receiver_sample=3/6 scenario=2026_07_15_01_26_56 timestamp=000068 cavs=[13, 14, 10]
+sgcp_constrained receiver=13 policy=all-cluster-heads sources=[13, 14, 10] clusters=6 ra=perception_aware_potential_game comm_bytes=159392 selected_grids={14: 58, 10: 58}
+fusion_method=early pred_boxes=15 gt_boxes=34
+pred_scores_shape=(15,)
+frame=5/41 receiver_sample=4/6 scenario=2026_07_15_01_26_56 timestamp=000068 cavs=[15, 6]
+sgcp_constrained receiver=15 policy=all-cluster-heads sources=[15, 6] clusters=6 ra=perception_aware_potential_game comm_bytes=73584 selected_grids={6: 60}
+fusion_method=early pred_boxes=15 gt_boxes=16
+pred_scores_shape=(15,)
+frame=5/41 receiver_sample=5/6 scenario=2026_07_15_01_26_56 timestamp=000068 cavs=[16, 20, 7]
+sgcp_constrained receiver=16 policy=all-cluster-heads sources=[16, 20, 7] clusters=6 ra=perception_aware_potential_game comm_bytes=156960 selected_grids={20: 52, 7: 58}
+fusion_method=early pred_boxes=18 gt_boxes=26
+pred_scores_shape=(18,)
+frame=5/41 receiver_sample=6/6 scenario=2026_07_15_01_26_56 timestamp=000068 cavs=[17, 3]
+sgcp_constrained receiver=17 policy=all-cluster-heads sources=[17, 3] clusters=6 ra=perception_aware_potential_game comm_bytes=79792 selected_grids={3: 63}
+fusion_method=early pred_boxes=13 gt_boxes=19
+pred_scores_shape=(13,)
+frame=6/41 receiver_sample=1/6 scenario=2026_07_15_01_26_56 timestamp=000070 cavs=[1, 12, 4]
+sgcp_constrained receiver=1 policy=all-cluster-heads sources=[1, 12, 4] clusters=6 ra=perception_aware_potential_game comm_bytes=155824 selected_grids={12: 59, 4: 58}
+fusion_method=early pred_boxes=17 gt_boxes=37
+pred_scores_shape=(17,)
+frame=6/41 receiver_sample=2/6 scenario=2026_07_15_01_26_56 timestamp=000070 cavs=[11, 2, 9]
+sgcp_constrained receiver=11 policy=all-cluster-heads sources=[11, 2, 9] clusters=6 ra=perception_aware_potential_game comm_bytes=155824 selected_grids={2: 57, 9: 52}
+fusion_method=early pred_boxes=18 gt_boxes=50
+pred_scores_shape=(18,)
+frame=6/41 receiver_sample=3/6 scenario=2026_07_15_01_26_56 timestamp=000070 cavs=[13, 14, 10]
+sgcp_constrained receiver=13 policy=all-cluster-heads sources=[13, 14, 10] clusters=6 ra=perception_aware_potential_game comm_bytes=159680 selected_grids={14: 56, 10: 56}
+fusion_method=early pred_boxes=13 gt_boxes=33
+pred_scores_shape=(13,)
+frame=6/41 receiver_sample=4/6 scenario=2026_07_15_01_26_56 timestamp=000070 cavs=[15, 6]
+sgcp_constrained receiver=15 policy=all-cluster-heads sources=[15, 6] clusters=6 ra=perception_aware_potential_game comm_bytes=73728 selected_grids={6: 60}
+fusion_method=early pred_boxes=14 gt_boxes=16
+pred_scores_shape=(14,)
+frame=6/41 receiver_sample=5/6 scenario=2026_07_15_01_26_56 timestamp=000070 cavs=[16, 20, 7]
+sgcp_constrained receiver=16 policy=all-cluster-heads sources=[16, 20, 7] clusters=6 ra=perception_aware_potential_game comm_bytes=157088 selected_grids={20: 52, 7: 59}
+fusion_method=early pred_boxes=18 gt_boxes=27
+pred_scores_shape=(18,)
+frame=6/41 receiver_sample=6/6 scenario=2026_07_15_01_26_56 timestamp=000070 cavs=[17, 3]
+sgcp_constrained receiver=17 policy=all-cluster-heads sources=[17, 3] clusters=6 ra=perception_aware_potential_game comm_bytes=79248 selected_grids={3: 61}
+fusion_method=early pred_boxes=14 gt_boxes=19
+pred_scores_shape=(14,)
+frame=7/41 receiver_sample=1/6 scenario=2026_07_15_01_26_56 timestamp=000072 cavs=[1, 2, 11]
+sgcp_constrained receiver=1 policy=all-cluster-heads sources=[1, 2, 11] clusters=6 ra=perception_aware_potential_game comm_bytes=156352 selected_grids={2: 57, 11: 57}
+fusion_method=early pred_boxes=19 gt_boxes=41
+pred_scores_shape=(19,)
+frame=7/41 receiver_sample=2/6 scenario=2026_07_15_01_26_56 timestamp=000072 cavs=[4, 12, 9]
+sgcp_constrained receiver=4 policy=all-cluster-heads sources=[4, 12, 9] clusters=6 ra=perception_aware_potential_game comm_bytes=155984 selected_grids={12: 58, 9: 52}
+fusion_method=early pred_boxes=11 gt_boxes=37
+pred_scores_shape=(11,)
+frame=7/41 receiver_sample=3/6 scenario=2026_07_15_01_26_56 timestamp=000072 cavs=[13, 14, 10]
+sgcp_constrained receiver=13 policy=all-cluster-heads sources=[13, 14, 10] clusters=6 ra=perception_aware_potential_game comm_bytes=159584 selected_grids={14: 61, 10: 57}
+fusion_method=early pred_boxes=13 gt_boxes=33
+pred_scores_shape=(13,)
+frame=7/41 receiver_sample=4/6 scenario=2026_07_15_01_26_56 timestamp=000072 cavs=[15, 6]
+sgcp_constrained receiver=15 policy=all-cluster-heads sources=[15, 6] clusters=6 ra=perception_aware_potential_game comm_bytes=73584 selected_grids={6: 56}
+fusion_method=early pred_boxes=13 gt_boxes=18
+pred_scores_shape=(13,)
+frame=7/41 receiver_sample=5/6 scenario=2026_07_15_01_26_56 timestamp=000072 cavs=[16, 20, 7]
+sgcp_constrained receiver=16 policy=all-cluster-heads sources=[16, 20, 7] clusters=6 ra=perception_aware_potential_game comm_bytes=157056 selected_grids={20: 52, 7: 61}
+fusion_method=early pred_boxes=17 gt_boxes=27
+pred_scores_shape=(17,)
+frame=7/41 receiver_sample=6/6 scenario=2026_07_15_01_26_56 timestamp=000072 cavs=[17, 3]
+sgcp_constrained receiver=17 policy=all-cluster-heads sources=[17, 3] clusters=6 ra=perception_aware_potential_game comm_bytes=79216 selected_grids={3: 63}
+fusion_method=early pred_boxes=13 gt_boxes=19
+pred_scores_shape=(13,)
+frame=8/41 receiver_sample=1/6 scenario=2026_07_15_01_26_56 timestamp=000074 cavs=[1, 2, 11]
+sgcp_constrained receiver=1 policy=all-cluster-heads sources=[1, 2, 11] clusters=6 ra=perception_aware_potential_game comm_bytes=156448 selected_grids={2: 54, 11: 57}
+fusion_method=early pred_boxes=20 gt_boxes=39
+pred_scores_shape=(20,)
+frame=8/41 receiver_sample=2/6 scenario=2026_07_15_01_26_56 timestamp=000074 cavs=[12, 4, 7]
+sgcp_constrained receiver=12 policy=all-cluster-heads sources=[12, 4, 7] clusters=6 ra=perception_aware_potential_game comm_bytes=156416 selected_grids={4: 60, 7: 63}
+fusion_method=early pred_boxes=19 gt_boxes=39
+pred_scores_shape=(19,)
+frame=8/41 receiver_sample=3/6 scenario=2026_07_15_01_26_56 timestamp=000074 cavs=[13, 14, 10]
+sgcp_constrained receiver=13 policy=all-cluster-heads sources=[13, 14, 10] clusters=6 ra=perception_aware_potential_game comm_bytes=159440 selected_grids={14: 61, 10: 58}
+fusion_method=early pred_boxes=13 gt_boxes=33
+pred_scores_shape=(13,)
+frame=8/41 receiver_sample=4/6 scenario=2026_07_15_01_26_56 timestamp=000074 cavs=[15, 6]
+sgcp_constrained receiver=15 policy=all-cluster-heads sources=[15, 6] clusters=6 ra=perception_aware_potential_game comm_bytes=73584 selected_grids={6: 55}
+fusion_method=early pred_boxes=14 gt_boxes=18
+pred_scores_shape=(14,)
+frame=8/41 receiver_sample=5/6 scenario=2026_07_15_01_26_56 timestamp=000074 cavs=[17, 3]
+sgcp_constrained receiver=17 policy=all-cluster-heads sources=[17, 3] clusters=6 ra=perception_aware_potential_game comm_bytes=79408 selected_grids={3: 61}
+fusion_method=early pred_boxes=13 gt_boxes=19
+pred_scores_shape=(13,)
+frame=8/41 receiver_sample=6/6 scenario=2026_07_15_01_26_56 timestamp=000074 cavs=[20, 16, 9]
+sgcp_constrained receiver=20 policy=all-cluster-heads sources=[20, 16, 9] clusters=6 ra=perception_aware_potential_game comm_bytes=155664 selected_grids={16: 54, 9: 52}
+fusion_method=early pred_boxes=20 gt_boxes=36
+pred_scores_shape=(20,)
+frame=9/41 receiver_sample=1/6 scenario=2026_07_15_01_26_56 timestamp=000076 cavs=[1, 2, 11]
+sgcp_constrained receiver=1 policy=all-cluster-heads sources=[1, 2, 11] clusters=6 ra=perception_aware_potential_game comm_bytes=156448 selected_grids={2: 54, 11: 57}
+fusion_method=early pred_boxes=19 gt_boxes=41
+pred_scores_shape=(19,)
+frame=9/41 receiver_sample=2/6 scenario=2026_07_15_01_26_56 timestamp=000076 cavs=[4, 12, 9]
+sgcp_constrained receiver=4 policy=all-cluster-heads sources=[4, 12, 9] clusters=6 ra=perception_aware_potential_game comm_bytes=156192 selected_grids={12: 56, 9: 53}Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+
+fusion_method=early pred_boxes=10 gt_boxes=37
+pred_scores_shape=(10,)
+frame=9/41 receiver_sample=3/6 scenario=2026_07_15_01_26_56 timestamp=000076 cavs=[13, 14, 10]
+sgcp_constrained receiver=13 policy=all-cluster-heads sources=[13, 14, 10] clusters=6 ra=perception_aware_potential_game comm_bytes=159440 selected_grids={14: 61, 10: 59}
+fusion_method=early pred_boxes=14 gt_boxes=32
+pred_scores_shape=(14,)
+frame=9/41 receiver_sample=4/6 scenario=2026_07_15_01_26_56 timestamp=000076 cavs=[15, 6]
+sgcp_constrained receiver=15 policy=all-cluster-heads sources=[15, 6] clusters=6 ra=perception_aware_potential_game comm_bytes=73984 selected_grids={6: 57}
+fusion_method=early pred_boxes=13 gt_boxes=18
+pred_scores_shape=(13,)
+frame=9/41 receiver_sample=5/6 scenario=2026_07_15_01_26_56 timestamp=000076 cavs=[16, 20, 7]
+sgcp_constrained receiver=16 policy=all-cluster-heads sources=[16, 20, 7] clusters=6 ra=perception_aware_potential_game comm_bytes=156976 selected_grids={20: 51, 7: 60}
+fusion_method=early pred_boxes=18 gt_boxes=28
+pred_scores_shape=(18,)
+frame=9/41 receiver_sample=6/6 scenario=2026_07_15_01_26_56 timestamp=000076 cavs=[17, 3]
+sgcp_constrained receiver=17 policy=all-cluster-heads sources=[17, 3] clusters=6 ra=perception_aware_potential_game comm_bytes=78960 selected_grids={3: 65}
+fusion_method=early pred_boxes=13 gt_boxes=20
+pred_scores_shape=(13,)
+frame=10/41 receiver_sample=1/6 scenario=2026_07_15_01_26_56 timestamp=000078 cavs=[1, 2, 11]
+sgcp_constrained receiver=1 policy=all-cluster-heads sources=[1, 2, 11] clusters=6 ra=perception_aware_potential_game comm_bytes=156128 selected_grids={2: 53, 11: 57}
+fusion_method=early pred_boxes=21 gt_boxes=40
+pred_scores_shape=(21,)
+frame=10/41 receiver_sample=2/6 scenario=2026_07_15_01_26_56 timestamp=000078 cavs=[4, 12, 9]
+sgcp_constrained receiver=4 policy=all-cluster-heads sources=[4, 12, 9] clusters=6 ra=perception_aware_potential_game comm_bytes=156032 selected_grids={12: 56, 9: 53}
+fusion_method=early pred_boxes=11 gt_boxes=39
+pred_scores_shape=(11,)
+frame=10/41 receiver_sample=3/6 scenario=2026_07_15_01_26_56 timestamp=000078 cavs=[13, 14, 10]
+sgcp_constrained receiver=13 policy=all-cluster-heads sources=[13, 14, 10] clusters=6 ra=perception_aware_potential_game comm_bytes=159200 selected_grids={14: 63, 10: 55}
+fusion_method=early pred_boxes=14 gt_boxes=33
+pred_scores_shape=(14,)
+frame=10/41 receiver_sample=4/6 scenario=2026_07_15_01_26_56 timestamp=000078 cavs=[15, 6]
+sgcp_constrained receiver=15 policy=all-cluster-heads sources=[15, 6] clusters=6 ra=perception_aware_potential_game comm_bytes=74160 selected_grids={6: 55}
+fusion_method=early pred_boxes=15 gt_boxes=19
+pred_scores_shape=(15,)
+frame=10/41 receiver_sample=5/6 scenario=2026_07_15_01_26_56 timestamp=000078 cavs=[16, 20, 7]
+sgcp_constrained receiver=16 policy=all-cluster-heads sources=[16, 20, 7] clusters=6 ra=perception_aware_potential_game comm_bytes=157232 selected_grids={20: 51, 7: 61}
+fusion_method=early pred_boxes=21 gt_boxes=27
+pred_scores_shape=(21,)
+frame=10/41 receiver_sample=6/6 scenario=2026_07_15_01_26_56 timestamp=000078 cavs=[17, 3]
+sgcp_constrained receiver=17 policy=all-cluster-heads sources=[17, 3] clusters=6 ra=perception_aware_potential_game comm_bytes=78912 selected_grids={3: 64}
+fusion_method=early pred_boxes=15 gt_boxes=20
+pred_scores_shape=(15,)
+frame=11/41 receiver_sample=1/6 scenario=2026_07_15_01_26_56 timestamp=000080 cavs=[1, 2, 11]
+sgcp_constrained receiver=1 policy=all-cluster-heads sources=[1, 2, 11] clusters=6 ra=perception_aware_potential_game comm_bytes=156112 selected_grids={2: 53, 11: 57}
+fusion_method=early pred_boxes=21 gt_boxes=42
+pred_scores_shape=(21,)
+frame=11/41 receiver_sample=2/6 scenario=2026_07_15_01_26_56 timestamp=000080 cavs=[4, 12, 9]
+sgcp_constrained receiver=4 policy=all-cluster-heads sources=[4, 12, 9] clusters=6 ra=perception_aware_potential_game comm_bytes=156208 selected_grids={12: 59, 9: 53}
+fusion_method=early pred_boxes=10 gt_boxes=40
+pred_scores_shape=(10,)
+frame=11/41 receiver_sample=3/6 scenario=2026_07_15_01_26_56 timestamp=000080 cavs=[13, 14, 10]
+sgcp_constrained receiver=13 policy=all-cluster-heads sources=[13, 14, 10] clusters=6 ra=perception_aware_potential_game comm_bytes=159280 selected_grids={14: 64, 10: 58}
+fusion_method=early pred_boxes=15 gt_boxes=34
+pred_scores_shape=(15,)
+frame=11/41 receiver_sample=4/6 scenario=2026_07_15_01_26_56 timestamp=000080 cavs=[15, 6]
+sgcp_constrained receiver=15 policy=all-cluster-heads sources=[15, 6] clusters=6 ra=perception_aware_potential_game comm_bytes=74192 selected_grids={6: 57}
+fusion_method=early pred_boxes=14 gt_boxes=18
+pred_scores_shape=(14,)
+frame=11/41 receiver_sample=5/6 scenario=2026_07_15_01_26_56 timestamp=000080 cavs=[16, 20, 7]
+sgcp_constrained receiver=16 policy=all-cluster-heads sources=[16, 20, 7] clusters=6 ra=perception_aware_potential_game comm_bytes=157216 selected_grids={20: 51, 7: 62}
+fusion_method=early pred_boxes=20 gt_boxes=27
+pred_scores_shape=(20,)
+frame=11/41 receiver_sample=6/6 scenario=2026_07_15_01_26_56 timestamp=000080 cavs=[17, 3]
+sgcp_constrained receiver=17 policy=all-cluster-heads sources=[17, 3] clusters=6 ra=perception_aware_potential_game comm_bytes=78992 selected_grids={3: 65}
+fusion_method=early pred_boxes=14 gt_boxes=20
+pred_scores_shape=(14,)
+frame=12/41 receiver_sample=1/6 scenario=2026_07_15_01_26_56 timestamp=000082 cavs=[1, 2, 11]
+sgcp_constrained receiver=1 policy=all-cluster-heads sources=[1, 2, 11] clusters=6 ra=perception_aware_potential_game comm_bytes=156352 selected_grids={2: 55, 11: 57}
+fusion_method=early pred_boxes=20 gt_boxes=41
+pred_scores_shape=(20,)
+frame=12/41 receiver_sample=2/6 scenario=2026_07_15_01_26_56 timestamp=000082 cavs=[12, 4, 7]
+sgcp_constrained receiver=12 policy=all-cluster-heads sources=[12, 4, 7] clusters=6 ra=perception_aware_potential_game comm_bytes=156048 selected_grids={4: 58, 7: 61}
+fusion_method=early pred_boxes=16 gt_boxes=38
+pred_scores_shape=(16,)
+frame=12/41 receiver_sample=3/6 scenario=2026_07_15_01_26_56 timestamp=000082 cavs=[13, 14, 10]
+sgcp_constrained receiver=13 policy=all-cluster-heads sources=[13, 14, 10] clusters=6 ra=perception_aware_potential_game comm_bytes=158688 selected_grids={14: 61, 10: 59}
+fusion_method=early pred_boxes=15 gt_boxes=34
+pred_scores_shape=(15,)
+frame=12/41 receiver_sample=4/6 scenario=2026_07_15_01_26_56 timestamp=000082 cavs=[15, 6]
+sgcp_constrained receiver=15 policy=all-cluster-heads sources=[15, 6] clusters=6 ra=perception_aware_potential_game comm_bytes=74448 selected_grids={6: 57}
+fusion_method=early pred_boxes=13 gt_boxes=18
+pred_scores_shape=(13,)
+frame=12/41 receiver_sample=5/6 scenario=2026_07_15_01_26_56 timestamp=000082 cavs=[17, 3, 16]
+sgcp_constrained receiver=17 policy=all-cluster-heads sources=[17, 3, 16] clusters=6 ra=perception_aware_potential_game comm_bytes=157696 selected_grids={3: 61, 16: 59}
+fusion_method=early pred_boxes=25 gt_boxes=29
+pred_scores_shape=(25,)
+frame=12/41 receiver_sample=6/6 scenario=2026_07_15_01_26_56 timestamp=000082 cavs=[20, 9]
+sgcp_constrained receiver=20 policy=all-cluster-heads sources=[20, 9] clusters=6 ra=perception_aware_potential_game comm_bytes=77744 selected_grids={9: 53}
+fusion_method=early pred_boxes=14 gt_boxes=30
+pred_scores_shape=(14,)
+frame=13/41 receiver_sample=1/6 scenario=2026_07_15_01_26_56 timestamp=000084 cavs=[1, 2, 11]
+sgcp_constrained receiver=1 policy=all-cluster-heads sources=[1, 2, 11] clusters=6 ra=perception_aware_potential_game comm_bytes=156416 selected_grids={2: 56, 11: 57}
+fusion_method=early pred_boxes=19 gt_boxes=40
+pred_scores_shape=(19,)
+frame=13/41 receiver_sample=2/6 scenario=2026_07_15_01_26_56 timestamp=000084 cavs=[12, 4, 7]
+sgcp_constrained receiver=12 policy=all-cluster-heads sources=[12, 4, 7] clusters=6 ra=perception_aware_potential_game comm_bytes=156096 selected_grids={4: 58, 7: 63}
+fusion_method=early pred_boxes=17 gt_boxes=35
+pred_scores_shape=(17,)
+frame=13/41 receiver_sample=3/6 scenario=2026_07_15_01_26_56 timestamp=000084 cavs=[13, 14, 10]
+sgcp_constrained receiver=13 policy=all-cluster-heads sources=[13, 14, 10] clusters=6 ra=perception_aware_potential_game comm_bytes=158528 selected_grids={14: 59, 10: 55}Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+
+fusion_method=early pred_boxes=13 gt_boxes=35
+pred_scores_shape=(13,)
+frame=13/41 receiver_sample=4/6 scenario=2026_07_15_01_26_56 timestamp=000084 cavs=[15, 6]
+sgcp_constrained receiver=15 policy=all-cluster-heads sources=[15, 6] clusters=6 ra=perception_aware_potential_game comm_bytes=74720 selected_grids={6: 58}
+fusion_method=early pred_boxes=15 gt_boxes=18
+pred_scores_shape=(15,)
+frame=13/41 receiver_sample=5/6 scenario=2026_07_15_01_26_56 timestamp=000084 cavs=[17, 3, 16]
+sgcp_constrained receiver=17 policy=all-cluster-heads sources=[17, 3, 16] clusters=6 ra=perception_aware_potential_game comm_bytes=157456 selected_grids={3: 65, 16: 52}
+fusion_method=early pred_boxes=22 gt_boxes=29
+pred_scores_shape=(22,)
+frame=13/41 receiver_sample=6/6 scenario=2026_07_15_01_26_56 timestamp=000084 cavs=[20, 9]
+sgcp_constrained receiver=20 policy=all-cluster-heads sources=[20, 9] clusters=6 ra=perception_aware_potential_game comm_bytes=77728 selected_grids={9: 54}
+fusion_method=early pred_boxes=13 gt_boxes=30
+pred_scores_shape=(13,)
+frame=14/41 receiver_sample=1/6 scenario=2026_07_15_01_26_56 timestamp=000086 cavs=[1, 2, 11]
+sgcp_constrained receiver=1 policy=all-cluster-heads sources=[1, 2, 11] clusters=6 ra=perception_aware_potential_game comm_bytes=156368 selected_grids={2: 58, 11: 56}
+fusion_method=early pred_boxes=20 gt_boxes=42
+pred_scores_shape=(20,)
+frame=14/41 receiver_sample=2/6 scenario=2026_07_15_01_26_56 timestamp=000086 cavs=[12, 4, 7]
+sgcp_constrained receiver=12 policy=all-cluster-heads sources=[12, 4, 7] clusters=6 ra=perception_aware_potential_game comm_bytes=156352 selected_grids={4: 60, 7: 63}
+fusion_method=early pred_boxes=16 gt_boxes=36
+pred_scores_shape=(16,)
+frame=14/41 receiver_sample=3/6 scenario=2026_07_15_01_26_56 timestamp=000086 cavs=[13, 14, 10]
+sgcp_constrained receiver=13 policy=all-cluster-heads sources=[13, 14, 10] clusters=6 ra=perception_aware_potential_game comm_bytes=159056 selected_grids={14: 60, 10: 53}
+fusion_method=early pred_boxes=17 gt_boxes=34
+pred_scores_shape=(17,)
+frame=14/41 receiver_sample=4/6 scenario=2026_07_15_01_26_56 timestamp=000086 cavs=[15, 6]
+sgcp_constrained receiver=15 policy=all-cluster-heads sources=[15, 6] clusters=6 ra=perception_aware_potential_game comm_bytes=74816 selected_grids={6: 56}
+fusion_method=early pred_boxes=14 gt_boxes=19
+pred_scores_shape=(14,)
+frame=14/41 receiver_sample=5/6 scenario=2026_07_15_01_26_56 timestamp=000086 cavs=[17, 3, 16]
+sgcp_constrained receiver=17 policy=all-cluster-heads sources=[17, 3, 16] clusters=6 ra=perception_aware_potential_game comm_bytes=157696 selected_grids={3: 63, 16: 54}
+fusion_method=early pred_boxes=22 gt_boxes=28
+pred_scores_shape=(22,)
+frame=14/41 receiver_sample=6/6 scenario=2026_07_15_01_26_56 timestamp=000086 cavs=[20, 9]
+sgcp_constrained receiver=20 policy=all-cluster-heads sources=[20, 9] clusters=6 ra=perception_aware_potential_game comm_bytes=77728 selected_grids={9: 53}
+fusion_method=early pred_boxes=14 gt_boxes=30
+pred_scores_shape=(14,)
+frame=15/41 receiver_sample=1/6 scenario=2026_07_15_01_26_56 timestamp=000088 cavs=[1, 2, 11]
+sgcp_constrained receiver=1 policy=all-cluster-heads sources=[1, 2, 11] clusters=6 ra=perception_aware_potential_game comm_bytes=156384 selected_grids={2: 57, 11: 58}
+fusion_method=early pred_boxes=20 gt_boxes=42
+pred_scores_shape=(20,)
+frame=15/41 receiver_sample=2/6 scenario=2026_07_15_01_26_56 timestamp=000088 cavs=[12, 4, 7]
+sgcp_constrained receiver=12 policy=all-cluster-heads sources=[12, 4, 7] clusters=6 ra=perception_aware_potential_game comm_bytes=156368 selected_grids={4: 58, 7: 64}
+fusion_method=early pred_boxes=14 gt_boxes=35
+pred_scores_shape=(14,)
+frame=15/41 receiver_sample=3/6 scenario=2026_07_15_01_26_56 timestamp=000088 cavs=[13, 14, 10]
+sgcp_constrained receiver=13 policy=all-cluster-heads sources=[13, 14, 10] clusters=6 ra=perception_aware_potential_game comm_bytes=158832 selected_grids={14: 60, 10: 54}
+fusion_method=early pred_boxes=16 gt_boxes=35
+pred_scores_shape=(16,)
+frame=15/41 receiver_sample=4/6 scenario=2026_07_15_01_26_56 timestamp=000088 cavs=[15, 6]
+sgcp_constrained receiver=15 policy=all-cluster-heads sources=[15, 6] clusters=6 ra=perception_aware_potential_game comm_bytes=74288 selected_grids={6: 57}
+fusion_method=early pred_boxes=13 gt_boxes=19
+pred_scores_shape=(13,)
+frame=15/41 receiver_sample=5/6 scenario=2026_07_15_01_26_56 timestamp=000088 cavs=[17, 3, 16]
+sgcp_constrained receiver=17 policy=all-cluster-heads sources=[17, 3, 16] clusters=6 ra=perception_aware_potential_game comm_bytes=158096 selected_grids={3: 64, 16: 57}
+fusion_method=early pred_boxes=21 gt_boxes=29
+pred_scores_shape=(21,)
+frame=15/41 receiver_sample=6/6 scenario=2026_07_15_01_26_56 timestamp=000088 cavs=[20, 9]
+sgcp_constrained receiver=20 policy=all-cluster-heads sources=[20, 9] clusters=6 ra=perception_aware_potential_game comm_bytes=77696 selected_grids={9: 52}
+fusion_method=early pred_boxes=14 gt_boxes=31
+pred_scores_shape=(14,)
+frame=16/41 receiver_sample=1/6 scenario=2026_07_15_01_26_56 timestamp=000090 cavs=[1, 2, 11]
+sgcp_constrained receiver=1 policy=all-cluster-heads sources=[1, 2, 11] clusters=6 ra=perception_aware_potential_game comm_bytes=156352 selected_grids={2: 57, 11: 58}
+fusion_method=early pred_boxes=19 gt_boxes=42
+pred_scores_shape=(19,)
+frame=16/41 receiver_sample=2/6 scenario=2026_07_15_01_26_56 timestamp=000090 cavs=[12, 7, 4]
+sgcp_constrained receiver=12 policy=all-cluster-heads sources=[12, 7, 4] clusters=6 ra=perception_aware_potential_game comm_bytes=156336 selected_grids={7: 63, 4: 58}
+fusion_method=early pred_boxes=18 gt_boxes=36
+pred_scores_shape=(18,)
+frame=16/41 receiver_sample=3/6 scenario=2026_07_15_01_26_56 timestamp=000090 cavs=[13, 14, 10]
+sgcp_constrained receiver=13 policy=all-cluster-heads sources=[13, 14, 10] clusters=6 ra=perception_aware_potential_game comm_bytes=158240 selected_grids={14: 62, 10: 56}
+fusion_method=early pred_boxes=14 gt_boxes=36
+pred_scores_shape=(14,)
+frame=16/41 receiver_sample=4/6 scenario=2026_07_15_01_26_56 timestamp=000090 cavs=[15, 6]
+sgcp_constrained receiver=15 policy=all-cluster-heads sources=[15, 6] clusters=6 ra=perception_aware_potential_game comm_bytes=74448 selected_grids={6: 58}
+fusion_method=early pred_boxes=14 gt_boxes=19
+pred_scores_shape=(14,)
+frame=16/41 receiver_sample=5/6 scenario=2026_07_15_01_26_56 timestamp=000090 cavs=[17, 3, 16]
+sgcp_constrained receiver=17 policy=all-cluster-heads sources=[17, 3, 16] clusters=6 ra=perception_aware_potential_game comm_bytes=158256 selected_grids={3: 66, 16: 59}
+fusion_method=early pred_boxes=20 gt_boxes=28
+pred_scores_shape=(20,)
+frame=16/41 receiver_sample=6/6 scenario=2026_07_15_01_26_56 timestamp=000090 cavs=[20, 9]
+sgcp_constrained receiver=20 policy=all-cluster-heads sources=[20, 9] clusters=6 ra=perception_aware_potential_game comm_bytes=77680 selected_grids={9: 52}
+fusion_method=early pred_boxes=13 gt_boxes=31
+pred_scores_shape=(13,)
+frame=17/41 receiver_sample=1/6 scenario=2026_07_15_01_26_56 timestamp=000092 cavs=[1, 2, 11]
+sgcp_constrained receiver=1 policy=all-cluster-heads sources=[1, 2, 11] clusters=6 ra=perception_aware_potential_game comm_bytes=156288 selected_grids={2: 58, 11: 57}
+fusion_method=early pred_boxes=19 gt_boxes=41
+pred_scores_shape=(19,)
+frame=17/41 receiver_sample=2/6 scenario=2026_07_15_01_26_56 timestamp=000092 cavs=[12, 7, 4]
+sgcp_constrained receiver=12 policy=all-cluster-heads sources=[12, 7, 4] clusters=6 ra=perception_aware_potential_game comm_bytes=156320 selected_grids={7: 62, 4: 59}
+fusion_method=early pred_boxes=16 gt_boxes=35
+pred_scores_shape=(16,)
+frame=17/41 receiver_sample=3/6 scenario=2026_07_15_01_26_56 timestamp=000092 cavs=[13, 14, 10]
+sgcp_constrained receiver=13 policy=all-cluster-heads sources=[13, 14, 10] clusters=6 ra=perception_aware_potential_game comm_bytes=158272 selected_grids={14: 62, 10: 56}
+fusion_method=early pred_boxes=20 gt_boxes=35
+pred_scores_shape=(20,)
+frame=17/41 receiver_sample=4/6 scenario=2026_07_15_01_26_56 timestamp=000092 cavs=[15, 6]
+sgcp_constrained receiver=15 policy=all-cluster-heads sources=[15, 6] clusters=6 ra=perception_aware_potential_game comm_bytes=74640 selected_grids={6: 57}Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+
+fusion_method=early pred_boxes=18 gt_boxes=19
+pred_scores_shape=(18,)
+frame=17/41 receiver_sample=5/6 scenario=2026_07_15_01_26_56 timestamp=000092 cavs=[17, 3, 16]
+sgcp_constrained receiver=17 policy=all-cluster-heads sources=[17, 3, 16] clusters=6 ra=perception_aware_potential_game comm_bytes=158352 selected_grids={3: 66, 16: 60}
+fusion_method=early pred_boxes=22 gt_boxes=27
+pred_scores_shape=(22,)
+frame=17/41 receiver_sample=6/6 scenario=2026_07_15_01_26_56 timestamp=000092 cavs=[20, 9]
+sgcp_constrained receiver=20 policy=all-cluster-heads sources=[20, 9] clusters=6 ra=perception_aware_potential_game comm_bytes=77680 selected_grids={9: 52}
+fusion_method=early pred_boxes=14 gt_boxes=31
+pred_scores_shape=(14,)
+frame=18/41 receiver_sample=1/6 scenario=2026_07_15_01_26_56 timestamp=000094 cavs=[1, 2, 11]
+sgcp_constrained receiver=1 policy=all-cluster-heads sources=[1, 2, 11] clusters=6 ra=perception_aware_potential_game comm_bytes=156336 selected_grids={2: 57, 11: 57}
+fusion_method=early pred_boxes=18 gt_boxes=39
+pred_scores_shape=(18,)
+frame=18/41 receiver_sample=2/6 scenario=2026_07_15_01_26_56 timestamp=000094 cavs=[12, 4, 7]
+sgcp_constrained receiver=12 policy=all-cluster-heads sources=[12, 4, 7] clusters=6 ra=perception_aware_potential_game comm_bytes=156320 selected_grids={4: 59, 7: 61}
+fusion_method=early pred_boxes=14 gt_boxes=36
+pred_scores_shape=(14,)
+frame=18/41 receiver_sample=3/6 scenario=2026_07_15_01_26_56 timestamp=000094 cavs=[13, 14, 10]
+sgcp_constrained receiver=13 policy=all-cluster-heads sources=[13, 14, 10] clusters=6 ra=perception_aware_potential_game comm_bytes=158016 selected_grids={14: 62, 10: 56}
+fusion_method=early pred_boxes=15 gt_boxes=35
+pred_scores_shape=(15,)
+frame=18/41 receiver_sample=4/6 scenario=2026_07_15_01_26_56 timestamp=000094 cavs=[15, 6]
+sgcp_constrained receiver=15 policy=all-cluster-heads sources=[15, 6] clusters=6 ra=perception_aware_potential_game comm_bytes=74720 selected_grids={6: 59}
+fusion_method=early pred_boxes=14 gt_boxes=20
+pred_scores_shape=(14,)
+frame=18/41 receiver_sample=5/6 scenario=2026_07_15_01_26_56 timestamp=000094 cavs=[17, 3, 16]
+sgcp_constrained receiver=17 policy=all-cluster-heads sources=[17, 3, 16] clusters=6 ra=perception_aware_potential_game comm_bytes=158400 selected_grids={3: 68, 16: 57}
+fusion_method=early pred_boxes=21 gt_boxes=27
+pred_scores_shape=(21,)
+frame=18/41 receiver_sample=6/6 scenario=2026_07_15_01_26_56 timestamp=000094 cavs=[20, 9]
+sgcp_constrained receiver=20 policy=all-cluster-heads sources=[20, 9] clusters=6 ra=perception_aware_potential_game comm_bytes=77664 selected_grids={9: 52}
+fusion_method=early pred_boxes=14 gt_boxes=31
+pred_scores_shape=(14,)
+frame=19/41 receiver_sample=1/6 scenario=2026_07_15_01_26_56 timestamp=000096 cavs=[1, 2, 11]
+sgcp_constrained receiver=1 policy=all-cluster-heads sources=[1, 2, 11] clusters=6 ra=perception_aware_potential_game comm_bytes=156400 selected_grids={2: 57, 11: 57}
+fusion_method=early pred_boxes=18 gt_boxes=39
+pred_scores_shape=(18,)
+frame=19/41 receiver_sample=2/6 scenario=2026_07_15_01_26_56 timestamp=000096 cavs=[12, 4, 7]
+sgcp_constrained receiver=12 policy=all-cluster-heads sources=[12, 4, 7] clusters=6 ra=perception_aware_potential_game comm_bytes=156304 selected_grids={4: 59, 7: 62}
+fusion_method=early pred_boxes=16 gt_boxes=35
+pred_scores_shape=(16,)
+frame=19/41 receiver_sample=3/6 scenario=2026_07_15_01_26_56 timestamp=000096 cavs=[13, 14, 10]
+sgcp_constrained receiver=13 policy=all-cluster-heads sources=[13, 14, 10] clusters=6 ra=perception_aware_potential_game comm_bytes=157648 selected_grids={14: 63, 10: 55}
+fusion_method=early pred_boxes=16 gt_boxes=34
+pred_scores_shape=(16,)
+frame=19/41 receiver_sample=4/6 scenario=2026_07_15_01_26_56 timestamp=000096 cavs=[15, 6]
+sgcp_constrained receiver=15 policy=all-cluster-heads sources=[15, 6] clusters=6 ra=perception_aware_potential_game comm_bytes=74672 selected_grids={6: 59}
+fusion_method=early pred_boxes=15 gt_boxes=19
+pred_scores_shape=(15,)
+frame=19/41 receiver_sample=5/6 scenario=2026_07_15_01_26_56 timestamp=000096 cavs=[17, 3, 16]
+sgcp_constrained receiver=17 policy=all-cluster-heads sources=[17, 3, 16] clusters=6 ra=perception_aware_potential_game comm_bytes=158624 selected_grids={3: 66, 16: 58}
+fusion_method=early pred_boxes=21 gt_boxes=27
+pred_scores_shape=(21,)
+frame=19/41 receiver_sample=6/6 scenario=2026_07_15_01_26_56 timestamp=000096 cavs=[20, 9]
+sgcp_constrained receiver=20 policy=all-cluster-heads sources=[20, 9] clusters=6 ra=perception_aware_potential_game comm_bytes=77648 selected_grids={9: 52}
+fusion_method=early pred_boxes=13 gt_boxes=31
+pred_scores_shape=(13,)
+frame=20/41 receiver_sample=1/6 scenario=2026_07_15_01_26_56 timestamp=000098 cavs=[1, 2, 11]
+sgcp_constrained receiver=1 policy=all-cluster-heads sources=[1, 2, 11] clusters=6 ra=perception_aware_potential_game comm_bytes=156208 selected_grids={2: 56, 11: 57}
+fusion_method=early pred_boxes=18 gt_boxes=38
+pred_scores_shape=(18,)
+frame=20/41 receiver_sample=2/6 scenario=2026_07_15_01_26_56 timestamp=000098 cavs=[12, 7, 4]
+sgcp_constrained receiver=12 policy=all-cluster-heads sources=[12, 7, 4] clusters=6 ra=perception_aware_potential_game comm_bytes=156336 selected_grids={7: 62, 4: 59}
+fusion_method=early pred_boxes=17 gt_boxes=34
+pred_scores_shape=(17,)
+frame=20/41 receiver_sample=3/6 scenario=2026_07_15_01_26_56 timestamp=000098 cavs=[13, 14, 10]
+sgcp_constrained receiver=13 policy=all-cluster-heads sources=[13, 14, 10] clusters=6 ra=perception_aware_potential_game comm_bytes=156832 selected_grids={14: 58, 10: 55}
+fusion_method=early pred_boxes=16 gt_boxes=33
+pred_scores_shape=(16,)
+frame=20/41 receiver_sample=4/6 scenario=2026_07_15_01_26_56 timestamp=000098 cavs=[15, 6]
+sgcp_constrained receiver=15 policy=all-cluster-heads sources=[15, 6] clusters=6 ra=perception_aware_potential_game comm_bytes=74720 selected_grids={6: 60}
+fusion_method=early pred_boxes=15 gt_boxes=19
+pred_scores_shape=(15,)
+frame=20/41 receiver_sample=5/6 scenario=2026_07_15_01_26_56 timestamp=000098 cavs=[17, 3, 16]
+sgcp_constrained receiver=17 policy=all-cluster-heads sources=[17, 3, 16] clusters=6 ra=perception_aware_potential_game comm_bytes=158784 selected_grids={3: 67, 16: 61}
+fusion_method=early pred_boxes=19 gt_boxes=27
+pred_scores_shape=(19,)
+frame=20/41 receiver_sample=6/6 scenario=2026_07_15_01_26_56 timestamp=000098 cavs=[20, 9]
+sgcp_constrained receiver=20 policy=all-cluster-heads sources=[20, 9] clusters=6 ra=perception_aware_potential_game comm_bytes=77648 selected_grids={9: 52}
+fusion_method=early pred_boxes=13 gt_boxes=31
+pred_scores_shape=(13,)
+frame=21/41 receiver_sample=1/6 scenario=2026_07_15_01_26_56 timestamp=000100 cavs=[1, 2, 11]
+sgcp_constrained receiver=1 policy=all-cluster-heads sources=[1, 2, 11] clusters=6 ra=perception_aware_potential_game comm_bytes=156288 selected_grids={2: 55, 11: 57}
+fusion_method=early pred_boxes=18 gt_boxes=38
+pred_scores_shape=(18,)
+frame=21/41 receiver_sample=2/6 scenario=2026_07_15_01_26_56 timestamp=000100 cavs=[12, 7, 4]
+sgcp_constrained receiver=12 policy=all-cluster-heads sources=[12, 7, 4] clusters=6 ra=perception_aware_potential_game comm_bytes=156336 selected_grids={7: 62, 4: 59}
+fusion_method=early pred_boxes=16 gt_boxes=34
+pred_scores_shape=(16,)
+frame=21/41 receiver_sample=3/6 scenario=2026_07_15_01_26_56 timestamp=000100 cavs=[13, 14, 10]
+sgcp_constrained receiver=13 policy=all-cluster-heads sources=[13, 14, 10] clusters=6 ra=perception_aware_potential_game comm_bytes=156832 selected_grids={14: 57, 10: 54}
+fusion_method=early pred_boxes=17 gt_boxes=33
+pred_scores_shape=(17,)
+frame=21/41 receiver_sample=4/6 scenario=2026_07_15_01_26_56 timestamp=000100 cavs=[15, 6]
+sgcp_constrained receiver=15 policy=all-cluster-heads sources=[15, 6] clusters=6 ra=perception_aware_potential_game comm_bytes=74768 selected_grids={6: 58}
+fusion_method=early pred_boxes=13 gt_boxes=20
+pred_scores_shape=(13,)
+frame=21/41 receiver_sample=5/6 scenario=2026_07_15_01_26_56 timestamp=000100 cavs=[17, 3, 16]
+sgcp_constrained receiver=17 policy=all-cluster-heads sources=[17, 3, 16] clusters=6 ra=perception_aware_potential_game comm_bytes=158864 selected_grids={3: 66, 16: 58}Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+
+fusion_method=early pred_boxes=20 gt_boxes=27
+pred_scores_shape=(20,)
+frame=21/41 receiver_sample=6/6 scenario=2026_07_15_01_26_56 timestamp=000100 cavs=[20, 9]
+sgcp_constrained receiver=20 policy=all-cluster-heads sources=[20, 9] clusters=6 ra=perception_aware_potential_game comm_bytes=77616 selected_grids={9: 52}
+fusion_method=early pred_boxes=13 gt_boxes=29
+pred_scores_shape=(13,)
+frame=22/41 receiver_sample=1/6 scenario=2026_07_15_01_26_56 timestamp=000102 cavs=[1, 2, 11]
+sgcp_constrained receiver=1 policy=all-cluster-heads sources=[1, 2, 11] clusters=6 ra=perception_aware_potential_game comm_bytes=156112 selected_grids={2: 56, 11: 57}
+fusion_method=early pred_boxes=19 gt_boxes=38
+pred_scores_shape=(19,)
+frame=22/41 receiver_sample=2/6 scenario=2026_07_15_01_26_56 timestamp=000102 cavs=[12, 7, 4]
+sgcp_constrained receiver=12 policy=all-cluster-heads sources=[12, 7, 4] clusters=6 ra=perception_aware_potential_game comm_bytes=156320 selected_grids={7: 62, 4: 59}
+fusion_method=early pred_boxes=14 gt_boxes=34
+pred_scores_shape=(14,)
+frame=22/41 receiver_sample=3/6 scenario=2026_07_15_01_26_56 timestamp=000102 cavs=[13, 14, 10]
+sgcp_constrained receiver=13 policy=all-cluster-heads sources=[13, 14, 10] clusters=6 ra=perception_aware_potential_game comm_bytes=156080 selected_grids={14: 57, 10: 54}
+fusion_method=early pred_boxes=16 gt_boxes=33
+pred_scores_shape=(16,)
+frame=22/41 receiver_sample=4/6 scenario=2026_07_15_01_26_56 timestamp=000102 cavs=[15, 6]
+sgcp_constrained receiver=15 policy=all-cluster-heads sources=[15, 6] clusters=6 ra=perception_aware_potential_game comm_bytes=74896 selected_grids={6: 63}
+fusion_method=early pred_boxes=13 gt_boxes=22
+pred_scores_shape=(13,)
+frame=22/41 receiver_sample=5/6 scenario=2026_07_15_01_26_56 timestamp=000102 cavs=[17, 3, 16]
+sgcp_constrained receiver=17 policy=all-cluster-heads sources=[17, 3, 16] clusters=6 ra=perception_aware_potential_game comm_bytes=159648 selected_grids={3: 68, 16: 62}
+fusion_method=early pred_boxes=20 gt_boxes=26
+pred_scores_shape=(20,)
+frame=22/41 receiver_sample=6/6 scenario=2026_07_15_01_26_56 timestamp=000102 cavs=[20, 9]
+sgcp_constrained receiver=20 policy=all-cluster-heads sources=[20, 9] clusters=6 ra=perception_aware_potential_game comm_bytes=77616 selected_grids={9: 52}
+fusion_method=early pred_boxes=13 gt_boxes=29
+pred_scores_shape=(13,)
+frame=23/41 receiver_sample=1/6 scenario=2026_07_15_01_26_56 timestamp=000104 cavs=[1, 2, 11]
+sgcp_constrained receiver=1 policy=all-cluster-heads sources=[1, 2, 11] clusters=6 ra=perception_aware_potential_game comm_bytes=156096 selected_grids={2: 55, 11: 57}
+fusion_method=early pred_boxes=19 gt_boxes=38
+pred_scores_shape=(19,)
+frame=23/41 receiver_sample=2/6 scenario=2026_07_15_01_26_56 timestamp=000104 cavs=[12, 7, 4]
+sgcp_constrained receiver=12 policy=all-cluster-heads sources=[12, 7, 4] clusters=6 ra=perception_aware_potential_game comm_bytes=156320 selected_grids={7: 62, 4: 59}
+fusion_method=early pred_boxes=16 gt_boxes=34
+pred_scores_shape=(16,)
+frame=23/41 receiver_sample=3/6 scenario=2026_07_15_01_26_56 timestamp=000104 cavs=[13, 14, 10]
+sgcp_constrained receiver=13 policy=all-cluster-heads sources=[13, 14, 10] clusters=6 ra=perception_aware_potential_game comm_bytes=156320 selected_grids={14: 61, 10: 56}
+fusion_method=early pred_boxes=16 gt_boxes=33
+pred_scores_shape=(16,)
+frame=23/41 receiver_sample=4/6 scenario=2026_07_15_01_26_56 timestamp=000104 cavs=[15, 6]
+sgcp_constrained receiver=15 policy=all-cluster-heads sources=[15, 6] clusters=6 ra=perception_aware_potential_game comm_bytes=75216 selected_grids={6: 63}
+fusion_method=early pred_boxes=14 gt_boxes=23
+pred_scores_shape=(14,)
+frame=23/41 receiver_sample=5/6 scenario=2026_07_15_01_26_56 timestamp=000104 cavs=[17, 3, 16]
+sgcp_constrained receiver=17 policy=all-cluster-heads sources=[17, 3, 16] clusters=6 ra=perception_aware_potential_game comm_bytes=158992 selected_grids={3: 68, 16: 60}
+fusion_method=early pred_boxes=19 gt_boxes=25
+pred_scores_shape=(19,)
+frame=23/41 receiver_sample=6/6 scenario=2026_07_15_01_26_56 timestamp=000104 cavs=[20, 9]
+sgcp_constrained receiver=20 policy=all-cluster-heads sources=[20, 9] clusters=6 ra=perception_aware_potential_game comm_bytes=77616 selected_grids={9: 52}
+fusion_method=early pred_boxes=13 gt_boxes=29
+pred_scores_shape=(13,)
+frame=24/41 receiver_sample=1/6 scenario=2026_07_15_01_26_56 timestamp=000106 cavs=[1, 2, 11]
+sgcp_constrained receiver=1 policy=all-cluster-heads sources=[1, 2, 11] clusters=6 ra=perception_aware_potential_game comm_bytes=156224 selected_grids={2: 55, 11: 57}
+fusion_method=early pred_boxes=16 gt_boxes=38
+pred_scores_shape=(16,)
+frame=24/41 receiver_sample=2/6 scenario=2026_07_15_01_26_56 timestamp=000106 cavs=[12, 4, 7]
+sgcp_constrained receiver=12 policy=all-cluster-heads sources=[12, 4, 7] clusters=6 ra=perception_aware_potential_game comm_bytes=156352 selected_grids={4: 59, 7: 62}
+fusion_method=early pred_boxes=17 gt_boxes=33
+pred_scores_shape=(17,)
+frame=24/41 receiver_sample=3/6 scenario=2026_07_15_01_26_56 timestamp=000106 cavs=[13, 14, 10]
+sgcp_constrained receiver=13 policy=all-cluster-heads sources=[13, 14, 10] clusters=6 ra=perception_aware_potential_game comm_bytes=155920 selected_grids={14: 57, 10: 56}
+fusion_method=early pred_boxes=16 gt_boxes=33
+pred_scores_shape=(16,)
+frame=24/41 receiver_sample=4/6 scenario=2026_07_15_01_26_56 timestamp=000106 cavs=[15, 6]
+sgcp_constrained receiver=15 policy=all-cluster-heads sources=[15, 6] clusters=6 ra=perception_aware_potential_game comm_bytes=75328 selected_grids={6: 64}
+fusion_method=early pred_boxes=12 gt_boxes=23
+pred_scores_shape=(12,)
+frame=24/41 receiver_sample=5/6 scenario=2026_07_15_01_26_56 timestamp=000106 cavs=[17, 3, 16]
+sgcp_constrained receiver=17 policy=all-cluster-heads sources=[17, 3, 16] clusters=6 ra=perception_aware_potential_game comm_bytes=159184 selected_grids={3: 66, 16: 61}
+fusion_method=early pred_boxes=16 gt_boxes=25
+pred_scores_shape=(16,)
+frame=24/41 receiver_sample=6/6 scenario=2026_07_15_01_26_56 timestamp=000106 cavs=[20, 9]
+sgcp_constrained receiver=20 policy=all-cluster-heads sources=[20, 9] clusters=6 ra=perception_aware_potential_game comm_bytes=77632 selected_grids={9: 53}
+fusion_method=early pred_boxes=13 gt_boxes=29
+pred_scores_shape=(13,)
+frame=25/41 receiver_sample=1/6 scenario=2026_07_15_01_26_56 timestamp=000108 cavs=[1, 2, 11]
+sgcp_constrained receiver=1 policy=all-cluster-heads sources=[1, 2, 11] clusters=6 ra=perception_aware_potential_game comm_bytes=156320 selected_grids={2: 55, 11: 57}
+fusion_method=early pred_boxes=16 gt_boxes=39
+pred_scores_shape=(16,)
+frame=25/41 receiver_sample=2/6 scenario=2026_07_15_01_26_56 timestamp=000108 cavs=[12, 4, 7]
+sgcp_constrained receiver=12 policy=all-cluster-heads sources=[12, 4, 7] clusters=6 ra=perception_aware_potential_game comm_bytes=156304 selected_grids={4: 59, 7: 62}
+fusion_method=early pred_boxes=17 gt_boxes=33
+pred_scores_shape=(17,)
+frame=25/41 receiver_sample=3/6 scenario=2026_07_15_01_26_56 timestamp=000108 cavs=[13, 14, 10]
+sgcp_constrained receiver=13 policy=all-cluster-heads sources=[13, 14, 10] clusters=6 ra=perception_aware_potential_game comm_bytes=155712 selected_grids={14: 58, 10: 57}
+fusion_method=early pred_boxes=18 gt_boxes=33
+pred_scores_shape=(18,)
+frame=25/41 receiver_sample=4/6 scenario=2026_07_15_01_26_56 timestamp=000108 cavs=[15, 6]
+sgcp_constrained receiver=15 policy=all-cluster-heads sources=[15, 6] clusters=6 ra=perception_aware_potential_game comm_bytes=75408 selected_grids={6: 64}
+fusion_method=early pred_boxes=14 gt_boxes=24
+pred_scores_shape=(14,)
+frame=25/41 receiver_sample=5/6 scenario=2026_07_15_01_26_56 timestamp=000108 cavs=[17, 16, 3]
+sgcp_constrained receiver=17 policy=all-cluster-heads sources=[17, 16, 3] clusters=6 ra=perception_aware_potential_game comm_bytes=159392 selected_grids={16: 65, 3: 67}
+fusion_method=early pred_boxes=16 gt_boxes=25
+pred_scores_shape=(16,)
+frame=25/41 receiver_sample=6/6 scenario=2026_07_15_01_26_56 timestamp=000108 cavs=[20, 9]
+sgcp_constrained receiver=20 policy=all-cluster-heads sources=[20, 9] clusters=6 ra=perception_aware_potential_game comm_bytes=77648 selected_grids={9: 53}Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+
+fusion_method=early pred_boxes=14 gt_boxes=29
+pred_scores_shape=(14,)
+frame=26/41 receiver_sample=1/6 scenario=2026_07_15_01_26_56 timestamp=000110 cavs=[1, 2, 11]
+sgcp_constrained receiver=1 policy=all-cluster-heads sources=[1, 2, 11] clusters=6 ra=perception_aware_potential_game comm_bytes=156336 selected_grids={2: 55, 11: 57}
+fusion_method=early pred_boxes=19 gt_boxes=40
+pred_scores_shape=(19,)
+frame=26/41 receiver_sample=2/6 scenario=2026_07_15_01_26_56 timestamp=000110 cavs=[12, 7, 4]
+sgcp_constrained receiver=12 policy=all-cluster-heads sources=[12, 7, 4] clusters=6 ra=perception_aware_potential_game comm_bytes=156304 selected_grids={7: 61, 4: 59}
+fusion_method=early pred_boxes=16 gt_boxes=33
+pred_scores_shape=(16,)
+frame=26/41 receiver_sample=3/6 scenario=2026_07_15_01_26_56 timestamp=000110 cavs=[13, 14, 10]
+sgcp_constrained receiver=13 policy=all-cluster-heads sources=[13, 14, 10] clusters=6 ra=perception_aware_potential_game comm_bytes=156320 selected_grids={14: 62, 10: 57}
+fusion_method=early pred_boxes=14 gt_boxes=33
+pred_scores_shape=(14,)
+frame=26/41 receiver_sample=4/6 scenario=2026_07_15_01_26_56 timestamp=000110 cavs=[15, 6]
+sgcp_constrained receiver=15 policy=all-cluster-heads sources=[15, 6] clusters=6 ra=perception_aware_potential_game comm_bytes=75408 selected_grids={6: 62}
+fusion_method=early pred_boxes=15 gt_boxes=24
+pred_scores_shape=(15,)
+frame=26/41 receiver_sample=5/6 scenario=2026_07_15_01_26_56 timestamp=000110 cavs=[17, 3, 16]
+sgcp_constrained receiver=17 policy=all-cluster-heads sources=[17, 3, 16] clusters=6 ra=perception_aware_potential_game comm_bytes=159472 selected_grids={3: 66, 16: 62}
+fusion_method=early pred_boxes=18 gt_boxes=25
+pred_scores_shape=(18,)
+frame=26/41 receiver_sample=6/6 scenario=2026_07_15_01_26_56 timestamp=000110 cavs=[20, 9]
+sgcp_constrained receiver=20 policy=all-cluster-heads sources=[20, 9] clusters=6 ra=perception_aware_potential_game comm_bytes=77664 selected_grids={9: 53}
+fusion_method=early pred_boxes=13 gt_boxes=29
+pred_scores_shape=(13,)
+frame=27/41 receiver_sample=1/6 scenario=2026_07_15_01_26_56 timestamp=000112 cavs=[1, 2, 11]
+sgcp_constrained receiver=1 policy=all-cluster-heads sources=[1, 2, 11] clusters=6 ra=perception_aware_potential_game comm_bytes=156336 selected_grids={2: 55, 11: 56}
+fusion_method=early pred_boxes=19 gt_boxes=40
+pred_scores_shape=(19,)
+frame=27/41 receiver_sample=2/6 scenario=2026_07_15_01_26_56 timestamp=000112 cavs=[12, 7, 4]
+sgcp_constrained receiver=12 policy=all-cluster-heads sources=[12, 7, 4] clusters=6 ra=perception_aware_potential_game comm_bytes=156272 selected_grids={7: 61, 4: 59}
+fusion_method=early pred_boxes=17 gt_boxes=33
+pred_scores_shape=(17,)
+frame=27/41 receiver_sample=3/6 scenario=2026_07_15_01_26_56 timestamp=000112 cavs=[13, 14, 10]
+sgcp_constrained receiver=13 policy=all-cluster-heads sources=[13, 14, 10] clusters=6 ra=perception_aware_potential_game comm_bytes=155856 selected_grids={14: 61, 10: 56}
+fusion_method=early pred_boxes=14 gt_boxes=33
+pred_scores_shape=(14,)
+frame=27/41 receiver_sample=4/6 scenario=2026_07_15_01_26_56 timestamp=000112 cavs=[15, 6]
+sgcp_constrained receiver=15 policy=all-cluster-heads sources=[15, 6] clusters=6 ra=perception_aware_potential_game comm_bytes=74976 selected_grids={6: 62}
+fusion_method=early pred_boxes=13 gt_boxes=24
+pred_scores_shape=(13,)
+frame=27/41 receiver_sample=5/6 scenario=2026_07_15_01_26_56 timestamp=000112 cavs=[17, 16, 3]
+sgcp_constrained receiver=17 policy=all-cluster-heads sources=[17, 16, 3] clusters=6 ra=perception_aware_potential_game comm_bytes=159344 selected_grids={16: 60, 3: 65}
+fusion_method=early pred_boxes=16 gt_boxes=25
+pred_scores_shape=(16,)
+frame=27/41 receiver_sample=6/6 scenario=2026_07_15_01_26_56 timestamp=000112 cavs=[20, 9]
+sgcp_constrained receiver=20 policy=all-cluster-heads sources=[20, 9] clusters=6 ra=perception_aware_potential_game comm_bytes=77680 selected_grids={9: 53}
+fusion_method=early pred_boxes=13 gt_boxes=29
+pred_scores_shape=(13,)
+frame=28/41 receiver_sample=1/6 scenario=2026_07_15_01_26_56 timestamp=000114 cavs=[1, 2, 11]
+sgcp_constrained receiver=1 policy=all-cluster-heads sources=[1, 2, 11] clusters=6 ra=perception_aware_potential_game comm_bytes=156304 selected_grids={2: 55, 11: 56}
+fusion_method=early pred_boxes=19 gt_boxes=40
+pred_scores_shape=(19,)
+frame=28/41 receiver_sample=2/6 scenario=2026_07_15_01_26_56 timestamp=000114 cavs=[12, 7, 4]
+sgcp_constrained receiver=12 policy=all-cluster-heads sources=[12, 7, 4] clusters=6 ra=perception_aware_potential_game comm_bytes=156320 selected_grids={7: 61, 4: 59}
+fusion_method=early pred_boxes=18 gt_boxes=34
+pred_scores_shape=(18,)
+frame=28/41 receiver_sample=3/6 scenario=2026_07_15_01_26_56 timestamp=000114 cavs=[13, 14, 10]
+sgcp_constrained receiver=13 policy=all-cluster-heads sources=[13, 14, 10] clusters=6 ra=perception_aware_potential_game comm_bytes=156016 selected_grids={14: 62, 10: 56}
+fusion_method=early pred_boxes=16 gt_boxes=33
+pred_scores_shape=(16,)
+frame=28/41 receiver_sample=4/6 scenario=2026_07_15_01_26_56 timestamp=000114 cavs=[15, 6]
+sgcp_constrained receiver=15 policy=all-cluster-heads sources=[15, 6] clusters=6 ra=perception_aware_potential_game comm_bytes=74880 selected_grids={6: 61}
+fusion_method=early pred_boxes=13 gt_boxes=24
+pred_scores_shape=(13,)
+frame=28/41 receiver_sample=5/6 scenario=2026_07_15_01_26_56 timestamp=000114 cavs=[17, 3, 16]
+sgcp_constrained receiver=17 policy=all-cluster-heads sources=[17, 3, 16] clusters=6 ra=perception_aware_potential_game comm_bytes=159440 selected_grids={3: 66, 16: 62}
+fusion_method=early pred_boxes=15 gt_boxes=25
+pred_scores_shape=(15,)
+frame=28/41 receiver_sample=6/6 scenario=2026_07_15_01_26_56 timestamp=000114 cavs=[20, 9]
+sgcp_constrained receiver=20 policy=all-cluster-heads sources=[20, 9] clusters=6 ra=perception_aware_potential_game comm_bytes=77664 selected_grids={9: 53}
+fusion_method=early pred_boxes=13 gt_boxes=28
+pred_scores_shape=(13,)
+frame=29/41 receiver_sample=1/6 scenario=2026_07_15_01_26_56 timestamp=000116 cavs=[1, 11, 2]
+sgcp_constrained receiver=1 policy=all-cluster-heads sources=[1, 11, 2] clusters=6 ra=perception_aware_potential_game comm_bytes=156304 selected_grids={11: 56, 2: 54}
+fusion_method=early pred_boxes=16 gt_boxes=40
+pred_scores_shape=(16,)
+frame=29/41 receiver_sample=2/6 scenario=2026_07_15_01_26_56 timestamp=000116 cavs=[12, 4, 7]
+sgcp_constrained receiver=12 policy=all-cluster-heads sources=[12, 4, 7] clusters=6 ra=perception_aware_potential_game comm_bytes=156272 selected_grids={4: 60, 7: 61}
+fusion_method=early pred_boxes=16 gt_boxes=32
+pred_scores_shape=(16,)
+frame=29/41 receiver_sample=3/6 scenario=2026_07_15_01_26_56 timestamp=000116 cavs=[13, 14, 10]
+sgcp_constrained receiver=13 policy=all-cluster-heads sources=[13, 14, 10] clusters=6 ra=perception_aware_potential_game comm_bytes=156016 selected_grids={14: 61, 10: 57}
+fusion_method=early pred_boxes=16 gt_boxes=33
+pred_scores_shape=(16,)
+frame=29/41 receiver_sample=4/6 scenario=2026_07_15_01_26_56 timestamp=000116 cavs=[15, 6]
+sgcp_constrained receiver=15 policy=all-cluster-heads sources=[15, 6] clusters=6 ra=perception_aware_potential_game comm_bytes=75360 selected_grids={6: 61}
+fusion_method=early pred_boxes=14 gt_boxes=24
+pred_scores_shape=(14,)
+frame=29/41 receiver_sample=5/6 scenario=2026_07_15_01_26_56 timestamp=000116 cavs=[17, 16, 3]
+sgcp_constrained receiver=17 policy=all-cluster-heads sources=[17, 16, 3] clusters=6 ra=perception_aware_potential_game comm_bytes=159744 selected_grids={16: 62, 3: 66}
+fusion_method=early pred_boxes=17 gt_boxes=24
+pred_scores_shape=(17,)
+frame=29/41 receiver_sample=6/6 scenario=2026_07_15_01_26_56 timestamp=000116 cavs=[20, 9]
+sgcp_constrained receiver=20 policy=all-cluster-heads sources=[20, 9] clusters=6 ra=perception_aware_potential_game comm_bytes=77648 selected_grids={9: 54}
+fusion_method=early pred_boxes=13 gt_boxes=28
+pred_scores_shape=(13,)
+frame=30/41 receiver_sample=1/6 scenario=2026_07_15_01_26_56 timestamp=000118 cavs=[1, 11, 2]
+sgcp_constrained receiver=1 policy=all-cluster-heads sources=[1, 11, 2] clusters=6 ra=perception_aware_potential_game comm_bytes=156512 selected_grids={11: 57, 2: 55}Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+
+fusion_method=early pred_boxes=16 gt_boxes=40
+pred_scores_shape=(16,)
+frame=30/41 receiver_sample=2/6 scenario=2026_07_15_01_26_56 timestamp=000118 cavs=[12, 4, 7]
+sgcp_constrained receiver=12 policy=all-cluster-heads sources=[12, 4, 7] clusters=6 ra=perception_aware_potential_game comm_bytes=156240 selected_grids={4: 60, 7: 61}
+fusion_method=early pred_boxes=17 gt_boxes=32
+pred_scores_shape=(17,)
+frame=30/41 receiver_sample=3/6 scenario=2026_07_15_01_26_56 timestamp=000118 cavs=[13, 14, 10]
+sgcp_constrained receiver=13 policy=all-cluster-heads sources=[13, 14, 10] clusters=6 ra=perception_aware_potential_game comm_bytes=156624 selected_grids={14: 64, 10: 57}
+fusion_method=early pred_boxes=14 gt_boxes=33
+pred_scores_shape=(14,)
+frame=30/41 receiver_sample=4/6 scenario=2026_07_15_01_26_56 timestamp=000118 cavs=[15, 6]
+sgcp_constrained receiver=15 policy=all-cluster-heads sources=[15, 6] clusters=6 ra=perception_aware_potential_game comm_bytes=75488 selected_grids={6: 62}
+fusion_method=early pred_boxes=13 gt_boxes=23
+pred_scores_shape=(13,)
+frame=30/41 receiver_sample=5/6 scenario=2026_07_15_01_26_56 timestamp=000118 cavs=[17, 16, 3]
+sgcp_constrained receiver=17 policy=all-cluster-heads sources=[17, 16, 3] clusters=6 ra=perception_aware_potential_game comm_bytes=159760 selected_grids={16: 62, 3: 65}
+fusion_method=early pred_boxes=17 gt_boxes=25
+pred_scores_shape=(17,)
+frame=30/41 receiver_sample=6/6 scenario=2026_07_15_01_26_56 timestamp=000118 cavs=[20, 9]
+sgcp_constrained receiver=20 policy=all-cluster-heads sources=[20, 9] clusters=6 ra=perception_aware_potential_game comm_bytes=77648 selected_grids={9: 53}
+fusion_method=early pred_boxes=13 gt_boxes=28
+pred_scores_shape=(13,)
+frame=31/41 receiver_sample=1/6 scenario=2026_07_15_01_26_56 timestamp=000120 cavs=[1, 11, 2]
+sgcp_constrained receiver=1 policy=all-cluster-heads sources=[1, 11, 2] clusters=6 ra=perception_aware_potential_game comm_bytes=156480 selected_grids={11: 57, 2: 55}
+fusion_method=early pred_boxes=16 gt_boxes=40
+pred_scores_shape=(16,)
+frame=31/41 receiver_sample=2/6 scenario=2026_07_15_01_26_56 timestamp=000120 cavs=[12, 4, 7]
+sgcp_constrained receiver=12 policy=all-cluster-heads sources=[12, 4, 7] clusters=6 ra=perception_aware_potential_game comm_bytes=156208 selected_grids={4: 59, 7: 61}
+fusion_method=early pred_boxes=16 gt_boxes=33
+pred_scores_shape=(16,)
+frame=31/41 receiver_sample=3/6 scenario=2026_07_15_01_26_56 timestamp=000120 cavs=[13, 14, 10]
+sgcp_constrained receiver=13 policy=all-cluster-heads sources=[13, 14, 10] clusters=6 ra=perception_aware_potential_game comm_bytes=156640 selected_grids={14: 64, 10: 58}
+fusion_method=early pred_boxes=17 gt_boxes=33
+pred_scores_shape=(17,)
+frame=31/41 receiver_sample=4/6 scenario=2026_07_15_01_26_56 timestamp=000120 cavs=[15, 6]
+sgcp_constrained receiver=15 policy=all-cluster-heads sources=[15, 6] clusters=6 ra=perception_aware_potential_game comm_bytes=75376 selected_grids={6: 61}
+fusion_method=early pred_boxes=15 gt_boxes=23
+pred_scores_shape=(15,)
+frame=31/41 receiver_sample=5/6 scenario=2026_07_15_01_26_56 timestamp=000120 cavs=[17, 16, 3]
+sgcp_constrained receiver=17 policy=all-cluster-heads sources=[17, 16, 3] clusters=6 ra=perception_aware_potential_game comm_bytes=159712 selected_grids={16: 60, 3: 62}
+fusion_method=early pred_boxes=17 gt_boxes=24
+pred_scores_shape=(17,)
+frame=31/41 receiver_sample=6/6 scenario=2026_07_15_01_26_56 timestamp=000120 cavs=[20, 9]
+sgcp_constrained receiver=20 policy=all-cluster-heads sources=[20, 9] clusters=6 ra=perception_aware_potential_game comm_bytes=77664 selected_grids={9: 53}
+fusion_method=early pred_boxes=13 gt_boxes=28
+pred_scores_shape=(13,)
+frame=32/41 receiver_sample=1/6 scenario=2026_07_15_01_26_56 timestamp=000122 cavs=[1, 11, 2]
+sgcp_constrained receiver=1 policy=all-cluster-heads sources=[1, 11, 2] clusters=6 ra=perception_aware_potential_game comm_bytes=156448 selected_grids={11: 57, 2: 55}
+fusion_method=early pred_boxes=16 gt_boxes=40
+pred_scores_shape=(16,)
+frame=32/41 receiver_sample=2/6 scenario=2026_07_15_01_26_56 timestamp=000122 cavs=[12, 4, 7]
+sgcp_constrained receiver=12 policy=all-cluster-heads sources=[12, 4, 7] clusters=6 ra=perception_aware_potential_game comm_bytes=156192 selected_grids={4: 59, 7: 61}
+fusion_method=early pred_boxes=17 gt_boxes=34
+pred_scores_shape=(17,)
+frame=32/41 receiver_sample=3/6 scenario=2026_07_15_01_26_56 timestamp=000122 cavs=[13, 14, 10]
+sgcp_constrained receiver=13 policy=all-cluster-heads sources=[13, 14, 10] clusters=6 ra=perception_aware_potential_game comm_bytes=156608 selected_grids={14: 64, 10: 58}
+fusion_method=early pred_boxes=12 gt_boxes=33
+pred_scores_shape=(12,)
+frame=32/41 receiver_sample=4/6 scenario=2026_07_15_01_26_56 timestamp=000122 cavs=[15, 6]
+sgcp_constrained receiver=15 policy=all-cluster-heads sources=[15, 6] clusters=6 ra=perception_aware_potential_game comm_bytes=75552 selected_grids={6: 61}
+fusion_method=early pred_boxes=15 gt_boxes=23
+pred_scores_shape=(15,)
+frame=32/41 receiver_sample=5/6 scenario=2026_07_15_01_26_56 timestamp=000122 cavs=[17, 3, 16]
+sgcp_constrained receiver=17 policy=all-cluster-heads sources=[17, 3, 16] clusters=6 ra=perception_aware_potential_game comm_bytes=159824 selected_grids={3: 66, 16: 58}
+fusion_method=early pred_boxes=17 gt_boxes=24
+pred_scores_shape=(17,)
+frame=32/41 receiver_sample=6/6 scenario=2026_07_15_01_26_56 timestamp=000122 cavs=[20, 9]
+sgcp_constrained receiver=20 policy=all-cluster-heads sources=[20, 9] clusters=6 ra=perception_aware_potential_game comm_bytes=77616 selected_grids={9: 52}
+fusion_method=early pred_boxes=13 gt_boxes=28
+pred_scores_shape=(13,)
+frame=33/41 receiver_sample=1/6 scenario=2026_07_15_01_26_56 timestamp=000124 cavs=[1, 2, 11]
+sgcp_constrained receiver=1 policy=all-cluster-heads sources=[1, 2, 11] clusters=6 ra=perception_aware_potential_game comm_bytes=156448 selected_grids={2: 55, 11: 56}
+fusion_method=early pred_boxes=16 gt_boxes=40
+pred_scores_shape=(16,)
+frame=33/41 receiver_sample=2/6 scenario=2026_07_15_01_26_56 timestamp=000124 cavs=[12, 4, 7]
+sgcp_constrained receiver=12 policy=all-cluster-heads sources=[12, 4, 7] clusters=6 ra=perception_aware_potential_game comm_bytes=156160 selected_grids={4: 60, 7: 60}
+fusion_method=early pred_boxes=16 gt_boxes=34
+pred_scores_shape=(16,)
+frame=33/41 receiver_sample=3/6 scenario=2026_07_15_01_26_56 timestamp=000124 cavs=[13, 14, 10]
+sgcp_constrained receiver=13 policy=all-cluster-heads sources=[13, 14, 10] clusters=6 ra=perception_aware_potential_game comm_bytes=156064 selected_grids={14: 60, 10: 57}
+fusion_method=early pred_boxes=18 gt_boxes=33
+pred_scores_shape=(18,)
+frame=33/41 receiver_sample=4/6 scenario=2026_07_15_01_26_56 timestamp=000124 cavs=[15, 6]
+sgcp_constrained receiver=15 policy=all-cluster-heads sources=[15, 6] clusters=6 ra=perception_aware_potential_game comm_bytes=75792 selected_grids={6: 61}
+fusion_method=early pred_boxes=13 gt_boxes=23
+pred_scores_shape=(13,)
+frame=33/41 receiver_sample=5/6 scenario=2026_07_15_01_26_56 timestamp=000124 cavs=[17, 16, 3]
+sgcp_constrained receiver=17 policy=all-cluster-heads sources=[17, 16, 3] clusters=6 ra=perception_aware_potential_game comm_bytes=160160 selected_grids={16: 58, 3: 65}
+fusion_method=early pred_boxes=17 gt_boxes=25
+pred_scores_shape=(17,)
+frame=33/41 receiver_sample=6/6 scenario=2026_07_15_01_26_56 timestamp=000124 cavs=[20, 9]
+sgcp_constrained receiver=20 policy=all-cluster-heads sources=[20, 9] clusters=6 ra=perception_aware_potential_game comm_bytes=77664 selected_grids={9: 54}
+fusion_method=early pred_boxes=13 gt_boxes=28
+pred_scores_shape=(13,)
+frame=34/41 receiver_sample=1/6 scenario=2026_07_15_01_26_56 timestamp=000126 cavs=[1, 11, 2]
+sgcp_constrained receiver=1 policy=all-cluster-heads sources=[1, 11, 2] clusters=6 ra=perception_aware_potential_game comm_bytes=156512 selected_grids={11: 56, 2: 54}
+fusion_method=early pred_boxes=16 gt_boxes=40
+pred_scores_shape=(16,)
+frame=34/41 receiver_sample=2/6 scenario=2026_07_15_01_26_56 timestamp=000126 cavs=[12, 4, 7]
+sgcp_constrained receiver=12 policy=all-cluster-heads sources=[12, 4, 7] clusters=6 ra=perception_aware_potential_game comm_bytes=156176 selected_grids={4: 60, 7: 60}Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+
+fusion_method=early pred_boxes=15 gt_boxes=35
+pred_scores_shape=(15,)
+frame=34/41 receiver_sample=3/6 scenario=2026_07_15_01_26_56 timestamp=000126 cavs=[13, 14, 10]
+sgcp_constrained receiver=13 policy=all-cluster-heads sources=[13, 14, 10] clusters=6 ra=perception_aware_potential_game comm_bytes=155728 selected_grids={14: 61, 10: 56}
+fusion_method=early pred_boxes=15 gt_boxes=33
+pred_scores_shape=(15,)
+frame=34/41 receiver_sample=4/6 scenario=2026_07_15_01_26_56 timestamp=000126 cavs=[15, 6]
+sgcp_constrained receiver=15 policy=all-cluster-heads sources=[15, 6] clusters=6 ra=perception_aware_potential_game comm_bytes=75856 selected_grids={6: 62}
+fusion_method=early pred_boxes=15 gt_boxes=24
+pred_scores_shape=(15,)
+frame=34/41 receiver_sample=5/6 scenario=2026_07_15_01_26_56 timestamp=000126 cavs=[17, 16, 3]
+sgcp_constrained receiver=17 policy=all-cluster-heads sources=[17, 16, 3] clusters=6 ra=perception_aware_potential_game comm_bytes=160304 selected_grids={16: 60, 3: 66}
+fusion_method=early pred_boxes=18 gt_boxes=23
+pred_scores_shape=(18,)
+frame=34/41 receiver_sample=6/6 scenario=2026_07_15_01_26_56 timestamp=000126 cavs=[20, 9]
+sgcp_constrained receiver=20 policy=all-cluster-heads sources=[20, 9] clusters=6 ra=perception_aware_potential_game comm_bytes=77664 selected_grids={9: 55}
+fusion_method=early pred_boxes=13 gt_boxes=28
+pred_scores_shape=(13,)
+frame=35/41 receiver_sample=1/6 scenario=2026_07_15_01_26_56 timestamp=000128 cavs=[1, 11, 2]
+sgcp_constrained receiver=1 policy=all-cluster-heads sources=[1, 11, 2] clusters=6 ra=perception_aware_potential_game comm_bytes=156368 selected_grids={11: 56, 2: 54}
+fusion_method=early pred_boxes=16 gt_boxes=39
+pred_scores_shape=(16,)
+frame=35/41 receiver_sample=2/6 scenario=2026_07_15_01_26_56 timestamp=000128 cavs=[12, 4, 7]
+sgcp_constrained receiver=12 policy=all-cluster-heads sources=[12, 4, 7] clusters=6 ra=perception_aware_potential_game comm_bytes=156176 selected_grids={4: 60, 7: 59}
+fusion_method=early pred_boxes=13 gt_boxes=35
+pred_scores_shape=(13,)
+frame=35/41 receiver_sample=3/6 scenario=2026_07_15_01_26_56 timestamp=000128 cavs=[13, 14, 10]
+sgcp_constrained receiver=13 policy=all-cluster-heads sources=[13, 14, 10] clusters=6 ra=perception_aware_potential_game comm_bytes=156240 selected_grids={14: 60, 10: 56}
+fusion_method=early pred_boxes=16 gt_boxes=32
+pred_scores_shape=(16,)
+frame=35/41 receiver_sample=4/6 scenario=2026_07_15_01_26_56 timestamp=000128 cavs=[15, 6]
+sgcp_constrained receiver=15 policy=all-cluster-heads sources=[15, 6] clusters=6 ra=perception_aware_potential_game comm_bytes=75856 selected_grids={6: 61}
+fusion_method=early pred_boxes=14 gt_boxes=24
+pred_scores_shape=(14,)
+frame=35/41 receiver_sample=5/6 scenario=2026_07_15_01_26_56 timestamp=000128 cavs=[17, 3, 16]
+sgcp_constrained receiver=17 policy=all-cluster-heads sources=[17, 3, 16] clusters=6 ra=perception_aware_potential_game comm_bytes=160416 selected_grids={3: 65, 16: 54}
+fusion_method=early pred_boxes=17 gt_boxes=24
+pred_scores_shape=(17,)
+frame=35/41 receiver_sample=6/6 scenario=2026_07_15_01_26_56 timestamp=000128 cavs=[20, 9]
+sgcp_constrained receiver=20 policy=all-cluster-heads sources=[20, 9] clusters=6 ra=perception_aware_potential_game comm_bytes=77648 selected_grids={9: 56}
+fusion_method=early pred_boxes=13 gt_boxes=28
+pred_scores_shape=(13,)
+frame=36/41 receiver_sample=1/6 scenario=2026_07_15_01_26_56 timestamp=000130 cavs=[1, 11, 2]
+sgcp_constrained receiver=1 policy=all-cluster-heads sources=[1, 11, 2] clusters=6 ra=perception_aware_potential_game comm_bytes=156240 selected_grids={11: 56, 2: 52}
+fusion_method=early pred_boxes=19 gt_boxes=39
+pred_scores_shape=(19,)
+frame=36/41 receiver_sample=2/6 scenario=2026_07_15_01_26_56 timestamp=000130 cavs=[12, 4, 7]
+sgcp_constrained receiver=12 policy=all-cluster-heads sources=[12, 4, 7] clusters=6 ra=perception_aware_potential_game comm_bytes=156144 selected_grids={4: 59, 7: 59}
+fusion_method=early pred_boxes=16 gt_boxes=34
+pred_scores_shape=(16,)
+frame=36/41 receiver_sample=3/6 scenario=2026_07_15_01_26_56 timestamp=000130 cavs=[13, 14, 10]
+sgcp_constrained receiver=13 policy=all-cluster-heads sources=[13, 14, 10] clusters=6 ra=perception_aware_potential_game comm_bytes=156864 selected_grids={14: 60, 10: 56}
+fusion_method=early pred_boxes=16 gt_boxes=32
+pred_scores_shape=(16,)
+frame=36/41 receiver_sample=4/6 scenario=2026_07_15_01_26_56 timestamp=000130 cavs=[15, 6]
+sgcp_constrained receiver=15 policy=all-cluster-heads sources=[15, 6] clusters=6 ra=perception_aware_potential_game comm_bytes=75920 selected_grids={6: 63}
+fusion_method=early pred_boxes=11 gt_boxes=23
+pred_scores_shape=(11,)
+frame=36/41 receiver_sample=5/6 scenario=2026_07_15_01_26_56 timestamp=000130 cavs=[17, 3, 16]
+sgcp_constrained receiver=17 policy=all-cluster-heads sources=[17, 3, 16] clusters=6 ra=perception_aware_potential_game comm_bytes=160160 selected_grids={3: 66, 16: 59}
+fusion_method=early pred_boxes=17 gt_boxes=25
+pred_scores_shape=(17,)
+frame=36/41 receiver_sample=6/6 scenario=2026_07_15_01_26_56 timestamp=000130 cavs=[20, 9]
+sgcp_constrained receiver=20 policy=all-cluster-heads sources=[20, 9] clusters=6 ra=perception_aware_potential_game comm_bytes=77664 selected_grids={9: 57}
+fusion_method=early pred_boxes=12 gt_boxes=28
+pred_scores_shape=(12,)
+frame=37/41 receiver_sample=1/6 scenario=2026_07_15_01_26_56 timestamp=000132 cavs=[4, 12, 7]
+sgcp_constrained receiver=4 policy=all-cluster-heads sources=[4, 12, 7] clusters=6 ra=perception_aware_potential_game comm_bytes=158240 selected_grids={12: 59, 7: 59}
+fusion_method=early pred_boxes=16 gt_boxes=35
+pred_scores_shape=(16,)
+frame=37/41 receiver_sample=2/6 scenario=2026_07_15_01_26_56 timestamp=000132 cavs=[11, 2, 19]
+sgcp_constrained receiver=11 policy=all-cluster-heads sources=[11, 2, 19] clusters=6 ra=perception_aware_potential_game comm_bytes=154944 selected_grids={2: 53, 19: 62}
+fusion_method=early pred_boxes=16 gt_boxes=47
+pred_scores_shape=(16,)
+frame=37/41 receiver_sample=3/6 scenario=2026_07_15_01_26_56 timestamp=000132 cavs=[13, 14, 10]
+sgcp_constrained receiver=13 policy=all-cluster-heads sources=[13, 14, 10] clusters=6 ra=perception_aware_potential_game comm_bytes=156400 selected_grids={14: 60, 10: 56}
+fusion_method=early pred_boxes=14 gt_boxes=32
+pred_scores_shape=(14,)
+frame=37/41 receiver_sample=4/6 scenario=2026_07_15_01_26_56 timestamp=000132 cavs=[15, 6]
+sgcp_constrained receiver=15 policy=all-cluster-heads sources=[15, 6] clusters=6 ra=perception_aware_potential_game comm_bytes=75856 selected_grids={6: 61}
+fusion_method=early pred_boxes=14 gt_boxes=22
+pred_scores_shape=(14,)
+frame=37/41 receiver_sample=5/6 scenario=2026_07_15_01_26_56 timestamp=000132 cavs=[17, 3, 16]
+sgcp_constrained receiver=17 policy=all-cluster-heads sources=[17, 3, 16] clusters=6 ra=perception_aware_potential_game comm_bytes=160272 selected_grids={3: 66, 16: 60}
+fusion_method=early pred_boxes=16 gt_boxes=24
+pred_scores_shape=(16,)
+frame=37/41 receiver_sample=6/6 scenario=2026_07_15_01_26_56 timestamp=000132 cavs=[20, 5]
+sgcp_constrained receiver=20 policy=all-cluster-heads sources=[20, 5] clusters=6 ra=perception_aware_potential_game comm_bytes=77776 selected_grids={5: 57}
+fusion_method=early pred_boxes=10 gt_boxes=31
+pred_scores_shape=(10,)
+frame=38/41 receiver_sample=1/6 scenario=2026_07_15_01_26_56 timestamp=000134 cavs=[4, 12, 7]
+sgcp_constrained receiver=4 policy=all-cluster-heads sources=[4, 12, 7] clusters=6 ra=perception_aware_potential_game comm_bytes=158448 selected_grids={12: 58, 7: 59}
+fusion_method=early pred_boxes=16 gt_boxes=35
+pred_scores_shape=(16,)
+frame=38/41 receiver_sample=2/6 scenario=2026_07_15_01_26_56 timestamp=000134 cavs=[11, 2, 19]
+sgcp_constrained receiver=11 policy=all-cluster-heads sources=[11, 2, 19] clusters=6 ra=perception_aware_potential_game comm_bytes=154960 selected_grids={2: 53, 19: 61}
+fusion_method=early pred_boxes=15 gt_boxes=47
+pred_scores_shape=(15,)
+frame=38/41 receiver_sample=3/6 scenario=2026_07_15_01_26_56 timestamp=000134 cavs=[13, 14, 10]
+sgcp_constrained receiver=13 policy=all-cluster-heads sources=[13, 14, 10] clusters=6 ra=perception_aware_potential_game comm_bytes=156576 selected_grids={14: 60, 10: 56}Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+
+fusion_method=early pred_boxes=12 gt_boxes=32
+pred_scores_shape=(12,)
+frame=38/41 receiver_sample=4/6 scenario=2026_07_15_01_26_56 timestamp=000134 cavs=[15, 6]
+sgcp_constrained receiver=15 policy=all-cluster-heads sources=[15, 6] clusters=6 ra=perception_aware_potential_game comm_bytes=75744 selected_grids={6: 59}
+fusion_method=early pred_boxes=13 gt_boxes=25
+pred_scores_shape=(13,)
+frame=38/41 receiver_sample=5/6 scenario=2026_07_15_01_26_56 timestamp=000134 cavs=[17, 3, 16]
+sgcp_constrained receiver=17 policy=all-cluster-heads sources=[17, 3, 16] clusters=6 ra=perception_aware_potential_game comm_bytes=160016 selected_grids={3: 65, 16: 57}
+fusion_method=early pred_boxes=17 gt_boxes=24
+pred_scores_shape=(17,)
+frame=38/41 receiver_sample=6/6 scenario=2026_07_15_01_26_56 timestamp=000134 cavs=[20, 5]
+sgcp_constrained receiver=20 policy=all-cluster-heads sources=[20, 5] clusters=6 ra=perception_aware_potential_game comm_bytes=77680 selected_grids={5: 58}
+fusion_method=early pred_boxes=12 gt_boxes=32
+pred_scores_shape=(12,)
+frame=39/41 receiver_sample=1/6 scenario=2026_07_15_01_26_56 timestamp=000136 cavs=[2, 6]
+sgcp_constrained receiver=2 policy=all-cluster-heads sources=[2, 6] clusters=6 ra=perception_aware_potential_game comm_bytes=75840 selected_grids={6: 61}
+fusion_method=early pred_boxes=14 gt_boxes=32
+pred_scores_shape=(14,)
+frame=39/41 receiver_sample=2/6 scenario=2026_07_15_01_26_56 timestamp=000136 cavs=[11, 1, 19]
+sgcp_constrained receiver=11 policy=all-cluster-heads sources=[11, 1, 19] clusters=6 ra=perception_aware_potential_game comm_bytes=156128 selected_grids={1: 47, 19: 61}
+fusion_method=early pred_boxes=17 gt_boxes=38
+pred_scores_shape=(17,)
+frame=39/41 receiver_sample=3/6 scenario=2026_07_15_01_26_56 timestamp=000136 cavs=[12, 4, 7]
+sgcp_constrained receiver=12 policy=all-cluster-heads sources=[12, 4, 7] clusters=6 ra=perception_aware_potential_game comm_bytes=156144 selected_grids={4: 58, 7: 61}
+fusion_method=early pred_boxes=14 gt_boxes=34
+pred_scores_shape=(14,)
+frame=39/41 receiver_sample=4/6 scenario=2026_07_15_01_26_56 timestamp=000136 cavs=[13, 14, 10]
+sgcp_constrained receiver=13 policy=all-cluster-heads sources=[13, 14, 10] clusters=6 ra=perception_aware_potential_game comm_bytes=156256 selected_grids={14: 64, 10: 55}
+fusion_method=early pred_boxes=17 gt_boxes=33
+pred_scores_shape=(17,)
+frame=39/41 receiver_sample=5/6 scenario=2026_07_15_01_26_56 timestamp=000136 cavs=[17, 3, 16]
+sgcp_constrained receiver=17 policy=all-cluster-heads sources=[17, 3, 16] clusters=6 ra=perception_aware_potential_game comm_bytes=160544 selected_grids={3: 64, 16: 58}
+fusion_method=early pred_boxes=17 gt_boxes=25
+pred_scores_shape=(17,)
+frame=39/41 receiver_sample=6/6 scenario=2026_07_15_01_26_56 timestamp=000136 cavs=[20, 5]
+sgcp_constrained receiver=20 policy=all-cluster-heads sources=[20, 5] clusters=6 ra=perception_aware_potential_game comm_bytes=77808 selected_grids={5: 58}
+fusion_method=early pred_boxes=10 gt_boxes=32
+pred_scores_shape=(10,)
+frame=40/41 receiver_sample=1/6 scenario=2026_07_15_01_26_56 timestamp=000138 cavs=[2, 6]
+sgcp_constrained receiver=2 policy=all-cluster-heads sources=[2, 6] clusters=6 ra=perception_aware_potential_game comm_bytes=75440 selected_grids={6: 61}
+fusion_method=early pred_boxes=13 gt_boxes=32
+pred_scores_shape=(13,)
+frame=40/41 receiver_sample=2/6 scenario=2026_07_15_01_26_56 timestamp=000138 cavs=[11, 1, 19]
+sgcp_constrained receiver=11 policy=all-cluster-heads sources=[11, 1, 19] clusters=6 ra=perception_aware_potential_game comm_bytes=156048 selected_grids={1: 47, 19: 61}
+fusion_method=early pred_boxes=17 gt_boxes=38
+pred_scores_shape=(17,)
+frame=40/41 receiver_sample=3/6 scenario=2026_07_15_01_26_56 timestamp=000138 cavs=[12, 4, 7]
+sgcp_constrained receiver=12 policy=all-cluster-heads sources=[12, 4, 7] clusters=6 ra=perception_aware_potential_game comm_bytes=156192 selected_grids={4: 58, 7: 61}
+fusion_method=early pred_boxes=14 gt_boxes=34
+pred_scores_shape=(14,)
+frame=40/41 receiver_sample=4/6 scenario=2026_07_15_01_26_56 timestamp=000138 cavs=[13, 14, 10]
+sgcp_constrained receiver=13 policy=all-cluster-heads sources=[13, 14, 10] clusters=6 ra=perception_aware_potential_game comm_bytes=156368 selected_grids={14: 63, 10: 55}
+fusion_method=early pred_boxes=13 gt_boxes=33
+pred_scores_shape=(13,)
+frame=40/41 receiver_sample=5/6 scenario=2026_07_15_01_26_56 timestamp=000138 cavs=[17, 3, 16]
+sgcp_constrained receiver=17 policy=all-cluster-heads sources=[17, 3, 16] clusters=6 ra=perception_aware_potential_game comm_bytes=160480 selected_grids={3: 65, 16: 57}
+fusion_method=early pred_boxes=17 gt_boxes=25
+pred_scores_shape=(17,)
+frame=40/41 receiver_sample=6/6 scenario=2026_07_15_01_26_56 timestamp=000138 cavs=[20, 5]
+sgcp_constrained receiver=20 policy=all-cluster-heads sources=[20, 5] clusters=6 ra=perception_aware_potential_game comm_bytes=77776 selected_grids={5: 56}
+fusion_method=early pred_boxes=9 gt_boxes=30
+pred_scores_shape=(9,)
+frame=41/41 receiver_sample=1/6 scenario=2026_07_15_01_26_56 timestamp=000140 cavs=[4, 12, 7]
+sgcp_constrained receiver=4 policy=all-cluster-heads sources=[4, 12, 7] clusters=6 ra=perception_aware_potential_game comm_bytes=158480 selected_grids={12: 57, 7: 59}
+fusion_method=early pred_boxes=16 gt_boxes=37
+pred_scores_shape=(16,)
+frame=41/41 receiver_sample=2/6 scenario=2026_07_15_01_26_56 timestamp=000140 cavs=[11, 2, 19]
+sgcp_constrained receiver=11 policy=all-cluster-heads sources=[11, 2, 19] clusters=6 ra=perception_aware_potential_game comm_bytes=154944 selected_grids={2: 54, 19: 61}
+fusion_method=early pred_boxes=16 gt_boxes=45
+pred_scores_shape=(16,)
+frame=41/41 receiver_sample=3/6 scenario=2026_07_15_01_26_56 timestamp=000140 cavs=[13, 14, 10]
+sgcp_constrained receiver=13 policy=all-cluster-heads sources=[13, 14, 10] clusters=6 ra=perception_aware_potential_game comm_bytes=156304 selected_grids={14: 63, 10: 55}
+fusion_method=early pred_boxes=14 gt_boxes=32
+pred_scores_shape=(14,)
+frame=41/41 receiver_sample=4/6 scenario=2026_07_15_01_26_56 timestamp=000140 cavs=[15, 6]
+sgcp_constrained receiver=15 policy=all-cluster-heads sources=[15, 6] clusters=6 ra=perception_aware_potential_game comm_bytes=75568 selected_grids={6: 62}
+fusion_method=early pred_boxes=15 gt_boxes=24
+pred_scores_shape=(15,)
+frame=41/41 receiver_sample=5/6 scenario=2026_07_15_01_26_56 timestamp=000140 cavs=[17, 16, 3]
+sgcp_constrained receiver=17 policy=all-cluster-heads sources=[17, 16, 3] clusters=6 ra=perception_aware_potential_game comm_bytes=160464 selected_grids={16: 58, 3: 64}
+fusion_method=early pred_boxes=15 gt_boxes=25
+pred_scores_shape=(15,)
+frame=41/41 receiver_sample=6/6 scenario=2026_07_15_01_26_56 timestamp=000140 cavs=[20, 5]
+sgcp_constrained receiver=20 policy=all-cluster-heads sources=[20, 5] clusters=6 ra=perception_aware_potential_game comm_bytes=78096 selected_grids={5: 57}
+fusion_method=early pred_boxes=11 gt_boxes=29
+pred_scores_shape=(11,)
+cp counter: 246
+Evaluate final average precision results:
+  - Fusion method: early
+  - The Average Precision at IOU 0.3 is 0.38, The Average Precision at IOU 0.5 is 0.36, The Average Precision at IOU 0.7 is 0.20
+sgcp_summary frames=246 avg_comm_bytes=130284.03 total_comm_bytes=32049872 avg_source_cavs=2.67 avg_selected_grids=97.22

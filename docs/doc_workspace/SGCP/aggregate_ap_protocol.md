@@ -17,7 +17,7 @@ Aggregate AP 指 OpenCOOD evaluator 在一次实验中把所有 evaluated receiv
 - `inter_cluster_late_fusion`：是否把多个 cluster head 的检测结果做簇间 late fusion。
 - `fusion_method`：OpenCOOD 输出的 fusion method，例如 `early`。
 - `resource_allocation` / `clustering` / `upload_mode`：调度、分簇和上传语义。
-- `payload_bytes` / `Mbps`：论文主通信量口径。当前离线实验默认 10 Hz，因此 Mbps = payload bytes * 8 / (`evaluated_samples` * 0.1 s) / 1e6。
+- `payload_bytes` / `Mbps`：论文主通信量口径。当前离线实验默认 10 Hz；通信时长按仿真帧数计算，优先使用 trace 中的 `unique_timestamps`，若无 trace 再退回 `evaluated_samples`。因此 Mbps = payload bytes * 8 / (`unique_timestamps` * 0.1 s) / 1e6。对于 no-late 的多 receiver-sample 消融，AP 可由 246 个 receiver samples 计算，但通信时长仍是 41 个 timestamp。
 - 原始 artifact：stdout log、trace CSV、summary/manifest CSV、代码 commit。
 
 ## Manifest 工具

@@ -211,12 +211,12 @@ def parse_trace(path):
     }
 
 
-def compute_mbps(total_bytes, evaluated_samples, frame_interval_s):
+def compute_mbps(total_bytes, duration_steps, frame_interval_s):
     total_bytes = parse_int(total_bytes)
-    evaluated_samples = parse_int(evaluated_samples)
-    if evaluated_samples <= 0:
+    duration_steps = parse_int(duration_steps)
+    if duration_steps <= 0:
         return ''
-    duration_s = evaluated_samples * frame_interval_s
+    duration_s = duration_steps * frame_interval_s
     if duration_s <= 0:
         return ''
     if total_bytes <= 0:
@@ -233,6 +233,7 @@ def row_for_run(label, log_path, trace_path, frame_interval_s, notes):
     total_bytes = (
         log.get('log_summary_total_comm_bytes') or
         trace.get('total_trace_comm_bytes', ''))
+    duration_steps = trace.get('unique_timestamps') or evaluated_samples
     inter_cluster = 'yes' if (
         parse_int(log.get('cp_counter')) and
         trace.get('trace_rows') and
@@ -260,7 +261,7 @@ def row_for_run(label, log_path, trace_path, frame_interval_s, notes):
         'payload_bytes': total_bytes,
         'mbps': compute_mbps(
             total_bytes,
-            evaluated_samples,
+            duration_steps,
             frame_interval_s),
         'avg_comm_bytes_per_trace_row': (
             log.get('log_summary_avg_comm_bytes') or
@@ -277,10 +278,13 @@ def row_for_run(label, log_path, trace_path, frame_interval_s, notes):
 def apply_overrides(row, overrides, frame_interval_s):
     for field, value in overrides.items():
         row[field] = value
-    if 'payload_bytes' in overrides or 'evaluated_samples' in overrides:
+    if ('payload_bytes' in overrides or 'evaluated_samples' in overrides or
+            'unique_timestamps' in overrides):
+        duration_steps = row.get('unique_timestamps') or row.get(
+            'evaluated_samples', '')
         row['mbps'] = compute_mbps(
             row.get('payload_bytes', ''),
-            row.get('evaluated_samples', ''),
+            duration_steps,
             frame_interval_s)
     return row
 

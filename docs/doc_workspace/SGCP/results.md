@@ -59,6 +59,23 @@
 
 解释边界：Pure late 在 aggregate AP@0.3 上已经达到 0.82，说明 late-fusion 覆盖本身很强；主文不能把 SGCP 的 AP@0.3 优势只归因于 late fusion。若该行进入 protocol-native comparison，必须同时报告或估算 detection-box exchange overhead，或者标注为 prediction-sharing reference。SGCP 的主张应集中在：在不依赖 edge/global assignment 的 V2V 点云预算下，通过分簇 + PAPG 点云选择 + 两层融合，在 62.54 Mbps 达到接近 EdgeCooper-HD 的 AP@0.3/AP@0.5，同时保留 NS3 子信道可行性。
 
+## Table 2 Fusion Scaffold Ablation
+
+统一 source CSV：
+
+`docs\doc_workspace\SGCP\artifacts\fusion_ablation_20260719\fusion_scaffold_manifest.csv`
+
+| Variant | Aggregate AP@0.3 | AP@0.5 | AP@0.7 | Evaluated Samples | Trace Rows | Late Fusion | Payload bytes | Mbps | Interpretation |
+| --- | ---: | ---: | ---: | ---: | ---: | --- | ---: | ---: | --- |
+| Head-only | 0.26 | 0.22 | 0.09 | 41 | 246 | yes | 0 | 0.00 | Lower reference for no point-cloud sharing |
+| Pure late singleton 20-CAV | 0.82 | 0.76 | 0.37 | 41 | 820 | yes | 0 point-cloud bytes | 0.00 point-cloud Mbps | Prediction-sharing reference; needs box-overhead accounting |
+| One-cluster full early-only | 0.85 | 0.83 | 0.48 | 41 | 41 | no | 60,838,528 | 118.71 | Full raw-LiDAR upper reference |
+| Clustered early-only, PAPG | 0.38 | 0.36 | 0.20 | 246 | 246 | no | 32,049,872 | 62.54 | Shows early fusion alone has poor network coverage |
+| One-cluster early+late | 0.85 | 0.83 | 0.48 | 41 | 41 | identity | 60,838,528 | 118.71 | Late fusion over one source is identity |
+| Full SGCP, PAPG | 0.81 | 0.78 | 0.39 | 41 | 246 | yes | 32,049,872 | 62.54 | Same payload as clustered early-only, but late fusion restores coverage |
+
+核心结论：同一 PAPG payload 下，clustered early-only 只有 `0.38/0.36/0.20`，加入簇间 late fusion 后 Full SGCP 达到 `0.81/0.78/0.39`，证明 two-layer fusion 的覆盖贡献非常明显。另一方面，Full SGCP 仍低于 one-cluster/full-sharing upper reference `0.85/0.83/0.48`，但只用约 52.7% 的 raw point-cloud Mbps；这为“通信受限下接近 full-sharing 上界”的叙事提供了更稳的主线。
+
 ## 消融实验
 
 | Variant | mAP@0.3 | mAP@0.5 | mAP@0.7 | Comm. Overhead (Mbps) | Reconfig. Count | Notes |

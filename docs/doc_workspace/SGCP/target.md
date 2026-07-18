@@ -63,12 +63,12 @@
 
 必须包含：
 
-- [ ] Head-only：无共享、无 late fusion。
-- [ ] Pure late fusion：全局本地检测框 late fusion，无点云共享。
-- [ ] One-cluster early-only：1 个簇头 + 19 个簇成员，全局点云通信后 early fusion，无 late fusion；用于观察无分簇的 early fusion 上限/通信代价。
-- [ ] Clustered early-only：SGCP 分簇 + 簇内 early fusion，无簇间 late fusion；用于证明只做簇内 early fusion 覆盖不足。
-- [ ] One-cluster early + late：无分簇/全局通信设置下的 early + late 对照；用于区分两层融合和分簇本身的贡献。
-- [ ] Full SGCP：分簇 + 点云划分 + early + late。
+- [x] Head-only：无共享、无 late fusion。
+- [x] Pure late fusion：全局本地检测框 late fusion，无点云共享。
+- [x] One-cluster early-only：1 个簇头 + 19 个簇成员，全局点云通信后 early fusion，无 late fusion；用于观察无分簇的 early fusion 上限/通信代价。
+- [x] Clustered early-only：SGCP 分簇 + 簇内 early fusion，无簇间 late fusion；用于证明只做簇内 early fusion 覆盖不足。
+- [x] One-cluster early + late：无分簇/全局通信设置下的 early + late 对照；用于区分两层融合和分簇本身的贡献。当前 one-cluster late fusion 为 identity，复用 one-cluster early artifact。
+- [x] Full SGCP：分簇 + 点云划分 + early + late。
 
 不做核心消融：
 
@@ -77,7 +77,7 @@
 验收标准：
 
 - [ ] AP@0.7 的提升应能解释为点云 early fusion / 高质量局部融合贡献。
-- [ ] AP@0.3 的提升应能解释为 late fusion / 多区域覆盖贡献。
+- [x] AP@0.3 的提升应能解释为 late fusion / 多区域覆盖贡献：同 payload 下 clustered early-only `0.38/0.36/0.20` 到 Full SGCP `0.81/0.78/0.39`。
 - [ ] Full SGCP 必须在通信量远低于 one-cluster/full-sharing 设置时保持有竞争力的 aggregate AP。
 - [ ] 若该表不能证明分簇或两层融合有效，优先修改算法、场景或评估口径，再进入论文。
 

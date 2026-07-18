@@ -5771,3 +5771,48 @@ conda run -n opencda python -m opencda.tools.sgcp_aggregate_ap_manifest --run "F
 ### 结论
 
 P1 核心行已有统一 manifest artifact。Pure late singleton 20-CAV 的 AP@0.3 很高，说明 SGCP 叙事不能只强调 late fusion 覆盖；应把 pure late 写成 prediction-sharing reference，并补 detection-box exchange overhead，或者明确它不是 raw point-cloud communication baseline。SGCP-PAPG 的优势应放在 V2V-only 点云预算、PAPG 调度、NS3 子信道可行性和接近 edge/global assignment 的低/中 IoU AP 上。
+
+## 2026-07-19 Table 2 fusion scaffold ablation first pass
+
+### 目的
+
+推进 `target.md` P2：验证 early fusion、late fusion、one-cluster/full-sharing、SGCP clustering + PAPG 的贡献边界。
+
+### 修正
+
+`sgcp_aggregate_ap_manifest` 的 Mbps 计算从使用 `evaluated_samples` 改为优先使用 `unique_timestamps`。原因：no-late clustered early-only 会产生 246 个 receiver samples，但通信时长仍是 41 个仿真 timestamp；如果用 246*0.1 s 会低估 Mbps。
+
+### 新跑实验
+
+Clustered early-only：
+
+```powershell
+conda run -n opencda python -m opencda.tools.offline_inference --dataset-root D:\Data\Carla --scenario-id 2026_07_15_01_26_56 --ego-cav-id 1 --max-frames 0 --sgcp-constrained --sgcp-receiver-policy all-cluster-heads --resource-allocation perception_aware_potential_game --rho-th 3 --num-channels 10 --bandwidth-mhz 20 --head-rb-budget 2 --sgcp-trace-output docs\doc_workspace\SGCP\artifacts\fusion_ablation_20260719\clustered_early_only_papg_41f_trace.csv
+```
+
+One-cluster full early-only：
+
+```powershell
+conda run -n opencda python -m opencda.tools.offline_inference --dataset-root D:\Data\Carla --scenario-id 2026_07_15_01_26_56 --ego-cav-id 1 --max-frames 0 --sgcp-constrained --clustering all_in_one --sgcp-upload-mode full_cluster --sgcp-receiver-policy all-cluster-heads --resource-allocation perception_aware_potential_game --rho-th 3 --num-channels 10 --bandwidth-mhz 20 --head-rb-budget 2 --sgcp-trace-output docs\doc_workspace\SGCP\artifacts\fusion_ablation_20260719\one_cluster_full_early_only_41f_trace.csv
+```
+
+Manifest：
+
+```powershell
+conda run -n opencda python -m opencda.tools.sgcp_aggregate_ap_manifest --run "HeadOnly=docs\doc_workspace\SGCP\artifacts\mechanism_probe\head_only_41f_stdout.log,docs\doc_workspace\SGCP\artifacts\mechanism_probe\head_only_41f_trace.csv" --run "PureLate=docs\doc_workspace\SGCP\artifacts\table1_protocol_20260719\pure_late_singleton_41f.log,docs\doc_workspace\SGCP\artifacts\table1_protocol_20260719\pure_late_singleton_41f_trace.csv" --run "OneClusterEarlyOnly=docs\doc_workspace\SGCP\artifacts\fusion_ablation_20260719\one_cluster_full_early_only_41f.log,docs\doc_workspace\SGCP\artifacts\fusion_ablation_20260719\one_cluster_full_early_only_41f_trace.csv" --run "ClusteredEarlyOnly=docs\doc_workspace\SGCP\artifacts\fusion_ablation_20260719\clustered_early_only_papg_41f.log,docs\doc_workspace\SGCP\artifacts\fusion_ablation_20260719\clustered_early_only_papg_41f_trace.csv" --run "OneClusterEarlyLate=docs\doc_workspace\SGCP\artifacts\fusion_ablation_20260719\one_cluster_full_early_only_41f.log,docs\doc_workspace\SGCP\artifacts\fusion_ablation_20260719\one_cluster_full_early_only_41f_trace.csv" --run "FullSGCP=docs\doc_workspace\SGCP\artifacts\repeat_check_20260718\papg_41f_r1.log,docs\doc_workspace\SGCP\artifacts\repeat_check_20260718\papg_41f_r1_trace.csv" --override "OneClusterEarlyLate.inter_cluster_late_fusion=identity_single_cluster" --override "OneClusterEarlyLate.notes=P2 fusion scaffold: one-cluster late fusion is identity; shares early-only artifact" --output-csv docs\doc_workspace\SGCP\artifacts\fusion_ablation_20260719\fusion_scaffold_manifest.csv --notes "P2 fusion scaffold manifest first pass"
+```
+
+### 结果
+
+| Variant | Aggregate AP@0.3 | AP@0.5 | AP@0.7 | Evaluated Samples | Payload bytes | Mbps |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| Head-only | 0.26 | 0.22 | 0.09 | 41 | 0 | 0.00 |
+| Pure late singleton 20-CAV | 0.82 | 0.76 | 0.37 | 41 | 0 point-cloud bytes | 0.00 point-cloud Mbps |
+| One-cluster full early-only | 0.85 | 0.83 | 0.48 | 41 | 60,838,528 | 118.71 |
+| Clustered early-only, PAPG | 0.38 | 0.36 | 0.20 | 246 | 32,049,872 | 62.54 |
+| One-cluster early+late | 0.85 | 0.83 | 0.48 | 41 | 60,838,528 | 118.71 |
+| Full SGCP, PAPG | 0.81 | 0.78 | 0.39 | 41 | 32,049,872 | 62.54 |
+
+### 结论
+
+该表有效支撑 two-layer fusion 叙事：同样 32.05 MB payload 下，clustered early-only 覆盖严重不足，而 Full SGCP 通过簇间 late fusion 恢复到接近 full-sharing upper reference 的 AP@0.3/AP@0.5。AP@0.7 仍低于 full-sharing，说明点云预算和分簇限制会损失局部几何质量；这恰好为 PAPG/Pareto 和参数敏感性留出解释空间。
