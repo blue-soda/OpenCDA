@@ -29,6 +29,31 @@
 
 当前论文草稿第一版 artifact 追踪已补齐；`target.md` P0 的 artifact 要求可标记为完成。但该完成状态只覆盖当前结果版本。若 early-fusion checkpoint 回收、新导出 CARLA 场景、替换主表数值或升级 BEV qualitative figure，必须新增 artifact 版本并更新索引。
 
+## 2026-07-19 - Protocol-native claim audit for P1
+
+### 目的
+
+推进 `target.md` P1 的验收项，确认当前 protocol-native 主表是否已经在论文正文中清楚解释 SGCP 系统优势、late-fusion coverage 贡献、FullPerception/EdgeCooper baseline 信息条件。
+
+### 输入
+
+```text
+C:\Workspace\icdcs-paper\SGCP\main.tex
+docs\doc_workspace\SGCP\artifacts\table1_protocol_20260719\protocol_native_manifest.csv
+docs\doc_workspace\SGCP\paper_artifact_index.md
+docs\doc_workspace\SGCP\main_table_candidate.md
+```
+
+### 输出
+
+- `docs/doc_workspace/SGCP/protocol_native_claim_audit.md`
+- 更新 `target.md`：P1 前三项验收标记完成。
+- 更新 `status.md` / `readme.md`。
+
+### 结论
+
+当前 `main.tex` 已经分清 Full20Early upper reference、FullPerception-PCS built-in baseline、EdgeCooper-HD edge-assisted reference、Pure late prediction-sharing reference 和 SGCP RSU-free V2V main method。SGCP 的 AP@0.3 贡献被写成 system protocol / inter-cluster late fusion 的 coverage 收益，scheduler comparison 另设 Table 3。P1 剩余风险不是表格结构，而是 Pure late detector/checkpoint fairness 和 early-fusion checkpoint 强度。
+
 ## 2026-07-19 - EdgeCooper writing reference for P9
 
 ### 目的
