@@ -1,0 +1,2 @@
+frames,assignment_rows,cached_group_inference_calls,planned_areas_mean,rsu_fused_pred_boxes_mean,rsu_fused_gt_boxes_mean,ap_03,ap_05,ap_07,gt_total,pred_samples
+11,253,210,23.000000,29.090909,31.545455,0.554762,0.554762,0.460461,347,320

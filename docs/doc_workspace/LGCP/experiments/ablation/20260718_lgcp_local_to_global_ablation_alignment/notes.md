@@ -12,6 +12,7 @@ This directory aligns the 11-frame Top-30 box-level hierarchy late-fusion result
 | Comm-aware top-k | Flat | 10 agents | 0.686146 | 0.545736 | 90000.000000 | fixed 10KB per non-ego agent |
 | Area-aware union | Flat | 10 agents | 0.676678 | 0.538273 | 90000.000000 | fixed 10KB per non-ego agent |
 | LGCP Top-20 box late fusion | Local-to-global hierarchy | 20 areas | 0.538594 | 0.440331 | 79287.272727 | raw member slice + leader result estimate |
+| LGCP Top-23 box late fusion | Local-to-global hierarchy | 23 areas | 0.554762 | 0.460461 | 93985.454545 | raw member slice + leader result estimate |
 | LGCP Top-30 box late fusion | Local-to-global hierarchy | 30 areas | 0.602748 | 0.506345 | 119415.272727 | scheduled raw-slice plan |
 
 ## Interpretation
@@ -19,6 +20,7 @@ This directory aligns the 11-frame Top-30 box-level hierarchy late-fusion result
 - LGCP Top-30 box-level hierarchy is now evaluated with real OpenCOOD calls over the same 11 local frames.
 - Its AP@0.5 is close to random 10-agent flat selection and below the stronger flat top-k baselines, but its AP@0.7 is much stronger than random and closer to area-aware / communication-aware baselines.
 - LGCP Top-20 is a near-common-budget point below the flat 10-agent `90KB/frame` proxy. It reaches AP@0.5 `0.538594`, which confirms the current box-level hierarchy loses quality under a tighter byte budget.
+- LGCP Top-23 is the closest current point to the flat 10-agent `90KB/frame` proxy. It uses about `93.99KB/frame` and reaches AP@0.5 `0.554762`, still below all 10-agent flat baselines.
 - The byte columns are not a perfectly uniform accounting model. Existing flat baselines use a fixed selected-agent packet proxy, while LGCP uses raw-slice-aware scheduled upload bytes. Any manuscript table must explicitly label this.
 - The result supports a careful claim: the current box-level hierarchy adapter validates the local-to-global mechanism path, but it does not yet prove that LGCP outperforms strong flat selective-sharing baselines in perception AP.
 - A stronger claim requires either neural feature slicing / intermediate fusion or a recalibrated common byte budget for all methods.
@@ -30,4 +32,4 @@ Run a common-byte-budget comparison:
 - flat selective sharing under the same `119.42 KB/frame` LGCP scheduled raw-slice budget, or
 - LGCP under the same fixed `90 KB/frame` flat 10-agent budget.
 
-The new Top-20 result is the first local LGCP low-budget point. A stricter next step would either tune `max_areas` between 20 and 30 to approach exactly `90KB/frame`, or recompute flat baselines with raw area-slice accounting.
+The new Top-23 result is the closest local LGCP low-budget point to `90KB/frame`. A stricter next step would recompute flat baselines with raw area-slice accounting.

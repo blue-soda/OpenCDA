@@ -82,6 +82,7 @@
 - `lgcp_hierarchy_late_fusion_eval.py` 已完成 Top-30 11 帧运行：330 assignment rows、245 次唯一 group inference、mean RSU fused pred / GT boxes 为 `34.909091 / 37.090909`，AP@0.5 为 `0.602748`；下一步应汇总为 local-to-global ablation 表并对齐既有 flat selective-sharing baseline。
 - 已新增 `20260718_lgcp_local_to_global_ablation_alignment`，将 Top-30 11 帧 box-level hierarchy 与 full / random / confidence_topk / comm_aware_topk / area_aware_union 11 帧 flat baselines 对齐；当前 LGCP AP@0.5 为 `0.602748`，低于 strong flat baselines，但 AP@0.7 为 `0.506345`，接近 area-aware / comm-aware baselines；byte proxy 类型不同，论文中必须显式标注。
 - 已完成 Top-20 11 帧 box-level hierarchy low-budget run：raw member slice + leader result 估计约 `79.29KB/frame`，AP@0.5 为 `0.538594`、AP@0.7 为 `0.440331`；该 near-common-budget 结果显示当前 box-level hierarchy 不能在低预算下超过 flat 10-agent baselines。
+- 已完成 Top-23 11 帧 box-level hierarchy near-90KB run：raw member slice `47.99KB/frame` + leader result `46KB/frame`，合计约 `93.99KB/frame`，AP@0.5 为 `0.554762`、AP@0.7 为 `0.460461`；这是当前最接近 flat 10-agent `90KB/frame` 的 LGCP 点，仍低于强 flat baselines。
 - 已新增 LGCP 专用仿真入口 `opencda/scenario_testing/lgcp_carla.py` 和配置 `opencda/scenario_testing/config_yaml/lgcp_carla.yaml`。
 - 未修改 `v2xp_cluster_carla` 原始配置。
 - 已补齐 RSU 首次启用所需的基础运行路径：固定基础设施感知初始化、RSU 注册/访问、最近感知结果保存、销毁路径。

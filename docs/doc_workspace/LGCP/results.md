@@ -1901,11 +1901,13 @@ docs/doc_workspace/LGCP/experiments/ablation/20260718_lgcp_local_to_global_ablat
 | Comm-aware top-k | Flat | 10 agents | 0.686146 | 0.545736 | 90000.000000 | fixed 10KB / non-ego agent |
 | Area-aware union | Flat | 10 agents | 0.676678 | 0.538273 | 90000.000000 | fixed 10KB / non-ego agent |
 | LGCP Top-20 box late fusion | Local-to-global hierarchy | 20 areas | 0.538594 | 0.440331 | 79287.272727 | raw member slice + leader result estimate |
+| LGCP Top-23 box late fusion | Local-to-global hierarchy | 23 areas | 0.554762 | 0.460461 | 93985.454545 | raw member slice + leader result estimate |
 | LGCP Top-30 box late fusion | Local-to-global hierarchy | 30 areas | 0.602748 | 0.506345 | 119415.272727 | scheduled raw-slice plan |
 
 Interpretation:
 
 - LGCP Top-20 是低于 flat 10-agent `90KB/frame` proxy 的近 common-budget 点，但 AP@0.5 只有 `0.538594`，说明当前 box-level hierarchy 在严格低预算下质量下降明显。
+- LGCP Top-23 是最接近 `90KB/frame` 的实测点，约 `93.99KB/frame`，AP@0.5 为 `0.554762`，仍低于所有 10-agent flat baselines。
 - LGCP Top-30 的 AP@0.5 接近 random 10-agent flat selection，但低于 strong flat top-k baselines；AP@0.7 明显优于 random，并接近 area-aware / communication-aware flat baselines。
 - Byte proxy 不是完全同口径：flat baselines 使用固定 selected-agent packet proxy，LGCP 使用 raw-slice-aware scheduled upload bytes。论文表格必须显式标注 proxy 类型，不能直接宣称通信量绝对公平。
 - 当前结果支持谨慎结论：local-to-global mechanism path 已经被真实模型调用验证，但若要主张 perception AP 超过强 flat selective-sharing baseline，还需要 neural feature slicing 或更严格的统一 byte accounting。

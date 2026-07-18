@@ -3357,3 +3357,23 @@ by type：
   - Top-20 低预算 hierarchy AP 明显低于 flat 10-agent confidence / area-aware / comm-aware baselines。
   - 这说明当前 box-level hierarchy adapter 更适合验证机制路径，不能支撑“公平预算下超过强 baseline”的强结论。
   - 若要强化 rebuttal，需要 neural feature slicing，或按统一 raw-slice byte accounting 重跑 flat baselines。
+
+## Top-23 near-90KB hierarchy run
+
+- 目标：
+  - 生成更接近 flat 10-agent `90KB/frame` 的 LGCP common-budget 点。
+- 命令：
+  - `conda run -n opencda python -m opencda.tools.lgcp_hierarchy_plan_eval --area-records docs\doc_workspace\LGCP\experiments\area_confidence\20260715_lgcp_carla_area_ap_11f_detector_score\area_records.csv --area-quality docs\doc_workspace\LGCP\experiments\area_confidence\20260715_lgcp_carla_area_ap_11f_detector_score\area_quality.csv --output-dir docs\doc_workspace\LGCP\experiments\hierarchy_plan\20260718_lgcp_carla_hierarchy_plan_area23_11f --confidence-field density_distance --delta-g 0.05 --max-group-size 4 --max-areas 23 --feature-packet-bytes 10000 --leader-result-bytes 2000 --assignment-bytes 64 --broadcast-bytes 2000`
+  - `conda run -n opencda python -m opencda.tools.lgcp_feature_slice_manifest --dataset-root D:\Data\Carla --scenario-id 2026_07_15_02_33_21 --assignment-plan docs\doc_workspace\LGCP\experiments\hierarchy_plan\20260718_lgcp_carla_hierarchy_plan_area23_11f\area_assignment_plan.csv --output-dir docs\doc_workspace\LGCP\experiments\hierarchy_plan\20260718_lgcp_carla_feature_slice_area23_11f --grid-size-x 10 --grid-size-y 6 --bytes-per-point 16`
+  - `conda run -n opencda python -m opencda.tools.lgcp_hierarchy_late_fusion_eval --dataset-root D:\Data\Carla --scenario-id 2026_07_15_02_33_21 --assignment-plan docs\doc_workspace\LGCP\experiments\hierarchy_plan\20260718_lgcp_carla_hierarchy_plan_area23_11f\area_assignment_plan.csv --output-dir docs\doc_workspace\LGCP\experiments\hierarchy_plan\20260718_lgcp_carla_hierarchy_late_fusion_top23_11f --max-frames 11 --fusion-method late`
+- 结果：
+  - hierarchy areas/frame: `23`
+  - raw member upload bytes/frame: `47985.454545`
+  - leader result bytes/frame: `46000.000000`
+  - estimated raw upload bytes/frame: `93985.454545`
+  - AP@0.3 / AP@0.5 / AP@0.7: `0.554762 / 0.554762 / 0.460461`
+  - mean RSU fused pred / GT boxes per frame: `29.090909 / 31.545455`
+- 结论：
+  - Top-23 是当前最接近 flat 10-agent `90KB/frame` 的 LGCP 实测点。
+  - AP@0.5 仍低于 random / confidence_topk / area_aware_union / comm_aware_topk，说明 box-level hierarchy 不能支持“公平预算下质量优于强 baseline”的强 claim。
+  - 可在 rebuttal 中诚实表述：当前补充实验验证 LGCP hierarchy path 和 budget-quality tradeoff；真正质量提升仍应依赖 neural feature slicing 或更公平的 raw-slice accounting baseline。
