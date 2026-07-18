@@ -12,6 +12,7 @@
 
 - 将 `results.md` 主结果表第一行从 `NC | TBD` 改为当前可复现 lower reference：`Head-only = 0.26/0.22/0.09, 0.00 Mbps`。
 - 清理 `results.md` 与 `baseline_fairness.md` 中 `fullperception_rsu` / `fullperception_decentralized` 的当前主表说明，改为直接使用 `global_selective_proxy` / `cluster_local_selective_proxy` 当前命名。
+- 同步清理 `baseline_reproduction_plan.md` 和 `fullperception_baseline_revision.md` 中的 `Renamed from` / `formerly` 表述；历史命令和 artifact 路径仍保留在 `log.md`，但当前索引文档只使用现名。
 - 保留 `reproducibility_manifest.md` 中旧 NC / `22.33 Mbps` 记录作为“不可复现旧主表”历史说明，不迁入当前主结果表。
 
 下一步：若继续清理，可扫描 `results.md` 中更深处的历史说明，确保凡是旧命名都明确标为历史记录而非当前主表行。

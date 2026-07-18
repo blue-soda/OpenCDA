@@ -69,7 +69,7 @@
 | Selective communication-aware | 0.78 / 0.75 / 0.40 | 30,222,256 bytes | 当前最强 V2V baseline，高 payload |
 | Selective forced random | 0.77 / 0.73 / 0.38 | 31,613,424 bytes | 3 members/head, 117 grid budget, payload 接近 PAPG |
 | Selective density high-budget | 0.80 / 0.76 / 0.40 | 37,710,864 bytes | 3 members/head, 117 grid budget |
-| Cluster-local selective proxy | 0.80 / 0.76 / 0.41 | 38,920,592 bytes | formerly `fullperception_decentralized`; cluster-local V2V candidates, 3 members/head, 117 grid budget; NS3 110/110 complete |
+| Cluster-local selective proxy | 0.80 / 0.76 / 0.41 | 38,920,592 bytes | cluster-local V2V candidates, 3 members/head, 117 grid budget; NS3 110/110 complete |
 | SGCP coverage-aware 10ch | 0.79 / 0.76 / 0.38 | 29,405,296 bytes | PAPG 前身/消融，NS3 110/110 complete |
 | SGCP PAPG 10ch | 0.81 / 0.78 / 0.39 | 32,049,872 bytes | 当前主方法，NS3 110/110 complete |
 | SGCP coverage-aware 20ch | 0.80 / 0.76 / 0.41 | 37,912,544 bytes | 资源敏感性/高预算附表 |
@@ -110,5 +110,5 @@ Full 20-CAV early fusion assumes all vehicles can upload complete point clouds t
 - 主表使用 SGCP PAPG、forced-budget random、density/communication-aware selective sharing、FullPerception-PCS baseline 和 full 20-CAV early-fusion upper reference；旧 random/MWS scheduler 只进入 w/o-PPS 消融或诊断表。
 - PAPG 已完成 11 帧真实 NS3 replay：110/110 scheduled request application/RLC complete，RLC drops=0，PHY decode failures=0。
 - 若后续重新打开 CARLA，可导出带 RSU sensor 的真实 RSU-assisted 数据，但它仍应标注为 infrastructure-assisted upper reference。
-- 当前 selective proxy 代码已接入 `offline_ns3_replay --selective-sharing-baseline`。`cluster_local_selective_proxy` 的链路证据来自重命名前的 11-frame true NS3 replay：110/110 application callback complete、110/110 RLC complete、RLC drops=0、PHY decode failures=0，使其链路证据与 PAPG/forced random 对称。
+- 当前 selective proxy 代码已接入 `offline_ns3_replay --selective-sharing-baseline`。`cluster_local_selective_proxy` 的 11-frame true NS3 replay 已完成：110/110 application callback complete、110/110 RLC complete、RLC drops=0、PHY decode failures=0，使其链路证据与 PAPG/forced random 对称。
 - 对 built-in `fullperception_pcs`，当前 tuned 结果已经可进入 baseline 表；下一步只需决定 `fullperception_mws/fullperception_random` 是否也采用相同 blind-spot 粒度，或保留原论文 heuristic 默认参数后作为 w/o-PCS 诊断。
