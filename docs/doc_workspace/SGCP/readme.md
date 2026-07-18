@@ -32,7 +32,6 @@
 - `reviewer_response_matrix.md`：审稿意见逐条覆盖表，映射 reviewer concern、当前证据、论文位置和剩余风险。
 - `rebuttal_draft.md`：按 reviewer concern 整理的 rebuttal 草稿，覆盖 FullPerception 公平性、`f(rho)`、runtime、topology trigger、NS3 delivery 和机制边界。
 - `rebuttal_short.md`：`rebuttal_draft.md` 的压缩版，用于最终 rebuttal 粘贴、字数控制和主张边界收束。
-- `aggregate_ap_protocol.md`：aggregate AP 指标口径、manifest 字段要求和表格源数据生成方式；后续主表、消融和 Pareto 图均按此文档执行。
 - `late_fusion_box_comm.md`：Pure late fusion prediction-box 通信预算，区分 raw-LiDAR payload、检测框 broadcast/all-to-all overhead、100 ms deadline 和信道冲突假设。
 - `../environment.md`：全局环境文档，统一维护 Conda 环境、数据路径、CARLA 路径、启动命令和通用工具入口；运行实验前优先查看这里。
 

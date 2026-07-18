@@ -19,8 +19,15 @@
 - EdgeCooper-HD 和 PACP-LiDAR proxy 在 AP@0.7 更强，但使用更强信息条件或更高 payload，应作为 reference/proxy boundary 解释。
 - Pure late prediction sharing 在 payload 上很强，因此主文必须把它写成 prediction-sharing reference，并强调其信息内容与 raw LiDAR early fusion 不同，不能把它当作 SGCP 需要“击败”的同类点云通信 baseline。
 
+## 图表草稿
+
+- AP@0.3：`figure1_pareto_ap03.png` / `figure1_pareto_ap03.pdf`
+- AP@0.7：`figure1_pareto_ap07.png` / `figure1_pareto_ap07.pdf`
+- 绘图脚本：`plot_pareto.py`
+
+当前图是 source-point draft：可以用于结果判断和论文版式设计，但正式论文图仍建议按主文分层语义重绘，避免把 prediction-sharing reference、edge-assisted reference 和 V2V-only raw-LiDAR Pareto 混成单一公平排名。
+
 ## 待补
 
-- 用该 CSV 生成 AP@0.3-vs-Mbps 和 AP@0.7-vs-Mbps 图。
 - 补 `rho_th`、channel count、point cap 的系统扫描，避免 Pareto 只依赖少数手工点。
 - early checkpoint fine-tune 完成后，重跑 SGCP-PAPG 与 Pure late controlled baseline，并更新本 CSV。

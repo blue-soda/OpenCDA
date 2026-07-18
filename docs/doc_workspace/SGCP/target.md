@@ -124,8 +124,8 @@
 
 必须绘制：
 
-- [ ] AP@0.3 vs Mbps：coverage / recall / large-scene utility。
-- [ ] AP@0.7 vs Mbps：localization / high-quality fusion。
+- [x] AP@0.3 vs Mbps：coverage / recall / large-scene utility。第一版草稿见 `docs/doc_workspace/SGCP/artifacts/pareto_20260719/figure1_pareto_ap03.png`。
+- [x] AP@0.7 vs Mbps：localization / high-quality fusion。第一版草稿见 `docs/doc_workspace/SGCP/artifacts/pareto_20260719/figure1_pareto_ap07.png`。
 
 必须扫描：
 
@@ -134,12 +134,12 @@
 - [ ] PACP-LiDAR：member/grid budget 或 priority threshold。
 - [ ] FullPerception-PCS：blind-spot granularity、candidate threshold 或 PCS 原生参数，不改主带宽。
 - [ ] EdgeCooperV2V+ / EdgeCooper-inspired：sender cap、assignment budget、half-duplex constraint。
-- [ ] Pure late prediction-box reference：在 Pareto 图或附注中加入 broadcast/all-to-all detection-box overhead；若要声称通信受限，必须补 NS3 synthetic late-box deadline replay，而不是只按 raw-LiDAR payload 记为 0 Mbps。
+- [x] Pure late prediction-box reference：在 Pareto 图或附注中加入 broadcast/all-to-all detection-box overhead；若要声称通信受限，必须补 NS3 synthetic late-box deadline replay，而不是只按 raw-LiDAR payload 记为 0 Mbps。第一版已加入 80B/box broadcast 与 all-to-all 两个点。
 
 验收标准：
 
-- [ ] SGCP 应在中低通信区间形成清晰 Pareto 优势，或至少在同等 Mbps 下获得更高 aggregate AP@0.3 / AP@0.5。
-- [ ] 若 SGCP 不在 Pareto frontier 上，优先分析瓶颈并修改算法；必要时选择更能体现大规模分簇优势的场景。
+- [ ] SGCP 应在中低通信区间形成清晰 Pareto 优势，或至少在同等 Mbps 下获得更高 aggregate AP@0.3 / AP@0.5。当前第一版图显示：若把 Pure late broadcast 作为同一 Pareto 点，SGCP 不在 AP@0.3 frontier；因此主文必须把 Pure late 标为 prediction-sharing reference，并将 raw-LiDAR V2V/PPS 方法单独解释。
+- [ ] 若 SGCP 不在 Pareto frontier 上，优先分析瓶颈并修改算法；必要时选择更能体现大规模分簇优势的场景。当前瓶颈已定位为 early checkpoint 偏弱和 Pure late 过强；远程 early checkpoint fine-tune 正在等待 GPU。
 
 ## P5：Figure 2 - Aggregate AP Protocol/Fusion Breakdown
 

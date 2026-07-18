@@ -40,6 +40,8 @@
 
 - 新增 `docs/doc_workspace/SGCP/artifacts/pareto_20260719/pareto_source.csv`。
 - 新增 `docs/doc_workspace/SGCP/artifacts/pareto_20260719/pareto_notes.md`。
+- 新增绘图脚本 `docs/doc_workspace/SGCP/artifacts/pareto_20260719/plot_pareto.py`。
+- 已生成 `figure1_pareto_ap03.png/.pdf` 与 `figure1_pareto_ap07.png/.pdf`。
 - 数据点覆盖 Head-only、Pure late detection-box broadcast/all-to-all、FullPerception-PCS、SGCP coverage/target-aware/PAPG 参数点、forced random、Density/Link-aware、EdgeCooper-HD、PACP-LiDAR、cluster-local/global selective proxy 和 Full20Early upper reference。
 
 ### 当前解释

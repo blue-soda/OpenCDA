@@ -95,6 +95,19 @@
 
 解释边界：PAPG 不是 AP@0.7 最优；PACP-LiDAR 和 EdgeCooper-HD 的高 IoU 更强。但 PAPG 在同一 scaffold 下以更少 payload 达到最优 AP@0.3，并与 EdgeCooper-HD 持平 AP@0.5；相比 density/link-aware 少约 15.0% payload 且 AP@0.3/AP@0.5 更高，相比 PACP-LiDAR 少约 27.8% payload且 AP@0.3 持平。该表应写成 AP-Mbps scheduler tradeoff，而不是“SGCP 全面最高 AP”的单点主张。
 
+## Figure 1 AP-Mbps Pareto Draft
+
+统一 source CSV：
+
+`docs\doc_workspace\SGCP\artifacts\pareto_20260719\pareto_source.csv`
+
+图表草稿：
+
+- AP@0.3 vs Mbps：`docs\doc_workspace\SGCP\artifacts\pareto_20260719\figure1_pareto_ap03.png`
+- AP@0.7 vs Mbps：`docs\doc_workspace\SGCP\artifacts\pareto_20260719\figure1_pareto_ap07.png`
+
+当前结论：PAPG 在 raw-LiDAR V2V/PPS 方法中处于中等通信量区间，`62.54 Mbps` 达到 `0.81/0.78/0.39`，相比 forced random 近似同 payload 提升 AP，相比 density/link-aware 少约 15% raw payload 并提升 AP@0.3/AP@0.5。Pure late broadcast 以很低 detection-box overhead 达到 AP@0.3 `0.82`，因此必须单独标为 prediction-sharing reference；EdgeCooper-HD 与 PACP-LiDAR proxy 的 AP@0.7 更强，应作为 edge/global 或 stronger-prior boundary，而不是写成 SGCP 的同类 V2V-only 失败。
+
 ## 消融实验
 
 | Variant | mAP@0.3 | mAP@0.5 | mAP@0.7 | Comm. Overhead (Mbps) | Reconfig. Count | Notes |
