@@ -56,8 +56,8 @@
 
 | Method | Current Result | Reason |
 | --- | --- | --- |
-| Random scheduler | 0.44 / 0.39 / 0.17, 9,725,376 bytes | Payload only 18.98 Mbps; does not fully use the resource budget. Keep as w/o PPS ablation. |
-| MWS scheduler | 0.31 / 0.26 / 0.11, 9,910,032 bytes | Payload only 19.34 Mbps and implementation definition needs review. Keep as diagnostic ablation. |
+| Random scheduler / RS | Legacy 41f `0.44/0.39/0.17`, 9,725,376 bytes; tuned 11f `0.54/0.49/0.23`, 1,644,160 bytes | FullPerception RS heuristic remains weak and/or low payload; keep as w/o-PCS diagnostic ablation, not a fair main baseline. |
+| MWS scheduler | Legacy 41f `0.31/0.26/0.11`, 9,910,032 bytes; tuned 11f `0.36/0.32/0.15`, 4,289,344 bytes | Even after sharing tuned PCS blind-spot units and `sc_num`, greedy MWS remains weak; keep as diagnostic ablation. |
 | Full 20-CAV late checkpoint | 0.91 / 0.85 / 0.51 | Different late-fusion checkpoint; use only as upper reference. |
 | True RSU-sensor FullPerception | N/A | Current dump is RSU-free; needs a new RSU-enabled export. Existing `global_selective_proxy` is a virtual/global selective proxy, not a real RSU-sensor replay. |
 
@@ -77,7 +77,7 @@
 
 1. Full 20-CAV early fusion and full-cluster upload define upper references, not fair decentralized baselines.
 2. The repository's built-in FullPerception implementation is `pcs.py`; the tuned `fullperception_pcs` path now uses payload-based `c(q)`, real `sc_num`, consistent blind-spot units, and gives `0.59/0.53/0.22` at 25.29 Mbps. It is the formal FullPerception baseline, while `global_selective_proxy` and EdgeCooper-style proxies are additional RSU/edge-assisted diagnostics because they use a global/edge candidate pool; `cluster_local_selective_proxy` is the CAV-only selective proxy counterpart.
-3. Random/MWS are w/o-PPS ablations; their low payload means they cannot support a communication-reduction claim.
+3. Random/MWS are w/o-PCS/PPS heuristic ablations; tuned 11-frame sanity remains weak, so they cannot support a communication-reduction or strong-baseline claim.
 4. The fair baseline should be payload-matched selective sharing. In high-budget mode, selective density reaches `0.80/0.76/0.40` at 73.58 Mbps, and `cluster_local_selective_proxy` reaches `0.80/0.76/0.41` at 75.94 Mbps.
 5. SGCP PAPG 10ch `rho_th=3,B_h=2` is the current main point: `0.81/0.78/0.39` at 62.54 Mbps. It beats the forced-budget random baseline by `+0.04/+0.05/+0.01` AP at nearly the same traffic, and beats the strong high-budget selective / cluster-local selective proxy baselines on AP@0.3/AP@0.5 while using lower payload.
 6. EdgeCooper-global-HD reaches `0.81/0.78/0.42` at 65.40 Mbps and 110/110 NS3 delivery after adding half-duplex sender/receiver exclusion. This is now a strong edge-assisted baseline, not a V2V-only fair baseline; if placed in the same table, PAPG no longer has the best AP@0.7.
@@ -94,6 +94,6 @@
 - Decide whether the main table shows both SGCP 10ch and 20ch, or places 20ch in network-resource sensitivity.
 - `rho_th=3` NS3 replay is now complete: 110/110 application callbacks and 110/110 RLC-complete requests over the first 11 frames, with no PHY decode failures.
 - PAPG 11-frame true NS3 socket replay is complete: 110/110 application callbacks, 110/110 RLC-complete requests, 0 PHY decode failures. The algorithm uses 410 scheduled links over 41 frames in the perception run and does not bypass subchannel budget.
-- Forced-budget random has been rerun under the same coalition path with 3 uploaded members/head and 117 grid budget: `0.77/0.73/0.38`, 31,613,424 bytes / 61.68 Mbps. Existing RandomRA/MWS rows still remain weak scheduler ablations because they use only about 18-19 Mbps.
+- Forced-budget random has been rerun under the same coalition path with 3 uploaded members/head and 117 grid budget: `0.77/0.73/0.38`, 31,613,424 bytes / 61.68 Mbps. Existing RandomRA/MWS rows remain diagnostic ablations: the legacy 41f rows were low-payload, and the tuned 11f FullPerception-RS/MWS sanity still lags strong baselines.
 - Built-in FullPerception PCS is now identified, aliased as `fullperception_pcs`, and tuned: `c(q)`, `sc_num`, scheduled links, scheduled-receiver evaluation, blind-spot cache, grid mAP cache, and blind-spot unit granularity are wired through. The current 41-frame result is `0.59/0.53/0.22` at 25.29 Mbps, with 11-frame dry-run showing 5 scheduled requests/frame and 0 skipped unscheduled. `cluster_local_selective_proxy` has symmetric NS3 evidence with PAPG and forced random: 110/110 application/RLC complete and 0 PHY failures. EdgeCooper-global-HD also has 110/110 NS3 delivery and better AP@0.7, so the next SGCP decision is whether to separate RSU/edge-assisted baselines from V2V-only baselines in the paper table, or improve PAPG high-IoU recall.
 - Stop expanding routing-hint variants unless a principled proposal/objectness trigger is added. Current object-level comparison shows routing hints gain 4 GT rows but lose 15, so the paper should treat this as diagnostic evidence for detector-context sensitivity rather than a main algorithm path.

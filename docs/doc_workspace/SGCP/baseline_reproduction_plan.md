@@ -20,8 +20,8 @@
 | Name | Information Scope | Scheduling Scope | Current Status |
 | --- | --- | --- | --- |
 | `fullperception_pcs` / `fullperception` | base-station / RSU-side PCS scheduling | PCS blind-spot link scheduling from `pcs.py` | Alias added; first protocol repair complete; 41-frame legacy and repaired results available |
-| `fullperception_mws` | base-station / RSU-side greedy baseline | MWS from `mws.py`, inherited from PCS | Alias added; old MWS result available |
-| `fullperception_random` | base-station / RSU-side random schedule | RS from `random_ra.py`, inherited from PCS | Alias added; old random result available |
+| `fullperception_mws` | base-station / RSU-side greedy baseline | MWS from `mws.py`, inherited from PCS | Tuned 11f sanity complete; weak diagnostic result |
+| `fullperception_random` | base-station / RSU-side random schedule | RS from `random_ra.py`, inherited from PCS | Tuned 11f sanity complete; weak/low-payload diagnostic result |
 | `global_selective_proxy` | virtual RSU / global CAV candidate pool | global density with mild distance cost, then grid-budgeted upload | Renamed from `fullperception_rsu`; 41-frame proxy result available |
 | `cluster_local_selective_proxy` | CAV-side V2V only | cluster-local density with distance/link-quality cost | Renamed from `fullperception_decentralized`; 41-frame result and 11-frame true NS3 replay available |
 | `edgecooper` | edge / virtual RSU | complementarity minus redundancy proxy | First proxy implemented |
@@ -99,7 +99,7 @@ PCS/MWS/RS 通过 `--resource-allocation fullperception_pcs|fullperception_mws|f
 
 ## Immediate Tasks
 
-- 继续校准 built-in `fullperception_pcs`：补 RSU/global receiver fusion 或更接近论文的 multi-blind-spot link treatment，然后重跑 PCS/MWS/RS。
+- `fullperception_pcs` 已完成 tuned baseline；`fullperception_mws/fullperception_random` 已完成 11-frame tuned sanity，结论为 heuristic diagnostics，不进入主公平表。
 - `cluster_local_selective_proxy` 的 11-frame true NS3 replay 已完成（artifact 目录仍保留重命名前名称）：110/110 application callback complete、110/110 RLC complete、0 PHY failures。后续只需在表格中维护 artifact 路径和口径说明。
 - 重构 EdgeCooper proxy：从当前 blind-spot-aware per-receiver greedy 改为 minimum-cost-flow/global assignment 风格。
 - 选择一个 V2V-only SOTA proxy 优先实现，建议从 Where2comm-style confidence communication 或 PACP-style priority-aware sharing 开始。
