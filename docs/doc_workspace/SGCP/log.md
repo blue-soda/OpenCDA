@@ -50,6 +50,27 @@
 - EdgeCooper-HD / PACP-LiDAR proxy 在 AP@0.7 更强，应作为 edge/global 或 proxy boundary，而不是 V2V-only SGCP 的直接失败。
 - Pure late prediction sharing payload 很低，必须作为 prediction-sharing reference 单独解释，不能再写成 0 Mbps 同类 baseline。
 
+## 2026-07-19 - Protocol and fusion breakdown figure drafts
+
+### 目的
+
+继续推进 `target.md` P5/P6，将已复现的 protocol-native manifest 与 fusion scaffold manifest 转为可直接检查的 Figure 2/3 草稿。
+
+### 结果
+
+- 新增 `docs/doc_workspace/SGCP/artifacts/figures_20260719/plot_breakdowns.py`。
+- 新增 `docs/doc_workspace/SGCP/artifacts/figures_20260719/figure_notes.md`。
+- 生成 Figure 2：`figure2_protocol_breakdown.png/.pdf`。
+- 生成 Figure 3：`figure3_fusion_contribution.png/.pdf`。
+
+### 验证
+
+```powershell
+conda run -n opencda python docs\doc_workspace\SGCP\artifacts\figures_20260719\plot_breakdowns.py
+```
+
+图表已目视检查。图内通信标注使用 raw LiDAR Mbps，避免 Pure late 被误读为完全无通信；Pure late detection-box overhead 继续由 `late_fusion_box_comm.md` 解释。
+
 ## 2026-07-18 - Results index baseline naming sync
 
 ### 目的

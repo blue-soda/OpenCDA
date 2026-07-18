@@ -108,6 +108,21 @@
 
 当前结论：PAPG 在 raw-LiDAR V2V/PPS 方法中处于中等通信量区间，`62.54 Mbps` 达到 `0.81/0.78/0.39`，相比 forced random 近似同 payload 提升 AP，相比 density/link-aware 少约 15% raw payload 并提升 AP@0.3/AP@0.5。Pure late broadcast 以很低 detection-box overhead 达到 AP@0.3 `0.82`，因此必须单独标为 prediction-sharing reference；EdgeCooper-HD 与 PACP-LiDAR proxy 的 AP@0.7 更强，应作为 edge/global 或 stronger-prior boundary，而不是写成 SGCP 的同类 V2V-only 失败。
 
+## Figure 2/3 Protocol and Fusion Breakdown Drafts
+
+统一 artifact 目录：
+
+`docs\doc_workspace\SGCP\artifacts\figures_20260719\`
+
+图表：
+
+- Figure 2 protocol-native breakdown：`figure2_protocol_breakdown.png` / `.pdf`
+- Figure 3 fusion contribution：`figure3_fusion_contribution.png` / `.pdf`
+
+Figure 2 当前用途：用 Head-only、Pure late、FullPerception-PCS、EdgeCooper-HD、SGCP-PAPG 和 Full 20-CAV upper reference 说明完整系统语义层级，避免把 FullPerception baseline、full-sharing upper reference 和 scheduler proxy 混在一起。图内通信标注为 raw LiDAR Mbps；Pure late 的 detection-box overhead 仍需参考 `late_fusion_box_comm.md`。
+
+Figure 3 当前用途：支撑 two-layer fusion 分工。Clustered early-only 与 Full SGCP raw payload 相同，前者为 `0.38/0.36/0.20`，后者为 `0.81/0.78/0.39`，说明 inter-cluster late fusion 对 coverage / low-IoU AP 贡献最大；Full 20-CAV early upper reference 为 `0.85/0.83/0.48`，说明 high-IoU localization 仍受 early checkpoint 和 raw point-cloud sharing 上界约束。
+
 ## 消融实验
 
 | Variant | mAP@0.3 | mAP@0.5 | mAP@0.7 | Comm. Overhead (Mbps) | Reconfig. Count | Notes |

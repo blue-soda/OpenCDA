@@ -147,13 +147,13 @@
 
 必须包含：
 
-- [ ] Aggregate AP@0.3 / AP@0.5 / AP@0.7 grouped bar 或折线图。
-- [ ] 至少比较 Head-only、Pure late、FullPerception-PCS、EdgeCooperV2V+、SGCP。
-- [ ] 明确每个方法的 evaluated samples 数、receiver policy 和 fusion scaffold。
+- [x] Aggregate AP@0.3 / AP@0.5 / AP@0.7 grouped bar 或折线图。第一版草稿见 `docs/doc_workspace/SGCP/artifacts/figures_20260719/figure2_protocol_breakdown.png`。
+- [x] 至少比较 Head-only、Pure late、FullPerception-PCS、EdgeCooperV2V+、SGCP。
+- [x] 明确每个方法的 evaluated samples 数、receiver policy 和 fusion scaffold。图内标注 raw Mbps 与 evaluated samples，完整字段见 `table1_protocol_20260719/protocol_native_manifest.csv`。
 
 验收标准：
 
-- [ ] 图中必须能说明 SGCP 的 aggregate AP 优势不是 ego-only 偶然结果，而来自多 receiver-frame / 多 cluster 的 pooled evaluation。
+- [x] 图中必须能说明 SGCP 的 aggregate AP 优势不是 ego-only 偶然结果，而来自多 receiver-frame / 多 cluster 的 pooled evaluation。
 - [ ] 若该图无法区分方法，优先检查 protocol-native baseline 是否正确、late fusion 是否一致、场景是否足够大，而不是新增自定义指标。
 
 ## P6：Figure 3 - Fusion Contribution by IoU Threshold
@@ -162,20 +162,20 @@
 
 必须包含：
 
-- [ ] Head-only。
-- [ ] Pure late fusion。
-- [ ] Clustered early-only。
-- [ ] Full SGCP。
-- [ ] 可选 One-cluster early-only / one-cluster early+late。
+- [x] Head-only。
+- [x] Pure late fusion。
+- [x] Clustered early-only。
+- [x] Full SGCP。
+- [x] 可选 One-cluster early-only / one-cluster early+late。第一版草稿使用 Full 20-CAV early upper reference，见 `docs/doc_workspace/SGCP/artifacts/figures_20260719/figure3_fusion_contribution.png`。
 
 图形：
 
-- [ ] Grouped bar：每个 variant 对应 AP@0.3、AP@0.5、AP@0.7。
-- [ ] 需要在 caption 中明确各 IoU 阈值对应 coverage / localization 的解释。
+- [x] Grouped bar：每个 variant 对应 AP@0.3、AP@0.5、AP@0.7。
+- [x] 需要在 caption 中明确各 IoU 阈值对应 coverage / localization 的解释。caption 草稿见 `docs/doc_workspace/SGCP/artifacts/figures_20260719/figure_notes.md`。
 
 验收标准：
 
-- [ ] AP@0.3 和 AP@0.7 的趋势必须可解释，能支撑 “early + late 的分工”。
+- [x] AP@0.3 和 AP@0.7 的趋势必须可解释，能支撑 “early + late 的分工”：Full SGCP 相比 clustered early-only 的 AP@0.3/AP@0.5 大幅提升来自 inter-cluster late fusion；Full 20-CAV early 的 AP@0.7 上界说明 localization 仍受 raw point-cloud sharing/checkpoint 限制。
 - [ ] 若趋势不符合叙事，优先检查 late-fusion NMS、坐标变换、full reference 和 receiver 统计口径。
 
 ## P7：Table 4 - Parameter Sensitivity
