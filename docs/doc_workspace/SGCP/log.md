@@ -5656,3 +5656,42 @@ conda run -n opencda python -m opencda.tools.offline_inference --dataset-root D:
 ### 结论
 
 PACP 不能写成点云严格复现；当前 `pacp_lidar` 是 PACP-style priority-aware LiDAR proxy。它证明 PACP 的 priority idea 可迁移到点云通信，但 raw LiDAR payload 较高：高预算 AP@0.7 强但 Mbps 高，低预算 AP 低于 PAPG。建议将其作为近年 V2V priority-aware proxy baseline 或附表，不作为 SGCP 主线替代。
+
+## 2026-07-19 Network-level satisfaction metric first pass
+
+### 目的
+
+推进 `target.md` P0/P5：建立一个可复现的 network-level satisfaction / coverage recovery 指标，避免后续主文只依赖 ego AP 或 aggregate AP。
+
+### 代码修改
+
+新增 `opencda.tools.sgcp_satisfaction_summary`：
+
+- 输入 `offline_inference --object-diagnostics-output` 生成的 per-GT CSV；
+- 按 receiver-frame 分组；
+- 计算 full-reference-detectable GT recovery；
+- 按阈值 `tau` 输出 satisfaction rate；
+- 输出 per-sample CSV 和 per-method summary CSV。
+
+### 命令
+
+```powershell
+conda run -n opencda python -m py_compile opencda\tools\sgcp_satisfaction_summary.py
+
+conda run -n opencda python -m opencda.tools.sgcp_satisfaction_summary --satisfaction-threshold 0.85 --object-csv Full=docs\doc_workspace\SGCP\artifacts\object_diag_full_41f.csv --object-csv Spatial10ch=docs\doc_workspace\SGCP\artifacts\object_diag_sgcp_spatial_rho3_10ch_41f.csv --object-csv TargetAware=docs\doc_workspace\SGCP\artifacts\object_diag_target_aware_pg_10ch_rho3_41f.csv --object-csv PAPG=docs\doc_workspace\SGCP\artifacts\object_diag_papg_bh2_rho3_41f.csv --sample-output docs\doc_workspace\SGCP\artifacts\satisfaction_p0_20260719\samples_existing_methods.csv --summary-output docs\doc_workspace\SGCP\artifacts\satisfaction_p0_20260719\summary_existing_methods_thr085.csv
+
+conda run -n opencda python -m opencda.tools.sgcp_satisfaction_summary --satisfaction-threshold 0.90 --object-csv Full=docs\doc_workspace\SGCP\artifacts\object_diag_full_41f.csv --object-csv Spatial10ch=docs\doc_workspace\SGCP\artifacts\object_diag_sgcp_spatial_rho3_10ch_41f.csv --object-csv TargetAware=docs\doc_workspace\SGCP\artifacts\object_diag_target_aware_pg_10ch_rho3_41f.csv --object-csv PAPG=docs\doc_workspace\SGCP\artifacts\object_diag_papg_bh2_rho3_41f.csv --summary-output docs\doc_workspace\SGCP\artifacts\satisfaction_p0_20260719\summary_existing_methods_thr090.csv
+```
+
+### 结果
+
+| Method | Mean Recovery | P10 Recovery | Satisfaction@0.85 | Satisfaction@0.90 | Payload bytes |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| Full reference | 1.000 | 1.000 | 1.000 | 1.000 | 0 |
+| Spatial-diverse 10ch | 0.877 | 0.807 | 0.707 | 0.366 | 29,405,296 |
+| Target-aware PG | 0.885 | 0.825 | 0.756 | 0.415 | 31,069,968 |
+| PAPG | 0.924 | 0.855 | 0.927 | 0.756 | 32,049,872 |
+
+### 结论
+
+`tau=0.70` 对当前强方法过宽，无法区分；`tau=0.85` 与 `mean recovery` 可以支撑 Figure 2 / satisfaction distribution。PAPG 的 p10 recovery 达到 0.855，说明其优势体现在 receiver-frame 尾部覆盖稳定性，而不仅是 aggregate AP。下一步需要为 FullPerception-PCS、EdgeCooperV2V+、pure late fusion 和最终 SGCP protocol-native rows 统一生成 object diagnostics。

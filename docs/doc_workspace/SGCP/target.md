@@ -26,7 +26,7 @@
 
 - [ ] 建立统一评估脚本/清单，保证所有图表使用同一数据集、CAV 数、OpenCOOD checkpoint、IoU 阈值、Mbps 换算、帧范围和随机种子记录。
 - [ ] 明确 network-level AP 的统计口径：优先按所有 receiver / cluster head / active CAV-frame 汇总，而不是只报告 ego AP；若保留 ego AP，只作为附录 sanity。
-- [ ] 定义并实现/确认 satisfaction rate：参考 EdgeCooper 的平均 satisfaction 思路，给出每个 CAV-frame 或区域是否满足 coverage / recall / AP 阈值的可复现定义。
+- [x] 定义并实现/确认 satisfaction rate：已新增 `opencda.tools.sgcp_satisfaction_summary` 和 `satisfaction_metric.md`。第一版定义为 receiver-frame 的 full-reference-detectable GT recovery；`tau=0.85` 在已有 41 帧结果中具有区分度，PAPG mean recovery 0.924、satisfaction@0.85 0.927，高于 spatial-diverse / target-aware PG。
 - [ ] 所有实验在结果进入论文前必须生成 artifact：命令、stdout/log 路径、trace CSV、summary CSV、图表源数据和 git commit。
 - [ ] 如果当前 41 帧场景无法支撑某张关键图表，重新导出更合适的 CARLA 场景；注意 CARLA 进程至多一个，数据路径仍遵循 `docs/doc_workspace/environment.md`。
 
