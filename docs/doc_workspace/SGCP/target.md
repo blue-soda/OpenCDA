@@ -132,7 +132,7 @@
 - [x] SGCP：`rho_th`、`B_h`、channel count、可选 point cap。当前 `pareto_source.csv` 已覆盖 5ch stress、10ch rho2/rho3、20ch rho2、cap=3000、B_h=2/3；early checkpoint 回收后需重跑同一组关键点。
 - [x] Random / Density / Link-aware：member budget、grid budget。当前已补 `scheduler_budget_sweep_20260719`：random low/high、density low/high、communication-aware low/high first-pass 预算扫描；若进附录可继续补更密集预算曲线。
 - [x] PACP-LiDAR：member/grid budget 或 priority threshold。当前已纳入 high-budget `86.56 Mbps` 和 low-budget `67.31 Mbps` 两个代表点，足够支撑 proxy baseline 边界；若进附录可继续补 priority threshold。
-- [ ] FullPerception-PCS：blind-spot granularity、candidate threshold 或 PCS 原生参数，不改主带宽。当前 tuned PCS 已进源表，但还未形成完整 PCS 参数曲线。
+- [x] FullPerception-PCS：blind-spot granularity、candidate threshold 或 PCS 原生参数，不改主带宽。当前已补 `pcs_parameter_sweep_20260719`：11 帧 granularity/overlap 趋势 + 41 帧 tuned anchor `div12/ov0`。41 帧更激进 sweep 因候选规模超过 10--15 分钟未完成，作为 PCS 可扩展性边界记录；Pareto 图仍只使用可复现的 41 帧 anchor。
 - [x] EdgeCooperV2V+ / EdgeCooper-inspired：sender cap、assignment budget、half-duplex constraint。当前已补 `edgecooper_budget_sweep_20260719`：`edgecooper_global_hd` 低预算 `1 member/head,58 grids/head` 与高预算 `3 members/head,117 grids/head`，并复现 EdgeCooper-HD 主点。
 - [x] Pure late prediction-box reference：在 Pareto 图或附注中加入 broadcast/all-to-all detection-box overhead；若要声称通信受限，必须补 NS3 synthetic late-box deadline replay，而不是只按 raw-LiDAR payload 记为 0 Mbps。第一版已加入 80B/box broadcast 与 all-to-all 两个点。
 

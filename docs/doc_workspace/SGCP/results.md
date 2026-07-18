@@ -964,3 +964,20 @@ Manifest：`docs\doc_workspace\SGCP\artifacts\edgecooper_budget_sweep_20260719\e
 | EdgeCooperHD | 3 | 117 | 0.81 | 0.78 | 0.42 | 33,519,040 | 65.40 |
 
 可读结论：EdgeCooper-HD 低预算端显著掉 AP，说明其高 AP@0.7 不是低通信量免费得到，而依赖 edge/global assignment + half-duplex sender cap 下仍保留较高 member/grid budget。与 PAPG 相比，EdgeCooper-HD 高预算在 AP@0.7 高 `+0.03`，但 payload 高约 `4.6%`，且属于 edge-assisted proxy/reference，而不是纯 V2V decentralized protocol。
+
+## FullPerception-PCS parameter sweep
+
+为补齐 P4 中 FullPerception-PCS 的原生参数扫描，本轮固定 20MHz/10ch、`fullperception_pcs`、`all-scheduled-receivers`，不改变主带宽或子信道数。41 帧 `div8/ov0` 与 `div12/ov1` 参数点均超过 10--15 分钟仍未产生日志/trace，说明 PCS 在更激进候选设置下存在明显运行时/候选规模边界；正式记录采用已经完成的 11 帧趋势 + 41 帧 tuned anchor。
+
+Manifest：`docs\doc_workspace\SGCP\artifacts\pcs_parameter_sweep_20260719\pcs_parameter_sweep_manifest.csv`
+
+| Variant | Frames | Division | Min overlap | AP@0.3 | AP@0.5 | AP@0.7 | Payload bytes | Mbps |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| PCS_11f_div4_ov1 | 11 | 4 | 1 | 0.58 | 0.51 | 0.24 | 3,668,304 | 26.68 |
+| PCS_11f_div8_ov0 | 11 | 8 | 0 | 0.50 | 0.46 | 0.26 | 3,683,232 | 26.79 |
+| PCS_11f_div12_ov0 | 11 | 12 | 0 | 0.57 | 0.54 | 0.30 | 4,513,424 | 32.82 |
+| PCS_11f_div12_ov1 | 11 | 12 | 1 | 0.56 | 0.49 | 0.16 | 3,634,432 | 26.43 |
+| PCS_11f_div16_ov1 | 11 | 16 | 1 | 0.42 | 0.40 | 0.20 | 540,160 | 3.93 |
+| PCS_41f_div12_ov0 | 41 | 12 | 0 | 0.59 | 0.53 | 0.22 | 12,959,840 | 25.29 |
+
+可读结论：`div12/ov0` 仍是当前 PCS baseline 的可写工作点。`min_overlap=1` 会显著降低 AP@0.7，`div16/ov1` 虽低通信但 AP 不可用；更细粒度/更宽候选的 41 帧运行不可承受。因此主表/Pareto 中保留 `PCS_41f_div12_ov0`，参数趋势放入附录或 rebuttal 支撑“PCS 已调参但受原机制限制”的边界。

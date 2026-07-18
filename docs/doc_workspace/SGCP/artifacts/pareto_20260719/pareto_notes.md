@@ -2,7 +2,7 @@
 
 更新时间：2026-07-19
 
-本目录是 Figure 1 AP-Mbps Pareto 曲线的第一版源数据，汇总已复现的 41 帧结果。2026-07-19 第二轮更新已补入 5ch stress、`B_h=2/3`、communication-aware low-budget 与 PACP-LiDAR low-budget 点；第三轮更新补跑并纳入 Random/Density/Communication-aware budget sweep；第四轮更新补入 EdgeCooper-HD low/high budget sweep，使 SGCP 主线、低带宽压力和 scheduler/edge-assisted proxy 具备 first-pass 扫描覆盖。
+本目录是 Figure 1 AP-Mbps Pareto 曲线的第一版源数据，汇总已复现的 41 帧结果。2026-07-19 第二轮更新已补入 5ch stress、`B_h=2/3`、communication-aware low-budget 与 PACP-LiDAR low-budget 点；第三轮更新补跑并纳入 Random/Density/Communication-aware budget sweep；第四轮更新补入 EdgeCooper-HD low/high budget sweep；第五轮完成 FullPerception-PCS 参数 first-pass 审计，Pareto 源表保留可复现的 41 帧 tuned PCS anchor，11 帧 granularity/overlap 趋势单独放在 `pcs_parameter_sweep_20260719`，避免混入 41 帧 Pareto。
 
 ## 口径
 
@@ -34,5 +34,5 @@
 - SGCP 已有 first-pass 扫描，但若 early checkpoint 回收后主线数值变化，需要重跑 `rho_th/channel/B_h/point cap`。
 - Random/Density/Link-aware 已有 first-pass budget sweep：random low/high、density low/high、communication-aware low/high。若进入 camera-ready 附录，可继续补更密集的 member/grid grid。
 - EdgeCooper-HD 已有 low/high budget sweep；若进入 camera-ready 附录，可继续补原版 RSU scheduling 与更多 sender-cap 点。
-- FullPerception-PCS tuning 已进入源表，但 PCS 原生参数尚未形成完整 Pareto sweep。
+- FullPerception-PCS 已补原生参数 first-pass：`pcs_parameter_sweep_20260719` 记录 11 帧 blind-spot granularity / overlap threshold 趋势和 41 帧 `div12/ov0` anchor。更激进 41 帧 sweep 出现候选规模/运行时不可承受，因此不混入 Pareto 源图。
 - early checkpoint fine-tune 完成后，重跑 SGCP-PAPG 与 Pure late controlled baseline，并更新本 CSV。

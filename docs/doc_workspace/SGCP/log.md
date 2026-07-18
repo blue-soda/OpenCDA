@@ -6296,3 +6296,40 @@ conda run -n opencda python -m opencda.tools.sgcp_aggregate_ap_manifest --run "E
 ### 结论
 
 EdgeCooper-HD 低预算端 AP 明显下降，高预算端复现既有主点。这支持将 EdgeCooper-HD 写成 edge-assisted / global assignment reference：它可以在较高预算下取得更强 AP@0.7，但不是低通信量下自然优于 SGCP 的同类纯分布式方法。
+
+## 2026-07-19 FullPerception-PCS parameter sweep
+
+### 目的
+
+继续推进 P4 中 FullPerception-PCS 的原生参数扫描。固定 20MHz/10ch、41 帧、`fullperception_pcs`、`all-scheduled-receivers`，不改变主带宽和子信道数；只扫描 PCS 的 blind-spot granularity (`--pcs-blind-spot-min-division`) 与 candidate overlap threshold (`--pcs-min-overlap-grids`)。该实验用于确认 `pcs.py` baseline 的合理工作区间，并避免把 FullPerception-PCS 与 SGCP-compatible scheduler 表混写。
+
+### 计划命令
+
+```powershell
+conda run -n opencda python -m opencda.tools.offline_inference --dataset-root D:\Data\Carla --scenario-id 2026_07_15_01_26_56 --ego-cav-id 1 --max-frames 0 --sgcp-constrained --resource-allocation fullperception_pcs --sgcp-receiver-policy all-scheduled-receivers --bandwidth-mhz 20 --num-channels 10 --pcs-blind-spot-min-division 8 --pcs-min-overlap-grids 0 --sgcp-trace-output docs\doc_workspace\SGCP\artifacts\pcs_parameter_sweep_20260719\pcs_div8_ov0_trace.csv
+conda run -n opencda python -m opencda.tools.offline_inference --dataset-root D:\Data\Carla --scenario-id 2026_07_15_01_26_56 --ego-cav-id 1 --max-frames 0 --sgcp-constrained --resource-allocation fullperception_pcs --sgcp-receiver-policy all-scheduled-receivers --bandwidth-mhz 20 --num-channels 10 --pcs-blind-spot-min-division 12 --pcs-min-overlap-grids 1 --sgcp-trace-output docs\doc_workspace\SGCP\artifacts\pcs_parameter_sweep_20260719\pcs_div12_ov1_trace.csv
+conda run -n opencda python -m opencda.tools.offline_inference --dataset-root D:\Data\Carla --scenario-id 2026_07_15_01_26_56 --ego-cav-id 1 --max-frames 0 --sgcp-constrained --resource-allocation fullperception_pcs --sgcp-receiver-policy all-scheduled-receivers --bandwidth-mhz 20 --num-channels 10 --pcs-blind-spot-min-division 16 --pcs-min-overlap-grids 0 --sgcp-trace-output docs\doc_workspace\SGCP\artifacts\pcs_parameter_sweep_20260719\pcs_div16_ov0_trace.csv
+```
+
+### 执行调整
+
+41 帧完整扫描中，`div8/ov0` 和 `div12/ov1` 均超过 10--15 分钟仍未产生日志/trace，需要手动终止残留进程。这说明 PCS 在更细 blind-spot granularity 或 overlap candidate 设置下存在候选规模/运行时不可承受问题。为避免把不完整运行写成正式结果，本轮改为使用此前已经完成的 11 帧 PCS 参数扫描展示趋势，并保留唯一完整 41 帧 tuned anchor `div12/ov0` 进入 Table/Pareto。
+
+Manifest 生成命令：
+
+```powershell
+conda run -n opencda python -m opencda.tools.sgcp_aggregate_ap_manifest --run "PCS_11f_div4_ov1=docs\doc_workspace\SGCP\artifacts\pcs_tuning_20260718\pcs_11f_div4_ov1.log,docs\doc_workspace\SGCP\artifacts\pcs_tuning_20260718\pcs_11f_div4_ov1_trace.csv" --run "PCS_11f_div8_ov0=docs\doc_workspace\SGCP\artifacts\pcs_tuning_20260718\pcs_11f_div8_ov0.log,docs\doc_workspace\SGCP\artifacts\pcs_tuning_20260718\pcs_11f_div8_ov0_trace.csv" --run "PCS_11f_div12_ov0=docs\doc_workspace\SGCP\artifacts\pcs_tuning_20260718\pcs_11f_div12_ov0.log,docs\doc_workspace\SGCP\artifacts\pcs_tuning_20260718\pcs_11f_div12_ov0_trace.csv" --run "PCS_11f_div12_ov1=docs\doc_workspace\SGCP\artifacts\pcs_tuning_20260718\pcs_11f_div12_ov1.log,docs\doc_workspace\SGCP\artifacts\pcs_tuning_20260718\pcs_11f_div12_ov1_trace.csv" --run "PCS_11f_div16_ov1=docs\doc_workspace\SGCP\artifacts\pcs_tuning_20260718\pcs_11f_div16_ov1.log,docs\doc_workspace\SGCP\artifacts\pcs_tuning_20260718\pcs_11f_div16_ov1_trace.csv" --run "PCS_41f_div12_ov0=docs\doc_workspace\SGCP\artifacts\pcs_tuning_20260718\pcs_41f_tuned_div12_ov0.log,docs\doc_workspace\SGCP\artifacts\pcs_tuning_20260718\pcs_41f_tuned_div12_ov0_trace.csv" --output-csv docs\doc_workspace\SGCP\artifacts\pcs_parameter_sweep_20260719\pcs_parameter_sweep_manifest.csv --notes "P4 FullPerception-PCS parameter sweep: 11-frame granularity/overlap trend plus existing 41-frame tuned div12 ov0 point; 20MHz/10ch unchanged"
+```
+
+| Variant | Frames | Division | Min overlap | AP@0.3 | AP@0.5 | AP@0.7 | Payload bytes | Mbps |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| PCS_11f_div4_ov1 | 11 | 4 | 1 | 0.58 | 0.51 | 0.24 | 3,668,304 | 26.68 |
+| PCS_11f_div8_ov0 | 11 | 8 | 0 | 0.50 | 0.46 | 0.26 | 3,683,232 | 26.79 |
+| PCS_11f_div12_ov0 | 11 | 12 | 0 | 0.57 | 0.54 | 0.30 | 4,513,424 | 32.82 |
+| PCS_11f_div12_ov1 | 11 | 12 | 1 | 0.56 | 0.49 | 0.16 | 3,634,432 | 26.43 |
+| PCS_11f_div16_ov1 | 11 | 16 | 1 | 0.42 | 0.40 | 0.20 | 540,160 | 3.93 |
+| PCS_41f_div12_ov0 | 41 | 12 | 0 | 0.59 | 0.53 | 0.22 | 12,959,840 | 25.29 |
+
+### 结论
+
+PCS 的可写主表点仍是 41 帧 `div12/ov0`：`0.59/0.53/0.22`、25.29 Mbps。11 帧趋势显示 `div12/ov0` 在 AP@0.5/AP@0.7 上是最合理的工作点；`min_overlap=1` 会显著伤高 IoU，`div16/ov1` 通信量很低但 AP 明显不可用。更激进的 41 帧 sweep 因候选规模导致运行时间不可接受，可作为 FullPerception-PCS 可扩展性边界而不是主文 Pareto 点。
