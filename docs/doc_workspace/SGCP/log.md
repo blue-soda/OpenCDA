@@ -6261,3 +6261,38 @@ conda run -n opencda python -m opencda.tools.sgcp_aggregate_ap_manifest --run "R
 ### 结论
 
 Random/Density/Link-aware 已形成 first-pass low/high budget coverage。PAPG `0.81/0.78/0.39, 62.54 Mbps` 在 AP@0.3/AP@0.5 上优于 density low-budget 且只比 random high-budget 多 0.86 Mbps；但 AP@0.7 仍低于 density/communication-aware high-quality reference，需要在 Pareto caption 中保留边界。
+
+## 2026-07-19 EdgeCooper-HD budget sweep
+
+### 目的
+
+继续推进 P4 中 EdgeCooperV2V+ / EdgeCooper-inspired 的 sender cap、assignment budget 与 half-duplex constraint 扫描。固定同一 clustered two-layer fusion scaffold、41 帧、all-cluster-heads pooled aggregate AP，使用 `edgecooper_global_hd` 表示 edge/global assignment + sender load cap + half-duplex proxy，只改变 member/grid budget。
+
+### 计划命令
+
+低预算端：
+
+```powershell
+conda run -n opencda python -m opencda.tools.offline_inference --dataset-root D:\Data\Carla --scenario-id 2026_07_15_01_26_56 --ego-cav-id 1 --max-frames 0 --sgcp-constrained --sgcp-receiver-policy all-cluster-heads --sgcp-inter-cluster-late-fusion --rho-th 3 --selective-sharing-baseline edgecooper_global_hd --selective-member-budget 1 --selective-grid-budget 58 --sgcp-trace-output docs\doc_workspace\SGCP\artifacts\edgecooper_budget_sweep_20260719\edgecooper_hd_m1_g58_trace.csv
+```
+
+高预算端：
+
+```powershell
+conda run -n opencda python -m opencda.tools.offline_inference --dataset-root D:\Data\Carla --scenario-id 2026_07_15_01_26_56 --ego-cav-id 1 --max-frames 0 --sgcp-constrained --sgcp-receiver-policy all-cluster-heads --sgcp-inter-cluster-late-fusion --rho-th 3 --selective-sharing-baseline edgecooper_global_hd --selective-member-budget 3 --selective-grid-budget 117 --sgcp-trace-output docs\doc_workspace\SGCP\artifacts\edgecooper_budget_sweep_20260719\edgecooper_hd_m3_g117_trace.csv
+```
+
+### 结果
+
+```powershell
+conda run -n opencda python -m opencda.tools.sgcp_aggregate_ap_manifest --run "EdgeCooperHD_m1_g58=docs\doc_workspace\SGCP\artifacts\edgecooper_budget_sweep_20260719\edgecooper_hd_m1_g58.log,docs\doc_workspace\SGCP\artifacts\edgecooper_budget_sweep_20260719\edgecooper_hd_m1_g58_trace.csv" --run "EdgeCooperHD_m3_g117=docs\doc_workspace\SGCP\artifacts\edgecooper_budget_sweep_20260719\edgecooper_hd_m3_g117.log,docs\doc_workspace\SGCP\artifacts\edgecooper_budget_sweep_20260719\edgecooper_hd_m3_g117_trace.csv" --output-csv docs\doc_workspace\SGCP\artifacts\edgecooper_budget_sweep_20260719\edgecooper_budget_sweep_manifest.csv --notes "P4 EdgeCooper-HD budget sweep: edgecooper_global_hd, 41-frame all-cluster-heads inter-cluster late fusion, rho_th=3"
+```
+
+| Method | Members/head | Grids/head | AP@0.3 | AP@0.5 | AP@0.7 | Payload bytes | Mbps |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| EdgeCooperHD_m1_g58 | 1 | 58 | 0.65 | 0.61 | 0.30 | 18,501,232 | 36.10 |
+| EdgeCooperHD_m3_g117 | 3 | 117 | 0.81 | 0.78 | 0.42 | 33,519,040 | 65.40 |
+
+### 结论
+
+EdgeCooper-HD 低预算端 AP 明显下降，高预算端复现既有主点。这支持将 EdgeCooper-HD 写成 edge-assisted / global assignment reference：它可以在较高预算下取得更强 AP@0.7，但不是低通信量下自然优于 SGCP 的同类纯分布式方法。

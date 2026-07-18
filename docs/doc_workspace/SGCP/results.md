@@ -951,3 +951,16 @@ Manifest：`docs\doc_workspace\SGCP\artifacts\scheduler_budget_sweep_20260719\sc
 | CommunicationAwareHighBudget | 3 | 117 | 0.80 | 0.76 | 0.42 | 38,920,592 | 75.94 |
 
 可读结论：random low-budget 是低通信/低 AP 端点；density low-budget 用接近 SGCP 的通信量获得较高 AP@0.7，但 AP@0.3/AP@0.5 仍低于 PAPG；communication-aware high-budget 在 AP@0.7 更强，但通信量高出 PAPG 约 21.4%。这支持论文中把 PAPG 写成中等通信区间的 raw-LiDAR V2V Pareto 候选，同时必须承认高预算 link-aware reference 的 AP@0.7 边界。
+
+## EdgeCooper-HD budget sweep for Pareto
+
+为补齐 P4 中 EdgeCooperV2V+ / EdgeCooper-inspired 的 sender cap、assignment budget、half-duplex constraint 扫描，本轮固定 41 帧、`rho_th=3`、all-cluster-heads、inter-cluster late fusion，使用 `edgecooper_global_hd` 作为 edge/global assignment + sender load cap + half-duplex proxy。
+
+Manifest：`docs\doc_workspace\SGCP\artifacts\edgecooper_budget_sweep_20260719\edgecooper_budget_sweep_manifest.csv`
+
+| Method | Members/head | Grids/head | AP@0.3 | AP@0.5 | AP@0.7 | Payload bytes | Mbps |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| EdgeCooperHDLow | 1 | 58 | 0.65 | 0.61 | 0.30 | 18,501,232 | 36.10 |
+| EdgeCooperHD | 3 | 117 | 0.81 | 0.78 | 0.42 | 33,519,040 | 65.40 |
+
+可读结论：EdgeCooper-HD 低预算端显著掉 AP，说明其高 AP@0.7 不是低通信量免费得到，而依赖 edge/global assignment + half-duplex sender cap 下仍保留较高 member/grid budget。与 PAPG 相比，EdgeCooper-HD 高预算在 AP@0.7 高 `+0.03`，但 payload 高约 `4.6%`，且属于 edge-assisted proxy/reference，而不是纯 V2V decentralized protocol。
