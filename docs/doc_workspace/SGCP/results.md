@@ -810,3 +810,27 @@ Actual-late 41 帧 prediction-box overhead：
 | `128 B/box` | 1.654 / 1.782 | 31.431 / 33.853 | 38.906 ms |
 
 结论：Pure late 过强不是因为误用了 early checkpoint；真正 late checkpoint 在当前场景下更强，甚至达到/略高于 full 20-CAV early upper reference `0.85/0.83/0.48`。这说明当前场景和模型组合下，box-level prediction sharing 是非常强的 reference。后续主表需要把 Pure late 从“baseline 被 SGCP 超越”的叙事中拆出来，作为 prediction-sharing upper/reference，或选择更能体现 raw LiDAR early fusion 恢复漏检能力的场景。
+
+### Unified late-detector sanity
+
+用户明确公平原则：SGCP 两层融合中，所有 “点云 -> 检测框” 过程应使用同一个 checkpoint；SGCP 的簇间 late fusion 和 Pure late fusion 都应使用 `naive_late_fusion()` 做 box-level NMS。
+
+代码确认：
+
+- SGCP inter-cluster late fusion：`offline_inference.py` 调用 `manager.naive_late_fusion()` 汇总每个 late source 的预测框。
+- `naive_late_fusion()` 本质是 concatenation + torchvision NMS。
+- 当前 SGCP 主线的第一层是 `fusion_method=early`，即 `pointpillar_early_fusion` raw point-cloud early fusion。
+
+补跑 “all late detector” sanity：
+
+```powershell
+conda run -n opencda python -m opencda.tools.offline_inference --dataset-root D:\Data\Carla --scenario-id 2026_07_15_01_26_56 --ego-cav-id 1 --max-frames 0 --fusion-method late --sgcp-constrained --sgcp-receiver-policy all-cluster-heads --resource-allocation perception_aware_potential_game --rho-th 3 --num-channels 10 --bandwidth-mhz 20 --head-rb-budget 2 --sgcp-inter-cluster-late-fusion --sgcp-trace-output docs\doc_workspace\SGCP\artifacts\late_detector_unified_20260719\sgcp_papg_late_detector_41f_trace.csv
+```
+
+| Variant | Frames | Detector / First-stage Fusion | Box-level Fusion | AP@0.3 | AP@0.5 | AP@0.7 | Payload Mbps | Interpretation |
+| --- | ---: | --- | --- | ---: | ---: | ---: | ---: | --- |
+| Pure late actual late | 41 | `pointpillar_late_fusion` local detector | `naive_late_fusion()` | 0.89 | 0.83 | 0.49 | 0 raw LiDAR | Native prediction-sharing reference |
+| SGCP PAPG forced late detector | 41 | `pointpillar_late_fusion` over scheduled source set | `naive_late_fusion()` | 0.87 | 0.81 | 0.48 | 62.54 | Sanity only; first stage is no longer raw point-cloud early fusion |
+| SGCP PAPG mainline | 41 | `pointpillar_early_fusion` raw point-cloud early fusion | `naive_late_fusion()` | 0.81 | 0.78 | 0.39 | 62.54 | Actual SGCP protocol |
+
+结论：如果都用 late checkpoint 的 local detector，SGCP 不能超过 Pure late；同时 forced SGCP late-detector row 不再代表论文中的 “簇内 early fusion + 簇间 late fusion”。因此主文公平策略应是：主线所有 raw point-cloud fusion baseline 统一使用 `pointpillar_early_fusion`；Pure late 作为 prediction-sharing reference 明确单列，或在 controlled ablation 中使用 `pointpillar_early_fusion` singleton detector + `naive_late_fusion()`。
