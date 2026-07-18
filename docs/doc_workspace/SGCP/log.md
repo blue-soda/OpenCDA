@@ -5613,3 +5613,46 @@ conda run -n opencda python -m opencda.tools.offline_inference --dataset-root D:
 ### 结论
 
 EdgeCooper-HD 与 PAPG 接近不是随机波动，而是当前实现和数据集上的稳定结果。论文应继续分层：EdgeCooper-HD 是 edge-assisted/global assignment reference，PAPG 是 V2V-only decentralized main method。PAPG 不应声称全面超过 EdgeCooper-HD；可主张其在无 RSU/无 edge global assignment 下达到相同 AP@0.3/AP@0.5、更低 payload，但 AP@0.7 仍低于 EdgeCooper-HD。
+
+## 2026-07-18 PACP modality audit and LiDAR proxy reproduction
+
+### 目的
+
+核实 PACP 是否为 RGB 方法，并尝试迁移到当前 SGCP raw LiDAR 点云通信场景。
+
+### 核实
+
+PACP 原文使用 camera perception、SinBEVT/CoBEVT BEV feature、BEV-match priority 和 adaptive autoencoder 压缩/重建 raw camera data；不是点云原生方法。当前实现命名为 `pacp_lidar`，只复现其 priority-aware / BEV-match scheduling idea 到 LiDAR BEV grid，占据一致性和 blind-grid complementarity 替代 RGB BEV feature match。
+
+### 代码修改
+
+`opencda/tools/offline_inference.py` 新增 `--selective-sharing-baseline pacp_lidar`：
+
+- sender priority = LiDAR BEV occupancy match + blind-grid complementarity + distance/NS3 link-quality cost；
+- grid priority = overlap match + blind-grid complementarity + novelty + raw density；
+- 保持 raw point-grid upload、SGCP coalition/receiver、OpenCOOD early fusion 和 inter-cluster late fusion 评价口径不变。
+
+### 命令与结果
+
+```powershell
+conda run -n opencda python -m py_compile opencda\tools\offline_inference.py opencda\tools\offline_ns3_replay.py
+conda run -n opencda python -m opencda.tools.offline_inference --dataset-root D:\Data\Carla --scenario-id 2026_07_15_01_26_56 --ego-cav-id 1 --max-frames 3 --selective-sharing-baseline pacp_lidar --selective-member-budget 3 --selective-grid-budget 117 --sgcp-receiver-policy all-cluster-heads --sgcp-inter-cluster-late-fusion --rho-th 3 --num-channels 10 --bandwidth-mhz 20 --sgcp-trace-output docs\doc_workspace\SGCP\artifacts\pacp_lidar_3f_trace.csv
+```
+
+3-frame smoke：AP `0.77/0.74/0.37`，total payload 3,249,312 bytes。
+
+41-frame full:
+
+| Variant | AP@0.3 | AP@0.5 | AP@0.7 | Payload bytes | Mbps |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| `pacp_lidar`, 3 members/head, 117 grids/head | 0.81 | 0.79 | 0.42 | 44,361,424 | 86.56 |
+| `pacp_lidar`, 2 members/head, 87 grids/head | 0.76 | 0.73 | 0.37 | 34,498,160 | 67.31 |
+
+11-frame NS3 dry-run:
+
+- high-budget: 110 scheduled requests, 44 skipped unscheduled demands；
+- low-budget: 110 scheduled requests, 9 skipped unscheduled demands。
+
+### 结论
+
+PACP 不能写成点云严格复现；当前 `pacp_lidar` 是 PACP-style priority-aware LiDAR proxy。它证明 PACP 的 priority idea 可迁移到点云通信，但 raw LiDAR payload 较高：高预算 AP@0.7 强但 Mbps 高，低预算 AP 低于 PAPG。建议将其作为近年 V2V priority-aware proxy baseline 或附表，不作为 SGCP 主线替代。

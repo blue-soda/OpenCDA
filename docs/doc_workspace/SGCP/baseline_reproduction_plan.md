@@ -27,6 +27,7 @@
 | `edgecooper` | edge / virtual RSU | complementarity minus redundancy proxy | First proxy implemented |
 | `edgecooper_global` | edge / virtual RSU with network-aware global assignment proxy | blind-spot complementarity + global sender-load balancing + 35 m V2V feasibility gate | Implemented; 41-frame offline result and 11-frame true NS3 replay available, but NS3 delivery incomplete |
 | `edgecooper_global_hd` | edge / virtual RSU with network-aware half-duplex global assignment proxy | `edgecooper_global` plus sender/receiver half-duplex exclusion within each slot | Implemented; 41-frame offline result and 11-frame true NS3 replay available with full delivery |
+| `pacp_lidar` | V2V-only priority-aware proxy | LiDAR BEV occupancy match + blind-grid complementarity + link/distance cost, then raw point-grid upload | Implemented; 41-frame offline result and 11-frame NS3 dry-run available |
 
 PCS/MWS/RS 通过 `--resource-allocation fullperception_pcs|fullperception_mws|fullperception_random` 进入资源分配路径；`global_selective_proxy/cluster_local_selective_proxy/edgecooper/edgecooper_global` 是后补的 selective-sharing proxy，通过 `--selective-sharing-baseline <name>` 进入同一 OpenCOOD checkpoint、同一 41-frame dump 和同一 inter-cluster late-fusion evaluation path。
 
@@ -91,7 +92,7 @@ PCS/MWS/RS 通过 `--resource-allocation fullperception_pcs|fullperception_mws|f
 | Candidate | Type | Fit to Current Dump | Implementation Plan |
 | --- | --- | --- | --- |
 | Where2comm | V2V / learned communication | Medium | OpenCOOD 生态相关；优先评估是否可直接复用 pretrained/code，否则实现 confidence-map top-k proxy |
-| PACP | V2V / priority-aware CP | Medium | 可 proxy 成 object/priority-aware selective sharing，与 PAPG 区分为 baseline priority scheduler |
+| PACP | V2V / priority-aware CP | Medium | 原论文是 RGB/BEV + CoBEVT/SinBEVT + adaptive autoencoder，不是点云原生；已实现 `pacp_lidar`，把 BEV-match priority 迁移为 LiDAR BEV occupancy/grid complementarity proxy |
 | What2comm | V2V / what-to-communicate | Medium | 若公开实现可接入则复现；否则用 objectness/uncertainty grid selection proxy |
 | CoBEVT | cooperative BEV transformer | Low-Medium | 更偏模型架构，需要 checkpoint/训练成本；适合作 related work，不一定适合短期主表 |
 | V2VNet | V2V feature-message passing | Low-Medium | 与当前 early point-cloud checkpoint 不同；可作为 related work 或另起模型复现任务 |
@@ -103,3 +104,22 @@ PCS/MWS/RS 通过 `--resource-allocation fullperception_pcs|fullperception_mws|f
 - `cluster_local_selective_proxy` 的 11-frame true NS3 replay 已完成：110/110 application callback complete、110/110 RLC complete、0 PHY failures。后续只需在表格中维护 artifact 路径和口径说明。
 - 重构 EdgeCooper proxy：从当前 blind-spot-aware per-receiver greedy 改为 minimum-cost-flow/global assignment 风格。
 - 选择一个 V2V-only SOTA proxy 优先实现，建议从 Where2comm-style confidence communication 或 PACP-style priority-aware sharing 开始。
+
+## PACP LiDAR Adaptation
+
+原 PACP 论文 `PACP: Priority-Aware Collaborative Perception for Connected and Autonomous Vehicles` 不是 raw LiDAR 点云方法。原文的 priority weight 基于 RGB 相机生成的 BEV feature/box overlap，backbone 使用 SinBEVT/CoBEVT，并用 adaptive autoencoder 压缩/重建 raw camera data。因此本文档和主表中不能把当前实现写成 PACP 原方法的严格复现，只能写为 `PACP-style LiDAR priority proxy`。
+
+当前 `pacp_lidar` 迁移原则：
+
+- 成员优先级：用 head/sender 的 LiDAR BEV grid 占据一致性近似 PACP 的 BEV-match；用 sender 对 head weak/blind grids 的互补密度近似 perception priority；再乘以距离或 NS3 link-quality cost。
+- Grid 选择：在选中 sender 后，按 overlap-match、blind-grid complementarity、novelty 和 density 选择 raw point-cloud grids；实际上传仍是点云块，进入同一 OpenCOOD early-fusion + inter-cluster late-fusion pipeline。
+- 公平边界：与 PACP 原论文共享 priority-aware / BEV-match resource scheduling idea，但没有复现 RGB encoder/decoder、CoBEVT feature fusion 或 adaptive image compression。
+
+41-frame first results:
+
+| Variant | AP@0.3 | AP@0.5 | AP@0.7 | Payload bytes | Mbps | NS3 Plan |
+| --- | ---: | ---: | ---: | ---: | ---: | --- |
+| `pacp_lidar`, 3 members/head, 117 grids/head | 0.81 | 0.79 | 0.42 | 44,361,424 | 86.56 | 11f dry-run: 110 scheduled, 44 skipped unscheduled |
+| `pacp_lidar`, 2 members/head, 87 grids/head | 0.76 | 0.73 | 0.37 | 34,498,160 | 67.31 | 11f dry-run: 110 scheduled, 9 skipped unscheduled |
+
+结论：PACP 思路可迁移到点云通信场景，并能在高预算下达到较高 AP@0.7；但 raw LiDAR payload 偏高，低预算下 AP 低于 PAPG。因此它适合作为近年 V2V priority-aware proxy baseline 或附表 baseline，不宜声称为严格 PACP 复现，也不宜直接替代 SGCP 主线。

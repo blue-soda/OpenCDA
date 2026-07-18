@@ -641,6 +641,29 @@ NS3 口径：`targetSubchannels=10`、`enableTimeSync=true`。在线 Mbps 使用
 
 结论：在线 CARLA/NS3 已经消除时间流速不一致导致的 sync timeout，并确认 OpenCDA 指定子信道真实落到 NS3 发送行为。在线 AP 仍不应直接与离线“最终 request complete”主表混用；论文中应额外声明 deadline-aware online CP delivery，即 request 必须在当前融合周期截止前完整或部分可用，才会影响该帧 AP。
 
+## PACP-style LiDAR priority baseline
+
+原 PACP 论文是 RGB/BEV 协作感知：使用多相机 perception、SinBEVT/CoBEVT BEV feature、BEV-match priority 和 adaptive autoencoder 压缩 camera data。当前结果不是 PACP 原方法严格复现，而是把 BEV-match priority-aware scheduling 思路迁移到当前 raw LiDAR grid sharing pipeline，代码入口为 `offline_inference --selective-sharing-baseline pacp_lidar`。
+
+命令：
+
+```powershell
+conda run -n opencda python -m opencda.tools.offline_inference --dataset-root D:\Data\Carla --scenario-id 2026_07_15_01_26_56 --ego-cav-id 1 --max-frames 0 --selective-sharing-baseline pacp_lidar --selective-member-budget 3 --selective-grid-budget 117 --sgcp-receiver-policy all-cluster-heads --sgcp-inter-cluster-late-fusion --rho-th 3 --num-channels 10 --bandwidth-mhz 20 --sgcp-trace-output docs\doc_workspace\SGCP\artifacts\pacp_lidar_41f_trace.csv
+conda run -n opencda python -m opencda.tools.offline_inference --dataset-root D:\Data\Carla --scenario-id 2026_07_15_01_26_56 --ego-cav-id 1 --max-frames 0 --selective-sharing-baseline pacp_lidar --selective-member-budget 2 --selective-grid-budget 87 --sgcp-receiver-policy all-cluster-heads --sgcp-inter-cluster-late-fusion --rho-th 3 --num-channels 10 --bandwidth-mhz 20 --sgcp-trace-output docs\doc_workspace\SGCP\artifacts\pacp_lidar_2m87g_41f_trace.csv
+```
+
+| Variant | Frames | AP@0.3 | AP@0.5 | AP@0.7 | Payload bytes | Mbps | Avg. source CAVs | Avg. selected grids |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| `pacp_lidar`, 3 members/head, 117 grids/head | 41 | 0.81 | 0.79 | 0.42 | 44,361,424 | 86.56 | 3.33 | 104.93 |
+| `pacp_lidar`, 2 members/head, 87 grids/head | 41 | 0.76 | 0.73 | 0.37 | 34,498,160 | 67.31 | 2.81 | 81.83 |
+
+Dry-run NS3 plan:
+
+- High-budget `pacp_lidar`: 11 frames, 110 scheduled requests, 44 skipped unscheduled demands.
+- Low-budget `pacp_lidar`: 11 frames, 110 scheduled requests, 9 skipped unscheduled demands.
+
+结论：PACP priority idea 可以迁移到点云通信场景，但 raw LiDAR grid payload 显著高于原 RGB feature/image-compression setting。高预算版本 AP@0.7 强，但 Mbps 高于 PAPG 与 EdgeCooper-HD；低预算版本接近公平通信量时 AP 低于 PAPG。因此它可作为近年 V2V priority-aware proxy baseline，不宜作为“严格 PACP”或 SGCP 主线替代。
+
 ## 离线 SGCP 回放稳定性与耗时
 
 命令：
