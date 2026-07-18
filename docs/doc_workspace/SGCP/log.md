@@ -5878,3 +5878,54 @@ conda run -n opencda python -m opencda.tools.sgcp_late_box_comm_budget --trace-c
 ### 结论
 
 Pure late fusion 应作为 strong prediction-sharing reference 写入论文，主表需显式报告 detection-box overhead 或标注 `0 raw-LiDAR Mbps`。SGCP 的优势应强调 raw LiDAR early fusion 能恢复本地 detector 漏检和高 IoU 几何质量，并通过分簇/PPS 控制 raw point-cloud payload；不能声称有调度的 20-CAV prediction-box late fusion 在当前场景下无法 100 ms 内完成。
+
+## 2026-07-19 Pure late checkpoint sanity
+
+### 目的
+
+核查用户提出的方向：Pure late 过强是否因为当前 early fusion 太弱，或当前实际 early fusion 是否加载 `C:\Workspace\OpenCDA\opencood\logs\pointpillar_early_fusion`。
+
+### 配置核查
+
+- `opencda/scenario_testing/config_yaml/v2xp_cluster_carla.yaml`：`fusion_method: early`，`early: opencood/logs/pointpillar_early_fusion`。
+- `opencda/scenario_testing/config_yaml/v2xp_cluster_carla_datadump.yaml`：同样使用 `pointpillar_early_fusion`。
+- `opencda/scenario_testing/config_yaml/enable_coperception.yaml`：offline inference 默认读取该文件，也使用 `fusion_method: early`。
+- `OpenCOODManager` 通过 `models[fusion_method]` 作为 `model_dir`，所以 SGCP early/full-sharing/PAPG 当前确实加载 `opencood/logs/pointpillar_early_fusion`。
+- `pointpillar_early_fusion/config.yaml` 的模型名为 `point_pillar_early_fusion_low_res`，`voxel_size=0.4m`，full 20-CAV early upper reference 为 `0.85/0.83/0.48`，说明高 IoU 上界本身不高。
+
+### 实验
+
+Actual late checkpoint 11 帧：
+
+```powershell
+conda run -n opencda python -m opencda.tools.offline_inference --dataset-root D:\Data\Carla --scenario-id 2026_07_15_01_26_56 --ego-cav-id 1 --max-frames 11 --fusion-method late --sgcp-constrained --clustering singleton --sgcp-upload-mode head_only --sgcp-receiver-policy all-cluster-heads --sgcp-inter-cluster-late-fusion --sgcp-trace-output docs\doc_workspace\SGCP\artifacts\pure_late_actual_late_20260719\pure_late_actual_late_11f_trace.csv
+```
+
+Early checkpoint singleton proxy 11 帧：
+
+```powershell
+conda run -n opencda python -m opencda.tools.offline_inference --dataset-root D:\Data\Carla --scenario-id 2026_07_15_01_26_56 --ego-cav-id 1 --max-frames 11 --fusion-method early --sgcp-constrained --clustering singleton --sgcp-upload-mode head_only --sgcp-receiver-policy all-cluster-heads --sgcp-inter-cluster-late-fusion --sgcp-trace-output docs\doc_workspace\SGCP\artifacts\pure_late_actual_late_20260719\pure_late_early_singleton_11f_trace.csv
+```
+
+Actual late checkpoint 41 帧：
+
+```powershell
+conda run -n opencda python -m opencda.tools.offline_inference --dataset-root D:\Data\Carla --scenario-id 2026_07_15_01_26_56 --ego-cav-id 1 --max-frames 0 --fusion-method late --sgcp-constrained --clustering singleton --sgcp-upload-mode head_only --sgcp-receiver-policy all-cluster-heads --sgcp-inter-cluster-late-fusion --sgcp-trace-output docs\doc_workspace\SGCP\artifacts\pure_late_actual_late_20260719\pure_late_actual_late_41f_trace.csv
+```
+
+### 结果
+
+| Variant | Frames | Fusion Method | AP@0.3 | AP@0.5 | AP@0.7 | Notes |
+| --- | ---: | --- | ---: | ---: | ---: | --- |
+| Pure late early-singleton proxy | 11 | early | 0.78 | 0.72 | 0.32 | 当前旧 manifest 的实现口径 |
+| Pure late actual late checkpoint | 11 | late | 0.90 | 0.84 | 0.46 | `resuming by loading epoch 30` |
+| Pure late actual late checkpoint | 41 | late | 0.89 | 0.83 | 0.49 | 比 full 20-CAV early upper `0.85/0.83/0.48` 略高 |
+
+Actual-late prediction-box overhead：
+
+- `80 B/box`：broadcast `1.068/1.148 Mbps` mean/max，all-to-all `20.298/21.815 Mbps` mean/max，scheduled mean `25.072 ms`。
+- `128 B/box`：broadcast `1.654/1.782 Mbps` mean/max，all-to-all `31.431/33.853 Mbps` mean/max，scheduled mean `38.906 ms`。
+
+### 结论
+
+当前 SGCP early fusion 确实使用 `pointpillar_early_fusion`，且 full-sharing early 上界 AP@0.7 只有 `0.48`，说明 early backend 本身不强。与此同时，真正 late checkpoint 的 Pure late 更强，说明 Pure late 过强不是由于误用了 early checkpoint，而是当前场景下 prediction-box sharing reference 本身非常强。后续主表应避免把 Pure late 写成普通低通信 baseline；更合理是作为 prediction-sharing reference/upper，或者换一个 local detector 漏检更明显、raw LiDAR early fusion 能恢复目标的场景。

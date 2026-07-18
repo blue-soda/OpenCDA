@@ -56,6 +56,7 @@
 - [ ] 若 SGCP 只靠 late fusion 在 AP@0.3 大幅领先，需要在正文明确这是系统协议优势，不把它写成单纯 scheduler 优势。
 - [ ] 若 FullPerception-PCS 或 EdgeCooperV2V+ 复现结果异常低，先核查算法、参数和场景，不直接拿弱结果进主表。
 - [x] Pure late fusion 当前 `0.82/0.76/0.37` 且 0 点云 payload 很强；论文写作必须计入 detection-box exchange overhead 或将其明确为 prediction-sharing reference，否则会削弱 SGCP 通信优势叙事。已新增 `late_fusion_box_comm.md` 与 `opencda.tools.sgcp_late_box_comm_budget`：20MHz/10ch 下 detection-box broadcast 约 `0.74-1.13 Mbps`，scheduled all-to-all unicast 约 `14.04-21.52 Mbps` 且 100 ms 内可完成；只有 unscheduled all-to-all 随机抢信道模型会因碰撞失败。
+- [ ] 修正 Pure late baseline 口径：当前 P1/P2 manifest 中的 Pure late 使用 `fusion_method=early` + singleton CAV + custom box-level late NMS，不是 `pointpillar_late_fusion` checkpoint。已补 41 帧 actual late checkpoint sanity：`0.89/0.83/0.49`，预测框 broadcast overhead 约 `1.07-1.65 Mbps`。后续主表应决定使用 actual-late checkpoint 作为 prediction-sharing reference，或明确标注 early-singleton late proxy。
 
 ## P2：Table 2 - Fusion Scaffold Ablation
 

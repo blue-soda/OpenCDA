@@ -789,3 +789,24 @@ conda run -n opencda python -m opencda.tools.sgcp_late_box_comm_budget --trace-c
 | `128 B/box` | all-to-all unicast | 21.515 | 24.028 | 27.336 ms | 100% | 0% |
 
 结论：当前场景下，预测框交换不能靠 payload rate 或调度传输时延自然压低；有调度 all-to-all unicast 在 100 ms deadline 内也可完成。只有完全无调度的 all-to-all 随机抢信道会因碰撞失败。论文中应把 Pure late 写成 strong prediction-sharing reference，并显式说明它的低 payload 与信息内容限制，而不是声称 20-CAV late fusion 必然 broadcast storm。
+
+### Actual late checkpoint sanity
+
+补查发现：当前 Table 1 / Table 2 manifest 中的 Pure late 行 `fusion_method=early`，实现上是用 `pointpillar_early_fusion` 对 singleton CAV 做本地检测，再由 `OpenCOODManager.naive_late_fusion()` 做 box-level NMS。它不是 `pointpillar_late_fusion` checkpoint 的原生 late inference。
+
+`pointpillar_late_fusion` 目录包含 `net_epoch30.pth`，`load_saved_model()` 会加载 epoch 30。使用真正 late checkpoint 的 sanity 结果如下：
+
+| Variant | Frames | Fusion Method | AP@0.3 | AP@0.5 | AP@0.7 | Trace Rows | Raw LiDAR Mbps |
+| --- | ---: | --- | ---: | ---: | ---: | ---: | ---: |
+| Pure late, early checkpoint singleton proxy | 11 | early | 0.78 | 0.72 | 0.32 | 220 | 0.00 |
+| Pure late, actual late checkpoint | 11 | late | 0.90 | 0.84 | 0.46 | 220 | 0.00 |
+| Pure late, actual late checkpoint | 41 | late | 0.89 | 0.83 | 0.49 | 820 | 0.00 |
+
+Actual-late 41 帧 prediction-box overhead：
+
+| Assumption | Broadcast Mean/Max Mbps | All-to-all Mean/Max Mbps | All-to-all Mean Scheduled Completion |
+| --- | ---: | ---: | ---: |
+| `80 B/box` | 1.068 / 1.148 | 20.298 / 21.815 | 25.072 ms |
+| `128 B/box` | 1.654 / 1.782 | 31.431 / 33.853 | 38.906 ms |
+
+结论：Pure late 过强不是因为误用了 early checkpoint；真正 late checkpoint 在当前场景下更强，甚至达到/略高于 full 20-CAV early upper reference `0.85/0.83/0.48`。这说明当前场景和模型组合下，box-level prediction sharing 是非常强的 reference。后续主表需要把 Pure late 从“baseline 被 SGCP 超越”的叙事中拆出来，作为 prediction-sharing upper/reference，或选择更能体现 raw LiDAR early fusion 恢复漏检能力的场景。

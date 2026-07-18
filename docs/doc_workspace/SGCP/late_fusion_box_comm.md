@@ -62,3 +62,16 @@ conda run -n opencda python -m opencda.tools.sgcp_late_box_comm_budget --trace-c
 - 默认逐帧：`docs\doc_workspace\SGCP\artifacts\late_box_comm_20260719\late_box_frame_budget.csv`
 - 保守估计：`docs\doc_workspace\SGCP\artifacts\late_box_comm_20260719_box128\late_box_summary.csv`
 - 保守逐帧：`docs\doc_workspace\SGCP\artifacts\late_box_comm_20260719_box128\late_box_frame_budget.csv`
+
+## Actual late checkpoint update
+
+2026-07-19 复核发现，原 Table 1 / Table 2 manifest 中的 Pure late 使用 `fusion_method=early`，即 `pointpillar_early_fusion` singleton local inference + custom box-level late NMS；它不是 `pointpillar_late_fusion` checkpoint。补跑真正 `fusion_method=late` 后：
+
+- 11 帧：AP `0.90/0.84/0.46`
+- 41 帧：AP `0.89/0.83/0.49`
+- `80 B/box` actual-late broadcast mean/max：`1.068/1.148 Mbps`
+- `80 B/box` actual-late all-to-all mean/max：`20.298/21.815 Mbps`
+- `128 B/box` actual-late broadcast mean/max：`1.654/1.782 Mbps`
+- `128 B/box` actual-late all-to-all mean/max：`31.431/33.853 Mbps`
+
+该结果进一步说明 Pure late 是强 prediction-sharing reference；若主文保留它，必须明确 checkpoint、通信类型和 detection-box overhead。
