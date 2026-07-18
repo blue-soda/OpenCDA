@@ -1,0 +1,2 @@
+rows,compressed_npz_bytes,uncompressed_bytes,mean_compressed_npz_bytes,mean_uncompressed_bytes,scatter_elements,fused_elements
+23,810688,6183680,35247.304348,268855.652174,1485952,1605888

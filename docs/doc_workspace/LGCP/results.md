@@ -1796,6 +1796,38 @@ Interpretation:
 - The recorded float32 byte estimates are uncompressed upper bounds, not final communication numbers.
 - The result moves model-level hierarchy from code-entry audit to concrete feature-slice adapter work.
 
+## PointPillar Feature Slice Export Smoke
+
+2026-07-18 新增 `opencda/tools/lgcp_pointpillar_feature_slice_export.py`，在 geometry probe 基础上实际裁剪并保存 feature tensor slices：
+
+```text
+docs/doc_workspace/LGCP/experiments/hierarchy_plan/20260718_lgcp_pointpillar_feature_slice_export_area23_1f5a
+```
+
+| Item | Value |
+| --- | ---: |
+| Rows | 5 |
+| Slice level | `both` |
+| Dtype | `float16` |
+| Uncompressed bytes | 1502848 |
+| Compressed `.npz` bytes | 178855 |
+| Mean compressed bytes / area | 35771 |
+
+Top-23 first-frame extension:
+
+| Item | Value |
+| --- | ---: |
+| Rows / slice files | 23 |
+| Uncompressed bytes | 6183680 |
+| Compressed `.npz` bytes | 810688 |
+| Mean compressed bytes / area | 35247.304348 |
+
+Interpretation:
+
+- The model-level hierarchy path now has a real feature crop / slice manifest smoke.
+- The saved `.npz` files contain cropped `scatter` and `fused` tensors plus bounds and group metadata.
+- This is still an interface result, not leader-local fusion or RSU global AP.
+
 ## Box-Level Hierarchy Late-Fusion Smoke
 
 2026-07-18 新增 `opencda/tools/lgcp_hierarchy_late_fusion_eval.py`，并完成最小 model-calling smoke：

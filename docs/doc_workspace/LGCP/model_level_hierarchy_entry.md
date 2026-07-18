@@ -358,3 +358,56 @@ conda run -n opencda python -m opencda.tools.lgcp_pointpillar_feature_probe --da
 - 该 probe 已把 LGCP world-coordinate area cell 映射到 PointPillar leader-local BEV feature index range。
 - 当前 byte 只是未压缩 float32 tensor 上界，不应用作最终通信成本；后续需要量化、稀疏化或选择更早/更轻的 feature representation。
 - 下一步应把该映射接入可选 feature crop adapter：先导出 per-area tensor slice manifest，再实现 leader-local crop fusion 和 RSU global aggregation。
+
+## 2026-07-18 PointPillar Feature Slice Export Smoke
+
+运行目录：
+
+```text
+docs/doc_workspace/LGCP/experiments/hierarchy_plan/20260718_lgcp_pointpillar_feature_slice_export_area23_1f5a
+```
+
+命令：
+
+```powershell
+conda run -n opencda python -m opencda.tools.lgcp_pointpillar_feature_slice_export --dataset-root D:\Data\Carla --scenario-id 2026_07_15_02_33_21 --assignment-plan docs\doc_workspace\LGCP\experiments\hierarchy_plan\20260718_lgcp_carla_hierarchy_plan_area23_11f\area_assignment_plan.csv --output-dir docs\doc_workspace\LGCP\experiments\hierarchy_plan\20260718_lgcp_pointpillar_feature_slice_export_area23_1f5a --fusion-method intermediate_attentive --max-frames 1 --max-areas-per-frame 5 --grid-size-x 10 --grid-size-y 6 --slice-level both --dtype float16
+```
+
+输出：
+
+| File | Meaning |
+| --- | --- |
+| `feature_slice_manifest.csv` | 每个 `(timestamp, area_id, leader)` 的 feature crop shape、bounds、byte count 和 `.npz` 路径 |
+| `feature_slice_summary.csv` | 汇总压缩 / 未压缩 feature bytes |
+| `slices/*.npz` | 真实裁剪后的 `scatter` 和 `fused` tensor slice，附带 bounds 与 group metadata |
+
+结果：
+
+| Metric | Value |
+| --- | ---: |
+| Rows | 5 |
+| Scatter slice shapes | `1-2 x 64 x 26-30 x 17-30` |
+| Fused slice shapes | `1 x 384 x 14-15 x 9-16` |
+| Uncompressed float16 bytes | 1502848 |
+| Compressed `.npz` bytes | 178855 |
+| Mean compressed bytes / area | 35771 |
+
+扩展到 Top-23 完整首帧：
+
+```text
+docs/doc_workspace/LGCP/experiments/hierarchy_plan/20260718_lgcp_pointpillar_feature_slice_export_area23_1f
+```
+
+| Metric | Value |
+| --- | ---: |
+| Rows | 23 |
+| Slice files | 23 |
+| Uncompressed float16 bytes | 6183680 |
+| Compressed `.npz` bytes | 810688 |
+| Mean compressed bytes / area | 35247.304348 |
+
+解释：
+
+- 这是第一个真实保存 neural feature crop 的 LGCP smoke，不再只是坐标映射。
+- 当前导出的 `scatter` slice 是 per-CAV/group tensor，`fused` slice 是 attentive backbone 已融合后的 leader tensor；二者都保存是为了比较后续 local fusion 的切入层。
+- 该 smoke 仍未实现 leader-local feature fusion 或 RSU global aggregation，因此不能作为最终 model-level AP 结果。

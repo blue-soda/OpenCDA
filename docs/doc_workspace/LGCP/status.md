@@ -77,6 +77,7 @@
 - 已新增 `opencda/tools/lgcp_feature_slice_manifest.py`，生成 raw LiDAR area-specific slice manifest；Top-40 11 帧 member upload slice 约 `6199` points/frame、`99.19 KB/frame`，为后续 neural feature slicing 提供接口和 byte proxy。
 - 已新增 `model_level_hierarchy_entry.md`，审计 OpenCOOD late/intermediate fusion、OpenCDA offline dataset 和 SGCP late-fusion 参考路径；结论是下一步应先实现 box-level hierarchy late-fusion adapter，再推进 PointPillar intermediate neural feature slicing。
 - 已新增 `opencda/tools/lgcp_pointpillar_feature_probe.py`，并完成 `intermediate_attentive` 首帧 5-area feature geometry probe：`model.scatter` 输出 `N x 64 x 200 x 704`，`model.backbone` 输出 `1 x 384 x 100 x 352`，LGCP area cell 已可映射到 leader-local BEV feature index range。
+- 已新增 `opencda/tools/lgcp_pointpillar_feature_slice_export.py`，完成首帧 5-area 与 Top-23 完整首帧真实 feature crop / slice manifest smoke：导出 `scatter` 与 `fused` `.npz` slices；Top-23 首帧 float16 未压缩 `6.18MB`、压缩 `.npz` `810.69KB`。
 - 已新增 `opencda/tools/lgcp_hierarchy_late_fusion_eval.py`，实现 box-level hierarchy late-fusion adapter；1 帧 2 area smoke 已完成，能够真实调用 OpenCOOD late model，输出 leader local prediction、RSU global late-fusion summary 和 AP。
 - `lgcp_hierarchy_late_fusion_eval.py` 已扩大到 Top-30 首帧完整 area：30 assignment rows、23 次唯一 group inference、RSU fused pred / GT boxes 为 `35 / 35`，AP@0.5 为 `0.606851`；仍需扩大到 3 帧 / 11 帧后才能作为论文级对照。
 - `lgcp_hierarchy_late_fusion_eval.py` 已完成 Top-30 3 帧连续运行：90 assignment rows、68 次唯一 group inference、mean RSU fused pred / GT boxes 均为 `35.666667`，AP@0.5 为 `0.584564`；下一步扩大到 11 帧并与 flat selective-sharing baseline 对齐。
@@ -93,7 +94,7 @@
 ## 近期建议焦点
 
 1. 扩大 area confidence validation 到多 seed / 多场景，形成可进入论文的稳定相关性结果；OpenCOOD 评估入口、日志格式、远端数据路径和候选 checkpoint 已确认，下一步应在 `mindspore-186` 跑 400-frame gate。
-2. 基于已完成的 selected-agent raw-byte、area-slice accounting 和 PointPillar feature geometry probe，下一步优先把 `lgcp_pointpillar_feature_probe.py` 扩展为真实 feature crop / slice manifest adapter，再推进 leader local fusion 和 RSU global perception aggregation。
+2. 基于已完成的 selected-agent raw-byte、area-slice accounting、PointPillar feature geometry probe 和 feature crop export smoke，下一步优先实现 leader-local feature fusion adapter，再推进 RSU global perception aggregation。
 3. 若继续扩展 ablation，应将 source-unique 作为更真实 scheduler 约束保留，同时继续诊断 member slots 的 target receiver setup 和非 RSU receiver 的 CAM application completion；另一条主线是推进 model-level leader/RSU fusion。
 4. 大规模 30 CAV 结果若短期只跑 latency，应在论文中收窄为 communication/computation scalability；若报告 perception scalability，只能报告已校准的 proxy，不能写成真实 AP。
 5. 下一步将 request-level PHY/RLC/HARQ trace 和 control-plane overhead 扩展到多 seed，或开始推进完整 LGCP local fusion / RSU aggregation。
@@ -101,7 +102,7 @@
 
 ## 当前阻塞点
 
-- 当前仓库已有 cluster-oriented cooperative perception / network co-simulation 管线，RSU 现在可以作为固定感知/注册实体启用；offline subset ablation、scalable quality proxy、hierarchy control-plane plan、11 帧 offline NS3 request-id bridge-observed replay、RLC request-id trace、PHY decode-failure breakdown、single-slot scheduled smoke、multi-slot scheduling proxy、3 帧 live multi-slot replay 和 PointPillar feature geometry probe 已能支持部分 rebuttal 证据，但尚未实现真实 feature crop、leader local fusion 和 RSU global perception aggregation。
+- 当前仓库已有 cluster-oriented cooperative perception / network co-simulation 管线，RSU 现在可以作为固定感知/注册实体启用；offline subset ablation、scalable quality proxy、hierarchy control-plane plan、11 帧 offline NS3 request-id bridge-observed replay、RLC request-id trace、PHY decode-failure breakdown、single-slot scheduled smoke、multi-slot scheduling proxy、3 帧 live multi-slot replay、PointPillar feature geometry probe 和 feature crop export smoke 已能支持部分 rebuttal 证据，但尚未实现 leader local feature fusion 和 RSU global perception aggregation。
 - 本地 `C:\Workspace\OpenCOOD` 尚无 `dataset/`，不能直接做 OPV2V / V2XSet 多场景 inference；远端 `mindspore-186` 的 OPV2V 数据路径、Python 环境和 checkpoint/log store 已确认。
 - NS3 当前版本已可接收 LGCP upload plan transfer requests，`cam_received`、RLC TX/RX/DROP、PSSCH decode OK/FAIL 和 HARQ ACK/NACK 已可通过 `request_id` 精确映射回 upload request；HARQ trace 需要显式使用 `--enableSlHarq=true --psfchPeriod=4`。
 

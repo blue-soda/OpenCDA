@@ -3442,3 +3442,52 @@ by type：
 - 结论：
   - LGCP neural feature slicing 的坐标映射入口已经验证。
   - 下一步应把 probe 扩展为真实 feature crop / slice manifest adapter，并再接 leader local fusion 与 RSU global aggregation。
+
+## PointPillar feature slice export smoke
+
+- 新增脚本：
+  - `opencda/tools/lgcp_pointpillar_feature_slice_export.py`
+- 目标：
+  - 在 feature geometry probe 基础上实际裁剪并保存 PointPillar feature tensor slices。
+  - 生成后续 leader-local feature fusion 可读取的 `.npz` slice 文件和 manifest。
+- 命令：
+  - `python -m py_compile opencda\tools\lgcp_pointpillar_feature_slice_export.py`
+  - `conda run -n opencda python -m opencda.tools.lgcp_pointpillar_feature_slice_export --dataset-root D:\Data\Carla --scenario-id 2026_07_15_02_33_21 --assignment-plan docs\doc_workspace\LGCP\experiments\hierarchy_plan\20260718_lgcp_carla_hierarchy_plan_area23_11f\area_assignment_plan.csv --output-dir docs\doc_workspace\LGCP\experiments\hierarchy_plan\20260718_lgcp_pointpillar_feature_slice_export_area23_1f5a --fusion-method intermediate_attentive --max-frames 1 --max-areas-per-frame 5 --grid-size-x 10 --grid-size-y 6 --slice-level both --dtype float16`
+- 输出目录：
+  - `docs/doc_workspace/LGCP/experiments/hierarchy_plan/20260718_lgcp_pointpillar_feature_slice_export_area23_1f5a`
+- 输出文件：
+  - `feature_slice_manifest.csv`
+  - `feature_slice_summary.csv`
+  - `slices/*.npz`
+- 结果：
+  - rows: `5`
+  - slice level: `both`
+  - dtype: `float16`
+  - uncompressed bytes: `1502848`
+  - compressed `.npz` bytes: `178855`
+  - mean compressed bytes / area: `35771`
+  - example saved arrays: `scatter` shape `(2, 64, 29, 29)`, `fused` shape `(1, 384, 15, 15)`
+- 验证：
+  - 已读取前两个 `.npz` 文件，确认包含 `scatter`、`fused`、bounds、timestamp、area、leader 和 group metadata，且 dtype 为 `float16`。
+- 结论：
+  - LGCP neural feature crop / slice manifest smoke 已完成。
+  - 下一步应实现 leader-local feature fusion adapter，决定使用 pre-fusion `scatter` slices 还是 post-fusion `fused` slices 作为论文机制主路径。
+
+## PointPillar feature slice export Top-23 first-frame extension
+
+- 目标：
+  - 将 5-area feature crop smoke 扩大到 Top-23 完整首帧 area budget。
+- 命令：
+  - `conda run -n opencda python -m opencda.tools.lgcp_pointpillar_feature_slice_export --dataset-root D:\Data\Carla --scenario-id 2026_07_15_02_33_21 --assignment-plan docs\doc_workspace\LGCP\experiments\hierarchy_plan\20260718_lgcp_carla_hierarchy_plan_area23_11f\area_assignment_plan.csv --output-dir docs\doc_workspace\LGCP\experiments\hierarchy_plan\20260718_lgcp_pointpillar_feature_slice_export_area23_1f --fusion-method intermediate_attentive --max-frames 1 --max-areas-per-frame 0 --grid-size-x 10 --grid-size-y 6 --slice-level both --dtype float16`
+- 输出目录：
+  - `docs/doc_workspace/LGCP/experiments/hierarchy_plan/20260718_lgcp_pointpillar_feature_slice_export_area23_1f`
+- 结果：
+  - rows / slice files: `23 / 23`
+  - uncompressed bytes: `6183680`
+  - compressed `.npz` bytes: `810688`
+  - mean compressed bytes / area: `35247.304348`
+  - scatter elements: `1485952`
+  - fused elements: `1605888`
+- 结论：
+  - feature crop / slice manifest adapter 已通过 Top-23 完整首帧验证。
+  - 下一步不应继续只扩大 export 规模，而应实现 leader-local feature fusion 或明确选择 `scatter` / `fused` 作为机制主路径。
