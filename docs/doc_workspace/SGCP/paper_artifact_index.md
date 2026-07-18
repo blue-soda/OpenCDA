@@ -27,6 +27,7 @@ docs\doc_workspace\SGCP\artifacts\paper_artifact_index_20260719\paper_artifact_i
 | P4 Scheduler Budget Sweep | `artifacts/scheduler_budget_sweep_20260719/scheduler_budget_sweep_manifest.csv` | `c63e0c2` | usable | 支撑 Pareto 中 Random/Density/Communication-aware low/high budget first-pass，不替代 protocol-native 主表。 |
 | P4 EdgeCooper-HD Budget Sweep | `artifacts/edgecooper_budget_sweep_20260719/edgecooper_budget_sweep_manifest.csv` | `6693b45` | usable | 支撑 EdgeCooper-HD edge/global assignment + half-duplex proxy 的 low/high budget 边界。 |
 | P4 FullPerception-PCS Parameter Sweep | `artifacts/pcs_parameter_sweep_20260719/pcs_parameter_sweep_manifest.csv` | `0053134` | usable with caveats | 11 帧 granularity/overlap 趋势 + 41 帧 tuned anchor；更激进 41 帧 sweep 运行不可承受，不混入 41 帧 Pareto。 |
+| Detector/Checkpoint Fairness Audit | `detector_checkpoint_fairness.md` | `4e6e8e2` | usable | 主表 Pure late 使用 early-checkpoint singleton detector + `naive_late_fusion()`；actual late checkpoint 只作 sensitivity/reference。 |
 | Table 4 Parameter Sensitivity | `artifacts/parameter_sensitivity_20260719/table4_parameter_sensitivity.csv` | `859f5d5` | usable | `rho_th` 和 channel count 可进主文；`N_max/T_min` 更适合附录或 rebuttal。 |
 | Runtime-Control-NS3 Appendix | `artifacts/appendix_support_20260719/runtime_control_ns3_appendix.md` | `d75abc4` | usable | 支撑 near-real-time control-plane feasibility，不承诺 detector-inclusive 100 ms。 |
 | Qualitative Case Study | `artifacts/appendix_support_20260719/qualitative_case_study_bev.pdf` | `73fdee0` | draft usable | 可用于 appendix/rebuttal；正式论文可补 legend 和 prediction-box overlay。 |
@@ -35,7 +36,7 @@ docs\doc_workspace\SGCP\artifacts\paper_artifact_index_20260719\paper_artifact_i
 ## Current Risks
 
 - Early-fusion checkpoint 仍是最大实验风险：远程 fine-tune watcher 已启动，但 GPU 尚未空闲。回收新 checkpoint 后必须生成新一版 Table/Figure artifacts，不覆盖当前版本。
-- Pure late 的主表口径仍需谨慎：当前 protocol manifest 的 Pure late 是 early-singleton + `naive_late_fusion()` controlled proxy；actual late checkpoint 已作为 sanity 记录，不应混入同一公平 raw-LiDAR baseline。
+- Pure late 口径已固定为 controlled prediction-sharing reference：early-singleton + `naive_late_fusion()`；actual late checkpoint 已作为 sanity 记录，不混入同一公平 raw-LiDAR baseline。
 - EdgeCooper-HD 与 PACP-LiDAR 在 AP@0.7 上强于 PAPG，应按信息条件边界解释为 edge/global 或 stronger-priority reference，不应硬写 SGCP 全面最优。
 - `main.tex` 位于 `C:\Workspace\icdcs-paper\SGCP\main.tex`，不在 OpenCDA git 仓库；本机缺少 `latexmk/pdflatex`，当前只做了结构检查，未完成 PDF 编译验证。
 
