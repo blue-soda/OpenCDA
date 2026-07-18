@@ -22,13 +22,13 @@
 | `fullperception_pcs` / `fullperception` | base-station / RSU-side PCS scheduling | PCS blind-spot link scheduling from `pcs.py` | Alias added; first protocol repair complete; 41-frame legacy and repaired results available |
 | `fullperception_mws` | base-station / RSU-side greedy baseline | MWS from `mws.py`, inherited from PCS | Alias added; old MWS result available |
 | `fullperception_random` | base-station / RSU-side random schedule | RS from `random_ra.py`, inherited from PCS | Alias added; old random result available |
-| `fullperception_rsu` | virtual RSU / global CAV candidate pool | global density with mild distance cost, then grid-budgeted upload | Implemented; 41-frame proxy result available |
-| `fullperception_decentralized` | CAV-side V2V only | cluster-local density with distance/link-quality cost | Implemented; 41-frame result and 11-frame true NS3 replay available |
+| `global_selective_proxy` | virtual RSU / global CAV candidate pool | global density with mild distance cost, then grid-budgeted upload | Renamed from `fullperception_rsu`; 41-frame proxy result available |
+| `cluster_local_selective_proxy` | CAV-side V2V only | cluster-local density with distance/link-quality cost | Renamed from `fullperception_decentralized`; 41-frame result and 11-frame true NS3 replay available |
 | `edgecooper` | edge / virtual RSU | complementarity minus redundancy proxy | First proxy implemented |
 | `edgecooper_global` | edge / virtual RSU with network-aware global assignment proxy | blind-spot complementarity + global sender-load balancing + 35 m V2V feasibility gate | Implemented; 41-frame offline result and 11-frame true NS3 replay available, but NS3 delivery incomplete |
 | `edgecooper_global_hd` | edge / virtual RSU with network-aware half-duplex global assignment proxy | `edgecooper_global` plus sender/receiver half-duplex exclusion within each slot | Implemented; 41-frame offline result and 11-frame true NS3 replay available with full delivery |
 
-PCS/MWS/RS 通过 `--resource-allocation fullperception_pcs|fullperception_mws|fullperception_random` 进入资源分配路径；`fullperception_rsu/fullperception_decentralized/edgecooper/edgecooper_global` 是后补的 selective-sharing proxy，通过 `--selective-sharing-baseline <name>` 进入同一 OpenCOOD checkpoint、同一 41-frame dump 和同一 inter-cluster late-fusion evaluation path。
+PCS/MWS/RS 通过 `--resource-allocation fullperception_pcs|fullperception_mws|fullperception_random` 进入资源分配路径；`global_selective_proxy/cluster_local_selective_proxy/edgecooper/edgecooper_global` 是后补的 selective-sharing proxy，通过 `--selective-sharing-baseline <name>` 进入同一 OpenCOOD checkpoint、同一 41-frame dump 和同一 inter-cluster late-fusion evaluation path。
 
 ## FullPerception Baselines
 
@@ -46,12 +46,12 @@ PCS/MWS/RS 通过 `--resource-allocation fullperception_pcs|fullperception_mws|f
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | --- |
 | Full 20-CAV early upper reference | 0.85 | 0.83 | 0.48 | 60,838,528 | 118.71 | 20.00 | N/A | Full-sharing AP upper reference, not a fair baseline |
 | `fullperception_pcs` / built-in PCS, legacy eval | 0.44 | 0.39 | 0.17 | 12,684,880 | 24.75 | 1.66 | 630.66 | Pre-repair compatibility result; simplified `c(q)=1` |
-| `fullperception_pcs` / built-in PCS, repaired scheduled receivers | 0.33 | 0.29 | 0.14 | 8,100,112 | 15.80 | 2.00 | 57.71 | Payload-based `c(q)`, real `sc_num`, 104 scheduled NS3 dry-run requests; still under-scheduled |
-| `fullperception_rsu` proxy | 0.84 | 0.80 | 0.46 | 56,224,736 | 109.71 | 4.00 | 117.00 | Virtual RSU/global scheduler, strong but infrastructure-assisted |
-| `fullperception_decentralized` proxy | 0.80 | 0.76 | 0.41 | 38,920,592 | 75.94 | 3.33 | 103.20 | V2V-only decentralized FullPerception proxy; NS3 110/110 complete |
-| `fullperception_rsu`, ego receiver probe | 0.71 | 0.70 | 0.49 | 26,350,784 | 51.42 | 9.54 | 332.93 | Diagnostic only; candidate fallback is unreliable |
+| `fullperception_pcs` / built-in PCS, tuned scheduled receivers | 0.59 | 0.53 | 0.22 | 12,959,840 | 25.29 | 2.00 | 27.00 | Current FullPerception PCS baseline; blind-spot units split with `division=12,min_overlap=0` |
+| `global_selective_proxy` | 0.84 | 0.80 | 0.46 | 56,224,736 | 109.71 | 4.00 | 117.00 | Virtual RSU/global scheduler proxy, strong but infrastructure-assisted |
+| `cluster_local_selective_proxy` | 0.80 | 0.76 | 0.41 | 38,920,592 | 75.94 | 3.33 | 103.20 | V2V-only selective proxy; NS3 110/110 complete under old artifact name |
+| `global_selective_proxy`, ego receiver probe | 0.71 | 0.70 | 0.49 | 26,350,784 | 51.42 | 9.54 | 332.93 | Diagnostic only; candidate fallback is unreliable |
 
-结论：`pcs.py` 是仓库内置 FullPerception PCS，但第一轮修复后仍不是强 baseline；它目前更像“协议正确但调度/融合口径仍待校准”的 built-in reproduction。`fullperception_rsu` 已不再等同 full 20-CAV early upper reference，它是一个 global/virtual-RSU scheduler proxy，通信量低于全量上传但仍拥有全局候选集合，因此只能放在 RSU/edge-assisted 层级。`fullperception_decentralized` 是更公平的 V2V-only FullPerception proxy，可作为强 decentralized baseline。
+结论：`pcs.py` 是仓库内置 FullPerception PCS，本轮修复和调参后可作为正式但不强势的 FullPerception baseline：它比第一轮协议修复显著改善，但仍低于 SGCP/EdgeCooper 等主算法。两个 selective proxy 已改名为 `global_selective_proxy` / `cluster_local_selective_proxy`，只能作为 proxy/diagnostic，不能替代 FullPerception 论文 PCS。
 
 ## EdgeCooper Plan
 
@@ -100,6 +100,6 @@ PCS/MWS/RS 通过 `--resource-allocation fullperception_pcs|fullperception_mws|f
 ## Immediate Tasks
 
 - 继续校准 built-in `fullperception_pcs`：补 RSU/global receiver fusion 或更接近论文的 multi-blind-spot link treatment，然后重跑 PCS/MWS/RS。
-- `fullperception_decentralized` 11-frame true NS3 replay 已完成：110/110 application callback complete、110/110 RLC complete、0 PHY failures。后续只需在表格中维护 artifact 路径和口径说明。
+- `cluster_local_selective_proxy` 的 11-frame true NS3 replay 已完成（artifact 目录仍保留重命名前名称）：110/110 application callback complete、110/110 RLC complete、0 PHY failures。后续只需在表格中维护 artifact 路径和口径说明。
 - 重构 EdgeCooper proxy：从当前 blind-spot-aware per-receiver greedy 改为 minimum-cost-flow/global assignment 风格。
 - 选择一个 V2V-only SOTA proxy 优先实现，建议从 Where2comm-style confidence communication 或 PACP-style priority-aware sharing 开始。

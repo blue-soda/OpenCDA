@@ -25,13 +25,12 @@
 | --- | ---: | ---: | ---: | ---: | ---: | --- |
 | NC | TBD | TBD | TBD | TBD | TBD | No cooperation |
 | Full 20-CAV early upper reference | 0.85 | 0.83 | 0.48 | 118.71 | TBD | Full point-cloud sharing AP upper bound; upload non-ego CAV payload 60,838,528 bytes |
-| Built-in FullPerception PCS, legacy cluster-head eval | 0.44 | 0.39 | 0.17 | 24.75 | TBD | Pre-repair compatibility result; `pcs.py` was already FullPerception PCS but simplified `c(q)=1` |
-| Built-in FullPerception PCS, repaired scheduled receivers | 0.33 | 0.29 | 0.14 | 15.80 | TBD | Protocol-correct PCS pass: payload-based `c(q)`, real `sc_num`, 104 scheduled requests in NS3 dry-run; still under-scheduled |
-| FullPerception-RSU proxy | 0.84 | 0.80 | 0.46 | 109.71 | TBD | Virtual RSU/global candidate pool, 3 members/head, 117 grid budget; not a V2V-only fair baseline |
+| Built-in FullPerception PCS, tuned | 0.59 | 0.53 | 0.22 | 25.29 | TBD | Current formal FullPerception baseline; payload-based `c(q)`, real `sc_num`, schedulable blind-spot units |
+| Global selective proxy | 0.84 | 0.80 | 0.46 | 109.71 | TBD | Former `fullperception_rsu`; virtual/global candidate pool, 3 members/head, 117 grid budget; not FullPerception PCS |
 | EdgeCooper-style proxy | 0.75 | 0.70 | 0.32 | 109.53 | TBD | Virtual edge/global candidate pool, blind-spot complementarity proxy; preliminary, not strict paper reproduction |
 | EdgeCooper-global network-aware proxy | 0.81 | 0.77 | 0.42 | 74.58 | TBD | Virtual edge/global assignment proxy with sender-load balancing and 35 m V2V feasibility; 11-frame NS3 73/110 complete |
 | EdgeCooper-global-HD proxy | 0.81 | 0.78 | 0.42 | 65.40 | TBD | Virtual edge/global assignment proxy with sender-load balancing, 35 m V2V feasibility and half-duplex sender/receiver exclusion; 11-frame NS3 110/110 complete |
-| FullPerception-Decentralized proxy | 0.80 | 0.76 | 0.41 | 75.94 | TBD | CAV-side V2V only, cluster-local candidates, 3 members/head, 117 grid budget; NS3 110/110 complete |
+| Cluster-local selective proxy | 0.80 | 0.76 | 0.41 | 75.94 | TBD | Former `fullperception_decentralized`; CAV-side V2V only, cluster-local candidates, 3 members/head, 117 grid budget; NS3 110/110 complete |
 | Full-cluster reference | 0.82 | 0.79 | 0.42 | 87.51 | TBD | Full intra-cluster upload reference |
 | Selective V2V forced random | 0.77 | 0.73 | 0.38 | 61.68 | TBD | Same coalition path, 3 members/head, 117 grid budget |
 | Selective V2V communication-aware | 0.78 | 0.75 | 0.40 | 58.97 | TBD | 2 members/head, 87 grid budget |
@@ -64,13 +63,12 @@
 | --- | --- | --- | --- | --- |
 | Upper reference | Full 20-CAV early fusion | 0.85 / 0.83 / 0.48 | No | 全点云共享，无 SGCP 通信约束；不是 FullPerception baseline；non-ego upload payload 60,838,528 bytes |
 | Upper reference | Full 20-CAV late checkpoint | 0.91 / 0.85 / 0.51 | No | 使用独立 late checkpoint，不能直接作为同 checkpoint 消融 |
-| Built-in FullPerception | PCS (`pcs.py`) legacy eval | 0.44 / 0.39 / 0.17 | No | 仓库内置 PCS 对应 FullPerception 论文调度算法；旧评估 payload 为 12,684,880 bytes / 24.75 Mbps |
-| Built-in FullPerception | PCS (`pcs.py`) repaired scheduled-receiver eval | 0.33 / 0.29 / 0.14 | No | `c(q)`、`sc_num` 和 scheduled links 已修复并进入 NS3 dry-run；payload 8,100,112 bytes / 15.80 Mbps，说明 PCS 当前仍 under-schedule |
-| RSU/edge-assisted | FullPerception-RSU proxy | 0.84 / 0.80 / 0.46 | No | 虚拟 RSU/global candidate pool；当前 dump 无真实 RSU sensor，不作为 V2V-only 公平主对比 |
+| Built-in FullPerception | PCS (`pcs.py`) tuned | 0.59 / 0.53 / 0.22 | No | 仓库内置 PCS 对应 FullPerception 论文调度算法；payload 12,959,840 bytes / 25.29 Mbps；正式 baseline 但不作为强 V2V 主对比 |
+| RSU/edge-assisted | Global selective proxy | 0.84 / 0.80 / 0.46 | No | 虚拟/global candidate pool；当前 dump 无真实 RSU sensor，不作为 V2V-only 公平主对比，也不再命名为 FullPerception |
 | RSU/edge-assisted | EdgeCooper-style proxy | 0.75 / 0.70 / 0.32 | No | 虚拟 edge/global candidate pool；当前是 blind-spot complementarity proxy，不是严格原论文 MCF/coloring 复现 |
 | RSU/edge-assisted | EdgeCooper-global network-aware proxy | 0.81 / 0.77 / 0.42 | No | 虚拟 edge/global assignment proxy；74.58 Mbps，11 帧 NS3 73/110 complete，说明离线高 AP 仍需 deadline-aware 调度补强 |
 | RSU/edge-assisted | EdgeCooper-global-HD proxy | 0.81 / 0.78 / 0.42 | No | 虚拟 edge/global assignment proxy + 半双工约束；65.40 Mbps，11 帧 NS3 110/110 complete，是当前最强 edge-assisted baseline |
-| V2V-only fair baseline | FullPerception-Decentralized proxy | 0.80 / 0.76 / 0.41 | Yes | cluster-local candidate pool，3 members/head，117 grid budget；强 decentralized baseline；11 帧 NS3 replay 110/110 application/RLC complete |
+| V2V-only fair baseline | Cluster-local selective proxy | 0.80 / 0.76 / 0.41 | Yes | cluster-local candidate pool，3 members/head，117 grid budget；强 decentralized proxy；11 帧 NS3 replay 110/110 application/RLC complete |
 | SGCP main | SGCP PAPG 10ch | 0.81 / 0.78 / 0.39 | Yes | 当前主方法，62.54 Mbps，PAPG NS3 110/110 complete |
 | SGCP sensitivity | SGCP PAPG 10ch, `B_h=3` | 0.80 / 0.78 / 0.40 | No | 简单放宽 per-head RB 上限，未形成更多有效 source diversity；作为负面 sensitivity |
 | SGCP negative branch | SGCP BPAPG source-balanced | 0.81 / 0.78 / 0.39 | No | source-diversity marginal term 不足以改变最终 upload distribution；history-credit 11 帧会伤 AP |
@@ -87,34 +85,34 @@
 | SGCP sensitivity | Coverage-aware spatial-diverse, 20ch | 0.80 / 0.76 / 0.41 | Yes | 高预算资源敏感性，73.98 Mbps，NS3 154/154 complete |
 | Reference only | Singleton full late-fusion reference | 0.82 / 0.76 / 0.37 | No | late-fuse 全部 20 CAV，当前未计 detection-box exchange overhead |
 
-论文写作建议：FullPerception-RSU 和 full 20-CAV early/late fusion 只能作为 upper/reference，不应放入“同通信预算公平主对比”结论。公平主对比应使用同数据、同 backbone、同 AP 口径，并尽量匹配通信预算或显式报告 payload。旧 `RandomRA/MWS` 的 payload 只有约 9.7/9.9 MB，未充分利用 10 子信道资源，不宜作为“SGCP 降低通信量”的主证据；它们更适合作 w/o PPS 消融。主公平 baseline 使用 forced-budget random、density/communication-aware selective sharing；SGCP 主方法使用 PAPG。
+论文写作建议：FullPerception baseline 使用 `pcs.py` / `fullperception_pcs`；full 20-CAV early/late fusion 只能作为 upper/reference，不应放入“同通信预算公平主对比”结论。公平主对比应使用同数据、同 backbone、同 AP 口径，并尽量匹配通信预算或显式报告 payload。旧 `RandomRA/MWS` 的 payload 只有约 9.7/9.9 MB，未充分利用 10 子信道资源，不宜作为“SGCP 降低通信量”的主证据；它们更适合作 w/o PCS/PPS 消融。主公平 baseline 使用 forced-budget random、density/communication-aware selective sharing；SGCP 主方法使用 PAPG。
 
 ### Explicit FullPerception Baselines
 
-代码状态：仓库没有以 `FullPerception` 命名的入口，但 `opencda/core/clustering/algorithms/resource_allocation/pcs.py` 是 FullPerception 论文 PCS 调度算法的内置实现；`mws.py` 和 `random_ra.py` 是同一 PCS 问题上的 greedy/random baseline。当前新增 `--resource-allocation fullperception_pcs|fullperception_mws|fullperception_random` alias，并保留 `--selective-sharing-baseline fullperception_rsu|fullperception_decentralized` 作为后补 proxy。proxy 分支使用 41 帧同一 dump、同一 OpenCOOD early checkpoint、同一 inter-cluster late-fusion evaluation path，并限制为 3 members/head 与 117 selected grids。
+代码状态：仓库中的 FullPerception baseline 应指向 `opencda/core/clustering/algorithms/resource_allocation/pcs.py`，即 FullPerception 论文的 PCS 调度算法；`mws.py` 和 `random_ra.py` 是同一 PCS 问题上的 greedy/random baseline。正规入口为 `--resource-allocation fullperception_pcs|fullperception_mws|fullperception_random`。此前后补的两个 selective-sharing proxy 已重命名为 `global_selective_proxy` 和 `cluster_local_selective_proxy`，避免把 proxy 误写成 FullPerception 论文复现。
 
 命令模板：
 
 ```powershell
-conda run -n opencda python -m opencda.tools.offline_inference --dataset-root D:\Data\Carla --scenario-id 2026_07_15_01_26_56 --ego-cav-id 1 --max-frames 0 --selective-sharing-baseline fullperception_rsu --selective-member-budget 3 --selective-grid-budget 117 --sgcp-inter-cluster-late-fusion --rho-th 3 --num-channels 10 --bandwidth-mhz 20 --sgcp-trace-output docs\doc_workspace\SGCP\artifacts\fullperception_baselines_20260717\fullperception_rsu_trace.csv
+conda run -n opencda python -m opencda.tools.offline_inference --dataset-root D:\Data\Carla --scenario-id 2026_07_15_01_26_56 --ego-cav-id 1 --max-frames 0 --sgcp-constrained --resource-allocation fullperception_pcs --sgcp-receiver-policy all-scheduled-receivers --sgcp-inter-cluster-late-fusion --rho-th 3 --num-channels 10 --bandwidth-mhz 20 --sgcp-trace-output docs\doc_workspace\SGCP\artifacts\pcs_tuning_20260718\pcs_41f_tuned_div12_ov0_trace.csv
 ```
 
 Artifact：
 
 ```text
-docs\doc_workspace\SGCP\artifacts\fullperception_baselines_20260717\
+docs\doc_workspace\SGCP\artifacts\pcs_tuning_20260718\
 ```
 
 | Baseline | Candidate Scope | AP@0.3 | AP@0.5 | AP@0.7 | Payload bytes | Mbps | Avg. Source CAVs | Avg. Selected Grids | Notes |
 | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | --- |
 | Full 20-CAV early upper reference | all CAVs, full upload | 0.85 | 0.83 | 0.48 | 60,838,528 | 118.71 | 20.00 | N/A | AP upper bound, not budgeted scheduling |
 | `fullperception_pcs` built-in, legacy cluster-head eval | PCS blind-spot scheduling | 0.44 | 0.39 | 0.17 | 12,684,880 | 24.75 | 1.66 | 630.66 | Pre-repair compatibility row; simplified `c(q)=1` |
-| `fullperception_pcs` built-in, repaired scheduled receivers | PCS blind-spot scheduling | 0.33 | 0.29 | 0.14 | 8,100,112 | 15.80 | 2.00 | 57.71 | Payload-based `c(q)` and real `sc_num`; protocol-correct but weaker, under-scheduled |
-| `fullperception_rsu` proxy | global / virtual RSU | 0.84 | 0.80 | 0.46 | 56,224,736 | 109.71 | 4.00 | 117.00 | Infrastructure-assisted global scheduler proxy |
-| `fullperception_decentralized` proxy | cluster-local V2V | 0.80 | 0.76 | 0.41 | 38,920,592 | 75.94 | 3.33 | 103.20 | Strong V2V-only decentralized FullPerception proxy; NS3 110/110 complete |
-| `fullperception_rsu`, ego receiver probe | ego virtual receiver | 0.71 | 0.70 | 0.49 | 26,350,784 | 51.42 | 9.54 | 332.93 | Diagnostic only; several frames fell back to ego-only |
+| `fullperception_pcs` built-in, tuned PCS | PCS blind-spot scheduling | 0.59 | 0.53 | 0.22 | 12,959,840 | 25.29 | 2.00 | 27.00 | Current FullPerception baseline; blind spots split into schedulable units (`division=12`, `min_overlap=0`) |
+| `global_selective_proxy` | global / virtual RSU | 0.84 | 0.80 | 0.46 | 56,224,736 | 109.71 | 4.00 | 117.00 | Infrastructure-assisted proxy, not FullPerception PCS |
+| `cluster_local_selective_proxy` | cluster-local V2V | 0.80 | 0.76 | 0.41 | 38,920,592 | 75.94 | 3.33 | 103.20 | Strong V2V-only selective proxy; NS3 110/110 complete under the old name |
+| `global_selective_proxy`, ego receiver probe | ego virtual receiver | 0.71 | 0.70 | 0.49 | 26,350,784 | 51.42 | 9.54 | 332.93 | Diagnostic only; several frames fell back to ego-only |
 
-`fullperception_decentralized` 已完成 11-frame true NS3 replay：110/110 scheduled requests 完成 application callback，110/110 RLC complete，RLC TX/RX events 2970/2970，PHY decode failures 0，avg/p95 callback delay 23.91/24.00 ms。`fullperception_rsu` 3-frame dry-run 每帧 10 scheduled / 8 skipped。修复后的 built-in `fullperception_pcs` 41 帧 dry-run 生成 104 条 scheduled request，`sc_num` 会按 required subchannels 写入 upload plan。下一步应优先校准 `fullperception_pcs` 的调度强度和 RSU/global receiver 口径，再进入主表。
+`cluster_local_selective_proxy` 的链路证据来自重命名前的 11-frame true NS3 replay：110/110 scheduled requests 完成 application callback，110/110 RLC complete，RLC TX/RX events 2970/2970，PHY decode failures 0，avg/p95 callback delay 23.91/24.00 ms。tuned `fullperception_pcs` 已完成 11-frame dry-run：每帧 5 条 scheduled request，0 skipped unscheduled；41-frame perception run 为 `0.59/0.53/0.22`、25.29 Mbps。
 
 ### Same-Budget CAV-Only Selective Sharing
 

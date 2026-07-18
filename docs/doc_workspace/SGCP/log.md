@@ -2,6 +2,38 @@
 
 本文件按时间顺序追加实验记录。每条记录应尽量包含：目的、代码版本、配置、命令、日志路径、关键结果、异常现象和下一步。
 
+## 2026-07-18 - FullPerception proxy rename and PCS tuning pass
+
+### 目的
+
+用户要求避免 `fullperception_rsu` / `fullperception_decentralized` 误导论文命名，并在不修改 20MHz/10ch 网络参数的前提下调试仓库内置 PCS，使 FullPerception baseline 能以合理结果进入主表。
+
+### 代码改动
+
+- `offline_inference --selective-sharing-baseline` 中旧 `fullperception_rsu` 改名为 `global_selective_proxy`。
+- 旧 `fullperception_decentralized` 改名为 `cluster_local_selective_proxy`。
+- 删除 `builder.py` 中易混淆的 `fullperception_rsu_pcs` alias；保留 `fullperception` / `fullperception_pcs` 指向 `pcs.py`。
+- `PCS` 修复 blind-spot cache key 忽略 split 粒度、grid mAP cache 索引错误、utility/payload/grid-selection 使用不同 blind-spot 粒度的问题。
+- `PCS` 默认 blind-spot split 调为 `blind_spot_min_division=12`、`min_overlap_grids=0`，将论文 blind spot 单元拆成更可调度的小盲区；带宽和子信道数仍由 `--bandwidth-mhz 20 --num-channels 10` 固定。
+- `offline_inference` / `offline_ns3_replay` 新增 `--pcs-blind-spot-min-division` 和 `--pcs-min-overlap-grids`，用于后续不改网络资源的 PCS 参数复核。
+
+### 命令
+
+```powershell
+$artifact='docs\doc_workspace\SGCP\artifacts\pcs_tuning_20260718'
+conda run --no-capture-output -n opencda python -m opencda.tools.offline_inference --dataset-root D:\Data\Carla --scenario-id 2026_07_15_01_26_56 --ego-cav-id 1 --max-frames 0 --sgcp-constrained --resource-allocation fullperception_pcs --sgcp-receiver-policy all-scheduled-receivers --sgcp-inter-cluster-late-fusion --rho-th 3 --num-channels 10 --bandwidth-mhz 20 --sgcp-trace-output "$artifact\pcs_41f_tuned_div12_ov0_trace.csv"
+conda run --no-capture-output -n opencda python -m opencda.tools.offline_ns3_replay --dataset-root D:\Data\Carla --scenario-id 2026_07_15_01_26_56 --ego-cav-id 1 --max-frames 11 --resource-allocation fullperception_pcs --rho-th 3 --num-channels 10 --bandwidth-mhz 20 --dry-run --upload-plan-output "$artifact\pcs_11f_tuned_div12_ov0_dryrun_plan.csv"
+```
+
+### 结果
+
+| Variant | Frames | AP@0.3 | AP@0.5 | AP@0.7 | Payload bytes | Mbps | Notes |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | --- |
+| PCS tuned `division=12,min_overlap=0` | 41 | 0.59 | 0.53 | 0.22 | 12,959,840 | 25.29 | Current formal FullPerception PCS baseline |
+| PCS tuned NS3 dry-run | 11 | N/A | N/A | N/A | request plan only | N/A | 5 scheduled requests/frame, 0 skipped unscheduled |
+
+11 帧扫描中，`division=12,min_overlap=0` 达到 `0.57/0.54/0.30`，`division=4,min_overlap=1` 达到 `0.58/0.51/0.24`。完整 41 帧选择前者作为默认，因为 AP@0.5/AP@0.7 更稳。结论：PCS baseline 不再是异常 under-schedule，但仍明显低于 PAPG/EdgeCooper/strong selective proxy，应作为正式 FullPerception baseline 而不是主张 SGCP 击败所有上界的依据。
+
 ## 2026-07-18 - FullPerception PCS protocol repair pass
 
 ### 目的

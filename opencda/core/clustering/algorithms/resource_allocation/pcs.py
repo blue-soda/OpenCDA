@@ -25,7 +25,10 @@ class PCS(ResourceAllocationAlgorithm):
         self.resource_sc_nums: Dict[Tuple[int, int], int] = {}  # 最终调度子信道数量：(发送方vid, 接收方vid) -> 连续子信道数量
         self.grid_selection: Dict[int, Dict[int, Set[str]]] = {}  # 网格选择：接收方vid -> 发送方vid -> 需要接收的网格ID集合
         self.grid_mAP_cache: Dict[int, Dict[int, float]] = {}  # 网格mAP缓存：vid -> grid_id -> mAP值（预计算）
-        self.blind_spots_cache: Dict[int, Dict[int, Set[str]]] = {}  # 车辆盲 spot 缓存：vid -> 盲spot_id -> 网格集合
+        self.blind_spots_cache: Dict[Tuple[int, int], Dict[int, Set[str]]] = {}  # (vid, division) -> blind_spot_id -> grids
+        self.blind_spot_min_division = 12
+        self.min_overlap_grids = 0
+        self.active_blind_spot_min_division = self.blind_spot_min_division
         self.bandwidth_all = 20.0 * (10 ** 6)
         self.time_slot = 0.1
         self.feature_bytes_per_grid = 1024
@@ -36,8 +39,10 @@ class PCS(ResourceAllocationAlgorithm):
         获取车辆的盲 spot 集合（盲spot_id -> 对应的网格集合）
         盲spot定义：req_grids（需求范围）与high_density_grids（非盲spot区域）的差集
         """
-        if vid in self.blind_spots_cache:
-            return self.blind_spots_cache[vid]
+        division = max(1, int(min_division))
+        cache_key = (int(vid), division)
+        if cache_key in self.blind_spots_cache:
+            return self.blind_spots_cache[cache_key]
         
         vehicle = common.global_vehicles.get(vid)
         if not vehicle:
@@ -54,12 +59,12 @@ class PCS(ResourceAllocationAlgorithm):
         size = len(blind_spot_grids)
         while unassigned_grids:
             start_grid = unassigned_grids.pop()
-            adjacent_grids = self._find_adjacent_grids(start_grid, unassigned_grids, size, min_division=min_division)
+            adjacent_grids = self._find_adjacent_grids(start_grid, unassigned_grids, size, min_division=division)
             blind_spot = {start_grid} | adjacent_grids
             blind_spots[spot_id] = blind_spot
             unassigned_grids -= adjacent_grids
             spot_id += 1
-        self.blind_spots_cache[vid] = blind_spots
+        self.blind_spots_cache[cache_key] = blind_spots
         return blind_spots
 
     def _generate_adjacent_grids(self, grid_id: str) -> Set[str]:
@@ -101,6 +106,9 @@ class PCS(ResourceAllocationAlgorithm):
         1. 发送方的感知范围（sens_grids）覆盖接收方的某个盲spot网格
         2. 发送方与接收方在通信范围内
         """
+        min_division = max(1, int(min_division))
+        min_overlap = max(0, int(min_overlap))
+        self.active_blind_spot_min_division = min_division
         vehicle_vids = common.global_vehicles.keys()
         for receiver_vid in vehicle_vids:
             # 获取接收方的盲spot
@@ -125,7 +133,7 @@ class PCS(ResourceAllocationAlgorithm):
                 for spot_id, spot_grids in receiver_blind_spots.items():
                     overlap_grids = spot_grids & sender.sens_grids
                     # print(f"sender_vid: {sender_vid}, receiver_vid: {receiver_vid}, spot_id: {spot_id}, overlap_grids: {len(overlap_grids)}")
-                    if overlap_grids and len(overlap_grids) > min_overlap:  # 存在覆盖的网格，生成链路
+                    if overlap_grids and len(overlap_grids) >= min_overlap:  # 存在覆盖的网格，生成链路
                         link = (sender_vid, receiver_vid, spot_id)
                         self.all_links.append(link)
 
@@ -163,7 +171,7 @@ class PCS(ResourceAllocationAlgorithm):
             grid_size = vehicle.grid_size  # 网格尺寸（如0.8m，与生成网格时一致）
             self.grid_mAP_cache[vid] = {}
             for grid_id in vehicle.sens_grids:
-                if grid_id in self.grid_mAP_cache:
+                if grid_id in self.grid_mAP_cache[vid]:
                     continue
                 
                 # 解析网格ID，计算网格中心的全局坐标
@@ -171,7 +179,7 @@ class PCS(ResourceAllocationAlgorithm):
                     x_idx, y_idx = map(int, grid_id.split("_"))
                 except (ValueError, IndexError):
                     # 若网格ID格式异常，默认低mAP
-                    self.grid_mAP_cache[grid_id] = 0.2
+                    self.grid_mAP_cache[vid][grid_id] = 0.2
                     continue
                 
                 # 计算网格中心坐标（全局坐标系）
@@ -210,23 +218,34 @@ class PCS(ResourceAllocationAlgorithm):
                 continue
             
             # 获取该链路对应的盲spot网格
-            receiver_blind_spots = self._get_vehicle_blind_spots(receiver_vid)
+            receiver_blind_spots = self._get_vehicle_blind_spots(
+                receiver_vid,
+                self.active_blind_spot_min_division)
             spot_grids = receiver_blind_spots.get(spot_id, set())
             if not spot_grids:
+                continue
+            sender = common.global_vehicles.get(sender_vid)
+            if not sender:
+                continue
+            covered_grids = spot_grids & sender.sens_grids
+            if not covered_grids:
                 continue
             
             # 计算网格平均mAP
             total_mAP = 0.0
             valid_grids = 0
-            for grid_id in spot_grids:
-                mAP = self.grid_mAP_cache[sender_vid].get(grid_id, 0.0)
+            for grid_id in covered_grids:
+                mAP = self.grid_mAP_cache.get(sender_vid, {}).get(grid_id, 0.0)
                 total_mAP += mAP
                 valid_grids += 1
             
             if valid_grids == 0:
                 link_weight = 0.0
             else:
-                link_weight = total_mAP / valid_grids
+                coverage_ratio = min(
+                    1.0,
+                    float(len(covered_grids)) / float(max(len(spot_grids), 1)))
+                link_weight = (total_mAP / valid_grids) * coverage_ratio
             
             self.link_utilities[link] = link_weight
 
@@ -241,7 +260,9 @@ class PCS(ResourceAllocationAlgorithm):
             return 1
         
         # 获取盲spot网格集合
-        receiver_blind_spots = self._get_vehicle_blind_spots(receiver_vid)
+        receiver_blind_spots = self._get_vehicle_blind_spots(
+            receiver_vid,
+            self.active_blind_spot_min_division)
         spot_grids = receiver_blind_spots.get(spot_id, set())
         covered_grids = spot_grids & sender.sens_grids
         if not covered_grids:
@@ -377,7 +398,9 @@ class PCS(ResourceAllocationAlgorithm):
             self.resource_strategy[(sender_q, receiver_q)] = start_idx
             self.resource_sc_nums[(sender_q, receiver_q)] = c_qt
             # 获取盲spot网格并记录
-            receiver_blind_spots = self._get_vehicle_blind_spots(receiver_q)
+            receiver_blind_spots = self._get_vehicle_blind_spots(
+                receiver_q,
+                self.active_blind_spot_min_division)
             sender = common.global_vehicles.get(sender_q)
             spot_grids = receiver_blind_spots.get(spot_id, set())
             if sender:
@@ -405,7 +428,9 @@ class PCS(ResourceAllocationAlgorithm):
         """执行PCS调度（重写父类方法）"""
 
         # 初始化：生成链路并计算效用
-        self._generate_potential_links()
+        self._generate_potential_links(
+            min_division=self.blind_spot_min_division,
+            min_overlap=self.min_overlap_grids)
         self._precompute_grid_mAP()
         self._calculate_link_utilities()
 

@@ -131,6 +131,15 @@ def parse_args():
                         help='Override PotentialGame per-head RB budget B_h. '
                              'Defaults to 1 to preserve the original SGCP '
                              'protocol.')
+    parser.add_argument('--pcs-blind-spot-min-division', type=int,
+                        default=None,
+                        help='Override FullPerception PCS blind-spot '
+                             'division granularity. This changes PCS blind '
+                             'spot units, not network bandwidth.')
+    parser.add_argument('--pcs-min-overlap-grids', type=int, default=None,
+                        help='Override minimum sender/receiver blind-spot '
+                             'grid overlap for FullPerception PCS candidate '
+                             'links.')
     parser.add_argument('--max-upload-points-per-source', type=int,
                         default=None,
                         help='Optional deterministic point budget for each '
@@ -140,8 +149,8 @@ def parse_args():
     parser.add_argument('--selective-sharing-baseline', default=None,
                         choices=['random', 'nearest', 'density',
                                  'greedy_density', 'communication_aware',
-                                 'fullperception_rsu',
-                                 'fullperception_decentralized',
+                                 'global_selective_proxy',
+                                 'cluster_local_selective_proxy',
                                  'edgecooper',
                                  'edgecooper_global',
                                  'edgecooper_global_hd'],
@@ -235,7 +244,9 @@ def extract_lidar_density_threshold(protocol):
 
 
 def apply_resource_overrides(resource_allocator, world, num_channels=None,
-                             bandwidth_mhz=None, head_rb_budget=None):
+                             bandwidth_mhz=None, head_rb_budget=None,
+                             pcs_blind_spot_min_division=None,
+                             pcs_min_overlap_grids=None):
     if num_channels is not None:
         if num_channels <= 0:
             raise ValueError('--num-channels must be positive')
@@ -246,6 +257,17 @@ def apply_resource_overrides(resource_allocator, world, num_channels=None,
         if bandwidth_mhz <= 0:
             raise ValueError('--bandwidth-mhz must be positive')
         resource_allocator.bandwidth_all = float(bandwidth_mhz) * (10 ** 6)
+    if pcs_blind_spot_min_division is not None:
+        if pcs_blind_spot_min_division <= 0:
+            raise ValueError('--pcs-blind-spot-min-division must be positive')
+        if hasattr(resource_allocator, 'blind_spot_min_division'):
+            resource_allocator.blind_spot_min_division = int(
+                pcs_blind_spot_min_division)
+    if pcs_min_overlap_grids is not None:
+        if pcs_min_overlap_grids < 0:
+            raise ValueError('--pcs-min-overlap-grids cannot be negative')
+        if hasattr(resource_allocator, 'min_overlap_grids'):
+            resource_allocator.min_overlap_grids = int(pcs_min_overlap_grids)
     if hasattr(resource_allocator, 'time_slot'):
         resource_allocator.time_slot = float(
             getattr(world.network_manager, 'time_slot', 0.1))
@@ -959,6 +981,8 @@ def apply_sgcp_constraint(frame, protocol, ego_cav_id, resource_allocation,
                           timestamp=None,
                           fixed_cluster_templates=None,
                           head_rb_budget=None,
+                          pcs_blind_spot_min_division=None,
+                          pcs_min_overlap_grids=None,
                           coverage_fallback='none',
                           coverage_state=None,
                           max_upload_points_per_source=None,
@@ -1000,7 +1024,9 @@ def apply_sgcp_constraint(frame, protocol, ego_cav_id, resource_allocation,
         world,
         num_channels=num_channels,
         bandwidth_mhz=bandwidth_mhz,
-        head_rb_budget=head_rb_budget)
+        head_rb_budget=head_rb_budget,
+        pcs_blind_spot_min_division=pcs_blind_spot_min_division,
+        pcs_min_overlap_grids=pcs_min_overlap_grids)
     allocator.set_clusters(clusters)
     allocator.run()
     if grid_selection_mode == 'random':
@@ -1124,7 +1150,7 @@ def ns3_link_quality(link_quality, timestamp, source_id, target_id):
 
 def candidate_member_ids(world, cluster, baseline_name):
     head_id = int(cluster.head_id)
-    if baseline_name in ['fullperception_rsu', 'edgecooper']:
+    if baseline_name in ['global_selective_proxy', 'edgecooper']:
         return [
             int(member_id)
             for member_id in sorted(world.get_vehicle_managers().keys())
@@ -1310,14 +1336,14 @@ def select_baseline_members(world, cluster, baseline_name, member_budget,
             sender_capacity=sender_capacity)
 
     if baseline_name in ['density', 'greedy_density', 'communication_aware',
-                         'fullperception_rsu',
-                         'fullperception_decentralized']:
+                         'global_selective_proxy',
+                         'cluster_local_selective_proxy']:
         scored = []
         for member_id in members:
             sender_vm = world.get_vehicle_manager(member_id)
             density_sum = density_score_for_member(head_vm, sender_vm)
             if baseline_name in ['communication_aware',
-                                 'fullperception_decentralized']:
+                                 'cluster_local_selective_proxy']:
                 distance = vehicle_distance(head_vm, sender_vm)
                 quality = ns3_link_quality(
                     link_quality,
@@ -1329,7 +1355,7 @@ def select_baseline_members(world, cluster, baseline_name, member_budget,
                 else:
                     density_sum = (
                         density_sum * quality / (1.0 + distance / 100.0))
-            elif baseline_name == 'fullperception_rsu':
+            elif baseline_name == 'global_selective_proxy':
                 distance = vehicle_distance(head_vm, sender_vm)
                 density_sum = density_sum / (1.0 + distance / 200.0)
             scored.append((-density_sum, member_id))
@@ -1895,6 +1921,9 @@ def main():
                     fixed_cluster_templates
                     if args.clustering == 'fixed_first_frame' else None),
                 head_rb_budget=args.head_rb_budget,
+                pcs_blind_spot_min_division=(
+                    args.pcs_blind_spot_min_division),
+                pcs_min_overlap_grids=args.pcs_min_overlap_grids,
                 coverage_fallback=args.sgcp_coverage_fallback,
                 coverage_state=sgcp_coverage_state,
                 max_upload_points_per_source=(

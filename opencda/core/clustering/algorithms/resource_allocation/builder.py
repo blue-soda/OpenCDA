@@ -74,7 +74,6 @@ RESOURCE_ALLOCATION_ALGORITHMS = {
     'pcs': PCS,
     'fullperception': PCS,
     'fullperception_pcs': PCS,
-    'fullperception_rsu_pcs': PCS,
     'mws': MWS,
     'fullperception_mws': MWS,
     'random': RandomRA,

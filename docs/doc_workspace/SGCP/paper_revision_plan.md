@@ -195,7 +195,7 @@ The coalition formation stage is guided by a stability-aware utility and empiric
 2026-07-18 追加更新：修正 FullPerception 命名问题并重跑 PAPG / EdgeCooper-HD：
 
 - `FullPerception-centralized` 改为 `Full 20-CAV early fusion`，因为 `0.85/0.83/0.48, 118.71 Mbps` 是 full 20-CAV point-cloud sharing upper reference。
-- 新增 `FullPerception-PCS (built-in)` 行，对应仓库 `pcs.py` 的 FullPerception PCS baseline；修复 scheduled-receiver 协议后的结果为 `0.33/0.29/0.14, 15.80 Mbps`。
+- 新增 `FullPerception-PCS (built-in)` 行，对应仓库 `pcs.py` 的 FullPerception PCS baseline；当前 tuned scheduled-receiver 协议结果为 `0.59/0.53/0.22, 25.29 Mbps`。
 - 41 帧 repeat 确认 PAPG 为 `0.81/0.78/0.39, 62.54 Mbps`，EdgeCooper-HD 为 `0.81/0.78/0.42, 65.40 Mbps`。两者接近是稳定结果，不应写成随机波动或实现误差。
 - Selective V2V 三个主表 baseline 已在 `results.md` 定义：forced random、communication-aware density/distance、density high-budget。
 

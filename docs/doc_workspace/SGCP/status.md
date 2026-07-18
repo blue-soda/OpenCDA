@@ -25,8 +25,8 @@ SGCP 工作与仓库中以下部分关系最紧密：
 - 当前可复现主结果：PAPG 41 帧 AP@0.3/0.5/0.7 = `0.81/0.78/0.39`，payload `32,049,872 bytes` / `62.54 Mbps`，410 scheduled links。
 - 公平随机 baseline 已改为 forced-budget random：`0.77/0.73/0.38`，`31,613,424 bytes` / `61.68 Mbps`。旧 RandomRA/MWS payload 过低，只保留为 w/o-PPS 诊断。
 - FullPerception/full 20-CAV early fusion 作为 centralized upper reference：`0.85/0.83/0.48`，`118.71 Mbps`，不作为同通信预算公平主对比。
-- 已重新核查代码：`opencda/core/clustering/algorithms/resource_allocation/pcs.py` 对应 FullPerception 论文 PCS 调度算法，`mws.py` / `random_ra.py` 是同一问题上的 heuristic baseline。已新增 `fullperception_pcs` alias，并完成第一轮协议修复：PCS 的 `c(q)` 现在由 payload、20 MHz/10ch 和 0.1 s slot 计算，`sc_num` 会传入 OpenCDA scheduler 与 NS3 replay。修复后的协议正确 41 帧 scheduled-receiver 结果为 `0.33/0.29/0.14`、8,100,112 bytes / `15.80 Mbps`，NS3 dry-run 生成 104 条 scheduled requests。结论仍是内置 PCS under-schedule，需要继续校准后才能作为强 FullPerception baseline。
-- 另有后补 `fullperception_rsu` 和 `fullperception_decentralized` selective proxy。FullPerception-RSU proxy 41 帧为 `0.84/0.80/0.46`、`109.71 Mbps`，FullPerception-Decentralized proxy 为 `0.80/0.76/0.41`、`75.94 Mbps`；这些应标注为 proxy，不替代内置 PCS。FullPerception-Decentralized 已补 11 帧真实 NS3 replay：110/110 application callback complete、110/110 RLC complete、0 PHY failures。
+- 已重新核查代码：`opencda/core/clustering/algorithms/resource_allocation/pcs.py` 对应 FullPerception 论文 PCS 调度算法，`mws.py` / `random_ra.py` 是同一问题上的 heuristic baseline。正规入口为 `fullperception_pcs`。本轮进一步修复 PCS 的 blind-spot cache key、grid mAP cache index、同一 blind-spot 粒度下的 utility/payload/grid-selection 对齐，并将默认 blind-spot split 调为 `division=12,min_overlap=0`。41 帧 scheduled-receiver 结果提升为 `0.59/0.53/0.22`、12,959,840 bytes / `25.29 Mbps`；11 帧 NS3 dry-run 每帧 5 条 scheduled request、0 skipped unscheduled。
+- 另有后补 selective proxy 已改名为 `global_selective_proxy` 和 `cluster_local_selective_proxy`，不再占用 FullPerception 命名。重命名前结果为：global selective proxy 41 帧 `0.84/0.80/0.46`、`109.71 Mbps`；cluster-local selective proxy `0.80/0.76/0.41`、`75.94 Mbps`，并已补 11 帧真实 NS3 replay：110/110 application callback complete、110/110 RLC complete、0 PHY failures。这些是 proxy/diagnostic，不替代论文 PCS baseline。
 - EdgeCooper 已从逐 receiver blind-spot proxy 升级为 `edgecooper_global_hd` network-aware / half-duplex proxy：诊断发现旧 `edgecooper_global` 的 73/110 delivery 主要来自同一 100 ms slot 内 receiver 同时作为 sender 的半双工冲突。新增半双工约束后，41 帧结果为 `0.81/0.78/0.42`、33,519,040 bytes / `65.40 Mbps`，11 帧真实 NS3 replay 为 110/110 application/RLC complete、0 PHY failures。该结果应归入 RSU/edge-assisted baseline；它对 PAPG 主线形成新的高 IoU 压力，论文需分层呈现 edge-assisted 与 V2V-only，或继续提升 PAPG AP@0.7。
 - PAPG `B_h=3` 已完成 41 帧 probe：`0.80/0.78/0.40`、32,051,792 bytes / `62.54 Mbps`，avg source CAVs 降至 2.67。结论是简单提高 per-head RB 上限不能追平 EdgeCooper-HD 的 AP@0.7；下一步若继续提升 PAPG，应做高质量 source / target-grid coverage 保护。
 - 已同步 `C:\Workspace\icdcs-paper\SGCP\main.tex`：主表加入 `EdgeCooper-HD (edge-assisted)` 行，并在正文明确它是 virtual edge-assisted reference，不属于 fully decentralized RSU-free V2V 公平 baseline。
@@ -41,7 +41,7 @@ SGCP 工作与仓库中以下部分关系最紧密：
 - 已完成 detector-benefit post-hoc 对比：11 帧 PAPG 无 hint 基线为 `0.76/0.73/0.34`、8,598,224 bytes；merged routing hints 相比 PAPG 逐 GT 对比为 4 个 gained GT、15 个 lost GT，PAPG `full_detected_method_missed=82`，hint 为 91。结论：routing 可以修复少数诊断目标，但会破坏更多已覆盖目标；后续触发器必须保护已覆盖 object prototypes，而不是只看 object-support gap。
 - 已将 ISPG、CCISPG 和 routing-hint 诊断结果收束为论文边界：这些结果解释 PAPG 与 EdgeCooper-HD 在 AP@0.7 上的结构性差距，但当前不进入主表。主表/回复口径保持 PAPG 为稳定 V2V-only 主算法，EdgeCooper-HD 为 edge-assisted/global-assignment reference；若继续算法改造，必须先有 proposal/objectness-level trigger，不能继续追加临时 routing 修补。
 - 已完成 `C:\Workspace\icdcs-paper\SGCP\main.tex` 的 PAPG 主表一致性修订：PAPG 行不再把 AP@0.7/Mbps 误加粗为列最优；正文明确 PAPG 相比 communication-aware selective V2V 是 AP@0.3/0.5 提升、AP@0.7/通信量存在 tradeoff；结论弱化为低/中 IoU 改善和 NS3 子信道可行性，而不是无条件全面击败所有 heuristic。
-- 已根据最新审阅修正 `C:\Workspace\icdcs-paper\SGCP\main.tex` 的 FullPerception 命名问题：`0.85/0.83/0.48, 118.71 Mbps` 行现在命名为 `Full 20-CAV early fusion` upper reference；另新增 `FullPerception-PCS (built-in)` 行，对应仓库 `pcs.py`，修复后协议正确结果为 `0.33/0.29/0.14, 15.80 Mbps`。这避免再把 FullPerception baseline 和 full-sharing AP 上界混写。
+- 已根据最新审阅修正 `C:\Workspace\icdcs-paper\SGCP\main.tex` 的 FullPerception 命名问题：`0.85/0.83/0.48, 118.71 Mbps` 行现在命名为 `Full 20-CAV early fusion` upper reference；FullPerception baseline 对应仓库 `pcs.py` / `fullperception_pcs`，当前 tuned 结果为 `0.59/0.53/0.22, 25.29 Mbps`。这避免再把 FullPerception baseline 和 full-sharing AP 上界混写。
 - 已重跑 PAPG 与 EdgeCooper-HD：11 帧 repeat 为 PAPG `0.76/0.73/0.34`、EdgeCooper-HD `0.77/0.73/0.37`；41 帧 repeat 为 PAPG `0.81/0.78/0.39`、EdgeCooper-HD `0.81/0.78/0.42`。结论是两者接近为稳定结果，EdgeCooper-HD 作为 edge/global assignment reference 保留 AP@0.7 优势。
 - PAPG 真实 NS3 replay 已完成 11 帧：110/110 scheduled requests application callback 和 RLC request complete，RLC drops=0，PHY decode failures=0。
 - `main.tex`、`main_table_candidate.md`、`results.md`、`baseline_fairness.md`、`fullperception_baseline_revision.md`、`baseline_reproduction_plan.md`、`rebuttal_draft.md` 和 `rebuttal_short.md` 当前应以 PAPG 主线和显式 baseline 分层为准；早期 coverage-aware 10ch/20ch 只作为消融或资源敏感性结果。
@@ -63,7 +63,7 @@ SGCP 工作与仓库中以下部分关系最紧密：
 
 - 核心模块消融：无稳定窗口、无 coalition formation、无 PPS、仅 early fusion、仅 late fusion 等。
 - 参数敏感性：`T_min^stab`、`N_max`、`rho_th`、CAV 数量、带宽/子信道数量。
-- 更公平的 baseline：FullPerception-RSU、FullPerception-Decentralized、其他 V2V-only/decentralized 方法。
+- 更公平的 baseline：FullPerception PCS、global/cluster-local selective proxy、其他 V2V-only/decentralized 方法。
 - `f(rho)` 标定曲线和泛化实验。
 - 运行时开销：聚类耗时、调度耗时、通信耗时、融合与检测耗时。
 - 稳定性指标：cluster lifetime、reconfiguration 次数、fragmentation rate。
@@ -115,7 +115,7 @@ SGCP 工作与仓库中以下部分关系最紧密：
 - 已新增 `--num-channels` / `--bandwidth-mhz` 离线参数，并完成网络资源敏感性第一版：5/10/20 子信道 AP@0.5 分别为 0.53/0.73/0.73，平均上传 payload 分别为 60,225/109,415/139,300 bytes/source，平均 selected grids 分别为 45.58/87.32/117.18。
 - 已完成 PPS 带宽参数第一轮复核：`bandwidth_per_channel` 已进入 `PotentialGame` 的 max-grid、SINR 和 data-rate 计算；20/40/80 MHz 当前结果一致，是因为本 dump 的调度不由带宽上限主导，主要受子信道数量、每簇头 `B_h=1` RB 和候选网格集合约束。
 - 已完成低带宽瓶颈触发实验：0.1/0.5/1.0 MHz 下 AP@0.5 分别为 0.22/0.50/0.61，平均 selected grids 分别为 0.00/4.32/9.66，证明带宽约束可观测生效。
-- 已新增 `baseline_fairness.md`，明确 FullPerception-RSU 是 centralized/RSU-assisted upper reference，不作为同通信预算公平主对比；full 20-CAV early/late fusion 也只作为 upper/reference。
+- 已新增并更新 `baseline_fairness.md`，明确 FullPerception baseline 对应 `pcs.py` PCS；full 20-CAV early/late fusion 只作为 upper/reference，global selective proxy 不作为同通信预算公平主对比。
 - 已新增 same-budget CAV-only selective-sharing baseline：`nearest`、`density`、`communication_aware` 三种成员选择，复用 SGCP clustering + inter-cluster late fusion，默认每簇头 2 个成员、87 个 grid budget；41 帧结果分别为 AP@0.3/0.5/0.7 = 0.76/0.73/0.37、0.77/0.74/0.39、0.78/0.75/0.40。
 - 已新增 `topology_trigger.md`，定义 SGCP topology change trigger 的邻居变化、相对运动、链路质量、utility 下降、hard failure 和 periodic guard 条件，并明确 `NO_CHANGE/LOCAL_REPAIR/RECLUSTER` 三类输出。
 - 已将 topology trigger 统计接入 `opencda.tools.offline_replay`：支持 summary 输出和 `--print-topology-events` 逐 transition 明细；当前支持 `dump` 与 `pose_delta` 两种速度源，默认使用相邻帧位置差分速度。
@@ -130,7 +130,7 @@ SGCP 工作与仓库中以下部分关系最紧密：
 - 已新增 `paper_revision_plan.md`，把 topology trigger 表述矛盾、实时性、`f(rho)` 标定、baseline fairness 和 game-theoretic convergence 转成 `main.tex` 级别替换建议；其中 topology trigger 矛盾的 P4 写作项已完成。
 - 已新增 `related_work_novelty_revision.md`，完成 P4 related work / novelty 写作口径：SGCP 的新意不写成 coalition game 本身，而是感知效用标定、稳定性约束、容量约束、PPS 子信道可行性和分层 early/late fusion 的组合。
 - 已新增 `parameter_calibration_revision.md`，完成 P4 `f(rho)` 标定过程和 `T_min^stab/N_max/rho_th` 参数依据写作口径；特别明确当前短序列不能证明 `T_min^stab=500 ms` 最优，只能写为五个感知周期的保守默认。
-- 已新增 `fullperception_baseline_revision.md`，完成 P4 FullPerception baseline 写作口径：FullPerception-RSU、full 20-CAV early/late fusion 作为 centralized/infrastructure-assisted upper reference；同通信预算主对比采用 CAV-only nearest/density/communication-aware selective sharing，并明确当前短序列上 SGCP 不能声称 AP 全面领先强 selective baseline。
+- 已新增并更新 `fullperception_baseline_revision.md`，完成 P4 FullPerception baseline 写作口径：`pcs.py` 是正式 FullPerception PCS baseline；full 20-CAV early/late fusion 作为 centralized full-sharing upper reference；同通信预算主对比采用 CAV-only nearest/density/communication-aware selective sharing，并明确当前短序列上 SGCP 不能声称 AP 全面领先强 selective baseline。
 - 已扩展 `opencda.tools.offline_replay` 输出 `runtime_breakdown_ms`，并新增 `runtime_feasibility_revision.md`。当前 41 帧控制面 profiling 中，SGCP algorithm total 平均 105.24 ms，coalition formation 64.39 ms，PPS scheduling 40.58 ms；离线读取和 world build 约 599.73 ms/frame，属于 replay artifact，不计入在线周期。论文中应写为 near-real-time feasibility，而不是完整端到端 100 ms 保证。
 - 已新增 `reproducibility_manifest.md`，固定当前可复现实验的 OpenCDA commit、数据集、命令、结果和 artifact 路径；同时确认 `main.tex` 旧主表 `NC/RS/MUG/FullPerception/Ours = 0.13/0.31/0.37/0.81/0.85@AP0.3...` 尚未找到原始日志、随机种子和代码版本，论文修订应以当前复现结果替换或找回旧日志后再使用。
 - 已完成真实 CARLA 在线 topology-trigger gate 短回归，并新增 `online_topology_gate_regression.md`。通过 `OPENCDA_CLUSTERING_CONFIG=networking_clustering_topology_gate.yaml` 打开 gate，通过 `OPENCDA_ONLINE_TICKS=35` 自动结束在线仿真；回归正常退出，CP counter=8，AP@0.3/0.5/0.7 = 0.84/0.82/0.69，cluster trigger 为 `initial=1`、`neighbor_set_change=1`、`head_member_unreachable=3`、`skip=0`。结论：gate 接入和日志生效，但当前 35 m 通信范围下 hard condition 持续触发，不能用该回归证明 skip 收益。
@@ -141,7 +141,7 @@ SGCP 工作与仓库中以下部分关系最紧密：
 - 已完成 `spatial_diverse` 子信道 sweep：5/10/20 子信道分别为 AP@0.3/0.5/0.7 = 0.56/0.53/0.27、0.79/0.75/0.37、0.80/0.76/0.41；payload 分别为 14,815,408、28,743,280、37,912,544 bytes。10 子信道是低通信主点，20 子信道 AP@0.7 接近 full-cluster 0.42 且 payload 低约 15.5%。
 - 已将 `offline_ns3_replay` 对齐 coverage-aware 主表候选，支持 `--num-channels`、`--bandwidth-mhz`、`--sgcp-grid-score-mode` 和 `--sgcp-grid-selection-mode`。10 子信道 `spatial_diverse` 11 帧 NS3 replay 完成：110/110 scheduled request application/RLC complete，44 条未调度需求被 OpenCDA replay 跳过；20 子信道 `spatial_diverse` 完成：154/154 scheduled request application/RLC complete。两者 `MANUAL_CMD_REJECT=0`，PSCCH/PSSCH decode failure 均为 0。
 - 已补齐 `offline_ns3_replay --rho-th` 参数，并完成 `spatial_diverse` 10 子信道 `rho_th=3.0` 的 11 帧 NS3 replay：110/110 scheduled request application/RLC complete，44 条未调度需求跳过，PHY failures 为 0。至此主表推荐的 10ch tuned low-budget row 不再是 NS3 pending。
-- 已补全 FullPerception 口径：当前 RSU-free dump 无真实 FullPerception-RSU；可复现 centralized full 20-CAV early reference 为 AP@0.3/0.5/0.7 = 0.85/0.83/0.48，non-ego CAV 上传 payload 60,838,528 bytes。FullPerception-Decentralized 应使用 CAV-only selective sharing；高预算 density/communication-aware selective baseline 为 0.80/0.76/0.40，payload 37,710,864 bytes。
+- 已补全 FullPerception 口径：当前 RSU-free dump 无真实 RSU sensor；可复现 centralized full 20-CAV early reference 为 AP@0.3/0.5/0.7 = 0.85/0.83/0.48，non-ego CAV 上传 payload 60,838,528 bytes。FullPerception PCS 使用 `pcs.py`，当前 tuned 结果为 0.59/0.53/0.22、25.29 Mbps；高预算 density/communication-aware selective baseline 为 0.80/0.76/0.40，payload 37,710,864 bytes。
 - 已确认旧 Random/MWS scheduler payload 过低（约 9.7/9.9 MB），未充分利用 10 子信道资源，不适合作“通信量减少”的主表证据。它们保留为 w/o PPS 消融；公平主对比改用 payload-matched selective baselines、random-grid same-link probe 和 SGCP spatial-diverse 10/20ch。
 - 已完成 `spatial_diverse` 的 `rho_th` 点云阈值 sweep：`rho_th=1/2/3/4` 中，`rho_th=3.0` 达到 0.79/0.76/0.38，payload 29,405,296 bytes，是默认 10ch 低通信候选之外的更高 AP 阈值配置。
 - 已新增 `main_table_candidate.md`，把可复现结果收束为论文主表候选：FullPerception centralized upper reference 118.71 Mbps、payload-matched selective high-budget 73.58 Mbps、SGCP coverage-aware 10ch `rho_th=3` 为 57.38 Mbps、SGCP coverage-aware 20ch 为 73.98 Mbps，并明确 Random/MWS 只作消融。
@@ -199,7 +199,7 @@ SGCP 工作与仓库中以下部分关系最紧密：
 - 当前 `T_min_stab=0` 消融未显示差异，说明当前 41 帧 dump 不足以证明稳定窗口贡献；需要更长序列或更强相对运动/topology change 场景。
 - `T_min^stab=100-1000 ms` 参数实验同样未显示差异；当前只能作为“短序列无敏感性”的工程记录，不能作为论文中参数选择依据。
 - singleton-cluster 结果会 late-fuse 全部 20 个 CAV 的检测框，但当前只统计点云 payload，不能直接作为零通信公平 baseline；需要补检测框交换开销或实现距离/随机固定簇对比。
-- FullPerception-Decentralized / same-budget CAV-only selective baseline 已有 first version；communication-aware baseline 现在同时支持 distance proxy 与 NS3 RLC-complete cost。当前 dump 上 distance proxy AP@0.5/AP@0.7 高于 SGCP 且 payload 更高；NS3-aware 11 帧结果显示链路可行性约束会降低 AP 和通信量。论文主张需要谨慎转向稳定性、PPS channel feasibility 和动态网络约束，而不是简单宣称 AP 全面领先。
+- Cluster-local selective proxy / same-budget CAV-only selective baseline 已有 first version；communication-aware baseline 现在同时支持 distance proxy 与 NS3 RLC-complete cost。当前 dump 上 distance proxy AP@0.5/AP@0.7 高于 SGCP 且 payload 更高；NS3-aware 11 帧结果显示链路可行性约束会降低 AP 和通信量。论文主张需要谨慎转向稳定性、PPS channel feasibility 和动态网络约束，而不是简单宣称 AP 全面领先。
 - `N_max` 参数实验显示非单调趋势；进入论文前需要补更长序列/不同密度场景，并计入 inter-cluster 检测框交换开销。
 - `rho_th` 参数实验已显示通信-精度折中，`f(rho)` 密度分布标定已有第一版；论文级结论仍需要补跨场景/探测器泛化，必要时把 density bin 与 per-grid detection recall/IoU 绑定。
 - CAV 数量规模实验目前只是固定场景子集实验；论文级“密度扩展”仍需重新导出不同 CAV/背景车密度的 CARLA 场景。

@@ -17,7 +17,7 @@
 - `paper_revision_plan.md`：面向论文正文和 rebuttal 的修订计划，记录具体表述替换、审稿意见回应和风险边界。
 - `related_work_novelty_revision.md`：related work 与 novelty 的重写建议，重点回应 decentralized CP baseline 和 coalition-game 相似性质疑。
 - `parameter_calibration_revision.md`：`f(rho)`、`rho_th`、`N_max`、`T_min^stab` 的参数标定与论文写作依据。
-- `fullperception_baseline_revision.md`：FullPerception-RSU / FullPerception-Decentralized 的实现口径、公平性边界和 rebuttal 写法。
+- `fullperception_baseline_revision.md`：FullPerception PCS、full-sharing upper reference、global/cluster-local selective proxy 的实现口径、公平性边界和 rebuttal 写法。
 - `baseline_reproduction_plan.md`：FullPerception、EdgeCooper 和其他 decentralized / V2V-only baseline 的复现计划、代码口径和当前状态。
 - `runtime_feasibility_revision.md`：SGCP 控制面毫秒级耗时分解、100 ms 周期可行性边界和 rebuttal 写法。
 - `reproducibility_manifest.md`：当前可复现实验的代码版本、数据集、命令、结果和日志路径；同时标注论文旧主表缺少原始日志的问题。
