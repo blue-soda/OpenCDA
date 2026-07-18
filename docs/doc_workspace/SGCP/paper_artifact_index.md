@@ -26,6 +26,7 @@ docs\doc_workspace\SGCP\artifacts\paper_artifact_index_20260719\paper_artifact_i
 | Table 3 Scheduler Comparison | `artifacts/scheduler_comparison_20260719/scheduler_comparison_manifest.csv` | `2a2e4b2` | usable | 只比较同一 SGCP-compatible scaffold 内的 scheduler。 |
 | P4 Scheduler Budget Sweep | `artifacts/scheduler_budget_sweep_20260719/scheduler_budget_sweep_manifest.csv` | `c63e0c2` | usable | 支撑 Pareto 中 Random/Density/Communication-aware low/high budget first-pass，不替代 protocol-native 主表。 |
 | P4 EdgeCooper-HD Budget Sweep | `artifacts/edgecooper_budget_sweep_20260719/edgecooper_budget_sweep_manifest.csv` | `6693b45` | usable | 支撑 EdgeCooper-HD edge/global assignment + half-duplex proxy 的 low/high budget 边界。 |
+| P4 FullPerception-PCS Parameter Sweep | `artifacts/pcs_parameter_sweep_20260719/pcs_parameter_sweep_manifest.csv` | `0053134` | usable with caveats | 11 帧 granularity/overlap 趋势 + 41 帧 tuned anchor；更激进 41 帧 sweep 运行不可承受，不混入 41 帧 Pareto。 |
 | Table 4 Parameter Sensitivity | `artifacts/parameter_sensitivity_20260719/table4_parameter_sensitivity.csv` | `859f5d5` | usable | `rho_th` 和 channel count 可进主文；`N_max/T_min` 更适合附录或 rebuttal。 |
 | Runtime-Control-NS3 Appendix | `artifacts/appendix_support_20260719/runtime_control_ns3_appendix.md` | `d75abc4` | usable | 支撑 near-real-time control-plane feasibility，不承诺 detector-inclusive 100 ms。 |
 | Qualitative Case Study | `artifacts/appendix_support_20260719/qualitative_case_study_bev.pdf` | `73fdee0` | draft usable | 可用于 appendix/rebuttal；正式论文可补 legend 和 prediction-box overlay。 |
