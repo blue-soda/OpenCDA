@@ -2,6 +2,36 @@
 
 本文件按时间顺序追加实验记录。每条记录应尽量包含：目的、代码版本、配置、命令、日志路径、关键结果、异常现象和下一步。
 
+## 2026-07-18 - FullPerception MWS/RS heuristic sanity pass
+
+### 目的
+
+PCS tuned 后，复核同论文 heuristic baseline（MWS/RS）是否应采用相同 blind-spot 粒度，并确认它们是否可以进入主表。
+
+### 代码改动
+
+- `MWS` / `RandomRA` 不再硬编码 `min_division=1,min_overlap=50`，改为复用 `PCS.blind_spot_min_division/min_overlap_grids`。
+- 两个 heuristic 都记录 `resource_sc_nums`，使 NS3 request plan 的 `sc_num` 与 scheduled link payload 口径一致。
+- 网格选择只上传 sender 实际覆盖的 blind-spot grids。
+- 修复 `RandomRA` 新路径缺少 `common` import 的 bug。
+
+### 命令
+
+```powershell
+$artifact='docs\doc_workspace\SGCP\artifacts\fullperception_heuristics_20260718'
+conda run --no-capture-output -n opencda python -m opencda.tools.offline_inference --dataset-root D:\Data\Carla --scenario-id 2026_07_15_01_26_56 --ego-cav-id 1 --max-frames 11 --sgcp-constrained --resource-allocation fullperception_mws --sgcp-receiver-policy all-scheduled-receivers --sgcp-inter-cluster-late-fusion --rho-th 3 --num-channels 10 --bandwidth-mhz 20 --sgcp-trace-output "$artifact\fullperception_mws_11f_tuned_trace.csv"
+conda run --no-capture-output -n opencda python -m opencda.tools.offline_inference --dataset-root D:\Data\Carla --scenario-id 2026_07_15_01_26_56 --ego-cav-id 1 --max-frames 11 --sgcp-constrained --resource-allocation fullperception_random --sgcp-receiver-policy all-scheduled-receivers --sgcp-inter-cluster-late-fusion --rho-th 3 --num-channels 10 --bandwidth-mhz 20 --sgcp-trace-output "$artifact\fullperception_random_11f_tuned_trace.csv"
+```
+
+### 结果
+
+| Variant | Frames | AP@0.3 | AP@0.5 | AP@0.7 | Payload bytes | Mbps | Notes |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | --- |
+| FullPerception-MWS tuned | 11 | 0.36 | 0.32 | 0.15 | 4,289,344 | 39.00 | Greedy heuristic remains weak despite higher payload |
+| FullPerception-RS tuned | 11 | 0.54 | 0.49 | 0.23 | 1,644,160 | 14.95 | Random heuristic is closer to PCS on 11f but far below SGCP/strong selective baselines |
+
+结论：MWS/RS 统一 tuned blind-spot 口径后仍不适合作主公平 baseline。它们应作为 FullPerception PCS 的 heuristic/ablation 诊断，而主表保留 tuned PCS、PAPG、payload-matched selective baselines、EdgeCooper-HD 和 full-sharing upper reference。
+
 ## 2026-07-18 - FullPerception proxy rename and PCS tuning pass
 
 ### 目的

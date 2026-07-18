@@ -1,4 +1,5 @@
 from opencda.core.clustering.utils import *
+from opencda.core.clustering.utils import common
 from opencda.log.logger_config import logger
 from opencda.core.clustering.algorithms.resource_allocation.pcs import PCS
 import random
@@ -11,7 +12,9 @@ class RandomRA(PCS):
         """执行随机算法调度（重写父类方法）"""
 
         # 初始化：生成链路并计算效用
-        self._generate_potential_links(min_division=1, min_overlap=50)
+        self._generate_potential_links(
+            min_division=self.blind_spot_min_division,
+            min_overlap=self.min_overlap_grids)
         # self._precompute_grid_mAP()
         # self._calculate_link_utilities()
 
@@ -51,10 +54,17 @@ class RandomRA(PCS):
                 # 分配子信道
                 sender_q, receiver_q, spot_id = link
                 self.resource_strategy[(sender_q, receiver_q)] = start_idx
+                self.resource_sc_nums[(sender_q, receiver_q)] = (
+                    required_subchannels)
                 
                 # 更新网格选择
-                receiver_blind_spots = self._get_vehicle_blind_spots(receiver_q, min_division=1)
+                receiver_blind_spots = self._get_vehicle_blind_spots(
+                    receiver_q,
+                    self.active_blind_spot_min_division)
+                sender = common.global_vehicles.get(sender_q)
                 spot_grids = receiver_blind_spots.get(spot_id, set())
+                if sender:
+                    spot_grids = spot_grids & sender.sens_grids
                 if receiver_q not in self.grid_selection:
                     self.grid_selection[receiver_q] = {}
                 if sender_q not in self.grid_selection[receiver_q]:

@@ -27,23 +27,34 @@ class MWS(PCS):
                 continue
             
             # 获取该链路对应的盲spot网格
-            receiver_blind_spots = self._get_vehicle_blind_spots(receiver_vid)
+            receiver_blind_spots = self._get_vehicle_blind_spots(
+                receiver_vid,
+                self.active_blind_spot_min_division)
             spot_grids = receiver_blind_spots.get(spot_id, set())
             if not spot_grids:
+                continue
+            sender = common.global_vehicles.get(sender_vid)
+            if not sender:
+                continue
+            covered_grids = spot_grids & sender.sens_grids
+            if not covered_grids:
                 continue
             
             # 计算网格平均mAP
             total_mAP = 0.0
             valid_grids = 0
-            for grid_id in spot_grids:
-                mAP = self.grid_mAP_cache[sender_vid].get(grid_id, 0.0)
+            for grid_id in covered_grids:
+                mAP = self.grid_mAP_cache.get(sender_vid, {}).get(grid_id, 0.0)
                 total_mAP += mAP
                 valid_grids += 1
             
             if valid_grids == 0:
                 link_weight = 0.0
             else:
-                link_weight = total_mAP / valid_grids
+                coverage_ratio = min(
+                    1.0,
+                    float(len(covered_grids)) / float(max(len(spot_grids), 1)))
+                link_weight = (total_mAP / valid_grids) * coverage_ratio
             
             self.link_utilities[link] = link_weight
 
@@ -51,7 +62,9 @@ class MWS(PCS):
         """执行贪心算法调度（重写父类方法）"""
 
         # 初始化：生成链路并计算效用
-        self._generate_potential_links(min_division=1, min_overlap=50)
+        self._generate_potential_links(
+            min_division=self.blind_spot_min_division,
+            min_overlap=self.min_overlap_grids)
         self._precompute_grid_mAP()
         self._calculate_link_utilities()
 
@@ -82,10 +95,17 @@ class MWS(PCS):
                 # 分配子信道
                 sender_q, receiver_q, spot_id = link
                 self.resource_strategy[(sender_q, receiver_q)] = start_idx
+                self.resource_sc_nums[(sender_q, receiver_q)] = (
+                    required_subchannels)
                 
                 # 更新网格选择
-                receiver_blind_spots = self._get_vehicle_blind_spots(receiver_q, min_division=1)
+                receiver_blind_spots = self._get_vehicle_blind_spots(
+                    receiver_q,
+                    self.active_blind_spot_min_division)
+                sender = common.global_vehicles.get(sender_q)
                 spot_grids = receiver_blind_spots.get(spot_id, set())
+                if sender:
+                    spot_grids = spot_grids & sender.sens_grids
                 if receiver_q not in self.grid_selection:
                     self.grid_selection[receiver_q] = {}
                 if sender_q not in self.grid_selection[receiver_q]:

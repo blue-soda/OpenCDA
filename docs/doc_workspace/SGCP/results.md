@@ -55,6 +55,15 @@
 | constrained early only | 0.36 | 0.34 | 0.17 | TBD | 11 | All cluster heads, no inter-cluster late fusion |
 | late fusion only | 0.91 | 0.85 | 0.51 | TBD | N/A | OpenCOOD full 20-CAV late checkpoint; reference only, not a strict same-checkpoint SGCP ablation |
 
+## FullPerception Heuristic Sanity
+
+PCS tuned 后，MWS/RS 复用相同 blind-spot 粒度和 scheduled `sc_num` 口径做 11 帧 sanity check。结果说明它们仍是 heuristic/diagnostic ablation，不适合进入主公平表。
+
+| Variant | Frames | AP@0.3 | AP@0.5 | AP@0.7 | Payload bytes | Mbps | Notes |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | --- |
+| FullPerception-MWS tuned | 11 | 0.36 | 0.32 | 0.15 | 4,289,344 | 39.00 | Greedy heuristic remains weak despite higher payload |
+| FullPerception-RS tuned | 11 | 0.54 | 0.49 | 0.23 | 1,644,160 | 14.95 | Random heuristic remains far below SGCP/strong selective baselines |
+
 ## Baseline 公平性说明
 
 详细口径见 `baseline_fairness.md`。当前结果应按以下层级解释：
