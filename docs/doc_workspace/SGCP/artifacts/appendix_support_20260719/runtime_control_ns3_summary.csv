@@ -1,0 +1,22 @@
+category,item,scope,value_1,value_2,value_3,unit,paper_use,notes
+runtime,coalition_formation,41-frame offline replay control-plane profiling,64.39,82.32,,ms,appendix or short main-text sentence,Mean and max runtime of CoalitionGame.run(); online cost can be amortized by topology-triggered updates.
+runtime,post_cluster_state_update,41-frame offline replay control-plane profiling,0.24,0.44,,ms,appendix,Mean and max cost for applying cluster state and topology state.
+runtime,pps_scheduling,41-frame offline replay control-plane profiling,40.58,53.05,,ms,appendix or short main-text sentence,Mean and max runtime of potential-guided PPS scheduling.
+runtime,sgcp_algorithm_total,41-frame offline replay control-plane profiling,105.24,127.58,,ms,appendix or short main-text sentence,Coalition formation + PPS + control-plane bookkeeping; excludes detector inference and transmission waiting.
+runtime,dump_frame_loading,offline replay artifact,448.40,513.31,,ms,exclude from online runtime,PCD/YAML file loading is not part of online CARLA execution.
+runtime,offline_world_build,offline replay artifact,151.33,199.34,,ms,exclude from online runtime,Offline adapter reconstructs manager state every frame.
+convergence,pps_frames_converged,41-frame offline replay control-plane profiling,41,41,,frames,appendix,All frames converged before max_iter=20.
+convergence,pps_iterations,41-frame offline replay control-plane profiling,3.00,3,,iterations,appendix,Average and maximum PPS iterations.
+convergence,scheduled_links,41-frame offline replay control-plane profiling,10.00,410,,links,appendix,Average links per frame and total links over 41 frames.
+convergence,selected_grids,41-frame offline replay control-plane profiling,523.90,,,grids/frame,appendix,Average selected raw-LiDAR grids per frame.
+control,beacon,41-frame accounting,52480,1280.00,,bytes,appendix,Total and average bytes per frame.
+control,density_metadata,41-frame accounting,40184,980.10,,bytes,appendix,Compact high-density grid metadata.
+control,cluster_control,41-frame accounting,3608,88.00,,bytes,appendix,Cluster membership and role metadata.
+control,pps_schedule,41-frame accounting,90840,2215.61,,bytes,appendix,Sender/grid/subchannel schedule commands.
+control,total_control_metadata,41-frame accounting,187112,4563.71,,bytes,appendix or short main-text sentence,0.70% of the older potential-game payload; 0.58% of the PAPG main payload.
+ns3,papg_request_delivery,11-frame true socket replay,110,110,1.000000,requests,main-text sanity plus appendix,Application callbacks matched all scheduled PAPG requests.
+ns3,papg_rlc_completion,11-frame true socket replay,110,110,1.000000,requests,appendix,RLC-complete requests matched all scheduled PAPG requests.
+ns3,papg_rlc_events,11-frame true socket replay,2970,2970,,events,appendix,RLC TX and RX events.
+ns3,papg_delay,11-frame true socket replay,23.91,24.00,,ms,appendix,Average and p95 callback delay.
+ns3,papg_phy_failures,11-frame true socket replay,0,,,events,appendix,No PSCCH/PSSCH decode failures observed.
+ns3,subchannel_window_stress,5-subchannel exposed replay,55,55,55 requests,requests,appendix,55 in-window requests completed; 55 out-of-window requests were rejected before CAM/RLC transmission.

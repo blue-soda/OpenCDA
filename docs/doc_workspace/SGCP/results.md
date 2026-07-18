@@ -635,6 +635,22 @@ docs\doc_workspace\SGCP\artifacts\runtime_breakdown_41f\offline_replay_runtime.l
 
 观察：当前 Python 原型的 control-plane 平均 105.24 ms，接近但略高于 100 ms 协作周期，因此论文中应写为 near-real-time feasibility，而不是完整端到端 100 ms 保证。PPS 本身平均 40.58 ms，41/41 帧在 3 轮内收敛；主要优化空间在 coalition formation。已接入的 topology-trigger gate 可作为机制解释：在线执行时 cluster membership 不必每个 sensing cycle 重算，只有 topology/stability trigger 或 periodic guard 触发时才支付该成本。
 
+## Appendix Support Summary
+
+已将 runtime、control overhead、PPS convergence 和 NS3 request-level reliability 收束为附录证据包：
+
+```text
+docs\doc_workspace\SGCP\artifacts\appendix_support_20260719\runtime_control_ns3_appendix.md
+docs\doc_workspace\SGCP\artifacts\appendix_support_20260719\runtime_control_ns3_summary.csv
+```
+
+建议写作口径：
+
+- 主文只保留短句：PAPG scheduled requests 在 11 帧 NS3 replay 中 110/110 application callback 与 RLC complete，0 PHY failures；控制面 Python prototype 平均 105.24 ms，接近 100 ms 周期。
+- 附录表格报告详细分解：coalition formation 64.39 ms、PPS scheduling 40.58 ms、control metadata 187,112 bytes / 4,563.71 bytes/frame。
+- 不写成 full end-to-end 100 ms guarantee；offline frame loading/world build、OpenCOOD detector inference 和在线 callback 开销不包含在 105.24 ms 中。
+- 控制 metadata 相对 PAPG main raw payload `32,049,872 bytes` 约为 0.58%，相对旧 potential-game payload `26,916,208 bytes` 为 0.70%；论文中应统一写 “below 1% of perception payload”。
+
 ## 数据集导出验证
 
 | Dataset Path | CAVs | Frames / CAV | PCD Files | YAML Files | Offline Inference |

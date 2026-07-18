@@ -196,10 +196,10 @@
 
 ## P8：可选图表与附录
 
-- [ ] Runtime/control overhead：可进入附录或主文短表；用于回应实时性，但不作为主贡献主表。
-- [ ] NS3 request-level reliability：不做主文 Table；只在正文一句话报告 SGCP scheduled replay sanity，完整数据放附录/rebuttal。
+- [x] Runtime/control overhead：可进入附录或主文短表；用于回应实时性，但不作为主贡献主表。已整理附录证据包 `artifacts/appendix_support_20260719/runtime_control_ns3_appendix.md`，明确 control-plane 平均 105.24 ms、控制 metadata 低于 1% payload，并标注 near-real-time 边界。
+- [x] NS3 request-level reliability：不做主文 Table；只在正文一句话报告 SGCP scheduled replay sanity，完整数据放附录/rebuttal。已整理 PAPG 11 帧 110/110 application/RLC complete、0 PHY failures，以及 5-subchannel out-of-window reject stress。
 - [ ] Qualitative case study：选 2-3 帧展示 GT、selected CAV、selected grids、cluster heads、final detections；用于解释失败修复和两层融合。
-- [ ] Appendix raw results：完整列出所有已跑结果，避免主文表格过载。
+- [x] Appendix raw results：完整列出所有已跑结果，避免主文表格过载。第一版通过 `results.md`、`reproducibility_manifest.md` 和 `artifacts/appendix_support_20260719/runtime_control_ns3_summary.csv` 索引；后续若补新场景需继续追加。
 
 ## P9：论文 LaTeX 修改
 

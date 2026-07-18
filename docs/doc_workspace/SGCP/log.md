@@ -2,6 +2,29 @@
 
 本文件按时间顺序追加实验记录。每条记录应尽量包含：目的、代码版本、配置、命令、日志路径、关键结果、异常现象和下一步。
 
+## 2026-07-19 - P8 appendix support consolidation
+
+### 目的
+
+继续推进 `target.md` P8，在不引入新主指标的前提下，把 runtime、control overhead、PPS convergence 和 NS3 request-level reliability 整理成可放附录/rebuttal 的证据包。
+
+### 结果
+
+- 新增 `docs/doc_workspace/SGCP/artifacts/appendix_support_20260719/runtime_control_ns3_appendix.md`。
+- 新增 `docs/doc_workspace/SGCP/artifacts/appendix_support_20260719/runtime_control_ns3_summary.csv`。
+- 更新 `target.md`：P8 中 Runtime/control overhead、NS3 request-level reliability、Appendix raw results 第一版标记完成；Qualitative case study 保留未完成。
+- 更新 `status.md` / `results.md`：记录附录证据包路径和论文写作边界。
+
+### 关键口径
+
+- SGCP control-plane prototype：平均 105.24 ms，最大 127.58 ms；这是 near-real-time feasibility，不是 detector-inclusive end-to-end 100 ms guarantee。
+- PAPG 11 帧 NS3 replay：110/110 scheduled requests application callback 与 RLC complete，0 PHY failures，平均/p95 delay 23.91/24.00 ms。
+- 控制 metadata：187,112 bytes，4,563.71 bytes/frame；相对 PAPG main raw payload 约 0.58%，可写为 below 1%。
+
+### 训练 watcher
+
+远程 early-fusion checkpoint fine-tune watcher 仍在等待 GPU：`mindspore-187` 上 8 张 3090 当前各占约 22.2GB，`/data2/gzc/sgcp_early_train/logs/train_gpu_waiter.log` 正常轮询。
+
 ## 2026-07-19 - Remote early-fusion checkpoint fine-tune setup
 
 ### 目的
