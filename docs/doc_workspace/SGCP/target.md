@@ -56,8 +56,8 @@
 - [x] 若 SGCP 只靠 late fusion 在 AP@0.3 大幅领先，需要在正文明确这是系统协议优势，不把它写成单纯 scheduler 优势。当前 `main.tex` 已将 late fusion 写成 network-level coverage / low-IoU recall 机制，并把 scheduler comparison 独立成 Table 3。
 - [x] 若 FullPerception-PCS 或 EdgeCooperV2V+ 复现结果异常低，先核查算法、参数和场景，不直接拿弱结果进主表。当前审计结论：FullPerception-PCS 是 repaired/tuned built-in PCS baseline；EdgeCooper-HD 是 edge-assisted/global assignment reference，二者均在表格和正文中标注信息条件。
 - [x] Pure late fusion 当前 `0.82/0.76/0.37` 且 0 点云 payload 很强；论文写作必须计入 detection-box exchange overhead 或将其明确为 prediction-sharing reference，否则会削弱 SGCP 通信优势叙事。已新增 `late_fusion_box_comm.md` 与 `opencda.tools.sgcp_late_box_comm_budget`：20MHz/10ch 下 detection-box broadcast 约 `0.74-1.13 Mbps`，scheduled all-to-all unicast 约 `14.04-21.52 Mbps` 且 100 ms 内可完成；只有 unscheduled all-to-all 随机抢信道模型会因碰撞失败。
-- [ ] 修正 Pure late baseline 口径：当前 P1/P2 manifest 中的 Pure late 使用 `fusion_method=early` + singleton CAV + custom box-level late NMS，不是 `pointpillar_late_fusion` checkpoint。已补 41 帧 actual late checkpoint sanity：`0.89/0.83/0.49`，预测框 broadcast overhead 约 `1.07-1.65 Mbps`。后续主表应决定使用 actual-late checkpoint 作为 prediction-sharing reference，或明确标注 early-singleton late proxy。
-- [ ] 统一 detector/checkpoint 公平性：SGCP 论文主线的“点云 -> 检测框”必须使用同一 checkpoint；由于 SGCP 簇内阶段是 raw point-cloud early fusion，主线公平口径应统一使用 `pointpillar_early_fusion`，Pure late 则为 singleton local inference + `naive_late_fusion()`。已补 “all late detector” sanity：Pure late actual late `0.89/0.83/0.49`，forced SGCP PAPG late-detector `0.87/0.81/0.48`、62.54 Mbps；后者不再是严格 SGCP early-fusion 协议，只能作为 checkpoint sensitivity。
+- [x] 修正 Pure late baseline 口径：当前 P1/P2 manifest 中的 Pure late 使用 `fusion_method=early` + singleton CAV + box-level late NMS，不是 `pointpillar_late_fusion` checkpoint。已新增 `detector_checkpoint_fairness.md`，明确主表采用 early-checkpoint singleton controlled Pure late + `naive_late_fusion()`，actual-late checkpoint 只作 detector sensitivity / prediction-sharing reference。
+- [x] 统一 detector/checkpoint 公平性：SGCP 论文主线的“点云 -> 检测框”统一使用 `pointpillar_early_fusion`；Pure late 使用同 checkpoint 的 singleton local inference + `naive_late_fusion()`。已补 “all late detector” sanity：Pure late actual late `0.89/0.83/0.49`，forced SGCP PAPG late-detector `0.87/0.81/0.48`、62.54 Mbps；后者不再是严格 SGCP early-fusion 协议，只能作为 checkpoint sensitivity。
 - [ ] 提升 early-fusion checkpoint：当前最大实验风险是 `pointpillar_early_fusion` 对 SGCP raw point-cloud early fusion 不够强，导致 Pure late prediction-sharing reference 过强、SGCP AP@0.7 上限偏低。远程训练固定使用 `ssh mindspore-187`、`/data2/gzc/sgcp_early_train/` 和 `opencood-gzc` 环境；已上传当前 checkpoint 并启动 GPU watcher，GPU 空闲后自动 fine-tune。回收 checkpoint 后必须用同一 checkpoint 重跑 SGCP 与 Pure late controlled baseline。
 
 ## P2：Table 2 - Fusion Scaffold Ablation
@@ -75,7 +75,7 @@
 
 不做核心消融：
 
-- [ ] 不把 `Clustered late-only` 作为核心表格行；分簇主要服务点云通信和 early fusion，clustered late-only 机制不自然，若保留仅放附录诊断。
+- [x] 不把 `Clustered late-only` 作为核心表格行；分簇主要服务点云通信和 early fusion，clustered late-only 机制不自然，若保留仅放附录诊断。
 
 验收标准：
 

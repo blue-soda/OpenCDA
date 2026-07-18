@@ -981,3 +981,16 @@ Manifest：`docs\doc_workspace\SGCP\artifacts\pcs_parameter_sweep_20260719\pcs_p
 | PCS_41f_div12_ov0 | 41 | 12 | 0 | 0.59 | 0.53 | 0.22 | 12,959,840 | 25.29 |
 
 可读结论：`div12/ov0` 仍是当前 PCS baseline 的可写工作点。`min_overlap=1` 会显著降低 AP@0.7，`div16/ov1` 虽低通信但 AP 不可用；更细粒度/更宽候选的 41 帧运行不可承受。因此主表/Pareto 中保留 `PCS_41f_div12_ov0`，参数趋势放入附录或 rebuttal 支撑“PCS 已调参但受原机制限制”的边界。
+
+## Detector / checkpoint fairness decision
+
+已新增 `detector_checkpoint_fairness.md` 固化主文口径：SGCP raw-LiDAR 系列统一使用 `pointpillar_early_fusion` checkpoint。Pure late 主表行不切换到 `pointpillar_late_fusion` checkpoint，而是作为 controlled prediction-sharing reference：early-checkpoint singleton local inference + `naive_late_fusion()`。
+
+| Variant | Frames | Detector / First-stage Fusion | Box-level Fusion | AP@0.3 | AP@0.5 | AP@0.7 | 用途 |
+| --- | ---: | --- | --- | ---: | ---: | ---: | --- |
+| Pure late controlled | 41 | `pointpillar_early_fusion` singleton local detector | `naive_late_fusion()` | 0.82 | 0.76 | 0.37 | 主表 prediction-sharing reference |
+| Pure late actual-late sanity | 41 | `pointpillar_late_fusion` local detector | `naive_late_fusion()` | 0.89 | 0.83 | 0.49 | sensitivity/reference，不进公平 raw-LiDAR 主表 |
+| SGCP PAPG mainline | 41 | `pointpillar_early_fusion` raw point-cloud early fusion | `naive_late_fusion()` | 0.81 | 0.78 | 0.39 | SGCP 主线 |
+| SGCP PAPG forced-late sanity | 41 | `pointpillar_late_fusion` over scheduled source set | `naive_late_fusion()` | 0.87 | 0.81 | 0.48 | checkpoint sensitivity，不代表 SGCP 协议 |
+
+结论：Pure late 仍是强 prediction-sharing reference，但不应和 raw-LiDAR SGCP/PAPG 写成同类点云通信 baseline。当前最大风险仍是 early checkpoint 偏弱；远程 fine-tune watcher 尚在等待 GPU 空闲。

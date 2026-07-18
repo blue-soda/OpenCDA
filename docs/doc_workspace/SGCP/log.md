@@ -6333,3 +6333,21 @@ conda run -n opencda python -m opencda.tools.sgcp_aggregate_ap_manifest --run "P
 ### 结论
 
 PCS 的可写主表点仍是 41 帧 `div12/ov0`：`0.59/0.53/0.22`、25.29 Mbps。11 帧趋势显示 `div12/ov0` 在 AP@0.5/AP@0.7 上是最合理的工作点；`min_overlap=1` 会显著伤高 IoU，`div16/ov1` 通信量很低但 AP 明显不可用。更激进的 41 帧 sweep 因候选规模导致运行时间不可接受，可作为 FullPerception-PCS 可扩展性边界而不是主文 Pareto 点。
+
+## 2026-07-19 Detector / checkpoint fairness closure
+
+### 目的
+
+继续推进 P1/P2 中 Pure late baseline 口径和 detector/checkpoint 公平性开放项。用户已经明确：SGCP 两层融合中所有 “点云 -> 检测框” 过程应使用同一 checkpoint，Pure late baseline 也应与 SGCP 一样使用 early checkpoint。
+
+### 处理
+
+新增 `detector_checkpoint_fairness.md`，并同步更新 `target.md`、`status.md`、`results.md`、`readme.md`：
+
+- 主文 raw-LiDAR 系列统一使用 `pointpillar_early_fusion`；
+- Pure late 主表行固定为 early-checkpoint singleton local inference + `naive_late_fusion()`；
+- actual `pointpillar_late_fusion` checkpoint 结果 `0.89/0.83/0.49` 只作为 detector sensitivity / prediction-sharing reference；
+- forced SGCP late-detector row `0.87/0.81/0.48` 不代表 SGCP raw point-cloud early-fusion 协议；
+- `Clustered late-only` 不作为核心消融行。
+
+远程 early-fusion fine-tune watcher 仍在等待 GPU：最新日志仍为 `no GPU below 6000 MiB`。

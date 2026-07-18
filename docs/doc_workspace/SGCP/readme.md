@@ -35,6 +35,7 @@
 - `rebuttal_draft.md`：按 reviewer concern 整理的 rebuttal 草稿，覆盖 FullPerception 公平性、`f(rho)`、runtime、topology trigger、NS3 delivery 和机制边界。
 - `rebuttal_short.md`：`rebuttal_draft.md` 的压缩版，用于最终 rebuttal 粘贴、字数控制和主张边界收束。
 - `late_fusion_box_comm.md`：Pure late fusion prediction-box 通信预算，区分 raw-LiDAR payload、检测框 broadcast/all-to-all overhead、100 ms deadline 和信道冲突假设。
+- `detector_checkpoint_fairness.md`：SGCP 与 Pure late / actual-late checkpoint 的公平性口径，明确主表使用 early-checkpoint singleton controlled Pure late，actual-late 只作 sensitivity/reference。
 - `edgecooper_writing_reference.md`：从 EdgeCooper 论文中提炼的实验章节组织、baseline 分层和 SGCP 写作边界，用于支撑论文 LaTeX 修改。
 - `../environment.md`：全局环境文档，统一维护 Conda 环境、数据路径、CARLA 路径、启动命令和通用工具入口；运行实验前优先查看这里。
 
