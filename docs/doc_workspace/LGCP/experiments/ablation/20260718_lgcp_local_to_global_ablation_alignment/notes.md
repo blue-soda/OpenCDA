@@ -38,6 +38,19 @@ This directory aligns the 11-frame Top-30 box-level hierarchy late-fusion result
 
 This is the cleanest local rebuttal evidence so far: strong flat baselines keep higher AP, but LGCP Top-30 retains about `87.85%` of comm-aware AP@0.5 and `92.78%` of AP@0.7 with about `16.11%` of the raw selected-agent bytes.
 
+## Unified Area-Slice Accounting
+
+`unified_area_slice_accounting_summary.csv` is stricter: flat methods keep their selected agents, but only raw points inside the same LGCP planned area cells are counted.
+
+| Area plan | Method | AP@0.5 | AP@0.7 | Area-slice bytes / frame | Byte ratio vs comm-aware top-k |
+| --- | --- | ---: | ---: | ---: | ---: |
+| Top-23 | Comm-aware top-k, 10 agents | 0.686146 | 0.545736 | 253130.181818 | 1.000000 |
+| Top-23 | LGCP Top-23 box late fusion | 0.554762 | 0.460461 | 93985.454545 | 0.371292 |
+| Top-30 | Comm-aware top-k, 10 agents | 0.686146 | 0.545736 | 295755.636364 | 1.000000 |
+| Top-30 | LGCP Top-30 box late fusion | 0.602748 | 0.506345 | 119415.272727 | 0.403765 |
+
+This preserves the same conclusion under a more favorable accounting for flat baselines: LGCP still does not beat the strongest flat AP, but Top-30 keeps `87.85%` AP@0.5 and `92.78%` AP@0.7 with `40.38%` of comm-aware top-k's raw area-slice bytes.
+
 ## Next Step
 
 Run a common-byte-budget comparison:

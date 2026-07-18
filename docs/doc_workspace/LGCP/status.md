@@ -84,6 +84,7 @@
 - 已完成 Top-20 11 帧 box-level hierarchy low-budget run：raw member slice + leader result 估计约 `79.29KB/frame`，AP@0.5 为 `0.538594`、AP@0.7 为 `0.440331`；该 near-common-budget 结果显示当前 box-level hierarchy 不能在低预算下超过 flat 10-agent baselines。
 - 已完成 Top-23 11 帧 box-level hierarchy near-90KB run：raw member slice `47.99KB/frame` + leader result `46KB/frame`，合计约 `93.99KB/frame`，AP@0.5 为 `0.554762`、AP@0.7 为 `0.460461`；这是当前最接近 flat 10-agent `90KB/frame` 的 LGCP 点，仍低于强 flat baselines。
 - 已新增 `opencda/tools/lgcp_flat_raw_byte_accounting.py`，对既有 flat baselines 的 selected agents 按实际 PCD 点数做 raw-byte accounting；10-agent comm-aware top-k 为 `741.03KB/frame`，LGCP Top-30 为 `119.42KB/frame`，约为其 `16.11%`，同时保留 `87.85%` AP@0.5 和 `92.78%` AP@0.7。
+- 已新增 `opencda/tools/lgcp_flat_area_slice_accounting.py`，对 flat baselines 只统计同一 LGCP planned areas 内的 raw point slices；Top-30 area plan 下 comm-aware top-k 为 `295.76KB/frame`，LGCP Top-30 为 `119.42KB/frame`，约为其 `40.38%`，同时保留 `87.85%` AP@0.5 和 `92.78%` AP@0.7。
 - 已新增 LGCP 专用仿真入口 `opencda/scenario_testing/lgcp_carla.py` 和配置 `opencda/scenario_testing/config_yaml/lgcp_carla.yaml`。
 - 未修改 `v2xp_cluster_carla` 原始配置。
 - 已补齐 RSU 首次启用所需的基础运行路径：固定基础设施感知初始化、RSU 注册/访问、最近感知结果保存、销毁路径。
@@ -91,7 +92,7 @@
 ## 近期建议焦点
 
 1. 扩大 area confidence validation 到多 seed / 多场景，形成可进入论文的稳定相关性结果；OpenCOOD 评估入口、日志格式、远端数据路径和候选 checkpoint 已确认，下一步应在 `mindspore-186` 跑 400-frame gate。
-2. 基于已完成的 raw-byte accounting，下一步优先推进 PointPillar intermediate neural feature tensor slicing、leader local fusion 和 RSU global perception aggregation；若继续 baseline fairness，可进一步实现 flat raw area-slice accounting。
+2. 基于已完成的 selected-agent raw-byte 和 area-slice accounting，下一步优先推进 PointPillar intermediate neural feature tensor slicing、leader local fusion 和 RSU global perception aggregation。
 3. 若继续扩展 ablation，应将 source-unique 作为更真实 scheduler 约束保留，同时继续诊断 member slots 的 target receiver setup 和非 RSU receiver 的 CAM application completion；另一条主线是推进 model-level leader/RSU fusion。
 4. 大规模 30 CAV 结果若短期只跑 latency，应在论文中收窄为 communication/computation scalability；若报告 perception scalability，只能报告已校准的 proxy，不能写成真实 AP。
 5. 下一步将 request-level PHY/RLC/HARQ trace 和 control-plane overhead 扩展到多 seed，或开始推进完整 LGCP local fusion / RSU aggregation。

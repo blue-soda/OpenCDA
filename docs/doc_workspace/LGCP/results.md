@@ -1933,3 +1933,26 @@ Interpretation:
 - 若 flat baselines 按完整 selected-agent raw PCD 计算，10-agent communication-aware baseline 约为 `741.03KB/frame`。
 - LGCP Top-30 约为 `119.42KB/frame`，仅为 comm-aware top-k raw bytes 的 `16.11%`，同时保留 `87.85%` 的 AP@0.5 和 `92.78%` 的 AP@0.7。
 - 这不能证明当前 box-level LGCP 的 AP 超过强 baseline，但可以更公平地支撑“以较低通信量保留大部分感知质量”的 rebuttal 口径。
+
+### Unified Area-Slice Accounting
+
+2026-07-18 进一步新增 flat baseline area-slice byte accounting：flat 方法仍保留自己的 selected agents，但只统计同一组 LGCP planned area cells 内的 raw points。
+
+```text
+docs/doc_workspace/LGCP/experiments/ablation/20260718_lgcp_flat_area_slice_accounting_area23_11f
+docs/doc_workspace/LGCP/experiments/ablation/20260718_lgcp_flat_area_slice_accounting_area30_11f
+docs/doc_workspace/LGCP/experiments/ablation/20260718_lgcp_local_to_global_ablation_alignment/unified_area_slice_accounting_summary.csv
+```
+
+| Area plan | Method | AP@0.5 | AP@0.7 | Area-slice bytes / frame | Byte ratio vs comm-aware top-k |
+| --- | --- | ---: | ---: | ---: | ---: |
+| Top-23 | Comm-aware top-k, 10 agents | 0.686146 | 0.545736 | 253130.181818 | 1.000000 |
+| Top-23 | LGCP Top-23 box late fusion | 0.554762 | 0.460461 | 93985.454545 | 0.371292 |
+| Top-30 | Comm-aware top-k, 10 agents | 0.686146 | 0.545736 | 295755.636364 | 1.000000 |
+| Top-30 | LGCP Top-30 box late fusion | 0.602748 | 0.506345 | 119415.272727 | 0.403765 |
+
+Interpretation:
+
+- 即使 flat baselines 也只传 LGCP planned area cells 的 raw slices，comm-aware top-k 在 Top-30 area plan 下仍需 `295.76KB/frame`。
+- LGCP Top-30 用 `40.38%` 的 comm-aware area-slice bytes，保留 `87.85%` AP@0.5 和 `92.78%` AP@0.7。
+- 这是比 fixed 10KB proxy 和 full selected-agent raw bytes 都更公平的本地通信口径；仍然应谨慎表述为 bounded quality loss under much lower communication，而不是 AP superiority。

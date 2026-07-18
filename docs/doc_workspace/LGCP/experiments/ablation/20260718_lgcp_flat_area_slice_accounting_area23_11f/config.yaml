@@ -1,0 +1,11 @@
+dataset_root: D:\Data\Carla
+scenario_id: '2026_07_15_02_33_21'
+subset_frame_records: C:\Workspace\OpenCDA\docs\doc_workspace\LGCP\experiments\ablation\20260715_lgcp_carla_comm_aware_baseline_11f\subset_frame_records.csv
+ablation_summary: C:\Workspace\OpenCDA\docs\doc_workspace\LGCP\experiments\ablation\20260715_lgcp_carla_comm_aware_baseline_11f\ablation_summary.csv
+assignment_plan: C:\Workspace\OpenCDA\docs\doc_workspace\LGCP\experiments\hierarchy_plan\20260718_lgcp_carla_hierarchy_plan_area23_11f\area_assignment_plan.csv
+ego_cav_id: '1'
+grid_size_x: 10.0
+grid_size_y: 6.0
+bytes_per_point: 16
+note: Raw area-slice bytes for existing flat selected-agent decisions; does not rerun
+  perception.

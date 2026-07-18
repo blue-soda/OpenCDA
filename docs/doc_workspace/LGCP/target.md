@@ -14,13 +14,13 @@
 - [x] 设计 area confidence 验证实验：统计 confidence 与 area-level AP / recall 的相关性。
 - [x] 设计 Eq. (2) 组合规则验证实验：比较 product rule、max、mean、sum、top-k 等组合方式。
 - [x] 增加 greedy group selection 的 small-scale optimality gap 实验：用 exhaustive search 或 ILP 做小规模最优参考。
-- [ ] 增加 local-to-global ablation：区分 partial sharing 与 LGCP 层次结构本身带来的收益。（已完成 Top-30 11 帧 box-level hierarchy late-fusion、flat-baseline alignment、Top-20/Top-23 near-common-budget runs 和 flat selected-agent raw-byte accounting；当前结论是 LGCP Top-30 用约 `16.11%` raw bytes 保留 comm-aware baseline `87.85%` AP@0.5 / `92.78%` AP@0.7，但 AP 仍未超过强 flat baselines；下一步是 neural feature hierarchy 或 flat raw area-slice accounting）
+- [ ] 增加 local-to-global ablation：区分 partial sharing 与 LGCP 层次结构本身带来的收益。（已完成 Top-30 11 帧 box-level hierarchy late-fusion、flat-baseline alignment、Top-20/Top-23 near-common-budget runs、flat selected-agent raw-byte accounting 和 flat area-slice accounting；当前结论是 LGCP Top-30 用 `16.11%` selected-agent raw bytes 或 `40.38%` area-slice bytes，保留 comm-aware baseline `87.85%` AP@0.5 / `92.78%` AP@0.7，但 AP 仍未超过强 flat baselines；下一步是 neural feature hierarchy）
 - [x] 补充更强通信感知 baseline：至少包含 adaptive sharing 或 selective sharing without LGCP hierarchy。
 - [x] 明确大规模 30 CAV 实验只验证 latency，或补充 scalable perception-quality proxy。
 
 ## P0：当前未闭环目标
 
-- [x] Common-byte-budget / raw-byte local-to-global ablation：Top-20/Top-23 LGCP 对齐 flat 10-agent fixed proxy，且新增 flat selected-agent raw PCD accounting；结果显示当前 box-level LGCP 不能超过强 flat baseline AP，但 Top-30 仅用约 `16.11%` raw bytes 保留 comm-aware baseline `87.85%` AP@0.5 和 `92.78%` AP@0.7。
+- [x] Common-byte-budget / raw-byte local-to-global ablation：Top-20/Top-23 LGCP 对齐 flat 10-agent fixed proxy，且新增 flat selected-agent raw PCD accounting 与 flat area-slice accounting；结果显示当前 box-level LGCP 不能超过强 flat baseline AP，但 Top-30 仅用约 `16.11%` selected-agent raw bytes / `40.38%` area-slice bytes 保留 comm-aware baseline `87.85%` AP@0.5 和 `92.78%` AP@0.7。
 - [ ] Neural feature slicing / model-level hierarchy：实现 PointPillar intermediate feature tensor area slicing、leader local fusion 和 RSU global aggregation。
 - [ ] Area confidence 多 seed / 多场景验证：在 `mindspore-186` 上跑 400-frame gate 多 seed，形成论文级相关性统计。
 - [ ] Greedy / O3 optimality gap 多场景扩展：覆盖更大 instance 和 latency-aware objective。

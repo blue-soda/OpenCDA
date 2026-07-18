@@ -3398,3 +3398,20 @@ by type：
 - 结论：
   - 按 raw selected-agent bytes 计，LGCP Top-30 使用约 `16.11%` 的 comm-aware top-k bytes，保留 `87.85%` AP@0.5 和 `92.78%` AP@0.7。
   - 这是目前回应 baseline fairness 最清楚的本地证据：不声称 AP 更高，而是强调 much lower communication with bounded quality loss。
+
+## Flat area-slice raw-byte accounting
+
+- 新增脚本：
+  - `opencda/tools/lgcp_flat_area_slice_accounting.py`
+- 目标：
+  - 保留既有 flat selective-sharing baseline 的 selected-agent 决策，不重跑模型。
+  - 只统计这些 selected agents 在同一组 LGCP planned area cells 内的 raw point slices。
+- 命令：
+  - `conda run -n opencda python -m opencda.tools.lgcp_flat_area_slice_accounting --dataset-root D:\Data\Carla --scenario-id 2026_07_15_02_33_21 --subset-frame-records docs\doc_workspace\LGCP\experiments\ablation\20260715_lgcp_carla_comm_aware_baseline_11f\subset_frame_records.csv --ablation-summary docs\doc_workspace\LGCP\experiments\ablation\20260715_lgcp_carla_comm_aware_baseline_11f\ablation_summary.csv --assignment-plan docs\doc_workspace\LGCP\experiments\hierarchy_plan\20260718_lgcp_carla_hierarchy_plan_area23_11f\area_assignment_plan.csv --output-dir docs\doc_workspace\LGCP\experiments\ablation\20260718_lgcp_flat_area_slice_accounting_area23_11f --ego-cav-id 1 --grid-size-x 10 --grid-size-y 6 --bytes-per-point 16`
+  - `conda run -n opencda python -m opencda.tools.lgcp_flat_area_slice_accounting --dataset-root D:\Data\Carla --scenario-id 2026_07_15_02_33_21 --subset-frame-records docs\doc_workspace\LGCP\experiments\ablation\20260715_lgcp_carla_comm_aware_baseline_11f\subset_frame_records.csv --ablation-summary docs\doc_workspace\LGCP\experiments\ablation\20260715_lgcp_carla_comm_aware_baseline_11f\ablation_summary.csv --assignment-plan docs\doc_workspace\LGCP\experiments\hierarchy_plan\20260717_lgcp_carla_hierarchy_budget_sweep_density_distance\area30\area_assignment_plan.csv --output-dir docs\doc_workspace\LGCP\experiments\ablation\20260718_lgcp_flat_area_slice_accounting_area30_11f --ego-cav-id 1 --grid-size-x 10 --grid-size-y 6 --bytes-per-point 16`
+- 关键结果：
+  - Top-23 area plan: comm-aware top-k 10 agents area-slice bytes/frame `253130.181818`; LGCP Top-23 bytes/frame `93985.454545`
+  - Top-30 area plan: comm-aware top-k 10 agents area-slice bytes/frame `295755.636364`; LGCP Top-30 bytes/frame `119415.272727`
+- 结论：
+  - 在更有利于 flat baselines 的 area-slice accounting 下，LGCP Top-30 仍只用 comm-aware top-k `40.38%` bytes，保留 `87.85%` AP@0.5 和 `92.78%` AP@0.7。
+  - baseline fairness 口径已经基本闭环；下一步应转向 neural feature slicing / model-level hierarchy。
