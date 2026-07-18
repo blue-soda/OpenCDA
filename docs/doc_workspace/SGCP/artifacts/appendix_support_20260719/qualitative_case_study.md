@@ -10,6 +10,20 @@ Primary sources:
 - `docs/doc_workspace/SGCP/target_grid_case_study.md`
 - `docs/doc_workspace/SGCP/artifacts/failure_diag_target_aware_pg_10ch_rho3_41f/gt_objects.csv`
 
+Generated BEV draft:
+
+```text
+docs\doc_workspace\SGCP\artifacts\appendix_support_20260719\qualitative_case_study_bev.png
+docs\doc_workspace\SGCP\artifacts\appendix_support_20260719\qualitative_case_study_bev.pdf
+docs\doc_workspace\SGCP\artifacts\appendix_support_20260719\qualitative_case_study_summary.csv
+```
+
+Reproduce:
+
+```powershell
+conda run -n opencda python docs\doc_workspace\SGCP\artifacts\appendix_support_20260719\plot_qualitative_case_study.py
+```
+
 ## Case Selection Rationale
 
 The cases below are chosen from persistent misses where full 20-CAV early fusion detects the object but the constrained SGCP variant misses it. They cover three distinct failure modes:
@@ -72,7 +86,7 @@ Paper use: show as the boundary case. It protects the narrative by explaining wh
 
 ## Figure Draft Recommendation
 
-If this becomes a paper figure, use a three-panel BEV layout:
+The generated draft uses a three-panel BEV layout:
 
 | Panel | Visual Elements | Caption Point |
 | --- | --- | --- |
@@ -81,3 +95,5 @@ If this becomes a paper figure, use a three-panel BEV layout:
 | C | Dense grid and missing final box | Dense grid coverage is not equivalent to object-level detector support. |
 
 The figure should not introduce a new metric. It should simply visualize aggregate-AP failure modes that are already quantified in `failure_diagnostics.md`.
+
+Current figure status: suitable for appendix/rebuttal drafting. Before camera-ready paper use, improve visual styling if needed: add a compact legend, replace the text note with caption prose, and optionally overlay predicted boxes if the corresponding pre-NMS/final box CSV is exported.

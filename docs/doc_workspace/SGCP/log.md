@@ -25,6 +25,37 @@ C:\Users\sakakibara\OneDrive\Papers\Cooperative Perception\EdgeCooper_Network-Aw
 
 SGCP 可以借鉴 EdgeCooper 的系统化实验组织，但不能沿用 satisfaction rate 作为主指标。SGCP 修订稿应继续使用 aggregate AP + Mbps，并严格区分 Full 20-CAV upper reference、EdgeCooper-HD edge-assisted reference、FullPerception-PCS baseline、Pure late prediction-sharing reference 和 SGCP-compatible scheduler comparison。
 
+## 2026-07-19 - Qualitative BEV overlay draft
+
+### 目的
+
+在 P8 qualitative case study 文字草稿基础上，生成可复现 BEV overlay draft，使三个失败案例不仅有表格说明，也有图形素材。
+
+### 输入
+
+```text
+docs\doc_workspace\SGCP\artifacts\failure_diag_target_aware_pg_10ch_rho3_41f\gt_objects.csv
+docs\doc_workspace\SGCP\artifacts\failure_diag_target_aware_pg_10ch_rho3_41f\vehicles.csv
+docs\doc_workspace\SGCP\artifacts\failure_diag_target_aware_pg_10ch_rho3_41f\schedules.csv
+```
+
+### 命令
+
+```powershell
+conda run -n opencda python docs\doc_workspace\SGCP\artifacts\appendix_support_20260719\plot_qualitative_case_study.py
+```
+
+### 输出
+
+- `docs/doc_workspace/SGCP/artifacts/appendix_support_20260719/plot_qualitative_case_study.py`
+- `docs/doc_workspace/SGCP/artifacts/appendix_support_20260719/qualitative_case_study_bev.png`
+- `docs/doc_workspace/SGCP/artifacts/appendix_support_20260719/qualitative_case_study_bev.pdf`
+- `docs/doc_workspace/SGCP/artifacts/appendix_support_20260719/qualitative_case_study_summary.csv`
+
+### 目视检查
+
+PNG 已检查：三个 panel 均能显示目标 grid、GT、cluster head、selected sender 和 best-view sender；当前适合作为 appendix/rebuttal draft。正式论文版可继续补 legend、预测框 overlay 和更紧凑 caption。
+
 ## 2026-07-19 - P8 appendix support consolidation
 
 ### 目的

@@ -1,0 +1,4 @@
+timestamp,object_id,target_grid,nearest_cav,nearest_head,best_source,scheduled_source,full_reference_matched,method_matched,scheduled_covering_links,nearest_cav_object_grid_points,nearest_head_covering_point_count
+000068,438,3_0,12,4,12,9,1,0,7>16,424,0
+000066,401,2_0,12,12,4,7,1,0,5>16;11>1;20>16,2022,0
+000062,337,0_-3,1,1,8,2,1,0,10>19,1453,0
