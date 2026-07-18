@@ -2,6 +2,21 @@
 
 本文件按时间顺序追加实验记录。每条记录应尽量包含：目的、代码版本、配置、命令、日志路径、关键结果、异常现象和下一步。
 
+## 2026-07-18 - Reviewer response coverage matrix
+
+### 目的
+
+核查 `C:\Workspace\icdcs-paper\SGCP\SGCP-review.txt` 中关于机制、公平 baseline、参数实验、实时性和 topology trigger 的意见是否都已有 rebuttal / `main.tex` 落点，避免最终回复时遗漏。
+
+### 结果
+
+- 新增 `reviewer_response_matrix.md`，按 Reviewer 2/3/4 映射 concern、current response、evidence/location 和 remaining risk。
+- 更新 `readme.md`，把该矩阵加入 SGCP 文档工作区索引。
+- 扫描 `C:\Workspace\icdcs-paper\SGCP\main.tex` 中的强 claim，未发现旧 `22.33 Mbps`、旧 AP 或 `FullPerception-centralized` 残留；将摘要中的 `guaranteed external views` 改为 `external-view coverage`，并弱化 coalition non-negativity 段的 `guaranteeing` 表述。
+- 主要剩余风险：LaTeX 尚未完整编译；Where2Comm/PACP 等模型级严格复现未完成，只能以 same-backbone V2V selective proxy 作为当前公平 baseline；在线 CARLA+NS3 deadline-aware AP 与离线 final-delivery AP 仍需分口径描述。
+
+下一步：在 final paper freeze 前检查 `main.tex` 是否仍有 “outperforms all baselines”、“guaranteed 100 ms” 或无条件 “exact potential game” 等过强表述。
+
 ## 2026-07-18 - Paper main-table LaTeX structure sanity check
 
 ### 目的
