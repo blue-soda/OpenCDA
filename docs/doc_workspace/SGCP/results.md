@@ -123,6 +123,30 @@ Figure 2 当前用途：用 Head-only、Pure late、FullPerception-PCS、EdgeCoo
 
 Figure 3 当前用途：支撑 two-layer fusion 分工。Clustered early-only 与 Full SGCP raw payload 相同，前者为 `0.38/0.36/0.20`，后者为 `0.81/0.78/0.39`，说明 inter-cluster late fusion 对 coverage / low-IoU AP 贡献最大；Full 20-CAV early upper reference 为 `0.85/0.83/0.48`，说明 high-IoU localization 仍受 early checkpoint 和 raw point-cloud sharing 上界约束。
 
+## Table 4 Parameter Sensitivity Candidate
+
+统一 artifact 目录：
+
+`docs\doc_workspace\SGCP\artifacts\parameter_sensitivity_20260719\`
+
+源数据：
+
+- `table4_parameter_sensitivity.csv`
+- `table4_parameter_sensitivity.md`
+
+主文建议只放证据最清晰的两组：
+
+| Parameter | Setting | AP@0.3 | AP@0.5 | AP@0.7 | Mbps | Interpretation |
+| --- | --- | ---: | ---: | ---: | ---: | --- |
+| `rho_th` | 1.0 | 0.76 | 0.72 | 0.34 | 51.31 | Lower payload, lower AP |
+| `rho_th` | 2.0 | 0.79 | 0.75 | 0.37 | 56.08 | Low-budget candidate |
+| `rho_th` | 3.0 | 0.79 | 0.76 | 0.38 | 57.38 | Better AP with modest payload increase |
+| Channels | 5 | 0.56 | 0.53 | 0.27 | 28.91 | Strong resource bottleneck |
+| Channels | 10 | 0.79 | 0.75 | 0.37 | 56.08 | Main low-budget channel setting |
+| Channels | 20 | 0.80 | 0.76 | 0.41 | 73.98 | Higher localization AP, higher payload |
+
+`N_max` 和 `T_min^stab` 已有 sweep，但当前 41 帧短序列结论较弱：`N_max` 证明容量约束真实生效但 AP 非单调；`T_min^stab=100--1000 ms` 完全不敏感。因此建议放附录或 rebuttal，正文只保留保守一句话。
+
 ## 消融实验
 
 | Variant | mAP@0.3 | mAP@0.5 | mAP@0.7 | Comm. Overhead (Mbps) | Reconfig. Count | Notes |

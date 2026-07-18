@@ -1,0 +1,23 @@
+group,parameter,setting,method_scope,ap_03,ap_05,ap_07,total_bytes,mbps,aux_metric_1,aux_metric_2,paper_use,notes
+rho_th,rho_th,1.0,coverage-aware spatial-diverse,0.76,0.72,0.34,26296464,51.31,avg_selected_grids=80.75,avg_source_cavs=2.67,main_or_appendix,Lower payload but AP drops
+rho_th,rho_th,2.0,coverage-aware spatial-diverse,0.79,0.75,0.37,28743280,56.08,avg_selected_grids=87.32,avg_source_cavs=2.67,main_or_appendix,Low-budget candidate
+rho_th,rho_th,3.0,coverage-aware spatial-diverse,0.79,0.76,0.38,29405296,57.38,avg_selected_grids=89.72,avg_source_cavs=2.67,main_or_appendix,Slight AP gain with modest payload increase
+rho_th,rho_th,4.0,coverage-aware spatial-diverse,0.79,0.76,0.38,29837744,58.22,avg_selected_grids=90.62,avg_source_cavs=2.67,appendix,Plateau after rho_th=3 with higher payload
+network_resource,num_channels,5 ch / 40 MHz,coverage-aware spatial-diverse,0.56,0.53,0.27,14815408,28.91,avg_selected_grids=45.58,avg_source_cavs=1.83,main,Severe channel bottleneck; fewer admitted members/grids
+network_resource,num_channels,10 ch / 40 MHz,coverage-aware spatial-diverse,0.79,0.75,0.37,28743280,56.08,avg_selected_grids=87.32,avg_source_cavs=2.67,main,Low-budget channel setting
+network_resource,num_channels,20 ch / 40 MHz,coverage-aware spatial-diverse,0.80,0.76,0.41,37912544,73.98,avg_selected_grids=117.18,avg_source_cavs=3.33,main,More channels improve AP@0.7 but increase payload
+network_resource,bandwidth,0.1 MHz / 10 ch,potential_game,0.26,0.22,0.09,0,0.00,avg_selected_grids=0.00,avg_source_cavs=1.00,appendix,Extreme bottleneck; head-only behavior
+network_resource,bandwidth,0.5 MHz / 10 ch,potential_game,0.56,0.50,0.23,9764736,19.05,avg_selected_grids=4.32,avg_source_cavs=2.44,appendix,Partial recovery
+network_resource,bandwidth,1.0 MHz / 10 ch,potential_game,0.66,0.61,0.31,18607360,36.31,avg_selected_grids=9.66,avg_source_cavs=2.61,appendix,More bandwidth admits more grids
+network_resource,bandwidth,20 MHz / 10 ch,potential_game,0.77,0.73,0.35,26916208,52.52,avg_selected_grids=87.32,avg_source_cavs=2.67,appendix,Saturated for this dump
+N_max,N_max,2,potential_game,0.79,0.74,0.37,26247824,51.22,avg_cluster_size=1.95,reconfig=16,appendix,More clusters and smaller fusion groups
+N_max,N_max,3,potential_game,0.75,0.71,0.34,25572432,49.90,avg_cluster_size=2.65,reconfig=9,appendix,Lower AP in current dump
+N_max,N_max,4,potential_game,0.77,0.73,0.35,26916208,52.52,avg_cluster_size=3.33,reconfig=11,appendix,Default; no singleton clusters; active capacity constraint
+N_max,N_max,5,potential_game,0.75,0.71,0.32,25235360,49.24,avg_cluster_size=3.33,reconfig=8,appendix,Same cluster count as N_max=6 in current dump
+N_max,N_max,6,potential_game,0.75,0.71,0.32,25235360,49.24,avg_cluster_size=3.33,reconfig=8,appendix,No full clusters but lower AP
+T_min_stab,T_min_stab,100 ms,potential_game,0.77,0.73,0.35,26916208,52.52,reconfig=11,avg_lifetime_frames=6.65,appendix_or_negative,No sensitivity observed on short dump
+T_min_stab,T_min_stab,300 ms,potential_game,0.77,0.73,0.35,26916208,52.52,reconfig=11,avg_lifetime_frames=6.65,appendix_or_negative,No sensitivity observed on short dump
+T_min_stab,T_min_stab,500 ms,potential_game,0.77,0.73,0.35,26916208,52.52,reconfig=11,avg_lifetime_frames=6.65,appendix_or_negative,Paper default candidate but needs dynamic scenario
+T_min_stab,T_min_stab,1000 ms,potential_game,0.77,0.73,0.35,26916208,52.52,reconfig=11,avg_lifetime_frames=6.65,appendix_or_negative,No sensitivity observed on short dump
+B_h,head_rb_budget,2,perception-aware potential game,0.81,0.78,0.39,32049872,62.54,avg_selected_grids=97.22,avg_source_cavs=2.67,appendix,Current PAPG main setting
+B_h,head_rb_budget,3,perception-aware potential game,0.80,0.78,0.40,32051792,62.54,avg_source_cavs=2.67,,appendix,AP@0.7 rises slightly but AP@0.3 drops

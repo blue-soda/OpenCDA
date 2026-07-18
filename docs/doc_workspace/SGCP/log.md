@@ -71,6 +71,23 @@ conda run -n opencda python docs\doc_workspace\SGCP\artifacts\figures_20260719\p
 
 图表已目视检查。图内通信标注使用 raw LiDAR Mbps，避免 Pure late 被误读为完全无通信；Pure late detection-box overhead 继续由 `late_fusion_box_comm.md` 解释。
 
+## 2026-07-19 - Table 4 parameter sensitivity candidate
+
+### 目的
+
+推进 `target.md` P7，将已有 `rho_th`、`N_max`、`T_min^stab`、子信道数/带宽和 `B_h` sweep 整理成论文 Table 4 候选，并区分主文可用结论和附录弱结论。
+
+### 结果
+
+- 新增 `docs/doc_workspace/SGCP/artifacts/parameter_sensitivity_20260719/table4_parameter_sensitivity.csv`。
+- 新增 `docs/doc_workspace/SGCP/artifacts/parameter_sensitivity_20260719/table4_parameter_sensitivity.md`。
+- 主文建议只放 `rho_th` 与子信道数：二者有清楚 AP-Mbps tradeoff。
+- `N_max` / `T_min^stab` 建议放附录或 rebuttal：当前短序列中 `N_max` AP 非单调，`T_min^stab=100--1000 ms` 不敏感。
+
+### 解释边界
+
+该表不是最终补实验的替代品。若论文必须强论证稳定窗口，需要重新导出更长或更动态的 CARLA 场景；当前表只能支持“短序列中稳定窗口不敏感，默认值按 10 Hz sensing cycle 的保守滞回设置”。
+
 ## 2026-07-18 - Results index baseline naming sync
 
 ### 目的

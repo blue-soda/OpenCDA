@@ -184,15 +184,15 @@
 
 必须包含主文最小集合：
 
-- [ ] `rho_th` sweep：体现点云划分阈值的 AP-Mbps tradeoff。
-- [ ] `N_max` sweep：体现分簇容量对 AP、cluster size、reconfiguration 的影响。
-- [ ] `T_min^stab` sweep：体现稳定窗口，若当前场景不敏感，必须明确说明并补更动态场景或降为附录。
-- [ ] Channel count / bandwidth sweep：体现网络资源受限时算法行为。
+- [x] `rho_th` sweep：体现点云划分阈值的 AP-Mbps tradeoff。第一版 Table 4 candidate 见 `docs/doc_workspace/SGCP/artifacts/parameter_sensitivity_20260719/table4_parameter_sensitivity.csv`。
+- [x] `N_max` sweep：体现分簇容量对 AP、cluster size、reconfiguration 的影响。当前建议放附录，因为 AP 非单调但容量约束确实生效。
+- [x] `T_min^stab` sweep：体现稳定窗口，若当前场景不敏感，必须明确说明并补更动态场景或降为附录。当前 41 帧 dump 对 100--1000 ms 不敏感，建议附录或负面结果。
+- [x] Channel count / bandwidth sweep：体现网络资源受限时算法行为。5/10/20 ch 可进主文，极低带宽 stress 可进附录。
 
 验收标准：
 
-- [ ] 每个参数必须有选择依据，而不是只报告最优点。
-- [ ] 若参数结论弱，正文写保守边界，更多细节放附录或 rebuttal。
+- [x] 每个参数必须有选择依据，而不是只报告最优点。第一版解释见 `table4_parameter_sensitivity.md`。
+- [x] 若参数结论弱，正文写保守边界，更多细节放附录或 rebuttal。当前 `N_max` / `T_min^stab` 已明确为附录/弱结论。
 
 ## P8：可选图表与附录
 
