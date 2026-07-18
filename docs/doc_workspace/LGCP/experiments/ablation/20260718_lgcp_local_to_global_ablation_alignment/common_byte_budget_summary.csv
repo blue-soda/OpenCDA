@@ -1,0 +1,7 @@
+comparison,method,structure,frames,budget_label,ap_03,ap_05,ap_07,bytes_per_frame,byte_proxy_type,gt_total,pred_samples,interpretation
+near_90kb,random_10,flat_selective_sharing,11,10_agents,0.611342,0.598993,0.380556,90000.000000,fixed_10kb_per_non_ego_agent,730,482,flat random baseline at the nominal 90KB/frame selected-agent proxy
+near_90kb,confidence_topk_10,flat_selective_sharing,11,10_agents,0.629379,0.624088,0.436000,90000.000000,fixed_10kb_per_non_ego_agent,692,476,stronger confidence-based flat selective sharing at 90KB/frame
+near_90kb,comm_aware_topk_10,flat_selective_sharing,11,10_agents,0.688703,0.686146,0.545736,90000.000000,fixed_10kb_per_non_ego_agent,709,510,strongest current flat selective baseline at 90KB/frame
+near_90kb,area_aware_union_10,flat_selective_sharing,11,10_agents,0.678388,0.676678,0.538273,90000.000000,fixed_10kb_per_non_ego_agent,691,502,area-aware flat selective sharing at 90KB/frame
+near_90kb,lgcp_top20_box_late_fusion,local_to_global_hierarchy,11,20_areas,0.538594,0.538594,0.440331,79287.272727,raw_member_slice_plus_leader_result_estimate,319,289,lower-byte LGCP point validates budget sensitivity but does not beat flat 10-agent baselines
+near_120kb,lgcp_top30_box_late_fusion,local_to_global_hierarchy,11,30_areas,0.602748,0.602748,0.506345,119415.272727,scheduled_raw_slice_plan,408,384,higher-byte LGCP point improves over top20 and approaches flat baselines at AP@0.7

@@ -3338,3 +3338,22 @@ by type：
   - 当前 box-level hierarchy validates model-calling local-to-global path，但 AP@0.5 尚未超过 strong flat selective baselines。
   - AP@0.7 明显好于 random，并接近 area-aware / comm-aware flat baselines。
   - byte proxy 类型不一致；论文必须显式标注 fixed selected-agent proxy vs scheduled raw-slice plan，下一步最好补 common-byte-budget 对照。
+
+## Top-20 near-common-budget hierarchy run
+
+- 目标：
+  - 补 common-byte-budget 对照的低预算 LGCP 点。
+  - Top-20 raw member slice bytes 为 `39.29KB/frame`，leader result bytes 为 `40KB/frame`，合计约 `79.29KB/frame`，接近但低于 flat 10-agent `90KB/frame` proxy。
+- 命令：
+  - `conda run -n opencda python -m opencda.tools.lgcp_hierarchy_late_fusion_eval --dataset-root D:\Data\Carla --scenario-id 2026_07_15_02_33_21 --assignment-plan docs\doc_workspace\LGCP\experiments\hierarchy_plan\20260717_lgcp_carla_hierarchy_budget_sweep_density_distance\area20\area_assignment_plan.csv --output-dir docs\doc_workspace\LGCP\experiments\hierarchy_plan\20260718_lgcp_carla_hierarchy_late_fusion_top20_11f --max-frames 11 --fusion-method late`
+- 结果：
+  - frames: `11`
+  - assignment rows: `220`
+  - cached group inference calls: `194`
+  - mean RSU fused pred / GT boxes per frame: `26.272727 / 29.000000`
+  - AP@0.3 / AP@0.5 / AP@0.7: `0.538594 / 0.538594 / 0.440331`
+  - GT total / pred samples: `319 / 289`
+- 结论：
+  - Top-20 低预算 hierarchy AP 明显低于 flat 10-agent confidence / area-aware / comm-aware baselines。
+  - 这说明当前 box-level hierarchy adapter 更适合验证机制路径，不能支撑“公平预算下超过强 baseline”的强结论。
+  - 若要强化 rebuttal，需要 neural feature slicing，或按统一 raw-slice byte accounting 重跑 flat baselines。
