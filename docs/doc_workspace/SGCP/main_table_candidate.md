@@ -15,6 +15,8 @@
 
 ## 推荐主表
 
+论文 `main.tex` 当前采用单表分组布局，而不是把所有行平铺比较：先列 lower/full-sharing/infrastructure-assisted references，再列 RSU-free V2V baselines and SGCP variants。这个布局是有意为之，目的是防止把 EdgeCooper-HD 这类 edge/global assignment reference 误读为 fully decentralized V2V fair baseline。
+
 | Method | Type | AP@0.3 | AP@0.5 | AP@0.7 | Payload | Mbps | NS3 Delivery | Notes |
 | --- | --- | ---: | ---: | ---: | ---: | ---: | --- | --- |
 | No cooperation / Head-only | Lower reference | 0.26 | 0.22 | 0.09 | 0 | 0.00 | N/A | Cluster heads detect alone, then late-fuse |
