@@ -1,6 +1,6 @@
 # SGCP Rebuttal Draft
 
-更新时间：2026-07-16
+更新时间：2026-07-18
 
 本文档整理可直接迁移到 rebuttal 的答复素材。口径以当前可复现实验和 `C:\Workspace\icdcs-paper\SGCP\main.tex` 最新修订为准，避免继续使用旧主表中缺少日志支撑的 `0.84/0.69` 和 `22.33 Mbps` 叙事。
 
@@ -74,7 +74,7 @@ We agree and no longer claim that 500 ms is an empirically optimal value. We tre
 
 **Draft response:**
 
-We revised the baseline set. The original RandomRA and MWS schedulers are now treated as w/o-PPS diagnostics because their payloads are only 18.98/19.34 Mbps and they do not fully utilize the available channel budget. For fair main comparison, we add capacity-matched CAV-only selective-sharing baselines: forced-budget random, nearest, density-based and communication-aware variants. Forced-budget random uses the same coalition path with 3 uploaded members per head and a 117-grid budget, reaching 0.77/0.73/0.38 at 61.68 Mbps; PAPG reaches 0.81/0.78/0.39 at 62.54 Mbps. The communication-aware variant can incorporate NS3 request-level RLC completion as link-quality cost. We also distinguish centralized full-sharing references from fair decentralized baselines. This revision directly addresses the concern that the old comparison mixed RSU-assisted, centralized and RSU-free settings.
+We revised the baseline set. The original RandomRA and MWS schedulers are now treated as w/o-PPS diagnostics because they either under-utilize the payload budget or remain weak after sharing the tuned FullPerception blind-spot units. For fair main comparison, we add capacity-matched CAV-only selective-sharing baselines: forced-budget random, nearest, density-based and communication-aware variants. Forced-budget random uses the same coalition path with 3 uploaded members per head and a 117-grid budget, reaching 0.77/0.73/0.38 at 61.68 Mbps; PAPG reaches 0.81/0.78/0.39 at 62.54 Mbps. The communication-aware variant can incorporate NS3 request-level RLC completion as link-quality cost. We also distinguish centralized full-sharing references, infrastructure-assisted references and fair decentralized baselines. EdgeCooper-HD reaches 0.81/0.78/0.42 at 65.40 Mbps, but it uses edge/global assignment information, so it is reported as an infrastructure-assisted reference rather than a fully decentralized V2V baseline. This revision directly addresses the concern that the old comparison mixed RSU-assisted, centralized and RSU-free settings.
 
 ### Ablation studies
 

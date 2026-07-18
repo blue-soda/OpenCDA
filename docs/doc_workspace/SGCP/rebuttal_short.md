@@ -1,6 +1,6 @@
 # SGCP Short Rebuttal Draft
 
-更新时间：2026-07-17
+更新时间：2026-07-18
 
 本文档是 `rebuttal_draft.md` 的压缩版，面向最终 rebuttal 粘贴和字数控制。详细证据、命令和结果仍以 `rebuttal_draft.md`、`main_table_candidate.md`、`results.md` 和 `reproducibility_manifest.md` 为准。
 
@@ -24,7 +24,7 @@ We thank the reviewers for the constructive comments. In the revision, we substa
 
 **`T_min^stab` and `N_max`.** We no longer claim that `T_min^stab=500 ms` is empirically optimal. It is a conservative hysteresis default corresponding to five 10 Hz perception cycles. A sweep over 100/300/500/700/1000 ms gives identical AP and reconfiguration metrics in the current sequence, showing that the main result is not fragile to this parameter. For `N_max`, we explain the choice as a capacity-control tradeoff rather than pure AP tuning; `N_max=4` avoids singleton fragmentation while keeping the channel budget explicit.
 
-**Fair baselines.** The original RandomRA and MWS schedulers are now treated as w/o-PPS diagnostics because their payloads are only 18.98/19.34 Mbps and they do not fully use the channel budget. We additionally add a forced-budget random baseline using the same coalition path, 3 uploaded members per head and 117-grid budget; it reaches `0.77/0.73/0.38` at `61.68 Mbps`. PAPG improves this by `+0.04/+0.05/+0.01` AP at nearly the same traffic. The fair main comparison also includes nearest, density-based and communication-aware selective variants, avoiding mixed centralized, RSU-assisted and RSU-free settings.
+**Fair baselines.** The original RandomRA and MWS schedulers are now treated as w/o-PPS diagnostics because they either under-use the payload budget or remain weak after the tuned FullPerception blind-spot units. We additionally add a forced-budget random baseline using the same coalition path, 3 uploaded members per head and 117-grid budget; it reaches `0.77/0.73/0.38` at `61.68 Mbps`. PAPG improves this by `+0.04/+0.05/+0.01` AP at nearly the same traffic. The fair main comparison also includes nearest, density-based and communication-aware selective variants. EdgeCooper-HD reaches `0.81/0.78/0.42` at `65.40 Mbps`, but it uses edge/global assignment information, so it is reported in the infrastructure-assisted reference group rather than as a fully decentralized V2V baseline.
 
 **Ablations.** We added mechanism probes: head-only late fusion gives `0.26/0.22/0.09`, SGCP grid-constrained fusion gives `0.77/0.73/0.35`, full-cluster upload gives `0.82/0.79/0.42`, random-grid same-link selection gives `0.78/0.75/0.36`, coverage-aware 10ch `rho_th=3` gives `0.79/0.76/0.38` at `57.38 Mbps`, and PAPG improves to `0.81/0.78/0.39` at `62.54 Mbps`. Object-level diagnostics show PAPG reduces full-reference-detected but SGCP-missed rows from 106 to 59. These results identify grid selection, source coverage and channel budget as the main AP/payload drivers.
 
