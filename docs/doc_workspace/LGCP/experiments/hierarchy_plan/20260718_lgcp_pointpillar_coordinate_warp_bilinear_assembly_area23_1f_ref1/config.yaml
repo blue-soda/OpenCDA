@@ -1,0 +1,22 @@
+dataset_root: D:\Data\Carla
+scenario_id: '2026_07_15_02_33_21'
+assignment_plan: C:\Workspace\OpenCDA\docs\doc_workspace\LGCP\experiments\hierarchy_plan\20260718_lgcp_carla_hierarchy_plan_area23_11f\area_assignment_plan.csv
+leader_root: C:\Workspace\OpenCDA\docs\doc_workspace\LGCP\experiments\hierarchy_plan\20260718_lgcp_pointpillar_leader_feature_fusion_area23_1f
+leader_feature_manifest: C:\Workspace\OpenCDA\docs\doc_workspace\LGCP\experiments\hierarchy_plan\20260718_lgcp_pointpillar_leader_feature_fusion_area23_1f\leader_feature_manifest.csv
+reference_cav_id: '1'
+feature_key: leader_scatter_mean
+sampling: bilinear
+grid_size_x: 10.0
+grid_size_y: 6.0
+lidar_range:
+- -140.8
+- -40.0
+- -3.0
+- 140.8
+- 40.0
+- 1.0
+voxel_size:
+- 0.4
+- 0.4
+- 4.0
+note: bilinear coordinate warp; no learned alignment.

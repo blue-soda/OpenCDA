@@ -3670,3 +3670,35 @@ by type：
 - 结论：
   - 不应扩大 nearest-neighbor warp AP 当作论文结果。
   - 下一步应做 bilinear/affine warp 校准或 retrained aggregation；短期 rebuttal 更安全的口径是 feature-level coverage / byte / feasibility proxy。
+
+## PointPillar bilinear coordinate-warp AP probe
+
+- 新增脚本改动：
+  - `opencda/tools/lgcp_pointpillar_coordinate_warp_assembly.py`
+  - 新增 `--sampling nearest|bilinear`，默认 `nearest` 保持旧结果兼容。
+- 目标：
+  - 用同一 Top-23 首帧和同一 reference CAV 1，验证 bilinear sampling 是否能显著修复 nearest coordinate warp 的低 AP。
+- 命令：
+  - `python -m py_compile opencda\tools\lgcp_pointpillar_coordinate_warp_assembly.py`
+  - `conda run -n opencda python -m opencda.tools.lgcp_pointpillar_coordinate_warp_assembly --dataset-root D:\Data\Carla --scenario-id 2026_07_15_02_33_21 --assignment-plan docs\doc_workspace\LGCP\experiments\hierarchy_plan\20260718_lgcp_carla_hierarchy_plan_area23_11f\area_assignment_plan.csv --leader-root docs\doc_workspace\LGCP\experiments\hierarchy_plan\20260718_lgcp_pointpillar_leader_feature_fusion_area23_1f --leader-feature-manifest docs\doc_workspace\LGCP\experiments\hierarchy_plan\20260718_lgcp_pointpillar_leader_feature_fusion_area23_1f\leader_feature_manifest.csv --output-dir docs\doc_workspace\LGCP\experiments\hierarchy_plan\20260718_lgcp_pointpillar_coordinate_warp_bilinear_assembly_area23_1f_ref1 --reference-cav-id 1 --feature-key leader_scatter_mean --grid-size-x 10 --grid-size-y 6 --dtype float16 --sampling bilinear`
+  - `conda run -n opencda python -m opencda.tools.lgcp_pointpillar_rsu_head_probe --rsu-root docs\doc_workspace\LGCP\experiments\hierarchy_plan\20260718_lgcp_pointpillar_coordinate_warp_bilinear_assembly_area23_1f_ref1 --rsu-frame-manifest docs\doc_workspace\LGCP\experiments\hierarchy_plan\20260718_lgcp_pointpillar_coordinate_warp_bilinear_assembly_area23_1f_ref1\coordinate_warp_frame_manifest.csv --output-dir docs\doc_workspace\LGCP\experiments\hierarchy_plan\20260718_lgcp_pointpillar_coordinate_warp_bilinear_head_probe_area23_1f_ref1 --fusion-method intermediate_attentive --top-k 20 --frame-file-column warped_frame_file --canvas-key warped_canvas`
+  - `conda run -n opencda python -m opencda.tools.lgcp_pointpillar_warp_ap_probe --dataset-root D:\Data\Carla --scenario-id 2026_07_15_02_33_21 --warped-root docs\doc_workspace\LGCP\experiments\hierarchy_plan\20260718_lgcp_pointpillar_coordinate_warp_bilinear_assembly_area23_1f_ref1 --warped-frame-manifest docs\doc_workspace\LGCP\experiments\hierarchy_plan\20260718_lgcp_pointpillar_coordinate_warp_bilinear_assembly_area23_1f_ref1\coordinate_warp_frame_manifest.csv --output-dir docs\doc_workspace\LGCP\experiments\hierarchy_plan\20260718_lgcp_pointpillar_coordinate_warp_bilinear_ap_probe_area23_1f_ref1 --reference-cav-id 1 --fusion-method intermediate_attentive --frame-file-column warped_frame_file --canvas-key warped_canvas`
+- 输出目录：
+  - `docs/doc_workspace/LGCP/experiments/hierarchy_plan/20260718_lgcp_pointpillar_coordinate_warp_bilinear_assembly_area23_1f_ref1`
+  - `docs/doc_workspace/LGCP/experiments/hierarchy_plan/20260718_lgcp_pointpillar_coordinate_warp_bilinear_head_probe_area23_1f_ref1`
+  - `docs/doc_workspace/LGCP/experiments/hierarchy_plan/20260718_lgcp_pointpillar_coordinate_warp_bilinear_ap_probe_area23_1f_ref1`
+- 结果：
+  - bilinear sample ratio: `0.998363`
+  - coverage ratio: `0.060625`
+  - max overlap: `1`
+  - head score max / mean: `0.815208 / 0.003937`
+  - postprocess pred boxes: `29`
+  - GT boxes: `16`
+  - AP@0.3 / AP@0.5 / AP@0.7: `0.024457 / 0.011364 / 0.003472`
+- 对照：
+  - nearest AP@0.3 / AP@0.5 / AP@0.7: `0.010000 / 0.010000 / 0.000000`
+  - bilinear 只带来极小改善，仍远低于可进入论文的模型级 AP。
+- 结论：
+  - 简单采样方式不是主要瓶颈。
+  - 当前跨 leader 裁剪、均值融合、重投影后的 feature canvas 与预训练 PointPillar head 缺少校准。
+  - 短期不应继续扩大 nearest/bilinear AP；要么实现 affine/grid-sample + feature calibration / retrained aggregation，要么将 neural hierarchy 口径收窄为 feature-level coverage / byte proxy。

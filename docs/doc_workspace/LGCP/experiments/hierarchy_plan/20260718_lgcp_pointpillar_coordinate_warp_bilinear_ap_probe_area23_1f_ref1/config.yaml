@@ -1,0 +1,10 @@
+dataset_root: D:\Data\Carla
+scenario_id: '2026_07_15_02_33_21'
+warped_root: C:\Workspace\OpenCDA\docs\doc_workspace\LGCP\experiments\hierarchy_plan\20260718_lgcp_pointpillar_coordinate_warp_bilinear_assembly_area23_1f_ref1
+warped_frame_manifest: C:\Workspace\OpenCDA\docs\doc_workspace\LGCP\experiments\hierarchy_plan\20260718_lgcp_pointpillar_coordinate_warp_bilinear_assembly_area23_1f_ref1\coordinate_warp_frame_manifest.csv
+reference_cav_id: '1'
+fusion_method: intermediate_attentive
+frame_file_column: warped_frame_file
+canvas_key: warped_canvas
+score_threshold: null
+note: Single-frame warped feature AP smoke; not final paper result.

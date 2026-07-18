@@ -2164,3 +2164,29 @@ Interpretation:
 - 即使 flat baselines 也只传 LGCP planned area cells 的 raw slices，comm-aware top-k 在 Top-30 area plan 下仍需 `295.76KB/frame`。
 - LGCP Top-30 用 `40.38%` 的 comm-aware area-slice bytes，保留 `87.85%` AP@0.5 和 `92.78%` AP@0.7。
 - 这是比 fixed 10KB proxy 和 full selected-agent raw bytes 都更公平的本地通信口径；仍然应谨慎表述为 bounded quality loss under much lower communication，而不是 AP superiority。
+
+## R4：Model-Level Feature Hierarchy Boundary
+
+### 2026-07-18：Nearest vs Bilinear Coordinate-Warp AP Probe
+
+本次结果用于判断当前 PointPillar neural feature hierarchy 是否能直接形成论文级 AP。实验复用 Top-23 首帧 leader-local feature slices，以 CAV 1 为 reference canvas，比较 nearest 与 bilinear 的 `reference -> world -> leader` coordinate warp。
+
+输出目录：
+
+```text
+docs/doc_workspace/LGCP/experiments/hierarchy_plan/20260718_lgcp_pointpillar_coordinate_warp_assembly_area23_1f_ref1
+docs/doc_workspace/LGCP/experiments/hierarchy_plan/20260718_lgcp_pointpillar_coordinate_warp_ap_probe_area23_1f_ref1
+docs/doc_workspace/LGCP/experiments/hierarchy_plan/20260718_lgcp_pointpillar_coordinate_warp_bilinear_assembly_area23_1f_ref1
+docs/doc_workspace/LGCP/experiments/hierarchy_plan/20260718_lgcp_pointpillar_coordinate_warp_bilinear_ap_probe_area23_1f_ref1
+```
+
+| Sampling | Sample ratio | Coverage ratio | Head score max | Pred boxes | GT boxes | AP@0.3 | AP@0.5 | AP@0.7 |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| Nearest | 1.000000 | 0.060724 | 0.893363 | 30 | 16 | 0.010000 | 0.010000 | 0.000000 |
+| Bilinear | 0.998363 | 0.060625 | 0.815208 | 29 | 16 | 0.024457 | 0.011364 | 0.003472 |
+
+结论：
+
+- Bilinear 只带来极小 AP 改善，仍不能支撑 model-level LGCP AP claim。
+- 当前问题不只是采样方式，而是跨 leader feature slice 的裁剪、均值融合、重投影 canvas 与预训练 PointPillar detection head 缺少校准。
+- 论文近期可用口径应是 feature-level data-path / coverage / byte proxy，加上 box-level hierarchy late-fusion 的真实 OpenCOOD model-calling ablation；若要报告 neural feature AP，需要 affine warp calibration、feature normalization 或 retrained aggregation head。

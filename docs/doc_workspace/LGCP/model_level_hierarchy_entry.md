@@ -637,3 +637,37 @@ conda run -n opencda python -m opencda.tools.lgcp_pointpillar_warp_ap_probe --da
 - 该 probe 首次闭合了 coordinate-warp canvas -> PointPillar head/postprocess -> reference-frame GT/AP 的评价链路。
 - 结果很低，说明当前 nearest-neighbor coordinate warp 虽然技术可运行，但不能支撑论文级 model-level detection claim。
 - 短期论文安全选择是将 neural feature hierarchy 写作限制为 data-path feasibility / feature coverage / byte proxy；若要报告 AP，需要 bilinear/affine warp、feature normalization/calibration，甚至重新训练 aggregation head。
+
+## 2026-07-18 Bilinear Coordinate-Warp AP Probe
+
+本轮在 `lgcp_pointpillar_coordinate_warp_assembly.py` 中新增 `--sampling nearest|bilinear`，默认保持 nearest 兼容旧结果，并对同一 Top-23 首帧、同一 reference CAV 1 跑 bilinear 对照。
+
+运行目录：
+
+```text
+docs/doc_workspace/LGCP/experiments/hierarchy_plan/20260718_lgcp_pointpillar_coordinate_warp_bilinear_assembly_area23_1f_ref1
+docs/doc_workspace/LGCP/experiments/hierarchy_plan/20260718_lgcp_pointpillar_coordinate_warp_bilinear_head_probe_area23_1f_ref1
+docs/doc_workspace/LGCP/experiments/hierarchy_plan/20260718_lgcp_pointpillar_coordinate_warp_bilinear_ap_probe_area23_1f_ref1
+```
+
+结果：
+
+| Metric | Nearest | Bilinear |
+| --- | ---: | ---: |
+| Frames | 1 | 1 |
+| Sample ratio | 1.000000 | 0.998363 |
+| Coverage ratio | 0.060724 | 0.060625 |
+| Max overlap | 1 | 1 |
+| Head score max | 0.893363 | 0.815208 |
+| Postprocess pred boxes | 30 | 29 |
+| GT boxes | 16 | 16 |
+| AP@0.3 | 0.010000 | 0.024457 |
+| AP@0.5 | 0.010000 | 0.011364 |
+| AP@0.7 | 0.000000 | 0.003472 |
+
+解释：
+
+- Bilinear sampling 相比 nearest 只带来极小 AP 改善，仍远低于可报告的模型级感知性能。
+- 这说明问题不只是 nearest-neighbor 的离散化误差，而是预训练 PointPillar head 对这种跨 leader 裁剪、均值融合、重投影 feature canvas 没有校准。
+- 后续若要报告 model-level AP，需要 affine/grid-sample 级特征旋转校准、feature normalization、训练后的 aggregation head 或端到端 fine-tuning。
+- 短期论文更安全的口径是将 neural feature hierarchy 收窄为 feature-level data path、coverage 和 byte proxy，把 box-level hierarchy late fusion 作为真实 OpenCOOD model-calling local-to-global ablation。

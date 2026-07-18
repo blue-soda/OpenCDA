@@ -4,8 +4,8 @@ Coordinate-aware assembly for LGCP PointPillar leader feature slices.
 
 For each target cell in a shared reference lidar frame, this tool maps the
 cell center to world coordinates, then back into the leader lidar frame, and
-samples the corresponding leader-local feature slice. It is a nearest-neighbor
-feature warp smoke for validating coordinate alignment.
+samples the corresponding leader-local feature slice. It is a coordinate
+feature warp smoke for validating alignment before any learned calibration.
 """
 
 import argparse
@@ -43,6 +43,8 @@ def parse_args():
     parser.add_argument('--grid-size-y', type=float, default=6.0)
     parser.add_argument('--dtype', choices=['float32', 'float16'],
                         default='float16')
+    parser.add_argument('--sampling', choices=['nearest', 'bilinear'],
+                        default='nearest')
     parser.add_argument('--lidar-range', nargs=6, type=float,
                         default=DEFAULT_LIDAR_RANGE)
     parser.add_argument('--voxel-size', nargs=3, type=float,
@@ -157,15 +159,33 @@ def sample_feature_into_canvas(feature, source_bounds, assignment, leader_pose,
                 world_to_leader,
                 world_x,
                 world_y)
-            leader_ix = int(round((leader_x - x_min) / voxel_x - 0.5))
-            leader_iy = int(round((leader_y - y_min) / voxel_y - 0.5))
-            src_x = leader_ix - source_x0
-            src_y = leader_iy - source_y0
-            if (0 <= src_y < feature.shape[2] and
-                    0 <= src_x < feature.shape[3]):
-                accum[:, :, ty, tx] += feature[:, :, src_y, src_x]
-                counts[:, :, ty, tx] += 1.0
-                sampled_cells += 1
+            src_fx = (leader_x - x_min) / voxel_x - 0.5 - source_x0
+            src_fy = (leader_y - y_min) / voxel_y - 0.5 - source_y0
+            if args.sampling == 'nearest':
+                src_x = int(round(src_fx))
+                src_y = int(round(src_fy))
+                if not (0 <= src_y < feature.shape[2] and
+                        0 <= src_x < feature.shape[3]):
+                    continue
+                sample = feature[:, :, src_y, src_x]
+            else:
+                src_x0 = int(math.floor(src_fx))
+                src_y0 = int(math.floor(src_fy))
+                src_x1 = src_x0 + 1
+                src_y1 = src_y0 + 1
+                if not (0 <= src_y0 and src_y1 < feature.shape[2] and
+                        0 <= src_x0 and src_x1 < feature.shape[3]):
+                    continue
+                wx = src_fx - src_x0
+                wy = src_fy - src_y0
+                sample = (
+                    (1.0 - wx) * (1.0 - wy) * feature[:, :, src_y0, src_x0] +
+                    wx * (1.0 - wy) * feature[:, :, src_y0, src_x1] +
+                    (1.0 - wx) * wy * feature[:, :, src_y1, src_x0] +
+                    wx * wy * feature[:, :, src_y1, src_x1])
+            accum[:, :, ty, tx] += sample
+            counts[:, :, ty, tx] += 1.0
+            sampled_cells += 1
     return target_cells, sampled_cells, (x0, x1, y0, y1)
 
 
@@ -251,6 +271,7 @@ def main():
                 'area_id': row['area_id'],
                 'leader_id': row['leader_id'],
                 'reference_cav_id': args.reference_cav_id,
+                'sampling': args.sampling,
                 'source_bounds_xyxy': ';'.join(str(item)
                                                for item in source_bounds),
                 'target_bounds_xyxy': '%d;%d;%d;%d' % bounds,
@@ -281,6 +302,7 @@ def main():
                 'timestamp': np.asarray(timestamp),
                 'reference_cav_id': np.asarray(args.reference_cav_id),
                 'feature_key': np.asarray(args.feature_key),
+                'sampling': np.asarray(args.sampling),
                 'warped_canvas': to_dtype(canvas, args.dtype),
                 'coverage_count': counts.astype(np.uint16),
             })
@@ -289,6 +311,7 @@ def main():
             'reference_cav_id': args.reference_cav_id,
             'warped_frame_file': rel_path.replace('\\', '/'),
             'feature_key': args.feature_key,
+            'sampling': args.sampling,
             'canvas_shape': shape_string(canvas),
             'input_rows': len(rows),
             'used_rows': used_rows,
@@ -331,11 +354,12 @@ def main():
             args.leader_feature_manifest),
         'reference_cav_id': args.reference_cav_id,
         'feature_key': args.feature_key,
+        'sampling': args.sampling,
         'grid_size_x': args.grid_size_x,
         'grid_size_y': args.grid_size_y,
         'lidar_range': [float(item) for item in args.lidar_range],
         'voxel_size': [float(item) for item in args.voxel_size],
-        'note': 'Nearest-neighbor coordinate warp; no learned alignment.',
+        'note': '%s coordinate warp; no learned alignment.' % args.sampling,
     }
     with open(os.path.join(args.output_dir, 'config.yaml'), 'w') as stream:
         yaml.safe_dump(config, stream, sort_keys=False)
@@ -344,6 +368,7 @@ def main():
         stream.write('This run samples leader-local feature slices by mapping ')
         stream.write('each reference-frame cell center through world coordinates ')
         stream.write('back to the leader lidar frame.\n\n')
+        stream.write('- sampling: `%s`\n' % args.sampling)
         stream.write('- frames: `%s`\n' % summary['frames'])
         stream.write('- sample ratio: `%s`\n' % summary['mean_sample_ratio'])
         stream.write('- coverage ratio: `%s`\n' %

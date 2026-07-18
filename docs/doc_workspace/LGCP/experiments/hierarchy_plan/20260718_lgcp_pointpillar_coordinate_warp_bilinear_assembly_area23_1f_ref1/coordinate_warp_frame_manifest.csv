@@ -1,0 +1,2 @@
+timestamp,reference_cav_id,warped_frame_file,feature_key,sampling,canvas_shape,input_rows,used_rows,skipped_rows,target_cells,sampled_cells,sample_ratio,coverage_cells,coverage_ratio,overlap_cells,max_overlap,mean_abs_yaw_delta_deg,max_abs_yaw_delta_deg,compressed_npz_bytes
+000060,1,warped_frames/000060_leader_scatter_mean_ref1.npz,leader_scatter_mean,bilinear,1x64x200x704,23,23,0,8550,8536,0.998363,8536,0.060625,0,1,93.412838,175.817131,149700

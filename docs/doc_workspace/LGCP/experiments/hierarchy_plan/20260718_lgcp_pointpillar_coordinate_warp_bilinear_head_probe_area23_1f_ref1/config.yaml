@@ -1,0 +1,8 @@
+rsu_root: C:\Workspace\OpenCDA\docs\doc_workspace\LGCP\experiments\hierarchy_plan\20260718_lgcp_pointpillar_coordinate_warp_bilinear_assembly_area23_1f_ref1
+rsu_frame_manifest: C:\Workspace\OpenCDA\docs\doc_workspace\LGCP\experiments\hierarchy_plan\20260718_lgcp_pointpillar_coordinate_warp_bilinear_assembly_area23_1f_ref1\coordinate_warp_frame_manifest.csv
+fusion_method: intermediate_attentive
+top_k: 20
+score_threshold: null
+frame_file_column: warped_frame_file
+canvas_key: warped_canvas
+note: Detection-head feasibility probe; no GT/AP evaluation.
