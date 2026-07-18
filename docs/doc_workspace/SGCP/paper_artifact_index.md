@@ -22,7 +22,7 @@ docs\doc_workspace\SGCP\artifacts\paper_artifact_index_20260719\paper_artifact_i
 | Table 1 Protocol-Native System Comparison | `artifacts/table1_protocol_20260719/protocol_native_manifest.csv` | `60728bd` | usable with caveats | Pure late 是 prediction-sharing reference；Full20Early 是 upper reference；EdgeCooper-HD 是 edge-assisted reference。 |
 | Figure 2 Protocol Breakdown | `artifacts/figures_20260719/figure2_protocol_breakdown.pdf` | `80a590a` | usable | 只报告 aggregate AP，不引入 satisfaction rate。 |
 | Figure 3 Fusion Contribution | `artifacts/figures_20260719/figure3_fusion_contribution.pdf` | `80a590a` | usable | 解释 early/late 两层融合分工，不把 AP@0.3 全写成 scheduler 贡献。 |
-| Figure 1 AP-Mbps Pareto | `artifacts/pareto_20260719/pareto_source.csv` | `bb030cb` / `7d7389a` | usable with caveats | Pure late prediction sharing 必须和 raw-LiDAR Pareto frontier 分开解释。 |
+| Figure 1 AP-Mbps Pareto | `artifacts/pareto_20260719/pareto_source.csv` | `ab73cd7` | usable with caveats | Pure late prediction sharing 必须和 raw-LiDAR Pareto frontier 分开解释；当前源表已包含 SGCP/PACP first-pass sensitivity 点。 |
 | Table 3 Scheduler Comparison | `artifacts/scheduler_comparison_20260719/scheduler_comparison_manifest.csv` | `2a2e4b2` | usable | 只比较同一 SGCP-compatible scaffold 内的 scheduler。 |
 | Table 4 Parameter Sensitivity | `artifacts/parameter_sensitivity_20260719/table4_parameter_sensitivity.csv` | `859f5d5` | usable | `rho_th` 和 channel count 可进主文；`N_max/T_min` 更适合附录或 rebuttal。 |
 | Runtime-Control-NS3 Appendix | `artifacts/appendix_support_20260719/runtime_control_ns3_appendix.md` | `d75abc4` | usable | 支撑 near-real-time control-plane feasibility，不承诺 detector-inclusive 100 ms。 |
