@@ -130,7 +130,7 @@
 必须扫描：
 
 - [x] SGCP：`rho_th`、`B_h`、channel count、可选 point cap。当前 `pareto_source.csv` 已覆盖 5ch stress、10ch rho2/rho3、20ch rho2、cap=3000、B_h=2/3；early checkpoint 回收后需重跑同一组关键点。
-- [ ] Random / Density / Link-aware：member budget、grid budget。当前已有 forced random、density high-budget、communication-aware low/high 代表点，但还缺完整预算 sweep。
+- [x] Random / Density / Link-aware：member budget、grid budget。当前已补 `scheduler_budget_sweep_20260719`：random low/high、density low/high、communication-aware low/high first-pass 预算扫描；若进附录可继续补更密集预算曲线。
 - [x] PACP-LiDAR：member/grid budget 或 priority threshold。当前已纳入 high-budget `86.56 Mbps` 和 low-budget `67.31 Mbps` 两个代表点，足够支撑 proxy baseline 边界；若进附录可继续补 priority threshold。
 - [ ] FullPerception-PCS：blind-spot granularity、candidate threshold 或 PCS 原生参数，不改主带宽。当前 tuned PCS 已进源表，但还未形成完整 PCS 参数曲线。
 - [ ] EdgeCooperV2V+ / EdgeCooper-inspired：sender cap、assignment budget、half-duplex constraint。当前 EdgeCooper-HD proxy 已进源表，仍需补 sender cap/assignment sweep。

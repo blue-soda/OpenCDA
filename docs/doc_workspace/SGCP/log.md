@@ -6224,3 +6224,40 @@ conda run -n opencda python -m opencda.tools.sgcp_aggregate_ap_manifest --run "S
 | SelectiveCommunicationAwareLowBudget | 0.78 | 0.75 | 0.40 | 58.97 |
 | SGCP_PAPG_Bh3 | 0.80 | 0.78 | 0.40 | 62.54 |
 | PACP_LiDAR_LowBudget | 0.76 | 0.73 | 0.37 | 67.31 |
+
+## 2026-07-19 Scheduler budget sweep for Pareto
+
+### 目的
+
+继续推进 P4 中 `Random / Density / Link-aware` 的 member/grid budget sweep。固定同一 clustered two-layer fusion scaffold、41 帧、all-cluster-heads pooled aggregate AP，仅改变 selective baseline 和 `member_budget/grid_budget`，用于补齐 Figure 1 AP-Mbps Pareto 的公平预算轴。
+
+### 计划命令
+
+低预算点：
+
+```powershell
+conda run -n opencda python -m opencda.tools.offline_inference --dataset-root D:\Data\Carla --scenario-id 2026_07_15_01_26_56 --ego-cav-id 1 --max-frames 0 --sgcp-constrained --sgcp-receiver-policy all-cluster-heads --sgcp-inter-cluster-late-fusion --rho-th 3 --selective-sharing-baseline random --selective-member-budget 2 --selective-grid-budget 87 --sgcp-trace-output docs\doc_workspace\SGCP\artifacts\scheduler_budget_sweep_20260719\random_m2_g87_trace.csv
+conda run -n opencda python -m opencda.tools.offline_inference --dataset-root D:\Data\Carla --scenario-id 2026_07_15_01_26_56 --ego-cav-id 1 --max-frames 0 --sgcp-constrained --sgcp-receiver-policy all-cluster-heads --sgcp-inter-cluster-late-fusion --rho-th 3 --selective-sharing-baseline density --selective-member-budget 2 --selective-grid-budget 87 --sgcp-trace-output docs\doc_workspace\SGCP\artifacts\scheduler_budget_sweep_20260719\density_m2_g87_trace.csv
+```
+
+高预算/对齐主表点：
+
+```powershell
+conda run -n opencda python -m opencda.tools.offline_inference --dataset-root D:\Data\Carla --scenario-id 2026_07_15_01_26_56 --ego-cav-id 1 --max-frames 0 --sgcp-constrained --sgcp-receiver-policy all-cluster-heads --sgcp-inter-cluster-late-fusion --rho-th 3 --selective-sharing-baseline communication_aware --selective-member-budget 3 --selective-grid-budget 117 --sgcp-trace-output docs\doc_workspace\SGCP\artifacts\scheduler_budget_sweep_20260719\communication_aware_m3_g117_trace.csv
+```
+
+### 结果
+
+```powershell
+conda run -n opencda python -m opencda.tools.sgcp_aggregate_ap_manifest --run "Random_m2_g87=docs\doc_workspace\SGCP\artifacts\scheduler_budget_sweep_20260719\random_m2_g87.log,docs\doc_workspace\SGCP\artifacts\scheduler_budget_sweep_20260719\random_m2_g87_trace.csv" --run "Density_m2_g87=docs\doc_workspace\SGCP\artifacts\scheduler_budget_sweep_20260719\density_m2_g87.log,docs\doc_workspace\SGCP\artifacts\scheduler_budget_sweep_20260719\density_m2_g87_trace.csv" --run "CommunicationAware_m3_g117=docs\doc_workspace\SGCP\artifacts\scheduler_budget_sweep_20260719\communication_aware_m3_g117.log,docs\doc_workspace\SGCP\artifacts\scheduler_budget_sweep_20260719\communication_aware_m3_g117_trace.csv" --output-csv docs\doc_workspace\SGCP\artifacts\scheduler_budget_sweep_20260719\scheduler_budget_sweep_manifest.csv --notes "P4 scheduler budget sweep: 41-frame all-cluster-heads inter-cluster late fusion, rho_th=3"
+```
+
+| Method | Members/head | Grids/head | AP@0.3 | AP@0.5 | AP@0.7 | Payload bytes | Mbps |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| Random_m2_g87 | 2 | 87 | 0.75 | 0.70 | 0.34 | 24,772,192 | 48.34 |
+| Density_m2_g87 | 2 | 87 | 0.78 | 0.74 | 0.40 | 31,421,408 | 61.31 |
+| CommunicationAware_m3_g117 | 3 | 117 | 0.80 | 0.76 | 0.42 | 38,920,592 | 75.94 |
+
+### 结论
+
+Random/Density/Link-aware 已形成 first-pass low/high budget coverage。PAPG `0.81/0.78/0.39, 62.54 Mbps` 在 AP@0.3/AP@0.5 上优于 density low-budget 且只比 random high-budget 多 0.86 Mbps；但 AP@0.7 仍低于 density/communication-aware high-quality reference，需要在 Pareto caption 中保留边界。

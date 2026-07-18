@@ -937,3 +937,17 @@ conda run -n opencda python -m opencda.tools.offline_inference --dataset-root D:
 | PACP_LiDAR_LowBudget | 0.76 | 0.73 | 0.37 | 67.31 | PACP-style proxy low-budget point |
 
 结论：当前 Pareto 源表已经足够支持“SGCP/PAPG 在 raw-LiDAR V2V 中等通信区间具有竞争力”的图形判断，但仍不能写成所有 baseline 全预算最优。正式论文 caption 需要分层解释 raw-LiDAR frontier、prediction-sharing Pure late reference 和 edge-assisted/global reference。
+
+## Scheduler budget sweep for Pareto
+
+为补齐 P4 中 `Random / Density / Link-aware` 的 member/grid budget sweep，本轮固定 41 帧、`rho_th=3`、all-cluster-heads、inter-cluster late fusion 和同一 clustered two-layer scaffold，补跑三组 selective-sharing baseline。
+
+Manifest：`docs\doc_workspace\SGCP\artifacts\scheduler_budget_sweep_20260719\scheduler_budget_sweep_manifest.csv`
+
+| Method | Members/head | Grids/head | AP@0.3 | AP@0.5 | AP@0.7 | Payload bytes | Mbps |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| RandomLowBudget | 2 | 87 | 0.75 | 0.70 | 0.34 | 24,772,192 | 48.34 |
+| DensityLowBudget | 2 | 87 | 0.78 | 0.74 | 0.40 | 31,421,408 | 61.31 |
+| CommunicationAwareHighBudget | 3 | 117 | 0.80 | 0.76 | 0.42 | 38,920,592 | 75.94 |
+
+可读结论：random low-budget 是低通信/低 AP 端点；density low-budget 用接近 SGCP 的通信量获得较高 AP@0.7，但 AP@0.3/AP@0.5 仍低于 PAPG；communication-aware high-budget 在 AP@0.7 更强，但通信量高出 PAPG 约 21.4%。这支持论文中把 PAPG 写成中等通信区间的 raw-LiDAR V2V Pareto 候选，同时必须承认高预算 link-aware reference 的 AP@0.7 边界。
