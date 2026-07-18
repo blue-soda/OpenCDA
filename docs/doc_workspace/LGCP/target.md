@@ -21,7 +21,7 @@
 ## P0：当前未闭环目标
 
 - [x] Common-byte-budget / raw-byte local-to-global ablation：Top-20/Top-23 LGCP 对齐 flat 10-agent fixed proxy，且新增 flat selected-agent raw PCD accounting 与 flat area-slice accounting；结果显示当前 box-level LGCP 不能超过强 flat baseline AP，但 Top-30 仅用约 `16.11%` selected-agent raw bytes / `40.38%` area-slice bytes 保留 comm-aware baseline `87.85%` AP@0.5 和 `92.78%` AP@0.7。
-- [ ] Neural feature slicing / model-level hierarchy：实现 PointPillar intermediate feature tensor area slicing、leader local fusion 和 RSU global aggregation。
+- [ ] Neural feature slicing / model-level hierarchy：已完成 PointPillar `intermediate_attentive` feature geometry probe，确认 scatter tensor `N x 64 x 200 x 704`、fused tensor `1 x 384 x 100 x 352`，并可将 LGCP area cell 映射到 leader-local BEV feature index range；下一步实现真实 feature crop / slice manifest、leader local fusion 和 RSU global aggregation。
 - [ ] Area confidence 多 seed / 多场景验证：在 `mindspore-186` 上跑 400-frame gate 多 seed，形成论文级相关性统计。
 - [ ] Greedy / O3 optimality gap 多场景扩展：覆盖更大 instance 和 latency-aware objective。
 - [ ] 论文源文件落地：将 contribution、workflow、baseline fairness、limitations、stage numbering、Fig. 7 x-axis 等修改写入 `conference_101719.tex` 和图源。
@@ -86,4 +86,4 @@
 - [x] 扩大 request-level PSSCH / HARQ trace 到 11 帧 LGCP replay。
 - [x] 接入 LGCP multi-slot replay lifecycle diagnostics，定位 scheduled replay 中 member-to-leader callback 偏低的阶段原因。
 - [x] 增加 LGCP source-unique / half-duplex scheduling sensitivity，验证同 source 同 slot 多发不是 member-to-leader 瓶颈的充分解释。
-- [ ] 实现 LGCP 专用 RSU area assignment、leader local fusion 和 RSU global aggregation 管线。（已完成 offline assignment / upload plan、hierarchy area-budget sweep、raw LiDAR feature-slice budget sweep、raw-slice-aware upload plan dry-run / 3 帧与 11 帧 request-level NS3 trace、single-slot scheduled NS3 smoke、multi-slot scheduling proxy、3 帧 live multi-slot replay、leader/RSU aggregation proxy、model-level hierarchy 入口审计、box-level late-fusion adapter smoke、Top-30 1 帧完整 area run、Top-30 3 帧 run、Top-30 11 帧 run 和 baseline 对齐表；common-byte-budget 对照与 neural feature slicing + model-level fusion 仍待实现）
+- [ ] 实现 LGCP 专用 RSU area assignment、leader local fusion 和 RSU global aggregation 管线。（已完成 offline assignment / upload plan、hierarchy area-budget sweep、raw LiDAR feature-slice budget sweep、raw-slice-aware upload plan dry-run / 3 帧与 11 帧 request-level NS3 trace、single-slot scheduled NS3 smoke、multi-slot scheduling proxy、3 帧 live multi-slot replay、leader/RSU aggregation proxy、model-level hierarchy 入口审计、box-level late-fusion adapter smoke、Top-30 1 帧完整 area run、Top-30 3 帧 run、Top-30 11 帧 run、baseline 对齐表、common-byte/raw-byte 对照和 PointPillar feature geometry probe；neural feature crop / model-level fusion 仍待实现）

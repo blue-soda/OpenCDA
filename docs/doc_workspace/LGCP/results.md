@@ -1772,6 +1772,30 @@ Interpretation:
 
 该结论记录在 `model_level_hierarchy_entry.md`，用于约束后续论文表述和实现优先级。
 
+## PointPillar Intermediate Feature Geometry Probe
+
+2026-07-18 新增 `opencda/tools/lgcp_pointpillar_feature_probe.py`，用于确认 LGCP area cell 到 PointPillar intermediate BEV feature tensor 的映射关系：
+
+```text
+docs/doc_workspace/LGCP/experiments/hierarchy_plan/20260718_lgcp_pointpillar_feature_probe_area23_1f5a
+```
+
+| Item | Value |
+| --- | --- |
+| Fusion method | `intermediate_attentive` |
+| Frames / areas | `1 / 5` |
+| Lidar range | `[-140.8, -40, -3, 140.8, 40, 1]` |
+| Voxel size | `[0.4, 0.4, 4]` |
+| Scatter tensor | `N x 64 x 200 x 704` |
+| Fused backbone tensor | `1 x 384 x 100 x 352` |
+| Fused slice cells | `126-225` |
+
+Interpretation:
+
+- This is the first validated neural-feature entry for LGCP: world-coordinate area cells can be mapped to leader-local PointPillar BEV feature index ranges.
+- The recorded float32 byte estimates are uncompressed upper bounds, not final communication numbers.
+- The result moves model-level hierarchy from code-entry audit to concrete feature-slice adapter work.
+
 ## Box-Level Hierarchy Late-Fusion Smoke
 
 2026-07-18 新增 `opencda/tools/lgcp_hierarchy_late_fusion_eval.py`，并完成最小 model-calling smoke：

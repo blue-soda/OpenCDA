@@ -3415,3 +3415,30 @@ by type：
 - 结论：
   - 在更有利于 flat baselines 的 area-slice accounting 下，LGCP Top-30 仍只用 comm-aware top-k `40.38%` bytes，保留 `87.85%` AP@0.5 和 `92.78%` AP@0.7。
   - baseline fairness 口径已经基本闭环；下一步应转向 neural feature slicing / model-level hierarchy。
+
+## PointPillar intermediate feature geometry probe
+
+- 新增脚本：
+  - `opencda/tools/lgcp_pointpillar_feature_probe.py`
+- 目标：
+  - 推进 P0 `Neural feature slicing / model-level hierarchy`。
+  - 对 `intermediate_attentive` checkpoint 运行真实 OpenCOOD forward hook，确认 PointPillar 中间 tensor shape，并把 LGCP world-coordinate area cell 映射到 leader-local BEV feature index range。
+- 命令：
+  - `python -m py_compile opencda\tools\lgcp_pointpillar_feature_probe.py`
+  - `conda run -n opencda python -m opencda.tools.lgcp_pointpillar_feature_probe --dataset-root D:\Data\Carla --scenario-id 2026_07_15_02_33_21 --assignment-plan docs\doc_workspace\LGCP\experiments\hierarchy_plan\20260718_lgcp_carla_hierarchy_plan_area23_11f\area_assignment_plan.csv --output-dir docs\doc_workspace\LGCP\experiments\hierarchy_plan\20260718_lgcp_pointpillar_feature_probe_area23_1f5a --fusion-method intermediate_attentive --max-frames 1 --max-areas-per-frame 5 --grid-size-x 10 --grid-size-y 6`
+- 输出目录：
+  - `docs/doc_workspace/LGCP/experiments/hierarchy_plan/20260718_lgcp_pointpillar_feature_probe_area23_1f5a`
+- 结果：
+  - rows: `5`
+  - `model.scatter` output: `N x 64 x 200 x 704`
+  - `model.backbone` output: `1 x 384 x 100 x 352`
+  - 5 个 area 均在 leader lidar range 内。
+  - fused feature slice cells: `126-225`
+  - scatter slice float32 bytes for group: `117504-430592`
+  - fused slice float32 bytes: `193536-345600`
+- 观察：
+  - `OpenCOODManager.inference()` 对 intermediate 路径会把 `return_object_ids` 传给不支持该参数的本地 OpenCOOD helper；probe 已改为直接调用 `model(batch_data['ego'])` 并用 forward hook 抓 tensor shape。
+  - 当前 byte 是未压缩 float32 上界估计，不能替代 raw-slice communication 结果。
+- 结论：
+  - LGCP neural feature slicing 的坐标映射入口已经验证。
+  - 下一步应把 probe 扩展为真实 feature crop / slice manifest adapter，并再接 leader local fusion 与 RSU global aggregation。

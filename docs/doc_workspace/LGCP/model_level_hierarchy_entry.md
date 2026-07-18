@@ -321,3 +321,40 @@ conda run -n opencda python -m opencda.tools.lgcp_hierarchy_late_fusion_eval --d
 - 这是当前本地 `lgcp_carla` dump 上第一个完整 11 帧 box-level hierarchy result。
 - 该结果可作为 local-to-global hierarchy ablation 的模型调用版本，但仍属于 box-level late fusion，不是 neural feature slicing。
 - 下一步应把它与 `lgcp_subset_ablation_eval.py` 已有 11 帧 full / confidence_topk / comm_aware_topk / area_aware_union 结果做同表对齐，并补充 byte proxy：Top-30 raw member upload `59.42 KB/frame`，scheduled latency proxy `50 ms/frame`。
+
+## 2026-07-18 PointPillar Feature Geometry Probe
+
+运行目录：
+
+```text
+docs/doc_workspace/LGCP/experiments/hierarchy_plan/20260718_lgcp_pointpillar_feature_probe_area23_1f5a
+```
+
+命令：
+
+```powershell
+conda run -n opencda python -m opencda.tools.lgcp_pointpillar_feature_probe --dataset-root D:\Data\Carla --scenario-id 2026_07_15_02_33_21 --assignment-plan docs\doc_workspace\LGCP\experiments\hierarchy_plan\20260718_lgcp_carla_hierarchy_plan_area23_11f\area_assignment_plan.csv --output-dir docs\doc_workspace\LGCP\experiments\hierarchy_plan\20260718_lgcp_pointpillar_feature_probe_area23_1f5a --fusion-method intermediate_attentive --max-frames 1 --max-areas-per-frame 5 --grid-size-x 10 --grid-size-y 6
+```
+
+已确认 PointPillar intermediate attentive checkpoint 的特征几何：
+
+| Tensor | Shape | Interpretation |
+| --- | --- | --- |
+| `model.scatter` output `spatial_features` | `N x 64 x 200 x 704` | per-CAV scatter BEV tensor，`N` 等于 group size |
+| `model.backbone` output `spatial_features_2d` | `1 x 384 x 100 x 352` | attentive fusion 后的 ego/leader BEV tensor |
+
+5 个首帧 area cell 均可映射到 leader-local lidar range 内；在 `10m x 6m` area cell、`0.4m` voxel、stride-2 fused BEV 下，fused feature slice 约覆盖 `126-225` cells。未压缩 float32 byte 估计如下：
+
+| Area | Group size | Scatter slice bytes for group | Fused slice bytes |
+| --- | ---: | ---: | ---: |
+| `12_9` | 2 | 430592 | 345600 |
+| `13_2` | 2 | 384000 | 299520 |
+| `13_0` | 1 | 117504 | 193536 |
+| `11_7` | 2 | 399360 | 344064 |
+| `13_3` | 1 | 192000 | 299520 |
+
+解释：
+
+- 该 probe 已把 LGCP world-coordinate area cell 映射到 PointPillar leader-local BEV feature index range。
+- 当前 byte 只是未压缩 float32 tensor 上界，不应用作最终通信成本；后续需要量化、稀疏化或选择更早/更轻的 feature representation。
+- 下一步应把该映射接入可选 feature crop adapter：先导出 per-area tensor slice manifest，再实现 leader-local crop fusion 和 RSU global aggregation。
