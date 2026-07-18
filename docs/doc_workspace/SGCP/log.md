@@ -12,7 +12,8 @@
 
 - 新增 `docs/doc_workspace/SGCP/artifacts/appendix_support_20260719/runtime_control_ns3_appendix.md`。
 - 新增 `docs/doc_workspace/SGCP/artifacts/appendix_support_20260719/runtime_control_ns3_summary.csv`。
-- 更新 `target.md`：P8 中 Runtime/control overhead、NS3 request-level reliability、Appendix raw results 第一版标记完成；Qualitative case study 保留未完成。
+- 新增 `docs/doc_workspace/SGCP/artifacts/appendix_support_20260719/qualitative_case_study.md`，基于既有 failure/grid diagnostics 选取 `000068/438`、`000066/401`、`000062/337` 三个帧级案例。
+- 更新 `target.md`：P8 中 Runtime/control overhead、NS3 request-level reliability、Qualitative case study 和 Appendix raw results 第一版标记完成。
 - 更新 `status.md` / `results.md`：记录附录证据包路径和论文写作边界。
 
 ### 关键口径
@@ -20,6 +21,7 @@
 - SGCP control-plane prototype：平均 105.24 ms，最大 127.58 ms；这是 near-real-time feasibility，不是 detector-inclusive end-to-end 100 ms guarantee。
 - PAPG 11 帧 NS3 replay：110/110 scheduled requests application callback 与 RLC complete，0 PHY failures，平均/p95 delay 23.91/24.00 ms。
 - 控制 metadata：187,112 bytes，4,563.71 bytes/frame；相对 PAPG main raw payload 约 0.58%，可写为 below 1%。
+- Qualitative case study：三个案例分别对应 best-view sender 未调度、同簇内 sender/grid 选择不当、dense grid 仍缺 object-level detector support。当前是文字/表格草稿，进入论文前应生成 BEV overlay。
 
 ### 训练 watcher
 

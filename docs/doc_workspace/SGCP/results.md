@@ -642,6 +642,7 @@ docs\doc_workspace\SGCP\artifacts\runtime_breakdown_41f\offline_replay_runtime.l
 ```text
 docs\doc_workspace\SGCP\artifacts\appendix_support_20260719\runtime_control_ns3_appendix.md
 docs\doc_workspace\SGCP\artifacts\appendix_support_20260719\runtime_control_ns3_summary.csv
+docs\doc_workspace\SGCP\artifacts\appendix_support_20260719\qualitative_case_study.md
 ```
 
 建议写作口径：
@@ -650,6 +651,7 @@ docs\doc_workspace\SGCP\artifacts\appendix_support_20260719\runtime_control_ns3_
 - 附录表格报告详细分解：coalition formation 64.39 ms、PPS scheduling 40.58 ms、control metadata 187,112 bytes / 4,563.71 bytes/frame。
 - 不写成 full end-to-end 100 ms guarantee；offline frame loading/world build、OpenCOOD detector inference 和在线 callback 开销不包含在 105.24 ms 中。
 - 控制 metadata 相对 PAPG main raw payload `32,049,872 bytes` 约为 0.58%，相对旧 potential-game payload `26,916,208 bytes` 为 0.70%；论文中应统一写 “below 1% of perception payload”。
+- Qualitative case study 第一版选取 `000068/438`、`000066/401`、`000062/337` 三个持续漏检案例，用表格说明 GT grid、cluster head、selected sender/grid、full reference detection 和 constrained method miss；下一步若放入论文，应渲染 BEV overlay。
 
 ## 数据集导出验证
 
