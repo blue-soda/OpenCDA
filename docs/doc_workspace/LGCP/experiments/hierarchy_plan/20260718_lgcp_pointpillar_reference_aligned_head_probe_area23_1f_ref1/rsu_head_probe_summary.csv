@@ -1,0 +1,2 @@
+timestamp,source_rsu_frame_file,canvas_key,input_canvas_shape,backbone_spatial_features_2d_shape,psm_shape,rm_shape,score_min,score_mean,score_max,score_p95,score_threshold_used,postprocess_pred_boxes,postprocess_scores,postprocess_max_score,postprocess_top_scores
+000060,reference_frames/000060_leader_scatter_mean_ref1.npz,reference_canvas,1x64x200x704,1x384x100x352,1x2x100x352,1x14x100x352,0.000000,0.003301,0.867036,0.005342,0.2,18,18,0.867036,0.867036;0.630663;0.453195;0.452532;0.408705;0.354160;0.337880;0.329380;0.329071;0.308100

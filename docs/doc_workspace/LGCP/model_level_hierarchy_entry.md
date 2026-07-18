@@ -525,3 +525,40 @@ conda run -n opencda python -m opencda.tools.lgcp_pointpillar_rsu_head_probe --r
 - 该 probe 证明 assembled RSU feature canvas 可以技术上接回 PointPillar backbone、classification/regression heads 和 voxel postprocess。
 - 这仍不是有效 AP：当前 RSU canvas 尚未做跨 leader 坐标统一，postprocess 只验证接口可运行和输出张量维度。
 - 下一步若要形成论文级 model-level AP，必须把 area slices 重投影到统一 world/RSU coordinate canvas，或把论文结果限制为 feature-level path / byte / coverage proxy。
+
+## 2026-07-18 Reference-Frame Alignment Diagnostic
+
+运行目录：
+
+```text
+docs/doc_workspace/LGCP/experiments/hierarchy_plan/20260718_lgcp_pointpillar_reference_aligned_assembly_area23_1f_ref1
+docs/doc_workspace/LGCP/experiments/hierarchy_plan/20260718_lgcp_pointpillar_reference_aligned_head_probe_area23_1f_ref1
+```
+
+命令：
+
+```powershell
+conda run -n opencda python -m opencda.tools.lgcp_pointpillar_reference_aligned_assembly --dataset-root D:\Data\Carla --scenario-id 2026_07_15_02_33_21 --assignment-plan docs\doc_workspace\LGCP\experiments\hierarchy_plan\20260718_lgcp_carla_hierarchy_plan_area23_11f\area_assignment_plan.csv --leader-root docs\doc_workspace\LGCP\experiments\hierarchy_plan\20260718_lgcp_pointpillar_leader_feature_fusion_area23_1f --leader-feature-manifest docs\doc_workspace\LGCP\experiments\hierarchy_plan\20260718_lgcp_pointpillar_leader_feature_fusion_area23_1f\leader_feature_manifest.csv --output-dir docs\doc_workspace\LGCP\experiments\hierarchy_plan\20260718_lgcp_pointpillar_reference_aligned_assembly_area23_1f_ref1 --reference-cav-id 1 --feature-key leader_scatter_mean --grid-size-x 10 --grid-size-y 6 --dtype float16
+conda run -n opencda python -m opencda.tools.lgcp_pointpillar_rsu_head_probe --rsu-root docs\doc_workspace\LGCP\experiments\hierarchy_plan\20260718_lgcp_pointpillar_reference_aligned_assembly_area23_1f_ref1 --rsu-frame-manifest docs\doc_workspace\LGCP\experiments\hierarchy_plan\20260718_lgcp_pointpillar_reference_aligned_assembly_area23_1f_ref1\reference_frame_manifest.csv --output-dir docs\doc_workspace\LGCP\experiments\hierarchy_plan\20260718_lgcp_pointpillar_reference_aligned_head_probe_area23_1f_ref1 --fusion-method intermediate_attentive --top-k 20 --frame-file-column reference_frame_file --canvas-key reference_canvas
+```
+
+结果：
+
+| Metric | Value |
+| --- | ---: |
+| Reference CAV | 1 |
+| Input / used leader slices | 23 / 23 |
+| Reference canvas | `1 x 64 x 200 x 704` |
+| Coverage cells / ratio | `9189 / 0.065263` |
+| Overlap cells / max overlap | `293 / 3` |
+| Mean / max abs yaw delta | `93.412838 / 175.817131 deg` |
+| Mean resize area ratio | 0.637908 |
+| Head `psm` / `rm` | `1 x 2 x 100 x 352` / `1 x 14 x 100 x 352` |
+| Head score max / mean | `0.867036 / 0.003301` |
+| Postprocess pred boxes | 18 |
+
+解释：
+
+- 将 world-coordinate area cells 映射到统一 reference CAV frame 后，coverage ratio 从 index-space assembly 的 `0.033161` 提高到 `0.065263`，head/postprocess 也出现更强响应。
+- 但 leader 与 reference 的 yaw 差很大，平均约 `93.41 deg`，最大约 `175.82 deg`。当前实现只做 nearest resize，没有 feature rotation / affine warp / learned alignment。
+- 因此这仍是 alignment diagnostic，不是 AP 结果。论文安全口径应是：model-level data path is feasible, while valid AP requires coordinate-aware feature warping or retrained aggregation.

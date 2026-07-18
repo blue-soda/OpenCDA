@@ -30,6 +30,8 @@ def parse_args():
     parser.add_argument('--coperception-yaml', default=None)
     parser.add_argument('--top-k', type=int, default=20)
     parser.add_argument('--score-threshold', type=float, default=None)
+    parser.add_argument('--frame-file-column', default='rsu_frame_file')
+    parser.add_argument('--canvas-key', default='rsu_canvas')
     return parser.parse_args()
 
 
@@ -144,9 +146,9 @@ def main():
     head_rows = []
     top_rows = []
     for row in rows:
-        frame_path = os.path.join(args.rsu_root, row['rsu_frame_file'])
+        frame_path = os.path.join(args.rsu_root, row[args.frame_file_column])
         data = np.load(frame_path)
-        canvas = data['rsu_canvas']
+        canvas = data[args.canvas_key]
         spatial_features_2d, psm, rm = run_head(manager, canvas)
         prob = torch.sigmoid(psm.detach().cpu())
         pred_count, score_count, post_max_score, post_scores = postprocess(
@@ -156,7 +158,8 @@ def main():
             args.score_threshold)
         head_rows.append(OrderedDict({
             'timestamp': row['timestamp'],
-            'source_rsu_frame_file': row['rsu_frame_file'],
+            'source_rsu_frame_file': row[args.frame_file_column],
+            'canvas_key': args.canvas_key,
             'input_canvas_shape': shape_string(canvas),
             'backbone_spatial_features_2d_shape':
                 shape_string(spatial_features_2d),
@@ -191,6 +194,8 @@ def main():
         'fusion_method': args.fusion_method,
         'top_k': args.top_k,
         'score_threshold': args.score_threshold,
+        'frame_file_column': args.frame_file_column,
+        'canvas_key': args.canvas_key,
         'note': 'Detection-head feasibility probe; no GT/AP evaluation.',
     }
     with open(os.path.join(args.output_dir, 'config.yaml'), 'w') as stream:

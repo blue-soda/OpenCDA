@@ -3582,3 +3582,36 @@ by type：
 - 结论：
   - detection-head 可行性已验证，但不能报告有效 AP。
   - 下一步必须实现跨 leader 坐标对齐，或将论文口径收窄为 feature-level coverage / byte proxy。
+
+## PointPillar reference-frame alignment diagnostic
+
+- 新增脚本：
+  - `opencda/tools/lgcp_pointpillar_reference_aligned_assembly.py`
+- 目标：
+  - 以统一 reference CAV lidar frame 重新计算每个 world-coordinate area cell 的 target bounds。
+  - 量化 leader-local feature slice 到 reference frame 的 yaw delta、resize ratio、coverage 和 overlap。
+  - 复用 detection head probe，检查 reference-frame approximate assembly 的 head response。
+- 命令：
+  - `python -m py_compile opencda\tools\lgcp_pointpillar_reference_aligned_assembly.py`
+  - `conda run -n opencda python -m opencda.tools.lgcp_pointpillar_reference_aligned_assembly --dataset-root D:\Data\Carla --scenario-id 2026_07_15_02_33_21 --assignment-plan docs\doc_workspace\LGCP\experiments\hierarchy_plan\20260718_lgcp_carla_hierarchy_plan_area23_11f\area_assignment_plan.csv --leader-root docs\doc_workspace\LGCP\experiments\hierarchy_plan\20260718_lgcp_pointpillar_leader_feature_fusion_area23_1f --leader-feature-manifest docs\doc_workspace\LGCP\experiments\hierarchy_plan\20260718_lgcp_pointpillar_leader_feature_fusion_area23_1f\leader_feature_manifest.csv --output-dir docs\doc_workspace\LGCP\experiments\hierarchy_plan\20260718_lgcp_pointpillar_reference_aligned_assembly_area23_1f_ref1 --reference-cav-id 1 --feature-key leader_scatter_mean --grid-size-x 10 --grid-size-y 6 --dtype float16`
+  - `conda run -n opencda python -m opencda.tools.lgcp_pointpillar_rsu_head_probe --rsu-root docs\doc_workspace\LGCP\experiments\hierarchy_plan\20260718_lgcp_pointpillar_reference_aligned_assembly_area23_1f_ref1 --rsu-frame-manifest docs\doc_workspace\LGCP\experiments\hierarchy_plan\20260718_lgcp_pointpillar_reference_aligned_assembly_area23_1f_ref1\reference_frame_manifest.csv --output-dir docs\doc_workspace\LGCP\experiments\hierarchy_plan\20260718_lgcp_pointpillar_reference_aligned_head_probe_area23_1f_ref1 --fusion-method intermediate_attentive --top-k 20 --frame-file-column reference_frame_file --canvas-key reference_canvas`
+- 输出目录：
+  - `docs/doc_workspace/LGCP/experiments/hierarchy_plan/20260718_lgcp_pointpillar_reference_aligned_assembly_area23_1f_ref1`
+  - `docs/doc_workspace/LGCP/experiments/hierarchy_plan/20260718_lgcp_pointpillar_reference_aligned_head_probe_area23_1f_ref1`
+- 结果：
+  - reference CAV: `1`
+  - input / used leader slices: `23 / 23`
+  - reference canvas: `1 x 64 x 200 x 704`
+  - coverage cells / ratio: `9189 / 0.065263`
+  - overlap cells / max overlap: `293 / 3`
+  - mean / max abs yaw delta: `93.412838 / 175.817131 deg`
+  - mean resize area ratio: `0.637908`
+  - head `psm` / `rm`: `1 x 2 x 100 x 352` / `1 x 14 x 100 x 352`
+  - head score max / mean: `0.867036 / 0.003301`
+  - postprocess pred boxes: `18`
+- 观察：
+  - Reference-frame target bounds 比 index-space assembly 更合理，coverage ratio 从 `0.033161` 提高到 `0.065263`，head response 也更强。
+  - 但 mean abs yaw delta 已达 `93.41 deg`，nearest resize 明显不能替代 feature rotation / affine warp。
+- 结论：
+  - 坐标对齐问题已被量化，不能把 reference-frame smoke 当作 AP。
+  - 下一步要么实现 coordinate-aware feature warp，要么将论文中的 neural feature hierarchy 结果收窄为 coverage / byte / feasibility proxy。

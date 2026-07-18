@@ -1901,6 +1901,33 @@ Interpretation:
 - Because the current assembly is not world-aligned across leaders, these boxes are interface evidence, not valid model-level AP.
 - The next publishable path is either world/RSU-frame feature reprojection before postprocess, or a clearly scoped feature-level coverage/byte proxy.
 
+## Reference-Frame Alignment Diagnostic
+
+2026-07-18 新增 `opencda/tools/lgcp_pointpillar_reference_aligned_assembly.py`，以 CAV 1 lidar frame 作为统一 reference，将 Top-23 首帧 leader feature slices 按 world-coordinate area cell 映射到 reference canvas，并复用 head probe：
+
+```text
+docs/doc_workspace/LGCP/experiments/hierarchy_plan/20260718_lgcp_pointpillar_reference_aligned_assembly_area23_1f_ref1
+docs/doc_workspace/LGCP/experiments/hierarchy_plan/20260718_lgcp_pointpillar_reference_aligned_head_probe_area23_1f_ref1
+```
+
+| Item | Value |
+| --- | ---: |
+| Used leader slices | 23 |
+| Coverage ratio | 0.065263 |
+| Overlap cells | 293 |
+| Max overlap | 3 |
+| Mean abs yaw delta | 93.412838 deg |
+| Max abs yaw delta | 175.817131 deg |
+| Mean resize area ratio | 0.637908 |
+| Head score max | 0.867036 |
+| Postprocess pred boxes | 18 |
+
+Interpretation:
+
+- Reference-frame target bounds improve coverage and produce stronger head responses than the earlier index-space canvas.
+- The large yaw deltas prove that nearest resize is not a valid geometric feature warp.
+- This should be reported only as a diagnostic toward coordinate-aware feature alignment, not as model-level detection performance.
+
 ## Box-Level Hierarchy Late-Fusion Smoke
 
 2026-07-18 新增 `opencda/tools/lgcp_hierarchy_late_fusion_eval.py`，并完成最小 model-calling smoke：

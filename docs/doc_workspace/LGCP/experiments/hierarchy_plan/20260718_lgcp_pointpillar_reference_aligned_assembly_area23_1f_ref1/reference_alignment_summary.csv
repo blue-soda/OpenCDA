@@ -1,0 +1,2 @@
+frames,compressed_npz_bytes,mean_coverage_ratio,mean_abs_yaw_delta_deg,max_abs_yaw_delta_deg,mean_resize_area_ratio,max_overlap
+1,117207,0.065263,93.412838,175.817131,0.637908,3

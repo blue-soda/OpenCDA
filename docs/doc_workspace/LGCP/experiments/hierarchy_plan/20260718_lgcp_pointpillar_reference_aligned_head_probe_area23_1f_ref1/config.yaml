@@ -1,0 +1,8 @@
+rsu_root: C:\Workspace\OpenCDA\docs\doc_workspace\LGCP\experiments\hierarchy_plan\20260718_lgcp_pointpillar_reference_aligned_assembly_area23_1f_ref1
+rsu_frame_manifest: C:\Workspace\OpenCDA\docs\doc_workspace\LGCP\experiments\hierarchy_plan\20260718_lgcp_pointpillar_reference_aligned_assembly_area23_1f_ref1\reference_frame_manifest.csv
+fusion_method: intermediate_attentive
+top_k: 20
+score_threshold: null
+frame_file_column: reference_frame_file
+canvas_key: reference_canvas
+note: Detection-head feasibility probe; no GT/AP evaluation.

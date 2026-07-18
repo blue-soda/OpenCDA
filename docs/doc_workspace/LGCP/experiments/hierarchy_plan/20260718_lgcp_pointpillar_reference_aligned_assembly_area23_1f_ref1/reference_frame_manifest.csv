@@ -1,0 +1,2 @@
+timestamp,reference_cav_id,reference_frame_file,feature_key,canvas_shape,input_rows,used_rows,skipped_rows,coverage_cells,coverage_ratio,overlap_cells,max_overlap,mean_abs_yaw_delta_deg,max_abs_yaw_delta_deg,mean_resize_area_ratio,compressed_npz_bytes
+000060,1,reference_frames/000060_leader_scatter_mean_ref1.npz,leader_scatter_mean,1x64x200x704,23,23,0,9189,0.065263,293,3,93.412838,175.817131,0.637908,117207
