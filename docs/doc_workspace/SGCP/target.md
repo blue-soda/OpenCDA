@@ -214,6 +214,7 @@
 - [x] 修改 `C:\Workspace\icdcs-paper\SGCP\main.tex` 的实验章节结构，使其按以下顺序组织：protocol-native comparison、fusion scaffold ablation、Pareto curve、scheduler-compatible comparison、parameter sensitivity。第一版已完成。
 - [x] 将 `C:\Workspace\icdcs-paper\SGCP\main.tex` 的 Table 1/3、Figure 1/2/3 和正文解释切换到 attentive candidate；旧 `pointpillar_early_fusion` 数值只保留为 checkpoint-reference artifacts。已新增 `artifacts/paper_number_audit_attentive_20260719/`。
 - [x] 重写 baseline 说明，明确 FullPerception-PCS、EdgeCooperV2V+、PACP-style LiDAR proxy、SGCP-compatible scheduler comparison 的信息条件和公平性边界。当前已在主表、Pareto caption 和 scheduler comparison 中分层说明。
+- [x] 收紧正文强 claim 并回应 Smartform 相似性质疑：intro/related work 不再写 “Nearly all SOTA rely on RSUs” 等过宽表述；`Reference.bib` 新增 SMARTFORM 引用；正文明确 SGCP novelty 不在 generic coalition formation，而在 perception-density utility、motion-stability hysteresis、capacity-constrained cluster maintenance、raw-LiDAR grid selection 和 explicit V2V subchannel scheduling 的组合。
 - [x] 修改图表 caption：每个图表必须说明回答的问题、统一资源设置、是否 protocol-native、是否 SGCP-compatible。
 - [x] 删除或降级此前容易误导的单一“主表”叙事；不要把 full 20-CAV upper reference、FullPerception baseline、scheduler proxy 混在同一语义层级。
 - [x] 论文修改完成后尝试编译 PDF；若本机缺少 LaTeX 工具，记录未编译原因和需要人工验证的图表编号。本机未检测到 `latexmk` / `pdflatex` / `bibtex`，已做轻量结构检查：table/figure/tabular begin-end 配对正常，新增 label/ref 无缺失。

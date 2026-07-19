@@ -6899,3 +6899,30 @@ ssh mindspore-187 "nvidia-smi --query-gpu=index,memory.used,memory.total,utiliza
 - Legacy `pointpillar_early_fusion`：保留为 checkpoint-reference artifact。
 - actual-late / COSDH：仍是 sensitivity 或 negative probe，不进入公平 raw-LiDAR 主表。
 - 远端 fine-tune：不是当前 attentive candidate 的 blocker；若回收到更好 checkpoint，则触发新 artifact 版本和全表重跑。
+
+## 2026-07-19 22:40 - 论文 claim 收紧与 reviewer response 同步
+
+本轮按 `target.md` P9/P10 继续推进论文落地，重点检查 `main.tex`、新图表口径和审稿意见覆盖情况。
+
+完成事项：
+
+- `C:\Workspace\icdcs-paper\SGCP\main.tex`：
+  - 将 intro 中 “strict real-time constraints / most existing CP systems rely on RSUs” 收紧为 “bounded collaboration cycles / many network-level CP systems rely on RSUs”，避免过度概括 V2V/feature-sharing 工作。
+  - 将 related work 中 “Nearly all state-of-the-art frameworks rely on RSUs” 改为 network-level RSU/edge scheduling 分支，并新增 decentralized V2V methods 的边界说明。
+  - 新增 SMARTFORM / generic self-managed coalition formation 对比，明确 SGCP 不把 coalition formation 本身作为 novelty，而强调 LiDAR-density utility、motion-stability hysteresis、capacity-constrained cluster maintenance、raw-LiDAR grid selection 和 V2V subchannel scheduling 的组合。
+  - 收紧 coalition formation 收敛表述：改为固定 topology snapshot 和 admitted migration rule 下的 finite-action stable partition，不再写成无条件全局最优或泛化 Nash guarantee。
+  - 将 baseline detector 公平性句子改为所有 point-cloud-to-box inference 使用同一 PointPillars-family attentive checkpoint，避免 “All methods employ PointPillars” 与 checkpoint sensitivity 口径冲突。
+  - 结论中将 “Extensive evaluations” 改为更保守的 “Evaluations”，并把 high-IoU 边界写为 edge-assisted global assignment 和 full raw-data sharing reference。
+- `C:\Workspace\icdcs-paper\SGCP\Reference.bib`：
+  - 新增 `aslam2024smartform`，用于回应 R2 对 Smartform 相似性的质疑。
+- `rebuttal_short.md`：
+  - 将旧 `pointpillar_early_fusion` rho sweep 数字替换为 attentive forward-writing Table 4：`rho_th=1/2/3` 均为 `0.87/0.81/0.36`，`62.57/62.54/62.54 Mbps`。
+- `reviewer_response_matrix.md`：
+  - 更新 Smartform concern 状态：正文已补 citation/difference，剩余风险降为 PDF 编译确认引用编号。
+
+验证：
+
+- `main.tex` 轻量结构检查通过：`table 3/3`、`figure 2/2`、`figure* 4/4`、`tabular 4/4`、`equation 28/28`、`algorithm 3/3`。
+- `aslam2024smartform` 引用键已同时出现在 `main.tex` 和 `Reference.bib`。
+- 本机仍缺少 `pdflatex` / `latexmk` / `bibtex`，未能生成 PDF。
+- 远端 `mindspore-187` watcher 仍等待 GPU：8 张 GPU 均约 `22203/24576 MiB` used，当前仅有上传初始 checkpoint `/data2/gzc/sgcp_early_train/checkpoints/latest.pth`，尚无新训练 checkpoint。
