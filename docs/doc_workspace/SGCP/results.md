@@ -1021,3 +1021,12 @@ Manifest：`docs\doc_workspace\SGCP\artifacts\pcs_parameter_sweep_20260719\pcs_p
 | Full SGCP | 62.54 | 0.81 | 0.78 | 0.39 | two-layer protocol |
 
 Full SGCP 使用 52.7% full-sharing raw payload，保留 full-sharing AP@0.3/AP@0.5/AP@0.7 的 95.3%/94.0%/81.3%。这支持主文写 “low/mid-IoU coverage with much lower raw payload”；AP@0.7 仍作为 high-IoU localization/checkpoint headroom。
+
+## Figure 2/3 readiness check
+
+2026-07-19 视觉检查 Figure 2/3 后发现旧图中 Pure late 标为 `raw 0.0`，与 `late_fusion_box_comm.md` 和主文 prediction-box overhead 口径不一致。已修改 `artifacts/figures_20260719/plot_breakdowns.py`，为 Pure late 使用 `box 0.7` 的图内 communication label，并重生成：
+
+- `artifacts/figures_20260719/figure2_protocol_breakdown.png/.pdf`
+- `artifacts/figures_20260719/figure3_fusion_contribution.png/.pdf`
+
+Figure 2 现在可以区分 Head-only、Pure late prediction-sharing、FullPerception-PCS、EdgeCooper-HD、SGCP-PAPG 和 Full20Early；Figure 3 可以清楚展示 clustered early-only 到 Full SGCP 的 coverage gain，以及 Full20Early 的 AP@0.7 上界。

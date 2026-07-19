@@ -6400,3 +6400,31 @@ Full SGCP 使用 `52.7%` full raw-sharing payload，保留 full-sharing AP@0.3/A
 ### 结论
 
 P2/P6 可按保守口径 first-pass 关闭：two-layer fusion 对 coverage / AP@0.3-0.5 的贡献明确；AP@0.7 仍写成 high-IoU localization/checkpoint headroom，不写成全面最优。
+
+## 2026-07-19 Figure 2/3 readiness check
+
+### 目的
+
+继续推进 P5/P6 剩余验收：检查 protocol breakdown 和 fusion contribution 图是否能区分方法、趋势是否符合当前叙事。
+
+### 发现
+
+视觉检查 `figure2_protocol_breakdown.png` 和 `figure3_fusion_contribution.png` 后发现：Pure late 图内标注为 `raw 0.0`，容易被误读为零通信 baseline，和当前 `late_fusion_box_comm.md` / `main.tex` 中 prediction-box overhead 口径不一致。
+
+### 处理
+
+修改 `artifacts/figures_20260719/plot_breakdowns.py`：
+
+- 增加 per-row communication label；
+- Pure late 标为 `box 0.7`；
+- 其他方法继续标为 `raw X.X`。
+
+重生成命令：
+
+```powershell
+conda run -n opencda python docs\doc_workspace\SGCP\artifacts\figures_20260719\plot_breakdowns.py
+```
+
+### 结论
+
+Figure 2 现在可以区分 protocol-native 方法和 reference 边界；Figure 3 可以清楚展示 clustered early-only 到 Full SGCP 的 coverage gain，以及 Full20Early 的 AP@0.7 上界。P5/P6 图表验收项按 first-pass 完成处理。

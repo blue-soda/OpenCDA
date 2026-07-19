@@ -154,7 +154,7 @@
 验收标准：
 
 - [x] 图中必须能说明 SGCP 的 aggregate AP 优势不是 ego-only 偶然结果，而来自多 receiver-frame / 多 cluster 的 pooled evaluation。
-- [ ] 若该图无法区分方法，优先检查 protocol-native baseline 是否正确、late fusion 是否一致、场景是否足够大，而不是新增自定义指标。
+- [x] 若该图无法区分方法，优先检查 protocol-native baseline 是否正确、late fusion 是否一致、场景是否足够大，而不是新增自定义指标。2026-07-19 已视觉检查并重生成 Figure 2：Pure late 标为 `box 0.7`，SGCP/EdgeCooper/Full20Early/FullPerception-PCS 差异清晰；图可按 protocol-native breakdown 使用。
 
 ## P6：Figure 3 - Fusion Contribution by IoU Threshold
 
@@ -176,7 +176,7 @@
 验收标准：
 
 - [x] AP@0.3 和 AP@0.7 的趋势必须可解释，能支撑 “early + late 的分工”：Full SGCP 相比 clustered early-only 的 AP@0.3/AP@0.5 大幅提升来自 inter-cluster late fusion；Full 20-CAV early 的 AP@0.7 上界说明 localization 仍受 raw point-cloud sharing/checkpoint 限制。
-- [ ] 若趋势不符合叙事，优先检查 late-fusion NMS、坐标变换、full reference 和 receiver 统计口径。
+- [x] 若趋势不符合叙事，优先检查 late-fusion NMS、坐标变换、full reference 和 receiver 统计口径。2026-07-19 已视觉检查并重生成 Figure 3：clustered early-only 到 Full SGCP 的覆盖提升清楚，Full20Early AP@0.7 上界也清楚；趋势符合“coverage gain + localization headroom”的保守叙事。
 
 ## P7：Table 4 - Parameter Sensitivity
 

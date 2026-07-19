@@ -17,7 +17,13 @@ AP_LABELS = ["AP@0.3", "AP@0.5", "AP@0.7"]
 COLORS = ["#4c78a8", "#f58518", "#54a24b"]
 
 
-def grouped_bar(df: pd.DataFrame, labels: List[str], title: str, out_stem: str) -> None:
+def grouped_bar(
+    df: pd.DataFrame,
+    labels: List[str],
+    title: str,
+    out_stem: str,
+    comm_labels: List[str] = None,
+) -> None:
     x = np.arange(len(df))
     width = 0.24
     fig, ax = plt.subplots(figsize=(8.2, 4.4), dpi=180)
@@ -36,7 +42,8 @@ def grouped_bar(df: pd.DataFrame, labels: List[str], title: str, out_stem: str) 
     for idx, row in df.iterrows():
         mbps = float(row["mbps"])
         samples = row["evaluated_samples"]
-        annotation = f"raw {mbps:.1f}\nn={samples}"
+        comm_label = comm_labels[idx] if comm_labels else f"raw {mbps:.1f}"
+        annotation = f"{comm_label}\nn={samples}"
         ax.text(
             idx,
             0.015,
@@ -64,12 +71,21 @@ def make_protocol() -> None:
         "SGCP-PAPG",
         "Full 20-CAV",
     ]
+    comm_labels = [
+        "raw 0.0",
+        "box 0.7",
+        "raw 25.3",
+        "raw 65.4",
+        "raw 62.5",
+        "raw 118.7",
+    ]
     picked = df.set_index("label").loc[order].reset_index()
     grouped_bar(
         picked,
         labels,
         "Protocol-Native Aggregate AP Breakdown",
         "figure2_protocol_breakdown",
+        comm_labels=comm_labels,
     )
 
 
@@ -83,12 +99,20 @@ def make_fusion() -> None:
         "Full SGCP",
         "Full 20-CAV\nearly",
     ]
+    comm_labels = [
+        "raw 0.0",
+        "box 0.7",
+        "raw 62.5",
+        "raw 62.5",
+        "raw 118.7",
+    ]
     picked = df.set_index("label").loc[order].reset_index()
     grouped_bar(
         picked,
         labels,
         "Fusion Contribution by IoU Threshold",
         "figure3_fusion_contribution",
+        comm_labels=comm_labels,
     )
 
 
