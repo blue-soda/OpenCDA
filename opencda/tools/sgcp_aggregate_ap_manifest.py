@@ -42,6 +42,8 @@ FIELDNAMES = [
     'upload_mode',
     'grid_selection_mode',
     'grid_score_mode',
+    'num_channels',
+    'bandwidth_mhz',
     'cluster_count_mode',
     'payload_bytes',
     'mbps',
@@ -202,6 +204,10 @@ def parse_trace(path):
             [row.get('grid_selection_mode', '') for row in rows]),
         'grid_score_mode': most_common(
             [row.get('grid_score_mode', '') for row in rows]),
+        'num_channels': most_common(
+            [row.get('num_channels', '') for row in rows]),
+        'bandwidth_mhz': most_common(
+            [row.get('bandwidth_mhz', '') for row in rows]),
         'cluster_count_mode': most_common(
             [row.get('cluster_count', '') for row in rows]),
         'total_trace_comm_bytes': sum(comm_values),
@@ -257,6 +263,8 @@ def row_for_run(label, log_path, trace_path, frame_interval_s, notes):
         'upload_mode': trace.get('upload_mode', ''),
         'grid_selection_mode': trace.get('grid_selection_mode', ''),
         'grid_score_mode': trace.get('grid_score_mode', ''),
+        'num_channels': trace.get('num_channels', ''),
+        'bandwidth_mhz': trace.get('bandwidth_mhz', ''),
         'cluster_count_mode': trace.get('cluster_count_mode', ''),
         'payload_bytes': total_bytes,
         'mbps': compute_mbps(

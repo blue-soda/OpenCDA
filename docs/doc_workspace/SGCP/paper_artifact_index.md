@@ -38,6 +38,7 @@ docs\doc_workspace\SGCP\artifacts\paper_artifact_index_20260719\paper_artifact_i
 | Qualitative Case Study | `artifacts/appendix_support_20260719/qualitative_case_study_bev.pdf` | `73fdee0` | draft usable | 可用于 appendix/rebuttal；正式论文可补 legend 和 prediction-box overlay。 |
 | EdgeCooper Writing Reference | `edgecooper_writing_reference.md` | `2efda0a` | usable | 借鉴系统评估结构，不引入 satisfaction rate。 |
 | Paper main.tex sync | `C:/Workspace/icdcs-paper/SGCP/main.tex` | outside OpenCDA git | structure checked not compiled | Paper directory is outside OpenCDA git；已补入 attentive checkpoint sensitivity 段落，作为 sensitivity evidence 而非 Table 1 替换。 |
+| Paper Number Audit | `artifacts/paper_number_audit_20260719/paper_number_audit.csv` | this update | usable | 核查 Table 1/3/4 与 manifest 数值一致；修正 Table 4 channel sweep 的 legacy `40 MHz` 标签为当前复现实验命令口径 `20 MHz`。 |
 
 ## Current Risks
 
@@ -47,6 +48,7 @@ docs\doc_workspace\SGCP\artifacts\paper_artifact_index_20260719\paper_artifact_i
 - EdgeCooper-HD 与 PACP-LiDAR 在 AP@0.7 上强于 PAPG，应按信息条件边界解释为 edge/global 或 stronger-priority reference，不应硬写 SGCP 全面最优。
 - `main.tex` 位于 `C:\Workspace\icdcs-paper\SGCP\main.tex`，不在 OpenCDA git 仓库；本机缺少 `latexmk/pdflatex`，当前只做了结构检查，未完成 PDF 编译验证。
 - 2026-07-19 已向 `main.tex` 补入 attentive checkpoint sensitivity 段落；该修改无法在 OpenCDA 仓库提交，只能通过本文档和外部 paper 目录状态追踪。
+- 2026-07-19 number audit 已确认 Table 1/3/4 数值与 manifest 对齐；Pure late 的 `0.74 Mbps` 是检测框 broadcast overhead，不是 raw-LiDAR manifest Mbps。旧 trace 未记录 `bandwidth_mhz`，后续新 trace/manifest 已补工具字段。
 
 ## 下一次更新条件
 

@@ -1,0 +1,18 @@
+paper_item,field_or_claim,paper_value,artifact_value,status,source
+Table 1,Full20Early AP/Mbps,0.85/0.83/0.48 and 118.71 Mbps,0.85/0.83/0.48 and 118.7093 Mbps,match,artifacts/table1_protocol_20260719/protocol_native_manifest.csv
+Table 1,Head-only AP/Mbps,0.26/0.22/0.09 and 0.00 Mbps,0.26/0.22/0.09 and 0.0 Mbps,match,artifacts/table1_protocol_20260719/protocol_native_manifest.csv
+Table 1,Pure late AP,0.82/0.76/0.37,0.82/0.76/0.37,match,artifacts/table1_protocol_20260719/protocol_native_manifest.csv
+Table 1,Pure late Mbps,0.74 Mbps,0 raw-LiDAR Mbps plus 0.739 Mbps 80B/box broadcast estimate,match_with_boundary,artifacts/late_box_comm_20260719 and late_fusion_box_comm.md
+Table 1,FullPerception-PCS AP/Mbps,0.59/0.53/0.22 and 25.29 Mbps,0.59/0.53/0.22 and 25.2875 Mbps,match,artifacts/table1_protocol_20260719/protocol_native_manifest.csv
+Table 1,EdgeCooper-HD AP/Mbps,0.81/0.78/0.42 and 65.40 Mbps,0.81/0.78/0.42 and 65.4030 Mbps,match,artifacts/table1_protocol_20260719/protocol_native_manifest.csv
+Table 1,SGCP-PAPG AP/Mbps,0.81/0.78/0.39 and 62.54 Mbps,0.81/0.78/0.39 and 62.5363 Mbps,match,artifacts/table1_protocol_20260719/protocol_native_manifest.csv
+Table 3,Forced random AP/Mbps,0.77/0.73/0.38 and 61.68 Mbps,0.77/0.73/0.38 and 61.6847 Mbps,match,artifacts/scheduler_comparison_20260719/scheduler_comparison_manifest.csv
+Table 3,Density-greedy AP/Mbps,0.80/0.76/0.40 and 73.58 Mbps,0.80/0.76/0.40 and 73.5822 Mbps,match,artifacts/scheduler_comparison_20260719/scheduler_comparison_manifest.csv
+Table 3,Link-aware density AP/Mbps,0.80/0.76/0.40 and 73.58 Mbps,0.80/0.76/0.40 and 73.5822 Mbps,match,artifacts/scheduler_comparison_20260719/scheduler_comparison_manifest.csv
+Table 3,PACP-style LiDAR AP/Mbps,0.81/0.79/0.42 and 86.56 Mbps,0.81/0.79/0.42 and 86.5589 Mbps,match,artifacts/scheduler_comparison_20260719/scheduler_comparison_manifest.csv
+Table 3,EdgeCooper-HD proxy AP/Mbps,0.81/0.78/0.42 and 65.40 Mbps,0.81/0.78/0.42 and 65.4030 Mbps,match,artifacts/scheduler_comparison_20260719/scheduler_comparison_manifest.csv
+Table 3,SGCP-PAPG AP/Mbps,0.81/0.78/0.39 and 62.54 Mbps,0.81/0.78/0.39 and 62.5363 Mbps,match,artifacts/scheduler_comparison_20260719/scheduler_comparison_manifest.csv
+Table 4,rho_th rows,1.0/2.0/3.0 with 0.76/0.72/0.34; 0.79/0.75/0.37; 0.79/0.76/0.38,source rows match,match,artifacts/parameter_sensitivity_20260719/table4_parameter_sensitivity.csv
+Table 4,channel rows,5/10/20 channels under 20 MHz,source labels corrected from legacy 40 MHz to 20 MHz,corrected,artifacts/parameter_sensitivity_20260719/table4_parameter_sensitivity.csv
+Network setting,main reproduced command bandwidth,20 MHz / 10 subchannels,commands use --bandwidth-mhz 20 --num-channels 10; legacy default code remains 40 MHz,match_with_legacy_boundary,docs/doc_workspace/SGCP/log.md and opencda/tools/offline_inference.py
+Manifest tooling,num_channels/bandwidth fields,should be preserved in future manifests,sgcp_aggregate_ap_manifest now carries num_channels and bandwidth_mhz when traces provide them,fixed,opencda/tools/sgcp_aggregate_ap_manifest.py

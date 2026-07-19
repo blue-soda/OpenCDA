@@ -6620,3 +6620,28 @@ Artifacts：
 - Actual late checkpoint 与 attentive checkpoint 均写作 sensitivity，不作为 fair raw-LiDAR 主表替换。
 - COSDH 路线当前被记录为 negative/smoke artifact：能跑通部分路径，但 collapsed raw point-cloud 输入下无有效最终框。
 - 远程 fine-tune checkpoint 一旦回收，必须另建新 artifact 目录重跑 SGCP/Pure late/Full20Early，而不是覆盖本目录。
+
+## 2026-07-19 18:00 - Paper number audit 与网络口径修正
+
+### 目的
+
+检查 `C:\Workspace\icdcs-paper\SGCP\main.tex` 中 Table 1 / Table 3 / Table 4 的 AP、Mbps 和网络参数标签是否与 OpenCDA artifact manifest 一致。
+
+### 发现
+
+- Table 1 与 Table 3 的 AP/Mbps 与 manifest 对齐。
+- Pure late 是有意例外：raw-LiDAR manifest Mbps 为 `0`，论文表格使用 `late_fusion_box_comm.md` 中 80 B/box one-hop broadcast overhead，即 `0.74 Mbps`。
+- `table4_parameter_sensitivity.csv` 的 channel sweep 曾标为 `5/10/20 ch / 40 MHz`，但当前可复现实验命令使用 `--bandwidth-mhz 20`；该标签是 legacy/default-code 口径残留。
+- 旧 trace CSV 未记录 `bandwidth_mhz`，导致 aggregate manifest 不能独立证明网络口径，只能回看命令日志。
+
+### 修改
+
+- 新增 `docs\doc_workspace\SGCP\artifacts\paper_number_audit_20260719\paper_number_audit.csv`。
+- 新增 `docs\doc_workspace\SGCP\artifacts\paper_number_audit_20260719\paper_number_audit.md`。
+- 修正 `docs\doc_workspace\SGCP\artifacts\parameter_sensitivity_20260719\table4_parameter_sensitivity.csv` 的 channel labels：`40 MHz` -> `20 MHz`。
+- 给 `protocol_native_manifest.csv` 和 `scheduler_comparison_manifest.csv` 补 `num_channels` / `bandwidth_mhz` 列。
+- 增强 `opencda.tools.sgcp_aggregate_ap_manifest`：未来 trace 中若有 `num_channels` / `bandwidth_mhz` 字段，manifest 会保留它们。
+
+### 结论
+
+当前论文主配置仍按复现实验命令写作 `20 MHz / 10 subchannels`。`enable_network.yaml` 和 `Params.bandwidth_all=40` 是 legacy/default code path，不能覆盖当前 artifact 命令口径。后续 checkpoint 回收或新场景实验必须生成带网络元数据的新 trace/manifest。

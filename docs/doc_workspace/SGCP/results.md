@@ -995,6 +995,15 @@ Manifest：`docs\doc_workspace\SGCP\artifacts\pcs_parameter_sweep_20260719\pcs_p
 
 结论：Pure late 仍是强 prediction-sharing reference，但不应和 raw-LiDAR SGCP/PAPG 写成同类点云通信 baseline。当前最大风险仍是 early checkpoint 偏弱；远程 fine-tune watcher 尚在等待 GPU 空闲。
 
+## Paper number audit
+
+已新增 `docs\doc_workspace\SGCP\artifacts\paper_number_audit_20260719\paper_number_audit.csv`。核查结论：
+
+- `main.tex` Table 1、Table 3 和 Table 4 的 AP/Mbps 与当前 manifest 对齐。
+- Pure late 例外已明确：manifest 中 raw-LiDAR payload 为 `0`，论文表格使用 `late_fusion_box_comm.md` 的 80 B/box one-hop broadcast estimate，即 `0.74 Mbps`。
+- `table4_parameter_sensitivity.csv` 的 channel sweep 标签从 legacy `5/10/20 ch / 40 MHz` 修正为 `5/10/20 ch / 20 MHz`，对应当前复现实验命令中的 `--bandwidth-mhz 20`。
+- `opencda.tools.sgcp_aggregate_ap_manifest` 已新增 `num_channels` / `bandwidth_mhz` 输出字段，后续新 trace 若包含网络元数据，manifest 不再丢失该口径。
+
 ## Pareto claim audit
 
 已新增 `pareto_claim_audit.md`，用 `artifacts/pareto_20260719/pareto_source.csv` 重新计算 raw-LiDAR V2V / SGCP-compatible 集合的 Pareto frontier。该集合只纳入 `proposed`、`sgcp_ablation`、`sgcp_sensitivity`、`scheduler_baseline` 和 `scheduler_baseline_proxy` 且 `scaffold=sgcp_compatible` 的结果；不把 Pure late prediction-box sharing、Edge/global reference 或 full-sharing upper reference 混入同一 frontier。
