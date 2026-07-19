@@ -6532,3 +6532,51 @@ Artifact：
 ### 结论
 
 COSDH 当前不是简单调低阈值即可迁移到 SGCP merged point-cloud detector 的 checkpoint。更可能的问题是 COSDH intermediate model 的训练/输入语义、`proj_first=false`、feature-communication 分支、LiDAR range 或后处理约定与本 CARLA collapsed raw point-cloud 输入不一致。该路线暂不进入主表；后续如继续，只做单独 calibration/debug，不占用主线实验资源。
+
+## 2026-07-19 - Attentive checkpoint Pure late controlled run
+
+### 目的
+
+补齐 attentive intermediate checkpoint 作为 early detector 时的公平 prediction-sharing reference。已有 attentive SGCP-PAPG 41 帧为 `0.87/0.81/0.36`，Full20Early attentive upper reference 为 `0.88/0.85/0.45`；还需要同 checkpoint 下的 Pure late controlled，判断该 detector 是否只是同时增强了 prediction-box sharing reference。
+
+### 配置
+
+- Dataset：`D:\Data\Carla\2026_07_15_01_26_56`，41 帧。
+- Detector：`docs/doc_workspace/SGCP/artifacts/early_from_late_checkpoint_20260719/pointpillar_early_from_attentive_weights`。
+- Fusion scaffold：`--clustering singleton --sgcp-inter-cluster-late-fusion`，即每个 CAV 单独 local inference，再用 `naive_late_fusion()` 做 box-level NMS。
+- 该实验统计 raw LiDAR payload 为 0；prediction-box overhead 仍沿用 `late_fusion_box_comm.md` 口径。
+
+### 命令
+
+```powershell
+conda run -n opencda python -m opencda.tools.offline_inference `
+  --dataset-root D:\Data\Carla `
+  --scenario-id 2026_07_15_01_26_56 `
+  --ego-cav-id 1 `
+  --max-frames 0 `
+  --fusion-method early `
+  --coperception-yaml docs\doc_workspace\SGCP\artifacts\early_from_late_checkpoint_20260719\enable_coperception_early_from_attentive.yaml `
+  --sgcp-constrained `
+  --clustering singleton `
+  --sgcp-receiver-policy all-cluster-heads `
+  --sgcp-inter-cluster-late-fusion `
+  --sgcp-trace-output docs\doc_workspace\SGCP\artifacts\early_from_late_checkpoint_20260719\pure_late_attentive_41f_trace.csv
+```
+
+### 结果
+
+- Pure late controlled attentive：41 帧 `AP@0.3/0.5/0.7 = 0.82/0.65/0.28`。
+- Trace：`docs\doc_workspace\SGCP\artifacts\early_from_late_checkpoint_20260719\pure_late_attentive_41f_trace.csv`，`820` receiver rows，41 frame groups，raw LiDAR payload `0`。
+- 与 SGCP-PAPG attentive `0.87/0.81/0.36` 对比：同 detector/checkpoint 下，SGCP 的 raw point-cloud early fusion + selective scheduling 对 AP@0.5/AP@0.7 有明显收益，避免了“attentive 只是强化 pure late reference”的口径风险。
+
+### Prediction-box overhead
+
+按 `sgcp_late_box_comm_budget` 估算：
+
+- `80 B/box`：broadcast mean/max `1.37/1.51 Mbps`；scheduled all-to-all mean/max `25.97/28.60 Mbps`，平均调度完成 `31.39 ms`。
+- `128 B/box`：broadcast mean/max `2.13/2.35 Mbps`；scheduled all-to-all mean/max `40.53/44.65 Mbps`，平均调度完成 `47.60 ms`。
+
+Artifacts：
+
+- `docs\doc_workspace\SGCP\artifacts\early_from_late_checkpoint_20260719\pure_late_attentive_box_comm_80\`
+- `docs\doc_workspace\SGCP\artifacts\early_from_late_checkpoint_20260719\pure_late_attentive_box_comm_128\`

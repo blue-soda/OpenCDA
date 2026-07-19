@@ -1073,6 +1073,7 @@ Artifact：
 | Late checkpoint as early detector | 11 | `pointpillar_late_fusion/net_epoch30.pth` copied into early config | 0.58 | 0.48 | 0.15 | 8,598,224 | 62.53 | reject |
 | Attentive checkpoint as early detector | 11 | attentive intermediate checkpoint copied into early config | 0.85 | 0.77 | 0.32 | 8,598,224 | 62.53 | promising smoke |
 | SGCP-PAPG attentive detector | 41 | attentive intermediate checkpoint copied into early config | 0.87 | 0.81 | 0.36 | 32,049,872 | 62.54 | sensitivity / candidate |
+| Pure late attentive controlled | 41 | attentive checkpoint singleton local detector + `naive_late_fusion()` | 0.82 | 0.65 | 0.28 | 0 raw LiDAR | 0 raw LiDAR | prediction-sharing reference |
 | Full20Early attentive detector | 41 | attentive intermediate checkpoint copied into early config | 0.88 | 0.85 | 0.45 | n/a | n/a | upper reference |
 | COSDH compatible transplant | 11 | 140 compatible COSDH weights + original early fallback heads | 0.00 | 0.00 | 0.00 | 8,598,224 | 62.53 | reject |
 | COSDH backbone + early heads | 11 | COSDH backbone, original early detection heads | 0.02 | 0.00 | 0.00 | 8,598,224 | 62.53 | reject |
@@ -1083,4 +1084,6 @@ Artifact：
 
 - 使用 attentive intermediate checkpoint 初始化/替换 early detector 对 AP@0.3/AP@0.5 很有帮助，说明当前主线的核心风险确实来自 early detector/checkpoint 强度。
 - Attentive checkpoint 的 AP@0.7 仍低于原 PAPG 主线，因此不能简单替换全部主表；更合理的用法是 detector sensitivity、或在远程 fine-tune 失败时作为 AP@0.3/AP@0.5 strengthened candidate。
+- 同 attentive checkpoint 下，Pure late controlled 只有 `0.82/0.65/0.28`，明显低于 SGCP-PAPG attentive 的 `0.87/0.81/0.36`。这说明 attentive detector 并非只同步增强 prediction-sharing reference；SGCP 的 scheduled raw point-cloud early fusion 在 AP@0.5/AP@0.7 上仍有实质贡献。
+- Pure late attentive 的 prediction-box overhead：`80 B/box` broadcast mean/max `1.37/1.51 Mbps`，scheduled all-to-all mean/max `25.97/28.60 Mbps`；`128 B/box` broadcast mean/max `2.13/2.35 Mbps`，scheduled all-to-all mean/max `40.53/44.65 Mbps`。因此它仍应写作 prediction-sharing reference，而不是 raw-LiDAR baseline。
 - COSDH checkpoint 不能直接迁移到 plain PointPillar early detector；真实 COSDH 模型虽然已在本仓库跑通加载与 forward path，但当前 CARLA dump 上 1 帧输出 0 个预测框。进一步诊断显示 6 个 receiver 的 `psm` sigmoid 最大值仅约 `0.0148--0.0224`；即使把 `score_threshold` 降到 `0.01/0.005/0.003`，正式 postprocess 仍返回 0 个最终框。该路线不是简单阈值校准问题，必须先解决 `proj_first`、feature-communication 输入语义、LiDAR range / postprocessor 约定与 collapsed raw point-cloud 输入不匹配的问题。
