@@ -6794,3 +6794,31 @@ conda run -n opencda python -m opencda.tools.sgcp_aggregate_ap_manifest `
 - SGCP-PAPG attentive 同时高于 Pure late attentive 与 EdgeCooperHD attentive，且通信量低于 EdgeCooperHD。
 - PACP-LiDAR attentive AP@0.3/AP@0.7 略高，但使用 `86.56 Mbps`，比 SGCP 高 `24.02 Mbps`；写作时作为 Pareto tradeoff，而不是主方法失败。
 - Full20Early attentive `0.88/0.85/0.45` 仍是上界。SGCP attentive 以 `52.7%` raw payload 保留其 AP@0.3/AP@0.5 的 `98.9%/95.3%`。
+
+## 2026-07-19 20:45 - main.tex 同步 attentive candidate
+
+### 修改
+
+- 更新 `C:\Workspace\icdcs-paper\SGCP\main.tex` 的 Table 1：使用 attentive protocol-native candidate 数值。
+- 更新 Pure late 通信口径：`80 B/box` one-hop broadcast 从旧 early 的 `0.74 Mbps` 改为 attentive 的 `1.37 Mbps`；scheduled all-to-all 从 `14.04 Mbps` 改为 `25.97 Mbps`。
+- 更新 Table 3：使用 attentive scheduler comparison 数值。
+- 更新 protocol/fusion/Pareto/scheduler 解释段落：删除“attentive 只作 sensitivity、不替换主表”的自我削弱表述，改为 attentive candidate 是后续写作默认入口，legacy early checkpoint 只作 reference。
+- 将 attentive PDF 图复制到论文目录：
+  - `C:\Workspace\icdcs-paper\SGCP\fig\sgcp_protocol_breakdown.pdf`
+  - `C:\Workspace\icdcs-paper\SGCP\fig\sgcp_fusion_contribution.pdf`
+  - `C:\Workspace\icdcs-paper\SGCP\fig\sgcp_pareto_ap03.pdf`
+  - `C:\Workspace\icdcs-paper\SGCP\fig\sgcp_pareto_ap07.pdf`
+
+### 验证
+
+- 旧主线关键词扫描通过：`0.81/0.78/0.39`、`0.74 Mbps`、`0.85/0.83/0.48`、`0.59/0.53/0.22` 不再作为正文主表结果出现。
+- LaTeX 结构计数正常：`table/table*/figure/figure*/tabular` begin-end 均配平。
+- 本机仍未检测到 `latexmk/pdflatex/bibtex`，未完成 PDF 编译。
+
+### Artifact
+
+- 新增 `artifacts/paper_number_audit_attentive_20260719/paper_number_audit_attentive.csv`，核对当前 `main.tex` Table 1/3 与 attentive manifests。
+
+### 边界
+
+`C:\Workspace\icdcs-paper\SGCP` 不在 OpenCDA git 仓库中，本次 paper 目录修改需在论文仓库或外部归档中另行提交。

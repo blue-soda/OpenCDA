@@ -1,0 +1,18 @@
+paper_item,field_or_claim,paper_value,artifact_value,status,source
+Table 1,Head-only attentive AP/Mbps,0.42/0.30/0.13 and 0.00 Mbps,0.42/0.30/0.13 and 0.0 Mbps,match,artifacts/attentive_protocol_20260719/protocol_native_attentive_manifest.csv
+Table 1,Pure late attentive AP,0.82/0.65/0.28,0.82/0.65/0.28,match,artifacts/attentive_protocol_20260719/protocol_native_attentive_manifest.csv
+Table 1,Pure late attentive Mbps,1.37 Mbps box broadcast,1.366728 Mbps 80B/box broadcast mean,match_with_boundary,artifacts/early_from_late_checkpoint_20260719/pure_late_attentive_box_comm_80/late_box_summary.csv
+Table 1,Full20Early attentive AP/Mbps,0.88/0.85/0.45 and 118.71 Mbps,0.88/0.85/0.45 and 118.7093 Mbps,match,artifacts/attentive_protocol_20260719/protocol_native_attentive_manifest.csv
+Table 1,FullPerception-PCS attentive AP/Mbps,0.43/0.29/0.14 and 16.38 Mbps,0.43/0.29/0.14 and 16.3818 Mbps,match,artifacts/attentive_protocol_20260719/protocol_native_attentive_manifest.csv
+Table 1,EdgeCooper-HD attentive AP/Mbps,0.85/0.74/0.35 and 65.40 Mbps,0.85/0.74/0.35 and 65.4030 Mbps,match,artifacts/attentive_protocol_20260719/protocol_native_attentive_manifest.csv
+Table 1,SGCP-PAPG attentive AP/Mbps,0.87/0.81/0.36 and 62.54 Mbps,0.87/0.81/0.36 and 62.5363 Mbps,match,artifacts/attentive_protocol_20260719/protocol_native_attentive_manifest.csv
+Table 3,Forced random attentive AP/Mbps,0.85/0.75/0.36 and 61.25 Mbps,0.85/0.75/0.36 and 61.2451 Mbps,match,artifacts/attentive_scheduler_comparison_20260719/scheduler_comparison_attentive_manifest.csv
+Table 3,Density-greedy attentive AP/Mbps,0.86/0.78/0.38 and 75.94 Mbps,0.86/0.78/0.38 and 75.9426 Mbps,match,artifacts/attentive_scheduler_comparison_20260719/scheduler_comparison_attentive_manifest.csv
+Table 3,Link-aware density attentive AP/Mbps,0.86/0.78/0.38 and 75.94 Mbps,0.86/0.78/0.38 and 75.9426 Mbps,match,artifacts/attentive_scheduler_comparison_20260719/scheduler_comparison_attentive_manifest.csv
+Table 3,PACP-style LiDAR attentive AP/Mbps,0.88/0.79/0.37 and 86.56 Mbps,0.88/0.79/0.37 and 86.5589 Mbps,match,artifacts/attentive_scheduler_comparison_20260719/scheduler_comparison_attentive_manifest.csv
+Table 3,EdgeCooper-HD attentive AP/Mbps,0.85/0.74/0.35 and 65.40 Mbps,0.85/0.74/0.35 and 65.4030 Mbps,match,artifacts/attentive_scheduler_comparison_20260719/scheduler_comparison_attentive_manifest.csv
+Table 3,SGCP-PAPG attentive AP/Mbps,0.87/0.81/0.36 and 62.54 Mbps,0.87/0.81/0.36 and 62.5363 Mbps,match,artifacts/attentive_scheduler_comparison_20260719/scheduler_comparison_attentive_manifest.csv
+Figure 1,Paper Pareto PDFs,fig/sgcp_pareto_ap03.pdf and fig/sgcp_pareto_ap07.pdf,copied from pareto_attentive_20260719 attentive PDFs,match_outside_git,C:/Workspace/icdcs-paper/SGCP/fig
+Figure 2,Paper protocol breakdown PDF,fig/sgcp_protocol_breakdown.pdf,copied from figures_attentive_20260719/figure2_protocol_breakdown_attentive.pdf,match_outside_git,C:/Workspace/icdcs-paper/SGCP/fig
+Figure 3,Paper fusion contribution PDF,fig/sgcp_fusion_contribution.pdf,copied from figures_attentive_20260719/figure3_fusion_contribution_attentive.pdf,match_outside_git,C:/Workspace/icdcs-paper/SGCP/fig
+Claim boundary,Legacy early checkpoint table,demoted to checkpoint-reference artifacts,main.tex no longer uses old Table 1/3 numbers as default,updated,C:/Workspace/icdcs-paper/SGCP/main.tex
