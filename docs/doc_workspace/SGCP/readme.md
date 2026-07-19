@@ -29,6 +29,7 @@
 - `target_grid_case_study.md`：逐帧 target-grid 漏检案例分析，记录关键 GT grid、最佳 CAV、未调度原因和 object-aware PG 设计。
 - `perception_aware_pg.md`：perception-aware potential game 的完整机制说明、主表候选结果和后续验证项。
 - `paper_artifact_index.md`：论文主表、图、附录与其源数据/脚本/log/commit 的统一索引，用于保证结果可追溯。
+- `paper_freeze_check_20260719.md`：论文冻结前静态检查记录，保存 `main.tex` / `Reference.bib` 的 citation、label、figure 和环境配平检查结果，以及真实 PDF 编译前剩余风险。
 - `protocol_native_claim_audit.md`：Protocol-native 主表叙事审计，确认 FullPerception、EdgeCooper、Pure late、Full20Early 和 SGCP 的信息条件边界。
 - `main_table_candidate.md`：论文主表候选，区分 full 20-CAV upper reference、FullPerception-PCS baseline、payload-matched selective baseline、SGCP 10/20ch、Mbps 换算和主表/附表边界。
 - `reviewer_response_matrix.md`：审稿意见逐条覆盖表，映射 reviewer concern、当前证据、论文位置和剩余风险。
