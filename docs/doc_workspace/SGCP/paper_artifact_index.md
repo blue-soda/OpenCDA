@@ -19,12 +19,12 @@ docs\doc_workspace\SGCP\artifacts\paper_artifact_index_20260719\paper_artifact_i
 
 | Paper Item | Primary Artifact | Commit | Status | Boundary |
 | --- | --- | --- | --- | --- |
-| Attentive Table 1 Protocol-Native Candidate | `artifacts/attentive_protocol_20260719/protocol_native_attentive_manifest.csv` | this update | preferred candidate | 后续写作默认入口；SGCP-PAPG attentive `0.87/0.81/0.36` at `62.54 Mbps`，高于 Pure late / EdgeCooperHD attentive；FullPerception-PCS 使用 paper-faithful scheduling + raw-LiDAR full-sender adaptation `0.63/0.49/0.17` at `32.06 Mbps`；Full20Early 仍是 upper reference。 |
-| Attentive Figure 1 AP-Mbps Pareto | `artifacts/pareto_attentive_20260719/pareto_attentive_source.csv` | this update | preferred candidate | 使用 attentive source points；FullPerception-PCS 改为 raw-LiDAR adaptation 点；PACP-LiDAR AP@0.3/AP@0.7 略高但通信明显更贵，SGCP 是更优中等通信点。 |
-| Attentive Figure 2/3/4 Breakdowns | `artifacts/figures_attentive_20260719/` | this update | preferred candidate | Figure 2 protocol、Figure 3 fusion、Figure 4 scheduler 均使用 attentive detector；Pure late 标为 `box 1.37`。 |
-| Attentive Table 2 Fusion Scaffold | `artifacts/attentive_fusion_ablation_20260719/fusion_scaffold_attentive_manifest.csv` | this update | preferred candidate | Clustered early-only `0.51/0.45/0.21` 到 Full SGCP `0.87/0.81/0.36`，支撑两层融合贡献。 |
-| Attentive Table 3 Scheduler Comparison | `artifacts/attentive_scheduler_comparison_20260719/scheduler_comparison_attentive_manifest.csv` | this update | preferred candidate | SGCP-compatible scheduler comparison；PACP-LiDAR 更高 AP@0.3/AP@0.7 但 `86.56 Mbps`，SGCP AP@0.5 最高且 `62.54 Mbps`。 |
-| Attentive Paper Number Audit | `artifacts/paper_number_audit_attentive_20260719/paper_number_audit_attentive.csv` | this update | preferred candidate | 核查当前 `main.tex` Table 1/3 与 attentive manifests 一致，并记录论文 fig 目录已替换为 attentive PDFs。 |
+| Attentive Table 1 Protocol-Native Candidate | `artifacts/attentive_protocol_20260719/protocol_native_attentive_manifest.csv` | `b9ccf50`--`5945dea` | preferred candidate | 后续写作默认入口；SGCP-PAPG attentive `0.87/0.81/0.36` at `62.54 Mbps`，高于 Pure late / EdgeCooperHD attentive；FullPerception-PCS 使用 paper-faithful scheduling + raw-LiDAR full-sender adaptation `0.63/0.49/0.17` at `32.06 Mbps`；Full20Early 仍是 upper reference。 |
+| Attentive Figure 1 AP-Mbps Pareto | `artifacts/pareto_attentive_20260719/pareto_attentive_source.csv` | `b9ccf50`--`5945dea` | preferred candidate | 使用 attentive source points；FullPerception-PCS 改为 raw-LiDAR adaptation 点；PACP-LiDAR AP@0.3/AP@0.7 略高但通信明显更贵，SGCP 是更优中等通信点。 |
+| Attentive Figure 2/3/4 Breakdowns | `artifacts/figures_attentive_20260719/` | `b9ccf50`--`5945dea` | preferred candidate | Figure 2 protocol、Figure 3 fusion、Figure 4 scheduler 均使用 attentive detector；Pure late 标为 `box 1.37`。 |
+| Attentive Table 2 Fusion Scaffold | `artifacts/attentive_fusion_ablation_20260719/fusion_scaffold_attentive_manifest.csv` | `b9ccf50`--`5945dea` | preferred candidate | Clustered early-only `0.51/0.45/0.21` 到 Full SGCP `0.87/0.81/0.36`，支撑两层融合贡献。 |
+| Attentive Table 3 Scheduler Comparison | `artifacts/attentive_scheduler_comparison_20260719/scheduler_comparison_attentive_manifest.csv` | `b9ccf50`--`5945dea` | preferred candidate | SGCP-compatible scheduler comparison；PACP-LiDAR 更高 AP@0.3/AP@0.7 但 `86.56 Mbps`，SGCP AP@0.5 最高且 `62.54 Mbps`。 |
+| Attentive Paper Number Audit | `artifacts/paper_number_audit_attentive_20260719/paper_number_audit_attentive.csv` | `0cfc70c`--`5945dea` | preferred candidate | 核查当前 `main.tex` Table 1/3 与 attentive manifests 一致，并记录论文 fig 目录已替换为 attentive PDFs。 |
 | Table 1 Protocol-Native System Comparison | `artifacts/table1_protocol_20260719/protocol_native_manifest.csv` | `4fee24e` | usable with caveats | Pure late 是 prediction-sharing reference；Full20Early 是 upper reference；EdgeCooper-HD 是 edge-assisted reference；manifest 已显式记录 `10 ch / 20 MHz`。 |
 | Figure 2 Protocol Breakdown | `artifacts/figures_20260719/figure2_protocol_breakdown.pdf` | `5776727` | usable | 只报告 aggregate AP，不引入 satisfaction rate；Pure late 图内标为 `box 0.7` 而不是 raw 0。 |
 | Figure 3 Fusion Contribution | `artifacts/figures_20260719/figure3_fusion_contribution.pdf` | `5776727` | usable | 解释 early/late 两层融合分工，不把 AP@0.3 全写成 scheduler 贡献；Pure late 图内标为 `box 0.7`。 |
@@ -39,12 +39,12 @@ docs\doc_workspace\SGCP\artifacts\paper_artifact_index_20260719\paper_artifact_i
 | P4 FullPerception-PCS Parameter Sweep | `artifacts/pcs_parameter_sweep_20260719/pcs_parameter_sweep_manifest.csv` | `0053134` | usable with caveats | 11 帧 granularity/overlap 趋势 + 41 帧 tuned anchor；更激进 41 帧 sweep 运行不可承受，不混入 41 帧 Pareto。 |
 | Detector/Checkpoint Fairness Audit | `detector_checkpoint_fairness.md` | `4e6e8e2` | usable | 主表 Pure late 使用 early-checkpoint singleton detector + `naive_late_fusion()`；actual late checkpoint 只作 sensitivity/reference。 |
 | Detector Checkpoint Sensitivity | `artifacts/checkpoint_sensitivity_20260719/detector_checkpoint_sensitivity_manifest.csv` | `738d148` | usable sensitivity | 汇总 legacy mainline、actual-late、attentive 和 COSDH checkpoint probes；attentive 已升级为当前 forward-writing candidate，actual-late/COSDH 仍只作 sensitivity 或 negative probe。 |
-| Attentive Table 4 Parameter Sensitivity | `artifacts/parameter_sensitivity_attentive_20260719/table4_parameter_sensitivity_attentive.csv` | this update | preferred candidate | attentive forward-writing Table 4；`rho_th=1/2/3` 稳定，5ch stress 明显降低 AP，20ch 额外收益有限。 |
+| Attentive Table 4 Parameter Sensitivity | `artifacts/parameter_sensitivity_attentive_20260719/table4_parameter_sensitivity_attentive.csv` | `5945dea` | preferred candidate | attentive forward-writing Table 4；`rho_th=1/2/3` 稳定，5ch stress 明显降低 AP，20ch 额外收益有限。 |
 | Legacy Table 4 Parameter Sensitivity | `artifacts/parameter_sensitivity_20260719/table4_parameter_sensitivity.csv` | `9cf102f` | legacy | `pointpillar_early_fusion` checkpoint-reference artifact；不再作为 forward-writing Table 4。 |
 | Runtime-Control-NS3 Appendix | `artifacts/appendix_support_20260719/runtime_control_ns3_appendix.md` | `d75abc4` | usable | 支撑 near-real-time control-plane feasibility，不承诺 detector-inclusive 100 ms。 |
 | Qualitative Case Study | `artifacts/appendix_support_20260719/qualitative_case_study_bev.pdf` | `73fdee0` | draft usable | 可用于 appendix/rebuttal；正式论文可补 legend 和 prediction-box overlay。 |
 | EdgeCooper Writing Reference | `edgecooper_writing_reference.md` | `2efda0a` | usable | 借鉴系统评估结构，不引入 satisfaction rate。 |
-| Paper main.tex sync | `C:/Workspace/icdcs-paper/SGCP/main.tex` | outside OpenCDA git | structure checked not compiled | Paper directory is outside OpenCDA git；Table 1/3、Figure 1/2/3 和正文已同步到 attentive forward-writing candidate。 |
+| Paper main.tex sync | `C:/Workspace/icdcs-paper/SGCP/main.tex` | outside OpenCDA git; docs `e1a8f15` | static checked not compiled | Paper directory is outside OpenCDA git；Table 1/3、Figure 1/2/3 和正文已同步到 attentive forward-writing candidate；2026-07-19 claim audit 已收紧 RSU/SOTA/100ms 表述并补 SMARTFORM citation。 |
 | Paper Number Audit | `artifacts/paper_number_audit_20260719/paper_number_audit.csv` | `4fee24e` | usable | 核查 Table 1/3/4 与 manifest 数值一致；修正 Table 4 channel sweep 的 legacy `40 MHz` 标签为当前复现实验命令口径 `20 MHz`；Table 1/3 manifest 已用工具重生成并显式记录网络元数据。 |
 
 ## Current Risks
@@ -55,6 +55,7 @@ docs\doc_workspace\SGCP\artifacts\paper_artifact_index_20260719\paper_artifact_i
 - Pure late 口径已固定为 controlled prediction-sharing reference：early-singleton + `naive_late_fusion()`；actual late checkpoint 已作为 sanity 记录，不混入同一公平 raw-LiDAR baseline。
 - 在 attentive candidate 中，EdgeCooperHD 不再强于 SGCP；PACP-LiDAR AP@0.3/AP@0.7 略高于 SGCP 但通信量显著更高，应按 Pareto tradeoff 写作。
 - `main.tex` 位于 `C:\Workspace\icdcs-paper\SGCP\main.tex`，不在 OpenCDA git 仓库；本机缺少 `latexmk/pdflatex`，当前只做了结构检查，未完成 PDF 编译验证。
+- 2026-07-19 静态 LaTeX 检查通过：43 个 citation / 29 个 unique citation keys 均在 `Reference.bib` 中存在，32 个 label 无重复，22 个 ref 均可解析，7 个 includegraphics 文件均存在，主要 table/figure/tabular/equation/algorithm 环境配平。
 - 2026-07-19 已将 `main.tex` 切换到 attentive forward-writing candidate；该修改无法在 OpenCDA 仓库提交，只能通过本文档和外部 paper 目录状态追踪。
 - 2026-07-19 number audit 已确认 Table 1/3/4 数值与 manifest 对齐；Pure late 的 `0.74 Mbps` 是检测框 broadcast overhead，不是 raw-LiDAR manifest Mbps。旧 trace 未记录 `bandwidth_mhz`，后续新 trace/manifest 已补工具字段。
 

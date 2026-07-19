@@ -6926,3 +6926,27 @@ ssh mindspore-187 "nvidia-smi --query-gpu=index,memory.used,memory.total,utiliza
 - `aslam2024smartform` 引用键已同时出现在 `main.tex` 和 `Reference.bib`。
 - 本机仍缺少 `pdflatex` / `latexmk` / `bibtex`，未能生成 PDF。
 - 远端 `mindspore-187` watcher 仍等待 GPU：8 张 GPU 均约 `22203/24576 MiB` used，当前仅有上传初始 checkpoint `/data2/gzc/sgcp_early_train/checkpoints/latest.pth`，尚无新训练 checkpoint。
+
+## 2026-07-19 23:02 - PDF 编译前静态完整性检查
+
+继续推进 P9/P10。由于本机没有 LaTeX 工具，先做编译前静态检查并清理摘要强 claim。
+
+完成事项：
+
+- `main.tex` 摘要进一步收紧：
+  - `eliminating blind spots` 改为 `reducing blind spots`。
+  - `operates entirely through` 改为 `operates through`。
+  - `Extensive simulations` 改为 `Simulations`。
+- 静态检查结果：
+  - citation：43 个 citation、29 个 unique keys，均在 `Reference.bib` 中存在。
+  - label/ref：32 个 label 无重复，22 个 ref/eqref 均能解析。
+  - figures：7 个 `includegraphics` 文件均存在。
+  - LaTeX 环境配平：`table 3/3`、`figure 2/2`、`figure* 4/4`、`tabular 4/4`、`equation 28/28`、`algorithm 3/3`、`itemize 5/5`。
+  - 高风险短语检查：未再发现 `eliminating blind spots`、`Extensive simulations`、`operates entirely`、`Nearly all`、`strict real-time`、`outperforms all`、`guaranteed`。
+- `paper_artifact_index.md`：
+  - 将 attentive artifact 行的 `this update` 替换为实际提交范围 `b9ccf50--5945dea` / `0cfc70c--5945dea` / `5945dea`。
+  - 记录 2026-07-19 静态 LaTeX 检查通过。
+
+剩余：
+
+- 仍需在有 `pdflatex` / `latexmk` 的环境中做真实 PDF 编译和视觉检查。
