@@ -4,16 +4,40 @@
 
 本文档把当前可复现结果收束为论文主表候选。目标是避免三类混淆：把 Full 20-CAV upper reference 误写成 FullPerception baseline、用低 payload 的 Random/MWS 证明通信量降低、只给单一 SGCP 设置而不展示 AP/payload tradeoff。FullPerception 在本仓库中对应 `pcs.py` 的 PCS 调度算法；full 20-CAV early fusion 只是全点云共享上界，不应命名为 FullPerception。
 
-当前表的主候选已从 coverage-aware grid post-processing 收束为 `perception_aware_potential_game`。PAPG 在同一 20MHz/10ch 约束下，以 62.54 Mbps 达到 `0.81/0.78/0.39`，高于当前强 selective baseline 的 AP@0.3/AP@0.5，并低于 full 20-CAV upper reference。FullPerception 正式 baseline 使用仓库内置 `pcs.py`，当前 tuned PCS 为 `0.59/0.53/0.22`、25.29 Mbps；两个后补 selective proxy 已改名，避免和 FullPerception 论文复现混写。
+当前推荐主线已从 legacy `pointpillar_early_fusion` checkpoint 切换为 attentive intermediate checkpoint 复现实验。原因是 legacy early checkpoint 明显限制 SGCP raw-LiDAR early fusion，导致 Pure late / EdgeCooperHD 的相对位置误导后续写作。新的 attentive candidate 在同一 20MHz/10ch 约束下，SGCP-PAPG 以 62.54 Mbps 达到 `0.87/0.81/0.36`，高于 Pure late attentive 的 `0.82/0.65/0.28`，也高于 EdgeCooperHD attentive 的 `0.85/0.74/0.35` 且通信量更低。旧 early checkpoint 表格保留为 legacy checkpoint reference，不再作为后续论文默认主表。
 
 ## 口径
 
 - 数据：`D:\Data\Carla\2026_07_15_01_26_56`，41 帧，20 CAV。
-- 感知：OpenCOOD early-fusion checkpoint，SGCP inter-cluster late fusion evaluation path。
+- 感知：默认采用 attentive intermediate checkpoint 迁移到 early-fusion detector 的复现实验；legacy `pointpillar_early_fusion` 结果仅作 checkpoint reference。SGCP inter-cluster late fusion evaluation path 保持 `naive_late_fusion()`。
 - 通信量：点云 upload payload；Mbps 按 41 帧、0.1 s 协作周期换算，即 `payload_bytes * 8 / 4.1 s / 1e6`。
 - NS3：`spatial_diverse` 10ch (`rho_th=2/3`) 和 20ch 已完成 11 帧 request-level replay，均为 application/RLC complete。PAPG 10ch `rho_th=3,B_h=2` 已完成 11 帧真实 socket replay，110/110 application callback 与 RLC request complete，PHY failures 为 0。
 
-## 推荐主表
+## 推荐主表：Attentive Candidate
+
+统一 source CSV：`artifacts/attentive_protocol_20260719/protocol_native_attentive_manifest.csv`。
+
+| Method | Type | AP@0.3 | AP@0.5 | AP@0.7 | Payload | Mbps | Notes |
+| --- | --- | ---: | ---: | ---: | ---: | ---: | --- |
+| Head-only attentive | Lower reference | 0.42 | 0.30 | 0.13 | 0 | 0.00 | Cluster heads detect alone; late-fused across heads |
+| Pure late attentive | Prediction-sharing reference | 0.82 | 0.65 | 0.28 | 0 point-cloud bytes | 1.37 box broadcast | Singleton local detector + `naive_late_fusion()`; raw-LiDAR Mbps is 0 but box exchange is not free |
+| FullPerception-PCS attentive | Built-in FullPerception baseline | 0.43 | 0.29 | 0.14 | 8,395,696 | 16.38 | Repaired PCS under attentive detector; still weak on this RSU-free dump |
+| EdgeCooperHD attentive | Edge/global scheduler reference | 0.85 | 0.74 | 0.35 | 33,519,040 | 65.40 | Strong edge-assisted/global assignment reference |
+| SGCP-PAPG attentive | Proposed candidate | 0.87 | 0.81 | 0.36 | 32,049,872 | 62.54 | Best AP@0.5 among non-upper-reference rows; higher AP than EdgeCooperHD at lower traffic |
+| Full20Early attentive | Upper reference | 0.88 | 0.85 | 0.45 | 60,838,528 | 118.71 | Full raw point-cloud sharing upper reference |
+
+## 推荐图表：Attentive Candidate
+
+| Figure/Table | Artifact | 用途 |
+| --- | --- | --- |
+| Figure 1 Pareto | `artifacts/pareto_attentive_20260719/figure1_pareto_ap03_attentive.pdf`, `figure1_pareto_ap07_attentive.pdf` | 使用 attentive source points，避免旧 early checkpoint Pareto 带偏 |
+| Figure 2 Protocol Breakdown | `artifacts/figures_attentive_20260719/figure2_protocol_breakdown_attentive.pdf` | 展示 SGCP attentive 优于 Pure late / EdgeCooperHD，并接近 Full20 upper |
+| Figure 3 Fusion Contribution | `artifacts/figures_attentive_20260719/figure3_fusion_contribution_attentive.pdf` | 展示 clustered early-only 到 Full SGCP 的两层融合收益 |
+| Figure 4 Scheduler Comparison | `artifacts/figures_attentive_20260719/figure4_scheduler_comparison_attentive.pdf` | SGCP-compatible scheduler comparison；PACP AP@0.3/0.7 略高但通信更贵，SGCP AP@0.5 最强 |
+
+## Legacy Early-Checkpoint 主表
+
+以下旧表使用 legacy `pointpillar_early_fusion` checkpoint。它保留用于 checkpoint sensitivity 和历史复现实验追踪，不再作为后续论文写作默认主线。
 
 论文 `main.tex` 当前采用单表分组布局，而不是把所有行平铺比较：先列 lower/full-sharing/infrastructure-assisted references，再列 RSU-free V2V baselines and SGCP variants。这个布局是有意为之，目的是防止把 EdgeCooper-HD 这类 edge/global assignment reference 误读为 fully decentralized V2V fair baseline。
 

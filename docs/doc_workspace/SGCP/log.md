@@ -6748,3 +6748,49 @@ conda run -n opencda python -m opencda.tools.sgcp_aggregate_ap_manifest `
 ### 结论
 
 同 attentive detector/checkpoint 口径下，SGCP-PAPG 不再弱于 Pure late 或 EdgeCooperHD：相比 Pure late attentive 高 `+0.05/+0.16/+0.08` AP；相比 EdgeCooperHD attentive 高 `+0.02/+0.07/+0.01` AP，且少约 `2.87 Mbps` raw-LiDAR payload。该结果非常有利于论文叙事，但它改变了 detector 初始化，当前仍应作为 checkpoint sensitivity / candidate；若替换正式主表，需要完整重跑所有主表 baseline 和图表。
+
+## 2026-07-19 20:20 - Attentive 全图表重跑并降级 legacy early 图表
+
+### 目的
+
+用户要求立即重跑 attentive 图表，弱化旧 `pointpillar_early_fusion` checkpoint 图表在文档中的地位，避免后续论文写作被旧结果带偏。本轮将 attentive 从单点 sensitivity 扩展为完整 candidate artifact set。
+
+### 新增/重跑 artifacts
+
+- `artifacts/attentive_protocol_20260719/protocol_native_attentive_manifest.csv`
+- `artifacts/attentive_fusion_ablation_20260719/fusion_scaffold_attentive_manifest.csv`
+- `artifacts/attentive_scheduler_comparison_20260719/scheduler_comparison_attentive_manifest.csv`
+- `artifacts/figures_attentive_20260719/figure2_protocol_breakdown_attentive.png/.pdf`
+- `artifacts/figures_attentive_20260719/figure3_fusion_contribution_attentive.png/.pdf`
+- `artifacts/figures_attentive_20260719/figure4_scheduler_comparison_attentive.png/.pdf`
+- `artifacts/pareto_attentive_20260719/figure1_pareto_ap03_attentive.png/.pdf`
+- `artifacts/pareto_attentive_20260719/figure1_pareto_ap07_attentive.png/.pdf`
+
+### Table 1 attentive candidate
+
+| Method | AP@0.3 | AP@0.5 | AP@0.7 | Mbps |
+| --- | ---: | ---: | ---: | ---: |
+| Head-only attentive | 0.42 | 0.30 | 0.13 | 0.00 |
+| Pure late attentive | 0.82 | 0.65 | 0.28 | 1.37 box broadcast |
+| FullPerception-PCS attentive | 0.43 | 0.29 | 0.14 | 16.38 |
+| EdgeCooperHD attentive | 0.85 | 0.74 | 0.35 | 65.40 |
+| SGCP-PAPG attentive | 0.87 | 0.81 | 0.36 | 62.54 |
+| Full20Early attentive | 0.88 | 0.85 | 0.45 | 118.71 |
+
+### Table 3 attentive scheduler comparison
+
+| Scheduler | AP@0.3 | AP@0.5 | AP@0.7 | Mbps |
+| --- | ---: | ---: | ---: | ---: |
+| RandomBudget attentive | 0.85 | 0.75 | 0.36 | 61.25 |
+| DensityGreedy attentive | 0.86 | 0.78 | 0.38 | 75.94 |
+| LinkAwareDensity attentive | 0.86 | 0.78 | 0.38 | 75.94 |
+| PACP-LiDAR attentive | 0.88 | 0.79 | 0.37 | 86.56 |
+| EdgeCooperHD attentive | 0.85 | 0.74 | 0.35 | 65.40 |
+| SGCP-PAPG attentive | 0.87 | 0.81 | 0.36 | 62.54 |
+
+### 结论
+
+- 后续写作默认引用 attentive candidate 图表；legacy `pointpillar_early_fusion` 图表保留为 checkpoint-reference artifacts。
+- SGCP-PAPG attentive 同时高于 Pure late attentive 与 EdgeCooperHD attentive，且通信量低于 EdgeCooperHD。
+- PACP-LiDAR attentive AP@0.3/AP@0.7 略高，但使用 `86.56 Mbps`，比 SGCP 高 `24.02 Mbps`；写作时作为 Pareto tradeoff，而不是主方法失败。
+- Full20Early attentive `0.88/0.85/0.45` 仍是上界。SGCP attentive 以 `52.7%` raw payload 保留其 AP@0.3/AP@0.5 的 `98.9%/95.3%`。

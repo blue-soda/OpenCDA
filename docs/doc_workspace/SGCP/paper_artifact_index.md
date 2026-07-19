@@ -19,6 +19,11 @@ docs\doc_workspace\SGCP\artifacts\paper_artifact_index_20260719\paper_artifact_i
 
 | Paper Item | Primary Artifact | Commit | Status | Boundary |
 | --- | --- | --- | --- | --- |
+| Attentive Table 1 Protocol-Native Candidate | `artifacts/attentive_protocol_20260719/protocol_native_attentive_manifest.csv` | this update | preferred candidate | 后续写作默认入口；SGCP-PAPG attentive `0.87/0.81/0.36` at `62.54 Mbps`，高于 Pure late / EdgeCooperHD attentive；Full20Early 仍是 upper reference。 |
+| Attentive Figure 1 AP-Mbps Pareto | `artifacts/pareto_attentive_20260719/pareto_attentive_source.csv` | this update | preferred candidate | 使用 attentive source points；PACP-LiDAR AP@0.3/AP@0.7 略高但通信明显更贵，SGCP 是更优中等通信点。 |
+| Attentive Figure 2/3/4 Breakdowns | `artifacts/figures_attentive_20260719/` | this update | preferred candidate | Figure 2 protocol、Figure 3 fusion、Figure 4 scheduler 均使用 attentive detector；Pure late 标为 `box 1.37`。 |
+| Attentive Table 2 Fusion Scaffold | `artifacts/attentive_fusion_ablation_20260719/fusion_scaffold_attentive_manifest.csv` | this update | preferred candidate | Clustered early-only `0.51/0.45/0.21` 到 Full SGCP `0.87/0.81/0.36`，支撑两层融合贡献。 |
+| Attentive Table 3 Scheduler Comparison | `artifacts/attentive_scheduler_comparison_20260719/scheduler_comparison_attentive_manifest.csv` | this update | preferred candidate | SGCP-compatible scheduler comparison；PACP-LiDAR 更高 AP@0.3/AP@0.7 但 `86.56 Mbps`，SGCP AP@0.5 最高且 `62.54 Mbps`。 |
 | Table 1 Protocol-Native System Comparison | `artifacts/table1_protocol_20260719/protocol_native_manifest.csv` | `4fee24e` | usable with caveats | Pure late 是 prediction-sharing reference；Full20Early 是 upper reference；EdgeCooper-HD 是 edge-assisted reference；manifest 已显式记录 `10 ch / 20 MHz`。 |
 | Figure 2 Protocol Breakdown | `artifacts/figures_20260719/figure2_protocol_breakdown.pdf` | `5776727` | usable | 只报告 aggregate AP，不引入 satisfaction rate；Pure late 图内标为 `box 0.7` 而不是 raw 0。 |
 | Figure 3 Fusion Contribution | `artifacts/figures_20260719/figure3_fusion_contribution.pdf` | `5776727` | usable | 解释 early/late 两层融合分工，不把 AP@0.3 全写成 scheduler 贡献；Pure late 图内标为 `box 0.7`。 |
@@ -42,10 +47,11 @@ docs\doc_workspace\SGCP\artifacts\paper_artifact_index_20260719\paper_artifact_i
 
 ## Current Risks
 
-- Early-fusion checkpoint 仍是最大实验风险：远程 fine-tune watcher 已启动，但 GPU 尚未空闲；回收流程见 `early_checkpoint_recovery.md`。回收新 checkpoint 后必须生成新一版 Table/Figure artifacts，不覆盖当前版本。
-- Detector checkpoint sensitivity 已补齐 mainline、actual-late、attentive、COSDH 四类证据；attentive 可作为 rebuttal 或 appendix 证据，但因 AP@0.7 仍低于原 PAPG 主线，当前只作为 sensitivity，不替换主表。
+- Legacy `pointpillar_early_fusion` checkpoint 不再作为后续论文默认主表；当前默认 forward-writing artifacts 为 attentive candidate。旧 Table 1/3/Figure 1/2/3 保留为 checkpoint-reference artifacts。
+- 远程 fine-tune watcher 已启动但 GPU 尚未空闲；回收流程见 `early_checkpoint_recovery.md`。若回收到更好 checkpoint，必须生成新一版 Table/Figure artifacts，不覆盖当前 attentive 版本。
+- Detector checkpoint sensitivity 已补齐 mainline、actual-late、attentive、COSDH 四类证据；attentive 已补齐 key baselines 和图表，当前可作为 candidate mainline；COSDH 仍为 negative probe。
 - Pure late 口径已固定为 controlled prediction-sharing reference：early-singleton + `naive_late_fusion()`；actual late checkpoint 已作为 sanity 记录，不混入同一公平 raw-LiDAR baseline。
-- EdgeCooper-HD 与 PACP-LiDAR 在 AP@0.7 上强于 PAPG，应按信息条件边界解释为 edge/global 或 stronger-priority reference，不应硬写 SGCP 全面最优。
+- 在 attentive candidate 中，EdgeCooperHD 不再强于 SGCP；PACP-LiDAR AP@0.3/AP@0.7 略高于 SGCP 但通信量显著更高，应按 Pareto tradeoff 写作。
 - `main.tex` 位于 `C:\Workspace\icdcs-paper\SGCP\main.tex`，不在 OpenCDA git 仓库；本机缺少 `latexmk/pdflatex`，当前只做了结构检查，未完成 PDF 编译验证。
 - 2026-07-19 已向 `main.tex` 补入 attentive checkpoint sensitivity 段落；该修改无法在 OpenCDA 仓库提交，只能通过本文档和外部 paper 目录状态追踪。
 - 2026-07-19 number audit 已确认 Table 1/3/4 数值与 manifest 对齐；Pure late 的 `0.74 Mbps` 是检测框 broadcast overhead，不是 raw-LiDAR manifest Mbps。旧 trace 未记录 `bandwidth_mhz`，后续新 trace/manifest 已补工具字段。
