@@ -6428,3 +6428,22 @@ conda run -n opencda python docs\doc_workspace\SGCP\artifacts\figures_20260719\p
 ### 结论
 
 Figure 2 现在可以区分 protocol-native 方法和 reference 边界；Figure 3 可以清楚展示 clustered early-only 到 Full SGCP 的 coverage gain，以及 Full20Early 的 AP@0.7 上界。P5/P6 图表验收项按 first-pass 完成处理。
+
+## 2026-07-19 Scenario sufficiency audit
+
+### 目的
+
+继续推进 P0 剩余项：判断当前 41 帧场景是否无法支撑关键图表，是否需要重新打开 CARLA 导出新场景。
+
+### 结论
+
+新增 `scenario_sufficiency_audit.md`。当前 artifact index 已覆盖 Table 1、Figure 1、Figure 2、Figure 3、Table 3、Table 4、runtime/NS3 appendix 和 qualitative case study draft；所有主文 first-pass 图表均有可追溯 artifact。因此本阶段不重新导出 CARLA 场景。
+
+### 触发条件
+
+后续仅在以下情况下重新采集：
+
+- early checkpoint 回收并重跑后，当前场景仍无法支撑 raw-LiDAR V2V AP@0.3/AP@0.5 frontier；
+- 需要更强动态稳定性或真实 CAV 密度 sweep；
+- 需要正式 CARLA+NS3 在线端到端图表；
+- 论文决定把 AP@0.7 high-IoU 提升作为核心主张。

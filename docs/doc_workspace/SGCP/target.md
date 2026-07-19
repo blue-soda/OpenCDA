@@ -28,7 +28,7 @@
 - [x] 明确并固化 aggregate AP 统计口径：所有 protocol-native、fusion ablation、scheduler comparison 和 Pareto 图均使用 pooled evaluator AP；每个结果必须记录 evaluated samples 数、receiver policy、是否 inter-cluster late fusion，以及是否为 ego-only sanity。不再保留独立 aggregate AP 指标文档，口径直接写入 `target.md` / `status.md` / `results.md`。
 - [x] 删除 satisfaction rate 作为主文指标：不再新增或使用 `satisfaction_metric.md` / `sgcp_satisfaction_summary`，后续图表只报告 aggregate AP、Mbps 和必要的辅助统计。
 - [x] 所有实验在结果进入论文前必须生成 artifact：命令、stdout/log 路径、trace CSV、manifest/summary CSV、图表源数据和 git commit。当前论文草稿第一版 artifact 索引已建立：`paper_artifact_index.md` 与 `artifacts/paper_artifact_index_20260719/paper_artifact_index.csv`；后续任何新 checkpoint/新场景/新主表数值必须追加新 artifact。
-- [ ] 如果当前 41 帧场景无法支撑某张关键图表，重新导出更合适的 CARLA 场景；注意 CARLA 进程至多一个，数据路径仍遵循 `docs/doc_workspace/environment.md`。
+- [x] 如果当前 41 帧场景无法支撑某张关键图表，重新导出更合适的 CARLA 场景；注意 CARLA 进程至多一个，数据路径仍遵循 `docs/doc_workspace/environment.md`。已新增 `scenario_sufficiency_audit.md`：当前 41 帧场景足以支撑 first-pass 主文图表和附录证据，暂不重新导出；仅在 checkpoint 回收后仍无法支撑主张、需要更强动态稳定性/密度实验或在线端到端证据时触发新场景。
 
 ## P1：Table 1 - Protocol-Native System Comparison
 

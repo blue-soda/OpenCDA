@@ -38,6 +38,7 @@
 - `detector_checkpoint_fairness.md`：SGCP 与 Pure late / actual-late checkpoint 的公平性口径，明确主表使用 early-checkpoint singleton controlled Pure late，actual-late 只作 sensitivity/reference。
 - `pareto_claim_audit.md`：AP-Mbps Pareto 主张审计，按 prediction-sharing、edge/global reference 和 raw-LiDAR V2V 集合划分可写 claim 与边界。
 - `fusion_scaffold_claim_audit.md`：两层融合消融审计，量化 clustered early-only、Full SGCP、Pure late 和 Full20Early 的贡献与写作边界。
+- `scenario_sufficiency_audit.md`：当前 41 帧 CARLA 离线场景是否足以支撑主文图表的审计，以及重新导出新场景的触发条件。
 - `edgecooper_writing_reference.md`：从 EdgeCooper 论文中提炼的实验章节组织、baseline 分层和 SGCP 写作边界，用于支撑论文 LaTeX 修改。
 - `../environment.md`：全局环境文档，统一维护 Conda 环境、数据路径、CARLA 路径、启动命令和通用工具入口；运行实验前优先查看这里。
 

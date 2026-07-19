@@ -1030,3 +1030,18 @@ Full SGCP 使用 52.7% full-sharing raw payload，保留 full-sharing AP@0.3/AP@
 - `artifacts/figures_20260719/figure3_fusion_contribution.png/.pdf`
 
 Figure 2 现在可以区分 Head-only、Pure late prediction-sharing、FullPerception-PCS、EdgeCooper-HD、SGCP-PAPG 和 Full20Early；Figure 3 可以清楚展示 clustered early-only 到 Full SGCP 的 coverage gain，以及 Full20Early 的 AP@0.7 上界。
+
+## Scenario sufficiency audit
+
+已新增 `scenario_sufficiency_audit.md`。当前 41 帧 `v2xp_cluster_carla` 离线场景足以支撑 first-pass 主文图表：
+
+- Table 1 protocol-native comparison；
+- Figure 1 AP-Mbps Pareto；
+- Figure 2 protocol breakdown；
+- Figure 3 fusion contribution；
+- Table 3 scheduler comparison；
+- Table 4 parameter sensitivity；
+- runtime / NS3 appendix；
+- qualitative case study draft。
+
+当前不立即重新导出 CARLA 场景。后续只有在 early checkpoint 回收后仍无法支撑主张，或需要更强动态稳定性、不同 CAV 密度、在线端到端证据时，再按 `environment.md` 的 CARLA 约束启动新导出。
