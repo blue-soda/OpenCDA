@@ -1064,6 +1064,7 @@ Figure 2 现在可以区分 Head-only、Pure late prediction-sharing、FullPerce
 
 Artifact：
 
+- `docs\doc_workspace\SGCP\artifacts\checkpoint_sensitivity_20260719\detector_checkpoint_sensitivity_manifest.csv`
 - `docs\doc_workspace\SGCP\artifacts\early_from_late_checkpoint_20260719\`
 - `docs\doc_workspace\SGCP\artifacts\cosdh_checkpoint_probe_20260719\`
 

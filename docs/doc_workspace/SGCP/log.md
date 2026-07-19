@@ -6602,3 +6602,21 @@ Artifacts：
 
 - 已做轻量 LaTeX 结构检查：`table/figure/tabular` begin-end 数量配平。
 - 本机仍未检测到 `latexmk` / `pdflatex`，未生成 PDF。
+
+## 2026-07-19 17:35 - 固化 detector checkpoint sensitivity manifest
+
+### 目的
+
+把 mainline、actual-late、attentive、COSDH checkpoint probes 从散落日志整理为统一机器可读证据，服务论文 appendix/rebuttal 和后续 checkpoint 回收重跑。
+
+### 新增 artifact
+
+- `docs\doc_workspace\SGCP\artifacts\checkpoint_sensitivity_20260719\detector_checkpoint_sensitivity_manifest.csv`
+- `docs\doc_workspace\SGCP\artifacts\checkpoint_sensitivity_20260719\detector_checkpoint_sensitivity.md`
+
+### 关键边界
+
+- 主表仍使用 `pointpillar_early_fusion` mainline：SGCP-PAPG `0.81/0.78/0.39`、Pure late controlled `0.82/0.76/0.37`。
+- Actual late checkpoint 与 attentive checkpoint 均写作 sensitivity，不作为 fair raw-LiDAR 主表替换。
+- COSDH 路线当前被记录为 negative/smoke artifact：能跑通部分路径，但 collapsed raw point-cloud 输入下无有效最终框。
+- 远程 fine-tune checkpoint 一旦回收，必须另建新 artifact 目录重跑 SGCP/Pure late/Full20Early，而不是覆盖本目录。
