@@ -71,7 +71,13 @@ def inference_early_fusion(batch_data, model, dataset, return_output=False, retu
 
     output_dict['ego'] = model(cav_content)
 
-    post_process_result = dataset.post_process(batch_data, output_dict, return_object_ids=return_object_ids)
+    if return_object_ids:
+        post_process_result = dataset.post_process(
+            batch_data,
+            output_dict,
+            return_object_ids=return_object_ids)
+    else:
+        post_process_result = dataset.post_process(batch_data, output_dict)
     ret = list(post_process_result)
     if return_output:
         ret.append(output_dict)
@@ -79,7 +85,9 @@ def inference_early_fusion(batch_data, model, dataset, return_output=False, retu
     return tuple(ret)
 
 
-def inference_intermediate_fusion(batch_data, model, dataset, return_output=False):
+def inference_intermediate_fusion(batch_data, model, dataset,
+                                  return_output=False,
+                                  return_object_ids=False):
     """
     Model inference for early fusion.
 
@@ -96,7 +104,12 @@ def inference_intermediate_fusion(batch_data, model, dataset, return_output=Fals
     gt_box_tensor : torch.Tensor
         The tensor of gt bounding box.
     """
-    return inference_early_fusion(batch_data, model, dataset, return_output)
+    return inference_early_fusion(
+        batch_data,
+        model,
+        dataset,
+        return_output,
+        return_object_ids=False)
 
 
 def save_prediction_gt(pred_tensor, gt_tensor, pcd, timestamp, save_path):

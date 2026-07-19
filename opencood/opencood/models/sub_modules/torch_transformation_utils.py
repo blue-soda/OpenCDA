@@ -357,6 +357,24 @@ def warp_affine(
                          padding_mode=padding_mode)
 
 
+def warp_affine_simple(src, M, dsize,
+                       mode='bilinear',
+                       padding_mode='zeros',
+                       align_corners=False):
+    """Direct affine_grid warp used by Where2comm/COSDH modules."""
+    batch_size, channels, _, _ = src.size()
+    grid = F.affine_grid(
+        M,
+        [batch_size, channels, dsize[0], dsize[1]],
+        align_corners=align_corners).to(src)
+    return F.grid_sample(
+        src,
+        grid,
+        align_corners=align_corners,
+        padding_mode=padding_mode,
+        mode=mode)
+
+
 class Test:
     """
     Test the transformation in this file.

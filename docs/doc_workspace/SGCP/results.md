@@ -1057,3 +1057,29 @@ Figure 2 现在可以区分 Head-only、Pure late prediction-sharing、FullPerce
 - 当前状态：8 张 GPU 均约 22.2GB used，watcher 仍在每 300 秒轮询。
 
 训练完成后，必须先回收最新 step checkpoint，并在同一 checkpoint 下重跑 SGCP-PAPG 和 Pure late controlled baseline。只有在不破坏 AP@0.3/AP@0.5 且改善或解释 AP@0.7 时，才替换主文结果；否则作为 sensitivity/negative artifact 记录。
+
+## Detector checkpoint probe: late / attentive / COSDH
+
+本轮围绕“早期融合 checkpoint 偏弱”风险，固定 SGCP-PAPG 通信协议、41 帧 `2026_07_15_01_26_56` 场景、20MHz/10ch/rho3/`B_h=2`、all-cluster-heads 和 inter-cluster `naive_late_fusion()`，测试更强检测器权重能否作为 merged point-cloud detector。
+
+Artifact：
+
+- `docs\doc_workspace\SGCP\artifacts\early_from_late_checkpoint_20260719\`
+- `docs\doc_workspace\SGCP\artifacts\cosdh_checkpoint_probe_20260719\`
+
+| Variant | Frames | Detector source | AP@0.3 | AP@0.5 | AP@0.7 | Payload bytes | Raw Mbps | Decision |
+| --- | ---: | --- | ---: | ---: | ---: | ---: | ---: | --- |
+| Original SGCP-PAPG smoke | 11 | `pointpillar_early_fusion` | 0.76 | 0.73 | 0.34 | 8,598,224 | 62.53 | baseline smoke |
+| Late checkpoint as early detector | 11 | `pointpillar_late_fusion/net_epoch30.pth` copied into early config | 0.58 | 0.48 | 0.15 | 8,598,224 | 62.53 | reject |
+| Attentive checkpoint as early detector | 11 | attentive intermediate checkpoint copied into early config | 0.85 | 0.77 | 0.32 | 8,598,224 | 62.53 | promising smoke |
+| SGCP-PAPG attentive detector | 41 | attentive intermediate checkpoint copied into early config | 0.87 | 0.81 | 0.36 | 32,049,872 | 62.54 | sensitivity / candidate |
+| Full20Early attentive detector | 41 | attentive intermediate checkpoint copied into early config | 0.88 | 0.85 | 0.45 | n/a | n/a | upper reference |
+| COSDH compatible transplant | 11 | 140 compatible COSDH weights + original early fallback heads | 0.00 | 0.00 | 0.00 | 8,598,224 | 62.53 | reject |
+| COSDH backbone + early heads | 11 | COSDH backbone, original early detection heads | 0.02 | 0.00 | 0.00 | 8,598,224 | 62.53 | reject |
+| COSDH real model collapsed smoke | 1 | `point_pillar_comm_multiscale`, scheduled points collapsed to receiver cloud | n/a | n/a | n/a | 783,392 | n/a | runs, but 0 predictions |
+
+结论：
+
+- 使用 attentive intermediate checkpoint 初始化/替换 early detector 对 AP@0.3/AP@0.5 很有帮助，说明当前主线的核心风险确实来自 early detector/checkpoint 强度。
+- Attentive checkpoint 的 AP@0.7 仍低于原 PAPG 主线，因此不能简单替换全部主表；更合理的用法是 detector sensitivity、或在远程 fine-tune 失败时作为 AP@0.3/AP@0.5 strengthened candidate。
+- COSDH checkpoint 不能直接迁移到 plain PointPillar early detector；真实 COSDH 模型虽然已在本仓库跑通加载与 forward path，但当前 CARLA dump 上 1 帧输出 0 个预测框，必须先做后处理阈值、range、`proj_first` 和模型输入语义校准。

@@ -59,6 +59,10 @@
 - [x] 修正 Pure late baseline 口径：当前 P1/P2 manifest 中的 Pure late 使用 `fusion_method=early` + singleton CAV + box-level late NMS，不是 `pointpillar_late_fusion` checkpoint。已新增 `detector_checkpoint_fairness.md`，明确主表采用 early-checkpoint singleton controlled Pure late + `naive_late_fusion()`，actual-late checkpoint 只作 detector sensitivity / prediction-sharing reference。
 - [x] 统一 detector/checkpoint 公平性：SGCP 论文主线的“点云 -> 检测框”统一使用 `pointpillar_early_fusion`；Pure late 使用同 checkpoint 的 singleton local inference + `naive_late_fusion()`。已补 “all late detector” sanity：Pure late actual late `0.89/0.83/0.49`，forced SGCP PAPG late-detector `0.87/0.81/0.48`、62.54 Mbps；后者不再是严格 SGCP early-fusion 协议，只能作为 checkpoint sensitivity。
 - [ ] 提升 early-fusion checkpoint：当前最大实验风险是 `pointpillar_early_fusion` 对 SGCP raw point-cloud early fusion 不够强，导致 Pure late prediction-sharing reference 过强、SGCP AP@0.7 上限偏低。远程训练固定使用 `ssh mindspore-187`、`/data2/gzc/sgcp_early_train/` 和 `opencood-gzc` 环境；已上传当前 checkpoint 并启动 GPU watcher，GPU 空闲后自动 fine-tune。回收 checkpoint 后必须用同一 checkpoint 重跑 SGCP 与 Pure late controlled baseline。
+  - [x] Late checkpoint 直接替换 early detector 已判负：11 帧 `0.58/0.48/0.15`。
+  - [x] Attentive intermediate checkpoint 作为 early detector 已完成 sensitivity：41 帧 SGCP-PAPG `0.87/0.81/0.36`，Full20Early attentive upper reference `0.88/0.85/0.45`；可作为 AP@0.3/AP@0.5 strengthened candidate，但 AP@0.7 仍低于原 PAPG 主线，暂不替换主表。
+  - [x] COSDH compatible-weight transplant 已判负：11 帧 `0.00/0.00/0.00` 或 `0.02/0.00/0.00`。
+  - [ ] COSDH 实模型已复制必要代码并跑通 1 帧 collapsed smoke test，但当前 6 个 cluster head 均 0 prediction；若继续该路线，先做 logits、postprocessor threshold、range 与 `proj_first` 输入语义校准，再扩展 11/41 帧。
 
 ## P2：Table 2 - Fusion Scaffold Ablation
 

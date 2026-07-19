@@ -79,6 +79,22 @@ def x1_to_x2(x1, x2):
     return transformation_matrix
 
 
+def normalize_pairwise_tfm(pairwise_t_matrix, H, W, discrete_ratio,
+                           downsample_rate=1):
+    """Normalize pairwise SE(2) transforms for affine_grid warping."""
+    pairwise_t_matrix = pairwise_t_matrix[:, :, :, [0, 1], :]
+    pairwise_t_matrix = pairwise_t_matrix[:, :, :, :, [0, 1, 3]]
+    pairwise_t_matrix[..., 0, 1] = pairwise_t_matrix[..., 0, 1] * H / W
+    pairwise_t_matrix[..., 1, 0] = pairwise_t_matrix[..., 1, 0] * W / H
+    pairwise_t_matrix[..., 0, 2] = (
+        pairwise_t_matrix[..., 0, 2] /
+        (downsample_rate * discrete_ratio * W) * 2)
+    pairwise_t_matrix[..., 1, 2] = (
+        pairwise_t_matrix[..., 1, 2] /
+        (downsample_rate * discrete_ratio * H) * 2)
+    return pairwise_t_matrix
+
+
 def dist_to_continuous(p_dist, displacement_dist, res, downsample_rate):
     """
     Convert points discretized format to continuous space for BEV representation.

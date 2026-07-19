@@ -4,18 +4,20 @@ Run OpenCOOD inference from an OPV2V-style data dump.
 """
 
 import argparse
+import copy
 import csv
 import math
 import os
 import json
 import random
-from collections import defaultdict
+from collections import defaultdict, OrderedDict
 
 import numpy as np
 from omegaconf import OmegaConf
 import yaml
 
 from opencood.utils import common_utils
+from opencood.utils.transformation_utils import x1_to_x2
 
 from opencda.core.common.offline_dataset import OPV2VFrameDataset
 from opencda.core.common.offline_replay import (
@@ -175,6 +177,14 @@ def parse_args():
     parser.add_argument('--object-diagnostics-iou', type=float, default=0.5,
                         help='IoU threshold used by object diagnostics. '
                              'Defaults to 0.5.')
+    parser.add_argument('--collapse-to-ego-pointcloud', action='store_true',
+                        help='Before OpenCOOD inference, project all CAV '
+                             'point clouds in the evaluated frame into the '
+                             'ego/receiver lidar pose and collapse them into '
+                             'one ego CAV. This keeps the SGCP point-cloud '
+                             'communication plan but lets single-agent or '
+                             'intermediate checkpoints act as merged point '
+                             'cloud detectors.')
     return parser.parse_args()
 
 
@@ -1646,6 +1656,51 @@ def run_opencood_inference(manager, frame, ego_lidar_pose):
         return_object_ids=manager.fusion_method != 'late')
 
 
+def project_points_by_matrix(points, transformation_matrix):
+    if points is None or points.size == 0:
+        return points
+    xyz1 = np.hstack((
+        points[:, :3],
+        np.ones((points.shape[0], 1), dtype=points.dtype)))
+    projected = np.dot(xyz1, np.asarray(transformation_matrix).T)[:, :3]
+    output = points.copy()
+    output[:, :3] = projected
+    return output
+
+
+def collapse_frame_to_receiver_pointcloud(frame, receiver_lidar_pose):
+    """Collapse an evaluated multi-CAV frame into one merged ego CAV."""
+    ego_id = next(cav_id for cav_id, cav in frame.items() if cav['ego'])
+    ego_cav = frame[ego_id]
+    collapsed = OrderedDict()
+    merged_points = []
+    merged_vehicles = {}
+    for cav in frame.values():
+        cav_pose = cav['params']['lidar_pose']
+        transformation_matrix = x1_to_x2(
+            cav_pose,
+            receiver_lidar_pose)
+        merged_points.append(
+            project_points_by_matrix(cav['lidar_np'], transformation_matrix))
+        merged_vehicles.update(cav['params'].get('vehicles', {}))
+
+    cloned = OrderedDict()
+    cloned['ego'] = True
+    cloned['time_delay'] = ego_cav.get('time_delay', 0)
+    cloned['params'] = copy.deepcopy(ego_cav['params'])
+    cloned['params']['vehicles'] = merged_vehicles
+    cloned['params']['transformation_matrix'] = x1_to_x2(
+        receiver_lidar_pose,
+        receiver_lidar_pose)
+    cloned['params']['gt_transformation_matrix'] = (
+        cloned['params']['transformation_matrix'])
+    cloned['params']['spatial_correction_matrix'] = (
+        cloned['params']['transformation_matrix'])
+    cloned['lidar_np'] = np.vstack(merged_points).astype(np.float32)
+    collapsed[ego_id] = cloned
+    return collapsed
+
+
 def is_empty_pillar_error(error):
     return (
         isinstance(error, RuntimeError) and
@@ -2067,9 +2122,14 @@ def main():
                     frame_items,
                     start=1):
                 try:
+                    inference_frame = (
+                        collapse_frame_to_receiver_pointcloud(
+                            eval_frame,
+                            target_ego_lidar_pose)
+                        if args.collapse_to_ego_pointcloud else eval_frame)
                     ret = run_opencood_inference(
                         manager,
-                        eval_frame,
+                        inference_frame,
                         target_ego_lidar_pose)
                 except RuntimeError as error:
                     if not is_empty_pillar_error(error):
@@ -2139,10 +2199,11 @@ def main():
                           gt_box_tensor.shape[0],
                           sgcp_metadata['communication_bytes']))
 
-            fused_pred, fused_score = manager.naive_late_fusion(
+            fused_pred_ret = manager.naive_late_fusion(
                 pred_tensors,
                 pred_scores,
                 iou_threshold=args.sgcp_late_nms_thresh)
+            fused_pred, fused_score = fused_pred_ret[:2]
             fused_gt, _ = manager.naive_late_fusion(
                 gt_tensors,
                 None,
@@ -2213,7 +2274,15 @@ def main():
             ego = next(cav for cav in eval_frame.values() if cav['ego'])
             ego_lidar_pose = ego['params']['lidar_pose']
 
-            ret = run_opencood_inference(manager, eval_frame, ego_lidar_pose)
+            inference_frame = (
+                collapse_frame_to_receiver_pointcloud(
+                    eval_frame,
+                    ego_lidar_pose)
+                if args.collapse_to_ego_pointcloud else eval_frame)
+            ret = run_opencood_inference(
+                manager,
+                inference_frame,
+                ego_lidar_pose)
 
             pred_box_tensor, pred_score, gt_box_tensor = ret[0:3]
             pred_count = (

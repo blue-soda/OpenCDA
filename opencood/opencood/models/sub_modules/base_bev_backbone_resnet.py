@@ -1,10 +1,19 @@
+﻿"""
+Resblock is much strong than normal conv
+
+Provide api for multiscale intermeidate fuion
+"""
+
 import numpy as np
 import torch
 import torch.nn as nn
 
+from opencood.models.sub_modules.resblock import ResNetModified, BasicBlock
 
-class BaseBEVBackbone(nn.Module):
-    def __init__(self, model_cfg, input_channels):
+DEBUG = False
+
+class ResNetBEVBackbone(nn.Module):
+    def __init__(self, model_cfg, input_channels=64):
         super().__init__()
         self.model_cfg = model_cfg
 
@@ -30,31 +39,17 @@ class BaseBEVBackbone(nn.Module):
         else:
             upsample_strides = num_upsample_filters = []
 
-        num_levels = len(layer_nums)
-        c_in_list = [input_channels, *num_filters[:-1]]
+        self.resnet = ResNetModified(BasicBlock,
+                                        layer_nums,
+                                        layer_strides,
+                                        num_filters,
+                                        inplanes = model_cfg.get('inplanes', 64))
 
-        self.blocks = nn.ModuleList()
+        num_levels = len(layer_nums)
+        self.num_levels = len(layer_nums)
         self.deblocks = nn.ModuleList()
 
         for idx in range(num_levels):
-            cur_layers = [
-                nn.ZeroPad2d(1),
-                nn.Conv2d(
-                    c_in_list[idx], num_filters[idx], kernel_size=3,
-                    stride=layer_strides[idx], padding=0, bias=False
-                ),
-                nn.BatchNorm2d(num_filters[idx], eps=1e-3, momentum=0.01),
-                nn.ReLU()
-            ]
-            for k in range(layer_nums[idx]):
-                cur_layers.extend([
-                    nn.Conv2d(num_filters[idx], num_filters[idx],
-                              kernel_size=3, padding=1, bias=False),
-                    nn.BatchNorm2d(num_filters[idx], eps=1e-3, momentum=0.01),
-                    nn.ReLU()
-                ])
-
-            self.blocks.append(nn.Sequential(*cur_layers))
             if len(upsample_strides) > 0:
                 stride = upsample_strides[idx]
                 if stride >= 1:
@@ -95,45 +90,10 @@ class BaseBEVBackbone(nn.Module):
     def forward(self, data_dict):
         spatial_features = data_dict['spatial_features']
 
+        x = self.resnet(spatial_features)  # tuple of features
         ups = []
-        ret_dict = {}
-        x = spatial_features
 
-        for i in range(len(self.blocks)):
-            x = self.blocks[i](x)
-
-            stride = int(spatial_features.shape[2] / x.shape[2])
-            ret_dict['spatial_features_%dx' % stride] = x
-
-            if len(self.deblocks) > 0:
-                ups.append(self.deblocks[i](x))
-            else:
-                ups.append(x)
-
-        if len(ups) > 1:
-            x = torch.cat(ups, dim=1)
-        elif len(ups) == 1:
-            x = ups[0]
-
-        if len(self.deblocks) > len(self.blocks):
-            x = self.deblocks[-1](x)
-
-        data_dict['spatial_features_2d'] = x
-        return data_dict
-
-    def get_multiscale_feature(self, spatial_features):
-        """Return per-level BEV features before multiscale fusion."""
-        feature_list = []
-        x = spatial_features
-        for i in range(len(self.blocks)):
-            x = self.blocks[i](x)
-            feature_list.append(x)
-        return feature_list
-
-    def decode_multiscale_feature(self, x):
-        """Decode fused per-level BEV features back to detection canvas."""
-        ups = []
-        for i in range(len(self.blocks)):
+        for i in range(self.num_levels):
             if len(self.deblocks) > 0:
                 ups.append(self.deblocks[i](x[i]))
             else:
@@ -144,6 +104,41 @@ class BaseBEVBackbone(nn.Module):
         elif len(ups) == 1:
             x = ups[0]
 
-        if len(self.deblocks) > len(self.blocks):
+        if len(self.deblocks) > self.num_levels:
+            x = self.deblocks[-1](x)
+
+        data_dict['spatial_features_2d'] = x
+        return data_dict
+
+    # these two functions are seperated for multiscale intermediate fusion
+    def get_multiscale_feature(self, spatial_features):
+        """
+        before multiscale intermediate fusion
+        """
+        x = self.resnet(spatial_features)  # tuple of features
+        return x
+
+    def decode_multiscale_feature(self, x):
+        """
+        after multiscale interemediate fusion
+        """
+        ups = []
+        for i in range(self.num_levels):
+            if len(self.deblocks) > 0:
+                ups.append(self.deblocks[i](x[i]))
+            else:
+                ups.append(x[i])
+        if len(ups) > 1:
+            x = torch.cat(ups, dim=1)
+        elif len(ups) == 1:
+            x = ups[0]
+
+        if len(self.deblocks) > self.num_levels:
             x = self.deblocks[-1](x)
         return x
+
+    def get_layer_i_feature(self, spatial_features, layer_i):
+        """
+        before multiscale intermediate fusion
+        """
+        return eval(f"self.resnet.layer{layer_i}")(spatial_features)  # tuple of features

@@ -6477,3 +6477,26 @@ env: opencood-gzc
 - 是否替换主文结果的验收标准。
 
 同时更新 `protocol_native_claim_audit.md`，将 Pure late detector/checkpoint fairness 从 open 改为 pass；P1 剩余风险只保留 early-fusion checkpoint strength。
+## 2026-07-19 - Early-from-late detector checkpoint probe
+
+- 目的：验证是否可以保持 SGCP raw point-cloud early-fusion 通信语义不变，只用更强 late detector checkpoint 初始化/替换 merged point-cloud detector，从而改善当前 early checkpoint 偏弱导致的 AP@0.7 风险。
+- 实验目录：`docs/doc_workspace/SGCP/artifacts/early_from_late_checkpoint_20260719/`。
+- 模型目录：`pointpillar_early_from_late_weights/`，其中 `config.yaml` 复制自 `opencood/logs/pointpillar_early_fusion/config.yaml`，`latest.pth` 复制自 `opencood/logs/pointpillar_late_fusion/net_epoch30.pth`。
+- 专用配置：`enable_coperception_early_from_late.yaml`，仅将 `models.early` 指向上述实验模型目录，`fusion_method` 仍为 `early`。
+- 计划命令：先运行 11 帧 SGCP-PAPG smoke test；若结构兼容且结果不差，再运行 41 帧 SGCP-PAPG、Pure late controlled 和 Full20Early upper reference。
+
+## 2026-07-19 - COSDH checkpoint as SGCP early detector probe
+
+- 目的：测试 `D:\Files\Recent\opv2v_cosdh-20260708T114517Z-3-001.zip` 中 COSDH checkpoint 是否可作为 SGCP merged point-cloud detector 的更强初始化。
+- 约束：不修改 `C:\Workspace\OpenCOOD`；只读取其代码/配置。权重包解压到本仓库 artifact：`docs/doc_workspace/SGCP/artifacts/cosdh_checkpoint_probe_20260719/opv2v_cosdh/`。
+- COSDH 原配置：`core_method=point_pillar_comm_multiscale`、`fusion.core_method=intermediate`、LiDAR range `[-140.8, -38.4, -3, 140.8, 38.4, 1]`。
+- 第一阶段实验不引入 COSDH 中期融合模型本体，而是生成 `pointpillar_early_from_cosdh_compatible/latest.pth`：将 COSDH 中 140 个与 SGCP early `point_pillar` 同名同形状权重迁移到 early detector，`cls_head.weight` 与 `reg_head.weight` 因通道不兼容保留原 early 权重。
+- 专用配置：`enable_coperception_early_from_cosdh.yaml`，仅将 `models.early` 指向上述兼容模型目录，`fusion_method` 仍为 `early`。
+- 计划命令：先跑 11 帧 SGCP-PAPG smoke test；若 AP 有提升，再扩展到 41 帧，并补 Pure late controlled / Full20Early 同 checkpoint 公平对照。
+
+### 结果更新
+
+- late detector checkpoint 直接替换 early detector：11 帧 SGCP-PAPG 为 `0.58/0.48/0.15`，低于原 early checkpoint 的 `0.76/0.73/0.34`，不继续扩展。
+- attentive intermediate checkpoint 直接作为 early detector：11 帧为 `0.85/0.77/0.32`，41 帧 SGCP-PAPG 为 `0.87/0.81/0.36`，Full20 early upper reference 为 `0.88/0.85/0.45`。该路线显著提升 AP@0.3/AP@0.5，但 AP@0.7 低于原 PAPG 主线的 `0.39`，适合作 checkpoint sensitivity / potential mainline candidate，不直接替换主表。
+- COSDH compatible-weight transplant：仅迁移 140 个同名同形状权重时 11 帧为 `0.00/0.00/0.00`；保留 early heads、仅迁移 COSDH backbone 时为 `0.02/0.00/0.00`。大量误检导致 AP 失效，不继续扩展。
+- COSDH 实模型适配：已从 `C:\Workspace\OpenCOOD` 复制所需模型代码到本仓库，新增 `--collapse-to-ego-pointcloud`，可将 SGCP 已调度 raw point cloud 合并为单个 receiver 输入，并加载 COSDH `point_pillar_comm_multiscale` checkpoint。1 帧 smoke test 成功跑通，但 6 个 cluster head 全部 `pred_boxes=0`，最终 `fused_pred_boxes=0`。当前判断为 COSDH 配置/后处理/训练分布与本 CARLA dump 不匹配，需要 logits/threshold calibration 后再扩展。

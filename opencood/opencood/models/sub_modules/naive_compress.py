@@ -25,8 +25,10 @@ class NaiveCompressor(nn.Module):
             nn.ReLU()
         )
 
-    def forward(self, x):
+    def forward(self, x, use_fp16=False):
         x = self.encoder(x)
+        if use_fp16:
+            x = x.to(torch.float16).to(torch.float32)
         x = self.decoder(x)
 
         return x

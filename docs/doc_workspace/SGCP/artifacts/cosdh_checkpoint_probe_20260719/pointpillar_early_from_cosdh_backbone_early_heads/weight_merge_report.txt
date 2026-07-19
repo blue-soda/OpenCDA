@@ -1,0 +1,5 @@
+early_path=opencood/logs/pointpillar_early_fusion/latest.pth
+cosdh_path=docs/doc_workspace/SGCP/artifacts/cosdh_checkpoint_probe_20260719/opv2v_cosdh/net_epoch22.pth
+loaded_from_cosdh=138
+fallback_to_early=4
+fallback_keys=cls_head.weight,cls_head.bias,reg_head.weight,reg_head.bias
