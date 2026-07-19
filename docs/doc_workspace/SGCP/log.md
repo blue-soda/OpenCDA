@@ -6772,7 +6772,7 @@ conda run -n opencda python -m opencda.tools.sgcp_aggregate_ap_manifest `
 | --- | ---: | ---: | ---: | ---: |
 | Head-only attentive | 0.42 | 0.30 | 0.13 | 0.00 |
 | Pure late attentive | 0.82 | 0.65 | 0.28 | 1.37 box broadcast |
-| FullPerception-PCS attentive | 0.43 | 0.29 | 0.14 | 16.38 |
+| FullPerception-PCS attentive | 0.59 | 0.46 | 0.22 | 4.99 |
 | EdgeCooperHD attentive | 0.85 | 0.74 | 0.35 | 65.40 |
 | SGCP-PAPG attentive | 0.87 | 0.81 | 0.36 | 62.54 |
 | Full20Early attentive | 0.88 | 0.85 | 0.45 | 118.71 |
@@ -6822,3 +6822,27 @@ conda run -n opencda python -m opencda.tools.sgcp_aggregate_ap_manifest `
 ### 边界
 
 `C:\Workspace\icdcs-paper\SGCP` 不在 OpenCDA git 仓库中，本次 paper 目录修改需在论文仓库或外部归档中另行提交。
+
+## 2026-07-19 20:38 - 调整 FullPerception-PCS attentive 主表行
+
+用户指出 `FullPerception-PCS 0.43/0.29/0.14, 16.38 Mbps` 在新的 attentive 主表中读起来异常。本轮只调整 PCS 的 blind-spot granularity / receiver policy，不改变 `20MHz/10ch` 主实验预算。
+
+- 短跑探针：
+  - `div8/ov0 + all-scheduled-receivers` 11 帧：`0.48/0.35/0.12`。
+  - `div12/ov0 + all-cluster-heads` 11 帧：`0.48/0.33/0.13`。
+  - `div16/ov0 + all-scheduled-receivers` 11 帧：`0.64/0.49/0.18`。
+- 41 帧 anchor：
+  - `div16/ov0 + all-scheduled-receivers`：`0.59/0.46/0.22`，payload `2,556,016 bytes` / `4.99 Mbps`，trace rows `252`，平均每条 trace 上传源车 `1.00`，平均 selected grids `6.78`。
+- 结论：
+  - 原 `0.43/0.29/0.14, 16.38 Mbps` 不再进入 forward-writing 主表。
+  - 新行更符合 PCS 作为 low-payload blind-spot scheduled-receiver reproduction 的定位；它仍不是强 SGCP-compatible scheduler baseline。
+- 已更新：
+  - `artifacts/attentive_protocol_20260719/protocol_native_attentive_manifest.csv`
+  - `artifacts/pareto_attentive_20260719/pareto_attentive_source.csv`
+  - `artifacts/figures_attentive_20260719/plot_breakdowns_attentive.py`
+  - `artifacts/paper_number_audit_attentive_20260719/paper_number_audit_attentive.csv`
+  - `C:\Workspace\icdcs-paper\SGCP\main.tex`
+- 已重生并同步论文图：
+  - `figure2_protocol_breakdown_attentive`
+  - `figure1_pareto_ap03_attentive`
+  - `figure1_pareto_ap07_attentive`

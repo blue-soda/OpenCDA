@@ -15,6 +15,7 @@ docs\doc_workspace\SGCP\artifacts\paper_number_audit_attentive_20260719\paper_nu
 - Table 1 now matches `artifacts/attentive_protocol_20260719/protocol_native_attentive_manifest.csv`.
 - Table 3 now matches `artifacts/attentive_scheduler_comparison_20260719/scheduler_comparison_attentive_manifest.csv`.
 - Pure late communication now uses the attentive 80 B/box one-hop broadcast estimate: `1.37 Mbps`.
+- FullPerception-PCS now uses the adjusted attentive low-payload scheduled-receiver anchor: `0.59/0.46/0.22`, `4.99 Mbps`.
 - Paper figure PDFs were copied from the attentive artifacts into `C:\Workspace\icdcs-paper\SGCP\fig`:
   - `sgcp_protocol_breakdown.pdf`
   - `sgcp_fusion_contribution.pdf`

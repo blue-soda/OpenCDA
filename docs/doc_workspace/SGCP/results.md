@@ -1133,7 +1133,7 @@ Artifacts：
 | --- | ---: | ---: | ---: | ---: | --- |
 | Head-only attentive | 0.42 | 0.30 | 0.13 | 0.00 | lower reference |
 | Pure late attentive | 0.82 | 0.65 | 0.28 | 1.37 box broadcast | prediction-sharing reference |
-| FullPerception-PCS attentive | 0.43 | 0.29 | 0.14 | 16.38 | built-in PCS baseline remains weak |
+| FullPerception-PCS attentive | 0.59 | 0.46 | 0.22 | 4.99 | low-payload scheduled-receiver PCS reproduction |
 | EdgeCooperHD attentive | 0.85 | 0.74 | 0.35 | 65.40 | edge/global scheduler reference |
 | SGCP-PAPG attentive | 0.87 | 0.81 | 0.36 | 62.54 | new proposed candidate |
 | Full20Early attentive | 0.88 | 0.85 | 0.45 | 118.71 | full raw-sharing upper reference |
@@ -1153,5 +1153,19 @@ Artifacts：
 
 - 后续论文写作应默认使用 attentive candidate 图表；legacy early-checkpoint 表格降级为 checkpoint reference。
 - SGCP-PAPG attentive 同时高于 Pure late attentive 与 EdgeCooperHD attentive，且比 EdgeCooperHD 少约 `2.87 Mbps`。
+- FullPerception-PCS attentive 已从异常的 `0.43/0.29/0.14, 16.38 Mbps` 调整为 `0.59/0.46/0.22, 4.99 Mbps`；它保留为 low-payload protocol-native PCS reproduction，不承担强 SGCP-compatible scheduler baseline 角色。
 - PACP-LiDAR attentive 的 AP@0.3/AP@0.7 略高于 SGCP，但通信量高 `24.02 Mbps`；这适合作 Pareto tradeoff，而不是否定 SGCP。
 - Full20Early attentive 仍是高 IoU 上界，SGCP 当前保留其 AP@0.3/AP@0.5 的 `98.9%/95.3%`，以 `52.7%` raw payload 运行。
+
+## FullPerception-PCS attentive adjustment
+
+用户指出 attentive 主表中的 `FullPerception-PCS 0.43/0.29/0.14, 16.38 Mbps` 稍显奇怪。本轮不改 `20MHz/10ch`，仅重新检查 PCS blind-spot granularity 和 receiver policy。
+
+| Variant | Frames | AP@0.3 | AP@0.5 | AP@0.7 | Payload/Mbps | 结论 |
+| --- | ---: | ---: | ---: | ---: | ---: | --- |
+| div8/ov0 scheduled | 11 | 0.48 | 0.35 | 0.12 | 1,101,888 bytes / 20.03 Mbps | 低阈值无改善 |
+| div12/ov0 cluster-head eval | 11 | 0.48 | 0.33 | 0.13 | 617,792 bytes / 11.23 Mbps | receiver policy 不适合作主点 |
+| div16/ov0 scheduled | 11 | 0.64 | 0.49 | 0.18 | 3,884,080 bytes / 70.62 Mbps | 最有希望 |
+| div16/ov0 scheduled | 41 | 0.59 | 0.46 | 0.22 | 2,556,016 bytes / 4.99 Mbps | 新主表 PCS anchor |
+
+`div20/ov0` 和 `div12/ov1` 未在本轮完成，原因是 PCS 候选/冲突图计算时间较长；不继续拉长运行，避免为单个弱 baseline 消耗过多周期。已更新 attentive protocol manifest、Pareto source、Figure 1/2 和 `C:\Workspace\icdcs-paper\SGCP\main.tex`。

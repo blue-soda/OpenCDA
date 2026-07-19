@@ -102,7 +102,7 @@ def make_protocol() -> None:
     comm_labels = [
         "raw 0.0",
         "box 1.37",
-        "raw 16.4",
+        "raw 5.0",
         "raw 65.4",
         "raw 62.5",
         "raw 118.7",

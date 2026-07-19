@@ -19,8 +19,8 @@ docs\doc_workspace\SGCP\artifacts\paper_artifact_index_20260719\paper_artifact_i
 
 | Paper Item | Primary Artifact | Commit | Status | Boundary |
 | --- | --- | --- | --- | --- |
-| Attentive Table 1 Protocol-Native Candidate | `artifacts/attentive_protocol_20260719/protocol_native_attentive_manifest.csv` | this update | preferred candidate | 后续写作默认入口；SGCP-PAPG attentive `0.87/0.81/0.36` at `62.54 Mbps`，高于 Pure late / EdgeCooperHD attentive；Full20Early 仍是 upper reference。 |
-| Attentive Figure 1 AP-Mbps Pareto | `artifacts/pareto_attentive_20260719/pareto_attentive_source.csv` | this update | preferred candidate | 使用 attentive source points；PACP-LiDAR AP@0.3/AP@0.7 略高但通信明显更贵，SGCP 是更优中等通信点。 |
+| Attentive Table 1 Protocol-Native Candidate | `artifacts/attentive_protocol_20260719/protocol_native_attentive_manifest.csv` | this update | preferred candidate | 后续写作默认入口；SGCP-PAPG attentive `0.87/0.81/0.36` at `62.54 Mbps`，高于 Pure late / EdgeCooperHD attentive；FullPerception-PCS 为 low-payload reproduction `0.59/0.46/0.22` at `4.99 Mbps`；Full20Early 仍是 upper reference。 |
+| Attentive Figure 1 AP-Mbps Pareto | `artifacts/pareto_attentive_20260719/pareto_attentive_source.csv` | this update | preferred candidate | 使用 attentive source points；FullPerception-PCS 是 low-payload protocol-native PCS reproduction；PACP-LiDAR AP@0.3/AP@0.7 略高但通信明显更贵，SGCP 是更优中等通信点。 |
 | Attentive Figure 2/3/4 Breakdowns | `artifacts/figures_attentive_20260719/` | this update | preferred candidate | Figure 2 protocol、Figure 3 fusion、Figure 4 scheduler 均使用 attentive detector；Pure late 标为 `box 1.37`。 |
 | Attentive Table 2 Fusion Scaffold | `artifacts/attentive_fusion_ablation_20260719/fusion_scaffold_attentive_manifest.csv` | this update | preferred candidate | Clustered early-only `0.51/0.45/0.21` 到 Full SGCP `0.87/0.81/0.36`，支撑两层融合贡献。 |
 | Attentive Table 3 Scheduler Comparison | `artifacts/attentive_scheduler_comparison_20260719/scheduler_comparison_attentive_manifest.csv` | this update | preferred candidate | SGCP-compatible scheduler comparison；PACP-LiDAR 更高 AP@0.3/AP@0.7 但 `86.56 Mbps`，SGCP AP@0.5 最高且 `62.54 Mbps`。 |

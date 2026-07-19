@@ -15,6 +15,7 @@ Key reading:
 
 - `SGCP_PAPG_attentive` reaches `0.87/0.81/0.36` at `62.54 Mbps`.
 - `PureLateBroadcast80_attentive` reaches `0.82/0.65/0.28` with `1.37 Mbps` box-broadcast overhead.
+- `FullPerceptionPCS_attentive` reaches `0.59/0.46/0.22` at `4.99 Mbps`; it is a low-payload PCS reproduction, not a strong SGCP-compatible scheduler baseline.
 - `EdgeCooperHD_attentive` reaches `0.85/0.74/0.35` at `65.40 Mbps`.
 - `PACP_LiDAR_attentive` reaches `0.88/0.79/0.37` at `86.56 Mbps`.
 - `Full20Early_attentive` is the raw-sharing upper reference: `0.88/0.85/0.45` at `118.71 Mbps`.

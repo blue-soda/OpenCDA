@@ -63,6 +63,7 @@
   - [x] Attentive intermediate checkpoint 作为 early detector 已完成全图表 candidate 重跑：41 帧 SGCP-PAPG `0.87/0.81/0.36`，Pure late attentive controlled `0.82/0.65/0.28`，Full20Early attentive upper reference `0.88/0.85/0.45`。后续写作默认使用 attentive candidate；legacy `pointpillar_early_fusion` 结果降级为 checkpoint-reference artifacts。
   - [x] 补齐 attentive 下的关键 EdgeCooperHD 对照：EdgeCooperHD attentive 41 帧 `0.85/0.74/0.35`、`65.40 Mbps`，SGCP-PAPG attentive `0.87/0.81/0.36`、`62.54 Mbps`，说明同 detector/checkpoint 口径下 SGCP 可同时优于 Pure late attentive 和 EdgeCooperHD attentive。该结论仍是 checkpoint sensitivity / candidate，若替换主表需完整重跑所有 baseline。
   - [x] 重跑 attentive Table/Figure：Table 1 `attentive_protocol_20260719`，Table 2 `attentive_fusion_ablation_20260719`，Table 3 `attentive_scheduler_comparison_20260719`，Figure 1 `pareto_attentive_20260719`，Figure 2/3/4 `figures_attentive_20260719`。PACP-LiDAR attentive `0.88/0.79/0.37`、`86.56 Mbps`，可作为高通信参考；SGCP attentive 保持 AP@0.5 最强且通信更低。
+  - [x] 调整 FullPerception-PCS attentive 异常行：不改 20MHz/10ch，只把 blind-spot granularity 调为 `division=16,min_overlap=0` 并使用 scheduled-receiver protocol，41 帧结果为 `0.59/0.46/0.22`、`4.99 Mbps`。主文写成 low-payload protocol-native PCS reproduction，不写成强公平 scheduler baseline。
   - [x] COSDH compatible-weight transplant 已判负：11 帧 `0.00/0.00/0.00` 或 `0.02/0.00/0.00`。
   - [x] COSDH 实模型已复制必要代码并跑通 1 帧 collapsed smoke test；进一步用 `--debug-opencood-output` 和 `score_threshold=0.01/0.005/0.003` 诊断后确认 `psm` 置信度极低且正式 postprocess 仍无最终框。该路线完成 first-pass 判定：暂不扩展 11/41 帧，不进入主表；后续仅作为低优先级 calibration/debug。
 
