@@ -7035,3 +7035,20 @@ C:\Workspace\icdcs-paper\SGCP\experiment_results_20260720
 
 - 结果包共 106 个文件，约 3.99 MB。
 - 不包含 detector checkpoint 权重；只包含结果、图表、日志、trace 和绘图/说明文件。
+
+## 2026-07-20 06:25 - INFOCOM clean experiment directory corrected
+
+用户指出此前放入 `C:\Workspace\2026-7-papers\infocom\SGCP\experiment` 的混合协议候选主表会误导 Table 1 写作。本轮已清理并重建该目录：
+
+- 完全移除误导性 raw candidate table，不再保留 deprecated 目录。
+- 新增 `protocol_matrix.md`，强制每张表逐行记录 checkpoint、late fusion、clustering、resource allocation 四个维度；当前 checkpoint 统一为 attentive。
+- 新增 `data/table1_original_protocol_baselines_20260720.csv`，将原版/协议适配 baseline 与 SGCP-scaffold scheduler comparison 分离。
+- 新增 `data/table5_clustering_ablation_attentive_20260720.csv`，补充分簇算法消融。
+- 重生成 `figures/figure0` 到 `figure7` 的 PNG/PDF，并重建 `MANIFEST.csv`。
+
+新增 41 帧实验：
+
+- FullPerception-PCS protocol adaptation：`attentive / no late / all_in_one / fullperception_pcs`，AP `0.22/0.17/0.07`，`11.07 Mbps`，215 receiver samples。
+- EdgeCooper V2V protocol adaptation：`attentive / no late / singleton / selective_edgecooper_global`，AP `0.54/0.48/0.25`，`282.20 Mbps`，820 receiver samples。
+- Fixed first-frame clustering ablation：`attentive / inter_cluster_nms / fixed_first_frame / perception_aware_potential_game`，AP `0.83/0.70/0.28`，`62.63 Mbps`。
+- All-in-one full raw-sharing clustering reference：`attentive / identity_single_cluster / all_in_one / full_cluster`，AP `0.89/0.86/0.45`，`118.71 Mbps`。

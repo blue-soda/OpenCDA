@@ -1198,3 +1198,28 @@ Artifacts：
 | Channels | 20 | 0.88 | 0.81 | 0.36 | 67.33 | Limited extra gain |
 
 `div20/ov0` 和 `div12/ov1` 未在本轮完成，原因是 PCS 候选/冲突图计算时间较长；不继续拉长运行，避免为单个弱 baseline 消耗过多周期。已更新 attentive protocol manifest、Pareto source、Figure 1/2 和 `C:\Workspace\icdcs-paper\SGCP\main.tex`。
+
+## INFOCOM Clean Experiment Package - 2026-07-20
+
+路径：`C:\Workspace\2026-7-papers\infocom\SGCP\experiment`。
+
+### Original / Protocol Adaptation Baselines
+
+| Method | Checkpoint | Late fusion | Clustering | Resource allocation | AP@0.3 | AP@0.5 | AP@0.7 | Mbps | Samples |
+| --- | --- | --- | --- | --- | ---: | ---: | ---: | ---: | ---: |
+| Full 20-CAV early fusion | attentive | none | none | full sharing | 0.88 | 0.85 | 0.45 | 118.71 | 41 |
+| Pure late | attentive | prediction NMS | singleton | local detection | 0.82 | 0.65 | 0.28 | 1.37 box | 41 |
+| FullPerception-PCS protocol adaptation | attentive | none | all_in_one | fullperception_pcs | 0.22 | 0.17 | 0.07 | 11.07 | 215 |
+| EdgeCooper V2V protocol adaptation | attentive | none | singleton | selective_edgecooper_global | 0.54 | 0.48 | 0.25 | 282.20 | 820 |
+| SGCP-PAPG | attentive | inter-cluster NMS | coalition_game | perception_aware_potential_game | 0.87 | 0.81 | 0.36 | 62.54 | 41 |
+
+### Clustering Ablation
+
+| Variant | Checkpoint | Late fusion | Clustering | Resource allocation | AP@0.3 | AP@0.5 | AP@0.7 | Mbps |
+| --- | --- | --- | --- | --- | ---: | ---: | ---: | ---: |
+| Singleton pure late reference | attentive | prediction NMS | singleton | local detection | 0.82 | 0.65 | 0.28 | 1.37 box |
+| Fixed first-frame clusters | attentive | inter-cluster NMS | fixed_first_frame | perception_aware_potential_game | 0.83 | 0.70 | 0.28 | 62.63 |
+| Dynamic coalition clusters (SGCP) | attentive | inter-cluster NMS | coalition_game | perception_aware_potential_game | 0.87 | 0.81 | 0.36 | 62.54 |
+| All-in-one full raw sharing | attentive | identity single cluster | all_in_one | full_cluster | 0.89 | 0.86 | 0.45 | 118.71 |
+
+结论：当前写作应把原版/协议适配 baseline 与 SGCP-compatible scheduler comparison 分成两类表。Table 3 scheduler comparison 仍可证明同等 coalition + late-fusion scaffold 下 PAPG 的 AP@0.5 优势；Table 1 original/protocol adaptation 则显示不引入 SGCP coalition 和 inter-cluster late fusion 时，PCS/EdgeCooper-style V2V adaptation 难以达到 SGCP 的 aggregate AP。
