@@ -6639,7 +6639,7 @@ Artifacts：
 - 新增 `docs\doc_workspace\SGCP\artifacts\paper_number_audit_20260719\paper_number_audit.csv`。
 - 新增 `docs\doc_workspace\SGCP\artifacts\paper_number_audit_20260719\paper_number_audit.md`。
 - 修正 `docs\doc_workspace\SGCP\artifacts\parameter_sensitivity_20260719\table4_parameter_sensitivity.csv` 的 channel labels：`40 MHz` -> `20 MHz`。
-- 给 `protocol_native_manifest.csv` 和 `scheduler_comparison_manifest.csv` 补 `num_channels` / `bandwidth_mhz` 列。
+- 使用更新后的 `opencda.tools.sgcp_aggregate_ap_manifest` 重生成 `protocol_native_manifest.csv` 和 `scheduler_comparison_manifest.csv`，通过 override 明确补入 `num_channels` / `bandwidth_mhz` 列。
 - 增强 `opencda.tools.sgcp_aggregate_ap_manifest`：未来 trace 中若有 `num_channels` / `bandwidth_mhz` 字段，manifest 会保留它们。
 
 ### 结论

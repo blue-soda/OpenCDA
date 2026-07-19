@@ -1003,6 +1003,7 @@ Manifest：`docs\doc_workspace\SGCP\artifacts\pcs_parameter_sweep_20260719\pcs_p
 - Pure late 例外已明确：manifest 中 raw-LiDAR payload 为 `0`，论文表格使用 `late_fusion_box_comm.md` 的 80 B/box one-hop broadcast estimate，即 `0.74 Mbps`。
 - `table4_parameter_sensitivity.csv` 的 channel sweep 标签从 legacy `5/10/20 ch / 40 MHz` 修正为 `5/10/20 ch / 20 MHz`，对应当前复现实验命令中的 `--bandwidth-mhz 20`。
 - `opencda.tools.sgcp_aggregate_ap_manifest` 已新增 `num_channels` / `bandwidth_mhz` 输出字段，后续新 trace 若包含网络元数据，manifest 不再丢失该口径。
+- `protocol_native_manifest.csv` 和 `scheduler_comparison_manifest.csv` 已用更新后的 manifest 工具重生成，并通过 override 写入当前 paper scope 的 `10` subchannels / `20` MHz。
 
 ## Pareto claim audit
 

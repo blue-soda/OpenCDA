@@ -30,3 +30,5 @@ The current paper artifacts, however, are based on reproduced offline commands t
 ## Tooling Fix
 
 `opencda.tools.sgcp_aggregate_ap_manifest` now includes `num_channels` and `bandwidth_mhz` in its output schema when future traces provide these fields. This prevents the same ambiguity from recurring after new runs or fine-tuned checkpoint recovery.
+
+After the tooling change, `protocol_native_manifest.csv` and `scheduler_comparison_manifest.csv` were regenerated with explicit `num_channels=10` and `bandwidth_mhz=20` overrides. This keeps the current source tables reproducible by the manifest tool rather than relying on manual CSV column edits.
