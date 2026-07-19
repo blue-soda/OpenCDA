@@ -6950,3 +6950,30 @@ ssh mindspore-187 "nvidia-smi --query-gpu=index,memory.used,memory.total,utiliza
 剩余：
 
 - 仍需在有 `pdflatex` / `latexmk` 的环境中做真实 PDF 编译和视觉检查。
+
+## 2026-07-19 23:43 - 外部论文源码快照归档
+
+继续推进 P9/P10 的可追溯性收尾。由于 `C:\Workspace\icdcs-paper\SGCP` 不在 OpenCDA git 仓库中，本轮将当前论文源码快照复制到 SGCP artifact 目录。
+
+新增 artifact：
+
+```text
+docs\doc_workspace\SGCP\artifacts\paper_freeze_snapshot_20260719\
+```
+
+内容：
+
+- `main.tex`：当前外部论文正文快照。
+- `Reference.bib`：当前外部 bib 快照。
+- `MANIFEST.md`：记录 `main.tex`、`Reference.bib` 和论文侧 Figure 1/2/3 PDF 的 SHA256。
+
+同时更新：
+
+- `paper_freeze_check_20260719.md`：加入 snapshot 路径，并说明 active paper 目录仍需单独归档/版本控制。
+- `paper_artifact_index.md`：新增 Paper Freeze Source Snapshot 行。
+
+远端训练状态：
+
+- `mindspore-187` 仍无可用 GPU：8 张 GPU 均约 `22207/24576 MiB` used。
+- watcher 最新日志仍为 `no GPU below 6000 MiB; sleeping 300s`。
+- 仍未产生新训练 checkpoint，只有初始 `/data2/gzc/sgcp_early_train/checkpoints/latest.pth`。

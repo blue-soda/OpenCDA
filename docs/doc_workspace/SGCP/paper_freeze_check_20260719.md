@@ -8,6 +8,7 @@ This document records the current pre-freeze state of the SGCP paper draft. The 
 - Bibliography: `C:\Workspace\icdcs-paper\SGCP\Reference.bib`
 - Figure directory: `C:\Workspace\icdcs-paper\SGCP\fig`
 - Review file: `C:\Workspace\icdcs-paper\SGCP\SGCP-review.txt`
+- OpenCDA snapshot: `docs\doc_workspace\SGCP\artifacts\paper_freeze_snapshot_20260719`
 
 ## Current Draft State
 
@@ -51,7 +52,7 @@ High-risk phrase scan no longer finds:
 ## Remaining Risks
 
 - The current machine has no `pdflatex`, `latexmk`, `bibtex`, `xelatex`, `lualatex`, `tectonic`, or WSL LaTeX toolchain. The paper still needs a real PDF compile and visual check.
-- `main.tex` and `Reference.bib` are outside OpenCDA git; this document records the state, but the paper directory still needs separate archival or version control.
+- `main.tex` and `Reference.bib` are outside OpenCDA git. A snapshot has been copied into `artifacts/paper_freeze_snapshot_20260719`, but the active paper directory still needs separate archival or version control.
 - Remote early-fusion fine-tuning on `mindspore-187` has not produced a new checkpoint because GPUs remain occupied. The attentive candidate is the current forward-writing version; any future checkpoint replacement must trigger a new full table/figure artifact version.
 - Table 3 should continue to be described as a scheduler comparison inside the SGCP scaffold, because PACP-LiDAR and EdgeCooper-HD are proxy/reference methods with different information assumptions.
 - Runtime wording should remain control-plane near-real-time, not detector-inclusive 100 ms guarantee.

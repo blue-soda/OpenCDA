@@ -1,0 +1,737 @@
+\documentclass[conference]{IEEEtran}
+\IEEEoverridecommandlockouts
+% The preceding line is only needed to identify funding in the first footnote. If that is unneeded, please comment it out.
+\usepackage{cite}
+\usepackage{amsmath,amssymb,amsfonts}
+\usepackage{algorithmic}
+\usepackage{algorithm}
+\usepackage{graphicx}
+\usepackage{textcomp}
+\usepackage{xcolor}
+\def\BibTeX{{\rm B\kern-.05em{\sc i\kern-.025em b}\kern-.08em
+    T\kern-.1667em\lower.7ex\hbox{E}\kern-.125emX}}
+\begin{document}
+
+\title{Decentralized Collaborative Perception in Vehicular Networks: A Self-Organized Game-Theoretic Framework
+\thanks{
+% H. Zhang,  Z. Gong, Y. Yang and W. Lu are with the School of Computer Science and Technology, University of Science and Technology of China, Hefei, 230027, P. R. China. (e-mail: {fzhh}@ustc.edu.cn; \{gongzechuan, yuquany, luwenyu9\}@mail.ustc.edu.cn).
+}
+}
+
+% \author{\IEEEauthorblockN{Hui Zhang, Zechuan Gong,  Yuquan Yang and Wenyu Lu}
+% \IEEEauthorblockA{\textit{School of Computer Science and Technology} \\
+% \textit{University of Science and Technology of China}\\
+% Hefei, China \\
+% {fzhh}@ustc.edu.cn; \{gongzechuan, yuquany,luwenyu9\}@mail.ustc.edu.cn}
+% % \and
+% % \IEEEauthorblockN{2\textsuperscript{nd} Given Name Surname}
+% % \IEEEauthorblockA{\textit{dept. name of organization (of Aff.)} \\
+% % \textit{name of organization (of Aff.)}\\
+% % City, Country \\
+% % email address or ORCID}
+% }
+
+\maketitle
+
+\begin{abstract}
+Collaborative perception enhances autonomous driving safety by enabling vehicles to share sensor data, thereby extending perception ranges and reducing blind spots. However, achieving efficient and scalable collaboration under limited communication resources remains challenging in large-scale, high-density vehicular networks. Existing approaches often rely on roadside units (RSUs) for centralized scheduling or computation, which is inapplicable in infrastructure-free scenarios and prone to performance bottlenecks. To address this, we propose a decentralized, communication-efficient collaborative perception framework that operates through self-organized vehicle-to-vehicle cooperation without infrastructure support. Specifically, we formulate the problem as a mixed-integer nonlinear program and solve it via a hierarchical game-theoretic framework: first, vehicles autonomously form collaborative coalitions through a coalition game based on perceptual coverage complementarity and motion stability, and elect a leader; then, each leader coordinates its members via perception-aware potential-guided constrained scheduling that balances external-view coverage and object-prototype gains for local fusion, and finally, coalitions exchange lightweight detection results for global awareness. Simulations on the CARLA–OpenCDA–NS3 platform demonstrate that our method preserves most centralized full-sharing perception accuracy with substantially lower point-cloud traffic and improves the communication-performance tradeoff over capacity-matched V2V baselines.
+\end{abstract}
+
+\begin{IEEEkeywords}
+Connected and Autonomous Vehicles, Collaborative perception, Vehicular networks, Game theory, Resource allocation
+\end{IEEEkeywords}
+
+
+\section{Introduction}
+
+Connected and Autonomous Vehicles (CAVs) have become a fundamental component of future intelligent transportation systems, empowered by high-resolution sensors such as LiDARs and cameras to support safety-critical functions including collision warning~\cite{lin2015blind} and emergency avoidance~\cite{cui2022coopernaut}. Nevertheless, single-vehicle perception is intrinsically limited by line-of-sight constraints, occlusions and adverse environmental conditions, leading to inevitable perceptual blind spots~\cite{xu2022behind}. These limitations significantly degrade the reliability of autonomous driving, especially in dense urban environments.
+Collaborative perception (CP) mitigates this issue by allowing multiple CAVs to exchange perception information through V2X communications, thereby extending sensing coverage and improving detection robustness~\cite{wang2020v2vnet,kim2015impact}. In CP, perception tasks are executed collaboratively by a group of CAVs, enabling system-level awareness beyond the capability of any single agent.
+
+However, practical deployment of CP in large-scale vehicular networks is hindered by three fundamental challenges. First, collaborative perception, whether based on raw sensor data or compressed features, incurs substantial communication overhead, which is exacerbated by redundant transmissions from overlapping sensing regions and leads to superlinear growth of channel load as vehicle density increases\cite{liang2025fullperception}. Second, vehicular networks are highly dynamic: mobility, topology and perception quality change rapidly\cite{yang2023what2comm}, rendering static or centralized coordination schemes ineffective under bounded collaboration cycles. Third, many network-level CP systems such as \cite{zhang2021emp,luo2023edgecooper,liang2025fullperception} rely on Roadside Units (RSUs) for centralized scheduling or computing. Such infrastructure is costly, inflexible to traffic dynamics, and often unavailable, making RSU-dependent designs unsuitable for many real-world road networks.
+
+These challenges are exacerbated in dense urban intersections, where tens of vehicles may coexist within a limited area and perception updates are typically synchronized with 10\,Hz sensing cycles. Meanwhile, current benchmarks such as OPV2V~\cite{xu2022opv2v} and V2XSet~\cite{xu2022v2xset} primarily evaluate sparse scenarios, providing limited insight into the scalability of CP under realistic high-density conditions.
+
+
+To address these limitations, we propose a fully decentralized collaborative perception framework for infrastructure-free vehicular networks, grounded in a self-organized game-theoretic design. Specifically, as depicted in Fig.~\ref{fig:overview}, CAVs autonomously form stable collaboration clusters through a coalition game that evaluates perception performance and motion stability. Within each cluster, the elected leader schedules its members to upload only high-value point cloud regions for early fusion through perception-aware potential-guided PPS, which first prioritizes a strong external view for each leader and then allocates the remaining resource blocks to object-like regions with high marginal detection gain. Across clusters, leaders exchange lightweight detection results for late fusion. This hierarchical, game-driven approach suppresses redundant data propagation while maintaining high perception fidelity, enabling scalable, infrastructure-free CP in dense urban scenarios.
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=1.0\linewidth] {fig/scene_intro.pdf}
+% \caption{Overview of the proposed collaborative perception framework}
+\caption{System overview: CAVs self-organize into clusters, each with a leader. Members upload high-value point clouds to leaders for early fusion. CAVs broadcast detection results for late fusion across clusters.}
+\label{fig:overview}
+\end{figure}
+
+The main contributions of this paper are summarized as follows:
+\begin{itemize}
+    \item We propose a fully decentralized cooperative perception framework that eliminates RSU dependency by integrating coalition-game-based cluster formation with potential-guided resource scheduling, enabling self-organized collaboration under dynamic vehicular conditions.
+    
+    \item We design a hierarchical fusion architecture that combines intra-cluster point-cloud-level collaboration with inter-cluster result-level collaboration, achieving high perception accuracy while suppressing communication redundancy through perception-aware data selection.
+    
+    \item We validate the framework on CARLA–OpenCDA–NS3 simulation platform, demonstrating a favorable communication-performance tradeoff against centralized full-sharing references and capacity-matched V2V baselines under dense urban scenarios.
+\end{itemize}
+
+
+\section{Related Work}
+\label{sec:related}
+
+Collaborative perception (CP) methods can be categorized along two orthogonal dimensions: (1) the granularity of shared data, and (2) the underlying communication and scheduling architecture.
+
+\subsection{Collaboration Granularity}
+
+Based on the level of shared information, CP approaches fall into three categories.
+
+\textbf{Late fusion} exchanges only object-level detection results (e.g., bounding boxes with class and confidence). Arnold et al.~\cite{arnold2020nmsLate} applied non-maximum suppression (NMS) to fused detections from multiple vehicles. FusionEye~\cite{liu2019fusioneyeLate} integrated multi-view image detections into a unified traffic topology via bipartite matching. Song et al.~\cite{song2023late} proposed a distributed framework using optimal transport for cross-vehicle detection matching, while GraphPS~\cite{li2023graphps} employed graph-based similarity metrics to fuse multi-hop results. Late fusion minimizes communication overhead (typically \textless 10\,Mbps~\cite{li2023hetSDN}) and is model-agnostic, enabling seamless cooperation across heterogeneous fleets. However, it cannot recover geometric details lost during individual detection, limiting accuracy in complex scenes requiring precise localization.
+
+\textbf{Intermediate fusion} shares compressed neural network features instead of raw data. V2VNet~\cite{wang2020v2vnet} aggregates features from all neighbors using a graph neural network, improving detection performance but suffering from redundant all-to-all communication. When2Com~\cite{liu2020when2com} introduced a learnable handshake mechanism for dynamic partner selection. Where2Comm~\cite{hu2022where2comm} used spatial confidence maps to guide selective feature sharing, and UMC~\cite{wang2023umc} employed entropy-driven region selection with graph-structured aggregation. Although more efficient than raw data sharing, intermediate fusion requires homogeneous model architectures, hindering deployment in heterogeneous environments~\cite{li2023hetSDN}.
+
+\textbf{Early fusion} directly exchanges raw sensor data, most commonly LiDAR point clouds, and performs detection on the fused global view~\cite{chen2019cooper}. By integrating multi-perspective geometry, it achieves the highest detection accuracy but demands substantial bandwidth (over 100\,Mbps per link~\cite{li2023hetSDN}\cite{liang2025fullperception}) and intensive computation for registration and fusion~\cite{zhang2021emp}. To mitigate these costs, recent works have introduced structured data selection: EdgeCooper~\cite{luo2023edgecooper} employs voxel-based filtering to suppress redundant points, while our work uses grid-based utility-aware uploading.
+
+\subsection{Communication and Scheduling Architectures}
+
+Beyond fusion granularity, the communication architecture critically determines CP scalability and practicality. A major line of network-level CP frameworks relies on Roadside Units (RSUs) or edge nodes for centralized resource management.
+
+EdgeCooper~\cite{luo2023edgecooper} assumes a high-performance RSU that centrally coordinates surrounding CAVs for multi-hop point cloud collection and aggregation. Lu \emph{et al.}~\cite{lu2025joint} allow CAVs to offload partial perception workloads to a single high-capacity RSU and jointly optimize partner selection, data compression, transmission scheduling and computation offloading to balance blind-spot perception quality and end-to-end latency. Zhang \emph{et al.}~\cite{zhao2025multiDRL} further treat RSUs and resource-rich vehicles as edge service nodes and leverage deep reinforcement learning for dynamic computation offloading.  FullPerception~\cite{liang2025fullperception} proposes a blind-spot-driven on-demand transmission mechanism, in which the RSU performs global link weight computation, conflict detection and subchannel assignment for centralized resource scheduling, while all perception computation is executed at CAVs.
+
+These RSU-centric designs achieve strong performance in controlled settings but suffer from fundamental limitations: (1) high deployment and maintenance costs make dense urban coverage economically infeasible; (2) fixed RSU locations cannot adapt to spatiotemporal traffic variations; (3) centralized scheduling introduces single points of failure and becomes a bottleneck in high-density scenarios.
+
+In parallel, decentralized V2V perception methods such as V2VNet, When2Com and Where2Comm reduce infrastructure dependency through learned feature exchange or partner selection, but they usually assume a fixed collaboration graph, compatible neural features, or abstract communication budgets rather than explicit raw-LiDAR subchannel scheduling. Generic self-managed coalition formation has also been studied in non-vehicular cyber-physical systems, such as smart-grid energy trading~\cite{aslam2024smartform}. SGCP does not claim coalition formation itself as new; instead, it targets the less explored combination of adaptive collaboration structure, LiDAR-density perception utility, motion-stability hysteresis, capacity-constrained cluster maintenance, perception-aware raw point-cloud grid selection and explicit V2V resource scheduling in a fully decentralized CP pipeline. Our framework addresses this gap by integrating stability-aware cluster formation with potential-guided scheduling to improve perception gains without roadside infrastructure.
+
+\section{System Model}
+% \subsection{Scenario Overview}
+\subsection{Decentralized Collaborative Perception Framework}
+\label{sec:system_model}
+We consider an RSU-free urban intersection scenario,  where a set of CAVs equipped with LiDAR sensors is denoted by $\mathcal{V} = \{v_1, \dots, v_N\}$. 
+% To model spatial perception, 
+Each CAV periodically acquires point cloud data at 10\,Hz and participates in collaborative perception. 
+Assume that the scene’s $x$–$y$ plane is discretized into a set of non-overlapping grids $\mathcal{G}$ in global coordinates \cite{luo2023edgecooper}\cite{liang2025fullperception}, each CAV $v_i$ observes grids within its sensor radius $R^{\mathrm{sens}}$, forming the sensing region
+\begin{equation}
+\mathcal{G}_i^{\mathrm{sens}} = \{ g \in \mathcal{G} \mid \|c_g - \mathbf{x}_i\| \leq R^{\mathrm{sens}} \},
+\end{equation}
+%假定有高清地图获得全局坐标grid。
+where $\mathbf{x}_i$ is the vehicle position and $c_g$ is the center of grid $g$. 
+Similarly, its perceptual requirement region is defined by a larger radius $R^{\mathrm{req}}$:
+\begin{equation}
+\mathcal{G}_i^{\mathrm{req}} = \{ g \in \mathcal{G} \mid \|c_g - \mathbf{x}_i\| \leq R^{\mathrm{req}} \}.
+\end{equation}
+
+CAVs self-organize into disjoint collaboration clusters $\{\mathcal{S}_h\}_{h \in \mathcal{H}}$, where $\mathcal{H} \subseteq \mathcal{V}$ is the set of elected leaders and each cluster $\mathcal{S}_h$ is led by vehicle $h$.  
+The collaboration structure defines which vehicles participate in intra-cluster fusion and establishes the scope of collective perception goals. 
+For cluster $\mathcal{S}_h$, we define its collective requirement region as the union of all members’ individual requirement regions:
+\begin{equation}
+\mathcal{G}_{\mathcal{S}_h}^{\mathrm{req}} = \bigcup_{i \in \mathcal{S}_h} \mathcal{G}_i^{\mathrm{req}},
+\end{equation}
+which represents the total spatial area that the cluster aims to perceive collaboratively.
+The decentralized collaborative perception system operates in periodic collaboration cycles of duration $T_c = 100$\,ms, synchronized with the sensing interval. 
+
+In the decentralized collaborative perception system, each collaboration cycle contains the following four phases, as shown in Fig. \ref{fig:time_slot}:
+\begin{itemize}
+    \item \textbf{Cluster Formation}: 
+    CAVs self-organize into disjoint clusters based on spatial proximity, motion consistency and sensing overlap. 
+    At every cooperation cycle, CAVs refresh beacon-level state and perception-density metadata. Cluster membership, however, is updated only when the current coalition becomes infeasible or sufficiently suboptimal, e.g., due to neighbor-set changes, head/member disconnection, relative-motion risk, link-quality degradation, or a periodic guard. Otherwise, SGCP keeps the previous coalition and only updates PPS scheduling and perception fusion.
+    Within each cluster, a leader is elected to serve as the local fusion center.
+
+    \item \textbf{Transmission Scheduling and Point Cloud Transmission}: 
+    Each leader determines which grids its members should upload, based on perceptual utility and resource constraints. 
+    Only selected grids are transmitted, significantly reducing communication overhead while mitigating intra- and inter-cluster interference.
+
+    \item \textbf{Intra-cluster Fusion}: 
+    In each cluster, the leader aggregates received point cloud segments from its members and fuses them into an enhanced multi-view representation. 
+    The fused point cloud density over grid $g$ is the sum of contributions from all participating members. 
+    This fused density is then processed by a 3D detector (e.g., PointPillars) to produce local perception results.
+
+    \item \textbf{Inter-cluster Fusion}: 
+    After local perception is done, cluster leaders broadcast their detection results (object positions, categories and confidence scores) to neighboring vehicles via V2V links. 
+    CAVs integrate these results through late fusion to form a consistent global perception.
+\end{itemize}
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=1.0\linewidth] {fig/timeslot.pdf}
+% \caption{Overview of the proposed collaborative perception framework}
+\caption{Decentralized collaborative perception framework.}
+\label{fig:time_slot}
+\end{figure}
+
+
+
+\subsection{Channel Model}
+\label{sec:channel_model}
+The collaborative perception system employs 5G NR-V2X sidelink communication (PC5 interface) in Mode 2. The available system bandwidth $W$ is divided into $\mathcal K$ orthogonal subchannels, each of bandwidth $B = W / \mathcal K$. 
+The instantaneous data rate from CAV $v_i$ to CAV $v_j$ over subchannel $k$ is modeled using the Shannon capacity formula:
+\begin{equation}
+r_{i,j}^{k} = B \log_2\left(1 + \frac{p_i h_{i,j}^{k}}{\sum_{i' \in \mathcal{V},\, i' \neq i} p_{i'} h_{i',j}^{k} + \sigma^2}\right),
+\end{equation}
+where $p_i$ denotes the transmit power of $v_i$, $h_{i,j}^{k}$ is the channel gain including path loss, shadowing and small-scale fading, and $\sigma^2$ is the noise power. 
+
+
+Let $l_{i,j}^{k} \in \{0,1\}$ denote the activation status of the V2V link from vehicle $v_i$ to vehicle $v_j$ over subchannel $k$, where $l_{i,j}^{k} = 1$ indicates that the link is active.
+
+The link activation is  subject to half-duplex constraints
+\begin{equation}
+l_{i,j}^{k} + l_{j,i}^{k} \leq 1, \quad \forall i \neq j,
+\label{eq:half_duplex}
+\end{equation}
+and each active V2V link is assigned at most one subchannel:
+\begin{equation}
+\sum_{k \in \mathcal{K}} l_{i,j}^{k} \leq 1, \quad \forall i \neq j.
+\label{eq:one_subchannel_per_link}
+\end{equation}
+
+\section{Problem Formulation}
+
+%从数据传输和优化感知精度的角度，对第二阶段需要解决的问题进行形式化
+
+% 分簇对感知结果有重大影响，因此我们首先在给定的网络拓扑下研究感知性能，随后在优化问题中隐含了分簇的求解。
+The quality of collaborative perception is fundamentally shaped by the collaboration structure. To capture this dependency, we first formalize the hierarchical fusion
+process under
+a given network topology. Building on this model, we then formulate a joint optimization problem
+that couples coalition formation with scheduling decisions, while maximizing system-wide
+perception utility under practical communication and latency constraints.
+\subsection{Intra-Cluster Fusion}
+\label{sec:intra_cluster}
+Within each collaboration cluster, perception quality is determined by the aggregated point cloud density available to the leader. Recent studies confirm that detection accuracy strongly depends on point cloud density: FullPerception~\cite{liang2025fullperception} shows that perception accuracy degrades with sensing distance, which is typically associated with sparser LiDAR point clouds, while EdgeCooper~\cite{luo2023edgecooper} quantifies detection reliability via local point counts. These results establish point cloud density as a fundamental determinant of perception utility.
+
+In sparse regions, insufficient sampling severely degrades classification and localization accuracy~\cite{luo2023edgecooper}. As the sampling density increases, object geometry becomes more complete and detection performance improves rapidly. However, once local structures are sufficiently captured, the performance gain gradually saturates and the marginal benefit of additional points diminishes.
+
+We model detection accuracy as a function $f(\rho)$ of the aggregated point cloud density $\rho$, defined as the number of LiDAR points per unit area (points/m$^2$). The function satisfies
+\begin{equation}
+f'(\rho) > 0, \quad \lim_{\rho \to \infty} f(\rho) = f_{\max},
+\end{equation}
+where $f_{\max}$ denotes the upper bound of achievable detection accuracy under a given sensor configuration and scene complexity. Based on this saturating behavior, we define a saturation threshold $\rho_{\mathrm{th}}$ such that $f(\rho_{\mathrm{th}}) \geq (1 - \epsilon) f_{\max}$ for a small tolerance $\epsilon > 0$ (e.g., $\epsilon = 0.05$). Grids with aggregated density $\hat{\rho}_{k,g} \geq \rho_{\mathrm{th}}$ are considered perceptually saturated, and further data transmission to these regions yields negligible utility gain.
+
+The form of $f(\cdot)$ depends on the backbone models and environment and is obtained empirically. In this work, we adopt PointPillars as the backbone model and calibrate $f(\rho)$ using mAP@0.3 measurements from CARLA urban scenarios. This fitted function is treated as system metadata to guide resource allocation, such that communication and computation resources are prioritized for regions with high marginal perception gain, while avoiding waste in saturated areas.
+
+Let $x_{i,j,g}^{k} \in \{0,1\}$ denote the binary decision variable indicating whether CAV $v_i$ uploads the point cloud of grid $g$ to CAV $v_j$ over subchannel $k$. Consistent with the link activation model in Section~\ref{sec:channel_model}, we have
+\begin{equation}
+l_{i,j}^{k} = \min\Big\{1, \sum_{g \in \mathcal{G}} x_{i,j,g}^{k} \Big\},
+\end{equation}
+
+Let $\rho_{i,g}$ denote the raw point cloud density of CAV $v_i$ in grid $g$, with $\rho_{i,g} = 0$ for $g \notin \mathcal{G}_i^{\mathrm{sens}}$. 
+
+The effective point cloud density $\hat{\rho}_{i,g}$ used by vehicle $v_i$ for local detection is then defined as
+\begin{equation}
+\hat{\rho}_{i,g} =
+\begin{cases}
+\rho_{i,g} + \sum\limits_{m \in \mathcal{S}_i \setminus \{i\}} \sum\limits_{k \in \mathcal{K}} x_{m,i,g}^{k} \, \rho_{m,g}, & \text{if } v_i \in \mathcal{H}, \\
+\rho_{i,g}, & \text{otherwise}.
+\end{cases}
+\label{eq:rho_hat}
+\end{equation}
+This formulation indicates that leader vehicles fuse their own observations with scheduled uploads from members, while non-leader vehicles perform local detection using only their own sensor data. The local perception utility derived from grid $g$ is $f(\hat{\rho}_{i,g})$.
+
+
+The total transmitted data volume from $v_i$ to $v_j$ over subchannel $k$ is
+\begin{equation}
+s_{i,j}^{k} = \sum_{g \in \mathcal{G}} x_{i,j,g}^{k} \, \rho_{i,g} \, c_0,
+\end{equation}
+where $c_0$ is the data volume per unit point cloud density.
+
+The corresponding transmission delay is
+\begin{equation}
+T^{\mathrm{tr}}_{i,j,k} = \frac{s_{i,j}^{k}}{r_{i,j}^{k}}.
+\end{equation}
+
+For local computation, let $f_i$ denote the computational capacity of $v_i$ (in FLOPS), and $n_\mathrm{bit}$ the number of floating-point operations per input bit. The computation delay for early fusion at leader $v_i$ is
+\begin{equation}
+T^{\mathrm{cp}}_{i} = \frac{\sum_{j \in \mathcal{V}} \sum_{k \in \mathcal{K}} s_{j,i}^{k} \cdot n_\mathrm{bit}}{f_i}.
+\end{equation}
+
+The perception task must complete within the cooperation cycle $T_c$. For any leader $v_i$:
+\begin{equation}
+\max_{\substack{j \in \mathcal{S}_i \setminus \{i\} \\ k \in \mathcal{K}}} T^{\mathrm{tr}}_{j,i,k} + T^{\mathrm{cp}}_{i} \leq T_c.
+\label{eq:delay}
+\end{equation}
+
+\subsection{Inter-Cluster Fusion}
+\label{sec:inter_cluster}
+Late fusion integrates object-level detection results produced by different CAVs after early fusion and local inference. Each vehicle outputs a set of detected objects, which are subsequently aggregated to form a consistent global perception of the scene.
+
+Due to heterogeneous viewpoints and occlusions, the perceptual quality in a spatial region $g$ varies significantly across vehicles. For a given vehicle $v_k$, the local perception utility in region $g$ is denoted by $f(\hat{\rho}_{k,g})$, where $\hat{\rho}_{k,g}$ is the effective point cloud density used for its local detection.
+
+Late fusion can thus be abstracted as a region-wise aggregation process that preserves the most informative detection result among all contributors. Specifically, let $\mathcal{D}_g \subseteq \mathcal{V}$ denote the set of vehicles that successfully generate and share a detection result for grid $g$. The fused perception utility for grid $g$ is modeled as
+\begin{equation}
+F_g^{\mathrm{late}} = \max_{k \in \mathcal{D}_g} f(\hat{\rho}_{k,g}),
+\label{eq:F_fusion_max}
+\end{equation}
+which represents the highest detection quality achievable for grid $g$ across the network. Since no detection is possible when the point cloud density is zero, we have $f(0) = 0$. Moreover, for any vehicle $k$ that does not observe or upload data for grid $g$, it holds that $\hat{\rho}_{k,g} = 0$. Consequently,
+\begin{equation}
+\max_{k \in \mathcal{D}_g} f(\hat{\rho}_{k,g}) = \max_{k \in \mathcal{V}} f(\hat{\rho}_{k,g}).
+\end{equation}
+This formulation captures two essential properties of late fusion: (i) suboptimal-detection suppression, where low-quality or inconsistent detections are dominated by higher-confidence results, and (ii) coverage enhancement, where observations from any vehicle are propagated to all others through fusion, effectively extending the perceptual field of the system.
+
+Consequently, the total collaborative perception utility of any vehicle $v_i$ is determined by the best detection available for each grid in its requirement region:
+\begin{equation}
+U_i = \sum_{g \in \mathcal{G}_i^{\mathrm{req}}} F_g^{\mathrm{late}} = \sum_{g \in \mathcal{G}_i^{\mathrm{req}}} \max_{k \in \mathcal{V}} f(\hat{\rho}_{k,g}).
+\label{eq:U_total}
+\end{equation}
+This unified utility model captures the full benefit of hierarchical collaboration: intra-cluster early fusion enhances local detection quality for leaders, while inter-cluster late fusion ensures all vehicles inherit the best available perception across the entire network.
+
+
+\subsection{Optimization Problem Statement}
+\label{sec:problem_formulation}
+
+% Building on the hierarchical fusion model, we now formalize the transmission scheduling decisions and system constraints. 
+
+
+Based on the perception utility model and the channel constraints, we formulate cooperative perception as a joint optimization problem over cluster formation, communication scheduling and point cloud selection:
+
+\begin{align}
+& \max_{\{x_{i,j,g}^{k}\}} \quad \sum_{i \in \mathcal{V}} U_i
+\label{eq:target} \\
+& \text{subject to:} \quad
+\text{
+(\ref{eq:half_duplex}), 
+(\ref{eq:one_subchannel_per_link})},
+(\ref{eq:delay}), 
+\notag \\
+& \quad x_{i,j,g}^{k} \in \{0,1\}, \quad \forall i,j,g,k. \notag
+\end{align}
+
+The objective maximizes the aggregate perception utility across all vehicles, subject to 
+% cluster structures, 
+end-to-end latency
+and physical-layer communication constraints.
+
+This problem is NP-hard. Even the subproblem of selecting non-conflicting V2V links under half-duplex and interference constraints is equivalent to the \emph{maximum weighted independent set} (MWIS) problem on a conflict graph~\cite{basagni2001mwis}. Our formulation further complicates this core scheduling challenge by incorporating (i) nonlinear perception utilities $f(\cdot)$ with saturation effects, (ii) multi-grid point cloud selection decisions. Consequently, exact optimization becomes computationally intractable in large-scale, high-density vehicular networks.
+
+
+\section{SOLUTIONS}
+
+The joint optimization problem formulated in Section~\ref{sec:problem_formulation} is NP-hard. To enable scalable and distributed coordination in large-scale vehicular networks, we decompose the problem into two subproblems. First, vehicles self-organize into stable collaboration clusters through a coalition game, which determines who should share raw point cloud data for early fusion. Second, within each cluster, leaders perform distributed resource scheduling that jointly selects which point cloud segments to upload and allocates orthogonal subchannels for transmission, as late fusion across clusters operates via direct broadcast of detection results and requires no explicit coordination. This decomposition preserves the hierarchical nature of our framework while ensuring computational tractability.
+
+\subsection{Coalition Game-Based Collaboration Cluster Formation}
+
+Within the proposed hierarchical collaboration framework, self-organized cluster formation in large-scale, dynamic vehicular networks should prioritize coalitions that deliver genuine perception gains beyond what is achievable through late fusion alone. Centralized or proximity-based grouping strategies often fail to distinguish between redundant data sharing and value-adding multi-view fusion. To address this, we model cluster formation as a coalition game in which the value of a coalition $S$ quantifies the marginal benefit of early fusion: specifically, the improvement in perception utility obtained by fusing raw point cloud data within $S$, relative to a baseline where members operate independently and exchange only detection results via late fusion.
+
+\subsubsection{Perception-Based Coalition Value Function}
+
+Formally, for any coalition $S \subseteq \mathcal{V}$, let $\hat{\rho}_{S,g} = \sum_{i \in S} \rho_{i,g}$ denote the aggregated point cloud density over grid $g$, assuming full upload for valuation purposes. The perception utility attainable through early fusion is $f(\hat{\rho}_{S,g})$. In the absence of intra-cluster point cloud sharing, each member performs local detection independently, and the best utility achievable for grid $g$ through late fusion is $\max_{i \in S} f(\rho_{i,g})$, 
+% as late fusion can select the highest-confidence detection among all members.
+according to Section \ref{sec:inter_cluster}.
+
+Consequently, the net gain from forming coalition $S$ is defined as:
+\begin{equation}
+V(S) = \sum_{g \in \mathcal{G}} \left[ f(\hat{\rho}_{S,g}) - \max_{i \in S} f(\rho_{i,g}) \right].
+\label{eq:V_overlap}
+\end{equation}
+
+This formulation ensures three desirable properties:
+\begin{itemize}
+    \item \textbf{Non-negativity}: $V(S) \geq 0$ due to the monotonicity of $f(\cdot)$ and $\hat{\rho}_{S,g} \geq \max_{i \in S} \rho_{i,g}$, so the coalition value measures non-negative marginal raw-fusion utility under the density model.
+    \item \textbf{Multi-view sensitivity}: The gain is maximized when members observe the same grid from geometrically complementary perspectives, rather than merely duplicating similar views, thus encouraging spatially proximate yet angularly diverse clusters.
+    \item \textbf{Resource efficiency}: Grids with uniformly low point cloud density across members yield negligible marginal gain, naturally discouraging unnecessary data transmission.
+\end{itemize}
+
+Critically, this design aligns with the hierarchical nature of our framework: since late fusion across clusters already provides global coverage and blind-spot compensation, intra-cluster early fusion is reserved exclusively for scenarios where multi-view point cloud fusion yields measurable accuracy improvements beyond late fusion. The resulting $V(S)$ serves as the potential function for our cluster formation algorithm, guiding autonomous vehicles toward clusters that deliver non-redundant, high-value perception enhancements.
+
+\subsubsection{Grid-Based Stability Contribution}
+
+To overcome the short-sightedness of traditional coalition games, we introduce a stability-aware contribution metric that accounts for vehicle motion dynamics.
+
+For coalition $S$, let $\bar{\mathbf{x}}_S$ and $\bar{\mathbf{v}}_S$ denote the average position and velocity of its members. The deviation of CAV $v_i$ is $\Delta\mathbf{x}_i = \mathbf{x}_i - \bar{\mathbf{x}}_S$ and $\Delta\mathbf{v}_i = \mathbf{v}_i - \bar{\mathbf{v}}_S$. Given a minimum stability window $T_{\min}^{\mathrm{stab}}$, its predicted position is
+\begin{equation}
+\mathbf{p}_i^{\mathrm{pred}} = \mathbf{x}_i + \Delta\mathbf{v}_i \, T_{\min}^{\mathrm{stab}}.
+\label{eq:x_pred_vec}
+\end{equation}
+This prediction is used to estimate the future sensing coverage of $v_i$ and assess its potential overlap with the coalition's requirement region.
+
+The immediate utility gain from $v_i$ joining $S$ is
+\begin{equation}
+V_i^{\mathrm{early}}(S) = \sum_{g \in \mathcal{G}_i^{\mathrm{sens}} \cap \mathcal{G}_S^{\mathrm{req}}} \left[ f(\hat{\rho}_{S,g} + \rho_{i,g}) - f(\hat{\rho}_{S,g}) \right],
+\end{equation}
+where $\hat{\rho}_{S,g}$ is the current fused density of coalition $S$.
+
+The future coverage overlap is quantified by the stability coefficient
+\begin{equation}
+\beta_i = \frac{|\mathcal{G}_i^{\mathrm{pred}} \cap \mathcal{G}_S^{\mathrm{req}}|}{|\mathcal{G}_i^{\mathrm{pred}}|}, \quad 0 \leq \beta_i \leq 1,
+\end{equation}
+with $\mathcal{G}_i^{\mathrm{pred}} = \{ g \mid \|c_g - \mathbf{p}_i^{\mathrm{pred}}\| \leq R^{\mathrm{sens}} \}$.
+
+The total contribution is then
+\begin{equation}
+\Delta V_i(S) = \beta_i \cdot V_i^{\mathrm{early}}(S),
+\label{eq:deltaV_i}
+\end{equation}
+which serves as the marginal utility for migration decisions, suppressing frequent reconfigurations while maintaining adaptivity.
+
+\subsubsection{Leader Election and Formation Algorithm}
+
+\paragraph{Leader Election}
+Each coalition elects a leader balancing geometric centrality and motion consistency:
+\begin{equation}
+h^\star = \arg\min_{i \in S} \left( \alpha \|\mathbf{x}_i - \bar{\mathbf{x}}_S\| + (1 - \alpha) \|\mathbf{v}_i - \bar{\mathbf{v}}_S\| \right),
+\end{equation}
+with $\alpha = 0.7$ prioritizing spatial proximity.
+
+\paragraph{Formation Algorithm}
+Coalition size is capped at $N_{\max}$ to avoid congestion. As outlined in Algorithm~\ref{alg:coalition_formation}, each CAV evaluates neighboring coalitions and migrates if $\Delta V_i(S) > 0$. Under a fixed topology snapshot and the admitted migration rule, each accepted move monotonically improves the partition potential $\Phi(\mathcal{C}) = \sum_{S \in \mathcal{C}} V(S)$, so the finite-action process terminates at a stable partition with no accepted beneficial migration. Resulting coalitions are retained across cycles unless a topology or stability trigger indicates that the current partition is infeasible or sufficiently suboptimal. The $T_{\min}^{\mathrm{stab}}$ term acts as a hysteresis window that suppresses frequent migrations, while PPS is recomputed every cycle to adapt to time-varying perception density and channel resources.
+
+\begin{algorithm}[ht]
+\caption{Stability-Constrained Cluster Formation and Leader Election}
+\label{alg:coalition_formation}
+\begin{algorithmic}[1]
+\REQUIRE Vehicle set $\mathcal{V}$; positions $\{\mathbf{x}_i\}$, velocities $\{\mathbf{v}_i\}$; sensing grids $\{\mathcal{G}_i^{\mathrm{sens}}\}$; parameters $N_{\max}, T_{\min}^{\mathrm{stab}}$;
+\ENSURE Stable coalition partition $\mathcal{C} = \{(S_h, h)\}$
+\STATE Initialize: $\mathcal{C} \gets \{ \{i\} \mid i \in \mathcal{V} \}$;
+\REPEAT
+    \STATE $\textit{updated} \gets \text{false}$;
+    \FOR{each vehicle $v_i \in \mathcal{V}$}
+        \STATE $S_i \gets$ current coalition of $v_i$;
+        \STATE $\mathcal{N}_ i \gets$ neighboring coalitions (e.g., distance $<2R^{\mathrm{sens}}$);
+        \STATE $\Delta V_i^{\max} \gets 0$, $S^\star \gets S_i$;
+        \FOR{each $S \in \mathcal{N}_i \cup \{S_i\}$}
+            \IF{$v_i \notin S$ and $|S| + 1 \leq N_{\max}$}
+                \STATE Compute $\Delta V_i(S) = \beta_i \cdot V_i^{\mathrm{early}}(S)$;
+                \IF{$\Delta V_i(S) > \Delta V_i^{\max}$}
+                    \STATE $\Delta V_i^{\max} \gets \Delta V_i(S)$, $S^\star \gets S$;
+                \ENDIF
+            \ENDIF
+        \ENDFOR
+        \IF{$S^\star \neq S_i$}
+            \STATE Move $v_i$ from $S_i$ to $S^\star$;
+            \STATE $\textit{updated} \gets \text{true}$;
+        \ENDIF
+    \ENDFOR
+\UNTIL{$\textit{updated} = \text{false}$}
+\FOR{each coalition $S \in \mathcal{C}$}
+    \STATE Elect leader $h^\star$ as above;
+    \STATE Record $(S, h^\star)$;
+\ENDFOR
+\RETURN $\mathcal{C}$;
+\end{algorithmic}
+\end{algorithm}
+
+\subsection{Distributed Resource Scheduling via Potential-Guided PPS}
+
+Once the collaboration cluster structure stabilizes, each leader must distributively schedule its members to upload point cloud data over limited time–frequency resources, aiming to maximize its cluster's perception utility. Since multiple leaders compete for shared wireless spectrum, this problem is naturally modeled as a non-cooperative scheduling game. We implement it as a potential-guided constrained best-response process: each leader selects feasible member, subchannel and grid actions according to their marginal contribution to a shared grid-level perception utility, while hard resource, half-duplex, capacity and SINR checks define the feasible action set.
+
+\subsubsection{Game Modeling and Utility Function}
+
+The players are the set of leaders $\mathcal{H} = \{h_1, \dots, h_H\}$, each representing cluster $\mathcal{S}_h$. The strategy of leader $h$ is its scheduling decision:
+\begin{equation}
+a_h = \left\{ x_{i,h,g}^{k} \,\middle|\, i \in \mathcal{S}_h,\, g \in \mathcal{G}_{\mathcal{S}_h}^{\mathrm{req}},\, k \in \mathcal{K} \right\},
+\end{equation}
+where $x_{i,h,g}^{k} \in \{0,1\}$ indicates whether member $v_i$ uploads grid $g$ to $h$ over subchannel $k$, and $\mathcal{G}_{\mathcal{S}_h}^{\mathrm{req}} = \bigcup_{i \in \mathcal{S}_h} \mathcal{G}_i^{\mathrm{req}}$ is the cluster’s collective requirement region.
+
+To ensure consistency with collaboration structure obtained from cluster formation, the strategy space is restricted such that:
+\begin{equation}
+x_{i,j,g}^{k} = 0, \quad \forall i \notin \mathcal{S}_j,
+\label{eq:cluster_constraint}
+\end{equation}
+\begin{equation}
+x_{i,j,g}^{k} = 0, \quad \text{if } v_j \notin \mathcal{H}.
+\label{eq:leader_constraint}
+\end{equation}
+Consequently, for leader $h$, only variables $x_{i,h,g}^{k}$ with $i \in \mathcal{S}_h$ are active; all other entries are fixed to zero by the structural constraints.
+
+According to Section \ref{sec:inter_cluster}, the utility of leader $h$ is defined as the sum of late-fusion utilities over this region:
+\begin{equation}
+U_h(a_h, a_{-h}) = \sum_{g \in \mathcal{G}_{\mathcal{S}_h}^{\mathrm{req}}} F_g^{\mathrm{late}} = \sum_{g \in \mathcal{G}_{\mathcal{S}_h}^{\mathrm{req}}} \max_{k \in \mathcal{V}}f(\hat{\rho}_{k,g}).
+\label{eq:U_total_all}
+\end{equation}
+This formulation ensures that the leader optimizes resource allocation to maximize the perception quality of the entire cluster.
+
+\subsubsection{Potential-Guided Scheduling Framework}
+
+Under fixed cluster membership, fixed candidate grids and feasibility constraints treated as hard action constraints, the grid-level perception utility can be used as a potential objective. This property arises because each leader's scheduling utility $U_h$ is defined as a sum of terms that depend on the global maximum perception utility per grid, i.e., $F_g^{\mathrm{late}} = \max_{k \in \mathcal{V}} f(\hat{\rho}_{k,g})$. Since an accepted upload can only increase or leave unchanged the fused density $\hat{\rho}_{h,g}$ over its selected grids, the corresponding update does not decrease the shared grid-level objective.
+
+Formally, we use the following grid-level objective as the potential guide:
+\begin{equation}
+\Phi(a) = \sum_{g \in \mathcal{G}} \max_{k \in \mathcal{V}} f(\hat{\rho}_{k,g}).
+\end{equation}
+For a unilateral feasible update by player $h$ whose local reward is defined as the corresponding marginal global utility, the update is evaluated by
+\begin{equation}
+\Delta U_h \equiv \Phi(a_h', a_{-h}) - \Phi(a_h, a_{-h}).
+\end{equation}
+Under the above fixed-candidate assumptions, $\Phi(a)$ serves as the potential objective for unilateral upload-grid changes whose local utility is defined as the corresponding marginal global utility. In implementation, PPS uses this potential as a scheduling guide and accepts only feasible actions over a finite set of members, subchannels and grids. Therefore, the algorithm terminates when no cluster can add a beneficial feasible upload or when the iteration cap is reached. We report empirical convergence and runtime in Section~V.
+
+As shown in Algorithm~\ref{alg:cluster_channel_game}, leaders iteratively update their strategies in parallel by solving local best-response problems based on the current global state. Only lightweight exchange of $\hat{\rho}_{h,g}$ is required.
+
+\begin{algorithm}[ht]
+\caption{Potential-Guided PPS Framework for Distributed Scheduling}
+\label{alg:cluster_channel_game}
+\begin{algorithmic}[1]
+\REQUIRE Leader set $\mathcal{H}$, cluster structure $\{\mathcal{S}_h\}$, resource pool $\mathcal{K}$;
+\ENSURE Converged strategy $a^\star$
+\STATE Initialize: Each $h$ generates feasible $a_h^{(0)}$ (e.g., distance-based heuristic);
+\STATE $n \gets 0$;
+\REPEAT
+    \STATE $n \gets n + 1$;
+    \FOR{each leader $h \in \mathcal{H}$ \textbf{in parallel}}
+        \STATE Observe $\{\hat{\rho}_{k,g}\}_{k \in \mathcal{H}}$, compute $F_g^{\mathrm{late}} = \max_k f(\hat{\rho}_{k,g})$;
+        \STATE Solve local best response:
+        \[
+        a_h^{(n)} \in \arg\max_{a_h \in \mathcal{A}_h} U_h(a_h, a_{-h}^{(n-1)}),
+        \]
+        where $\mathcal{A}_h$ enforces communication constraints;
+    \ENDFOR
+\UNTIL{Strategies stabilize or max iterations reached}
+\RETURN $a^\star = \{a_h^{(n)}\}_{h \in \mathcal{H}}$;
+\end{algorithmic}
+\end{algorithm}
+\subsubsection{Approximate Best Response: Perception-Priority Scheduling}
+
+The best-response problem is NP-hard, as it involves selecting a subset of members and grids to schedule under a limited resource budget while maximizing a nonlinear perception utility, generalizing the knapsack problem with combinatorial constraints. To enable real-time execution, we propose Perception-Priority Scheduling (PPS), a lightweight greedy approximation that prioritizes perception-critical and spatially complementary regions while respecting inter-cluster fairness.
+
+PPS operates under a perception-aware two-layer principle. Each cluster is allocated at most $B_h$ subchannels per cycle. In the coverage layer, the leader first reserves one high-quality external view whenever a member is available. This prevents low-IoU recall and spatial context from collapsing under tight channel budgets. In the target layer, remaining subchannels are assigned to member--leader actions with high object-prototype marginal gain. Candidate grids are not selected solely by raw density; the score combines head-weak regions, connected high-density components that resemble object footprints, multi-view confirmation grids and a bounded spatial-coverage term. This design preserves the potential-guided scheduling narrative while avoiding a purely greedy focus on isolated object peaks or redundant dense regions.
+\begin{algorithm}[ht]
+\caption{Perception-Priority Scheduling (PPS): Approximate Best Response for Leader $h$}
+\label{alg:best_response}
+\begin{algorithmic}[1]
+\REQUIRE Cluster $\mathcal{S}_h$, global resource status, $\hat{\rho}_{k,g}$ from all vehicles, saturation threshold $\rho_{\mathrm{th}}$;
+\ENSURE Updated scheduling strategy $a_h$
+\STATE Initialize: $\mathcal{S}_h^{\mathrm{sched}} \gets \emptyset$, used subchannels $u \gets 0$;
+\STATE Construct candidate grid and object-prototype sets:
+\[
+\mathcal{G}_{\mathrm{cand}} = \left\{ g \in \mathcal{G}_{\mathcal{S}_h}^{\mathrm{req}} \,\middle|\, \max_{k \in \mathcal{V}} \hat{\rho}_{k,g} < \rho_{\mathrm{th}} \right\};
+\]
+\IF{$\mathcal{G}_{\mathrm{cand}} = \emptyset$}
+    \RETURN $\emptyset$;
+\ENDIF
+
+\STATE \textbf{Coverage layer:} choose the feasible member $m_c$ with the largest coverage score over $\mathcal{G}_{\mathrm{cand}}$;
+\IF{$m_c$ exists and $u < B_h$}
+    \STATE Assign one idle subchannel to $m_c$;
+    \STATE Select bounded grids $\tilde{\mathcal{G}}_{m_c}$ using density, spatial coverage and head-weakness scores;
+    \STATE Schedule $\tilde{\mathcal{G}}_{m_c}$ and set $u \gets u+1$;
+\ENDIF
+\WHILE{$u < B_h$ and idle subchannels remain}
+    \STATE For each unscheduled member $m$, compute target score
+    \[
+    S_m^{\mathrm{tar}} = \sum_{g \in \mathcal{G}_m} \Delta f_{h,m,g}
+    + \lambda_o \, \Psi_{\mathrm{obj}}(m,h),
+    \]
+    where $\Delta f_{h,m,g}$ is the marginal density-utility gain at leader $h$ and $\Psi_{\mathrm{obj}}$ measures object-prototype gain from connected dense grids and multi-view confirmation.
+    \STATE Select the feasible member with maximum $S_m^{\mathrm{tar}}$;
+    \STATE Assign one idle subchannel and schedule its bounded target/context grid subset;
+    \STATE Update $\mathcal{S}_h^{\mathrm{sched}}$ and $u \gets u + 1$;
+\ENDWHILE
+\RETURN $\mathcal{S}_h^{\mathrm{sched}}$;
+\end{algorithmic}
+\end{algorithm}
+
+PPS accepts only actions with positive marginal utility and feasible resource assignments. The algorithm incurs minimal communication overhead, requiring only the shared grid-utility summaries and local resource occupancy information. Its computational complexity scales linearly with cluster size and with the number of candidate grids considered per scheduled member. By concentrating resources on perceptual bottlenecks while diversifying the selected spatial regions, PPS improves coverage under limited payload and remains suitable for dynamic vehicular environments.
+
+\section{PERFORMANCE EVALUATION}
+
+\subsection{Experimental Setup and Simulation Platform}
+
+We evaluate the proposed framework on a joint CARLA– OpenCDA–NS3 simulation platform. CARLA~\cite{dosovitskiy2017carla} provides high-fidelity urban intersection scenarios; OpenCDA~\cite{xu2021opencda} integrates the PointPillars perception module\cite{lang2019pointpillars} and implements cooperative logic; NS3~\cite{ns3,ns3-5g-lena} simulates 5G NR V2X Mode 2 D2D links under the 3GPP TR 37.885 channel model.
+
+\begin{figure*}[t]
+\centering
+\includegraphics[width=0.8\linewidth]{fig/scenario.png}
+\caption{A complex urban intersection scenario in CARLA Town03.}
+\label{fig:scenario}
+\end{figure*}
+
+As illustrated in Fig.~\ref{fig:scenario}, the scenario includes 100 vehicles, of which approximately 20 are CAVs equipped with LiDARs; the rest serve as non-cooperative background traffic. CAVs capture point clouds at 10\,Hz ($\approx$ 56,000 points/s), with a perception range of 50\,m and communication range of 100\,m. Vehicle speeds range from 0 to 60\,km/h. The main evaluation operates in the 5.9\,GHz band (n47 TDD) with 20\,MHz bandwidth, divided into $\mathcal{K}=10$ orthogonal subchannels; wider channel budgets are reported only as sensitivity settings. Each cooperation cycle lasts $T_c = 100$\,ms. Detailed parameters are listed in Table~\ref{tab:sim_params}.
+
+\begin{table}[htbp]
+\centering
+\caption{Simulation Parameters}
+\label{tab:sim_params}
+\begin{tabular}{|l|l|}
+\hline
+\textbf{Channel Parameters} & \textbf{Value} \\
+\hline
+Frequency band & 5.9 GHz \\
+Bandwidth & 20 MHz \\
+Number of subchannels ($\mathcal{K}$) & 10 \\
+Transmission power & 23 dBm \\
+Path loss model & $32.4 + 21 \log_{10}(d_{\text{3D}}) + 20 \log_{10}(f_c)$ \\
+Shadowing distribution & Log-normal \\
+Shadowing std. dev. & 4 dB \\
+Fast fading & Rayleigh \\
+Noise power spectral density & $-174$ dBm/Hz \\
+\hline
+\textbf{Perception Parameters} & \textbf{Value} \\
+\hline
+Perception range & 50 m \\
+LiDAR points per second & 56,000 \\
+LiDAR rotation frequency & 10 Hz \\
+Communication range & 100 m \\
+Number of vehicles & 100 \\
+Number of CAVs & 20 \\
+Velocity & 0–60 km/h \\
+Collaboration cycle & 100 ms \\
+Grid size & 10 m \\
+Saturation threshold ($\rho_{\mathrm{th}}$) & 2.0--3.0 points / m$^2$ \\
+Max cluster size ($N_{\max}$) & 4 \\
+Stability window ($T_{\min}^{\mathrm{stab}}$) & 500 ms \\
+\hline 
+\end{tabular}
+\end{table}
+
+We calibrate the density utility using the same grid reconstruction path as the SGCP replay. For each CAV and frame, LiDAR points are projected to the global grid map, and $\rho$ is measured as points per square meter in each 10\,m grid. In the 41-frame CARLA dump, we collect 788,020 CAV-grid density samples. Non-empty grids account for 5.98\% of all grid samples, with the 90th and 95th percentiles equal to 1.40 and 3.60 points/m$^2$, respectively. The default threshold $\rho_{\mathrm{th}}=2.0$ lies between these two percentiles and selects 7.18\% of non-empty grids as high-density candidates. We then sweep $\rho_{\mathrm{th}}$ and report the AP/payload tradeoff, rather than treating the density threshold as a universal constant. Since $\rho_{\mathrm{th}}$ depends on LiDAR resolution, grid size, point-cloud preprocessing and detector backbone, it should be recalibrated when these components change. Unless otherwise specified, $\rho_{\mathrm{th}}=2.0$ points/m$^2$ is used as the default scheduling threshold; we also report a tuned low-budget setting with $\rho_{\mathrm{th}}=3.0$.
+
+We set $N_{\max}=4$ as a capacity-control parameter rather than a pure accuracy-tuning knob. In the current dump, $N_{\max}=2$ creates many small clusters, while $N_{\max}=5/6$ makes the capacity constraint mostly inactive. The default $N_{\max}=4$ produces no singleton clusters, keeps the average cluster size at 3.33, and still records 99.15 capacity-skipped candidate joins per frame, indicating that the constraint actively prevents oversized coalitions. We treat $T_{\min}^{\mathrm{stab}}$ as a hysteresis parameter that prevents rapid coalition oscillation after a reconfiguration. Sweeping 100--1000\,ms produces the same AP and reconfiguration count in the tested 41-frame dump, so we use 500\,ms as a conservative default corresponding to five 10\,Hz perception cycles rather than claiming it is globally optimal.
+
+
+\subsection{Baseline Methods and Evaluation Metrics}
+
+We compare against the following baselines and reference configurations:
+\begin{itemize}
+    \item \textbf{Head-only}: Cluster heads run PointPillars without receiving point-cloud uploads, and their detections are combined through the same inter-cluster late-fusion path. This is a reproducible lower reference for the revised SGCP pipeline;
+    \item \textbf{Full 20-CAV early fusion}: A centralized upper reference that aggregates all non-ego CAV point clouds at the ego vehicle. This setting approximates the sensing upper bound of full raw-data sharing and is not used as a fair RSU-free communication baseline;
+    \item \textbf{FullPerception-PCS}: The repository implementation of FullPerception's blind-spot-driven PCS scheduler. We report the repaired scheduled-receiver protocol separately from the full-sharing upper reference because FullPerception is a baseline algorithm rather than an AP upper bound;
+    \item \textbf{EdgeCooper-HD}: A virtual edge-assisted reference inspired by EdgeCooper. It uses global blind-spot complementarity, sender-load balancing, V2V feasibility and half-duplex role constraints to schedule raw point-cloud uploads. Because the scheduling decision relies on global edge-side information, it is reported as an infrastructure-assisted reference rather than a fair RSU-free V2V baseline;
+    \item \textbf{Full-cluster}: All scheduled intra-cluster members upload their full point clouds to the cluster head, without grid-level filtering;
+    \item \textbf{Selective V2V}: A capacity-matched V2V scheduler that uses the same cluster structure and transmission budget as SGCP, but selects upload partners and grids using density or communication-aware heuristics instead of the proposed potential-guided PPS;
+    \item \textbf{Random/MWS diagnostics}: Random and maximum-weight scheduling variants that select conflict-free V2V links without the proposed perception-priority grid selection. These variants are reported as ablations because they either under-utilize the available payload budget or remain weak after sharing the tuned FullPerception blind-spot scheduling units;
+    \item \textbf{SGCP}: The proposed self-organized clustering and perception-priority scheduling framework with intra-cluster early fusion and inter-cluster late fusion.
+\end{itemize}
+All point-cloud-to-box inference paths use the same PointPillars-family detector backbone and attentive checkpoint unless a row is explicitly marked as an upper reference or sensitivity result. This keeps detector strength separate from the communication protocol being evaluated.
+
+Evaluation metrics include:
+\begin{itemize}
+    \item \textbf{Perception Performance}: Mean Average Precision (mAP) at different Intersection-over-Union (IoU) thresholds (i.e., mAP@0.3, mAP@0.5 and mAP@0.7);
+    \item \textbf{System Communication Overhead}: The aggregate data volume transmitted over all V2V links divided by the experiment duration, measured in Mbps.
+    
+\end{itemize}
+
+\subsection{Experimental Results Analysis}
+
+\subsubsection{Protocol-Native System Comparison}
+
+\begin{table*}[t]
+\centering
+\caption{Protocol-native perception and communication performance under dense urban conditions using a common attentive detector initialization. Communication is measured as aggregate V2V upload payload divided by the 4.1\,s evaluation duration, except Pure late where the reported value is the estimated one-hop prediction-box broadcast overhead. Pure late uses the same detector checkpoint for singleton local detection and the same NMS-based box fusion as SGCP, so it is a controlled prediction-sharing reference rather than a separate late-checkpoint detector. Full 20-CAV early fusion is an upper reference rather than a baseline algorithm.}
+\label{tab:mAP}
+\begin{tabular}{|l|ccc|c|}
+\hline
+Method & mAP@0.3 & mAP@0.5 & mAP@0.7 & Mbps \\
+\hline
+Head-only & 0.42 & 0.30 & 0.13 & 0.00 \\
+Pure late (prediction sharing) & 0.82 & 0.65 & 0.28 & 1.37 \\
+\hline
+\multicolumn{5}{|c|}{Full-sharing and infrastructure-assisted references} \\
+\hline
+Full 20-CAV early fusion & 0.88 & 0.85 & 0.45 & 118.71 \\
+FullPerception-PCS (raw-LiDAR adaptation) & 0.63 & 0.49 & 0.17 & 32.06 \\
+EdgeCooper-HD (edge-assisted) & 0.85 & 0.74 & 0.35 & 65.40 \\
+\hline
+\multicolumn{5}{|c|}{RSU-free V2V proposed protocol} \\
+\hline
+\textbf{SGCP-PAPG} & 0.87 & 0.81 & 0.36 & 62.54 \\
+\hline
+\end{tabular}
+\end{table*}
+
+Table~\ref{tab:mAP} presents detection accuracy and communication cost under protocol-native assumptions. Head-only is a lower reference. Pure late is a controlled prediction-sharing reference: each CAV runs singleton local inference with the same detector checkpoint used by the raw-LiDAR SGCP pipeline, and the resulting boxes are merged by the same NMS-based late fusion used by SGCP. Its raw-LiDAR payload is zero, but it still incurs prediction-box overhead. Using 80\,B per box, the one-hop broadcast overhead is 1.37\,Mbps on average; a scheduled all-to-all unicast implementation would require about 25.97\,Mbps. This result clarifies that pure late fusion is a strong prediction-sharing reference, not a zero-communication raw-LiDAR baseline. The full 20-CAV early-fusion reference provides the raw-data sharing upper bound, reaching 0.88/0.85/0.45 mAP at 118.71\,Mbps. This result is useful for judging perception headroom, but it assumes full point-cloud availability and therefore should not be interpreted as a fair infrastructure-free communication baseline.
+
+FullPerception-PCS is reported separately as the repository's implementation of the FullPerception scheduling baseline. We verified its conflict graph against the original paper and keep the paper-faithful Class-A rule: two links conflict if they share any endpoint, including a common receiver. Because the original FullPerception protocol transmits blind-spot intermediate features, we additionally report a raw-LiDAR adaptation for comparison with the other point-cloud baselines: PCS still selects the sender-receiver links, but the selected sender uploads its full local point cloud to the scheduled receiver. Under the same 20\,MHz/10-subchannel budget and attentive detector checkpoint, this adaptation reaches 0.63/0.49/0.17 mAP at 32.06\,Mbps. The stricter blind-spot-grid replay reaches 0.56/0.41/0.18 at 11.22\,Mbps, confirming that PCS itself is conservative in this RSU-free raw-LiDAR dump and should not be confused with a full-sharing upper bound or with the SGCP-compatible scheduler comparison below. We also report EdgeCooper-HD as an edge-assisted reference. It reaches 0.85/0.74/0.35 mAP at 65.40\,Mbps after enforcing half-duplex sender/receiver constraints, but its scheduler uses global edge-side information and is therefore not directly comparable to fully decentralized SGCP.
+
+Under the same attentive detector and RSU-free V2V setting, SGCP achieves a favorable communication-performance tradeoff. With 10 subchannels and $\rho_{\mathrm{th}}=3.0$, SGCP-PAPG reaches 0.87/0.81/0.36 mAP using 62.54\,Mbps, i.e., 52.7\% of the centralized full-sharing payload rate while retaining 98.9\%, 95.3\% and 80.0\% of its mAP at IoU thresholds 0.3, 0.5 and 0.7, respectively. Compared with Pure late, SGCP improves mAP by 0.05/0.16/0.08, showing that scheduled raw point-cloud sharing contributes beyond prediction-box propagation. Compared with EdgeCooper-HD, SGCP improves mAP by 0.02/0.07/0.01 while reducing raw-LiDAR traffic by 4.4\%. We therefore use Table~\ref{tab:mAP} to support the system-level claim that SGCP provides a decentralized raw-LiDAR collaboration protocol with competitive coverage and mid-IoU accuracy at substantially lower traffic than full raw sharing.
+
+These gains are attributed to perception-driven self-organized clustering, perception-aware point-cloud region selection for intra-cluster early fusion and late fusion that propagates lightweight detection results across clusters. Object-level diagnostics show that PAPG reduces full-reference-detected but SGCP-missed ground-truth rows from 106 under the target-aware scheduler to 59, while still using exactly 10 scheduled V2V requests per frame in the 10-channel setting. Additional object-routing probes show that directly forcing diagnosed target grids into the schedule can recover a few missed objects but may suppress more already-covered objects, so we keep such probes as failure analysis rather than main algorithms. The updated results also reveal an important limitation: naive random or maximum-weight link scheduling either under-utilizes the payload budget or remains weak after adopting the tuned FullPerception blind-spot units, so such variants are treated as diagnostic ablations rather than primary evidence of communication efficiency.
+
+\begin{figure*}[t]
+\centering
+\includegraphics[width=0.82\linewidth]{fig/sgcp_protocol_breakdown.pdf}
+\caption{Protocol-native aggregate AP breakdown. Each group reports pooled mAP@0.3, mAP@0.5 and mAP@0.7; the text inside each group indicates raw-LiDAR Mbps and evaluated samples. Pure late is a prediction-sharing reference whose box overhead is discussed separately, while Full 20-CAV early fusion is a full-sharing upper reference.}
+\label{fig:protocol_breakdown}
+\end{figure*}
+
+\subsubsection{Fusion Scaffold Ablation}
+
+\begin{figure*}[t]
+\centering
+\includegraphics[width=0.82\linewidth]{fig/sgcp_fusion_contribution.pdf}
+\caption{Fusion contribution by IoU threshold. Clustered early-only isolates the scheduled intra-cluster raw-LiDAR fusion path, while Full SGCP adds inter-cluster box-level late fusion on top of the same clustered perception scaffold. The large AP@0.3/AP@0.5 gain therefore reflects coverage propagation across clusters with lightweight prediction exchange, while the remaining AP@0.7 gap to Full 20-CAV early fusion indicates the localization headroom of full raw-point sharing and stronger early-fusion detection.}
+\label{fig:fusion_contribution}
+\end{figure*}
+
+Fig.~\ref{fig:protocol_breakdown} visualizes the protocol-native comparison in Table~\ref{tab:mAP}, and Fig.~\ref{fig:fusion_contribution} isolates the contribution of the two fusion layers. With the same 62.54\,Mbps raw-LiDAR payload, clustered early-only reaches only 0.51/0.45/0.21 mAP because each cluster head observes a limited portion of the scene. Adding inter-cluster late fusion raises Full SGCP to 0.87/0.81/0.36, showing that late fusion mainly restores network-level coverage and low/mid-IoU recall. Compared with the full 20-CAV early-fusion upper reference, SGCP uses 52.7\% of the raw payload while retaining 98.9\% and 95.3\% of its mAP@0.3 and mAP@0.5. The retained mAP@0.7 is lower, 80.0\%, so we treat high-IoU localization as remaining headroom bounded by raw point-cloud availability, view selection and detector localization.
+
+\subsubsection{AP-Mbps Pareto Analysis}
+
+\begin{figure*}[t]
+\centering
+\begin{minipage}{0.49\linewidth}
+\centering
+\includegraphics[width=\linewidth]{fig/sgcp_pareto_ap03.pdf}
+\centerline{(a) Coverage-oriented mAP@0.3}
+\end{minipage}
+\hfill
+\begin{minipage}{0.49\linewidth}
+\centering
+\includegraphics[width=\linewidth]{fig/sgcp_pareto_ap07.pdf}
+\centerline{(b) Localization-oriented mAP@0.7}
+\end{minipage}
+\caption{AP--communication Pareto source points. The dashed frontier is computed over raw-LiDAR sharing methods and references; prediction-sharing pure late points are plotted separately because their payload contains detection boxes rather than raw point clouds. SGCP-PAPG occupies the medium-payload RSU-free V2V region, while EdgeCooper-HD and PACP-style LiDAR proxies represent stronger information or priority assumptions.}
+\label{fig:pareto}
+\end{figure*}
+
+Fig.~\ref{fig:pareto} shows the AP--Mbps tradeoff under the attentive detector. In the raw-LiDAR V2V/SGCP-compatible subset, SGCP-PAPG occupies a strong medium-payload point: it improves over forced random and EdgeCooper-HD at similar traffic, and it is substantially more communication-efficient than PACP-style LiDAR, which reaches slightly higher mAP@0.3 and mAP@0.7 only at 86.56\,Mbps. The plot also exposes the boundary of the claim: pure late prediction sharing has low raw-LiDAR payload and strong mAP@0.3, so it should be interpreted as a different prediction-level reference rather than a raw-LiDAR scheduling baseline. At high IoU, density/link-aware and PACP-style scheduling can slightly exceed SGCP by using more traffic or stronger priority assumptions, while full 20-CAV early fusion remains the localization upper reference. We therefore report SGCP as a favorable communication--accuracy operating point rather than claiming universal Pareto dominance.
+
+\subsubsection{SGCP-Compatible Scheduler Comparison}
+
+\begin{table}[htbp]
+\centering
+\caption{Scheduler comparison under the same SGCP-compatible scaffold: coalition clustering, raw-LiDAR grid upload, all-cluster-head receiver policy, inter-cluster late fusion, 20\,MHz bandwidth and 10 subchannels. This table compares sender/grid schedulers only; it is not a protocol-native system ranking.}
+\label{tab:scheduler_comparison}
+\begin{tabular}{|l|ccc|c|}
+\hline
+Scheduler & mAP@0.3 & mAP@0.5 & mAP@0.7 & Mbps \\
+\hline
+Forced random & 0.85 & 0.75 & 0.36 & 61.25 \\
+Density-greedy & 0.86 & 0.78 & 0.38 & 75.94 \\
+Link-aware density & 0.86 & 0.78 & 0.38 & 75.94 \\
+PACP-style LiDAR proxy & 0.88 & 0.79 & 0.37 & 86.56 \\
+EdgeCooper-HD proxy & 0.85 & 0.74 & 0.35 & 65.40 \\
+\textbf{SGCP-PAPG} & 0.87 & 0.81 & 0.36 & 62.54 \\
+\hline
+\end{tabular}
+\end{table}
+
+Table~\ref{tab:scheduler_comparison} evaluates only the scheduler inside the same clustered two-layer fusion scaffold. PAPG achieves the best mAP@0.5 among the compared schedulers and improves over forced random and EdgeCooper-HD at similar traffic. Density/link-aware scheduling obtains slightly higher mAP@0.7 but requires 75.94\,Mbps, while PACP-style LiDAR obtains the highest mAP@0.3/mAP@0.7 at 86.56\,Mbps. We therefore use this table to support the marginal contribution of PAPG/PPS as a medium-payload perception-aware scheduler, while Table~\ref{tab:mAP} remains the protocol-native system comparison.
+
+\subsubsection{Parameter Sensitivity}
+
+Table~\ref{tab:param_sensitivity} reports the two parameter groups with the clearest implementation relevance: the density threshold and the subchannel budget. In the current 41-frame dump, $\rho_{\mathrm{th}}$ is stable over the tested range because PAPG and the head resource budget dominate the actually selected sender-grid set. In contrast, the subchannel budget exposes the expected communication bottleneck: too few subchannels sharply reduce the selected raw-LiDAR payload and detection accuracy, while extra subchannels beyond the main setting provide limited additional gain.
+
+\begin{table}[htbp]
+\centering
+\caption{Parameter sensitivity under the 20-CAV CARLA dump with the attentive detector checkpoint. Aggregate AP is computed by the pooled evaluator. Less sensitive parameters such as $N_{\max}$ and $T_{\min}^{\mathrm{stab}}$ are discussed below and reserved for the appendix.}
+\label{tab:param_sensitivity}
+\begin{tabular}{|l|c|ccc|c|}
+\hline
+Parameter & Setting & mAP@0.3 & mAP@0.5 & mAP@0.7 & Mbps \\
+\hline
+$\rho_{\mathrm{th}}$ & 1.0 & 0.87 & 0.81 & 0.36 & 62.57 \\
+$\rho_{\mathrm{th}}$ & 2.0 & 0.87 & 0.81 & 0.36 & 62.54 \\
+$\rho_{\mathrm{th}}$ & 3.0 & 0.87 & 0.81 & 0.36 & 62.54 \\
+\hline
+Channels & 5 & 0.74 & 0.61 & 0.24 & 31.12 \\
+Channels & 10 & 0.87 & 0.81 & 0.36 & 62.54 \\
+Channels & 20 & 0.88 & 0.81 & 0.36 & 67.33 \\
+\hline
+\end{tabular}
+\end{table}
+
+The density threshold is stable over the tested range because the PAPG utility and the head resource budget dominate the actually selected sender-grid set in this short dump. In contrast, the channel sweep exposes the expected communication bottleneck: reducing the system to 5 subchannels sharply lowers the selected raw-LiDAR payload and all AP levels, while increasing from 10 to 20 subchannels gives only marginal AP@0.3 gain. We also evaluated the cluster-capacity and stability parameters. For $N_{\max}=2/3/4/5/6$, mAP@0.5 is 0.74/0.71/0.73/0.71/0.71, respectively; $N_{\max}=4$ is selected because it avoids singleton fragmentation while keeping the capacity constraint active. For $T_{\min}^{\mathrm{stab}}=100/300/500/700/1000$\,ms, mAP@0.5 and reconfiguration count remain 0.73 and 11 in the current short sequence. Therefore, the reported results are not tuned to a fragile stability-window value, but a longer and more dynamic sequence is needed to demonstrate stronger stability-window effects.
+
+
+\subsubsection{Communication Efficiency Analysis}
+
+The measured communication overhead is reported directly in Table~\ref{tab:mAP}. The dominant saving comes from transmitting only selected high-value point cloud grids within each cluster, while inter-cluster coordination exchanges only lightweight detection boxes (\textless 1 KB/object). In the offline NS3 replay for the PAPG main setting, 110/110 scheduled V2V requests over the first 11 frames complete at both the RLC request level and the application callback level, with 2970/2970 RLC TX/RX events, no RLC drops, no PHY decode failures and an average callback delay of 23.91\,ms. Overloaded or unscheduled requests are explicitly skipped rather than being counted as successful receptions. This distinction prevents physical-layer diagnostics, RLC delivery and application-level fusion callbacks from being conflated in the evaluation.
+
+\subsubsection{Real-Time Feasibility}
+We evaluate runtime performance to assess whether the framework can operate near the 100\,ms cooperation cycle. In the current Python prototype, PPS converges in 3--4 iterations on average and the SGCP control-plane computation is close to the target cycle time. Cluster formation is the dominant cost, which motivates the topology-triggered update policy: beacon, density and scheduling information are refreshed every cycle, while cluster membership is recomputed only when topology or stability triggers fire. This design keeps the recurring scheduling path lightweight and confines the more expensive coalition update to topology-change events.
+
+
+\section{Conclusion}
+
+This paper addresses the critical challenges of communication inefficiency, RSU dependency and limited scalability in collaborative perception for large-scale vehicular networks. We propose a fully decentralized framework that eliminates infrastructure reliance and achieves high perception accuracy through self-organized V2V collaboration. The core innovation lies in a hierarchical fusion architecture combining intra-cluster early fusion with inter-cluster late fusion, and a two-stage game-theoretic decomposition that jointly optimizes collaboration structure and resource allocation.
+
+Specifically, we formulate the problem as a constrained optimization task and decompose it into two distributed subproblems. First, for collaboration cluster formation, we design a perception-driven coalition game that prioritizes clusters yielding measurable accuracy improvements, augmented with motion-aware stability to suppress frequent reconfigurations. Second, for intra-cluster scheduling, we develop a perception-aware potential-guided scheduler that first preserves external coverage for each leader and then allocates remaining resources to object-prototype gains under physical-layer constraints. The coalition stage converges to a stable partition under a fixed topology snapshot, and the PPS stage empirically converges within a few iterations over a finite feasible action set, requiring only lightweight local information exchange.
+
+Evaluations on the CARLA–OpenCDA–NS3 platform demonstrate that our method achieves a favorable communication-performance tradeoff in dense urban scenarios. SGCP preserves most of the centralized full-sharing perception accuracy while using roughly half of its raw point-cloud payload, improves low- and medium-IoU accuracy over capacity-matched V2V scheduling heuristics, and maintains request-level NS3 delivery under the scheduled subchannel constraints. These results validate the framework’s effectiveness in jointly improving perception fidelity, communication efficiency and system scalability without any roadside infrastructure, while leaving edge-assisted global assignment and full raw-data sharing as distinct high-IoU references.
+
+In summary, this work demonstrates that a hierarchical game-theoretic decomposition enables scalable, infrastructure-free collaborative perception in dynamic vehicular networks.
+
+\bibliographystyle{ieeetr}
+\bibliography{Reference}
+
+\end{document}
