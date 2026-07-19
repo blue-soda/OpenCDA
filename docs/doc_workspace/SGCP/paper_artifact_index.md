@@ -38,12 +38,12 @@ docs\doc_workspace\SGCP\artifacts\paper_artifact_index_20260719\paper_artifact_i
 | P4 EdgeCooper-HD Budget Sweep | `artifacts/edgecooper_budget_sweep_20260719/edgecooper_budget_sweep_manifest.csv` | `6693b45` | usable | 支撑 EdgeCooper-HD edge/global assignment + half-duplex proxy 的 low/high budget 边界。 |
 | P4 FullPerception-PCS Parameter Sweep | `artifacts/pcs_parameter_sweep_20260719/pcs_parameter_sweep_manifest.csv` | `0053134` | usable with caveats | 11 帧 granularity/overlap 趋势 + 41 帧 tuned anchor；更激进 41 帧 sweep 运行不可承受，不混入 41 帧 Pareto。 |
 | Detector/Checkpoint Fairness Audit | `detector_checkpoint_fairness.md` | `4e6e8e2` | usable | 主表 Pure late 使用 early-checkpoint singleton detector + `naive_late_fusion()`；actual late checkpoint 只作 sensitivity/reference。 |
-| Detector Checkpoint Sensitivity | `artifacts/checkpoint_sensitivity_20260719/detector_checkpoint_sensitivity_manifest.csv` | `738d148` | usable sensitivity | 汇总 mainline、actual-late、attentive 和 COSDH checkpoint probes；attentive 只作为 sensitivity evidence，不替换 Table 1。 |
+| Detector Checkpoint Sensitivity | `artifacts/checkpoint_sensitivity_20260719/detector_checkpoint_sensitivity_manifest.csv` | `738d148` | usable sensitivity | 汇总 legacy mainline、actual-late、attentive 和 COSDH checkpoint probes；attentive 已升级为当前 forward-writing candidate，actual-late/COSDH 仍只作 sensitivity 或 negative probe。 |
 | Table 4 Parameter Sensitivity | `artifacts/parameter_sensitivity_20260719/table4_parameter_sensitivity.csv` | `9cf102f` | usable | `rho_th` 和 channel count 可进主文；channel sweep 标签已修正为当前复现实验命令口径 `20 MHz`；`N_max/T_min` 更适合附录或 rebuttal。 |
 | Runtime-Control-NS3 Appendix | `artifacts/appendix_support_20260719/runtime_control_ns3_appendix.md` | `d75abc4` | usable | 支撑 near-real-time control-plane feasibility，不承诺 detector-inclusive 100 ms。 |
 | Qualitative Case Study | `artifacts/appendix_support_20260719/qualitative_case_study_bev.pdf` | `73fdee0` | draft usable | 可用于 appendix/rebuttal；正式论文可补 legend 和 prediction-box overlay。 |
 | EdgeCooper Writing Reference | `edgecooper_writing_reference.md` | `2efda0a` | usable | 借鉴系统评估结构，不引入 satisfaction rate。 |
-| Paper main.tex sync | `C:/Workspace/icdcs-paper/SGCP/main.tex` | outside OpenCDA git | structure checked not compiled | Paper directory is outside OpenCDA git；已补入 attentive checkpoint sensitivity 段落，作为 sensitivity evidence 而非 Table 1 替换。 |
+| Paper main.tex sync | `C:/Workspace/icdcs-paper/SGCP/main.tex` | outside OpenCDA git | structure checked not compiled | Paper directory is outside OpenCDA git；Table 1/3、Figure 1/2/3 和正文已同步到 attentive forward-writing candidate。 |
 | Paper Number Audit | `artifacts/paper_number_audit_20260719/paper_number_audit.csv` | `4fee24e` | usable | 核查 Table 1/3/4 与 manifest 数值一致；修正 Table 4 channel sweep 的 legacy `40 MHz` 标签为当前复现实验命令口径 `20 MHz`；Table 1/3 manifest 已用工具重生成并显式记录网络元数据。 |
 
 ## Current Risks
@@ -54,7 +54,7 @@ docs\doc_workspace\SGCP\artifacts\paper_artifact_index_20260719\paper_artifact_i
 - Pure late 口径已固定为 controlled prediction-sharing reference：early-singleton + `naive_late_fusion()`；actual late checkpoint 已作为 sanity 记录，不混入同一公平 raw-LiDAR baseline。
 - 在 attentive candidate 中，EdgeCooperHD 不再强于 SGCP；PACP-LiDAR AP@0.3/AP@0.7 略高于 SGCP 但通信量显著更高，应按 Pareto tradeoff 写作。
 - `main.tex` 位于 `C:\Workspace\icdcs-paper\SGCP\main.tex`，不在 OpenCDA git 仓库；本机缺少 `latexmk/pdflatex`，当前只做了结构检查，未完成 PDF 编译验证。
-- 2026-07-19 已向 `main.tex` 补入 attentive checkpoint sensitivity 段落；该修改无法在 OpenCDA 仓库提交，只能通过本文档和外部 paper 目录状态追踪。
+- 2026-07-19 已将 `main.tex` 切换到 attentive forward-writing candidate；该修改无法在 OpenCDA 仓库提交，只能通过本文档和外部 paper 目录状态追踪。
 - 2026-07-19 number audit 已确认 Table 1/3/4 数值与 manifest 对齐；Pure late 的 `0.74 Mbps` 是检测框 broadcast overhead，不是 raw-LiDAR manifest Mbps。旧 trace 未记录 `bandwidth_mhz`，后续新 trace/manifest 已补工具字段。
 
 ## 下一次更新条件

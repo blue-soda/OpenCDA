@@ -6846,3 +6846,29 @@ conda run -n opencda python -m opencda.tools.sgcp_aggregate_ap_manifest `
   - `figure2_protocol_breakdown_attentive`
   - `figure1_pareto_ap03_attentive`
   - `figure1_pareto_ap07_attentive`
+
+## 2026-07-19 20:46 - 远端训练检查与 attentive 口径收口
+
+### 远端训练状态
+
+执行：
+
+```powershell
+ssh mindspore-187 "nvidia-smi --query-gpu=index,memory.used,memory.total,utilization.gpu --format=csv,noheader,nounits; ps -fp 1532887; tail -n 60 /data2/gzc/sgcp_early_train/logs/train_gpu_waiter.log"
+```
+
+结果：
+
+- `mindspore-187` 当前 8 张 GPU 均约 `22203 / 24576 MiB` used，utilization 为 `0%`，仍由外部任务占用显存。
+- watcher PID `1532887` 仍存活。
+- 日志从 `2026-07-19T15:43` 到 `20:38` 持续输出 `no GPU below 6000 MiB; sleeping 300s`。
+- 仍未产生新训练 checkpoint；当前仅有上传的初始 `/data2/gzc/sgcp_early_train/checkpoints/latest.pth`。
+
+### 文档口径修正
+
+检查发现 `main.tex` 已使用 attentive forward-writing Table 1，但 `detector_checkpoint_fairness.md`、`reviewer_response_matrix.md`、`rebuttal_short.md`、`protocol_native_claim_audit.md`、`paper_artifact_index.md`、`results.md` 和 checkpoint sensitivity artifact 中仍有“attentive 只作 sensitivity、不替换主表”的旧句子。本轮已统一为：
+
+- 当前 forward-writing candidate：attentive checkpoint，且 Table 1/2/3/Figure 1/2/3/4 均已完整重跑。
+- Legacy `pointpillar_early_fusion`：保留为 checkpoint-reference artifact。
+- actual-late / COSDH：仍是 sensitivity 或 negative probe，不进入公平 raw-LiDAR 主表。
+- 远端 fine-tune：不是当前 attentive candidate 的 blocker；若回收到更好 checkpoint，则触发新 artifact 版本和全表重跑。

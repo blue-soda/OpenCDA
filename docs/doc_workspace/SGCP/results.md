@@ -980,20 +980,20 @@ Manifest：`docs\doc_workspace\SGCP\artifacts\pcs_parameter_sweep_20260719\pcs_p
 | PCS_11f_div16_ov1 | 11 | 16 | 1 | 0.42 | 0.40 | 0.20 | 540,160 | 3.93 |
 | PCS_41f_div12_ov0 | 41 | 12 | 0 | 0.59 | 0.53 | 0.22 | 12,959,840 | 25.29 |
 
-可读结论：`div12/ov0` 仍是当前 PCS baseline 的可写工作点。`min_overlap=1` 会显著降低 AP@0.7，`div16/ov1` 虽低通信但 AP 不可用；更细粒度/更宽候选的 41 帧运行不可承受。因此主表/Pareto 中保留 `PCS_41f_div12_ov0`，参数趋势放入附录或 rebuttal 支撑“PCS 已调参但受原机制限制”的边界。
+可读结论：在 legacy `pointpillar_early_fusion` 口径下，`div12/ov0` 是 PCS baseline 的可写工作点。2026-07-19 attentive forward-writing 口径下，PCS 主表行已进一步调整为 `div16/ov0 + scheduled receivers`，结果为 `0.59/0.46/0.22, 4.99 Mbps`，详见后文 `FullPerception-PCS attentive adjustment`。因此本节保留为 PCS 参数趋势和运行时边界，不再作为当前 attentive 主表/Pareto 的 source。
 
 ## Detector / checkpoint fairness decision
 
-已新增 `detector_checkpoint_fairness.md` 固化主文口径：SGCP raw-LiDAR 系列统一使用 `pointpillar_early_fusion` checkpoint。Pure late 主表行不切换到 `pointpillar_late_fusion` checkpoint，而是作为 controlled prediction-sharing reference：early-checkpoint singleton local inference + `naive_late_fusion()`。
+已新增并更新 `detector_checkpoint_fairness.md` 固化 checkpoint 公平性口径：同一张表内 SGCP raw-LiDAR 系列、Pure late controlled reference、EdgeCooperHD、scheduler comparison 和 Full20Early upper reference 必须共享同一个 detector checkpoint。legacy 表使用 `pointpillar_early_fusion`；当前 forward-writing candidate 使用 attentive checkpoint，并已完整重跑 Table 1/2/3/Figure 1/2/3/4。Pure late 不切换到 `pointpillar_late_fusion` checkpoint，而是作为 controlled prediction-sharing reference：singleton local inference + `naive_late_fusion()`。
 
 | Variant | Frames | Detector / First-stage Fusion | Box-level Fusion | AP@0.3 | AP@0.5 | AP@0.7 | 用途 |
 | --- | ---: | --- | --- | ---: | ---: | ---: | --- |
-| Pure late controlled | 41 | `pointpillar_early_fusion` singleton local detector | `naive_late_fusion()` | 0.82 | 0.76 | 0.37 | 主表 prediction-sharing reference |
+| Pure late controlled legacy | 41 | `pointpillar_early_fusion` singleton local detector | `naive_late_fusion()` | 0.82 | 0.76 | 0.37 | legacy prediction-sharing reference |
 | Pure late actual-late sanity | 41 | `pointpillar_late_fusion` local detector | `naive_late_fusion()` | 0.89 | 0.83 | 0.49 | sensitivity/reference，不进公平 raw-LiDAR 主表 |
-| SGCP PAPG mainline | 41 | `pointpillar_early_fusion` raw point-cloud early fusion | `naive_late_fusion()` | 0.81 | 0.78 | 0.39 | SGCP 主线 |
+| SGCP PAPG legacy | 41 | `pointpillar_early_fusion` raw point-cloud early fusion | `naive_late_fusion()` | 0.81 | 0.78 | 0.39 | legacy SGCP reference |
 | SGCP PAPG forced-late sanity | 41 | `pointpillar_late_fusion` over scheduled source set | `naive_late_fusion()` | 0.87 | 0.81 | 0.48 | checkpoint sensitivity，不代表 SGCP 协议 |
 
-结论：Pure late 仍是强 prediction-sharing reference，但不应和 raw-LiDAR SGCP/PAPG 写成同类点云通信 baseline。当前最大风险仍是 early checkpoint 偏弱；远程 fine-tune watcher 尚在等待 GPU 空闲。
+结论：Pure late 仍是强 prediction-sharing reference，但不应和 raw-LiDAR SGCP/PAPG 写成同类点云通信 baseline。当前 attentive forward-writing 结果已在后文补齐：Pure late attentive `0.82/0.65/0.28`，SGCP-PAPG attentive `0.87/0.81/0.36`。远程 fine-tune watcher 仍在等待 GPU 空闲；若产生新 checkpoint，必须重跑全表后才能替换当前 attentive candidate。
 
 ## Paper number audit
 
@@ -1083,7 +1083,7 @@ Artifact：
 | Original SGCP-PAPG smoke | 11 | `pointpillar_early_fusion` | 0.76 | 0.73 | 0.34 | 8,598,224 | 62.53 | baseline smoke |
 | Late checkpoint as early detector | 11 | `pointpillar_late_fusion/net_epoch30.pth` copied into early config | 0.58 | 0.48 | 0.15 | 8,598,224 | 62.53 | reject |
 | Attentive checkpoint as early detector | 11 | attentive intermediate checkpoint copied into early config | 0.85 | 0.77 | 0.32 | 8,598,224 | 62.53 | promising smoke |
-| SGCP-PAPG attentive detector | 41 | attentive intermediate checkpoint copied into early config | 0.87 | 0.81 | 0.36 | 32,049,872 | 62.54 | sensitivity / candidate |
+| SGCP-PAPG attentive detector | 41 | attentive intermediate checkpoint copied into early config | 0.87 | 0.81 | 0.36 | 32,049,872 | 62.54 | current forward-writing candidate |
 | Pure late attentive controlled | 41 | attentive checkpoint singleton local detector + `naive_late_fusion()` | 0.82 | 0.65 | 0.28 | 0 raw LiDAR | 0 raw LiDAR | prediction-sharing reference |
 | Full20Early attentive detector | 41 | attentive intermediate checkpoint copied into early config | 0.88 | 0.85 | 0.45 | n/a | n/a | upper reference |
 | COSDH compatible transplant | 11 | 140 compatible COSDH weights + original early fallback heads | 0.00 | 0.00 | 0.00 | 8,598,224 | 62.53 | reject |
@@ -1113,7 +1113,7 @@ Artifact：
 | EdgeCooperHD attentive | 41 | attentive raw-LiDAR detector | 0.85 | 0.74 | 0.35 | 65.40 | edge/global scheduler reference |
 | SGCP-PAPG attentive | 41 | attentive raw-LiDAR detector | 0.87 | 0.81 | 0.36 | 62.54 | strengthened SGCP sensitivity |
 
-结论：在同一 attentive detector 口径下，SGCP-PAPG 不再弱于 Pure late 或 EdgeCooperHD；它比 Pure late 高 `+0.05/+0.16/+0.08` AP，比 EdgeCooperHD 高 `+0.02/+0.07/+0.01` AP，同时比 EdgeCooperHD 少约 `2.87 Mbps` raw-LiDAR payload。该结果更有利于论文叙事，但由于它改变 detector 初始化，当前仍标为 checkpoint sensitivity / candidate；若要替换正式主表，必须把其他主表 baseline 也完整切到 attentive 后重跑并更新 Table 1/3/figures。
+结论：在同一 attentive detector 口径下，SGCP-PAPG 不再弱于 Pure late 或 EdgeCooperHD；它比 Pure late 高 `+0.05/+0.16/+0.08` AP，比 EdgeCooperHD 高 `+0.02/+0.07/+0.01` AP，同时比 EdgeCooperHD 少约 `2.87 Mbps` raw-LiDAR payload。后续已把其他主表 baseline 完整切到 attentive 并重跑 Table 1/2/3/Figure 1/2/3/4，因此 attentive 当前是 forward-writing candidate；legacy early checkpoint 保留为 reference。
 
 ## Attentive table/figure rerun
 

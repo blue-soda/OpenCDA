@@ -10,7 +10,7 @@
 - 主表采用分组布局：full-sharing / infrastructure-assisted references 与 RSU-free V2V baselines 分开，避免把 EdgeCooper-HD、global selective proxy 和 Full 20-CAV upper reference 混成公平去中心化 baseline。
 - SGCP 的论文主张收束为：在 RSU-free V2V 约束、明确子信道调度和 NS3 request-level delivery 下，PAPG 提供更好的低/中 IoU AP 与 payload tradeoff；不声称全面击败 centralized full sharing 或 edge-assisted global assignment。
 - 所有主文 Table/Figure 进入论文前必须能追溯 artifact；当前 `paper_number_audit_20260719` 已核查 Table 1/3/4 数值与 manifest 一致，Table 1/3 manifests 已显式记录 `10 ch / 20 MHz`。
-- Detector/checkpoint 风险单独作为 sensitivity 处理：主表仍使用同一个 `pointpillar_early_fusion` checkpoint；actual-late、attentive、COSDH 都不替换 Table 1。
+- Detector/checkpoint 风险按统一检测器口径处理：旧 `pointpillar_early_fusion` 主线保留为 legacy reference；当前 forward-writing Table 1/2/3/Figure 1/2/3/4 已统一切到 attentive checkpoint candidate。actual-late 和 COSDH 仍只作 sensitivity/negative probe，不替换主表。
 
 ## Reviewer 2
 
@@ -21,7 +21,7 @@
 | Does cluster merging exceed `N_max`? | 不允许超过 `N_max` 的 merge；split/merge 通过 topology trigger + coalition reformation 间接发生。 | `cluster_capacity_policy.md`; `target.md` P3; `rebuttal_short.md` R2。 | 无明显风险。 |
 | Does algorithm revisit members after leader density increases? | coalition formation 迭代会在更新后的 coalition state 上重算边际贡献；PPS 每周期重算 density/grid utility。 | `target.md` P3; `status.md`; `main.tex` every-cycle PPS 描述。 | 若 reviewer 要求代码级日志，可补 Delta utility trace；当前 rebuttal 可先文字说明。 |
 | Similarity to Smartform / generic coalition formation. | novelty 不再声称 coalition game 本身新，而是强调 perception-density utility、motion stability、capacity constraint、PPS subchannel feasibility 和 hierarchical fusion 的组合。 | `related_work_novelty_revision.md`; `main.tex` intro/related work; `rebuttal_short.md` R2。 | 需要确保 final related work 引用 Smartform 或至少在 rebuttal 直接回应。 |
-| FullPerception is RSU-assisted; no RSU scenario how simulated? Virtual RSU? | full 20-CAV early fusion 改为 upper reference，不再命名为 FullPerception。Formal FullPerception baseline 使用仓库 `pcs.py` / `fullperception_pcs`；global/cluster-local selective proxy 已重命名，避免误导。 | `fullperception_baseline_revision.md`; `main_table_candidate.md`; `main.tex` 主表；`paper_artifact_index.md` Table 1 artifact。 | FullPerception-PCS AP 较低，需在文中说明它是内置 PCS 调度在当前 RSU-free dump / scheduled-receiver 协议下的结果；不把 weak PCS 当作 SGCP 唯一优势证据。 |
+| FullPerception is RSU-assisted; no RSU scenario how simulated? Virtual RSU? | full 20-CAV early fusion 改为 upper reference，不再命名为 FullPerception。Formal FullPerception baseline 使用仓库 `pcs.py` / `fullperception_pcs`；global/cluster-local selective proxy 已重命名，避免误导。当前 attentive Table 1 中 PCS 写成 low-payload protocol-native reproduction：`0.59/0.46/0.22` at `4.99 Mbps`。 | `fullperception_baseline_revision.md`; `main.tex` 主表；`paper_artifact_index.md`; `artifacts/attentive_protocol_20260719`。 | FullPerception-PCS 不是强 SGCP-compatible scheduler baseline；文中已说明它不应与 full-sharing upper reference 或 Table 3 scaffold comparison 混淆。 |
 
 ## Reviewer 3
 
@@ -29,7 +29,7 @@
 | --- | --- | --- | --- |
 | `f(rho)` calibration too brief. | 已补 788,020 CAV-grid samples、non-empty ratio、p90/p95、`rho_th` sensitivity，并明确 detector/sensor/grid-size dependent。 | `f_rho_calibration.md`; `parameter_calibration_revision.md`; `main.tex` parameter section; `rebuttal_short.md` R3。 | 仍缺跨传感器/跨 detector 泛化；应写作 limitation/future，不声称通用常数。 |
 | `T_min^stab=500 ms` arbitrary. | 改为保守 hysteresis 默认，对应 5 个 10 Hz perception cycles；100/300/500/700/1000 ms sweep 在当前 dump 上不敏感。 | `parameter_calibration_revision.md`; `main.tex`; `rebuttal_short.md` R3。 | 该序列不够动态，不能证明 500 ms 最优；必须保守表述。 |
-| Baselines insufficient; lack latest decentralized CP. | 增加 protocol-native Table 1、SGCP-compatible scheduler Table 3 和 Pareto 分层：forced-budget random、density/link-aware、PACP-style LiDAR proxy、EdgeCooper-HD proxy、FullPerception-PCS、Pure late prediction-sharing reference 与 Full20Early upper reference 均有 artifact。 | `baseline_fairness.md`; `baseline_reproduction_plan.md`; `paper_artifact_index.md`; `artifacts/table1_protocol_20260719`; `artifacts/scheduler_comparison_20260719`; `main.tex`。 | Where2Comm/PACP 等严格模型级复现未完成；当前写法必须强调 same-backbone raw-LiDAR / proxy baseline 边界，不写成严格复现所有模型。 |
+| Baselines insufficient; lack latest decentralized CP. | 增加 protocol-native Table 1、SGCP-compatible scheduler Table 3 和 Pareto 分层：forced-budget random、density/link-aware、PACP-style LiDAR proxy、EdgeCooper-HD proxy、FullPerception-PCS、Pure late prediction-sharing reference 与 Full20Early upper reference 均有 attentive artifact。 | `baseline_fairness.md`; `baseline_reproduction_plan.md`; `paper_artifact_index.md`; `artifacts/attentive_protocol_20260719`; `artifacts/attentive_scheduler_comparison_20260719`; `main.tex`。 | Where2Comm/PACP 等严格模型级复现未完成；当前写法必须强调 same-backbone raw-LiDAR / proxy baseline 边界，不写成严格复现所有模型。 |
 | Need ablation experiments. | 已有 fusion scaffold ablation、scheduler comparison、Pareto、parameter sensitivity、checkpoint sensitivity、object-level failure diagnosis 和 NS3 replay。Clustered early-only 到 Full SGCP 证明 late fusion 覆盖贡献；Full20Early 展示 high-IoU localization 上界。 | `fusion_scaffold_claim_audit.md`; `pareto_claim_audit.md`; `detector_checkpoint_sensitivity_manifest.csv`; `failure_diagnostics.md`; `results.md`; `main.tex`。 | 正文需要保守写 AP@0.7：当前 SGCP 不是 AP@0.7 frontier，定位能力仍是 detector/raw-sharing headroom。 |
 | Add parameter study for stability window. | 已做 `T_min^stab=100/300/500/700/1000 ms`，结果不敏感，作为鲁棒性而非最优性证据。 | `parameter_calibration_revision.md`; `paper_revision_plan.md`; `main.tex`; `rebuttal_short.md` R3。 | 同上，需强调当前 sequence 边界。 |
 
@@ -53,7 +53,7 @@
 6. `T_min^stab=500 ms` and `rho_th` are calibrated/default engineering parameters with sensitivity evidence, not universal optima.
 7. Runtime claim is control-plane near-real-time, not full detector-inclusive 100 ms guarantee.
 8. Pure late is a prediction-sharing reference with detection-box overhead, not a zero-communication raw-LiDAR baseline.
-9. Checkpoint sensitivity is appendix/rebuttal evidence only; Table 1 keeps a common `pointpillar_early_fusion` checkpoint.
+9. Table 1 now keeps a common attentive checkpoint across SGCP, Pure late and baselines; legacy early-checkpoint results remain reproducibility references, while actual-late and COSDH stay sensitivity/negative probes.
 
 ## Remaining Before Final Paper Freeze
 
