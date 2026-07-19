@@ -994,3 +994,17 @@ Manifest：`docs\doc_workspace\SGCP\artifacts\pcs_parameter_sweep_20260719\pcs_p
 | SGCP PAPG forced-late sanity | 41 | `pointpillar_late_fusion` over scheduled source set | `naive_late_fusion()` | 0.87 | 0.81 | 0.48 | checkpoint sensitivity，不代表 SGCP 协议 |
 
 结论：Pure late 仍是强 prediction-sharing reference，但不应和 raw-LiDAR SGCP/PAPG 写成同类点云通信 baseline。当前最大风险仍是 early checkpoint 偏弱；远程 fine-tune watcher 尚在等待 GPU 空闲。
+
+## Pareto claim audit
+
+已新增 `pareto_claim_audit.md`，用 `artifacts/pareto_20260719/pareto_source.csv` 重新计算 raw-LiDAR V2V / SGCP-compatible 集合的 Pareto frontier。该集合只纳入 `proposed`、`sgcp_ablation`、`sgcp_sensitivity`、`scheduler_baseline` 和 `scheduler_baseline_proxy` 且 `scaffold=sgcp_compatible` 的结果；不把 Pure late prediction-box sharing、Edge/global reference 或 full-sharing upper reference 混入同一 frontier。
+
+关键结论：
+
+| Metric | SGCP-PAPG status | Boundary |
+| --- | --- | --- |
+| AP@0.3 | frontier point, 62.54 Mbps / 0.81 | 支撑 coverage / network-level recall claim |
+| AP@0.5 | 同预算 frontier, 62.54 Mbps / 0.78 | 与 `B_h=3` sensitivity 同 AP@0.5；PACP-LiDAR high-budget 以 86.56 Mbps 达到 0.79 |
+| AP@0.7 | not frontier | `B_h=2,rho3` sensitivity 以 54.56 Mbps 达到 0.42；说明 high-IoU localization 仍是 checkpoint/局部视角边界 |
+
+可写结论：SGCP-PAPG 可在 raw-LiDAR V2V 中写 AP@0.3/AP@0.5 的中等通信 Pareto 优势；AP@0.7 不写全面最优，而写成 high-IoU sensitivity / early checkpoint headroom。

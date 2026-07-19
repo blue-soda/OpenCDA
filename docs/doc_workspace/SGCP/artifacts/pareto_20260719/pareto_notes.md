@@ -14,6 +14,7 @@
 ## 当前可读结论
 
 - SGCP-PAPG 位于中等 raw LiDAR payload 区间：`62.54 Mbps`，AP `0.81/0.78/0.39`。
+- `pareto_claim_audit.md` 进一步确认：若只在 raw-LiDAR V2V / SGCP-compatible 集合中计算 frontier，SGCP-PAPG 是 AP@0.3 frontier 点，并在 AP@0.5 上达到同预算 frontier；AP@0.7 则由 `B_h=2` SGCP sensitivity 和高预算/强先验 reference 给出边界。
 - SGCP sensitivity 目前覆盖 `5ch` stress、`10ch rho2/rho3`、`20ch rho2`、`cap=3000`、`B_h=2/3`。这些点显示通信下降会先损伤 AP@0.3/AP@0.5 覆盖，`B_h=3` 能把 AP@0.7 推到 `0.40`，但不改善 AP@0.3。
 - 同一 scaffold 下，PAPG 相比 high-budget forced random 只多 `0.86 Mbps`，AP 提升 `+0.04/+0.05/+0.01`；相比 low-budget random 多约 `14.20 Mbps`，AP 提升 `+0.06/+0.08/+0.05`。
 - Density/communication-aware 的预算扫描显示：low-budget density `61.31 Mbps` 得到 `0.78/0.74/0.40`；high-budget communication-aware `75.94 Mbps` 得到 `0.80/0.76/0.42`。PAPG 在 AP@0.3/AP@0.5 上更高或持平且 payload 更低，但 AP@0.7 仍低于 high-budget link-aware reference。

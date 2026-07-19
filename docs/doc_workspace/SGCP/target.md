@@ -138,8 +138,8 @@
 
 验收标准：
 
-- [ ] SGCP 应在中低通信区间形成清晰 Pareto 优势，或至少在同等 Mbps 下获得更高 aggregate AP@0.3 / AP@0.5。当前第一版图显示：若把 Pure late broadcast 作为同一 Pareto 点，SGCP 不在 AP@0.3 frontier；因此主文必须把 Pure late 标为 prediction-sharing reference，并将 raw-LiDAR V2V/PPS 方法单独解释。
-- [ ] 若 SGCP 不在 Pareto frontier 上，优先分析瓶颈并修改算法；必要时选择更能体现大规模分簇优势的场景。当前瓶颈已定位为 early checkpoint 偏弱和 Pure late 过强；远程 early checkpoint fine-tune 正在等待 GPU。
+- [x] SGCP 应在中低通信区间形成清晰 Pareto 优势，或至少在同等 Mbps 下获得更高 aggregate AP@0.3 / AP@0.5。已新增 `pareto_claim_audit.md`：在 raw-LiDAR V2V / SGCP-compatible 集合中，SGCP-PAPG 位于 AP@0.3 frontier，并在 AP@0.5 上达到同预算 frontier；Pure late 已作为 prediction-sharing reference 单独解释。
+- [x] 若 SGCP 不在 Pareto frontier 上，优先分析瓶颈并修改算法；必要时选择更能体现大规模分簇优势的场景。审计结论：PAPG 主点不是 AP@0.7 frontier，AP@0.7 边界由 `B_h=2` SGCP sensitivity、高预算 proxy 或 full-sharing/edge reference 给出；论文只写 AP@0.3/AP@0.5 Pareto claim，AP@0.7 写成 early checkpoint / localization headroom 边界。early checkpoint fine-tune 仍单独保留为 P1 风险项。
 
 ## P5：Figure 2 - Aggregate AP Protocol/Fusion Breakdown
 

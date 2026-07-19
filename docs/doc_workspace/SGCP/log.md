@@ -6351,3 +6351,31 @@ PCS 的可写主表点仍是 41 帧 `div12/ov0`：`0.59/0.53/0.22`、25.29 Mbps�
 - `Clustered late-only` 不作为核心消融行。
 
 远程 early-fusion fine-tune watcher 仍在等待 GPU：最新日志仍为 `no GPU below 6000 MiB`。
+
+## 2026-07-19 Pareto claim audit
+
+### 目的
+
+继续推进 P4 验收项：确认 SGCP 是否能在合理公平集合内形成 Pareto 优势。此前问题是 Pure late prediction-box sharing 太强，如果把它和 raw-LiDAR point-grid sharing 混入同一 frontier，SGCP 不在 AP@0.3 frontier；因此本轮按通信内容和信息条件分层重新审计。
+
+### 方法
+
+从 `artifacts/pareto_20260719/pareto_source.csv` 中筛选：
+
+- `category in {proposed, sgcp_ablation, sgcp_sensitivity, scheduler_baseline, scheduler_baseline_proxy}`;
+- `scaffold == sgcp_compatible`。
+
+排除：
+
+- Pure late prediction-box sharing；
+- Edge/global reference；
+- full-sharing upper reference；
+- negative probe。
+
+### 结果
+
+Raw-LiDAR V2V / SGCP-compatible AP@0.3 frontier 的最高点是 SGCP-PAPG：`0.81` at `62.54 Mbps`。AP@0.5 上，SGCP-PAPG 和 `SGCP_PAPG_Bh3` 在同一 Mbps 下达到 `0.78`，属于同预算 frontier；PACP-LiDAR high-budget 以 `86.56 Mbps` 达到 `0.79`，作为 stronger-priority/high-budget boundary。AP@0.7 上，PAPG 主点不是 frontier，`SGCPCoverage10chRho3Bh2` 以 `54.56 Mbps` 达到 `0.42`，但 AP@0.3/AP@0.5 较低。
+
+### 结论
+
+P4 可按分层口径 first-pass 关闭：论文主张写成 “SGCP-PAPG 在 raw-LiDAR V2V 的 AP@0.3/AP@0.5 中等通信区间处于 Pareto frontier”；AP@0.7 写成 high-IoU localization/checkpoint headroom，不写成全面最优。
