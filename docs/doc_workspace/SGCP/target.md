@@ -61,6 +61,7 @@
 - [ ] 提升 early-fusion checkpoint：当前最大实验风险是 `pointpillar_early_fusion` 对 SGCP raw point-cloud early fusion 不够强，导致 Pure late prediction-sharing reference 过强、SGCP AP@0.7 上限偏低。远程训练固定使用 `ssh mindspore-187`、`/data2/gzc/sgcp_early_train/` 和 `opencood-gzc` 环境；已上传当前 checkpoint 并启动 GPU watcher，GPU 空闲后自动 fine-tune。回收 checkpoint 后必须用同一 checkpoint 重跑 SGCP 与 Pure late controlled baseline。
   - [x] Late checkpoint 直接替换 early detector 已判负：11 帧 `0.58/0.48/0.15`。
   - [x] Attentive intermediate checkpoint 作为 early detector 已完成 sensitivity：41 帧 SGCP-PAPG `0.87/0.81/0.36`，Pure late attentive controlled `0.82/0.65/0.28`，Full20Early attentive upper reference `0.88/0.85/0.45`；可作为 AP@0.3/AP@0.5 strengthened candidate，但 AP@0.7 仍低于原 PAPG 主线，暂不替换主表。
+  - [x] 补齐 attentive 下的关键 EdgeCooperHD 对照：EdgeCooperHD attentive 41 帧 `0.85/0.74/0.35`、`65.40 Mbps`，SGCP-PAPG attentive `0.87/0.81/0.36`、`62.54 Mbps`，说明同 detector/checkpoint 口径下 SGCP 可同时优于 Pure late attentive 和 EdgeCooperHD attentive。该结论仍是 checkpoint sensitivity / candidate，若替换主表需完整重跑所有 baseline。
   - [x] COSDH compatible-weight transplant 已判负：11 帧 `0.00/0.00/0.00` 或 `0.02/0.00/0.00`。
   - [x] COSDH 实模型已复制必要代码并跑通 1 帧 collapsed smoke test；进一步用 `--debug-opencood-output` 和 `score_threshold=0.01/0.005/0.003` 诊断后确认 `psm` 置信度极低且正式 postprocess 仍无最终框。该路线完成 first-pass 判定：暂不扩展 11/41 帧，不进入主表；后续仅作为低优先级 calibration/debug。
 

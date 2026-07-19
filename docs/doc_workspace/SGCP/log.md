@@ -6691,3 +6691,60 @@ Artifacts：
 ### 结论
 
 远端训练尚未开始，当前论文和主表继续使用已复现的 mainline/checkpoint-sensitivity artifact；不能回收或替换 checkpoint 数值。
+
+## 2026-07-19 19:20 - Attentive checkpoint 下补跑 EdgeCooperHD 对照
+
+### 背景
+
+用户关注：如果把 detector/checkpoint 替换成 attentive，SGCP 相比主表中的 Pure late 和 EdgeCooperHD 是否会更好。此前已有 SGCP-PAPG attentive、Pure late attentive、Full20Early attentive，但缺少 EdgeCooperHD attentive 同权重对照。
+
+### 命令
+
+```powershell
+$artifact='docs\doc_workspace\SGCP\artifacts\attentive_scheduler_comparison_20260719'
+conda run --no-capture-output -n opencda python -m opencda.tools.offline_inference `
+  --dataset-root D:\Data\Carla `
+  --scenario-id 2026_07_15_01_26_56 `
+  --ego-cav-id 1 `
+  --max-frames 0 `
+  --coperception-yaml docs\doc_workspace\SGCP\artifacts\early_from_late_checkpoint_20260719\enable_coperception_early_from_attentive.yaml `
+  --selective-sharing-baseline edgecooper_global_hd `
+  --selective-member-budget 3 `
+  --selective-grid-budget 117 `
+  --sgcp-receiver-policy all-cluster-heads `
+  --sgcp-inter-cluster-late-fusion `
+  --rho-th 3 `
+  --num-channels 10 `
+  --bandwidth-mhz 20 `
+  --sgcp-trace-output "$artifact\edgecooper_hd_attentive_3m117g_41f_trace.csv" `
+  *> "$artifact\edgecooper_hd_attentive_3m117g_41f.log"
+```
+
+Manifest：
+
+```powershell
+conda run -n opencda python -m opencda.tools.sgcp_aggregate_ap_manifest `
+  --run "SGCP_PAPG_attentive=docs\doc_workspace\SGCP\artifacts\early_from_late_checkpoint_20260719\sgcp_papg_early_from_attentive_41f.stdout.log,docs\doc_workspace\SGCP\artifacts\early_from_late_checkpoint_20260719\sgcp_papg_early_from_attentive_41f_trace.csv" `
+  --run "PureLate_attentive=docs\doc_workspace\SGCP\artifacts\early_from_late_checkpoint_20260719\pure_late_attentive_41f.stdout.log,docs\doc_workspace\SGCP\artifacts\early_from_late_checkpoint_20260719\pure_late_attentive_41f_trace.csv" `
+  --run "EdgeCooperHD_attentive=docs\doc_workspace\SGCP\artifacts\attentive_scheduler_comparison_20260719\edgecooper_hd_attentive_3m117g_41f.log,docs\doc_workspace\SGCP\artifacts\attentive_scheduler_comparison_20260719\edgecooper_hd_attentive_3m117g_41f_trace.csv" `
+  --output-csv docs\doc_workspace\SGCP\artifacts\attentive_scheduler_comparison_20260719\attentive_comparison_manifest.csv `
+  --notes "attentive detector sensitivity for SGCP vs PureLate and EdgeCooperHD; 20MHz/10ch; not main table replacement" `
+  --override SGCP_PAPG_attentive.num_channels=10 `
+  --override SGCP_PAPG_attentive.bandwidth_mhz=20 `
+  --override PureLate_attentive.num_channels=10 `
+  --override PureLate_attentive.bandwidth_mhz=20 `
+  --override EdgeCooperHD_attentive.num_channels=10 `
+  --override EdgeCooperHD_attentive.bandwidth_mhz=20
+```
+
+### 结果
+
+| Variant | AP@0.3 | AP@0.5 | AP@0.7 | Raw Mbps |
+| --- | ---: | ---: | ---: | ---: |
+| Pure late attentive | 0.82 | 0.65 | 0.28 | 0 raw LiDAR |
+| EdgeCooperHD attentive | 0.85 | 0.74 | 0.35 | 65.40 |
+| SGCP-PAPG attentive | 0.87 | 0.81 | 0.36 | 62.54 |
+
+### 结论
+
+同 attentive detector/checkpoint 口径下，SGCP-PAPG 不再弱于 Pure late 或 EdgeCooperHD：相比 Pure late attentive 高 `+0.05/+0.16/+0.08` AP；相比 EdgeCooperHD attentive 高 `+0.02/+0.07/+0.01` AP，且少约 `2.87 Mbps` raw-LiDAR payload。该结果非常有利于论文叙事，但它改变了 detector 初始化，当前仍应作为 checkpoint sensitivity / candidate；若替换正式主表，需要完整重跑所有主表 baseline 和图表。

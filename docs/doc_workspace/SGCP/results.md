@@ -1098,3 +1098,19 @@ Artifact：
 - 同 attentive checkpoint 下，Pure late controlled 只有 `0.82/0.65/0.28`，明显低于 SGCP-PAPG attentive 的 `0.87/0.81/0.36`。这说明 attentive detector 并非只同步增强 prediction-sharing reference；SGCP 的 scheduled raw point-cloud early fusion 在 AP@0.5/AP@0.7 上仍有实质贡献。
 - Pure late attentive 的 prediction-box overhead：`80 B/box` broadcast mean/max `1.37/1.51 Mbps`，scheduled all-to-all mean/max `25.97/28.60 Mbps`；`128 B/box` broadcast mean/max `2.13/2.35 Mbps`，scheduled all-to-all mean/max `40.53/44.65 Mbps`。因此它仍应写作 prediction-sharing reference，而不是 raw-LiDAR baseline。
 - COSDH checkpoint 不能直接迁移到 plain PointPillar early detector；真实 COSDH 模型虽然已在本仓库跑通加载与 forward path，但当前 CARLA dump 上 1 帧输出 0 个预测框。进一步诊断显示 6 个 receiver 的 `psm` sigmoid 最大值仅约 `0.0148--0.0224`；即使把 `score_threshold` 降到 `0.01/0.005/0.003`，正式 postprocess 仍返回 0 个最终框。该路线不是简单阈值校准问题，必须先解决 `proj_first`、feature-communication 输入语义、LiDAR range / postprocessor 约定与 collapsed raw point-cloud 输入不匹配的问题。
+
+### Attentive comparison against key baselines
+
+用户进一步关注：如果把 detector/checkpoint 统一替换为 attentive，SGCP 相对 Pure late 和 EdgeCooperHD 是否更好。已补跑 `EdgeCooperHD` attentive 41 帧，并生成 manifest：
+
+- `docs\doc_workspace\SGCP\artifacts\attentive_scheduler_comparison_20260719\attentive_comparison_manifest.csv`
+- `docs\doc_workspace\SGCP\artifacts\attentive_scheduler_comparison_20260719\edgecooper_hd_attentive_3m117g_41f.log`
+- `docs\doc_workspace\SGCP\artifacts\attentive_scheduler_comparison_20260719\edgecooper_hd_attentive_3m117g_41f_trace.csv`
+
+| Variant | Frames | Detector | AP@0.3 | AP@0.5 | AP@0.7 | Raw Mbps | Interpretation |
+| --- | ---: | --- | ---: | ---: | ---: | ---: | --- |
+| Pure late attentive | 41 | attentive singleton detector + `naive_late_fusion()` | 0.82 | 0.65 | 0.28 | 0 raw LiDAR | prediction-sharing reference |
+| EdgeCooperHD attentive | 41 | attentive raw-LiDAR detector | 0.85 | 0.74 | 0.35 | 65.40 | edge/global scheduler reference |
+| SGCP-PAPG attentive | 41 | attentive raw-LiDAR detector | 0.87 | 0.81 | 0.36 | 62.54 | strengthened SGCP sensitivity |
+
+结论：在同一 attentive detector 口径下，SGCP-PAPG 不再弱于 Pure late 或 EdgeCooperHD；它比 Pure late 高 `+0.05/+0.16/+0.08` AP，比 EdgeCooperHD 高 `+0.02/+0.07/+0.01` AP，同时比 EdgeCooperHD 少约 `2.87 Mbps` raw-LiDAR payload。该结果更有利于论文叙事，但由于它改变 detector 初始化，当前仍标为 checkpoint sensitivity / candidate；若要替换正式主表，必须把其他主表 baseline 也完整切到 attentive 后重跑并更新 Table 1/3/figures。
