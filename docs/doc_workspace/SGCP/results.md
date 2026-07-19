@@ -1077,9 +1077,10 @@ Artifact：
 | COSDH compatible transplant | 11 | 140 compatible COSDH weights + original early fallback heads | 0.00 | 0.00 | 0.00 | 8,598,224 | 62.53 | reject |
 | COSDH backbone + early heads | 11 | COSDH backbone, original early detection heads | 0.02 | 0.00 | 0.00 | 8,598,224 | 62.53 | reject |
 | COSDH real model collapsed smoke | 1 | `point_pillar_comm_multiscale`, scheduled points collapsed to receiver cloud | n/a | n/a | n/a | 783,392 | n/a | runs, but 0 predictions |
+| COSDH real model threshold diagnosis | 1 | same as above, `score_threshold=0.01/0.005/0.003` | n/a | n/a | n/a | 783,392 | n/a | logits too low; still 0 final boxes |
 
 结论：
 
 - 使用 attentive intermediate checkpoint 初始化/替换 early detector 对 AP@0.3/AP@0.5 很有帮助，说明当前主线的核心风险确实来自 early detector/checkpoint 强度。
 - Attentive checkpoint 的 AP@0.7 仍低于原 PAPG 主线，因此不能简单替换全部主表；更合理的用法是 detector sensitivity、或在远程 fine-tune 失败时作为 AP@0.3/AP@0.5 strengthened candidate。
-- COSDH checkpoint 不能直接迁移到 plain PointPillar early detector；真实 COSDH 模型虽然已在本仓库跑通加载与 forward path，但当前 CARLA dump 上 1 帧输出 0 个预测框，必须先做后处理阈值、range、`proj_first` 和模型输入语义校准。
+- COSDH checkpoint 不能直接迁移到 plain PointPillar early detector；真实 COSDH 模型虽然已在本仓库跑通加载与 forward path，但当前 CARLA dump 上 1 帧输出 0 个预测框。进一步诊断显示 6 个 receiver 的 `psm` sigmoid 最大值仅约 `0.0148--0.0224`；即使把 `score_threshold` 降到 `0.01/0.005/0.003`，正式 postprocess 仍返回 0 个最终框。该路线不是简单阈值校准问题，必须先解决 `proj_first`、feature-communication 输入语义、LiDAR range / postprocessor 约定与 collapsed raw point-cloud 输入不匹配的问题。

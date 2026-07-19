@@ -62,7 +62,7 @@
   - [x] Late checkpoint 直接替换 early detector 已判负：11 帧 `0.58/0.48/0.15`。
   - [x] Attentive intermediate checkpoint 作为 early detector 已完成 sensitivity：41 帧 SGCP-PAPG `0.87/0.81/0.36`，Full20Early attentive upper reference `0.88/0.85/0.45`；可作为 AP@0.3/AP@0.5 strengthened candidate，但 AP@0.7 仍低于原 PAPG 主线，暂不替换主表。
   - [x] COSDH compatible-weight transplant 已判负：11 帧 `0.00/0.00/0.00` 或 `0.02/0.00/0.00`。
-  - [ ] COSDH 实模型已复制必要代码并跑通 1 帧 collapsed smoke test，但当前 6 个 cluster head 均 0 prediction；若继续该路线，先做 logits、postprocessor threshold、range 与 `proj_first` 输入语义校准，再扩展 11/41 帧。
+  - [x] COSDH 实模型已复制必要代码并跑通 1 帧 collapsed smoke test；进一步用 `--debug-opencood-output` 和 `score_threshold=0.01/0.005/0.003` 诊断后确认 `psm` 置信度极低且正式 postprocess 仍无最终框。该路线完成 first-pass 判定：暂不扩展 11/41 帧，不进入主表；后续仅作为低优先级 calibration/debug。
 
 ## P2：Table 2 - Fusion Scaffold Ablation
 

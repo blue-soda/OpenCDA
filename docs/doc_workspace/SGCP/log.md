@@ -6500,3 +6500,35 @@ env: opencood-gzc
 - attentive intermediate checkpoint 直接作为 early detector：11 帧为 `0.85/0.77/0.32`，41 帧 SGCP-PAPG 为 `0.87/0.81/0.36`，Full20 early upper reference 为 `0.88/0.85/0.45`。该路线显著提升 AP@0.3/AP@0.5，但 AP@0.7 低于原 PAPG 主线的 `0.39`，适合作 checkpoint sensitivity / potential mainline candidate，不直接替换主表。
 - COSDH compatible-weight transplant：仅迁移 140 个同名同形状权重时 11 帧为 `0.00/0.00/0.00`；保留 early heads、仅迁移 COSDH backbone 时为 `0.02/0.00/0.00`。大量误检导致 AP 失效，不继续扩展。
 - COSDH 实模型适配：已从 `C:\Workspace\OpenCOOD` 复制所需模型代码到本仓库，新增 `--collapse-to-ego-pointcloud`，可将 SGCP 已调度 raw point cloud 合并为单个 receiver 输入，并加载 COSDH `point_pillar_comm_multiscale` checkpoint。1 帧 smoke test 成功跑通，但 6 个 cluster head 全部 `pred_boxes=0`，最终 `fused_pred_boxes=0`。当前判断为 COSDH 配置/后处理/训练分布与本 CARLA dump 不匹配，需要 logits/threshold calibration 后再扩展。
+
+## 2026-07-19 - COSDH output/postprocess diagnosis
+
+### 目的
+
+继续排查 COSDH 实模型 collapsed smoke test 为何 0 prediction，判断是否只是 postprocess 阈值过高。
+
+### 处理
+
+新增 `offline_inference` 调试参数：
+
+- `--debug-opencood-output`：打印 `psm/rm` shape、sigmoid 置信度分位数、各阈值候选 anchor 数，以及 postprocess 几何过滤 / NMS 计数。
+- `--postprocess-score-threshold <float>`：临时覆盖 OpenCOOD `score_threshold`，只用于 checkpoint 校准 probe。
+
+### 结果
+
+Artifact：
+
+- `artifacts/cosdh_checkpoint_probe_20260719/sgcp_papg_cosdh_collapsed_1f_debug.stdout.log`
+- `artifacts/cosdh_checkpoint_probe_20260719/sgcp_papg_cosdh_collapsed_1f_thr001.stdout.log`
+- `artifacts/cosdh_checkpoint_probe_20260719/sgcp_papg_cosdh_collapsed_1f_thr0005_nms.stdout.log`
+- `artifacts/cosdh_checkpoint_probe_20260719/sgcp_papg_cosdh_collapsed_1f_thr0003.stdout.log`
+
+关键发现：
+
+- 默认 `score_threshold=0.2` 下，6 个 cluster-head receiver 的 `psm` sigmoid 最大值仅约 `0.0148--0.0224`，远低于正常检测置信度。
+- 降到 `0.01` 仍然没有最终预测框。
+- 降到 `0.005/0.003` 后会出现大量低分候选，且部分候选能通过 large-box、z、range 和 NMS 诊断计数；但正式 OpenCOOD postprocess 仍返回 `pred_boxes=0`。这些候选分数极低，不能作为有效检测结果。
+
+### 结论
+
+COSDH 当前不是简单调低阈值即可迁移到 SGCP merged point-cloud detector 的 checkpoint。更可能的问题是 COSDH intermediate model 的训练/输入语义、`proj_first=false`、feature-communication 分支、LiDAR range 或后处理约定与本 CARLA collapsed raw point-cloud 输入不一致。该路线暂不进入主表；后续如继续，只做单独 calibration/debug，不占用主线实验资源。

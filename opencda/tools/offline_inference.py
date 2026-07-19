@@ -13,6 +13,7 @@ import random
 from collections import defaultdict, OrderedDict
 
 import numpy as np
+import torch
 from omegaconf import OmegaConf
 import yaml
 
@@ -185,6 +186,16 @@ def parse_args():
                              'communication plan but lets single-agent or '
                              'intermediate checkpoints act as merged point '
                              'cloud detectors.')
+    parser.add_argument('--debug-opencood-output', action='store_true',
+                        help='Print compact model-output/postprocess '
+                             'diagnostics for each OpenCOOD inference call. '
+                             'This is intended for checkpoint adaptation '
+                             'smoke tests and is off by default.')
+    parser.add_argument('--postprocess-score-threshold', type=float,
+                        default=None,
+                        help='Temporarily override the OpenCOOD '
+                             'postprocessor target score_threshold. Useful '
+                             'for detector checkpoint calibration probes.')
     return parser.parse_args()
 
 
@@ -1643,13 +1654,162 @@ def apply_selective_sharing_baseline(frame, protocol, ego_cav_id,
     return constrained_items
 
 
-def run_opencood_inference(manager, frame, ego_lidar_pose):
+def summarize_opencood_output(output_dict, dataset, batch_data=None,
+                              prefix='opencood_debug'):
+    if not output_dict:
+        print('%s no_output' % prefix)
+        return
+    score_threshold = None
+    try:
+        score_threshold = float(
+            dataset.post_processor.params['target_args']['score_threshold'])
+    except (AttributeError, KeyError, TypeError, ValueError):
+        pass
+
+    for cav_id, preds in output_dict.items():
+        if not isinstance(preds, dict) or 'psm' not in preds:
+            print('%s cav=%s keys=%s' %
+                  (prefix, cav_id, sorted(preds.keys())
+                   if isinstance(preds, dict) else type(preds).__name__))
+            continue
+        prob = torch.sigmoid(preds['psm'].detach()).reshape(-1)
+        quantiles = torch.quantile(
+            prob,
+            torch.tensor([0.5, 0.9, 0.99, 0.999],
+                         device=prob.device)).detach().cpu().numpy()
+        above_counts = {}
+        for threshold in [0.001, 0.003, 0.005, 0.01, 0.05, 0.10,
+                          0.20, 0.30, 0.50]:
+            above_counts[threshold] = int((prob > threshold).sum().item())
+        shape_text = ','.join(str(item) for item in preds['psm'].shape)
+        rm_shape_text = (
+            ','.join(str(item) for item in preds['rm'].shape)
+            if 'rm' in preds else 'none')
+        print(
+            '%s cav=%s psm_shape=%s rm_shape=%s score_threshold=%s '
+            'prob_min=%.6f prob_max=%.6f prob_mean=%.6f '
+            'q50=%.6f q90=%.6f q99=%.6f q999=%.6f '
+            'above_0001=%d above_0003=%d above_0005=%d '
+            'above_001=%d above_005=%d above_010=%d '
+            'above_020=%d above_030=%d above_050=%d' %
+            (prefix, cav_id, shape_text, rm_shape_text,
+             '' if score_threshold is None else '%.4f' % score_threshold,
+             float(prob.min().item()), float(prob.max().item()),
+             float(prob.mean().item()),
+             float(quantiles[0]), float(quantiles[1]),
+             float(quantiles[2]), float(quantiles[3]),
+             above_counts[0.001], above_counts[0.003],
+             above_counts[0.005], above_counts[0.01],
+             above_counts[0.05], above_counts[0.10],
+             above_counts[0.20], above_counts[0.30],
+             above_counts[0.50]))
+        if batch_data is None or score_threshold is None:
+            continue
+        try:
+            cav_content = batch_data[cav_id]
+            anchor_box = cav_content['anchor_box']
+            transformation_matrix = cav_content['transformation_matrix']
+            reg = preds['rm']
+            batch_box3d = dataset.post_processor.delta_to_boxes3d(
+                reg,
+                anchor_box)
+            mask = (prob > score_threshold).view(1, -1)
+            mask_reg = mask.unsqueeze(2).repeat(1, 1, 7)
+            boxes3d = torch.masked_select(
+                batch_box3d[0],
+                mask_reg[0]).view(-1, 7)
+            scores = torch.masked_select(prob, mask.view(-1))
+            if len(boxes3d) == 0:
+                print('%s cav=%s post_candidates=0' % (prefix, cav_id))
+                continue
+            from opencood.utils import box_utils
+            boxes3d_corner = box_utils.boxes_to_corners_3d(
+                boxes3d,
+                order=dataset.post_processor.params['order'])
+            projected_boxes3d = box_utils.project_box3d(
+                boxes3d_corner,
+                transformation_matrix)
+            keep_large = box_utils.remove_large_pred_bbx(projected_boxes3d)
+            keep_z = box_utils.remove_bbx_abnormal_z(projected_boxes3d)
+            keep_range = box_utils.get_mask_for_boxes_within_range_torch(
+                projected_boxes3d)
+            keep_all = torch.logical_and(
+                torch.logical_and(keep_large, keep_z),
+                keep_range)
+            filtered_boxes = projected_boxes3d[
+                torch.logical_and(keep_large, keep_z)]
+            filtered_scores = scores[
+                torch.logical_and(keep_large, keep_z)]
+            nms_keep_count = 0
+            nms_range_count = 0
+            if filtered_boxes.shape[0] > 0:
+                nms_keep = box_utils.nms_rotated(
+                    filtered_boxes,
+                    filtered_scores,
+                    dataset.post_processor.params['nms_thresh'])
+                nms_keep_count = int(len(nms_keep))
+                if nms_keep_count > 0:
+                    nms_boxes = filtered_boxes[nms_keep]
+                    nms_range_count = int(
+                        box_utils.get_mask_for_boxes_within_range_torch(
+                            nms_boxes).sum().item())
+            print('%s cav=%s post_candidates=%d keep_large=%d keep_z=%d '
+                  'keep_range=%d keep_all_pre_nms=%d nms_keep=%d '
+                  'nms_keep_in_range=%d score_max=%.6f' %
+                  (prefix, cav_id, int(boxes3d.shape[0]),
+                   int(keep_large.sum().item()),
+                   int(keep_z.sum().item()),
+                   int(keep_range.sum().item()),
+                   int(keep_all.sum().item()),
+                   nms_keep_count,
+                   nms_range_count,
+                   float(scores.max().item())))
+        except Exception as error:
+            print('%s cav=%s post_debug_error=%s' %
+                  (prefix, cav_id, str(error)))
+
+
+def run_opencood_inference(manager, frame, ego_lidar_pose,
+                           debug_output=False):
     reformat_data_dict = manager.opencood_dataset.get_item_test(
         frame,
         ego_lidar_pose)
     output_dict = manager.opencood_dataset.collate_batch_test(
         [reformat_data_dict])
     batch_data = manager.to_device(output_dict)
+    if debug_output:
+        from opencood.tools import inference_utils
+        with torch.no_grad():
+            if manager.fusion_method == 'late':
+                ret = inference_utils.inference_late_fusion(
+                    batch_data,
+                    manager.model,
+                    manager.opencood_dataset,
+                    return_output=True,
+                    return_object_ids=False)
+            elif manager.fusion_method == 'early':
+                ret = inference_utils.inference_early_fusion(
+                    batch_data,
+                    manager.model,
+                    manager.opencood_dataset,
+                    return_output=True,
+                    return_object_ids=False)
+            elif manager.fusion_method.startswith('intermediate'):
+                ret = inference_utils.inference_intermediate_fusion(
+                    batch_data,
+                    manager.model,
+                    manager.opencood_dataset,
+                    return_output=True,
+                    return_object_ids=False)
+            else:
+                raise NotImplementedError(
+                    'Only early, late and intermediate fusion is supported.')
+        summarize_opencood_output(
+            ret[-1],
+            manager.opencood_dataset,
+            batch_data=batch_data,
+            prefix='opencood_debug')
+        return ret[:-1]
     return manager.inference(
         batch_data,
         with_stats=False,
@@ -2010,6 +2170,12 @@ def main():
         args.coperception_yaml,
         args.fusion_method)
     manager = OpenCOODManager(coperception_params)
+    if args.postprocess_score_threshold is not None:
+        manager.opencood_dataset.post_processor.params[
+            'target_args']['score_threshold'] = (
+                args.postprocess_score_threshold)
+        print('postprocess_score_threshold_override=%.6f' %
+              args.postprocess_score_threshold)
     sgcp_summaries = []
     sgcp_trace_rows = []
     object_rows = []
@@ -2056,7 +2222,8 @@ def main():
             canonical_ret = run_opencood_inference(
                 manager,
                 frame,
-                target_ego_lidar_pose)
+                target_ego_lidar_pose,
+                debug_output=args.debug_opencood_output)
         frame_items = [(frame, None)]
         late_receiver_policy = (
             args.sgcp_receiver_policy
@@ -2130,7 +2297,8 @@ def main():
                     ret = run_opencood_inference(
                         manager,
                         inference_frame,
-                        target_ego_lidar_pose)
+                        target_ego_lidar_pose,
+                        debug_output=args.debug_opencood_output)
                 except RuntimeError as error:
                     if not is_empty_pillar_error(error):
                         raise
@@ -2282,7 +2450,8 @@ def main():
             ret = run_opencood_inference(
                 manager,
                 inference_frame,
-                ego_lidar_pose)
+                ego_lidar_pose,
+                debug_output=args.debug_opencood_output)
 
             pred_box_tensor, pred_score, gt_box_tensor = ret[0:3]
             pred_count = (
