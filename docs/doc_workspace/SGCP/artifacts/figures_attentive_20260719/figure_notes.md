@@ -19,6 +19,6 @@ Claim boundary:
 - These figures use the attentive intermediate checkpoint as the detector for SGCP and the comparable baselines.
 - They supersede the legacy early-checkpoint breakdown figures for forward SGCP writing, but they do not delete the legacy artifacts.
 - Pure late is a prediction-sharing reference. Its plotted communication label is `box 1.37`, the 80 B/box one-hop broadcast estimate from `pure_late_attentive_box_comm_80`.
-- FullPerception-PCS is plotted as a low-payload scheduled-receiver PCS reproduction: `0.59/0.46/0.22`, `raw 5.0`.
+- FullPerception-PCS is plotted as a paper-faithful PCS scheduling + raw-LiDAR full-sender adaptation: `0.63/0.49/0.17`, `raw 32.1`.
 - Full 20-CAV early fusion remains an upper reference, not a baseline algorithm.
 - EdgeCooperHD and PACP-LiDAR remain reference/proxy schedulers with stronger information assumptions or higher traffic than SGCP.

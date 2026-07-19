@@ -6836,6 +6836,33 @@ conda run -n opencda python -m opencda.tools.sgcp_aggregate_ap_manifest `
 - 结论：
   - 原 `0.43/0.29/0.14, 16.38 Mbps` 不再进入 forward-writing 主表。
   - 新行更符合 PCS 作为 low-payload blind-spot scheduled-receiver reproduction 的定位；它仍不是强 SGCP-compatible scheduler baseline。
+
+## 2026-07-19 21:41 - FullPerception-PCS paper audit and Table 4 attentive rerun
+
+用户进一步要求对照 FullPerception 原论文检查 PCS 实现，尤其是“同一个接收方的不同发送方”是否应归为 A 类硬冲突。
+
+核查结论：
+
+- FullPerception 原文 Class A conflict 是 common-node conflict：一个车辆同一时刻只能参与一条链路，两条链路只要共享任一节点即冲突。
+- 因此，同 receiver 多 sender 必须互斥；`pcs.py` 当前 A 类判断与论文一致。
+- 临时放宽同 receiver 冲突的实验不符合论文，未进入代码和正式 artifact。
+
+新增/更新：
+
+- `fullperception_pcs_paper_audit.md`
+- `artifacts/attentive_pcs_budget_fix_20260719/pcs_grid_paperfaithful_div12_ov0_41f.log`
+- `artifacts/attentive_pcs_budget_fix_20260719/pcs_fullsender_paperfaithful_div12_ov0_41f.log`
+- `artifacts/parameter_sensitivity_attentive_20260719/table4_parameter_sensitivity_attentive.csv`
+- `C:\Workspace\icdcs-paper\SGCP\main.tex`
+
+关键结果：
+
+| Experiment | AP@0.3 | AP@0.5 | AP@0.7 | Mbps |
+| --- | ---: | ---: | ---: | ---: |
+| PCS strict grid replay | 0.56 | 0.41 | 0.18 | 11.22 |
+| PCS raw-LiDAR adaptation | 0.63 | 0.49 | 0.17 | 32.06 |
+| SGCP Table 4 rho=1/2/3 | 0.87 | 0.81 | 0.36 | 62.57 / 62.54 / 62.54 |
+| SGCP Table 4 5/10/20ch | 0.74/0.87/0.88 | 0.61/0.81/0.81 | 0.24/0.36/0.36 | 31.12 / 62.54 / 67.33 |
 - 已更新：
   - `artifacts/attentive_protocol_20260719/protocol_native_attentive_manifest.csv`
   - `artifacts/pareto_attentive_20260719/pareto_attentive_source.csv`

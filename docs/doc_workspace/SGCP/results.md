@@ -980,7 +980,7 @@ Manifest：`docs\doc_workspace\SGCP\artifacts\pcs_parameter_sweep_20260719\pcs_p
 | PCS_11f_div16_ov1 | 11 | 16 | 1 | 0.42 | 0.40 | 0.20 | 540,160 | 3.93 |
 | PCS_41f_div12_ov0 | 41 | 12 | 0 | 0.59 | 0.53 | 0.22 | 12,959,840 | 25.29 |
 
-可读结论：在 legacy `pointpillar_early_fusion` 口径下，`div12/ov0` 是 PCS baseline 的可写工作点。2026-07-19 attentive forward-writing 口径下，PCS 主表行已进一步调整为 `div16/ov0 + scheduled receivers`，结果为 `0.59/0.46/0.22, 4.99 Mbps`，详见后文 `FullPerception-PCS attentive adjustment`。因此本节保留为 PCS 参数趋势和运行时边界，不再作为当前 attentive 主表/Pareto 的 source。
+可读结论：在 legacy `pointpillar_early_fusion` 口径下，`div12/ov0` 是 PCS baseline 的可写工作点。2026-07-19 attentive forward-writing 口径下，`div16/ov0 + scheduled receivers` 的 `0.59/0.46/0.22, 4.99 Mbps` 已被用户指出通信量异常，并经论文对照后降级为诊断点；当前 Table 1 使用 paper-faithful PCS scheduling + raw-LiDAR full-sender adaptation `0.63/0.49/0.17, 32.06 Mbps`，详见后文 `FullPerception-PCS paper-audit correction`。
 
 ## Detector / checkpoint fairness decision
 
@@ -1133,7 +1133,7 @@ Artifacts：
 | --- | ---: | ---: | ---: | ---: | --- |
 | Head-only attentive | 0.42 | 0.30 | 0.13 | 0.00 | lower reference |
 | Pure late attentive | 0.82 | 0.65 | 0.28 | 1.37 box broadcast | prediction-sharing reference |
-| FullPerception-PCS attentive | 0.59 | 0.46 | 0.22 | 4.99 | low-payload scheduled-receiver PCS reproduction |
+| FullPerception-PCS attentive | 0.63 | 0.49 | 0.17 | 32.06 | paper-faithful PCS scheduling + raw-LiDAR full-sender adaptation |
 | EdgeCooperHD attentive | 0.85 | 0.74 | 0.35 | 65.40 | edge/global scheduler reference |
 | SGCP-PAPG attentive | 0.87 | 0.81 | 0.36 | 62.54 | new proposed candidate |
 | Full20Early attentive | 0.88 | 0.85 | 0.45 | 118.71 | full raw-sharing upper reference |
@@ -1153,7 +1153,7 @@ Artifacts：
 
 - 后续论文写作应默认使用 attentive candidate 图表；legacy early-checkpoint 表格降级为 checkpoint reference。
 - SGCP-PAPG attentive 同时高于 Pure late attentive 与 EdgeCooperHD attentive，且比 EdgeCooperHD 少约 `2.87 Mbps`。
-- FullPerception-PCS attentive 已从异常的 `0.43/0.29/0.14, 16.38 Mbps` 调整为 `0.59/0.46/0.22, 4.99 Mbps`；它保留为 low-payload protocol-native PCS reproduction，不承担强 SGCP-compatible scheduler baseline 角色。
+- FullPerception-PCS attentive 已从异常的 `0.43/0.29/0.14, 16.38 Mbps` 和 `0.59/0.46/0.22, 4.99 Mbps` 继续修正为 `0.63/0.49/0.17, 32.06 Mbps` raw-LiDAR adaptation；严格 grid replay 另作边界结果。
 - PACP-LiDAR attentive 的 AP@0.3/AP@0.7 略高于 SGCP，但通信量高 `24.02 Mbps`；这适合作 Pareto tradeoff，而不是否定 SGCP。
 - Full20Early attentive 仍是高 IoU 上界，SGCP 当前保留其 AP@0.3/AP@0.5 的 `98.9%/95.3%`，以 `52.7%` raw payload 运行。
 
@@ -1166,6 +1166,35 @@ Artifacts：
 | div8/ov0 scheduled | 11 | 0.48 | 0.35 | 0.12 | 1,101,888 bytes / 20.03 Mbps | 低阈值无改善 |
 | div12/ov0 cluster-head eval | 11 | 0.48 | 0.33 | 0.13 | 617,792 bytes / 11.23 Mbps | receiver policy 不适合作主点 |
 | div16/ov0 scheduled | 11 | 0.64 | 0.49 | 0.18 | 3,884,080 bytes / 70.62 Mbps | 最有希望 |
-| div16/ov0 scheduled | 41 | 0.59 | 0.46 | 0.22 | 2,556,016 bytes / 4.99 Mbps | 新主表 PCS anchor |
+| div16/ov0 scheduled | 41 | 0.59 | 0.46 | 0.22 | 2,556,016 bytes / 4.99 Mbps | rejected diagnostic point; no longer main PCS anchor |
+
+## FullPerception-PCS paper-audit correction
+
+用户进一步指出 `4.99 Mbps` 仍然异常，并要求对照 FullPerception 原论文核查 PCS 冲突图，尤其是同 receiver 多 sender 是否应为 A 类冲突。
+
+核查结论：原文 Class A 定义为一个车辆同一时刻只能参与一条链路；两条链路只要共享任一节点即冲突。因此，同一个接收方的不同发送方属于 Class A common-node conflict。`pcs.py` 当前 A 类判断与原文一致，不应放宽。
+
+新 artifact：`docs/doc_workspace/SGCP/fullperception_pcs_paper_audit.md`。
+
+| Variant | Frames | AP@0.3 | AP@0.5 | AP@0.7 | Payload / Mbps | Use |
+| --- | ---: | ---: | ---: | ---: | --- | --- |
+| PCS strict grid replay | 41 | 0.56 | 0.41 | 0.18 | 5,752,240 bytes / 11.22 Mbps | Paper-faithful conflict graph + selected blind-spot raw grids; boundary result |
+| PCS raw-LiDAR adaptation | 41 | 0.63 | 0.49 | 0.17 | 16,429,312 bytes / 32.06 Mbps | Table 1 raw-LiDAR comparison row |
+| Rejected low-payload anchor | 41 | 0.59 | 0.46 | 0.22 | 2,556,016 bytes / 4.99 Mbps | Diagnostic only; no longer forward-writing anchor |
+
+可读结论：FullPerception 原文传输的是 blind-spot intermediate features，而本文主表多数 baseline 是 raw LiDAR replay。为避免主表里出现明显不合理的 `4.99 Mbps`，Table 1 使用 PCS 选链路 + selected sender full point-cloud upload 的 raw-LiDAR adaptation；正文同时说明严格 grid replay 通信更低但不是同一 raw-LiDAR payload 口径。
+
+## Table 4 attentive parameter sensitivity
+
+新增 artifact：`docs/doc_workspace/SGCP/artifacts/parameter_sensitivity_attentive_20260719/table4_parameter_sensitivity_attentive.csv`。
+
+| Parameter | Setting | AP@0.3 | AP@0.5 | AP@0.7 | Mbps | Notes |
+| --- | ---: | ---: | ---: | ---: | ---: | --- |
+| `rho_th` | 1.0 | 0.87 | 0.81 | 0.36 | 62.57 | Same detector and PAPG setting |
+| `rho_th` | 2.0 | 0.87 | 0.81 | 0.36 | 62.54 | Stable in this short dump |
+| `rho_th` | 3.0 | 0.87 | 0.81 | 0.36 | 62.54 | Main attentive setting |
+| Channels | 5 | 0.74 | 0.61 | 0.24 | 31.12 | Communication constrained |
+| Channels | 10 | 0.87 | 0.81 | 0.36 | 62.54 | Main attentive setting |
+| Channels | 20 | 0.88 | 0.81 | 0.36 | 67.33 | Limited extra gain |
 
 `div20/ov0` 和 `div12/ov1` 未在本轮完成，原因是 PCS 候选/冲突图计算时间较长；不继续拉长运行，避免为单个弱 baseline 消耗过多周期。已更新 attentive protocol manifest、Pareto source、Figure 1/2 和 `C:\Workspace\icdcs-paper\SGCP\main.tex`。

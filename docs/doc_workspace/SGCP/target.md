@@ -63,7 +63,7 @@
   - [x] Attentive intermediate checkpoint 作为 early detector 已完成全图表 candidate 重跑：41 帧 SGCP-PAPG `0.87/0.81/0.36`，Pure late attentive controlled `0.82/0.65/0.28`，Full20Early attentive upper reference `0.88/0.85/0.45`。后续写作默认使用 attentive candidate；legacy `pointpillar_early_fusion` 结果降级为 checkpoint-reference artifacts。
   - [x] 补齐 attentive 下的关键 EdgeCooperHD 对照：EdgeCooperHD attentive 41 帧 `0.85/0.74/0.35`、`65.40 Mbps`，SGCP-PAPG attentive `0.87/0.81/0.36`、`62.54 Mbps`，说明同 detector/checkpoint 口径下 SGCP 可同时优于 Pure late attentive 和 EdgeCooperHD attentive。该结果已扩展为完整 Table/Figure artifact set，当前作为 forward-writing candidate。
   - [x] 重跑 attentive Table/Figure：Table 1 `attentive_protocol_20260719`，Table 2 `attentive_fusion_ablation_20260719`，Table 3 `attentive_scheduler_comparison_20260719`，Figure 1 `pareto_attentive_20260719`，Figure 2/3/4 `figures_attentive_20260719`。PACP-LiDAR attentive `0.88/0.79/0.37`、`86.56 Mbps`，可作为高通信参考；SGCP attentive 保持 AP@0.5 最强且通信更低。
-  - [x] 调整 FullPerception-PCS attentive 异常行：不改 20MHz/10ch，只把 blind-spot granularity 调为 `division=16,min_overlap=0` 并使用 scheduled-receiver protocol，41 帧结果为 `0.59/0.46/0.22`、`4.99 Mbps`。主文写成 low-payload protocol-native PCS reproduction，不写成强公平 scheduler baseline。
+  - [x] 重新核查 FullPerception-PCS attentive 异常行：对照原论文确认“同一个接收方的不同发送方”属于 Class A common-node conflict，不能放宽冲突图。已新增 `fullperception_pcs_paper_audit.md`；主文 Table 1 改用 paper-faithful PCS scheduling + raw-LiDAR full-sender adaptation，41 帧结果为 `0.63/0.49/0.17`、`32.06 Mbps`。严格 blind-spot grid replay 为 `0.56/0.41/0.18`、`11.22 Mbps`，`4.99 Mbps` 低 payload 点降级为诊断结果。
   - [x] COSDH compatible-weight transplant 已判负：11 帧 `0.00/0.00/0.00` 或 `0.02/0.00/0.00`。
   - [x] COSDH 实模型已复制必要代码并跑通 1 帧 collapsed smoke test；进一步用 `--debug-opencood-output` 和 `score_threshold=0.01/0.005/0.003` 诊断后确认 `psm` 置信度极低且正式 postprocess 仍无最终框。该路线完成 first-pass 判定：暂不扩展 11/41 帧，不进入主表；后续仅作为低优先级 calibration/debug。
 
@@ -191,10 +191,10 @@
 
 必须包含主文最小集合：
 
-- [x] `rho_th` sweep：体现点云划分阈值的 AP-Mbps tradeoff。第一版 Table 4 candidate 见 `docs/doc_workspace/SGCP/artifacts/parameter_sensitivity_20260719/table4_parameter_sensitivity.csv`。
+- [x] `rho_th` sweep：体现点云划分阈值的 AP-Mbps tradeoff。attentive forward-writing 版本见 `docs/doc_workspace/SGCP/artifacts/parameter_sensitivity_attentive_20260719/table4_parameter_sensitivity_attentive.csv`；当前 41 帧中 `rho_th=1/2/3` 均为 `0.87/0.81/0.36`，约 `62.54-62.57 Mbps`，说明该参数不是脆弱调参点。
 - [x] `N_max` sweep：体现分簇容量对 AP、cluster size、reconfiguration 的影响。当前建议放附录，因为 AP 非单调但容量约束确实生效。
 - [x] `T_min^stab` sweep：体现稳定窗口，若当前场景不敏感，必须明确说明并补更动态场景或降为附录。当前 41 帧 dump 对 100--1000 ms 不敏感，建议附录或负面结果。
-- [x] Channel count / bandwidth sweep：体现网络资源受限时算法行为。5/10/20 ch 可进主文，极低带宽 stress 可进附录。
+- [x] Channel count / bandwidth sweep：体现网络资源受限时算法行为。attentive 5/10/20 ch 为 `0.74/0.61/0.24`、`0.87/0.81/0.36`、`0.88/0.81/0.36`，对应 `31.12/62.54/67.33 Mbps`；5ch 明显受限，20ch 收益很小。
 
 验收标准：
 
