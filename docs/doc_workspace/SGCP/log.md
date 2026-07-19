@@ -6645,3 +6645,49 @@ Artifacts：
 ### 结论
 
 当前论文主配置仍按复现实验命令写作 `20 MHz / 10 subchannels`。`enable_network.yaml` 和 `Params.bandwidth_all=40` 是 legacy/default code path，不能覆盖当前 artifact 命令口径。后续 checkpoint 回收或新场景实验必须生成带网络元数据的新 trace/manifest。
+
+## 2026-07-19 18:35 - Reviewer response matrix 更新
+
+### 目的
+
+把 2026-07-19 之后新增的 artifact 和论文边界同步到审稿回应矩阵与短版 rebuttal，避免最终 rebuttal 仍使用旧主表/旧网络口径。
+
+### 修改
+
+- 更新 `reviewer_response_matrix.md` 日期和总体策略，加入 artifact index / paper number audit / checkpoint sensitivity 三个新证据。
+- 更新 Reviewer 2 的 FullPerception 回应：强调 Full20Early 是 upper reference，FullPerception-PCS 是 formal built-in baseline，但 weak PCS 不能作为唯一优势证据。
+- 更新 Reviewer 3 的 baseline/ablation 回应：加入 Table 1、Table 3、Pareto、PACP-style LiDAR proxy、checkpoint sensitivity 和 failure diagnosis。
+- 更新 Reviewer 4 的 NS3 回应：强调 online time-sync bug 已修，主表仍采用离线 final-delivery 口径，不能用少量在线 CP 帧替换主表。
+- 更新 `rebuttal_short.md`：开头补 `20 MHz / 10 subchannel` manifest 口径；新增 detector checkpoint sensitivity 段落；claim boundary 中显式排除 prediction-sharing Pure late 和 edge-assisted global assignment 的全面统治。
+
+### 剩余风险
+
+- 仍需在最终 PDF 可编译后做视觉检查。
+- 远端 early checkpoint fine-tune 仍等待 GPU；若回收新 checkpoint，必须另建 artifact 并重跑 SGCP/Pure late/Full20Early。
+
+## 2026-07-19 18:50 - 论文 claim wording 收紧
+
+### 目的
+
+继续检查 `main.tex` 中与当前实验边界不一致的强表述，防止 rebuttal 已保守、正文仍暗示全局最优或全面支配。
+
+### 修改
+
+- 将 introduction/method 过渡段中的 `optimal cluster formation` 改为 `couples coalition formation with scheduling decisions`。
+- 保留 SGCP 的联合优化与势博弈叙事，但不再暗示算法证明或求解了全局最优分簇。
+
+### 剩余风险
+
+- `main.tex` 位于 `C:\Workspace\icdcs-paper\SGCP\main.tex`，不在 OpenCDA git 中；后续需在论文仓库单独提交或同步。
+
+## 2026-07-19 18:55 - 远端 fine-tune watcher 状态
+
+### 检查
+
+- `mindspore-187` 上 watcher 进程仍在：`bash /data2/gzc/sgcp_early_train/runs/start_train_when_gpu_free.sh`。
+- `logs/train_gpu_waiter.log` 到 `2026-07-19T18:33:31+08:00` 仍显示 `no GPU below 6000 MiB; sleeping 300s`。
+- `checkpoints/` 下仍只有旧的 `2026-07-11 14:30 latest.pth`，没有产生新的 fine-tune checkpoint。
+
+### 结论
+
+远端训练尚未开始，当前论文和主表继续使用已复现的 mainline/checkpoint-sensitivity artifact；不能回收或替换 checkpoint 数值。

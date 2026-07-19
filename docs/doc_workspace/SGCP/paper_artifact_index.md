@@ -19,7 +19,7 @@ docs\doc_workspace\SGCP\artifacts\paper_artifact_index_20260719\paper_artifact_i
 
 | Paper Item | Primary Artifact | Commit | Status | Boundary |
 | --- | --- | --- | --- | --- |
-| Table 1 Protocol-Native System Comparison | `artifacts/table1_protocol_20260719/protocol_native_manifest.csv` | `60728bd` | usable with caveats | Pure late 是 prediction-sharing reference；Full20Early 是 upper reference；EdgeCooper-HD 是 edge-assisted reference。 |
+| Table 1 Protocol-Native System Comparison | `artifacts/table1_protocol_20260719/protocol_native_manifest.csv` | `4fee24e` | usable with caveats | Pure late 是 prediction-sharing reference；Full20Early 是 upper reference；EdgeCooper-HD 是 edge-assisted reference；manifest 已显式记录 `10 ch / 20 MHz`。 |
 | Figure 2 Protocol Breakdown | `artifacts/figures_20260719/figure2_protocol_breakdown.pdf` | `5776727` | usable | 只报告 aggregate AP，不引入 satisfaction rate；Pure late 图内标为 `box 0.7` 而不是 raw 0。 |
 | Figure 3 Fusion Contribution | `artifacts/figures_20260719/figure3_fusion_contribution.pdf` | `5776727` | usable | 解释 early/late 两层融合分工，不把 AP@0.3 全写成 scheduler 贡献；Pure late 图内标为 `box 0.7`。 |
 | Fusion Scaffold Claim Audit | `fusion_scaffold_claim_audit.md` | `b504274` | usable | Full SGCP 用 52.7% full-sharing raw payload 保留 95.3%/94.0% AP@0.3/AP@0.5；AP@0.7 写成 localization/checkpoint headroom。 |
@@ -27,18 +27,18 @@ docs\doc_workspace\SGCP\artifacts\paper_artifact_index_20260719\paper_artifact_i
 | Early Checkpoint Recovery Protocol | `early_checkpoint_recovery.md` | `3766311` | ready | 记录远程 watcher、GPU blocker、checkpoint 回收命令和重跑验收标准；当前等待 GPU 空闲。 |
 | Figure 1 AP-Mbps Pareto | `artifacts/pareto_20260719/pareto_source.csv` | `6693b45` | usable with caveats | Pure late prediction sharing 必须和 raw-LiDAR Pareto frontier 分开解释；当前源表已包含 SGCP/PACP、Random/Density/Link-aware 与 EdgeCooper-HD first-pass budget 点。 |
 | Pareto Claim Audit | `pareto_claim_audit.md` | `9095b07` | usable | 按 prediction-sharing、edge/global reference、raw-LiDAR V2V 集合拆分 Pareto claim；SGCP-PAPG 只声明 AP@0.3/AP@0.5 raw-LiDAR frontier，不声明 AP@0.7 全面最优。 |
-| Table 3 Scheduler Comparison | `artifacts/scheduler_comparison_20260719/scheduler_comparison_manifest.csv` | `2a2e4b2` | usable | 只比较同一 SGCP-compatible scaffold 内的 scheduler。 |
+| Table 3 Scheduler Comparison | `artifacts/scheduler_comparison_20260719/scheduler_comparison_manifest.csv` | `4fee24e` | usable | 只比较同一 SGCP-compatible scaffold 内的 scheduler；manifest 已显式记录 `10 ch / 20 MHz`。 |
 | P4 Scheduler Budget Sweep | `artifacts/scheduler_budget_sweep_20260719/scheduler_budget_sweep_manifest.csv` | `c63e0c2` | usable | 支撑 Pareto 中 Random/Density/Communication-aware low/high budget first-pass，不替代 protocol-native 主表。 |
 | P4 EdgeCooper-HD Budget Sweep | `artifacts/edgecooper_budget_sweep_20260719/edgecooper_budget_sweep_manifest.csv` | `6693b45` | usable | 支撑 EdgeCooper-HD edge/global assignment + half-duplex proxy 的 low/high budget 边界。 |
 | P4 FullPerception-PCS Parameter Sweep | `artifacts/pcs_parameter_sweep_20260719/pcs_parameter_sweep_manifest.csv` | `0053134` | usable with caveats | 11 帧 granularity/overlap 趋势 + 41 帧 tuned anchor；更激进 41 帧 sweep 运行不可承受，不混入 41 帧 Pareto。 |
 | Detector/Checkpoint Fairness Audit | `detector_checkpoint_fairness.md` | `4e6e8e2` | usable | 主表 Pure late 使用 early-checkpoint singleton detector + `naive_late_fusion()`；actual late checkpoint 只作 sensitivity/reference。 |
-| Detector Checkpoint Sensitivity | `artifacts/checkpoint_sensitivity_20260719/detector_checkpoint_sensitivity_manifest.csv` | this update | usable sensitivity | 汇总 mainline、actual-late、attentive 和 COSDH checkpoint probes；attentive 只作为 sensitivity evidence，不替换 Table 1。 |
-| Table 4 Parameter Sensitivity | `artifacts/parameter_sensitivity_20260719/table4_parameter_sensitivity.csv` | `859f5d5` | usable | `rho_th` 和 channel count 可进主文；`N_max/T_min` 更适合附录或 rebuttal。 |
+| Detector Checkpoint Sensitivity | `artifacts/checkpoint_sensitivity_20260719/detector_checkpoint_sensitivity_manifest.csv` | `738d148` | usable sensitivity | 汇总 mainline、actual-late、attentive 和 COSDH checkpoint probes；attentive 只作为 sensitivity evidence，不替换 Table 1。 |
+| Table 4 Parameter Sensitivity | `artifacts/parameter_sensitivity_20260719/table4_parameter_sensitivity.csv` | `9cf102f` | usable | `rho_th` 和 channel count 可进主文；channel sweep 标签已修正为当前复现实验命令口径 `20 MHz`；`N_max/T_min` 更适合附录或 rebuttal。 |
 | Runtime-Control-NS3 Appendix | `artifacts/appendix_support_20260719/runtime_control_ns3_appendix.md` | `d75abc4` | usable | 支撑 near-real-time control-plane feasibility，不承诺 detector-inclusive 100 ms。 |
 | Qualitative Case Study | `artifacts/appendix_support_20260719/qualitative_case_study_bev.pdf` | `73fdee0` | draft usable | 可用于 appendix/rebuttal；正式论文可补 legend 和 prediction-box overlay。 |
 | EdgeCooper Writing Reference | `edgecooper_writing_reference.md` | `2efda0a` | usable | 借鉴系统评估结构，不引入 satisfaction rate。 |
 | Paper main.tex sync | `C:/Workspace/icdcs-paper/SGCP/main.tex` | outside OpenCDA git | structure checked not compiled | Paper directory is outside OpenCDA git；已补入 attentive checkpoint sensitivity 段落，作为 sensitivity evidence 而非 Table 1 替换。 |
-| Paper Number Audit | `artifacts/paper_number_audit_20260719/paper_number_audit.csv` | this update | usable | 核查 Table 1/3/4 与 manifest 数值一致；修正 Table 4 channel sweep 的 legacy `40 MHz` 标签为当前复现实验命令口径 `20 MHz`。 |
+| Paper Number Audit | `artifacts/paper_number_audit_20260719/paper_number_audit.csv` | `4fee24e` | usable | 核查 Table 1/3/4 与 manifest 数值一致；修正 Table 4 channel sweep 的 legacy `40 MHz` 标签为当前复现实验命令口径 `20 MHz`；Table 1/3 manifest 已用工具重生成并显式记录网络元数据。 |
 
 ## Current Risks
 

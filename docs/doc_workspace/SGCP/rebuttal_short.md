@@ -1,12 +1,12 @@
 # SGCP Short Rebuttal Draft
 
-更新时间：2026-07-18
+更新时间：2026-07-19
 
 本文档是 `rebuttal_draft.md` 的压缩版，面向最终 rebuttal 粘贴和字数控制。详细证据、命令和结果仍以 `rebuttal_draft.md`、`main_table_candidate.md`、`results.md` 和 `reproducibility_manifest.md` 为准。
 
 ## Opening
 
-We thank the reviewers for the constructive comments. In the revision, we substantially tightened the experimental protocol and the claim boundary. We now separate centralized full-sharing upper references from fair RSU-free V2V baselines, replace the old main table with reproducible CARLA/OpenCDA/NS3 results, report AP together with measured upload Mbps, and add NS3 request-level delivery diagnostics. We also clarify SGCP as a perception-driven, capacity-constrained coalition and perception-aware potential-guided PPS framework, add a reproducible density-calibration protocol for `f(rho)`, report `rho_th`, `N_max`, and `T_min^stab` sensitivity, and soften the real-time claim to near-real-time control-plane feasibility.
+We thank the reviewers for the constructive comments. In the revision, we substantially tightened the experimental protocol and the claim boundary. We now separate centralized full-sharing upper references from fair RSU-free V2V baselines, replace the old main table with reproducible CARLA/OpenCDA/NS3 results, report AP together with measured upload Mbps, and add NS3 request-level delivery diagnostics. The current table/figure artifacts are indexed, and the Table 1/3 manifests explicitly record the reproduced `20 MHz / 10 subchannel` setting. We also clarify SGCP as a perception-driven, capacity-constrained coalition and perception-aware potential-guided PPS framework, add a reproducible density-calibration protocol for `f(rho)`, report `rho_th`, `N_max`, and `T_min^stab` sensitivity, and soften the real-time claim to near-real-time control-plane feasibility.
 
 ## R2: Coalition Design, Full Clusters, Novelty, FullPerception
 
@@ -30,6 +30,8 @@ We thank the reviewers for the constructive comments. In the revision, we substa
 
 **Object-level failure analysis.** We further inspected missed ground-truth boxes, associated them with BEV grids and candidate CAV point support, and tested object-grid routing probes. These probes can recover several individual high-IoU misses, but the best routing-hint run gained 4 GT rows while losing 15 previously detected rows. This is why the revision does not present ad-hoc cross-cluster repair as the main algorithm; instead, it uses PAPG as the stable decentralized setting and separates edge/global schedulers as a different capability class.
 
+**Detector checkpoint sensitivity.** To avoid conflating communication protocols with detector strength, the main table uses a common `pointpillar_early_fusion` checkpoint for raw-LiDAR SGCP and the controlled Pure late reference. We also ran checkpoint sensitivity probes: an attentive intermediate checkpoint gives SGCP-PAPG `0.87/0.81/0.36`, Pure late controlled `0.82/0.65/0.28`, and Full20Early `0.88/0.85/0.45`. This supports that SGCP raw point-cloud sharing can improve over prediction-only late fusion under a common detector, but we keep it as sensitivity evidence because it changes detector initialization and does not replace the main AP@0.7 result.
+
 ## R4: Runtime, Topology Trigger, NS3 Reliability
 
 **Runtime.** We softened the claim from guaranteed end-to-end 100 ms closure to near-real-time control-plane feasibility. In the 20-CAV replay, SGCP control-plane computation averages 105.24 ms per profiled update: 64.39 ms for coalition formation and 40.58 ms for PPS. PPS converges in all 41 frames within three iterations. Offline file loading and world reconstruction are replay artifacts and are not counted as online control latency. We also clarify that coalition formation is topology-triggered, while PPS and perception metadata are refreshed per cycle.
@@ -40,4 +42,4 @@ We thank the reviewers for the constructive comments. In the revision, we substa
 
 ## Claim Boundary
 
-The revised claim is intentionally more conservative: SGCP does not claim to dominate the centralized full-sharing upper bound or edge-assisted global assignment at every IoU threshold. Instead, it provides a decentralized, stability-aware and channel-feasible perception-sharing pipeline. The PAPG main setting improves over forced-budget random at nearly identical traffic, improves AP@0.3/AP@0.5 over the high-budget density selective baseline while using less payload, substantially reduces communication relative to centralized full sharing, and has request-level NS3 evidence that scheduled transmissions obey the intended subchannel constraints.
+The revised claim is intentionally more conservative: SGCP does not claim to dominate the centralized full-sharing upper bound, prediction-sharing Pure late reference, or edge-assisted global assignment at every IoU threshold. Instead, it provides a decentralized, stability-aware and channel-feasible raw-LiDAR perception-sharing pipeline. The PAPG main setting improves over forced-budget random at nearly identical traffic, improves AP@0.3/AP@0.5 over the high-budget density selective baseline while using less payload, substantially reduces communication relative to centralized full sharing, and has request-level NS3 evidence that scheduled transmissions obey the intended subchannel constraints.
