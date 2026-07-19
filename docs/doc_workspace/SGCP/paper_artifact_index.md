@@ -24,6 +24,7 @@ docs\doc_workspace\SGCP\artifacts\paper_artifact_index_20260719\paper_artifact_i
 | Figure 3 Fusion Contribution | `artifacts/figures_20260719/figure3_fusion_contribution.pdf` | `5776727` | usable | 解释 early/late 两层融合分工，不把 AP@0.3 全写成 scheduler 贡献；Pure late 图内标为 `box 0.7`。 |
 | Fusion Scaffold Claim Audit | `fusion_scaffold_claim_audit.md` | `b504274` | usable | Full SGCP 用 52.7% full-sharing raw payload 保留 95.3%/94.0% AP@0.3/AP@0.5；AP@0.7 写成 localization/checkpoint headroom。 |
 | Scenario Sufficiency Audit | `scenario_sufficiency_audit.md` | `9381d7c` | usable | 当前 41 帧场景足以支撑 first-pass 主文图表；新场景触发条件改为 checkpoint/动态性/密度/在线端到端需求。 |
+| Early Checkpoint Recovery Protocol | `early_checkpoint_recovery.md` | `pending` | ready | 记录远程 watcher、GPU blocker、checkpoint 回收命令和重跑验收标准；当前等待 GPU 空闲。 |
 | Figure 1 AP-Mbps Pareto | `artifacts/pareto_20260719/pareto_source.csv` | `6693b45` | usable with caveats | Pure late prediction sharing 必须和 raw-LiDAR Pareto frontier 分开解释；当前源表已包含 SGCP/PACP、Random/Density/Link-aware 与 EdgeCooper-HD first-pass budget 点。 |
 | Pareto Claim Audit | `pareto_claim_audit.md` | `9095b07` | usable | 按 prediction-sharing、edge/global reference、raw-LiDAR V2V 集合拆分 Pareto claim；SGCP-PAPG 只声明 AP@0.3/AP@0.5 raw-LiDAR frontier，不声明 AP@0.7 全面最优。 |
 | Table 3 Scheduler Comparison | `artifacts/scheduler_comparison_20260719/scheduler_comparison_manifest.csv` | `2a2e4b2` | usable | 只比较同一 SGCP-compatible scaffold 内的 scheduler。 |
@@ -38,7 +39,7 @@ docs\doc_workspace\SGCP\artifacts\paper_artifact_index_20260719\paper_artifact_i
 
 ## Current Risks
 
-- Early-fusion checkpoint 仍是最大实验风险：远程 fine-tune watcher 已启动，但 GPU 尚未空闲。回收新 checkpoint 后必须生成新一版 Table/Figure artifacts，不覆盖当前版本。
+- Early-fusion checkpoint 仍是最大实验风险：远程 fine-tune watcher 已启动，但 GPU 尚未空闲；回收流程见 `early_checkpoint_recovery.md`。回收新 checkpoint 后必须生成新一版 Table/Figure artifacts，不覆盖当前版本。
 - Pure late 口径已固定为 controlled prediction-sharing reference：early-singleton + `naive_late_fusion()`；actual late checkpoint 已作为 sanity 记录，不混入同一公平 raw-LiDAR baseline。
 - EdgeCooper-HD 与 PACP-LiDAR 在 AP@0.7 上强于 PAPG，应按信息条件边界解释为 edge/global 或 stronger-priority reference，不应硬写 SGCP 全面最优。
 - `main.tex` 位于 `C:\Workspace\icdcs-paper\SGCP\main.tex`，不在 OpenCDA git 仓库；本机缺少 `latexmk/pdflatex`，当前只做了结构检查，未完成 PDF 编译验证。

@@ -1045,3 +1045,15 @@ Figure 2 现在可以区分 Head-only、Pure late prediction-sharing、FullPerce
 - qualitative case study draft。
 
 当前不立即重新导出 CARLA 场景。后续只有在 early checkpoint 回收后仍无法支撑主张，或需要更强动态稳定性、不同 CAV 密度、在线端到端证据时，再按 `environment.md` 的 CARLA 约束启动新导出。
+
+## Early checkpoint recovery protocol
+
+已新增 `early_checkpoint_recovery.md`，把远程 fine-tune 从“等待 GPU”转成可执行回收流程：
+
+- watcher：`mindspore-187:/data2/gzc/sgcp_early_train/runs/start_train_when_gpu_free.sh`
+- 日志：`/data2/gzc/sgcp_early_train/logs/train_gpu_waiter.log`
+- 环境：`opencood-gzc`
+- 配置：`/data2/gzc/sgcp_early_train/configs/pointpillar_early_ckpt_compat_onecav.yaml`
+- 当前状态：8 张 GPU 均约 22.2GB used，watcher 仍在每 300 秒轮询。
+
+训练完成后，必须先回收最新 step checkpoint，并在同一 checkpoint 下重跑 SGCP-PAPG 和 Pure late controlled baseline。只有在不破坏 AP@0.3/AP@0.5 且改善或解释 AP@0.7 时，才替换主文结果；否则作为 sensitivity/negative artifact 记录。

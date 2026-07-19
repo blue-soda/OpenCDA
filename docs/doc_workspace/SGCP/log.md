@@ -6447,3 +6447,33 @@ Figure 2 现在可以区分 protocol-native 方法和 reference 边界；Figure 
 - 需要更强动态稳定性或真实 CAV 密度 sweep；
 - 需要正式 CARLA+NS3 在线端到端图表；
 - 论文决定把 AP@0.7 high-IoU 提升作为核心主张。
+
+## 2026-07-19 Early checkpoint recovery protocol
+
+### 目的
+
+继续推进唯一剩余实质项：early-fusion checkpoint fine-tune。当前 GPU 仍未空闲，因此本轮检查远程 watcher 完整性，并把 checkpoint 回收、重跑和验收步骤固化为文档。
+
+### 远程状态
+
+```text
+mindspore-187:/data2/gzc/sgcp_early_train/
+watcher: runs/start_train_when_gpu_free.sh
+log: logs/train_gpu_waiter.log
+env: opencood-gzc
+```
+
+最新检查显示 8 张 GPU 均约 `22203/24576 MiB` used，watcher 仍输出 `no GPU below 6000 MiB; sleeping 300s`。
+
+### 处理
+
+新增 `early_checkpoint_recovery.md`，记录：
+
+- watcher 行为；
+- 每轮轮询命令；
+- 训练日志定位命令；
+- step checkpoint 查找与下载命令；
+- 回收后必须重跑的 SGCP-PAPG / Pure late controlled 实验；
+- 是否替换主文结果的验收标准。
+
+同时更新 `protocol_native_claim_audit.md`，将 Pure late detector/checkpoint fairness 从 open 改为 pass；P1 剩余风险只保留 early-fusion checkpoint strength。

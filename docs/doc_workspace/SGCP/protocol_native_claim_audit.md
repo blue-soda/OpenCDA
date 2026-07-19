@@ -18,7 +18,7 @@ docs\doc_workspace\SGCP\main_table_candidate.md
 | Table must explain SGCP's complete-system advantage, not a single scheduler win | Pass with caveats | `main.tex` Table 1 is protocol-native and text attributes gains to clustering, perception-aware point-cloud selection, and inter-cluster late fusion. |
 | If AP@0.3 comes mainly from late fusion, the text must say it is a system-protocol advantage | Pass | `main.tex` explicitly states late fusion restores network-level coverage and low-IoU recall; scheduler comparison is separated into its own table. |
 | Weak/atypical FullPerception-PCS or EdgeCooperV2V+ results must be explained before entering the table | Pass | FullPerception-PCS is separated from Full20Early upper reference and described as repaired/tuned built-in PCS; EdgeCooper-HD is labeled edge-assisted/global assignment reference. |
-| Pure late baseline detector/checkpoint fairness | Still open | Current protocol manifest uses early-singleton proxy; actual late checkpoint is recorded only as sanity. Pending early-checkpoint fine-tune may require rerun. |
+| Pure late baseline detector/checkpoint fairness | Pass | `detector_checkpoint_fairness.md` fixes the policy: Pure late main-table row uses the same early checkpoint as SGCP with singleton local inference plus `naive_late_fusion()`; actual late checkpoint remains sensitivity/reference only. |
 | Early-fusion checkpoint strength | Still open | Current full early upper AP@0.7 is only 0.48; remote fine-tune watcher is pending GPU. |
 
 ## Evidence in `main.tex`
@@ -34,18 +34,15 @@ The current `main.tex` already includes the following boundaries:
 
 ## Remaining P1 Risks
 
-1. Pure late detector/checkpoint decision:
-   - Main controlled protocol uses `pointpillar_early_fusion` singleton local inference + `naive_late_fusion()`.
-   - Actual late checkpoint reaches higher AP and must remain a prediction-sharing sanity/reference unless the paper deliberately changes detector fairness policy.
-
-2. Early-fusion checkpoint risk:
+1. Early-fusion checkpoint risk:
    - Current SGCP raw point-cloud early fusion is limited by the existing early checkpoint.
    - Remote training on `mindspore-187:/data2/gzc/sgcp_early_train/` is still waiting for GPU; if a better checkpoint is recovered, Table 1 and dependent figures must be regenerated under a new artifact index version.
+   - Recovery protocol is now documented in `early_checkpoint_recovery.md`.
 
-3. Main-claim wording:
+2. Main-claim wording:
    - Do not claim SGCP has highest AP and lowest Mbps across all baselines.
    - Safe claim: SGCP-PAPG achieves a favorable RSU-free V2V raw-LiDAR AP/Mbps tradeoff, matches EdgeCooper-HD on AP@0.3/AP@0.5 with less payload, but has lower AP@0.7 because EdgeCooper-HD uses global edge-side assignment.
 
 ## Target Update Rationale
 
-The first three P1 acceptance items can be marked complete because the current paper text and artifact index now explicitly address them. The Pure late detector fairness and early checkpoint strength items should remain open until the remote checkpoint task is resolved or the paper makes a final detector-policy decision.
+The first four P1 acceptance items can be marked complete because the current paper text, `detector_checkpoint_fairness.md`, and artifact index now explicitly address them. The only remaining P1 blocker is early checkpoint strength; it remains open until the remote checkpoint task is resolved or recorded as blocked by external GPU availability.
