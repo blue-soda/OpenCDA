@@ -6379,3 +6379,24 @@ Raw-LiDAR V2V / SGCP-compatible AP@0.3 frontier 的最高点是 SGCP-PAPG：`0.8
 ### 结论
 
 P4 可按分层口径 first-pass 关闭：论文主张写成 “SGCP-PAPG 在 raw-LiDAR V2V 的 AP@0.3/AP@0.5 中等通信区间处于 Pareto frontier”；AP@0.7 写成 high-IoU localization/checkpoint headroom，不写成全面最优。
+
+## 2026-07-19 Fusion scaffold claim audit
+
+### 目的
+
+继续推进 P2/P6：确认 fusion scaffold ablation 能支撑哪些论文主张，并避免把 AP@0.7 写得过强。
+
+### 结果
+
+从 `fusion_scaffold_manifest.csv` 读取：
+
+- Full20Early / one-cluster early：`0.85/0.83/0.48`，`118.71 Mbps`；
+- Clustered early-only：`0.38/0.36/0.20`，`62.54 Mbps`；
+- Full SGCP：`0.81/0.78/0.39`，`62.54 Mbps`；
+- Pure late controlled：`0.82/0.76/0.37`，0 raw-LiDAR Mbps，prediction-box overhead 另计。
+
+Full SGCP 使用 `52.7%` full raw-sharing payload，保留 full-sharing AP@0.3/AP@0.5/AP@0.7 的 `95.3%/94.0%/81.3%`。与 clustered early-only 相同 payload 对比，inter-cluster late fusion 将 AP 从 `0.38/0.36/0.20` 提升到 `0.81/0.78/0.39`。
+
+### 结论
+
+P2/P6 可按保守口径 first-pass 关闭：two-layer fusion 对 coverage / AP@0.3-0.5 的贡献明确；AP@0.7 仍写成 high-IoU localization/checkpoint headroom，不写成全面最优。

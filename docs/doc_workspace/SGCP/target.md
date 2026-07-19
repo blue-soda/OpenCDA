@@ -79,10 +79,10 @@
 
 验收标准：
 
-- [ ] AP@0.7 的提升应能解释为点云 early fusion / 高质量局部融合贡献。
+- [x] AP@0.7 的提升应能解释为点云 early fusion / 高质量局部融合贡献。已新增 `fusion_scaffold_claim_audit.md`：当前证据只能支持保守口径，即 full raw-sharing upper reference `0.48` 展示 early-fusion localization headroom，Full SGCP 相比 controlled Pure late 在 AP@0.5/AP@0.7 有小幅收益；不能写成当前 SGCP 已全面解决高 IoU。
 - [x] AP@0.3 的提升应能解释为 late fusion / 多区域覆盖贡献：同 payload 下 clustered early-only `0.38/0.36/0.20` 到 Full SGCP `0.81/0.78/0.39`。
-- [ ] Full SGCP 必须在通信量远低于 one-cluster/full-sharing 设置时保持有竞争力的 aggregate AP。
-- [ ] 若该表不能证明分簇或两层融合有效，优先修改算法、场景或评估口径，再进入论文。
+- [x] Full SGCP 必须在通信量远低于 one-cluster/full-sharing 设置时保持有竞争力的 aggregate AP。Full SGCP 使用 `62.54/118.71=52.7%` 的 full-sharing raw payload，保留 full-sharing AP@0.3/AP@0.5 的 `95.3%/94.0%`；AP@0.7 保留 `81.3%`，作为 localization/checkpoint headroom。
+- [x] 若该表不能证明分簇或两层融合有效，优先修改算法、场景或评估口径，再进入论文。审计结论：该表可以证明 inter-cluster late fusion 的 coverage 贡献和 SGCP 的中等通信 AP@0.3/AP@0.5 竞争力；AP@0.7 只写边界，不写全面最优。
 
 ## P3：Table 3 - SGCP-Compatible Scheduler Comparison
 

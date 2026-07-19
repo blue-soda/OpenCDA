@@ -1008,3 +1008,16 @@ Manifest：`docs\doc_workspace\SGCP\artifacts\pcs_parameter_sweep_20260719\pcs_p
 | AP@0.7 | not frontier | `B_h=2,rho3` sensitivity 以 54.56 Mbps 达到 0.42；说明 high-IoU localization 仍是 checkpoint/局部视角边界 |
 
 可写结论：SGCP-PAPG 可在 raw-LiDAR V2V 中写 AP@0.3/AP@0.5 的中等通信 Pareto 优势；AP@0.7 不写全面最优，而写成 high-IoU sensitivity / early checkpoint headroom。
+
+## Fusion scaffold claim audit
+
+已新增 `fusion_scaffold_claim_audit.md`，用于收束 P2/P6 的两层融合叙事。
+
+| Variant | Raw payload Mbps | AP@0.3 | AP@0.5 | AP@0.7 | Interpretation |
+| --- | ---: | ---: | ---: | ---: | --- |
+| Pure late controlled | 0.00 raw LiDAR | 0.82 | 0.76 | 0.37 | strong prediction-sharing reference |
+| Full20Early / one-cluster early | 118.71 | 0.85 | 0.83 | 0.48 | full raw-sharing upper reference |
+| Clustered early-only | 62.54 | 0.38 | 0.36 | 0.20 | cluster-local early-only coverage insufficient |
+| Full SGCP | 62.54 | 0.81 | 0.78 | 0.39 | two-layer protocol |
+
+Full SGCP 使用 52.7% full-sharing raw payload，保留 full-sharing AP@0.3/AP@0.5/AP@0.7 的 95.3%/94.0%/81.3%。这支持主文写 “low/mid-IoU coverage with much lower raw payload”；AP@0.7 仍作为 high-IoU localization/checkpoint headroom。
