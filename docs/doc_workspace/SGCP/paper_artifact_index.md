@@ -30,7 +30,7 @@ docs\doc_workspace\SGCP\artifacts\paper_artifact_index_20260719\paper_artifact_i
 | Figure 3 Fusion Contribution | `artifacts/figures_20260719/figure3_fusion_contribution.pdf` | `5776727` | usable | 解释 early/late 两层融合分工，不把 AP@0.3 全写成 scheduler 贡献；Pure late 图内标为 `box 0.7`。 |
 | Fusion Scaffold Claim Audit | `fusion_scaffold_claim_audit.md` | `b504274` | usable | Full SGCP 用 52.7% full-sharing raw payload 保留 95.3%/94.0% AP@0.3/AP@0.5；AP@0.7 写成 localization/checkpoint headroom。 |
 | Scenario Sufficiency Audit | `scenario_sufficiency_audit.md` | `9381d7c` | usable | 当前 41 帧场景足以支撑 first-pass 主文图表；新场景触发条件改为 checkpoint/动态性/密度/在线端到端需求。 |
-| Early Checkpoint Recovery Protocol | `early_checkpoint_recovery.md` | `3766311` | ready | 记录远程 watcher、GPU blocker、checkpoint 回收命令和重跑验收标准；当前等待 GPU 空闲。 |
+| Early Checkpoint Recovery Protocol | `early_checkpoint_recovery.md` | pending | stopped / archived | 远程 watcher 已按用户要求停止；当前固定使用 attentive forward-writing candidate。文件保留未来重启 fine-tune 时的恢复协议。 |
 | Figure 1 AP-Mbps Pareto | `artifacts/pareto_20260719/pareto_source.csv` | `6693b45` | usable with caveats | Pure late prediction sharing 必须和 raw-LiDAR Pareto frontier 分开解释；当前源表已包含 SGCP/PACP、Random/Density/Link-aware 与 EdgeCooper-HD first-pass budget 点。 |
 | Pareto Claim Audit | `pareto_claim_audit.md` | `9095b07` | usable | 按 prediction-sharing、edge/global reference、raw-LiDAR V2V 集合拆分 Pareto claim；SGCP-PAPG 只声明 AP@0.3/AP@0.5 raw-LiDAR frontier，不声明 AP@0.7 全面最优。 |
 | Table 3 Scheduler Comparison | `artifacts/scheduler_comparison_20260719/scheduler_comparison_manifest.csv` | `4fee24e` | usable | 只比较同一 SGCP-compatible scaffold 内的 scheduler；manifest 已显式记录 `10 ch / 20 MHz`。 |
@@ -52,7 +52,7 @@ docs\doc_workspace\SGCP\artifacts\paper_artifact_index_20260719\paper_artifact_i
 ## Current Risks
 
 - Legacy `pointpillar_early_fusion` checkpoint 不再作为后续论文默认主表；当前默认 forward-writing artifacts 为 attentive candidate。旧 Table 1/3/Figure 1/2/3 保留为 checkpoint-reference artifacts。
-- 远程 fine-tune watcher 已启动但 GPU 尚未空闲；回收流程见 `early_checkpoint_recovery.md`。若回收到更好 checkpoint，必须生成新一版 Table/Figure artifacts，不覆盖当前 attentive 版本。
+- 远程 fine-tune watcher 已按用户要求停止；当前固定使用 attentive forward-writing candidate。若未来重新开启训练并回收到更好 checkpoint，必须生成新一版 Table/Figure artifacts，不覆盖当前 attentive 版本。
 - Detector checkpoint sensitivity 已补齐 mainline、actual-late、attentive、COSDH 四类证据；attentive 已补齐 key baselines 和图表，当前可作为 candidate mainline；COSDH 仍为 negative probe。
 - Pure late 口径已固定为 controlled prediction-sharing reference：early-singleton + `naive_late_fusion()`；actual late checkpoint 已作为 sanity 记录，不混入同一公平 raw-LiDAR baseline。
 - 在 attentive candidate 中，EdgeCooperHD 不再强于 SGCP；PACP-LiDAR AP@0.3/AP@0.7 略高于 SGCP 但通信量显著更高，应按 Pareto tradeoff 写作。
@@ -65,7 +65,7 @@ docs\doc_workspace\SGCP\artifacts\paper_artifact_index_20260719\paper_artifact_i
 
 以下任一事件发生时，必须更新本索引：
 
-- early-fusion checkpoint fine-tune 完成并替换 SGCP/Pure late controlled baseline；
+- 未来重新开启 early-fusion checkpoint fine-tune 并替换 SGCP/Pure late controlled baseline；
 - 新导出 CARLA 场景或改变 CAV 数量/带宽主设置；当前 `scenario_sufficiency_audit.md` 结论是 first-pass 不需要新场景；
 - Table 1 / Pareto / scheduler comparison 任一数值被替换；
 - `main.tex` 图表编号、caption 或主结论发生变化；

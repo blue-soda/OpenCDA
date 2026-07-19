@@ -6977,3 +6977,26 @@ docs\doc_workspace\SGCP\artifacts\paper_freeze_snapshot_20260719\
 - `mindspore-187` 仍无可用 GPU：8 张 GPU 均约 `22207/24576 MiB` used。
 - watcher 最新日志仍为 `no GPU below 6000 MiB; sleeping 300s`。
 - 仍未产生新训练 checkpoint，只有初始 `/data2/gzc/sgcp_early_train/checkpoints/latest.pth`。
+
+## 2026-07-19 23:50 - 停止远端 checkpoint watcher
+
+用户明确要求暂时使用 attentive checkpoint，不再等待远端 fine-tune。本轮停止 `mindspore-187` watcher。
+
+执行前检查：
+
+```text
+1532887       1 S    bash /data2/gzc/sgcp_early_train/runs/start_train_when_gpu_free.sh
+```
+
+执行：
+
+```powershell
+ssh mindspore-187 "kill 1532887 2>/dev/null || true; sleep 1; ps -p 1532887 -o pid,stat,cmd || true; rm -f /data2/gzc/sgcp_early_train/runs/train_gpu_waiter.pid; echo '[manual stop 2026-07-19T23:50+08:00] SGCP watcher stopped; attentive checkpoint fixed as current paper candidate.' >> /data2/gzc/sgcp_early_train/logs/train_gpu_waiter.log"
+```
+
+结果：
+
+- `ps -p 1532887` 只输出 header，无进程残留。
+- pid 文件已删除。
+- watcher 日志已追加 manual stop 记录。
+- `target.md` P1 checkpoint 项已改为完成：当前固定使用 attentive forward-writing candidate；未来若重新训练 checkpoint，必须作为新任务开启并重跑全表/图。

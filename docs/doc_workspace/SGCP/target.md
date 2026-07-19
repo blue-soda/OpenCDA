@@ -58,7 +58,7 @@
 - [x] Pure late fusion 当前 `0.82/0.76/0.37` 且 0 点云 payload 很强；论文写作必须计入 detection-box exchange overhead 或将其明确为 prediction-sharing reference，否则会削弱 SGCP 通信优势叙事。已新增 `late_fusion_box_comm.md` 与 `opencda.tools.sgcp_late_box_comm_budget`：20MHz/10ch 下 detection-box broadcast 约 `0.74-1.13 Mbps`，scheduled all-to-all unicast 约 `14.04-21.52 Mbps` 且 100 ms 内可完成；只有 unscheduled all-to-all 随机抢信道模型会因碰撞失败。
 - [x] 修正 Pure late baseline 口径：当前 P1/P2 manifest 中的 Pure late 使用 `fusion_method=early` + singleton CAV + box-level late NMS，不是 `pointpillar_late_fusion` checkpoint。已新增 `detector_checkpoint_fairness.md`，明确主表采用 early-checkpoint singleton controlled Pure late + `naive_late_fusion()`，actual-late checkpoint 只作 detector sensitivity / prediction-sharing reference。
 - [x] 统一 detector/checkpoint 公平性：SGCP 论文主线的“点云 -> 检测框”统一使用 `pointpillar_early_fusion`；Pure late 使用同 checkpoint 的 singleton local inference + `naive_late_fusion()`。已补 “all late detector” sanity：Pure late actual late `0.89/0.83/0.49`，forced SGCP PAPG late-detector `0.87/0.81/0.48`、62.54 Mbps；后者不再是严格 SGCP early-fusion 协议，只能作为 checkpoint sensitivity。
-- [ ] 提升 early-fusion checkpoint：当前最大实验风险是 `pointpillar_early_fusion` 对 SGCP raw point-cloud early fusion 不够强，导致 Pure late prediction-sharing reference 过强、SGCP AP@0.7 上限偏低。远程训练固定使用 `ssh mindspore-187`、`/data2/gzc/sgcp_early_train/` 和 `opencood-gzc` 环境；已上传当前 checkpoint 并启动 GPU watcher，GPU 空闲后自动 fine-tune。回收 checkpoint 后必须用同一 checkpoint 重跑 SGCP 与 Pure late controlled baseline。
+- [x] 固定 detector/checkpoint 主线：不再等待远端 early-fusion fine-tune，当前论文和 rebuttal 暂定使用 attentive forward-writing candidate。此前 `mindspore-187` watcher 因 GPU 长期占用未启动训练，已按用户要求手动停止；若未来重新训练 checkpoint，必须作为新任务开启，并新建 artifact 版本重跑 SGCP/Pure late/Full20Early/Table 1/2/3/4/Figure 1/2/3。
   - [x] Late checkpoint 直接替换 early detector 已判负：11 帧 `0.58/0.48/0.15`。
   - [x] Attentive intermediate checkpoint 作为 early detector 已完成全图表 candidate 重跑：41 帧 SGCP-PAPG `0.87/0.81/0.36`，Pure late attentive controlled `0.82/0.65/0.28`，Full20Early attentive upper reference `0.88/0.85/0.45`。后续写作默认使用 attentive candidate；legacy `pointpillar_early_fusion` 结果降级为 checkpoint-reference artifacts。
   - [x] 补齐 attentive 下的关键 EdgeCooperHD 对照：EdgeCooperHD attentive 41 帧 `0.85/0.74/0.35`、`65.40 Mbps`，SGCP-PAPG attentive `0.87/0.81/0.36`、`62.54 Mbps`，说明同 detector/checkpoint 口径下 SGCP 可同时优于 Pure late attentive 和 EdgeCooperHD attentive。该结果已扩展为完整 Table/Figure artifact set，当前作为 forward-writing candidate。
@@ -146,7 +146,7 @@
 验收标准：
 
 - [x] SGCP 应在中低通信区间形成清晰 Pareto 优势，或至少在同等 Mbps 下获得更高 aggregate AP@0.3 / AP@0.5。已新增 `pareto_claim_audit.md`：在 raw-LiDAR V2V / SGCP-compatible 集合中，SGCP-PAPG 位于 AP@0.3 frontier，并在 AP@0.5 上达到同预算 frontier；Pure late 已作为 prediction-sharing reference 单独解释。
-- [x] 若 SGCP 不在 Pareto frontier 上，优先分析瓶颈并修改算法；必要时选择更能体现大规模分簇优势的场景。审计结论：PAPG 主点不是 AP@0.7 frontier，AP@0.7 边界由 `B_h=2` SGCP sensitivity、高预算 proxy 或 full-sharing/edge reference 给出；论文只写 AP@0.3/AP@0.5 Pareto claim，AP@0.7 写成 early checkpoint / localization headroom 边界。early checkpoint fine-tune 仍单独保留为 P1 风险项。
+- [x] 若 SGCP 不在 Pareto frontier 上，优先分析瓶颈并修改算法；必要时选择更能体现大规模分簇优势的场景。审计结论：PAPG 主点不是 AP@0.7 frontier，AP@0.7 边界由 `B_h=2` SGCP sensitivity、高预算 proxy 或 full-sharing/edge reference 给出；论文只写 AP@0.3/AP@0.5 Pareto claim，AP@0.7 写成 attentive detector / localization headroom 边界。远端 fine-tune 已停止，不再作为当前论文 blocker。
 
 ## P5：Figure 2 - Aggregate AP Protocol/Fusion Breakdown
 

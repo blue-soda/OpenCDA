@@ -4,13 +4,31 @@
 
 ## 当前状态
 
+按用户要求，远程 checkpoint watcher 已手动关闭；当前论文与 rebuttal 暂时固定使用 attentive forward-writing candidate，不再等待远端 fine-tune。
+
+执行结果：
+
+```text
+ssh mindspore-187 "kill 1532887 ...; rm -f /data2/gzc/sgcp_early_train/runs/train_gpu_waiter.pid"
+```
+
+远端日志已追加：
+
+```text
+[manual stop 2026-07-19T23:50+08:00] SGCP watcher stopped; attentive checkpoint fixed as current paper candidate.
+```
+
+以下内容保留为未来若重新开启 checkpoint 训练时的恢复协议；它不再是当前 SGCP target 的 blocker。
+
+## Historical Prepared State
+
 远程 early-fusion checkpoint fine-tune 已经准备完成，但尚未开始训练。阻塞原因不是代码或 checkpoint 兼容性，而是 `mindspore-187` 上 8 张 GPU 均被占用约 22.2 GB，watcher 一直输出：
 
 ```text
 no GPU below 6000 MiB; sleeping 300s
 ```
 
-GPU 等待期间已完成本地 checkpoint sensitivity 补充：attentive intermediate checkpoint 作为 early detector 时，SGCP-PAPG 41 帧为 `0.87/0.81/0.36`，Pure late controlled 为 `0.82/0.65/0.28`，Full20Early upper reference 为 `0.88/0.85/0.45`。该结果可作为 rebuttal/appendix 证据，但不替代本 fine-tune 任务；fine-tune 回收后仍必须按下文流程重跑同 checkpoint 公平对照。
+GPU 等待期间已完成本地 checkpoint sensitivity 补充：attentive intermediate checkpoint 作为 early detector 时，SGCP-PAPG 41 帧为 `0.87/0.81/0.36`，Pure late controlled 为 `0.82/0.65/0.28`，Full20Early upper reference 为 `0.88/0.85/0.45`。该结果已升级为当前 forward-writing candidate；未来若重新 fine-tune 并回收 checkpoint，仍必须按下文流程重跑同 checkpoint 公平对照。
 
 远程路径：
 
@@ -35,7 +53,7 @@ code: /data2/gzc/code/OpenCOOD
 | `/data2/gzc/sgcp_early_train/runs/start_train_when_gpu_free.sh` | GPU 空闲 watcher |
 | `/data2/gzc/sgcp_early_train/logs/train_gpu_waiter.log` | watcher 日志 |
 
-watcher PID 文件：
+历史 watcher PID 文件：
 
 ```text
 /data2/gzc/sgcp_early_train/runs/train_gpu_waiter.pid
