@@ -37,6 +37,7 @@ docs\doc_workspace\SGCP\artifacts\paper_artifact_index_20260719\paper_artifact_i
 | Runtime-Control-NS3 Appendix | `artifacts/appendix_support_20260719/runtime_control_ns3_appendix.md` | `d75abc4` | usable | 支撑 near-real-time control-plane feasibility，不承诺 detector-inclusive 100 ms。 |
 | Qualitative Case Study | `artifacts/appendix_support_20260719/qualitative_case_study_bev.pdf` | `73fdee0` | draft usable | 可用于 appendix/rebuttal；正式论文可补 legend 和 prediction-box overlay。 |
 | EdgeCooper Writing Reference | `edgecooper_writing_reference.md` | `2efda0a` | usable | 借鉴系统评估结构，不引入 satisfaction rate。 |
+| Paper main.tex sync | `C:/Workspace/icdcs-paper/SGCP/main.tex` | outside OpenCDA git | structure checked not compiled | Paper directory is outside OpenCDA git；已补入 attentive checkpoint sensitivity 段落，作为 sensitivity evidence 而非 Table 1 替换。 |
 
 ## Current Risks
 
@@ -45,6 +46,7 @@ docs\doc_workspace\SGCP\artifacts\paper_artifact_index_20260719\paper_artifact_i
 - Pure late 口径已固定为 controlled prediction-sharing reference：early-singleton + `naive_late_fusion()`；actual late checkpoint 已作为 sanity 记录，不混入同一公平 raw-LiDAR baseline。
 - EdgeCooper-HD 与 PACP-LiDAR 在 AP@0.7 上强于 PAPG，应按信息条件边界解释为 edge/global 或 stronger-priority reference，不应硬写 SGCP 全面最优。
 - `main.tex` 位于 `C:\Workspace\icdcs-paper\SGCP\main.tex`，不在 OpenCDA git 仓库；本机缺少 `latexmk/pdflatex`，当前只做了结构检查，未完成 PDF 编译验证。
+- 2026-07-19 已向 `main.tex` 补入 attentive checkpoint sensitivity 段落；该修改无法在 OpenCDA 仓库提交，只能通过本文档和外部 paper 目录状态追踪。
 
 ## 下一次更新条件
 

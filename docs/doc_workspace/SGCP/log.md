@@ -6580,3 +6580,25 @@ Artifacts：
 
 - `docs\doc_workspace\SGCP\artifacts\early_from_late_checkpoint_20260719\pure_late_attentive_box_comm_80\`
 - `docs\doc_workspace\SGCP\artifacts\early_from_late_checkpoint_20260719\pure_late_attentive_box_comm_128\`
+
+## 2026-07-19 17:05 - 论文正文补入 checkpoint sensitivity 口径
+
+### 目的
+
+将 attentive checkpoint 的结论落到论文正文，同时避免把 detector sensitivity 误写成主表替换。该段回应当前最大风险：`pointpillar_early_fusion` checkpoint 可能限制 SGCP raw point-cloud early fusion 的上限。
+
+### 修改
+
+- 文件：`C:\Workspace\icdcs-paper\SGCP\main.tex`。
+- 位置：Table 1 protocol-native comparison 解释段之后、SGCP 主行解释之前。
+- 内容：补入 attentive intermediate checkpoint sensitivity：SGCP-PAPG `0.87/0.81/0.36`，Pure late controlled `0.82/0.65/0.28`，Full20Early upper reference `0.88/0.85/0.45`。
+
+### 结论
+
+- 该证据支持“同 detector 下，SGCP 的 raw point-cloud sharing 比 prediction-only late fusion 在 AP@0.5/AP@0.7 上更强”。
+- 由于该 probe 更改了 detector initialization，且 AP@0.7 不优于当前主线 `pointpillar_early_fusion` PAPG，论文中明确写为 sensitivity evidence，不替换 Table 1。
+
+### 验证
+
+- 已做轻量 LaTeX 结构检查：`table/figure/tabular` begin-end 数量配平。
+- 本机仍未检测到 `latexmk` / `pdflatex`，未生成 PDF。
