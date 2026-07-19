@@ -23,7 +23,7 @@ docs\doc_workspace\SGCP\artifacts\paper_artifact_index_20260719\paper_artifact_i
 | Figure 2 Protocol Breakdown | `artifacts/figures_20260719/figure2_protocol_breakdown.pdf` | `80a590a` | usable | 只报告 aggregate AP，不引入 satisfaction rate。 |
 | Figure 3 Fusion Contribution | `artifacts/figures_20260719/figure3_fusion_contribution.pdf` | `80a590a` | usable | 解释 early/late 两层融合分工，不把 AP@0.3 全写成 scheduler 贡献。 |
 | Figure 1 AP-Mbps Pareto | `artifacts/pareto_20260719/pareto_source.csv` | `6693b45` | usable with caveats | Pure late prediction sharing 必须和 raw-LiDAR Pareto frontier 分开解释；当前源表已包含 SGCP/PACP、Random/Density/Link-aware 与 EdgeCooper-HD first-pass budget 点。 |
-| Pareto Claim Audit | `pareto_claim_audit.md` | `pending` | usable | 按 prediction-sharing、edge/global reference、raw-LiDAR V2V 集合拆分 Pareto claim；SGCP-PAPG 只声明 AP@0.3/AP@0.5 raw-LiDAR frontier，不声明 AP@0.7 全面最优。 |
+| Pareto Claim Audit | `pareto_claim_audit.md` | `9095b07` | usable | 按 prediction-sharing、edge/global reference、raw-LiDAR V2V 集合拆分 Pareto claim；SGCP-PAPG 只声明 AP@0.3/AP@0.5 raw-LiDAR frontier，不声明 AP@0.7 全面最优。 |
 | Table 3 Scheduler Comparison | `artifacts/scheduler_comparison_20260719/scheduler_comparison_manifest.csv` | `2a2e4b2` | usable | 只比较同一 SGCP-compatible scaffold 内的 scheduler。 |
 | P4 Scheduler Budget Sweep | `artifacts/scheduler_budget_sweep_20260719/scheduler_budget_sweep_manifest.csv` | `c63e0c2` | usable | 支撑 Pareto 中 Random/Density/Communication-aware low/high budget first-pass，不替代 protocol-native 主表。 |
 | P4 EdgeCooper-HD Budget Sweep | `artifacts/edgecooper_budget_sweep_20260719/edgecooper_budget_sweep_manifest.csv` | `6693b45` | usable | 支撑 EdgeCooper-HD edge/global assignment + half-duplex proxy 的 low/high budget 边界。 |
