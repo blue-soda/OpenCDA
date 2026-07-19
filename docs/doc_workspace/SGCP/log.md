@@ -7000,3 +7000,38 @@ ssh mindspore-187 "kill 1532887 2>/dev/null || true; sleep 1; ps -p 1532887 -o p
 - pid 文件已删除。
 - watcher 日志已追加 manual stop 记录。
 - `target.md` P1 checkpoint 项已改为完成：当前固定使用 attentive forward-writing candidate；未来若重新训练 checkpoint，必须作为新任务开启并重跑全表/图。
+
+## 2026-07-20 00:21 - SGCP 论文实验结果包整理
+
+用户要求将当前所有实验结果与图表数据打包到 SGCP 论文目录，并为图提供原始数据说明。本轮在论文目录下创建结果包：
+
+```text
+C:\Workspace\icdcs-paper\SGCP\experiment_results_20260720
+```
+
+包内入口：
+
+- `ALL_RESULTS_AND_FIGURE_DATA.md`：集中说明 Table 1/2/3/4、Figure 1/2/3/4 的所有数据、口径、claim boundary 和 raw CSV 路径。
+- `README.md`：目录结构说明。
+- `PACKAGE_MANIFEST.csv`：包内 106 个文件的相对路径、字节数和 SHA256。
+
+主要子目录：
+
+- `data/`：清洗后的主表/图 CSV。
+- `figures/`：论文侧 PDF 图和 PNG 预览。
+- `figure_raw_data/`：每张图对应的 raw data 说明。
+- `raw_artifacts/`：从 OpenCDA SGCP artifact 复制的 manifests、traces、logs、plot scripts 和 notes。
+
+已纳入当前 forward-writing attentive 数据：
+
+- Table 1：`protocol_native_attentive_manifest.csv`
+- Table 2：`fusion_scaffold_attentive_manifest.csv`
+- Table 3：`scheduler_comparison_attentive_manifest.csv`
+- Table 4：`table4_parameter_sensitivity_attentive.csv`
+- Figure 1：`pareto_attentive_source.csv`
+- Figure 2/3/4：attentive breakdown source manifests 与 figure notes
+
+检查：
+
+- 结果包共 106 个文件，约 3.99 MB。
+- 不包含 detector checkpoint 权重；只包含结果、图表、日志、trace 和绘图/说明文件。

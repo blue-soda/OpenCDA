@@ -47,6 +47,7 @@ docs\doc_workspace\SGCP\artifacts\paper_artifact_index_20260719\paper_artifact_i
 | Paper main.tex sync | `C:/Workspace/icdcs-paper/SGCP/main.tex` | outside OpenCDA git; docs `e1a8f15` | static checked not compiled | Paper directory is outside OpenCDA git；Table 1/3、Figure 1/2/3 和正文已同步到 attentive forward-writing candidate；2026-07-19 claim audit 已收紧 RSU/SOTA/100ms 表述并补 SMARTFORM citation。 |
 | Paper Freeze Static Check | `paper_freeze_check_20260719.md` | pending | ready for compile | 记录 citation/label/ref/figure/env 静态检查结果、外部 paper source 边界和 PDF 编译前剩余风险。 |
 | Paper Freeze Source Snapshot | `artifacts/paper_freeze_snapshot_20260719/` | pending | ready for archive | 复制当前外部 `main.tex` / `Reference.bib` 到 OpenCDA 文档树，并记录 paper-side figure PDF SHA256。 |
+| Paper Experiment Results Package | `C:/Workspace/icdcs-paper/SGCP/experiment_results_20260720/` | outside OpenCDA git | ready for paper/rebuttal use | 论文目录下的结果包，集中保存 attentive Table 1/2/3/4、Figure 1/2/3/4 源数据、图文件、raw artifacts、图表 raw-data notes 和 `ALL_RESULTS_AND_FIGURE_DATA.md`。 |
 | Paper Number Audit | `artifacts/paper_number_audit_20260719/paper_number_audit.csv` | `4fee24e` | usable | 核查 Table 1/3/4 与 manifest 数值一致；修正 Table 4 channel sweep 的 legacy `40 MHz` 标签为当前复现实验命令口径 `20 MHz`；Table 1/3 manifest 已用工具重生成并显式记录网络元数据。 |
 
 ## Current Risks
