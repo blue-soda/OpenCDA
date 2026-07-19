@@ -29,12 +29,27 @@ SGCP 的核心机制是 raw point-cloud region sharing + intra-cluster early fus
 | Pure late actual-late sanity | 41 | `pointpillar_late_fusion` local detector | `naive_late_fusion()` | 0.89 | 0.83 | 0.49 | 0.00 | detector sensitivity，不进公平主表 |
 | SGCP PAPG mainline | 41 | `pointpillar_early_fusion` raw point-cloud early fusion | `naive_late_fusion()` | 0.81 | 0.78 | 0.39 | 62.54 | SGCP 主线 |
 | SGCP PAPG forced-late sanity | 41 | `pointpillar_late_fusion` over scheduled source set | `naive_late_fusion()` | 0.87 | 0.81 | 0.48 | 62.54 | checkpoint sensitivity，不代表 SGCP 协议 |
+| Pure late attentive controlled | 41 | attentive checkpoint singleton local detector | `naive_late_fusion()` | 0.82 | 0.65 | 0.28 | 0.00 | attentive sensitivity / prediction-sharing reference |
+| SGCP PAPG attentive | 41 | attentive checkpoint raw point-cloud early fusion | `naive_late_fusion()` | 0.87 | 0.81 | 0.36 | 62.54 | attentive sensitivity / candidate |
+| Full20Early attentive upper | 41 | attentive checkpoint full 20-CAV raw point-cloud early fusion | none | 0.88 | 0.85 | 0.45 | n/a | attentive upper reference |
 
 Prediction-box overhead 见 `late_fusion_box_comm.md`：
 
 - 80 B/box one-hop broadcast：平均 0.739 Mbps，最大 0.823 Mbps；
 - 80 B/box scheduled all-to-all unicast：平均 14.043 Mbps，最大 15.638 Mbps；
 - actual-late checkpoint 会产生更多检测框，80 B/box broadcast 约 1.068/1.148 Mbps mean/max。
+
+Attentive checkpoint sensitivity 的 prediction-box overhead 见
+`artifacts/early_from_late_checkpoint_20260719/pure_late_attentive_box_comm_80`
+和
+`artifacts/early_from_late_checkpoint_20260719/pure_late_attentive_box_comm_128`：
+
+- 80 B/box one-hop broadcast：平均 1.37 Mbps，最大 1.51 Mbps；
+- 80 B/box scheduled all-to-all unicast：平均 25.97 Mbps，最大 28.60 Mbps；
+- 128 B/box one-hop broadcast：平均 2.13 Mbps，最大 2.35 Mbps；
+- 128 B/box scheduled all-to-all unicast：平均 40.53 Mbps，最大 44.65 Mbps。
+
+该 sensitivity 的关键结论是：当 detector/checkpoint 同时换成 attentive 权重时，Pure late controlled 降为 `0.82/0.65/0.28`，而 SGCP-PAPG attentive 为 `0.87/0.81/0.36`。这说明同 detector 条件下，SGCP 的 scheduled raw point-cloud early fusion 仍然带来 AP@0.5/AP@0.7 收益；它不是单纯被 late fusion coverage 或 detector checkpoint 盖住的结果。
 
 ## 论文写作口径
 
@@ -43,6 +58,7 @@ Prediction-box overhead 见 `late_fusion_box_comm.md`：
 - Pure late 是 prediction-sharing reference，不是 raw-LiDAR point-cloud sharing baseline；
 - 为避免 detector checkpoint 混淆，主表中的 Pure late 使用与 SGCP 一致的 early checkpoint 进行 singleton local detection；
 - actual late checkpoint 的结果作为 sensitivity study，说明当前场景中 box-level prediction sharing 很强，但不用于 raw-LiDAR 协议公平排名；
+- attentive checkpoint 的结果作为第二类 sensitivity：它可证明更强/不同初始化下 SGCP 相对 Pure late controlled 的 AP@0.5/AP@0.7 优势更清晰，但由于 AP@0.7 仍低于原 PAPG 主线和 full-sharing upper reference，暂不替换主表；
 - SGCP 的优势应写成“在 raw-LiDAR V2V 协议中，用中等点云 payload 获得接近/超过 controlled Pure late 的 AP@0.5/AP@0.7，同时保持多层融合叙事”，而不是声称全面击败所有 prediction-sharing detector 组合。
 
 ## 当前风险

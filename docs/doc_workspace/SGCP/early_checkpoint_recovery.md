@@ -10,6 +10,8 @@
 no GPU below 6000 MiB; sleeping 300s
 ```
 
+GPU 等待期间已完成本地 checkpoint sensitivity 补充：attentive intermediate checkpoint 作为 early detector 时，SGCP-PAPG 41 帧为 `0.87/0.81/0.36`，Pure late controlled 为 `0.82/0.65/0.28`，Full20Early upper reference 为 `0.88/0.85/0.45`。该结果可作为 rebuttal/appendix 证据，但不替代本 fine-tune 任务；fine-tune 回收后仍必须按下文流程重跑同 checkpoint 公平对照。
+
 远程路径：
 
 ```text
