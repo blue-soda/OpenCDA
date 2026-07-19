@@ -175,6 +175,11 @@ def parse_args():
                              'When set, each evaluated sample is compared '
                              'against a full-20CAV reference from the same '
                              'frame.')
+    parser.add_argument('--eval-stats-output', default=None,
+                        help='Optional CSV path for per-evaluated-sample '
+                             'TP/FP/GT deltas. This supports frame/sample '
+                             'bootstrap uncertainty estimates without '
+                             'changing inference behavior.')
     parser.add_argument('--object-diagnostics-iou', type=float, default=0.5,
                         help='IoU threshold used by object diagnostics. '
                              'Defaults to 0.5.')
@@ -2162,6 +2167,93 @@ def write_object_diagnostics_csv(path, rows):
             writer.writerow(row)
 
 
+def result_stat_lengths(result_stat):
+    return {
+        iou: {
+            'tp': len(values['tp']),
+            'fp': len(values['fp']),
+            'gt': values['gt'],
+        }
+        for iou, values in result_stat.items()
+    }
+
+
+def result_stat_delta(result_stat, before):
+    delta = {}
+    for iou, values in result_stat.items():
+        start_tp = before[iou]['tp']
+        start_fp = before[iou]['fp']
+        delta[iou] = {
+            'tp': list(values['tp'][start_tp:]),
+            'fp': list(values['fp'][start_fp:]),
+            'gt': values['gt'] - before[iou]['gt'],
+        }
+    return delta
+
+
+def append_eval_stats_row(rows,
+                          scenario_id,
+                          timestamp,
+                          sample_label,
+                          receiver_id,
+                          metadata,
+                          before,
+                          result_stat):
+    if rows is None:
+        return
+    delta = result_stat_delta(result_stat, before)
+    row = {
+        'scenario_id': scenario_id,
+        'timestamp': timestamp,
+        'sample_label': sample_label,
+        'receiver_id': receiver_id,
+        'resource_allocation': (
+            '' if metadata is None else
+            metadata.get('resource_allocation', '')),
+        'clustering': '' if metadata is None else metadata.get('clustering', ''),
+        'communication_bytes': (
+            0 if metadata is None else
+            metadata.get('communication_bytes', 0)),
+    }
+    for iou in (0.3, 0.5, 0.7):
+        suffix = str(iou).replace('.', '')
+        row['tp_%s_json' % suffix] = json.dumps(delta[iou]['tp'])
+        row['fp_%s_json' % suffix] = json.dumps(delta[iou]['fp'])
+        row['gt_%s' % suffix] = delta[iou]['gt']
+    rows.append(row)
+
+
+def write_eval_stats_csv(path, rows):
+    if not path or not rows:
+        return
+    output_dir = os.path.dirname(os.path.abspath(path))
+    if output_dir and not os.path.exists(output_dir):
+        os.makedirs(output_dir)
+    fieldnames = [
+        'scenario_id',
+        'timestamp',
+        'sample_label',
+        'receiver_id',
+        'resource_allocation',
+        'clustering',
+        'communication_bytes',
+        'tp_03_json',
+        'fp_03_json',
+        'gt_03',
+        'tp_05_json',
+        'fp_05_json',
+        'gt_05',
+        'tp_07_json',
+        'fp_07_json',
+        'gt_07',
+    ]
+    with open(path, 'w', newline='') as stream:
+        writer = csv.DictWriter(stream, fieldnames=fieldnames)
+        writer.writeheader()
+        for row in rows:
+            writer.writerow(row)
+
+
 def main():
     args = parse_args()
     dataset = OPV2VFrameDataset(args.dataset_root)
@@ -2179,6 +2271,7 @@ def main():
     sgcp_summaries = []
     sgcp_trace_rows = []
     object_rows = []
+    eval_stats_rows = [] if args.eval_stats_output else None
     ns3_link_quality = load_ns3_link_quality(args.ns3_link_quality_csv)
     sgcp_routing_hints = load_sgcp_routing_hints(
         args.sgcp_routing_hints_csv)
@@ -2385,38 +2478,38 @@ def main():
                       len(frame_items),
                       0 if fused_pred is None else fused_pred.shape[0],
                       0 if fused_gt is None else fused_gt.shape[0]))
+            aggregate_metadata = {
+                'receiver_id': args.ego_cav_id,
+                'resource_allocation': (
+                    'selective_%s' % args.selective_sharing_baseline
+                    if args.selective_sharing_baseline is not None
+                    else args.resource_allocation),
+                'clustering': args.clustering,
+                'upload_mode': args.sgcp_upload_mode,
+                'grid_selection_mode': args.sgcp_grid_selection_mode,
+                'grid_score_mode': args.sgcp_grid_score_mode,
+                'num_channels': args.num_channels,
+                'bandwidth_mhz': args.bandwidth_mhz,
+                'communication_bytes': sum(
+                    int((metadata or {}).get('communication_bytes', 0))
+                    for _, metadata in frame_items),
+                'source_cav_ids': sorted(set(
+                    source_id
+                    for _, metadata in frame_items
+                    for source_id in (
+                        (metadata or {}).get('source_cav_ids', [])))),
+                'selected_grid_counts': {},
+            }
+            for _, metadata in frame_items:
+                if not metadata:
+                    continue
+                for key, value in metadata.get(
+                        'selected_grid_counts', {}).items():
+                    aggregate_metadata['selected_grid_counts'][key] = (
+                        aggregate_metadata[
+                            'selected_grid_counts'].get(key, 0) +
+                        value)
             if canonical_ret is not None:
-                aggregate_metadata = {
-                    'receiver_id': args.ego_cav_id,
-                    'resource_allocation': (
-                        'selective_%s' % args.selective_sharing_baseline
-                        if args.selective_sharing_baseline is not None
-                        else args.resource_allocation),
-                    'clustering': args.clustering,
-                    'upload_mode': args.sgcp_upload_mode,
-                    'grid_selection_mode': args.sgcp_grid_selection_mode,
-                    'grid_score_mode': args.sgcp_grid_score_mode,
-                    'num_channels': args.num_channels,
-                    'bandwidth_mhz': args.bandwidth_mhz,
-                    'communication_bytes': sum(
-                        int((metadata or {}).get('communication_bytes', 0))
-                        for _, metadata in frame_items),
-                    'source_cav_ids': sorted(set(
-                        source_id
-                        for _, metadata in frame_items
-                        for source_id in (
-                            (metadata or {}).get('source_cav_ids', [])))),
-                    'selected_grid_counts': {},
-                }
-                for _, metadata in frame_items:
-                    if not metadata:
-                        continue
-                    for key, value in metadata.get(
-                            'selected_grid_counts', {}).items():
-                        aggregate_metadata['selected_grid_counts'][key] = (
-                            aggregate_metadata[
-                                'selected_grid_counts'].get(key, 0) +
-                            value)
                 object_rows.extend(object_diagnostic_rows(
                     scenario_id,
                     timestamp,
@@ -2429,12 +2522,22 @@ def main():
                     fused_pred,
                     fused_score,
                     args.object_diagnostics_iou))
+            before_stats = result_stat_lengths(manager.result_stat)
             manager.submit_results(
                 fused_pred,
                 fused_score,
                 fused_gt,
                 with_stats=True,
                 force=True)
+            append_eval_stats_row(
+                eval_stats_rows,
+                scenario_id,
+                timestamp,
+                'inter_cluster_late_fusion',
+                'late_fused',
+                aggregate_metadata,
+                before_stats,
+                manager.result_stat)
             continue
         for receiver_index, (eval_frame, sgcp_metadata) in enumerate(
                 frame_items,
@@ -2510,12 +2613,23 @@ def main():
                     pred_box_tensor,
                     pred_score,
                     args.object_diagnostics_iou))
+            before_stats = result_stat_lengths(manager.result_stat)
             manager.submit_results(
                 pred_box_tensor,
                 pred_score,
                 gt_box_tensor,
                 with_stats=True,
                 force=True)
+            append_eval_stats_row(
+                eval_stats_rows,
+                scenario_id,
+                timestamp,
+                'receiver_sample',
+                '' if sgcp_metadata is None else
+                sgcp_metadata.get('receiver_id', ''),
+                sgcp_metadata,
+                before_stats,
+                manager.result_stat)
 
     if len(frames) > 1:
         manager.evaluate_final_average_precision()
@@ -2541,6 +2655,7 @@ def main():
     write_object_diagnostics_csv(
         args.object_diagnostics_output,
         object_rows)
+    write_eval_stats_csv(args.eval_stats_output, eval_stats_rows)
 
 
 if __name__ == '__main__':
