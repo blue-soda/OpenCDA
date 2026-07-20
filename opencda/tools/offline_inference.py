@@ -72,7 +72,8 @@ def parse_args():
                                  'singleton', 'all_in_one',
                                  'random_balanced',
                                  'distance_greedy',
-                                 'density_greedy_cluster'],
+                                 'density_greedy_cluster',
+                                 'mobility_stability_greedy'],
                         help='Clustering algorithm for SGCP constrained inference.')
     parser.add_argument('--sgcp-receiver-policy',
                         choices=['ego', 'ego-cluster-head',
@@ -1019,6 +1020,19 @@ def _vehicle_distance(first_id, second_id):
     return math.hypot(x1 - x2, y1 - y2)
 
 
+def _vehicle_velocity_xy(vehicle_id):
+    vehicle = common.global_vehicles[int(vehicle_id)]
+    speed = float(vehicle.get_speed())
+    direction = vehicle.get_direction()
+    return speed * float(direction[0]), speed * float(direction[1])
+
+
+def _relative_speed(first_id, second_id):
+    vx1, vy1 = _vehicle_velocity_xy(first_id)
+    vx2, vy2 = _vehicle_velocity_xy(second_id)
+    return math.hypot(vx1 - vx2, vy1 - vy2)
+
+
 def _center_head_id(member_ids):
     member_ids = [int(item) for item in member_ids]
     if not member_ids:
@@ -1113,6 +1127,29 @@ def build_heuristic_clusters(world, clustering, n_max=None, timestamp=None):
                         -vid))
                 members.append(best_vid)
                 covered |= common.global_vehicles[best_vid].sens_grids
+        elif clustering == 'mobility_stability_greedy':
+            head_id = min(
+                unassigned,
+                key=lambda vid: (
+                    sum(_vehicle_distance(vid, other)
+                        for other in unassigned if other != vid),
+                    common.global_vehicles[vid].get_speed(),
+                    vid))
+            members = [head_id]
+            covered = set(common.global_vehicles[head_id].sens_grids)
+            while len(members) < capacity:
+                candidates = [vid for vid in unassigned if vid not in members]
+                if not candidates:
+                    break
+                best_vid = min(
+                    candidates,
+                    key=lambda vid: (
+                        _relative_speed(head_id, vid),
+                        _vehicle_distance(head_id, vid),
+                        -len(common.global_vehicles[vid].sens_grids - covered),
+                        vid))
+                members.append(best_vid)
+                covered |= common.global_vehicles[best_vid].sens_grids
         else:
             raise ValueError('Unknown heuristic clustering: %s' % clustering)
         unassigned -= set(members)
@@ -1168,7 +1205,8 @@ def apply_sgcp_constraint(frame, protocol, ego_cav_id, resource_allocation,
     elif clustering == 'all_in_one':
         clustering_algorithm = NaiveCluster(world, all_in_one=True)
     elif clustering in ['random_balanced', 'distance_greedy',
-                        'density_greedy_cluster']:
+                        'density_greedy_cluster',
+                        'mobility_stability_greedy']:
         clustering_algorithm = None
     else:
         raise ValueError('Unknown clustering algorithm: %s' % clustering)
@@ -1181,7 +1219,8 @@ def apply_sgcp_constraint(frame, protocol, ego_cav_id, resource_allocation,
     if clustering == 'fixed_first_frame' and fixed_cluster_templates:
         clusters = build_fixed_clusters(world, fixed_cluster_templates)
     elif clustering in ['random_balanced', 'distance_greedy',
-                        'density_greedy_cluster']:
+                        'density_greedy_cluster',
+                        'mobility_stability_greedy']:
         clusters = build_heuristic_clusters(
             world,
             clustering,
@@ -1757,7 +1796,8 @@ def apply_selective_sharing_baseline(frame, protocol, ego_cav_id,
     elif clustering == 'all_in_one':
         clustering_algorithm = NaiveCluster(world, all_in_one=True)
     elif clustering in ['random_balanced', 'distance_greedy',
-                        'density_greedy_cluster']:
+                        'density_greedy_cluster',
+                        'mobility_stability_greedy']:
         clustering_algorithm = None
     else:
         raise ValueError('Unknown clustering algorithm: %s' % clustering)
@@ -1768,7 +1808,8 @@ def apply_selective_sharing_baseline(frame, protocol, ego_cav_id,
             hasattr(clustering_algorithm, 'p')):
         clustering_algorithm.p.N_max = n_max
     if clustering in ['random_balanced', 'distance_greedy',
-                      'density_greedy_cluster']:
+                      'density_greedy_cluster',
+                      'mobility_stability_greedy']:
         clusters = build_heuristic_clusters(
             world,
             clustering,

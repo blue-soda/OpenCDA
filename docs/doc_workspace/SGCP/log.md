@@ -7265,6 +7265,7 @@ C:\Workspace\icdcs-paper\SGCP\experiment_results_20260720
 - `random_balanced`：AP `0.53/0.49/0.23`，raw `31.4695 Mbps`，box `0.3247 Mbps`，total `31.7942 Mbps`，205 receiver rows / 41 frames。
 - `distance_greedy`：AP `0.58/0.54/0.31`，raw `31.5183 Mbps`，box `0.3110 Mbps`，total `31.8293 Mbps`，205 receiver rows / 41 frames。
 - `density_greedy_cluster`：AP `0.58/0.53/0.30`，raw `31.6265 Mbps`，box `0.3551 Mbps`，total `31.9816 Mbps`，205 receiver rows / 41 frames。
+- `mobility_stability_greedy`：MASS/C-MASS-inspired baseline，AP `0.61/0.55/0.28`，raw `31.4539 Mbps`，box `0.3728 Mbps`，total `31.8267 Mbps`，205 receiver rows / 41 frames。
 
 产物：
 
@@ -7274,6 +7275,6 @@ C:\Workspace\icdcs-paper\SGCP\experiment_results_20260720
 
 结论：
 
-- 三个启发式分簇 baseline 在约 `31.8 Mbps` 下只达到 `0.53--0.58` AP@0.3 和 `0.49--0.54` AP@0.5，明显低于 SGCP dynamic coalition `0.87/0.81/0.36`。
+- 三个启发式分簇 baseline 与一个 mobility-aware literature-inspired baseline 在约 `31.8 Mbps` 下只达到 `0.53--0.61` AP@0.3 和 `0.49--0.55` AP@0.5，明显低于 SGCP dynamic coalition `0.87/0.81/0.36`。
 - fixed first-frame clusters 虽然通信量接近 SGCP，但 AP@0.5 从 `0.81` 降到 `0.70`，说明动态 coalition 更新本身有贡献。
-- Table 5 现在可作为机制消融表使用；仍需补 1--2 个 literature-inspired clustering baseline 或在文中说明三类启发式已覆盖 random/proximity/sensing-aware 边界。
+- Table 5 现在可作为机制消融表使用；已包含 random/proximity/sensing-aware/mobility-aware 四类 baseline。若篇幅允许，可继续补 graph coverage clustering；否则可在文中说明当前 baseline 覆盖 random、proximity、sensing-density 和 mobility-stability 边界。
