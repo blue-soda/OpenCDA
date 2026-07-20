@@ -7161,3 +7161,25 @@ C:\Workspace\icdcs-paper\SGCP\experiment_results_20260720
 - Pure late：`0 raw + 1.3667 box = 1.3667 Mbps`。
 
 剩余：P10.1 仍需 11/41 帧 PCS blind-spot sweep；P10.3 仍需 41 帧分簇消融补跑。
+
+# 2026-07-21 11:05 P10.1 PCS blind-spot sweep first pass
+
+目标：测试 `div4/radius4/min128` 是否能通过更大的 PCS blind-spot 单元修复 no-late PCS AP 与通信量异常。
+
+运行：
+
+- `pcs_div4_radius4_min128_nolate_11f`: start-index 0，11 帧，no late。
+- `pcs_default_nolate_11f`: start-index 0，11 帧，no late，对照。
+- `pcs_div4_radius4_min128_nolate_11f_start20`: start-index 20，11 帧，no late。
+
+结果：
+
+- default 前 11 帧：AP `0.00/0.00/0.00`，78 rows，1,247,952 bytes，约 9.08 Mbps，avg 9.35 selected grids/row。
+- div4/radius4/min128 前 11 帧：AP `0.00/0.00/0.00`，70 rows，4,179,440 bytes，约 30.40 Mbps，avg 35.21 selected grids/row。
+- div4/radius4/min128 后段 11 帧：AP `0.00/0.00/0.00`，64 rows，3,883,680 bytes，约 28.24 Mbps，avg 34.56 selected grids/row。
+
+结论：
+
+- 放大 blind-spot unit 确实能提高 PCS 通信量和 selected grids，但没有改善 no-late AP。
+- PCS 的问题不是单纯 under-schedule；更可能是 paper-faithful blind-spot/link utility 与当前 raw-LiDAR attentive detector 的有效检测区域错位，或者 PCS 选到的 receiver/sender 样本没有覆盖可检出 GT。
+- 不应把 `div4/radius4/min128` 直接上 41 帧作为修复；下一步应做 PCS link-level diagnostics：输出 scheduled receiver/sender、selected grids 与 GT object grid 的覆盖关系，并考虑 raw-LiDAR adaptation 下的 object-aware blind-region utility。

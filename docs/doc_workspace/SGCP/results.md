@@ -1266,6 +1266,18 @@ Artifacts：
 
 初步结论：PCS 旧结果通信量偏低确实与 blind-spot unitization 有关，但单纯放大 spot 不一定线性提高 selected grids；`division=4,radius=4,min_spot=128` 是下一轮 11/41 帧 sweep 的优先候选。
 
+### 11-frame PCS blind-spot sweep
+
+统一设置：`attentive` detector、`singleton` clustering、`fullperception_pcs`、20MHz/10ch、no late fusion、`all-scheduled-receivers`。
+
+| Setting | Window | AP@0.3 | AP@0.5 | AP@0.7 | Rows | Payload bytes | Mbps | Avg selected grids/row | Max selected grids/row |
+| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| default | frames 000060-000080 | 0.00 | 0.00 | 0.00 | 78 | 1,247,952 | 9.08 | 9.35 | 41 |
+| div4/radius4/min128 | frames 000060-000080 | 0.00 | 0.00 | 0.00 | 70 | 4,179,440 | 30.40 | 35.21 | 67 |
+| div4/radius4/min128 | start-index 20, 11 frames | 0.00 | 0.00 | 0.00 | 64 | 3,883,680 | 28.24 | 34.56 | 67 |
+
+结论：放大 blind-spot unit 可以显著提高通信量和 selected grids，但 no-late PCS 仍无 AP 命中；因此 P10.1 后续不应只调大 blind-spot 面积，而应检查 PCS link utility 与 detector 有效目标区域是否错位，必要时改为 raw-LiDAR adaptation 中的 receiver utility / object-aware blind region。
+
 ## Clustering baseline smoke diagnostics - 2026-07-21
 
 用途：确认新增 clustering baseline 可接入同一 SGCP-compatible pipeline，不进入论文表格。
