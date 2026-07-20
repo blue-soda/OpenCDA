@@ -7240,3 +7240,40 @@ C:\Workspace\icdcs-paper\SGCP\experiment_results_20260720
 - PCS 低 AP 主要来自 paper-style blind spot (`req_grids - high_density_grids`) 与 object-level detector utility 不匹配。
 - 单纯增加 blind-spot 面积可以增加通信量，但不能系统性选中 detector 需要的目标 grid。
 - 正式论文中应把 PCS 作为 paper-faithful protocol baseline 或 raw-LiDAR adaptation baseline；若要继续增强 PCS，只能说明是 adaptation variant，不能混同为原版 FullPerception-PCS。
+
+# 2026-07-21 18:40 P10.3 clustering ablation 41-frame run started
+
+目标：将新增 clustering baselines 从 1-frame smoke 推进到 41-frame paper-facing ablation。
+
+统一设置：
+
+- dataset：`D:\Data\Carla\2026_07_15_01_26_56`
+- detector：`early` fusion-method path / attentive forward-writing口径
+- resource allocation：`perception_aware_potential_game`
+- late fusion：`--sgcp-inter-cluster-late-fusion`
+- receiver policy：默认 all-cluster-heads
+- network setting：20MHz / 10 subchannels
+- max frames：41 全序列
+
+本轮优先运行：
+
+- `random_balanced`
+- 若时间允许继续 `distance_greedy`、`density_greedy_cluster`
+
+结果：
+
+- `random_balanced`：AP `0.53/0.49/0.23`，raw `31.4695 Mbps`，box `0.3247 Mbps`，total `31.7942 Mbps`，205 receiver rows / 41 frames。
+- `distance_greedy`：AP `0.58/0.54/0.31`，raw `31.5183 Mbps`，box `0.3110 Mbps`，total `31.8293 Mbps`，205 receiver rows / 41 frames。
+- `density_greedy_cluster`：AP `0.58/0.53/0.30`，raw `31.6265 Mbps`，box `0.3551 Mbps`，total `31.9816 Mbps`，205 receiver rows / 41 frames。
+
+产物：
+
+- OpenCDA artifact：`docs/doc_workspace/SGCP/artifacts/clustering_ablation_20260721/`
+- INFOCOM experiment package：`C:\Workspace\2026-7-papers\infocom\SGCP\experiment\data\table5_clustering_ablation_attentive_20260720.csv`
+- Figure：`C:\Workspace\2026-7-papers\infocom\SGCP\experiment\figures\figure7_clustering_ablation_ap_bars.png/.pdf`
+
+结论：
+
+- 三个启发式分簇 baseline 在约 `31.8 Mbps` 下只达到 `0.53--0.58` AP@0.3 和 `0.49--0.54` AP@0.5，明显低于 SGCP dynamic coalition `0.87/0.81/0.36`。
+- fixed first-frame clusters 虽然通信量接近 SGCP，但 AP@0.5 从 `0.81` 降到 `0.70`，说明动态 coalition 更新本身有贡献。
+- Table 5 现在可作为机制消融表使用；仍需补 1--2 个 literature-inspired clustering baseline 或在文中说明三类启发式已覆盖 random/proximity/sensing-aware 边界。

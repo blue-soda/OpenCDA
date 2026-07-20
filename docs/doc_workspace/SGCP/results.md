@@ -1231,9 +1231,14 @@ Artifacts：
 | Variant | Checkpoint | Late fusion | Clustering | Resource allocation | AP@0.3 | AP@0.5 | AP@0.7 | Mbps |
 | --- | --- | --- | --- | --- | ---: | ---: | ---: | ---: |
 | Singleton pure late reference | attentive | prediction NMS | singleton | local detection | 0.82 | 0.65 | 0.28 | 1.37 box |
+| Random balanced clusters | attentive | inter-cluster NMS | random_balanced | perception_aware_potential_game | 0.53 | 0.49 | 0.23 | 31.79 |
+| Distance-greedy clusters | attentive | inter-cluster NMS | distance_greedy | perception_aware_potential_game | 0.58 | 0.54 | 0.31 | 31.83 |
+| Density/quality-greedy clusters | attentive | inter-cluster NMS | density_greedy_cluster | perception_aware_potential_game | 0.58 | 0.53 | 0.30 | 31.98 |
 | Fixed first-frame clusters | attentive | inter-cluster NMS | fixed_first_frame | perception_aware_potential_game | 0.83 | 0.70 | 0.28 | 62.63 |
-| Dynamic coalition clusters (SGCP) | attentive | inter-cluster NMS | coalition_game | perception_aware_potential_game | 0.87 | 0.81 | 0.36 | 62.54 |
+| Dynamic coalition clusters (SGCP) | attentive | inter-cluster NMS | coalition_game | perception_aware_potential_game | 0.87 | 0.81 | 0.36 | 63.28 |
 | All-in-one full raw sharing | attentive | identity single cluster | all_in_one | full_cluster | 0.89 | 0.86 | 0.45 | 118.71 |
+
+2026-07-21 更新：Table 5 已补齐三类启发式分簇 baseline，并统一使用 `total_mbps = raw_lidar_mbps + box_mbps`。三类启发式在约 31.8 Mbps 下 AP 明显低于动态 SGCP coalition；fixed first-frame 在相近 total Mbps 下 AP@0.5 仍低 0.11，说明动态 coalition 的收益不只是通信量差异。
 
 结论：当前写作应把原版/协议适配 baseline 与 SGCP-compatible scheduler comparison 分成两类表。Table 3 scheduler comparison 仍可证明同等 coalition + late-fusion scaffold 下 PAPG 的 AP@0.5 优势；Table 1 original/protocol adaptation 则显示不引入 SGCP coalition 和 inter-cluster late fusion 时，PCS/EdgeCooper-style V2V adaptation 难以达到 SGCP 的 aggregate AP。
 

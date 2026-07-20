@@ -241,9 +241,9 @@
 
 ### P10.3 分簇算法 baseline 扩展
 
-- [ ] 在当前 `Fixed first-frame clusters` 之外，补充分簇算法 baseline：确定性随机分簇、距离/通信贪心分簇、密度/质量贪心分簇。所有 baseline 使用同一 attentive checkpoint、同一资源调度算法、同一 late-fusion 开关和同一 20MHz/10ch 设置，只替换 clustering 维度。
+- [x] 在当前 `Fixed first-frame clusters` 之外，补充分簇算法 baseline：确定性随机分簇、距离/通信贪心分簇、密度/质量贪心分簇。所有 baseline 使用同一 attentive checkpoint、同一资源调度算法、同一 late-fusion 开关和同一 20MHz/10ch 设置，只替换 clustering 维度。2026-07-21 已完成 41 帧：random balanced `0.53/0.49/0.23, 31.79 Mbps`；distance-greedy `0.58/0.54/0.31, 31.83 Mbps`；density/quality-greedy `0.58/0.53/0.30, 31.98 Mbps`。
 - [ ] 调研近年 V2X / cooperative perception / vehicular edge sensing 中可复现的分簇或 coalition baseline，优先选择 1--2 个能映射到当前 raw-LiDAR V2V 场景的方法，并记录论文来源、机制映射和不适配点。初版记录见 `clustering_baseline_literature_notes.md`。
-- [ ] 新增分簇算法消融表：至少包含 Dynamic SGCP coalition、Fixed first-frame、Random balanced、Distance-greedy、Density/quality-greedy，以及 1--2 个 literature-inspired baseline。若某个 baseline 结果较差，必须解释是通信拓扑、感知覆盖还是稳定性导致，不能只给数字。
+- [ ] 新增分簇算法消融表：至少包含 Dynamic SGCP coalition、Fixed first-frame、Random balanced、Distance-greedy、Density/quality-greedy，以及 1--2 个 literature-inspired baseline。若某个 baseline 结果较差，必须解释是通信拓扑、感知覆盖还是稳定性导致，不能只给数字。当前 Table 5 已包含 Dynamic SGCP coalition、Fixed first-frame、Random balanced、Distance-greedy、Density/quality-greedy；剩余缺口是 1--2 个 literature-inspired baseline 或明确说明三类启发式已覆盖 random/proximity/sensing-aware 边界。
 - [x] 论文修改完成后尝试编译 PDF；若本机缺少 LaTeX 工具，记录未编译原因和需要人工验证的图表编号。本机未检测到 `latexmk` / `pdflatex` / `bibtex`，已做轻量结构检查：table/figure/tabular begin-end 配对正常，新增 label/ref 无缺失。
 
 ## P11：自动任务执行规则
