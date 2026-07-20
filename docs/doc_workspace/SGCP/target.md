@@ -232,9 +232,9 @@
 
 ### P10.2 Late-fusion 检测框通信量计入总通信量
 
-- [ ] 对所有启用 late fusion / global box aggregation / prediction sharing 的数据行，统一在通信量统计中加入检测框共享 payload。表格至少同时保留 `raw_lidar_mbps`、`box_mbps`、`total_mbps` 三列；若正文只显示一个 Mbps，必须使用 `total_mbps`。
-- [ ] Pure late、SGCP full、SGCP-compatible scheduler comparison、PCS + global box aggregation、EdgeCooper/FullPerception protocol adaptation 中凡是共享检测框的行，都必须标注 box-sharing mode（broadcast、scheduled all-to-all、或 global aggregation）和估算参数（box bytes、message overhead、deadline）。
-- [ ] 更新实验目录中的 README/manifest，明确哪些行是 raw-LiDAR only，哪些行是 raw-LiDAR + late-box total，避免论文写作 agent 把 0 Mbps / raw-only Mbps 当成最终通信量。
+- [x] 对所有启用 late fusion / global box aggregation / prediction sharing 的数据行，统一在通信量统计中加入检测框共享 payload。表格至少同时保留 `raw_lidar_mbps`、`box_mbps`、`total_mbps` 三列；若正文只显示一个 Mbps，必须使用 `total_mbps`。2026-07-21 已在 `C:\Workspace\2026-7-papers\infocom\SGCP\experiment` 中完成 first pass，`mbps=total_mbps`。
+- [x] Pure late、SGCP full、SGCP-compatible scheduler comparison、PCS + global box aggregation、EdgeCooper/FullPerception protocol adaptation 中凡是共享检测框的行，都必须标注 box-sharing mode（broadcast、scheduled all-to-all、或 global aggregation）和估算参数（box bytes、message overhead、deadline）。当前口径：`broadcast_boxes`，`80 bytes/box + 64 bytes/message`，`100 ms` cycle。
+- [x] 更新实验目录中的 README/manifest，明确哪些行是 raw-LiDAR only，哪些行是 raw-LiDAR + late-box total，避免论文写作 agent 把 0 Mbps / raw-only Mbps 当成最终通信量。已更新 `README.md`、`table_guidance.md`、`experiment_update_summary.md` 和 `MANIFEST.csv`。
 
 ### P10.3 分簇算法 baseline 扩展
 

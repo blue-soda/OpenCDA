@@ -7135,3 +7135,29 @@ C:\Workspace\icdcs-paper\SGCP\experiment_results_20260720
 - 对 PCS `division/radius/min_spot/min_overlap` 做 11-frame metadata/AP sweep，优先验证 `div4/radius4/min128` 是否在 41-frame 上得到更合理 payload/AP。
 - 重建 experiment 目录中的通信列：`raw_lidar_mbps`、`box_mbps`、`total_mbps`。
 - 跑 41-frame clustering ablation：dynamic coalition、fixed first-frame、random balanced、distance greedy、density/quality greedy，并补 literature-inspired 1--2 个 baseline。
+
+# 2026-07-21 10:25 P10.2 late-box communication accounting
+
+目标：修复启用 late/global box aggregation 的行只统计 raw-LiDAR payload、漏算检测框共享 payload 的问题。
+
+已完成：
+
+- 在 `C:\Workspace\2026-7-papers\infocom\SGCP\experiment\scripts\add_late_box_totals.py` 新增统一通信统计脚本。
+- 对所有 paper-facing CSV 增加/更新：
+  - `raw_lidar_mbps`
+  - `box_mbps`
+  - `total_mbps`
+  - `box_sharing_mode`
+- 旧 `mbps` 列已覆盖为 `total_mbps`，即论文写作默认通信量。
+- box payload 估算口径：每个 late-fusion source 每帧广播一次检测框，`80 bytes/box + 64 bytes/message`，周期 `100 ms`。
+- 修复脚本幂等性：重复运行不会把 box payload 反复叠加到 raw Mbps。
+- 重建 `C:\Workspace\2026-7-papers\infocom\SGCP\experiment` 的 figures 和 `MANIFEST.csv`，并更新 `README.md`、`table_guidance.md`、`experiment_update_summary.md`。
+
+关键更新后的示例：
+
+- SGCP-PAPG：`62.5363 raw + 0.7413 box = 63.2776 Mbps`。
+- FullPerception-PCS + global box aggregation：`21.0329 raw + 1.4355 box = 22.4684 Mbps`。
+- EdgeCooper V2V + global box aggregation：`282.2037 raw + 2.8661 box = 285.0699 Mbps`。
+- Pure late：`0 raw + 1.3667 box = 1.3667 Mbps`。
+
+剩余：P10.1 仍需 11/41 帧 PCS blind-spot sweep；P10.3 仍需 41 帧分簇消融补跑。

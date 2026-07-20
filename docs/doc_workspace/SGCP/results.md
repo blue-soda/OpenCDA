@@ -1271,3 +1271,24 @@ Artifacts：
 用途：确认新增 clustering baseline 可接入同一 SGCP-compatible pipeline，不进入论文表格。
 
 已跑通 1-frame smoke：`random_balanced`、`distance_greedy`、`density_greedy_cluster`。三者均使用 attentive detector、20MHz/10ch、`perception_aware_potential_game`、`inter_cluster_nms`，并各生成 5 个 cluster-head source samples。正式 clustering ablation 需补 41 帧 AP/Mbps。
+
+## Late-box communication accounting - 2026-07-21
+
+外部实验目录：`C:\Workspace\2026-7-papers\infocom\SGCP\experiment`。
+
+所有 paper-facing CSV 已改为：
+
+```text
+mbps = total_mbps = raw_lidar_mbps + box_mbps
+```
+
+box payload 口径：每个 late-fusion source 每帧广播一次检测框，`80 bytes/box + 64 bytes/message`，周期 `100 ms`。该口径适用于 `prediction_nms`、`inter_cluster_nms`、`global_box_nms`。无 late/global box aggregation 的行 `box_mbps=0`。
+
+| Row | Raw LiDAR Mbps | Box Mbps | Total Mbps |
+| --- | ---: | ---: | ---: |
+| Pure late | 0.0000 | 1.3667 | 1.3667 |
+| SGCP-PAPG | 62.5363 | 0.7413 | 63.2776 |
+| FullPerception-PCS + global box aggregation | 21.0329 | 1.4355 | 22.4684 |
+| EdgeCooper V2V + global box aggregation | 282.2037 | 2.8661 | 285.0699 |
+
+解释：box payload 相比 raw LiDAR 不大，但必须计入，否则 Pure late / global box aggregation / SGCP two-layer rows 与 no-late raw-LiDAR rows 的通信口径不一致。
