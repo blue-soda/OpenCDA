@@ -207,6 +207,7 @@ SGCP 工作与仓库中以下部分关系最紧密：
 
 ## 当前阻塞项
 
+- 2026-07-20 最新 PCS 审计发现：`fullperception_pcs` singleton 结果仍需重跑后再进入论文。原因是 `pcs.py` 原实现存在两类会影响 baseline 稳定性的工程问题：离线 CAV id 字符串/整数混用时可能漏掉语义自环过滤，blind-spot grouping 使用 `set.pop()` 导致同一协议跨进程 receiver/grid selection 不确定。本轮已完成代码侧 1-frame stable-hash smoke，重复 trace hash 一致，且第 1 帧产生 7 个 scheduled receivers；但完整 41-frame stable-hash run 在 10 分钟超时前仅推进到第 25/41 帧，暂未形成 paper-facing 新数值。`C:\Workspace\2026-7-papers\infocom\SGCP\experiment` 中 PCS 行应暂视为 pre-determinism candidate，下一轮优先完成更长 timeout rerun 或更高效 deterministic tie-break。
 - 论文旧主表已经确认缺少原始日志、随机种子和复现实验配置；当前处理策略是使用 `reproducibility_manifest.md` 中的已复现离线结果修订论文，或后续人工找回旧日志后再恢复旧表。
 - 当前 OpenCDA 与 ns-3 工作区均存在未提交/dirty 状态；NS3 exposed-subchannel 修复与 request-level 统计已通过离线回归，但仍需要分别在 OpenCDA 仓库和 co-simulation 仓库提交。
 - 离线 SGCP 回放已完成到“多帧 clustering + `potential_game` 资源分配 + 稳定性/运行时指标 + OpenCOOD 约束感知 mAP”层。

@@ -42,6 +42,7 @@
 - [x] EdgeCooperV2V+：V2V 数据共享、edge/RSU 只调度；不能使用 SGCP 分簇作为原生设置，若使用 proxy 必须标注。
 - [x] SGCP full：分簇 + PAPG/PPS 点云划分 + 簇内 early fusion + 簇间 late fusion。
 - [x] Full 20-CAV early fusion upper reference：只作上界，不作为 baseline。
+- [ ] FullPerception-PCS deterministic rerun：2026-07-20 发现 `pcs.py` 存在 id 类型自环过滤和 blind-spot `set.pop()` 非确定性问题。已完成 1-frame deterministic smoke；完整 41-frame protocol/global-box PCS 行必须重跑或明确降级为 pre-determinism candidate 后，才能交给论文写作。
 
 指标：
 

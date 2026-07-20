@@ -1,5 +1,6 @@
 from typing import Dict, List, Tuple, Set, Optional
 import math
+import zlib
 from opencda.core.clustering.base import *
 from opencda.core.clustering import utils
 from opencda.core.clustering.utils import common
@@ -34,6 +35,18 @@ class PCS(ResourceAllocationAlgorithm):
         self.feature_bytes_per_grid = 1024
         self.point_bytes = 16
 
+    @staticmethod
+    def _grid_sort_key(grid_id: str):
+        try:
+            x_idx, y_idx = map(int, str(grid_id).split("_"))
+            return (x_idx, y_idx)
+        except (ValueError, IndexError):
+            return (0, str(grid_id))
+
+    @staticmethod
+    def _grid_seed_key(grid_id: str):
+        return zlib.crc32(str(grid_id).encode('utf-8'))
+
     def _get_vehicle_blind_spots(self, vid: int, min_division: int=1) -> Dict[int, Set[str]]:
         """
         获取车辆的盲 spot 集合（盲spot_id -> 对应的网格集合）
@@ -58,7 +71,8 @@ class PCS(ResourceAllocationAlgorithm):
         unassigned_grids = blind_spot_grids.copy()
         size = len(blind_spot_grids)
         while unassigned_grids:
-            start_grid = unassigned_grids.pop()
+            start_grid = min(unassigned_grids, key=self._grid_seed_key)
+            unassigned_grids.remove(start_grid)
             adjacent_grids = self._find_adjacent_grids(start_grid, unassigned_grids, size, min_division=division)
             blind_spot = {start_grid} | adjacent_grids
             blind_spots[spot_id] = blind_spot
@@ -89,9 +103,9 @@ class PCS(ResourceAllocationAlgorithm):
             flag = False
             cur_candidate = candidate.copy()
             candidate.clear()
-            for grid_id in cur_candidate:
+            for grid_id in sorted(cur_candidate, key=self._grid_sort_key):
                 adjacent_ids = self._generate_adjacent_grids(grid_id)
-                for adj_id in adjacent_ids:
+                for adj_id in sorted(adjacent_ids, key=self._grid_sort_key):
                     if adj_id in candidate_grids and adj_id not in adjacent:
                         candidate.add(adj_id)
                         adjacent.add(adj_id)
@@ -109,7 +123,7 @@ class PCS(ResourceAllocationAlgorithm):
         min_division = max(1, int(min_division))
         min_overlap = max(0, int(min_overlap))
         self.active_blind_spot_min_division = min_division
-        vehicle_vids = common.global_vehicles.keys()
+        vehicle_vids = sorted(common.global_vehicles.keys())
         for receiver_vid in vehicle_vids:
             # 获取接收方的盲spot
             receiver_blind_spots = self._get_vehicle_blind_spots(receiver_vid, min_division)
@@ -118,7 +132,7 @@ class PCS(ResourceAllocationAlgorithm):
             
             # 查找能覆盖该盲spot的发送方
             for sender_vid in vehicle_vids:
-                if sender_vid == receiver_vid:
+                if int(sender_vid) == int(receiver_vid):
                     continue  # 不与自身建立链路
                 
                 sender = common.global_vehicles.get(sender_vid)
@@ -130,7 +144,8 @@ class PCS(ResourceAllocationAlgorithm):
                     continue
                 
                 # 检查发送方感知范围是否覆盖接收方盲spot
-                for spot_id, spot_grids in receiver_blind_spots.items():
+                for spot_id in sorted(receiver_blind_spots):
+                    spot_grids = receiver_blind_spots[spot_id]
                     overlap_grids = spot_grids & sender.sens_grids
                     # print(f"sender_vid: {sender_vid}, receiver_vid: {receiver_vid}, spot_id: {spot_id}, overlap_grids: {len(overlap_grids)}")
                     if overlap_grids and len(overlap_grids) >= min_overlap:  # 存在覆盖的网格，生成链路
@@ -438,7 +453,10 @@ class PCS(ResourceAllocationAlgorithm):
         self._build_conflict_graph()
         
         # 2. 按权重降序排序链路
-        sorted_links = sorted(self.all_links, key=lambda x: self.link_utilities[x], reverse=True)
+        sorted_links = sorted(
+            (link for link in self.all_links if link in self.link_utilities),
+            key=lambda x: self.link_utilities[x],
+            reverse=True)
         initial_weights = {link: self.link_utilities[link] for link in sorted_links}
         
         # 3. 执行递归调度

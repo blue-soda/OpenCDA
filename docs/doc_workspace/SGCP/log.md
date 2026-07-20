@@ -7068,3 +7068,19 @@ C:\Workspace\icdcs-paper\SGCP\experiment_results_20260720
 - FullPerception-PCS + global box aggregation 已重跑为 singleton 口径：`attentive / global_box_nms / singleton / fullperception_pcs`，AP `0.82/0.64/0.27`，`10.51 Mbps`，每帧 20 receivers。
 - EdgeCooper V2V + global box aggregation：`attentive / global_box_nms / singleton / selective_edgecooper_global`，AP `0.88/0.76/0.34`，`282.20 Mbps`，每帧 20 receivers。
 - 结论：PCS sparse requests 在 global box aggregation 下几乎不超过 pure late；EdgeCooper 在 AP@0.3 上很强，但 raw-LiDAR demand 明显超出 20MHz/10ch 可合理承载范围。SGCP-PAPG 仍为 `0.87/0.81/0.36`、`62.54 Mbps`。
+# 2026-07-20 21:05 PCS singleton deterministic audit
+
+目标：继续推进 `target.md` 中 protocol-native baseline 清理。当前 FullPerception-PCS 已改为 singleton receiver universe，但 protocol run 与 global-box run 的 PCS payload 出现明显差异，因此本轮先检查并修复 `pcs.py` 中可能导致同一协议重复运行漂移的非确定性实现。
+
+计划：
+
+- 不改变 PCS 论文约束、不改变 20MHz/10ch、不改变 blind-spot 参数。
+- 固定 blind-spot 起点、邻居遍历、候选链路去重和等权 link 排序。
+- 运行 `py_compile` 和 1-frame repeated PCS singleton protocol smoke test，确认 trace 稳定性。
+
+结果：
+
+- `pcs.py` 存在两个问题：其一，离线路径中的 CAV id 可能以字符串/整数混用，原来的 `sender_vid == receiver_vid` 不能完全过滤语义自环；其二，blind-spot grouping 使用 `set.pop()`，同一帧不同进程可能得到不同 PCS receiver/grid selection。
+- 已在 `pcs.py` 中补充语义自环过滤，并尝试稳定 blind-spot grouping。1-frame stable-hash smoke test 两次 trace hash 完全一致，且第 1 帧产生 7 个 scheduled receivers，量级正常。
+- 41-frame stable-hash protocol run 在 10 分钟超时前推进到第 25/41 帧，说明该确定性切分增加了运行成本；本轮不将其写入 paper-facing 表。
+- 当前 `experiment` 目录中 FullPerception-PCS paper-facing 行应视为 pre-determinism candidate，下一轮需要用更长 timeout 完成 41-frame protocol/global rerun，或设计更高效的 deterministic tie-break。
