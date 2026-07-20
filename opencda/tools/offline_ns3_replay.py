@@ -98,6 +98,11 @@ def parse_args():
                         help='Override minimum sender/receiver blind-spot '
                              'grid overlap for FullPerception PCS candidate '
                              'links.')
+    parser.add_argument('--pcs-blind-spot-radius', type=int, default=None,
+                        help='Override PCS blind-spot connected-neighborhood '
+                             'radius in grid cells.')
+    parser.add_argument('--pcs-min-spot-grids', type=int, default=None,
+                        help='Override minimum grids per PCS blind-spot unit.')
     parser.add_argument('--rho-th', type=float, default=None,
                         help='Override lidar density_threshold / rho_th for '
                              'SGCP grid candidate construction.')
@@ -219,7 +224,9 @@ def collect_channel_sc_nums(world):
 def apply_resource_overrides(resource_allocator, world, num_channels=None,
                              bandwidth_mhz=None, head_rb_budget=None,
                              pcs_blind_spot_min_division=None,
-                             pcs_min_overlap_grids=None):
+                             pcs_min_overlap_grids=None,
+                             pcs_blind_spot_radius=None,
+                             pcs_min_spot_grids=None):
     if num_channels is not None:
         if num_channels <= 0:
             raise ValueError('--num-channels must be positive')
@@ -241,6 +248,18 @@ def apply_resource_overrides(resource_allocator, world, num_channels=None,
             raise ValueError('--pcs-min-overlap-grids cannot be negative')
         if hasattr(resource_allocator, 'min_overlap_grids'):
             resource_allocator.min_overlap_grids = int(pcs_min_overlap_grids)
+    if pcs_blind_spot_radius is not None:
+        if pcs_blind_spot_radius <= 0:
+            raise ValueError('--pcs-blind-spot-radius must be positive')
+        if hasattr(resource_allocator, 'blind_spot_adjacency_radius'):
+            resource_allocator.blind_spot_adjacency_radius = int(
+                pcs_blind_spot_radius)
+    if pcs_min_spot_grids is not None:
+        if pcs_min_spot_grids <= 0:
+            raise ValueError('--pcs-min-spot-grids must be positive')
+        if hasattr(resource_allocator, 'blind_spot_min_grids'):
+            resource_allocator.blind_spot_min_grids = int(
+                pcs_min_spot_grids)
     if hasattr(resource_allocator, 'time_slot'):
         resource_allocator.time_slot = float(
             getattr(world.network_manager, 'time_slot', 0.1))
@@ -269,7 +288,9 @@ def build_world_and_requests(dataset, scenario_id, timestamp, ego_cav_id,
                              grid_score_mode='utility', rho_th=None,
                              head_rb_budget=None,
                              pcs_blind_spot_min_division=None,
-                             pcs_min_overlap_grids=None):
+                             pcs_min_overlap_grids=None,
+                             pcs_blind_spot_radius=None,
+                             pcs_min_spot_grids=None):
     frame = dataset.load_frame(
         scenario_id,
         timestamp,
@@ -297,7 +318,9 @@ def build_world_and_requests(dataset, scenario_id, timestamp, ego_cav_id,
         bandwidth_mhz=bandwidth_mhz,
         head_rb_budget=head_rb_budget,
         pcs_blind_spot_min_division=pcs_blind_spot_min_division,
-        pcs_min_overlap_grids=pcs_min_overlap_grids)
+        pcs_min_overlap_grids=pcs_min_overlap_grids,
+        pcs_blind_spot_radius=pcs_blind_spot_radius,
+        pcs_min_spot_grids=pcs_min_spot_grids)
     resource_allocator.set_clusters(clusters)
     resource_allocator.run()
 
@@ -612,7 +635,9 @@ def main():
                     head_rb_budget=args.head_rb_budget,
                     pcs_blind_spot_min_division=(
                         args.pcs_blind_spot_min_division),
-                    pcs_min_overlap_grids=args.pcs_min_overlap_grids)
+                    pcs_min_overlap_grids=args.pcs_min_overlap_grids,
+                    pcs_blind_spot_radius=args.pcs_blind_spot_radius,
+                    pcs_min_spot_grids=args.pcs_min_spot_grids)
                 cluster_count = len(clusters)
                 request_mode = 'sgcp_%s_%s_%s' % (
                     ra_name,

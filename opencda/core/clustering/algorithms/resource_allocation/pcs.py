@@ -26,8 +26,10 @@ class PCS(ResourceAllocationAlgorithm):
         self.resource_sc_nums: Dict[Tuple[int, int], int] = {}  # 最终调度子信道数量：(发送方vid, 接收方vid) -> 连续子信道数量
         self.grid_selection: Dict[int, Dict[int, Set[str]]] = {}  # 网格选择：接收方vid -> 发送方vid -> 需要接收的网格ID集合
         self.grid_mAP_cache: Dict[int, Dict[int, float]] = {}  # 网格mAP缓存：vid -> grid_id -> mAP值（预计算）
-        self.blind_spots_cache: Dict[Tuple[int, int], Dict[int, Set[str]]] = {}  # (vid, division) -> blind_spot_id -> grids
+        self.blind_spots_cache: Dict[Tuple[int, int, int, int], Dict[int, Set[str]]] = {}  # (vid, division, radius, min_grids) -> blind_spot_id -> grids
         self.blind_spot_min_division = 12
+        self.blind_spot_adjacency_radius = 2
+        self.blind_spot_min_grids = 1
         self.min_overlap_grids = 0
         self.active_blind_spot_min_division = self.blind_spot_min_division
         self.bandwidth_all = 20.0 * (10 ** 6)
@@ -53,7 +55,9 @@ class PCS(ResourceAllocationAlgorithm):
         盲spot定义：req_grids（需求范围）与high_density_grids（非盲spot区域）的差集
         """
         division = max(1, int(min_division))
-        cache_key = (int(vid), division)
+        radius = max(1, int(getattr(self, 'blind_spot_adjacency_radius', 2)))
+        min_grids = max(1, int(getattr(self, 'blind_spot_min_grids', 1)))
+        cache_key = (int(vid), division, radius, min_grids)
         if cache_key in self.blind_spots_cache:
             return self.blind_spots_cache[cache_key]
         
@@ -70,10 +74,15 @@ class PCS(ResourceAllocationAlgorithm):
         spot_id = 0
         unassigned_grids = blind_spot_grids.copy()
         size = len(blind_spot_grids)
+        target_size = max(min_grids, int(math.ceil(size / float(division))))
         while unassigned_grids:
             start_grid = min(unassigned_grids, key=self._grid_seed_key)
             unassigned_grids.remove(start_grid)
-            adjacent_grids = self._find_adjacent_grids(start_grid, unassigned_grids, size, min_division=division)
+            adjacent_grids = self._find_adjacent_grids(
+                start_grid,
+                unassigned_grids,
+                target_size=target_size,
+                radius=radius)
             blind_spot = {start_grid} | adjacent_grids
             blind_spots[spot_id] = blind_spot
             unassigned_grids -= adjacent_grids
@@ -81,35 +90,44 @@ class PCS(ResourceAllocationAlgorithm):
         self.blind_spots_cache[cache_key] = blind_spots
         return blind_spots
 
-    def _generate_adjacent_grids(self, grid_id: str) -> Set[str]:
+    def _generate_adjacent_grids(self, grid_id: str, radius: int = 2) -> Set[str]:
         """
         生成(x,y)的相邻网格（上下左右四个方向）
         """
         x, y = map(int, grid_id.split("_"))
         adjacent = set()
-        for i in range(-2, 3):
-            for j in range(-2, 3):
+        radius = max(1, int(radius))
+        for i in range(-radius, radius + 1):
+            for j in range(-radius, radius + 1):
                 adjacent.add(f"{x + i}_{y + j}")
         return adjacent
 
-    def _find_adjacent_grids(self, grid_id: str, candidate_grids: Set[str], size: int, min_division: int = 1) -> Set[str]:
+    def _find_adjacent_grids(self, grid_id: str, candidate_grids: Set[str],
+                             target_size: int, radius: int = 2) -> Set[str]:
         """
         查找相邻网格（适配'x_y'二维格式）
         """
         adjacent = set([grid_id])
         candidate = set([grid_id])
+        target_size = max(1, int(target_size))
         flag = True
-        while flag and len(adjacent) <= size // min_division:
+        while flag and len(adjacent) < target_size:
             flag = False
             cur_candidate = candidate.copy()
             candidate.clear()
             for grid_id in sorted(cur_candidate, key=self._grid_sort_key):
-                adjacent_ids = self._generate_adjacent_grids(grid_id)
+                adjacent_ids = self._generate_adjacent_grids(
+                    grid_id,
+                    radius=radius)
                 for adj_id in sorted(adjacent_ids, key=self._grid_sort_key):
                     if adj_id in candidate_grids and adj_id not in adjacent:
                         candidate.add(adj_id)
                         adjacent.add(adj_id)
                         flag = True
+                        if len(adjacent) >= target_size:
+                            break
+                if len(adjacent) >= target_size:
+                    break
         return adjacent
 
 

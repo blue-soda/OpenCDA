@@ -69,7 +69,10 @@ def parse_args():
                         help='SGCP resource allocation algorithm for constrained inference.')
     parser.add_argument('--clustering', default='coalition_game',
                         choices=['coalition_game', 'fixed_first_frame',
-                                 'singleton', 'all_in_one'],
+                                 'singleton', 'all_in_one',
+                                 'random_balanced',
+                                 'distance_greedy',
+                                 'density_greedy_cluster'],
                         help='Clustering algorithm for SGCP constrained inference.')
     parser.add_argument('--sgcp-receiver-policy',
                         choices=['ego', 'ego-cluster-head',
@@ -144,6 +147,13 @@ def parse_args():
                         help='Override minimum sender/receiver blind-spot '
                              'grid overlap for FullPerception PCS candidate '
                              'links.')
+    parser.add_argument('--pcs-blind-spot-radius', type=int, default=None,
+                        help='Override PCS blind-spot connected-neighborhood '
+                             'radius in grid cells. This changes blind-spot '
+                             'unitization only, not bandwidth.')
+    parser.add_argument('--pcs-min-spot-grids', type=int, default=None,
+                        help='Override minimum grids per PCS blind-spot unit. '
+                             'Use to avoid unrealistically tiny blind spots.')
     parser.add_argument('--max-upload-points-per-source', type=int,
                         default=None,
                         help='Optional deterministic point budget for each '
@@ -274,7 +284,9 @@ def extract_lidar_density_threshold(protocol):
 def apply_resource_overrides(resource_allocator, world, num_channels=None,
                              bandwidth_mhz=None, head_rb_budget=None,
                              pcs_blind_spot_min_division=None,
-                             pcs_min_overlap_grids=None):
+                             pcs_min_overlap_grids=None,
+                             pcs_blind_spot_radius=None,
+                             pcs_min_spot_grids=None):
     if num_channels is not None:
         if num_channels <= 0:
             raise ValueError('--num-channels must be positive')
@@ -296,6 +308,18 @@ def apply_resource_overrides(resource_allocator, world, num_channels=None,
             raise ValueError('--pcs-min-overlap-grids cannot be negative')
         if hasattr(resource_allocator, 'min_overlap_grids'):
             resource_allocator.min_overlap_grids = int(pcs_min_overlap_grids)
+    if pcs_blind_spot_radius is not None:
+        if pcs_blind_spot_radius <= 0:
+            raise ValueError('--pcs-blind-spot-radius must be positive')
+        if hasattr(resource_allocator, 'blind_spot_adjacency_radius'):
+            resource_allocator.blind_spot_adjacency_radius = int(
+                pcs_blind_spot_radius)
+    if pcs_min_spot_grids is not None:
+        if pcs_min_spot_grids <= 0:
+            raise ValueError('--pcs-min-spot-grids must be positive')
+        if hasattr(resource_allocator, 'blind_spot_min_grids'):
+            resource_allocator.blind_spot_min_grids = int(
+                pcs_min_spot_grids)
     if hasattr(resource_allocator, 'time_slot'):
         resource_allocator.time_slot = float(
             getattr(world.network_manager, 'time_slot', 0.1))
@@ -983,6 +1007,119 @@ def build_fixed_clusters(world, cluster_templates):
     return clusters
 
 
+def _vehicle_xy(vehicle_id):
+    vehicle = common.global_vehicles[int(vehicle_id)]
+    location = vehicle.get_position().location
+    return float(location.x), float(location.y)
+
+
+def _vehicle_distance(first_id, second_id):
+    x1, y1 = _vehicle_xy(first_id)
+    x2, y2 = _vehicle_xy(second_id)
+    return math.hypot(x1 - x2, y1 - y2)
+
+
+def _center_head_id(member_ids):
+    member_ids = [int(item) for item in member_ids]
+    if not member_ids:
+        return None
+    positions = {vid: _vehicle_xy(vid) for vid in member_ids}
+    center_x = sum(item[0] for item in positions.values()) / len(member_ids)
+    center_y = sum(item[1] for item in positions.values()) / len(member_ids)
+    return min(
+        member_ids,
+        key=lambda vid: (
+            math.hypot(positions[vid][0] - center_x,
+                       positions[vid][1] - center_y),
+            vid))
+
+
+def _cluster_density_score(vehicle_id):
+    vehicle = common.global_vehicles[int(vehicle_id)]
+    density_dict = getattr(vehicle, 'grid_density_dict', {}) or {}
+    high_density = getattr(vehicle, 'high_density_grids', set()) or set()
+    sens_grids = getattr(vehicle, 'sens_grids', set()) or set()
+    density_sum = sum(float(density_dict.get(grid_id, 0.0))
+                      for grid_id in high_density)
+    return (
+        density_sum,
+        len(high_density),
+        len(sens_grids),
+        -int(vehicle_id))
+
+
+def _make_offline_cluster(member_ids):
+    cluster = common.Cluster(set(int(item) for item in member_ids))
+    head_id = _center_head_id(cluster.members)
+    if head_id is not None:
+        cluster.head_id = int(head_id)
+        cluster.grid_bits = cluster.compute_grid_bits()
+    return cluster
+
+
+def build_heuristic_clusters(world, clustering, n_max=None, timestamp=None):
+    """Build deterministic clustering baselines for offline ablation.
+
+    These baselines intentionally share the same center-nearest head election
+    rule as the SGCP coalition implementation; only membership formation is
+    replaced.
+    """
+    common.Vehicle_Grid.initialize(world)
+    vehicle_ids = sorted(int(item) for item in common.global_vehicles)
+    if not vehicle_ids:
+        return []
+    capacity = int(n_max or common.Params().N_max)
+    capacity = max(1, capacity)
+    if clustering == 'random_balanced':
+        seed = '%s:%s' % (
+            timestamp or 'all',
+            ','.join(str(item) for item in vehicle_ids))
+        shuffled = list(vehicle_ids)
+        random.Random(seed).shuffle(shuffled)
+        return [
+            _make_offline_cluster(shuffled[index:index + capacity])
+            for index in range(0, len(shuffled), capacity)
+        ]
+
+    unassigned = set(vehicle_ids)
+    clusters = []
+    while unassigned:
+        if clustering == 'distance_greedy':
+            head_id = min(
+                unassigned,
+                key=lambda vid: (
+                    sum(_vehicle_distance(vid, other)
+                        for other in unassigned if other != vid),
+                    vid))
+            members = [head_id]
+            candidates = sorted(
+                (vid for vid in unassigned if vid != head_id),
+                key=lambda vid: (_vehicle_distance(head_id, vid), vid))
+            members.extend(candidates[:capacity - 1])
+        elif clustering == 'density_greedy_cluster':
+            head_id = max(unassigned, key=_cluster_density_score)
+            members = [head_id]
+            covered = set(common.global_vehicles[head_id].sens_grids)
+            while len(members) < capacity:
+                candidates = [vid for vid in unassigned if vid not in members]
+                if not candidates:
+                    break
+                best_vid = max(
+                    candidates,
+                    key=lambda vid: (
+                        len(common.global_vehicles[vid].sens_grids - covered),
+                        _cluster_density_score(vid),
+                        -_vehicle_distance(head_id, vid),
+                        -vid))
+                members.append(best_vid)
+                covered |= common.global_vehicles[best_vid].sens_grids
+        else:
+            raise ValueError('Unknown heuristic clustering: %s' % clustering)
+        unassigned -= set(members)
+        clusters.append(_make_offline_cluster(members))
+    return clusters
+
+
 def scheduled_receiver_ids(world, fallback_clusters=None):
     receiver_ids = set()
     for vm in world.get_vehicle_managers().values():
@@ -1011,6 +1148,8 @@ def apply_sgcp_constraint(frame, protocol, ego_cav_id, resource_allocation,
                           head_rb_budget=None,
                           pcs_blind_spot_min_division=None,
                           pcs_min_overlap_grids=None,
+                          pcs_blind_spot_radius=None,
+                          pcs_min_spot_grids=None,
                           coverage_fallback='none',
                           coverage_state=None,
                           max_upload_points_per_source=None,
@@ -1028,14 +1167,26 @@ def apply_sgcp_constraint(frame, protocol, ego_cav_id, resource_allocation,
         clustering_algorithm = NaiveCluster(world, all_in_one=False)
     elif clustering == 'all_in_one':
         clustering_algorithm = NaiveCluster(world, all_in_one=True)
+    elif clustering in ['random_balanced', 'distance_greedy',
+                        'density_greedy_cluster']:
+        clustering_algorithm = None
     else:
         raise ValueError('Unknown clustering algorithm: %s' % clustering)
-    if t_min_stab is not None and hasattr(clustering_algorithm, 'p'):
+    if (clustering_algorithm is not None and t_min_stab is not None and
+            hasattr(clustering_algorithm, 'p')):
         clustering_algorithm.p.T_min_stab = t_min_stab
-    if n_max is not None and hasattr(clustering_algorithm, 'p'):
+    if (clustering_algorithm is not None and n_max is not None and
+            hasattr(clustering_algorithm, 'p')):
         clustering_algorithm.p.N_max = n_max
     if clustering == 'fixed_first_frame' and fixed_cluster_templates:
         clusters = build_fixed_clusters(world, fixed_cluster_templates)
+    elif clustering in ['random_balanced', 'distance_greedy',
+                        'density_greedy_cluster']:
+        clusters = build_heuristic_clusters(
+            world,
+            clustering,
+            n_max=n_max,
+            timestamp=timestamp)
     else:
         clusters = clustering_algorithm.run()
         if (clustering == 'fixed_first_frame' and
@@ -1054,7 +1205,9 @@ def apply_sgcp_constraint(frame, protocol, ego_cav_id, resource_allocation,
         bandwidth_mhz=bandwidth_mhz,
         head_rb_budget=head_rb_budget,
         pcs_blind_spot_min_division=pcs_blind_spot_min_division,
-        pcs_min_overlap_grids=pcs_min_overlap_grids)
+        pcs_min_overlap_grids=pcs_min_overlap_grids,
+        pcs_blind_spot_radius=pcs_blind_spot_radius,
+        pcs_min_spot_grids=pcs_min_spot_grids)
     allocator.set_clusters(clusters)
     allocator.run()
     if grid_selection_mode == 'random':
@@ -1603,13 +1756,26 @@ def apply_selective_sharing_baseline(frame, protocol, ego_cav_id,
         clustering_algorithm = NaiveCluster(world, all_in_one=False)
     elif clustering == 'all_in_one':
         clustering_algorithm = NaiveCluster(world, all_in_one=True)
+    elif clustering in ['random_balanced', 'distance_greedy',
+                        'density_greedy_cluster']:
+        clustering_algorithm = None
     else:
         raise ValueError('Unknown clustering algorithm: %s' % clustering)
-    if t_min_stab is not None and hasattr(clustering_algorithm, 'p'):
+    if (clustering_algorithm is not None and t_min_stab is not None and
+            hasattr(clustering_algorithm, 'p')):
         clustering_algorithm.p.T_min_stab = t_min_stab
-    if n_max is not None and hasattr(clustering_algorithm, 'p'):
+    if (clustering_algorithm is not None and n_max is not None and
+            hasattr(clustering_algorithm, 'p')):
         clustering_algorithm.p.N_max = n_max
-    clusters = clustering_algorithm.run()
+    if clustering in ['random_balanced', 'distance_greedy',
+                      'density_greedy_cluster']:
+        clusters = build_heuristic_clusters(
+            world,
+            clustering,
+            n_max=n_max,
+            timestamp=timestamp)
+    else:
+        clusters = clustering_algorithm.run()
     apply_cluster_state(world, clusters)
     if baseline_name in ['edgecooper_global', 'edgecooper_global_hd']:
         world._edgecooper_global_sender_loads = {}
@@ -2377,6 +2543,8 @@ def main():
                 pcs_blind_spot_min_division=(
                     args.pcs_blind_spot_min_division),
                 pcs_min_overlap_grids=args.pcs_min_overlap_grids,
+                pcs_blind_spot_radius=args.pcs_blind_spot_radius,
+                pcs_min_spot_grids=args.pcs_min_spot_grids,
                 coverage_fallback=args.sgcp_coverage_fallback,
                 coverage_state=sgcp_coverage_state,
                 max_upload_points_per_source=(

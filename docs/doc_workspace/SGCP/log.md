@@ -7108,3 +7108,30 @@ C:\Workspace\icdcs-paper\SGCP\experiment_results_20260720
 - global-box PCS singleton：`conda run --no-capture-output -n opencda python -m opencda.tools.offline_inference --dataset-root D:\Data\Carla --scenario-id 2026_07_15_01_26_56 --ego-cav-id 1 --max-frames 0 --sgcp-constrained --resource-allocation fullperception_pcs --sgcp-receiver-policy all-cavs --sgcp-inter-cluster-late-fusion --clustering singleton --num-channels 10 --bandwidth-mhz 20 --sgcp-trace-output docs\doc_workspace\SGCP\artifacts\pcs_singleton_late_align_20260720\pcs_singleton_late_allcavs_41f_trace.csv`
 - global-box AP：`0.83/0.77/0.38`，trace rows `820`，每帧 20 receiver samples，payload `10,779,344` bytes / `21.03 Mbps`。
 - 关键一致性检查：no-late 与 global-box trace 的 295 条非零 scheduled link rows 完全一致，payload 完全一致。因此 singleton 下晚期融合不影响 PCS 调度；AP 差异来自是否把 20 个 receiver 的检测框做 scene-level/global box aggregation。
+
+# 2026-07-21 09:40 P10 experiment credibility repair started
+
+用户新增最高优先级：修复 PCS baseline 合理性/可复现性、late-fusion 检测框通信量漏算、分簇 baseline 不足。本轮已将任务写入 `target.md` 的 `P10`，并把旧“自动任务规则”顺延为 `P11`。
+
+代码推进：
+
+- `pcs.py` 新增 PCS blind-spot unitization 参数：`blind_spot_adjacency_radius` 与 `blind_spot_min_grids`。默认值保持旧行为等价：radius=2、min grids=1；主实验带宽和子信道不变。
+- `offline_inference.py` / `offline_ns3_replay.py` 新增 CLI 参数：`--pcs-blind-spot-radius`、`--pcs-min-spot-grids`。
+- `offline_inference.py` 新增 deterministic clustering baselines：`random_balanced`、`distance_greedy`、`density_greedy_cluster`。三者只替换 clustering membership，簇头统一按“距离簇中心最近”选择，以便与 SGCP coalition 口径接近。
+
+验证：
+
+- `py_compile` 通过：`offline_inference.py`、`offline_ns3_replay.py`、`pcs.py`。
+- 新分簇 baseline 1-frame smoke 均跑通：`random_balanced`、`distance_greedy`、`density_greedy_cluster` 各生成 5 个 cluster-head late-fusion source sample。
+- PCS 1-frame 参数 smoke：
+  - default：7 rows，112,640 bytes，avg 10.14 selected grids/row，max 41。
+  - radius=3, min spot=48：8 rows，185,824 bytes，avg 10.25 grids/row，max 21。
+  - radius=4, min spot=96：6 rows，285,200 bytes，avg 14.83 grids/row，max 24。
+  - division=4, radius=4, min spot=128：7 rows，402,976 bytes，avg 35.57 grids/row，max 64。
+- `division=4,radius=4,min_spot=128` 重复 1-frame run 的 trace SHA256 完全一致：`9CA5758FC64C698E6391CC2573F8D1AB86A9DE6F24A42E7D4179B706F86101AA`。
+
+下一步：
+
+- 对 PCS `division/radius/min_spot/min_overlap` 做 11-frame metadata/AP sweep，优先验证 `div4/radius4/min128` 是否在 41-frame 上得到更合理 payload/AP。
+- 重建 experiment 目录中的通信列：`raw_lidar_mbps`、`box_mbps`、`total_mbps`。
+- 跑 41-frame clustering ablation：dynamic coalition、fixed first-frame、random balanced、distance greedy、density/quality greedy，并补 literature-inspired 1--2 个 baseline。

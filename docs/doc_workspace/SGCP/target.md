@@ -1,6 +1,6 @@
 # SGCP 任务清单
 
-更新时间：2026-07-19
+更新时间：2026-07-21
 
 最终目标：完成 SGCP 论文审稿意见响应与实验重构，使所有图表有效、可解释、保护论文叙事，并能证明 SGCP 在大规模 V2V 协同感知中以合理通信量获得更好的 aggregate AP。
 
@@ -218,9 +218,32 @@
 - [x] 收紧正文强 claim 并回应 Smartform 相似性质疑：intro/related work 不再写 “Nearly all SOTA rely on RSUs” 等过宽表述；`Reference.bib` 新增 SMARTFORM 引用；正文明确 SGCP novelty 不在 generic coalition formation，而在 perception-density utility、motion-stability hysteresis、capacity-constrained cluster maintenance、raw-LiDAR grid selection 和 explicit V2V subchannel scheduling 的组合。
 - [x] 修改图表 caption：每个图表必须说明回答的问题、统一资源设置、是否 protocol-native、是否 SGCP-compatible。
 - [x] 删除或降级此前容易误导的单一“主表”叙事；不要把 full 20-CAV upper reference、FullPerception baseline、scheduler proxy 混在同一语义层级。
+
+## P10：2026-07-21 实验表可信度修复（最高优先级）
+
+目的：修复当前实验数据中最容易被审稿人质疑的三个点：FullPerception-PCS 数值不稳定/通信量偏低、late fusion 行通信量漏算检测框共享、分簇算法 baseline 不足。该任务完成前，不再把新的 Table 1/Table 3/Table 6 数值写成最终论文结论。
+
+### P10.1 FullPerception-PCS 合理性与可复现性
+
+- [ ] 重新核查并修复 `pcs.py` 的 blind-spot 定义和分组参数，使 PCS 在 `singleton` receiver protocol 下得到稳定、可复现且通信量合理的调度结果。当前异常信号：PCS 平均每个 receiver 仅上传约 `2.66--22.79` 个 grids，远低于 EdgeCooper 的约 `103.33` grids；这很可能来自原生 blind-spot 面积过小或分割粒度过碎。
+- [ ] 在不修改主实验带宽/子信道设置（20MHz/10ch）的前提下，扫描并记录 PCS blind-spot 相关参数：`blind_spot_min_division`、候选邻域半径、最小 overlap、spot 面积下限/上限、确定性 tie-break。目标不是人为抬高 PCS，而是让其 raw-LiDAR V2V adaptation 与论文机制一致、候选需求完整、每次重复完全相同。
+- [ ] 对 PCS 输出做 trace-level 验收：同一命令重复运行的 scheduled links、selected grids、payload bytes、AP 必须一致；有/无 global late box aggregation 的 PCS 调度和 raw-LiDAR payload 必须一致。
+- [ ] 重新生成 PCS no-late、PCS + global box aggregation、PCS 参数诊断结果，并更新 `C:\Workspace\2026-7-papers\infocom\SGCP\experiment` 中相关表格、manifest 和说明；旧的 under-scheduled PCS 结果只保留为诊断，不进入主文表。
+
+### P10.2 Late-fusion 检测框通信量计入总通信量
+
+- [ ] 对所有启用 late fusion / global box aggregation / prediction sharing 的数据行，统一在通信量统计中加入检测框共享 payload。表格至少同时保留 `raw_lidar_mbps`、`box_mbps`、`total_mbps` 三列；若正文只显示一个 Mbps，必须使用 `total_mbps`。
+- [ ] Pure late、SGCP full、SGCP-compatible scheduler comparison、PCS + global box aggregation、EdgeCooper/FullPerception protocol adaptation 中凡是共享检测框的行，都必须标注 box-sharing mode（broadcast、scheduled all-to-all、或 global aggregation）和估算参数（box bytes、message overhead、deadline）。
+- [ ] 更新实验目录中的 README/manifest，明确哪些行是 raw-LiDAR only，哪些行是 raw-LiDAR + late-box total，避免论文写作 agent 把 0 Mbps / raw-only Mbps 当成最终通信量。
+
+### P10.3 分簇算法 baseline 扩展
+
+- [ ] 在当前 `Fixed first-frame clusters` 之外，补充分簇算法 baseline：确定性随机分簇、距离/通信贪心分簇、密度/质量贪心分簇。所有 baseline 使用同一 attentive checkpoint、同一资源调度算法、同一 late-fusion 开关和同一 20MHz/10ch 设置，只替换 clustering 维度。
+- [ ] 调研近年 V2X / cooperative perception / vehicular edge sensing 中可复现的分簇或 coalition baseline，优先选择 1--2 个能映射到当前 raw-LiDAR V2V 场景的方法，并记录论文来源、机制映射和不适配点。初版记录见 `clustering_baseline_literature_notes.md`。
+- [ ] 新增分簇算法消融表：至少包含 Dynamic SGCP coalition、Fixed first-frame、Random balanced、Distance-greedy、Density/quality-greedy，以及 1--2 个 literature-inspired baseline。若某个 baseline 结果较差，必须解释是通信拓扑、感知覆盖还是稳定性导致，不能只给数字。
 - [x] 论文修改完成后尝试编译 PDF；若本机缺少 LaTeX 工具，记录未编译原因和需要人工验证的图表编号。本机未检测到 `latexmk` / `pdflatex` / `bibtex`，已做轻量结构检查：table/figure/tabular begin-end 配对正常，新增 label/ref 无缺失。
 
-## P10：自动任务执行规则
+## P11：自动任务执行规则
 
 - [ ] 每轮自动任务先查看 `readme.md`、`target.md`、`status.md`、`results.md` 和 `../environment.md`。
 - [ ] 每轮优先推进 P0-P4；只有主图表证据稳定后再扩展 P5-P8。

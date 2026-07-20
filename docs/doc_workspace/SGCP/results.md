@@ -1250,3 +1250,24 @@ Artifacts：
 | Full 20-CAV early fusion | attentive | none | none | full sharing | 0.88 | 0.85 | 0.45 | 118.71 | 1 |
 
 读法：PCS 已按 singleton receiver universe 对齐 EdgeCooper。PCS 在 common box aggregation 下仍几乎等同 pure late，说明其 sparse raw-LiDAR requests 对 scene-level AP 贡献很小；EdgeCooper V2V 在 AP@0.3 很强，但 282.20 Mbps 是 demand-level raw-LiDAR payload，表示全 20 receiver 重复 unicast 后严重超载。SGCP 通过 coalition head 先聚合簇内点云，再做 inter-cluster NMS，以 62.54 Mbps 获得最高 AP@0.5。
+
+## PCS blind-spot smoke diagnostics - 2026-07-21
+
+用途：仅用于 P10 PCS 参数修复方向验证，不进入论文表格。正式 FullPerception-PCS 行需要 41 帧 AP + trace determinism 验收。
+
+统一设置：`attentive` detector、`singleton` clustering、`fullperception_pcs`、20MHz/10ch、1 frame (`000060`)、no late fusion、`all-scheduled-receivers`。
+
+| PCS setting | Rows | Payload bytes | Avg selected grids/row | Max selected grids/row | Determinism |
+| --- | ---: | ---: | ---: | ---: | --- |
+| default | 7 | 112,640 | 10.14 | 41 | not repeated |
+| radius=3, min_spot=48 | 8 | 185,824 | 10.25 | 21 | not repeated |
+| radius=4, min_spot=96 | 6 | 285,200 | 14.83 | 24 | not repeated |
+| division=4, radius=4, min_spot=128 | 7 | 402,976 | 35.57 | 64 | repeated trace SHA256 identical |
+
+初步结论：PCS 旧结果通信量偏低确实与 blind-spot unitization 有关，但单纯放大 spot 不一定线性提高 selected grids；`division=4,radius=4,min_spot=128` 是下一轮 11/41 帧 sweep 的优先候选。
+
+## Clustering baseline smoke diagnostics - 2026-07-21
+
+用途：确认新增 clustering baseline 可接入同一 SGCP-compatible pipeline，不进入论文表格。
+
+已跑通 1-frame smoke：`random_balanced`、`distance_greedy`、`density_greedy_cluster`。三者均使用 attentive detector、20MHz/10ch、`perception_aware_potential_game`、`inter_cluster_nms`，并各生成 5 个 cluster-head source samples。正式 clustering ablation 需补 41 帧 AP/Mbps。
