@@ -7278,3 +7278,26 @@ C:\Workspace\icdcs-paper\SGCP\experiment_results_20260720
 - 三个启发式分簇 baseline 与一个 mobility-aware literature-inspired baseline 在约 `31.8 Mbps` 下只达到 `0.53--0.61` AP@0.3 和 `0.49--0.55` AP@0.5，明显低于 SGCP dynamic coalition `0.87/0.81/0.36`。
 - fixed first-frame clusters 虽然通信量接近 SGCP，但 AP@0.5 从 `0.81` 降到 `0.70`，说明动态 coalition 更新本身有贡献。
 - Table 5 现在可作为机制消融表使用；已包含 random/proximity/sensing-aware/mobility-aware 四类 baseline。若篇幅允许，可继续补 graph coverage clustering；否则可在文中说明当前 baseline 覆盖 random、proximity、sensing-density 和 mobility-stability 边界。
+
+# 2026-07-21 19:20 P10.1 PCS trace-level closure
+
+目的：关闭 `target.md` 中 P10.1 仍未勾选的 PCS 可信度项，确认 no-late PCS 与 +global-box PCS 的调度是否完全一致。
+
+复核 artifacts：
+
+- no-late trace：`docs/doc_workspace/SGCP/artifacts/pcs_singleton_late_align_20260720/pcs_singleton_nolate_41f_trace.csv`
+- global-box trace：`docs/doc_workspace/SGCP/artifacts/pcs_singleton_late_align_20260720/pcs_singleton_late_allcavs_41f_trace.csv`
+
+结果：
+
+- no-late PCS：AP `0.14/0.13/0.06`。
+- PCS + global box aggregation：AP `0.83/0.77/0.38`。
+- 两个 trace 的非零 scheduled links 完全一致：均为 295 条。
+- 两个 trace 的 raw payload 完全一致：均为 `10,779,344` bytes / `21.03 Mbps`。
+- 链路序列 hash 前缀完全一致：`a99a282ae02603eb`。
+
+结论：
+
+- `+ global box aggregation` 只改变 evaluation/fusion scaffold，不改变 PCS raw-LiDAR 调度。
+- paper-faithful PCS 低 AP 已定位为 blind-spot proxy 与 raw-LiDAR detector object utility 不匹配；不应继续以 GT-aware/object-aware 方式“修高”原版 FullPerception-PCS。
+- P10.1 已按“可信度修复/边界说明”关闭。若未来新增 object-aware PCS，应命名为 adaptation variant。
