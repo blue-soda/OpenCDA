@@ -7183,3 +7183,60 @@ C:\Workspace\icdcs-paper\SGCP\experiment_results_20260720
 - 放大 blind-spot unit 确实能提高 PCS 通信量和 selected grids，但没有改善 no-late AP。
 - PCS 的问题不是单纯 under-schedule；更可能是 paper-faithful blind-spot/link utility 与当前 raw-LiDAR attentive detector 的有效检测区域错位，或者 PCS 选到的 receiver/sender 样本没有覆盖可检出 GT。
 - 不应把 `div4/radius4/min128` 直接上 41 帧作为修复；下一步应做 PCS link-level diagnostics：输出 scheduled receiver/sender、selected grids 与 GT object grid 的覆盖关系，并考虑 raw-LiDAR adaptation 下的 object-aware blind-region utility。
+
+# 2026-07-21 16:55 P10.1 fusion-method bug fix for PCS sweep
+
+问题：
+
+- 回看日志发现，正式 PCS singleton 41 帧结果使用 `Fusion method: early`，而 11 帧 blind-spot sweep 误用 `Fusion method: intermediate_attentive`。
+- 因此上一轮 `0.00/0.00/0.00` 的 PCS sweep AP 不是 PCS 算法结论，而是实验口径 bug。
+
+重跑：
+
+- default 11 帧 aligned command：`--fusion-method early --clustering singleton --resource-allocation fullperception_pcs --sgcp-receiver-policy all-scheduled-receivers --num-channels 10 --bandwidth-mhz 20`。
+- div4/radius4/min128 11 帧 aligned command：在上述命令基础上增加 `--pcs-blind-spot-min-division 4 --pcs-blind-spot-radius 4 --pcs-min-spot-grids 128`。
+
+结果：
+
+- default：AP `0.12/0.11/0.04`，78 rows，1,247,952 bytes，`9.08 Mbps`，avg selected grids/row `9.35`，max `41`。
+- div4/radius4/min128：AP `0.16/0.14/0.07`，70 rows，4,179,440 bytes，`30.40 Mbps`，avg selected grids/row `35.21`，max `67`。
+
+结论：
+
+- `intermediate_attentive` sweep 降级为 invalid diagnostic；不能写入论文或作为 PCS 修复失败依据。
+- 放大 blind-spot unit 有弱正收益，但仍不足以让 PCS no-late baseline 合理进入主表；下一步进入 PCS object-grid/link utility diagnostics。
+
+# 2026-07-21 17:30 P10.1 PCS object-grid diagnostics
+
+目的：解释 PCS no-late AP 偏低到底来自带宽不足、调度随机性，还是 PCS blind-spot proxy 与检测目标错位。
+
+代码：
+
+- `opencda.tools.sgcp_failure_diagnostics` 新增 GT object grid 的 receiver-side membership 字段：
+  - `nearest_head_object_grid_in_req`
+  - `nearest_head_object_grid_in_high_density`
+  - `nearest_head_object_grid_in_pcs_blind_spot`
+- `py_compile` 通过。
+
+实验：
+
+- 先用 `offline_inference` 对 default PCS 前 3 帧生成 `pcs_default_nolate_3f_objects.csv`，同时运行 full-reference 对照。
+- 再用 `sgcp_failure_diagnostics` 生成 `failure_default_3f_v3/gt_objects.csv`。
+
+结果：
+
+- 3 帧 PCS AP：`0.14/0.12/0.04`。
+- GT rows：47；其中 full-reference detected but PCS missed：30。
+- missed GT 中：
+  - 30/30 位于 nearest-head `req_grids`。
+  - 16/30 位于 nearest-head high-density grids，因此不属于 PCS blind spot。
+  - 14/30 属于 PCS blind spot。
+  - 只有 5/30 的 object grid 被任何 scheduled link 覆盖。
+  - 只有 2/30 是 nearest CAV 直接选中了 object grid。
+  - nearest CAV object-grid points 平均/中位数为 `637/455`。
+
+结论：
+
+- PCS 低 AP 主要来自 paper-style blind spot (`req_grids - high_density_grids`) 与 object-level detector utility 不匹配。
+- 单纯增加 blind-spot 面积可以增加通信量，但不能系统性选中 detector 需要的目标 grid。
+- 正式论文中应把 PCS 作为 paper-faithful protocol baseline 或 raw-LiDAR adaptation baseline；若要继续增强 PCS，只能说明是 adaptation variant，不能混同为原版 FullPerception-PCS。

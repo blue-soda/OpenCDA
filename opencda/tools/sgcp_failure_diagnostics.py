@@ -271,6 +271,45 @@ def grid_point_count(world, cav_id, grid_id):
     return len(lidar.grid_local_points.get(str(grid_id), []))
 
 
+def grid_membership_flags(world, allocator, cav_id, grid_id):
+    """Return receiver-side grid memberships used to debug PCS demands."""
+    vehicle = common.global_vehicles.get(int(cav_id))
+    if vehicle is None:
+        return {
+            'in_req': 0,
+            'in_high_density': 0,
+            'in_pcs_blind_spot': '',
+        }
+    grid_id = str(grid_id)
+    in_req = int(
+        grid_id in set(
+            str(item) for item in getattr(vehicle, 'req_grids', set())))
+    in_high_density = int(
+        grid_id in set(
+            str(item)
+            for item in getattr(vehicle, 'high_density_grids', set())))
+    in_pcs_blind_spot = ''
+    if hasattr(allocator, '_get_vehicle_blind_spots'):
+        try:
+            min_division = getattr(
+                allocator,
+                'active_blind_spot_min_division',
+                getattr(allocator, 'blind_spot_min_division', 1))
+            blind_spots = allocator._get_vehicle_blind_spots(
+                int(cav_id),
+                min_division)
+            in_pcs_blind_spot = int(any(
+                grid_id in set(str(item) for item in spot_grids)
+                for spot_grids in blind_spots.values()))
+        except Exception:
+            in_pcs_blind_spot = ''
+    return {
+        'in_req': in_req,
+        'in_high_density': in_high_density,
+        'in_pcs_blind_spot': in_pcs_blind_spot,
+    }
+
+
 def diagnose(args):
     ensure_dir(args.output_dir)
     dataset = OPV2VFrameDataset(args.dataset_root)
@@ -514,6 +553,11 @@ def diagnose(args):
             ]
             nearest_cav_object_grid_points = grid_point_count(
                 world, nearest_cav, object_grid_id)
+            nearest_head_grid_flags = grid_membership_flags(
+                world,
+                allocator,
+                nearest_head,
+                object_grid_id)
             full_missed = int(diag.get('full_detected_method_missed', 0) or 0)
             if full_missed:
                 summary['missed_gt_count'] += 1
@@ -561,6 +605,12 @@ def diagnose(args):
                     nearest_cav, ''),
                 'nearest_head': nearest_head,
                 'nearest_head_distance': '%.3f' % nearest_head_distance,
+                'nearest_head_object_grid_in_req':
+                    nearest_head_grid_flags['in_req'],
+                'nearest_head_object_grid_in_high_density':
+                    nearest_head_grid_flags['in_high_density'],
+                'nearest_head_object_grid_in_pcs_blind_spot':
+                    nearest_head_grid_flags['in_pcs_blind_spot'],
                 'nearest_cav_uploaded_anywhere': int(
                     nearest_cav in uploaded_sources),
                 'nearest_cav_uploaded_to_receivers': ';'.join(
@@ -633,7 +683,11 @@ def diagnose(args):
             'nearest_cav_selected_object_grid',
             'nearest_cav', 'nearest_cav_distance',
             'nearest_cav_cluster_index', 'nearest_head',
-            'nearest_head_distance', 'nearest_cav_uploaded_anywhere',
+            'nearest_head_distance',
+            'nearest_head_object_grid_in_req',
+            'nearest_head_object_grid_in_high_density',
+            'nearest_head_object_grid_in_pcs_blind_spot',
+            'nearest_cav_uploaded_anywhere',
             'nearest_cav_uploaded_to_receivers',
             'full_reference_matched', 'method_matched',
             'full_detected_method_missed',
