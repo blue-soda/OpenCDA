@@ -4,6 +4,19 @@
 
 更新时间：2026-07-19
 
+## FullPerception-PCS singleton late/no-late alignment rerun
+
+2026-07-20/21 根据用户指出的理论约束重跑：在 `clustering=singleton`、`resource_allocation=fullperception_pcs`、`20 MHz / 10 ch` 下，是否启用 late/global box aggregation 不应改变 PCS 调度。
+
+修复后结论成立：no-late 与 global-box 两条 trace 的 295 条非零 scheduled link rows 完全一致，payload 均为 `10,779,344` bytes，即 `21.03 Mbps`。差异只来自评估/fusion scaffold。
+
+| Variant | Late/global box aggregation | AP@0.3 | AP@0.5 | AP@0.7 | Payload bytes | Mbps | Evaluated samples |
+| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| FullPerception-PCS singleton | no | 0.14 | 0.13 | 0.06 | 10,779,344 | 21.03 | 295 scheduled receiver samples |
+| FullPerception-PCS singleton + global box aggregation | yes | 0.83 | 0.77 | 0.38 | 10,779,344 | 21.03 | 41 scene samples, 20 receiver sources/frame |
+
+Artifact: `docs/doc_workspace/SGCP/artifacts/pcs_singleton_late_align_20260720/`.
+
 ## 结果记录规范
 
 每组结果至少应包含：

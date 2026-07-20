@@ -7084,3 +7084,27 @@ C:\Workspace\icdcs-paper\SGCP\experiment_results_20260720
 - 已在 `pcs.py` 中补充语义自环过滤，并尝试稳定 blind-spot grouping。1-frame stable-hash smoke test 两次 trace hash 完全一致，且第 1 帧产生 7 个 scheduled receivers，量级正常。
 - 41-frame stable-hash protocol run 在 10 分钟超时前推进到第 25/41 帧，说明该确定性切分增加了运行成本；本轮不将其写入 paper-facing 表。
 - 当前 `experiment` 目录中 FullPerception-PCS paper-facing 行应视为 pre-determinism candidate，下一轮需要用更长 timeout 完成 41-frame protocol/global rerun，或设计更高效的 deterministic tie-break。
+
+# 2026-07-20 23:59 PCS singleton late/no-late alignment rerun
+
+用户指出：理论上 singleton 下启用或不启用晚期融合不应影响 PCS 调度结果。本轮据此继续修复和重跑。
+
+已确认：
+
+- `offline_ns3_replay --dry-run` 不适合验证 singleton PCS，因为该工具当前固定使用 `CoalitionGame(world).run()`，不走 `clustering=singleton`。
+- 新增 artifact profiler `artifacts/pcs_singleton_late_align_20260720/profile_pcs_singleton.py`，直接调用 `offline_inference.apply_sgcp_constraint(..., clustering="singleton", receiver_policy="all-cavs")`，只生成 PCS metadata，不跑 OpenCOOD。
+- 41 帧 metadata-only PCS singleton 调度完成：820 receiver rows、每帧 20 receivers、每帧 6--8 个非零 scheduled receivers、总 payload `10,781,296` bytes，即 `21.04 Mbps`。该调度计划应同时用于 no-late protocol evaluation 与 all-cavs global box aggregation evaluation。
+
+下一步：
+
+- 重跑 no-late `all-scheduled-receivers` 41 帧 AP。
+- 重跑 late `all-cavs + sgcp_inter_cluster_late_fusion` 41 帧 AP。
+- 两者 trace 的非零 scheduled links/payload 必须与 metadata-only plan 对齐；若不一致，修复 `offline_inference` 的 receiver/late path。
+
+完成结果：
+
+- no-late PCS singleton：`conda run --no-capture-output -n opencda python -m opencda.tools.offline_inference --dataset-root D:\Data\Carla --scenario-id 2026_07_15_01_26_56 --ego-cav-id 1 --max-frames 0 --sgcp-constrained --resource-allocation fullperception_pcs --sgcp-receiver-policy all-scheduled-receivers --clustering singleton --num-channels 10 --bandwidth-mhz 20 --sgcp-trace-output docs\doc_workspace\SGCP\artifacts\pcs_singleton_late_align_20260720\pcs_singleton_nolate_41f_trace.csv`
+- no-late AP：`0.14/0.13/0.06`，trace rows `295`，payload `10,779,344` bytes / `21.03 Mbps`。
+- global-box PCS singleton：`conda run --no-capture-output -n opencda python -m opencda.tools.offline_inference --dataset-root D:\Data\Carla --scenario-id 2026_07_15_01_26_56 --ego-cav-id 1 --max-frames 0 --sgcp-constrained --resource-allocation fullperception_pcs --sgcp-receiver-policy all-cavs --sgcp-inter-cluster-late-fusion --clustering singleton --num-channels 10 --bandwidth-mhz 20 --sgcp-trace-output docs\doc_workspace\SGCP\artifacts\pcs_singleton_late_align_20260720\pcs_singleton_late_allcavs_41f_trace.csv`
+- global-box AP：`0.83/0.77/0.38`，trace rows `820`，每帧 20 receiver samples，payload `10,779,344` bytes / `21.03 Mbps`。
+- 关键一致性检查：no-late 与 global-box trace 的 295 条非零 scheduled link rows 完全一致，payload 完全一致。因此 singleton 下晚期融合不影响 PCS 调度；AP 差异来自是否把 20 个 receiver 的检测框做 scene-level/global box aggregation。
