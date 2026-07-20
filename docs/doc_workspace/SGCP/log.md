@@ -7052,3 +7052,19 @@ C:\Workspace\icdcs-paper\SGCP\experiment_results_20260720
 - EdgeCooper V2V protocol adaptation：`attentive / no late / singleton / selective_edgecooper_global`，AP `0.54/0.48/0.25`，`282.20 Mbps`，820 receiver samples。
 - Fixed first-frame clustering ablation：`attentive / inter_cluster_nms / fixed_first_frame / perception_aware_potential_game`，AP `0.83/0.70/0.28`，`62.63 Mbps`。
 - All-in-one full raw-sharing clustering reference：`attentive / identity_single_cluster / all_in_one / full_cluster`，AP `0.89/0.86/0.45`，`118.71 Mbps`。
+
+## 2026-07-20 07:15 - Three-table baseline/ablation structure
+
+根据用户讨论，本轮将 baseline 实验组织为三张互补表：
+
+1. Original / protocol adaptation：不额外添加 SGCP coalition 或 common global box aggregation。
+2. `+ global box aggregation` normalized comparison：所有方法每帧输出一个 scene-level fused sample；这是有意给 baseline 加统一 box aggregation，用来公平比较 scene-level AP，不称为原版复现。
+3. SGCP-compatible scheduler comparison：固定 coalition formation 和 inter-cluster late fusion，只换 scheduler。
+
+为支持第二张表，`opencda.tools.offline_inference` 新增 `--sgcp-receiver-policy all-cavs`，可让每辆 CAV 作为 potential receiver，未收到上传的 receiver 走 local-only，然后在 `--sgcp-inter-cluster-late-fusion` 下统一 NMS 成每帧一个 aggregate AP sample。
+
+新增 41 帧 `+ global box aggregation` 实验：
+
+- FullPerception-PCS + global box aggregation：`attentive / global_box_nms / all_in_one / fullperception_pcs`，AP `0.82/0.65/0.28`，`20.79 Mbps`，每帧 20 receivers。
+- EdgeCooper V2V + global box aggregation：`attentive / global_box_nms / singleton / selective_edgecooper_global`，AP `0.88/0.76/0.34`，`282.20 Mbps`，每帧 20 receivers。
+- 结论：PCS sparse requests 在 global box aggregation 下几乎不超过 pure late；EdgeCooper 在 AP@0.3 上很强，但 raw-LiDAR demand 明显超出 20MHz/10ch 可合理承载范围。SGCP-PAPG 仍为 `0.87/0.81/0.36`、`62.54 Mbps`。

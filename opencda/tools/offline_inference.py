@@ -74,9 +74,10 @@ def parse_args():
     parser.add_argument('--sgcp-receiver-policy',
                         choices=['ego', 'ego-cluster-head',
                                  'all-cluster-heads',
-                                 'all-scheduled-receivers'],
+                                 'all-scheduled-receivers',
+                                 'all-cavs'],
                         default='ego-cluster-head',
-                        help='Receiver for constrained perception. all-cluster-heads evaluates every cluster head per frame; all-scheduled-receivers evaluates receivers that actually receive scheduled uploads.')
+                        help='Receiver for constrained perception. all-cluster-heads evaluates every cluster head per frame; all-scheduled-receivers evaluates receivers that actually receive scheduled uploads; all-cavs evaluates every CAV as a potential receiver.')
     parser.add_argument('--sgcp-inter-cluster-late-fusion',
                         action='store_true',
                         help='Late-fuse predictions from all SGCP cluster heads into the requested ego pose and submit one AP sample per frame.')
@@ -1078,6 +1079,9 @@ def apply_sgcp_constraint(frame, protocol, ego_cav_id, resource_allocation,
         receiver_ids = sorted(int(cluster.head_id) for cluster in clusters)
     elif receiver_policy == 'all-scheduled-receivers':
         receiver_ids = scheduled_receiver_ids(world, clusters)
+    elif receiver_policy == 'all-cavs':
+        receiver_ids = sorted(int(cav_id)
+                              for cav_id in world.get_vehicle_managers())
     else:
         receiver_ids = [select_sgcp_receiver_id(
             world,
@@ -1624,6 +1628,11 @@ def apply_selective_sharing_baseline(frame, protocol, ego_cav_id,
 
     if receiver_policy == 'all-cluster-heads':
         receiver_ids = sorted(int(cluster.head_id) for cluster in clusters)
+    elif receiver_policy == 'all-scheduled-receivers':
+        receiver_ids = scheduled_receiver_ids(world, clusters)
+    elif receiver_policy == 'all-cavs':
+        receiver_ids = sorted(int(cav_id)
+                              for cav_id in world.get_vehicle_managers())
     else:
         receiver_ids = [select_sgcp_receiver_id(
             world,
@@ -2320,7 +2329,8 @@ def main():
         frame_items = [(frame, None)]
         late_receiver_policy = (
             args.sgcp_receiver_policy
-            if args.sgcp_receiver_policy == 'all-scheduled-receivers'
+            if args.sgcp_receiver_policy in ['all-scheduled-receivers',
+                                             'all-cavs']
             else 'all-cluster-heads')
         if args.selective_sharing_baseline is not None:
             protocol = load_protocol(dataset, scenario_id)

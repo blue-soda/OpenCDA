@@ -1223,3 +1223,17 @@ Artifacts：
 | All-in-one full raw sharing | attentive | identity single cluster | all_in_one | full_cluster | 0.89 | 0.86 | 0.45 | 118.71 |
 
 结论：当前写作应把原版/协议适配 baseline 与 SGCP-compatible scheduler comparison 分成两类表。Table 3 scheduler comparison 仍可证明同等 coalition + late-fusion scaffold 下 PAPG 的 AP@0.5 优势；Table 1 original/protocol adaptation 则显示不引入 SGCP coalition 和 inter-cluster late fusion 时，PCS/EdgeCooper-style V2V adaptation 难以达到 SGCP 的 aggregate AP。
+
+### Global Box Aggregation Normalized Baselines
+
+该表有意为 protocol adaptations 添加 common scene-level box aggregation；因此它不是原版 baseline 表，而是“给 baseline 同样最终 box 聚合能力后”的机制消融。
+
+| Method | Checkpoint | Late fusion | Clustering | Resource allocation | AP@0.3 | AP@0.5 | AP@0.7 | Mbps | Receiver samples/frame |
+| --- | --- | --- | --- | --- | ---: | ---: | ---: | ---: | ---: |
+| Pure late | attentive | prediction NMS | singleton | local detection | 0.82 | 0.65 | 0.28 | 1.37 box | 20 |
+| FullPerception-PCS + global box aggregation | attentive | global box NMS | all_in_one | fullperception_pcs | 0.82 | 0.65 | 0.28 | 20.79 | 20 |
+| EdgeCooper V2V + global box aggregation | attentive | global box NMS | singleton | selective_edgecooper_global | 0.88 | 0.76 | 0.34 | 282.20 | 20 |
+| SGCP-PAPG | attentive | inter-cluster NMS | coalition_game | perception_aware_potential_game | 0.87 | 0.81 | 0.36 | 62.54 | 6 |
+| Full 20-CAV early fusion | attentive | none | none | full sharing | 0.88 | 0.85 | 0.45 | 118.71 | 1 |
+
+读法：PCS 在 common box aggregation 下几乎等同 pure late，说明其 sparse raw-LiDAR requests 对 scene-level AP 贡献很小；EdgeCooper V2V 在 AP@0.3 很强，但 282.20 Mbps 是 demand-level raw-LiDAR payload，表示全 20 receiver 重复 unicast 后严重超载。SGCP 通过 coalition head 先聚合簇内点云，再做 inter-cluster NMS，以 62.54 Mbps 获得最高 AP@0.5。
