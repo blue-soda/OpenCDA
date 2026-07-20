@@ -7048,7 +7048,7 @@ C:\Workspace\icdcs-paper\SGCP\experiment_results_20260720
 
 新增 41 帧实验：
 
-- FullPerception-PCS protocol adaptation：`attentive / no late / all_in_one / fullperception_pcs`，AP `0.22/0.17/0.07`，`11.07 Mbps`，215 receiver samples。
+- FullPerception-PCS protocol adaptation 已重跑为 singleton 口径：`attentive / no late / singleton / fullperception_pcs`，AP `0.22/0.16/0.06`，`24.28 Mbps`，258 receiver samples。此前 `all_in_one, 11.07 Mbps` 仅作为 rejected diagnostic，不再进入三表。
 - EdgeCooper V2V protocol adaptation：`attentive / no late / singleton / selective_edgecooper_global`，AP `0.54/0.48/0.25`，`282.20 Mbps`，820 receiver samples。
 - Fixed first-frame clustering ablation：`attentive / inter_cluster_nms / fixed_first_frame / perception_aware_potential_game`，AP `0.83/0.70/0.28`，`62.63 Mbps`。
 - All-in-one full raw-sharing clustering reference：`attentive / identity_single_cluster / all_in_one / full_cluster`，AP `0.89/0.86/0.45`，`118.71 Mbps`。
@@ -7065,6 +7065,6 @@ C:\Workspace\icdcs-paper\SGCP\experiment_results_20260720
 
 新增 41 帧 `+ global box aggregation` 实验：
 
-- FullPerception-PCS + global box aggregation：`attentive / global_box_nms / all_in_one / fullperception_pcs`，AP `0.82/0.65/0.28`，`20.79 Mbps`，每帧 20 receivers。
+- FullPerception-PCS + global box aggregation 已重跑为 singleton 口径：`attentive / global_box_nms / singleton / fullperception_pcs`，AP `0.82/0.64/0.27`，`10.51 Mbps`，每帧 20 receivers。
 - EdgeCooper V2V + global box aggregation：`attentive / global_box_nms / singleton / selective_edgecooper_global`，AP `0.88/0.76/0.34`，`282.20 Mbps`，每帧 20 receivers。
 - 结论：PCS sparse requests 在 global box aggregation 下几乎不超过 pure late；EdgeCooper 在 AP@0.3 上很强，但 raw-LiDAR demand 明显超出 20MHz/10ch 可合理承载范围。SGCP-PAPG 仍为 `0.87/0.81/0.36`、`62.54 Mbps`。

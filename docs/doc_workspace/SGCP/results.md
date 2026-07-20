@@ -1209,7 +1209,7 @@ Artifacts：
 | --- | --- | --- | --- | --- | ---: | ---: | ---: | ---: | ---: |
 | Full 20-CAV early fusion | attentive | none | none | full sharing | 0.88 | 0.85 | 0.45 | 118.71 | 41 |
 | Pure late | attentive | prediction NMS | singleton | local detection | 0.82 | 0.65 | 0.28 | 1.37 box | 41 |
-| FullPerception-PCS protocol adaptation | attentive | none | all_in_one | fullperception_pcs | 0.22 | 0.17 | 0.07 | 11.07 | 215 |
+| FullPerception-PCS protocol adaptation | attentive | none | singleton | fullperception_pcs | 0.22 | 0.16 | 0.06 | 24.28 | 258 |
 | EdgeCooper V2V protocol adaptation | attentive | none | singleton | selective_edgecooper_global | 0.54 | 0.48 | 0.25 | 282.20 | 820 |
 | SGCP-PAPG | attentive | inter-cluster NMS | coalition_game | perception_aware_potential_game | 0.87 | 0.81 | 0.36 | 62.54 | 41 |
 
@@ -1231,9 +1231,9 @@ Artifacts：
 | Method | Checkpoint | Late fusion | Clustering | Resource allocation | AP@0.3 | AP@0.5 | AP@0.7 | Mbps | Receiver samples/frame |
 | --- | --- | --- | --- | --- | ---: | ---: | ---: | ---: | ---: |
 | Pure late | attentive | prediction NMS | singleton | local detection | 0.82 | 0.65 | 0.28 | 1.37 box | 20 |
-| FullPerception-PCS + global box aggregation | attentive | global box NMS | all_in_one | fullperception_pcs | 0.82 | 0.65 | 0.28 | 20.79 | 20 |
+| FullPerception-PCS + global box aggregation | attentive | global box NMS | singleton | fullperception_pcs | 0.82 | 0.64 | 0.27 | 10.51 | 20 |
 | EdgeCooper V2V + global box aggregation | attentive | global box NMS | singleton | selective_edgecooper_global | 0.88 | 0.76 | 0.34 | 282.20 | 20 |
 | SGCP-PAPG | attentive | inter-cluster NMS | coalition_game | perception_aware_potential_game | 0.87 | 0.81 | 0.36 | 62.54 | 6 |
 | Full 20-CAV early fusion | attentive | none | none | full sharing | 0.88 | 0.85 | 0.45 | 118.71 | 1 |
 
-读法：PCS 在 common box aggregation 下几乎等同 pure late，说明其 sparse raw-LiDAR requests 对 scene-level AP 贡献很小；EdgeCooper V2V 在 AP@0.3 很强，但 282.20 Mbps 是 demand-level raw-LiDAR payload，表示全 20 receiver 重复 unicast 后严重超载。SGCP 通过 coalition head 先聚合簇内点云，再做 inter-cluster NMS，以 62.54 Mbps 获得最高 AP@0.5。
+读法：PCS 已按 singleton receiver universe 对齐 EdgeCooper。PCS 在 common box aggregation 下仍几乎等同 pure late，说明其 sparse raw-LiDAR requests 对 scene-level AP 贡献很小；EdgeCooper V2V 在 AP@0.3 很强，但 282.20 Mbps 是 demand-level raw-LiDAR payload，表示全 20 receiver 重复 unicast 后严重超载。SGCP 通过 coalition head 先聚合簇内点云，再做 inter-cluster NMS，以 62.54 Mbps 获得最高 AP@0.5。
