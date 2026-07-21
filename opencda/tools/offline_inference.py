@@ -35,6 +35,7 @@ from opencda.core.clustering.algorithms.clustering.naive_cluster import (
     NaiveCluster,
 )
 from opencda.core.clustering.utils import common
+from opencda.core.clustering.utils.channel_model import build_channel_model
 from opencda.core.clustering.algorithms.resource_allocation import (
     build_resource_allocator,
 )
@@ -135,6 +136,25 @@ def parse_args():
                         help='Override SGCP resource allocation channel count.')
     parser.add_argument('--bandwidth-mhz', type=float, default=None,
                         help='Override SGCP total bandwidth in MHz.')
+    parser.add_argument('--channel-estimator', default='logical',
+                        choices=['logical', 'ns3'],
+                        help='Shared channel estimator for all schedulers. '
+                             'logical preserves bandwidth/num_channels; ns3 '
+                             'uses calibrated TB-size-per-slot service rate.')
+    parser.add_argument('--ns3-tb-size-bytes', type=int, default=400,
+                        help='NS3-calibrated transport block bytes per '
+                             'subchannel grant. Defaults to 400 from current '
+                             'single-round timing logs.')
+    parser.add_argument('--ns3-slot-duration-ms', type=float, default=0.5,
+                        help='NR slot duration used by the NS3 estimator. '
+                             'Defaults to 0.5 ms for numerology 1.')
+    parser.add_argument('--ns3-subchannel-prbs', type=int, default=10,
+                        help='NS3 sidelink PRBs per logical subchannel.')
+    parser.add_argument('--ns3-symbols-per-slot', type=int, default=9,
+                        help='PSSCH symbols per slot used by NS3 manual '
+                             'scheduler TB sizing.')
+    parser.add_argument('--ns3-mcs', type=int, default=20,
+                        help='NS3 sidelink MCS used by manual scheduler.')
     parser.add_argument('--head-rb-budget', type=int, default=None,
                         help='Override PotentialGame per-head RB budget B_h. '
                              'Defaults to 1 to preserve the original SGCP '
@@ -184,6 +204,12 @@ def parse_args():
                         help='Maximum uploaded non-head members per receiver for selective baseline.')
     parser.add_argument('--selective-grid-budget', type=int, default=87,
                         help='Maximum selected grids per receiver for selective baseline.')
+    parser.add_argument('--selective-frame-deadline-ms', type=float,
+                        default=None,
+                        help='Optional deadline-aware trimming for selective '
+                             'baselines using the shared channel estimator. '
+                             'Defaults to disabled to preserve fixed-budget '
+                             'baseline protocols.')
     parser.add_argument('--ns3-link-quality-csv', default=None,
                         help='Optional rlc_by_request.csv from ns3_log_eval. '
                              'When set, communication_aware selective sharing '
@@ -291,12 +317,31 @@ def extract_lidar_density_threshold(protocol):
         return 2.0
 
 
+def build_cli_channel_model(args, world=None):
+    time_slot = 0.1
+    if world is not None:
+        time_slot = float(getattr(world.network_manager, 'time_slot', 0.1))
+    return build_channel_model(
+        mode=args.channel_estimator,
+        bandwidth_mhz=args.bandwidth_mhz or 20.0,
+        num_channels=args.num_channels or (
+            getattr(world.network_manager, 'subchannel_num', 10)
+            if world is not None else 10),
+        frame_deadline_s=time_slot,
+        ns3_tb_size_bytes=args.ns3_tb_size_bytes,
+        ns3_slot_duration_ms=args.ns3_slot_duration_ms,
+        ns3_subchannel_prbs=args.ns3_subchannel_prbs,
+        ns3_symbols_per_slot=args.ns3_symbols_per_slot,
+        ns3_mcs=args.ns3_mcs)
+
+
 def apply_resource_overrides(resource_allocator, world, num_channels=None,
                              bandwidth_mhz=None, head_rb_budget=None,
                              pcs_blind_spot_min_division=None,
                              pcs_min_overlap_grids=None,
                              pcs_blind_spot_radius=None,
-                             pcs_min_spot_grids=None):
+                             pcs_min_spot_grids=None,
+                             channel_model=None):
     if num_channels is not None:
         if num_channels <= 0:
             raise ValueError('--num-channels must be positive')
@@ -333,6 +378,12 @@ def apply_resource_overrides(resource_allocator, world, num_channels=None,
     if hasattr(resource_allocator, 'time_slot'):
         resource_allocator.time_slot = float(
             getattr(world.network_manager, 'time_slot', 0.1))
+    if channel_model is not None:
+        resource_allocator.channel_model = channel_model
+        if hasattr(resource_allocator, 'lambda_subchannels'):
+            resource_allocator.lambda_subchannels = channel_model.num_channels
+        if hasattr(resource_allocator, 'bandwidth_all'):
+            resource_allocator.bandwidth_all = channel_model.bandwidth_bps
     if not hasattr(resource_allocator, 'p'):
         return
     if num_channels is not None:
@@ -349,6 +400,12 @@ def apply_resource_overrides(resource_allocator, world, num_channels=None,
         resource_allocator.p.bandwidth_per_channel = (
             resource_allocator.p.bandwidth_all /
             resource_allocator.p.num_channels)
+    if channel_model is not None:
+        resource_allocator.p.channel_model = channel_model
+        resource_allocator.p.num_channels = channel_model.num_channels
+        resource_allocator.p.bandwidth_all = channel_model.bandwidth_bps
+        resource_allocator.p.bandwidth_per_channel = (
+            channel_model.bandwidth_bps / channel_model.num_channels)
 
 
 def clone_grid_selection(grid_selection):
@@ -390,34 +447,36 @@ def estimate_grid_selection_payload_bytes(world, grid_selection):
 
 
 def estimate_parallel_comm_time_ms(link_bytes, resource_sc_nums,
-                                   bandwidth_mhz, num_channels):
+                                   bandwidth_mhz, num_channels,
+                                   channel_model=None):
     """Estimate raw-LiDAR transfer time for one conflict-free round."""
     if not link_bytes:
         return 0.0
-    total_bandwidth_bps = float(bandwidth_mhz or 20.0) * (10 ** 6)
-    channel_count = max(int(num_channels or 1), 1)
-    per_channel_bps = total_bandwidth_bps / float(channel_count)
+    channel_model = channel_model or build_channel_model(
+        mode='logical',
+        bandwidth_mhz=bandwidth_mhz or 20.0,
+        num_channels=num_channels or 1)
     max_seconds = 0.0
     for link, payload_bytes in link_bytes.items():
         if payload_bytes <= 0:
             continue
         sc_num = max(int((resource_sc_nums or {}).get(link, 1)), 1)
-        link_seconds = (
-            float(payload_bytes) * 8.0 /
-            max(per_channel_bps * float(sc_num), 1.0))
-        max_seconds = max(max_seconds, link_seconds)
+        max_seconds = max(
+            max_seconds,
+            channel_model.payload_time_ms(payload_bytes, sc_num) / 1000.0)
     return max_seconds * 1000.0
 
 
 def trim_grid_selection_to_deadline(world, grid_selection, resource_sc_nums,
                                     bandwidth_mhz, num_channels,
-                                    deadline_ms):
+                                    deadline_ms, channel_model=None):
     """Trim PCS-selected grids so every parallel link fits the remaining time."""
     if deadline_ms is None:
         return clone_grid_selection(grid_selection)
-    total_bandwidth_bps = float(bandwidth_mhz or 20.0) * (10 ** 6)
-    channel_count = max(int(num_channels or 1), 1)
-    per_channel_bps = total_bandwidth_bps / float(channel_count)
+    channel_model = channel_model or build_channel_model(
+        mode='logical',
+        bandwidth_mhz=bandwidth_mhz or 20.0,
+        num_channels=num_channels or 1)
     trimmed = {}
     for receiver_id, sender_grids in clone_grid_selection(
             grid_selection).items():
@@ -427,9 +486,9 @@ def trim_grid_selection_to_deadline(world, grid_selection, resource_sc_nums,
                 continue
             link = (int(sender_id), int(receiver_id))
             sc_num = max(int((resource_sc_nums or {}).get(link, 1)), 1)
-            budget_bytes = int(
-                per_channel_bps * float(sc_num) *
-                max(float(deadline_ms), 0.0) / 1000.0 / 8.0)
+            budget_bytes = channel_model.payload_budget_bytes(
+                deadline_ms=deadline_ms,
+                subchannels=sc_num)
             if budget_bytes <= 0:
                 continue
             lidar = sender_vm.perception_manager.lidar
@@ -462,12 +521,14 @@ def trim_grid_selection_to_deadline(world, grid_selection, resource_sc_nums,
 
 
 def estimate_eval_frame_comm_time_ms(eval_frame, metadata, bandwidth_mhz,
-                                     num_channels):
+                                     num_channels, channel_model=None):
     """Estimate transfer time for an evaluated frame sample."""
     metadata = metadata or {}
     receiver_id = int(metadata.get('receiver_id'))
-    total_bandwidth_bps = float(bandwidth_mhz or 20.0) * (10 ** 6)
-    channel_count = max(int(num_channels or 1), 1)
+    channel_model = channel_model or build_channel_model(
+        mode='logical',
+        bandwidth_mhz=bandwidth_mhz or 20.0,
+        num_channels=num_channels or 1)
     channel_allocation = metadata.get('channel_allocation', {}) or {}
     uploaded_sources = [
         int(source_id)
@@ -477,7 +538,6 @@ def estimate_eval_frame_comm_time_ms(eval_frame, metadata, bandwidth_mhz,
     if not uploaded_sources:
         return 0.0
     if channel_allocation:
-        per_channel_bps = total_bandwidth_bps / float(channel_count)
         max_seconds = 0.0
         for source_id in uploaded_sources:
             cav = eval_frame.get(source_id)
@@ -486,17 +546,14 @@ def estimate_eval_frame_comm_time_ms(eval_frame, metadata, bandwidth_mhz,
             payload_bytes = int(cav['lidar_np'].nbytes)
             max_seconds = max(
                 max_seconds,
-                float(payload_bytes) * 8.0 / max(per_channel_bps, 1.0))
+                channel_model.payload_time_ms(payload_bytes, 1) / 1000.0)
         return max_seconds * 1000.0
     total_bytes = int(metadata.get('communication_bytes', 0) or 0)
-    return (
-        float(total_bytes) * 8.0 /
-        max(total_bandwidth_bps, 1.0) *
-        1000.0)
+    return channel_model.payload_time_ms(total_bytes, channel_model.num_channels)
 
 
 def run_pcs_rounds_with_deadline(allocator, world, max_rounds=1,
-                                 deadline_ms=None):
+                                 deadline_ms=None, channel_model=None):
     """Run repeated PCS scheduling rounds within one frame deadline."""
     max_rounds = max(int(max_rounds or 1), 1)
     if max_rounds == 1 and deadline_ms is None:
@@ -508,7 +565,8 @@ def run_pcs_rounds_with_deadline(allocator, world, max_rounds=1,
             link_bytes,
             getattr(allocator, 'resource_sc_nums', {}),
             getattr(allocator, 'bandwidth_all', 20.0 * (10 ** 6)) / (10 ** 6),
-            getattr(allocator, 'lambda_subchannels', 1))
+            getattr(allocator, 'lambda_subchannels', 1),
+            channel_model=channel_model)
         return {
             'pcs_rounds_requested': 1,
             'pcs_rounds_accepted': 1 if total_bytes > 0 else 0,
@@ -542,7 +600,8 @@ def run_pcs_rounds_with_deadline(allocator, world, max_rounds=1,
             link_bytes,
             getattr(allocator, 'resource_sc_nums', {}),
             getattr(allocator, 'bandwidth_all', 20.0 * (10 ** 6)) / (10 ** 6),
-            getattr(allocator, 'lambda_subchannels', 1))
+            getattr(allocator, 'lambda_subchannels', 1),
+            channel_model=channel_model)
         if payload_bytes <= 0 or round_time_ms <= 0:
             break
         if deadline_ms is not None:
@@ -557,7 +616,8 @@ def run_pcs_rounds_with_deadline(allocator, world, max_rounds=1,
                     getattr(allocator, 'bandwidth_all',
                             20.0 * (10 ** 6)) / (10 ** 6),
                     getattr(allocator, 'lambda_subchannels', 1),
-                    remaining_ms)
+                    remaining_ms,
+                    channel_model=channel_model)
                 payload_bytes, link_bytes = (
                     estimate_grid_selection_payload_bytes(
                         world,
@@ -567,7 +627,8 @@ def run_pcs_rounds_with_deadline(allocator, world, max_rounds=1,
                     getattr(allocator, 'resource_sc_nums', {}),
                     getattr(allocator, 'bandwidth_all',
                             20.0 * (10 ** 6)) / (10 ** 6),
-                    getattr(allocator, 'lambda_subchannels', 1))
+                    getattr(allocator, 'lambda_subchannels', 1),
+                    channel_model=channel_model)
                 if payload_bytes <= 0 or round_time_ms <= 0:
                     break
                 if sum(round_times) + round_time_ms > deadline_ms + 1e-6:
@@ -1457,7 +1518,8 @@ def apply_sgcp_constraint(frame, protocol, ego_cav_id, resource_allocation,
                           coverage_state=None,
                           max_upload_points_per_source=None,
                           routing_hints=None,
-                          routing_hints_max_per_frame=1):
+                          routing_hints_max_per_frame=1,
+                          channel_model=None):
     clear_sgcp_globals()
     world = OfflineCavWorld(
         frame,
@@ -1500,6 +1562,12 @@ def apply_sgcp_constraint(frame, protocol, ego_cav_id, resource_allocation,
             fixed_cluster_templates.extend(
                 cluster_templates_from_clusters(clusters))
     apply_cluster_state(world, clusters)
+    if channel_model is None:
+        channel_model = build_channel_model(
+            mode='logical',
+            bandwidth_mhz=bandwidth_mhz or 20.0,
+            num_channels=num_channels or world.network_manager.subchannel_num,
+            frame_deadline_s=getattr(world.network_manager, 'time_slot', 0.1))
     allocator = build_resource_allocator(resource_allocation, world)
     if hasattr(allocator, 'grid_score_mode'):
         allocator.grid_score_mode = grid_score_mode
@@ -1512,7 +1580,8 @@ def apply_sgcp_constraint(frame, protocol, ego_cav_id, resource_allocation,
         pcs_blind_spot_min_division=pcs_blind_spot_min_division,
         pcs_min_overlap_grids=pcs_min_overlap_grids,
         pcs_blind_spot_radius=pcs_blind_spot_radius,
-        pcs_min_spot_grids=pcs_min_spot_grids)
+        pcs_min_spot_grids=pcs_min_spot_grids,
+        channel_model=channel_model)
     allocator.set_clusters(clusters)
     pcs_round_metadata = {}
     if resource_allocation == 'fullperception_pcs':
@@ -1520,7 +1589,8 @@ def apply_sgcp_constraint(frame, protocol, ego_cav_id, resource_allocation,
             allocator,
             world,
             max_rounds=pcs_frame_rounds,
-            deadline_ms=pcs_frame_deadline_ms)
+            deadline_ms=pcs_frame_deadline_ms,
+            channel_model=channel_model)
     else:
         allocator.run()
     if grid_selection_mode == 'random':
@@ -1577,6 +1647,7 @@ def apply_sgcp_constraint(frame, protocol, ego_cav_id, resource_allocation,
             getattr(allocator.p, 'num_channels', None)
             if hasattr(allocator, 'p')
             else world.network_manager.subchannel_num)
+        metadata.update(channel_model.to_metadata())
         metadata['head_rb_budget'] = (
             getattr(allocator.p, 'head_rb_budget', None)
             if hasattr(allocator, 'p') else None)
@@ -1609,7 +1680,8 @@ def apply_sgcp_constraint(frame, protocol, ego_cav_id, resource_allocation,
                 constrained_frame,
                 metadata,
                 metadata.get('bandwidth_mhz') or bandwidth_mhz,
-                metadata.get('num_channels') or num_channels)
+                metadata.get('num_channels') or num_channels,
+                channel_model=channel_model)
         constrained_items.append((constrained_frame, metadata))
     update_coverage_state_from_items(coverage_state, constrained_items)
     return constrained_items
@@ -2074,7 +2146,9 @@ def apply_selective_sharing_baseline(frame, protocol, ego_cav_id,
                                      link_quality=None, timestamp=None,
                                      num_channels=None,
                                      bandwidth_mhz=None,
-                                     max_upload_points_per_source=None):
+                                     max_upload_points_per_source=None,
+                                     channel_model=None,
+                                     selective_frame_deadline_ms=None):
     clear_sgcp_globals()
     world = OfflineCavWorld(
         frame,
@@ -2110,6 +2184,12 @@ def apply_selective_sharing_baseline(frame, protocol, ego_cav_id,
     else:
         clusters = clustering_algorithm.run()
     apply_cluster_state(world, clusters)
+    if channel_model is None:
+        channel_model = build_channel_model(
+            mode='logical',
+            bandwidth_mhz=bandwidth_mhz or 20.0,
+            num_channels=num_channels or world.network_manager.subchannel_num,
+            frame_deadline_s=getattr(world.network_manager, 'time_slot', 0.1))
     if baseline_name in ['edgecooper_global', 'edgecooper_global_hd']:
         world._edgecooper_global_sender_loads = {}
         world._edgecooper_global_cluster_count = len(clusters)
@@ -2124,6 +2204,28 @@ def apply_selective_sharing_baseline(frame, protocol, ego_cav_id,
             grid_budget,
             link_quality=link_quality,
             timestamp=timestamp)
+    if selective_frame_deadline_ms is not None:
+        for cluster in clusters:
+            receiver_id = int(cluster.head_id)
+            receiver_vm = world.get_vehicle_manager(receiver_id)
+            if receiver_vm is None:
+                continue
+            current_selection = {
+                receiver_id: getattr(
+                    receiver_vm.perception_manager.co_manager,
+                    'grid_selection',
+                    {}) or {}
+            }
+            trimmed = trim_grid_selection_to_deadline(
+                world,
+                current_selection,
+                {},
+                bandwidth_mhz,
+                num_channels,
+                selective_frame_deadline_ms,
+                channel_model=channel_model)
+            receiver_vm.perception_manager.co_manager.set_grid_selection(
+                trimmed.get(receiver_id, {}))
 
     if receiver_policy == 'all-cluster-heads':
         receiver_ids = sorted(int(cluster.head_id) for cluster in clusters)
@@ -2159,8 +2261,12 @@ def apply_selective_sharing_baseline(frame, protocol, ego_cav_id,
             if rho_th is None else rho_th)
         metadata['selective_member_budget'] = member_budget
         metadata['selective_grid_budget'] = grid_budget
+        metadata['selective_frame_deadline_ms'] = (
+            '' if selective_frame_deadline_ms is None
+            else selective_frame_deadline_ms)
         metadata['num_channels'] = num_channels or world.network_manager.subchannel_num
         metadata['bandwidth_mhz'] = bandwidth_mhz or 20.0
+        metadata.update(channel_model.to_metadata())
         metadata['ns3_link_quality_csv'] = (
             link_quality['path'] if link_quality else '')
         metadata['max_upload_points_per_source'] = (
@@ -2169,7 +2275,8 @@ def apply_selective_sharing_baseline(frame, protocol, ego_cav_id,
             constrained_frame,
             metadata,
             metadata['bandwidth_mhz'],
-            metadata['num_channels'])
+            metadata['num_channels'],
+            channel_model=channel_model)
         constrained_items.append((constrained_frame, metadata))
     return constrained_items
 
@@ -2442,6 +2549,9 @@ def trace_row(scenario_id, timestamp, metadata, eval_frame,
         'routing_hints_csv': metadata.get('routing_hints_csv', ''),
         'clustering': metadata.get('clustering', ''),
         'cluster_count': metadata.get('cluster_count', ''),
+        'selective_frame_deadline_ms': metadata.get(
+            'selective_frame_deadline_ms',
+            ''),
         'cluster_member_ids': ';'.join(
             str(item) for item in metadata.get('cluster_member_ids', [])),
         'source_cav_ids': ';'.join(str(item) for item in source_ids),
@@ -2451,6 +2561,14 @@ def trace_row(scenario_id, timestamp, metadata, eval_frame,
         'point_counts_json': json.dumps(point_counts, sort_keys=True),
         'communication_bytes': metadata.get('communication_bytes', 0),
         'frame_comm_time_ms': metadata.get('frame_comm_time_ms', ''),
+        'num_channels': metadata.get('num_channels', ''),
+        'bandwidth_mhz': metadata.get('bandwidth_mhz', ''),
+        'channel_estimator': metadata.get('channel_estimator', ''),
+        'ns3_tb_size_bytes': metadata.get('ns3_tb_size_bytes', ''),
+        'ns3_slot_duration_ms': metadata.get('ns3_slot_duration_ms', ''),
+        'ns3_subchannel_prbs': metadata.get('ns3_subchannel_prbs', ''),
+        'ns3_symbols_per_slot': metadata.get('ns3_symbols_per_slot', ''),
+        'ns3_mcs': metadata.get('ns3_mcs', ''),
         'pcs_rounds_requested': metadata.get('pcs_rounds_requested', ''),
         'pcs_rounds_accepted': metadata.get('pcs_rounds_accepted', ''),
         'pcs_round_comm_time_ms_json': json.dumps(
@@ -2487,6 +2605,7 @@ def write_trace_csv(path, rows):
         'routing_hints_csv',
         'clustering',
         'cluster_count',
+        'selective_frame_deadline_ms',
         'cluster_member_ids',
         'source_cav_ids',
         'uploaded_source_ids',
@@ -2494,6 +2613,14 @@ def write_trace_csv(path, rows):
         'point_counts_json',
         'communication_bytes',
         'frame_comm_time_ms',
+        'num_channels',
+        'bandwidth_mhz',
+        'channel_estimator',
+        'ns3_tb_size_bytes',
+        'ns3_slot_duration_ms',
+        'ns3_subchannel_prbs',
+        'ns3_symbols_per_slot',
+        'ns3_mcs',
         'pcs_rounds_requested',
         'pcs_rounds_accepted',
         'pcs_round_comm_time_ms_json',
@@ -2626,6 +2753,9 @@ def object_diagnostic_rows(scenario_id, timestamp, sample_label, metadata,
             'grid_score_mode': metadata.get('grid_score_mode', ''),
             'num_channels': metadata.get('num_channels', ''),
             'bandwidth_mhz': metadata.get('bandwidth_mhz', ''),
+            'channel_estimator': metadata.get('channel_estimator', ''),
+            'ns3_tb_size_bytes': metadata.get('ns3_tb_size_bytes', ''),
+            'ns3_slot_duration_ms': metadata.get('ns3_slot_duration_ms', ''),
             'communication_bytes': metadata.get('communication_bytes', ''),
             'source_cav_ids': ';'.join(
                 str(item) for item in metadata.get('source_cav_ids', [])),
@@ -2670,6 +2800,9 @@ def write_object_diagnostics_csv(path, rows):
         'grid_score_mode',
         'num_channels',
         'bandwidth_mhz',
+        'channel_estimator',
+        'ns3_tb_size_bytes',
+        'ns3_slot_duration_ms',
         'communication_bytes',
         'source_cav_ids',
         'uploaded_source_ids',
@@ -2852,6 +2985,7 @@ def main():
             else 'all-cluster-heads')
         if args.selective_sharing_baseline is not None:
             protocol = load_protocol(dataset, scenario_id)
+            frame_channel_model = build_cli_channel_model(args)
             frame_items = apply_selective_sharing_baseline(
                 frame,
                 protocol,
@@ -2870,9 +3004,13 @@ def main():
                 num_channels=args.num_channels,
                 bandwidth_mhz=args.bandwidth_mhz,
                 max_upload_points_per_source=(
-                    args.max_upload_points_per_source))
+                    args.max_upload_points_per_source),
+                channel_model=frame_channel_model,
+                selective_frame_deadline_ms=(
+                    args.selective_frame_deadline_ms))
         elif args.sgcp_constrained:
             protocol = load_protocol(dataset, scenario_id)
+            frame_channel_model = build_cli_channel_model(args)
             frame_items = apply_sgcp_constraint(
                 frame,
                 protocol,
@@ -2907,7 +3045,8 @@ def main():
                     args.max_upload_points_per_source),
                 routing_hints=sgcp_routing_hints,
                 routing_hints_max_per_frame=(
-                    args.sgcp_routing_hints_max_per_frame))
+                    args.sgcp_routing_hints_max_per_frame),
+                channel_model=frame_channel_model)
         if args.sgcp_inter_cluster_late_fusion:
             pred_tensors = []
             pred_scores = []
@@ -3024,6 +3163,15 @@ def main():
                 'grid_score_mode': args.sgcp_grid_score_mode,
                 'num_channels': args.num_channels,
                 'bandwidth_mhz': args.bandwidth_mhz,
+                'selective_frame_deadline_ms': (
+                    '' if args.selective_frame_deadline_ms is None
+                    else args.selective_frame_deadline_ms),
+                'channel_estimator': args.channel_estimator,
+                'ns3_tb_size_bytes': args.ns3_tb_size_bytes,
+                'ns3_slot_duration_ms': args.ns3_slot_duration_ms,
+                'ns3_subchannel_prbs': args.ns3_subchannel_prbs,
+                'ns3_symbols_per_slot': args.ns3_symbols_per_slot,
+                'ns3_mcs': args.ns3_mcs,
                 'communication_bytes': sum(
                     int((metadata or {}).get('communication_bytes', 0))
                     for _, metadata in frame_items),

@@ -5,6 +5,7 @@ from opencda.core.clustering.base import *
 from opencda.core.clustering import utils
 from opencda.core.clustering.utils import common
 from opencda.core.clustering.utils import *
+from opencda.core.clustering.utils.channel_model import build_channel_model
 from opencda.core.networking.utils import calculate_distance
 from opencda.log.logger_config import logger
 
@@ -38,6 +39,11 @@ class PCS(ResourceAllocationAlgorithm):
         self.active_blind_spot_min_division = self.blind_spot_min_division
         self.bandwidth_all = 20.0 * (10 ** 6)
         self.time_slot = 0.1
+        self.channel_model = build_channel_model(
+            mode='logical',
+            bandwidth_mhz=self.bandwidth_all / (10 ** 6),
+            num_channels=self.lambda_subchannels,
+            frame_deadline_s=self.time_slot)
         self.feature_bytes_per_grid = 1024
         self.point_bytes = 16
 
@@ -308,14 +314,23 @@ class PCS(ResourceAllocationAlgorithm):
         if not covered_grids:
             return 1
 
-        total_feature_bits = self._estimate_link_payload_bytes(
-            sender,
-            covered_grids) * 8.0
-        per_channel_capacity = (
-            float(self.bandwidth_all) / float(max(self.lambda_subchannels, 1)))
-        available_bits = max(per_channel_capacity * float(self.time_slot), 1.0)
-        required_subchannels = int(math.ceil(
-            total_feature_bits / available_bits))
+        payload_bytes = self._estimate_link_payload_bytes(sender,
+                                                          covered_grids)
+        channel_model = getattr(self, 'channel_model', None)
+        if channel_model is not None:
+            required_subchannels = channel_model.required_subchannels(
+                payload_bytes,
+                deadline_s=self.time_slot)
+        else:
+            total_feature_bits = payload_bytes * 8.0
+            per_channel_capacity = (
+                float(self.bandwidth_all) /
+                float(max(self.lambda_subchannels, 1)))
+            available_bits = max(
+                per_channel_capacity * float(self.time_slot),
+                1.0)
+            required_subchannels = int(math.ceil(
+                total_feature_bits / available_bits))
         return max(1, min(int(self.lambda_subchannels), required_subchannels))
 
     def _estimate_link_payload_bytes(self, sender, covered_grids):

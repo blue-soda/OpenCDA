@@ -107,7 +107,12 @@ class PotentialGame(ResourceAllocationAlgorithm):
                 vehicle_dict[mid].perception_manager.do_not_skip_any_cav = True
 
     def calculate_max_grids_per_rb(self, sinr=None):
-        return common.calculate_max_grids_per_rb(sinr, self.p.bandwidth_per_channel, self.p.T_ddl, self.clusters[0].grid_bits)
+        return common.calculate_max_grids_per_rb(
+            sinr,
+            self.p.bandwidth_per_channel,
+            self.p.T_ddl,
+            self.clusters[0].grid_bits,
+            channel_model=getattr(self.p, 'channel_model', None))
 
     def grid_utility_density(self, density, rho_th):
         return common.density_score(density, rho_th)
@@ -182,7 +187,13 @@ class PotentialGame(ResourceAllocationAlgorithm):
         noise_power_w = dB_to_linear(dst_vm.noise_power) / 1000.0  # dBm→W
         interference_power_w = self.get_interference(dst_vm, subchannel=subchannel_id, exclude_vid=member_id)
         sinr_linear = calculate_sinr_linear(tx_power_w * ch_gain, interference_power_w, noise_power_w)
-        data_rate = calculate_available_data_rate(self.p.bandwidth_per_channel, sinr_linear)
+        channel_model = getattr(self.p, 'channel_model', None)
+        if channel_model is not None and channel_model.mode == 'ns3':
+            data_rate = channel_model.per_channel_bps()
+        else:
+            data_rate = calculate_available_data_rate(
+                self.p.bandwidth_per_channel,
+                sinr_linear)
         return data_rate
     
     @staticmethod

@@ -5,6 +5,7 @@ from matplotlib.patches import Rectangle
 from matplotlib.colors import LinearSegmentedColormap
 from opencda.core.common.cav_world import CavWorld
 from opencda.core.networking.utils import *
+from opencda.core.clustering.utils.channel_model import build_channel_model
 from scipy.stats import norm
 import matplotlib.pyplot as plt
 import numpy as np
@@ -199,7 +200,8 @@ class Params:
                  T_min_stab=1.0,
                  N_max=4,
                  head_rb_budget=1,
-                 ita=1.1
+                 ita=1.1,
+                 channel_model=None
                  ):
         # 协作集合划分参数
         self.N_max = N_max
@@ -214,6 +216,11 @@ class Params:
         self.channel_capacity = 2   # 每个子信道的并发容量 C
         self.bandwidth_all = bandwidth_all * (10**6)  # 总带宽 72 MHz
         self.bandwidth_per_channel = self.bandwidth_all / self.num_channels  # 每个子信道带宽
+        self.channel_model = channel_model or build_channel_model(
+            mode='logical',
+            bandwidth_mhz=bandwidth_all,
+            num_channels=num_channels,
+            frame_deadline_s=T_ddl)
 
     def bar_mu(self, d_S):
             return self.q_max \
@@ -419,7 +426,11 @@ def visualize_grid_set(grid_set, title="Grid Visualization", rho_th=None,
     plt.tight_layout()
     plt.show()
 
-def calculate_max_grids_per_rb(sinr=None, bandwidth_per_channel=None, T_ddl=None, grid_bits=None):
+def calculate_max_grids_per_rb(sinr=None, bandwidth_per_channel=None,
+                               T_ddl=None, grid_bits=None,
+                               channel_model=None):
+    if channel_model is not None:
+        return channel_model.max_grids_per_rb(grid_bits, deadline_s=T_ddl)
     if sinr is None:
         data_rate = calculate_data_rate_with_0_interference(bandwidth_per_channel)
         # print("data_rate_no_interference:", data_rate)

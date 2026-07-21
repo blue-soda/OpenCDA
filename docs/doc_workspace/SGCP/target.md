@@ -235,6 +235,8 @@
 - [x] 排查 2026-07-21 PCS sweep AP 全 0 的命令口径 bug：第一轮 sweep 误用 `intermediate_attentive`，已按正式 `early` fusion-method 口径重跑；default 11 帧为 `0.12/0.11/0.04`，div4/radius4/min128 为 `0.16/0.14/0.07`。
 - [x] 新增 PCS object-grid diagnostics，确认 PCS 低 AP 的主要原因是 paper-style blind spot (`req_grids - high_density_grids`) 与 raw-LiDAR detector object utility 错位：前 3 帧 full-reference detected but PCS missed 的 30 个 GT 中，16 个被 nearest head 视为 high-density 而不请求，14 个属于 blind spot 但只有 5 个被 scheduled link 覆盖。
 - [x] 基于上述结论修订 experiment 目录中的 PCS 表述：区分 paper-faithful PCS baseline、raw-LiDAR adaptation variant 和 SGCP-compatible scheduler comparison，避免把 object-aware 修补写成原版 FullPerception-PCS。
+- [x] 统一 SGCP/PCS/EdgeCooper/Selective baselines 的信道估算入口，并允许显式切换到 NS3-calibrated 参数。2026-07-21 已新增 `ChannelModel(mode='logical'|'ns3')`，PCS/PAPG/offline frame-time/Selective baselines 均已接入；NS3 侧暴露 MCS、symbols-per-slot、PSCCH RB、RRI、resource reserve 等吞吐相关参数。后续表格若使用 `--channel-estimator ns3`，必须在 manifest 中记录 `tb_size_bytes`、`slot_duration_ms`、`MCS`、`subchannel_prbs`。
+- [ ] 用真实 NS3 构建和 chunked replay 验证 high-capacity 参数组，至少比较 default、strict-20MHz/10ch (`slBandwidthIn100kHz=200, slSubchannelSize=5`) 和 high-capacity diagnostic 三组；更新 `ns3_channel_model_alignment.md` 与实验表格的 deadline 说明。
 
 ### P10.2 Late-fusion 检测框通信量计入总通信量
 

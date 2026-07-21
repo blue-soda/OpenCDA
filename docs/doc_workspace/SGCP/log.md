@@ -7403,3 +7403,26 @@ conda run --no-capture-output -n opencda python -m opencda.tools.offline_inferen
 - EdgeCooper V2V protocol-first10 diagnostic：32/73 callback，696,480 bytes，avg/p95/max observed `81.81/177.00/190.00 ms`；该 protocol adaptation 单轮仍过载/冲突。
 
 详细说明与 raw artifacts：`docs/doc_workspace/SGCP/artifacts/ns3_single_round_time_20260721/NS3_SINGLE_ROUND_TIME.md`。
+
+# 2026-07-21 NS3 channel estimator unification
+
+用户要求统一 SGCP/PCS/EdgeCooper 等调度算法的信道估算逻辑，并允许该估算设置为真实 NS3 参数；同时排查为何 NS3 实际带宽高于表格设定却仍可能超过 deadline。
+
+本轮完成：
+
+- OpenCDA 新增 `opencda/core/clustering/utils/channel_model.py`，提供 `ChannelModel(mode='logical'|'ns3')`。
+- PCS `_get_link_required_subchannels()` 改为可使用统一 `ChannelModel.required_subchannels()`。
+- PAPG/PotentialGame 的 max-grid budget 与 NS3-mode data-rate estimate 改为可读取 `p.channel_model`。
+- `offline_inference.py` 新增 `--channel-estimator`、`--ns3-tb-size-bytes`、`--ns3-slot-duration-ms`、`--ns3-subchannel-prbs`、`--ns3-symbols-per-slot`、`--ns3-mcs`。
+- EdgeCooper/Selective baselines 的 `frame_comm_time_ms` 改为统一 `ChannelModel`；另新增显式 `--selective-frame-deadline-ms`，默认关闭，避免静默改变旧 fixed-budget baseline。
+- NS3 侧通过 Windows 直接访问 WSL 仓库并修改：`main.cc` 暴露 `slMcs/slSymbolsPerSlot/slPscchRbs/slMaxNumPerReserve/slMaxTxTransNumPssch/slRriMs/slProbResourceKeep`；manual scheduler 新增 `SymbolsPerSlot` attribute，移除硬编码 9。
+
+验证：
+
+- OpenCDA `py_compile` 通过。
+- 按用户要求未进入 WSL 运行 `./ns3 build`；NS3 C++ 改动尚待后续构建验证。
+
+结论：
+
+- “40MHz 无法跑 60Mbps”不应写成物理带宽不足；准确说法是当前 NR sidelink Mode-2 默认配置下，应用层 raw-LiDAR burst 受 TB size、grant cadence、RLC/CAM chunking、控制资源和 MCS 共同限制。
+- 若需要容纳更多通信，应显式跑 high-capacity NS3 diagnostic，并让 OpenCDA 使用 `--channel-estimator ns3` 与相同 TB/slot 参数估算。
