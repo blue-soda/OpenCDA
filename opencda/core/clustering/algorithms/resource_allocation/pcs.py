@@ -27,9 +27,12 @@ class PCS(ResourceAllocationAlgorithm):
         self.grid_selection: Dict[int, Dict[int, Set[str]]] = {}  # 网格选择：接收方vid -> 发送方vid -> 需要接收的网格ID集合
         self.grid_mAP_cache: Dict[int, Dict[int, float]] = {}  # 网格mAP缓存：vid -> grid_id -> mAP值（预计算）
         self.blind_spots_cache: Dict[Tuple[int, int, int, int], Dict[int, Set[str]]] = {}  # (vid, division, radius, min_grids) -> blind_spot_id -> grids
-        self.blind_spot_min_division = 12
-        self.blind_spot_adjacency_radius = 2
-        self.blind_spot_min_grids = 1
+        # Raw-LiDAR PCS adaptation default.  The original paper schedules
+        # semantic blind-spot features, while our replay transmits point-cloud
+        # grids; larger blind-spot units avoid unrealistically tiny uploads.
+        self.blind_spot_min_division = 4
+        self.blind_spot_adjacency_radius = 4
+        self.blind_spot_min_grids = 128
         self.min_overlap_grids = 0
         self.active_blind_spot_min_division = self.blind_spot_min_division
         self.bandwidth_all = 20.0 * (10 ** 6)

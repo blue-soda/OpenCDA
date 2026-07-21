@@ -7341,3 +7341,19 @@ conda run --no-capture-output -n opencda python -m opencda.tools.offline_inferen
 - `MANIFEST.csv`
 
 表 2 `+ global box aggregation` 和表 3 `SGCP-compatible scheduler comparison` 本轮不改机制；它们的 caption 继续明确其不是 protocol-native no-late baseline。
+
+# 2026-07-21 22:10 PCS forward default and protocol objective audit
+
+用户要求后续 PCS 均采用更合理的 `div4/radius4/min128` 参数，并核查 PCS、EdgeCooper 与 SGCP 的调度目标是否一致。
+
+本轮完成：
+
+- 将 `opencda/core/clustering/algorithms/resource_allocation/pcs.py` 的 PCS raw-LiDAR adaptation 默认值改为 `blind_spot_min_division=4`、`blind_spot_adjacency_radius=4`、`blind_spot_min_grids=128`。后续命令若未显式传参，也会采用该 PCS 工作点。
+- 新增 `pcs_edgecooper_protocol_alignment.md`，记录 FullPerception-PCS、EdgeCooper、SGCP 的目标与时间/调度语义差异。
+- 在 `target.md` 中新增待办：用 `div4/radius4/min128` 重跑 Table 1 PCS、Table 2/6 PCS + global box aggregation、Table 3/A SGCP-scaffold PCS。旧 PCS 表格若未显式标注该参数，只能作为 archived diagnostic。
+
+协议核查结论：
+
+- FullPerception-PCS 的核心目标是有限通信资源下最大化累计感知收益，通信量是约束/效率结果，不是单纯最小化 Mbps；原文调度对象是 blind-spot semantic/features 与链路资源，不天然等价于一次性 raw-LiDAR grid upload。
+- EdgeCooper 的核心目标是 edge-assisted holistic perception；它通过互补性数据选择、relay/channel/packet scheduling 降低冗余，不等价于 20 个 singleton receiver 各自重复请求 raw-LiDAR 的 V2V proxy。
+- SGCP 当前实验协议是一帧映射一次 100 ms cooperative perception cycle，要求 intra-cluster raw-LiDAR 和 inter-cluster boxes 在该 cycle 中完成；因此 Table 3/A 可称为 SGCP-compatible scheduler comparison，Table 1 必须称为 protocol-native / protocol adaptation comparison。
