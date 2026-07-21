@@ -7723,3 +7723,48 @@ OpenCDA 侧新增审计摘要：`docs/doc_workspace/SGCP/experiment_protocol_con
 | All-in-one full raw sharing | 0.85 | 0.83 | 0.48 | 118.71 |
 
 判断：current-protocol Table5 能说明 dynamic coalition 在 AP@0.5 上仍优于 fixed/heuristic clustering，但优势较小，且 AP@0.7 不占优。结合 Pure late reference，该表仍是 diagnostic；最终论文分簇消融需要在 PAPG operating point / strict 60ms budget 叙事确定后再冻结。
+
+# 2026-07-22 Table4 current-protocol diagnostic result
+
+执行内容：在 `docs/doc_workspace/SGCP/artifacts/table4_current_protocol_20260722/` 下新增构建脚本 `build_table4_current_protocol.py`，复用 Table3 current-protocol PAPG base row，并补跑 8 个 41-frame 参数点：
+
+- `rho_th=1`
+- `rho_th=2`
+- `N_max=2`
+- `N_max=3`
+- `N_max=5`
+- `N_max=6`
+- `target_subchannels=5`
+- `target_subchannels=20`
+
+共同协议：attentive checkpoint，PAPG scheduler，`coalition_game` clustering，`all-cluster-heads` receiver policy，inter-cluster box NMS，`40 MHz / 10 target subchannels / 60 ms communication deadline`，NS3 estimator `tb_size=899 bytes`、`slot=0.5 ms`、`subchannel_prbs=10`、`MCS=28`、`PSSCH symbols=12`。Target-subchannel sweep 有意改变 `num_channels`，只作为资源敏感性诊断。
+
+执行命令：
+
+```powershell
+conda run --no-capture-output -n opencda python docs\doc_workspace\SGCP\artifacts\table4_current_protocol_20260722\build_table4_current_protocol.py
+```
+
+输出：
+
+- OpenCDA artifact CSV：`docs/doc_workspace/SGCP/artifacts/table4_current_protocol_20260722/table4_parameter_sensitivity_current_protocol_20260722.csv`
+- 外部实验目录 CSV：`C:\Workspace\2026-7-papers\infocom\SGCP\experiment\data\table4_parameter_sensitivity_current_protocol_20260722.csv`
+- 外部 Figure5：`figure5_parameter_sensitivity_current_protocol_20260722.png/.pdf`
+
+结果：
+
+| Parameter | Setting | AP@0.3 | AP@0.5 | AP@0.7 | Total Mbps |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| rho_th | 1 | 0.65 | 0.61 | 0.25 | 37.72 |
+| rho_th | 2 | 0.64 | 0.60 | 0.24 | 37.68 |
+| rho_th | 3 | 0.64 | 0.60 | 0.25 | 37.05 |
+| N_max | 2 | 0.82 | 0.77 | 0.39 | 60.13 |
+| N_max | 3 | 0.71 | 0.65 | 0.29 | 39.49 |
+| N_max | 4 | 0.64 | 0.60 | 0.25 | 37.05 |
+| N_max | 5 | 0.62 | 0.57 | 0.21 | 37.04 |
+| N_max | 6 | 0.62 | 0.57 | 0.21 | 37.04 |
+| Target subchannels | 5 | 0.60 | 0.56 | 0.21 | 30.85 |
+| Target subchannels | 10 | 0.64 | 0.60 | 0.25 | 37.05 |
+| Target subchannels | 20 | 0.64 | 0.60 | 0.25 | 37.05 |
+
+判断：Table4 current-protocol 诊断已合规生成，但它不能直接进入最终论文支撑旧参数叙事。`N_max=2` 明显优于默认 `N_max=4`，说明后续应优先评估将 current-protocol SGCP operating point 改为 `N_max=2` 并重跑关联表格；否则该表只能作为 appendix diagnostic。

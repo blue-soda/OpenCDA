@@ -1548,3 +1548,30 @@ Artifact: `docs/doc_workspace/SGCP/artifacts/table5_current_protocol_20260722/`
 | All-in-one full raw sharing | 0.85 | 0.83 | 0.48 | 118.71 |
 
 结论：current-protocol Table5 仍显示 dynamic coalition 在 AP@0.5 上领先 fixed/heuristic clustering，但优势被 strict 60ms budget 压缩；AP@0.7 甚至低于 density-greedy。与 Table2/Table3 一致，该表只能作为诊断，不能作为最终论文分簇消融，除非后续确定新的 PAPG operating point 或改写为 strict-budget appendix。
+
+## Table4 Current-Protocol Diagnostic Rerun - 2026-07-22
+
+Artifact: `docs/doc_workspace/SGCP/artifacts/table4_current_protocol_20260722/`
+
+外部实验包输出：
+
+- `C:\Workspace\2026-7-papers\infocom\SGCP\experiment\data\table4_parameter_sensitivity_current_protocol_20260722.csv`
+- `C:\Workspace\2026-7-papers\infocom\SGCP\experiment\figures\figure5_parameter_sensitivity_current_protocol_20260722.png/.pdf`
+
+协议：attentive checkpoint，PAPG scheduler，coalition clustering，inter-cluster NMS，`40 MHz / 10 target subchannels / 60 ms communication deadline`，NS3-calibrated estimator `tb_size=899 bytes, slot=0.5 ms, subchannel_prbs=10, MCS=28, PSSCH symbols=12`。Late-box broadcast 已计入 total Mbps。Target-subchannel sweep 是有意改变 `num_channels` 的资源敏感性诊断，不是固定协议主点。
+
+| Parameter | Setting | AP@0.3 | AP@0.5 | AP@0.7 | Total Mbps |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| rho_th | 1 | 0.65 | 0.61 | 0.25 | 37.72 |
+| rho_th | 2 | 0.64 | 0.60 | 0.24 | 37.68 |
+| rho_th | 3 | 0.64 | 0.60 | 0.25 | 37.05 |
+| N_max | 2 | 0.82 | 0.77 | 0.39 | 60.13 |
+| N_max | 3 | 0.71 | 0.65 | 0.29 | 39.49 |
+| N_max | 4 | 0.64 | 0.60 | 0.25 | 37.05 |
+| N_max | 5 | 0.62 | 0.57 | 0.21 | 37.04 |
+| N_max | 6 | 0.62 | 0.57 | 0.21 | 37.04 |
+| Target subchannels | 5 | 0.60 | 0.56 | 0.21 | 30.85 |
+| Target subchannels | 10 | 0.64 | 0.60 | 0.25 | 37.05 |
+| Target subchannels | 20 | 0.64 | 0.60 | 0.25 | 37.05 |
+
+结论：该 current-protocol Table4 不能继续支撑旧的默认 `N_max=4` 参数叙事。`N_max=2` 在 strict 60ms NS3-estimator 口径下同时提高 AP 和通信量，接近此前用户更满意的主线效果；后续若要冻结 current-protocol 主文图表，应优先评估是否将 SGCP operating point 改为 `N_max=2` 并重跑 Table2/Table3/Table5/TableA/Figure1-2/Figure6，而不是继续沿用 `N_max=4` strict-budget default。

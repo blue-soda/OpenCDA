@@ -64,7 +64,15 @@ budget probe 和 NS3 frame-level feasibility artifacts 外，外部实验包中�
    Dynamic coalition 为 `0.64/0.60/0.25, 37.05 Mbps`，只小幅领先
    fixed/density/mobility/random，并且 Pure late reference 仍为
    `0.82/0.76/0.37, 0.74 Mbps`；因此只能作为 diagnostic。
-4. Table 4 / Table 4b / Figure 5：parameter 与 Nmax sensitivity。
+4. Table 4 / Table 4b / Figure 5：2026-07-22 已新增
+   current-protocol diagnostic rerun：
+   `data/table4_parameter_sensitivity_current_protocol_20260722.csv` 和
+   `figures/figure5_parameter_sensitivity_current_protocol_20260722.*`。
+   该 rerun 覆盖 `rho_th`、`N_max` 和 target-subchannel 诊断；其中
+   `N_max=2` 为 `0.82/0.77/0.39, 60.13 Mbps`，明显强于默认
+   `N_max=4` 的 strict-budget PAPG `0.64/0.60/0.25, 37.05 Mbps`。
+   因此该表是参数敏感性诊断，不能继续支撑旧的默认参数最优叙事；
+   target-subchannel panel 也必须标注为有意改变 `num_channels` 的资源敏感性。
 5. Table 6 / Figure 8：global box aggregation normalized baselines。
 6. Table A / Figures 1-2：combined scaffold/Pareto summaries。
 7. Figure 6：bootstrap uncertainty，待最终行冻结后重算。
