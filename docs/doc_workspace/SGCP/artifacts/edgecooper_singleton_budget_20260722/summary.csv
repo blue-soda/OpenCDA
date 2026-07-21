@@ -4,6 +4,6 @@ EdgeCooper singleton d100 r35 m3 g240,11,singleton,all-cavs,35,100,3,240,0.32,0.
 EdgeCooper singleton d200 r35 m3 g240,11,singleton,all-cavs,35,200,3,240,0.32,0.26,0.09,6822688,49.62,654256,9,,,,Same as d100 at 35m; candidate/matching-limited.
 EdgeCooper singleton d100 r60 m3 g240,11,singleton,all-cavs,60,100,3,240,0.28,0.23,0.07,7344480,53.41,695264,9,,,,Corrected 11-frame probe; explicit singleton.
 EdgeCooper singleton d100 r100 m3 g240,11,singleton,all-cavs,100,100,3,240,0.25,0.20,0.07,7749536,56.36,691280,9,,,,Corrected 11-frame probe; explicit singleton.
-EdgeCooper singleton d200 r35 m3 g240,41,singleton,all-cavs,35,200,3,240,0.32,0.26,0.10,26306336,51.33,654256,9,,,,Full 41-frame probe; only +0.42 Mbps over 60ms reference.
+EdgeCooper singleton d200 r35 m3 g240,41,singleton,all-cavs,35,200,3,240,0.32,0.26,0.10,26306336,51.33,654256,9,68/68,25.926,53.000,54.000,Full 41-frame probe; only +0.42 Mbps over 60ms reference; frame 000060 NS3-deliverable.
 EdgeCooper singleton d100 r60 m3 g240,41,singleton,all-cavs,60,100,3,240,0.27,0.21,0.08,27890944,54.42,695264,9,,,,Full 41-frame corrected probe.
 EdgeCooper singleton d100 r100 m3 g240,41,singleton,all-cavs,100,100,3,240,0.25,0.19,0.07,28530400,55.67,691280,9,73/73,26.877,53.000,55.000,Highest corrected payload probe; NS3-deliverable but lower AP.

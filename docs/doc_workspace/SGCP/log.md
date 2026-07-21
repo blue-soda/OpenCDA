@@ -7577,5 +7577,6 @@ Artifact：`docs/doc_workspace/SGCP/artifacts/edgecooper_singleton_budget_202607
 
 - 11 帧：AP `0.32/0.26/0.09`，`6,822,688 bytes / 49.62 Mbps`，与 `35m/100ms` 完全一致；frame `000060` 为 `654,256 bytes / 9 links`。
 - 41 帧：AP `0.32/0.26/0.10`，`26,306,336 bytes / 51.33 Mbps`，仅比 60ms reference `50.91 Mbps` 高约 `0.42 Mbps`。
+- 追加 NS3 frame `000060` 回放：upload plan 为 `9 links / 68 chunks / 654,256 bytes`；40MHz/10 target subchannels high-capacity 正式参数下 application callback `68/68`，RLC TX/RX `68/68` request-level complete，PHY failures `0`，delay mean/P95/max `25.926/53.000/54.000 ms`，满足 60ms 通信窗口。
 
 结论：在 35m 通信候选范围内，EdgeCooper 原版 greedy schedule 基本已经被候选链路和 endpoint-disjoint matching 限制，继续增加 admission deadline 到 200ms 不会显著增加通信量。若目标只是提高通信量，需要扩大候选 range；但此前 `100m/100ms` 虽达 `55.67 Mbps` 且 NS3 可交付，AP 降到 `0.25/0.19/0.07`，不适合作为更强 baseline。

@@ -20,7 +20,7 @@ version:
 | Reference greedy constrained | 41 | 35 m | 60 ms | 0.32 | 0.26 | 0.10 | 50.91 | 68/68, max 54 ms |
 | Corrected greedy d100 r35 m3 g240 | 11 | 35 m | 100 ms | 0.32 | 0.26 | 0.09 | 49.62 | not replayed |
 | Corrected greedy d200 r35 m3 g240 | 11 | 35 m | 200 ms | 0.32 | 0.26 | 0.09 | 49.62 | not replayed |
-| Corrected greedy d200 r35 m3 g240 | 41 | 35 m | 200 ms | 0.32 | 0.26 | 0.10 | 51.33 | not replayed |
+| Corrected greedy d200 r35 m3 g240 | 41 | 35 m | 200 ms | 0.32 | 0.26 | 0.10 | 51.33 | 68/68, max 54 ms |
 | Corrected greedy d100 r60 m3 g240 | 11 | 60 m | 100 ms | 0.28 | 0.23 | 0.07 | 53.41 | not replayed |
 | Corrected greedy d100 r100 m3 g240 | 11 | 100 m | 100 ms | 0.25 | 0.20 | 0.07 | 56.36 | not replayed |
 | Corrected greedy d100 r60 m3 g240 | 41 | 60 m | 100 ms | 0.27 | 0.21 | 0.08 | 54.42 | not replayed |
@@ -37,10 +37,20 @@ run, `r100/d100` reaches `55.67 Mbps` and remains NS3-deliverable for frame
 The `35 m / 200 ms` probe confirms that the 35 m setting is candidate/matching
 limited rather than deadline limited: the 11-frame result is identical to
 `35 m / 100 ms`, and the 41-frame payload only rises from `50.91` to
-`51.33 Mbps`. The higher-range communication points reduce AP compared with
-the 60 ms reference. Therefore they are useful as diagnostics showing that
+`51.33 Mbps`. Frame `000060` is also NS3-deliverable under the paper-facing
+40 MHz/10-target-subchannel parameters with `68/68` callbacks and delay
+mean/P95/max `25.926/53.000/54.000 ms`. The higher-range communication points
+reduce AP compared with the 60 ms reference. Therefore they are useful as diagnostics showing that
 simply giving EdgeCooper more candidate range/budget does not improve aggregate
 AP in this scene. The paper-facing constrained EdgeCooper row can remain the
 original greedy `0.32/0.26/0.10, 50.91 Mbps` row unless the paper needs a
 traffic-only diagnostic; in that case use `r100/d100` as `0.25/0.19/0.07,
 55.67 Mbps`, not as a better perception baseline.
+
+## 35m / 200ms NS3 Replay
+
+The additional replay artifact is stored in
+`edgecooper_singleton_d200_r35_m3g240_ns3_frame000060/`. It is generated from
+the corrected singleton trace rather than the legacy `offline_ns3_replay`
+selective path, because that CLI path still defaults to coalition clustering.
+The upload plan contains `9` V2V links, `68` chunks, and `654,256` bytes.
