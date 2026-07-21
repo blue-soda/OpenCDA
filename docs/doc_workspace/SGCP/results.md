@@ -1368,3 +1368,23 @@ NS3 replay:
 | High MCS/symbols | MCS28, symbols12, PSCCH10, RRI5 | 0 | 82 | 82 | 898.91 | 27.18 / 54 / 55 |
 
 Interpretation: the unified NS3 estimator is now experimentally calibrated for the current default. Increasing MCS and PSSCH symbols is a viable high-capacity diagnostic and can bring the same SGCP chunked replay under a 100 ms cycle; changing PSCCH/RRI requires more careful pool-window redesign.
+
+## Paper-facing 40 MHz / 10-subchannel NS3 replay - 2026-07-21
+
+Formal experiment setting for subsequent SGCP tables:
+
+- Perception cycle: `100 ms`.
+- Communication deadline inside each cycle: `60 ms`.
+- Configured sidelink bandwidth: `40 MHz`.
+- OpenCDA-visible target subchannels: `10`.
+- NS3 parameters: `--slBandwidthIn100kHz=400 --targetSubchannels=10 --slSubchannelSize=10 --slMcs=28 --slSymbolsPerSlot=12`.
+
+`slSubchannelSize=11` is not valid in the NS3 NR sidelink resource pool, so the executable setting uses `10 PRBs`. NS3 reports `targetSubchannels=10 totalSubChannel=11 bandwidthIn100kHz=400 slSubchannelSize=10`; OpenCDA still exposes only subchannels `0..9` to the scheduler.
+
+Artifact: `docs/doc_workspace/SGCP/artifacts/ns3_40mhz_10ch_deadline_20260721/`
+
+| Method / plan | CAM chunks | Bytes | Callback delivery | Avg delay (ms) | P95 delay (ms) | Max delay (ms) | PHY failures | Mean grant bytes | Note |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | --- |
+| SGCP-PAPG frame `000060`, 10KB chunked | 82 | 783,392 | 82/82 | 27.18 | 54.00 | 55.00 | 0 | 898.91 | Satisfies the 60 ms communication deadline. |
+
+Estimated service rate from observed grant size: `898.91 bytes / 0.5 ms = 14.38 Mbps` per target subchannel, about `143.83 Mbps` across 10 target subchannels. This is an NS3 scheduler/service-rate estimate, not a Shannon-capacity statement.

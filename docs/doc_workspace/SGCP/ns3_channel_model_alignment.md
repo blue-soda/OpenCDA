@@ -2,6 +2,28 @@
 
 Last updated: 2026-07-21
 
+## Paper-Facing Channel Configuration
+
+Use the following configuration for subsequent paper-facing SGCP/PCS/EdgeCooper
+experiments unless a sensitivity figure explicitly states otherwise:
+
+- Perception cycle: `100 ms`.
+- Communication deadline inside each cycle: `60 ms`.
+- Configured sidelink bandwidth: `40 MHz`.
+- OpenCDA-visible target subchannels: `10`.
+- NS3 sidelink BWP argument: `--slBandwidthIn100kHz=400`.
+- NS3 sidelink subchannel size: `--slSubchannelSize=10`.
+- NS3 scheduler setting: `--slMcs=28 --slSymbolsPerSlot=12`.
+
+Important NS3 detail: `--slSubchannelSize=11` would make the arithmetic
+`40 MHz / 10` mapping look cleaner, but it is invalid in the NR sidelink
+resource-pool factory. Valid subchannel PRB sizes are `10`, `15`, `20`, `25`,
+`50`, `75`, and `100`. Therefore the executable paper-facing setting is
+`40 MHz / 10 target subchannels / 10 PRBs`, with NS3 reporting
+`totalSubChannel=11`. OpenCDA still exposes and schedules only subchannels
+`0..9`; the extra NS3 subchannel is a guard/resource-pool artifact, not an
+additional scheduler budget.
+
 ## Problem
 
 The scheduler baselines previously used mixed channel assumptions:
@@ -78,8 +100,22 @@ The paper-facing claim should not say "40 MHz cannot carry 60 Mbps" as a pure Sh
 
 > Under the current NR sidelink Mode-2 configuration, application-layer raw-LiDAR bursts are limited by TB size and grant cadence; 60 Mbps raw payload can exceed a 100 ms cooperative perception cycle unless the scheduler payload, chunking, and NS3 sidelink parameters are jointly calibrated.
 
-Next experiment should run three aligned modes:
+The 2026-07-21 SGCP single-frame chunked replay under the paper-facing setting
+completed within the 60 ms communication window:
+
+- NS3 setup line:
+  `targetSubchannels=10 totalSubChannel=11 bandwidthIn100kHz=400 slSubchannelSize=10`.
+- Replay plan: frame `000060`, `82` chunked requests, `783,392` raw-LiDAR bytes.
+- Application callbacks: `82/82`.
+- Delay mean/P95/max: `27.18 / 54.00 / 55.00 ms`.
+- PHY decode failures: `0`.
+- Mean manual grant payload: `898.91 bytes` per subchannel opportunity.
+- Estimated service rate: about `14.38 Mbps` per target subchannel, or
+  `143.83 Mbps` across 10 target subchannels.
+
+Remaining aligned modes for broader regression:
 
 - `logical`: old paper-table estimator for reproducibility.
 - `ns3-default`: `tb_size=400B`, `slot=0.5ms`, matching 2026-07-21 logs.
-- `ns3-high-capacity`: explicit NS3 settings with higher MCS/symbols or smaller subchannel PRBs, followed by real chunked single-round timing.
+- `paper-facing-ns3`: `40 MHz`, `10` target subchannels, `MCS=28`,
+  `symbolsPerSlot=12`, and `60 ms` communication deadline.

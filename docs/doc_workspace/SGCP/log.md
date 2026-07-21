@@ -7452,3 +7452,19 @@ NS3：
 - 默认 NS3 的真实服务率与 `ChannelModel(ns3, tb=400B, slot=0.5ms)` 对齐。
 - 提高 MCS/symbols 可以显著增加有效 TB size，使同一 SGCP raw-LiDAR chunk replay 进入 100 ms deadline。
 - 不能简单通过降低 PSCCH RB 或 RRI 增容；这需要同步修改 resource pool/window 约束并重新验证。
+
+# 2026-07-21 Paper-facing 40MHz/10ch/60ms NS3 replay
+
+用户确认后续希望采用适合写入论文参数表的整数配置，并强调每帧总周期 `100 ms` 中通信 max 最好控制在 `60 ms` 内，为调度、推理/融合和系统开销保留约 `40 ms`。
+
+本轮结论：
+
+- 正式论文信道口径收束为 `40 MHz` configured sidelink bandwidth、`10` OpenCDA-visible target subchannels、`100 ms` perception cycle、`60 ms` communication deadline。
+- 尝试 `--slSubchannelSize=11` 失败：NS3 NR sidelink resource pool 报 `Invalid subchannel size in RBs : 11`。合法 PRB 枚举为 `10/15/20/25/50/75/100`。
+- 因此采用可执行正式参数：`--slBandwidthIn100kHz=400 --targetSubchannels=10 --slSubchannelSize=10 --slMcs=28 --slSymbolsPerSlot=12`。NS3 报告 `targetSubchannels=10 totalSubChannel=11 bandwidthIn100kHz=400 slSubchannelSize=10`，OpenCDA 仍只使用 `0..9` 十个目标子信道。
+- SGCP-PAPG frame `000060`、10KB chunked upload plan：82 requests / 783,392 bytes，application callback `82/82`，delay mean/P95/max `27.18/54.00/55.00 ms`，PHY failures `0`，满足 60ms 通信窗口。
+- 观测到 mean manual grant `898.91 bytes`，对应约 `14.38 Mbps` per target subchannel、`143.83 Mbps` across 10 target subchannels。该值是 NS3 scheduler/service-rate 估计，不是 Shannon capacity。
+
+Artifact：`docs/doc_workspace/SGCP/artifacts/ns3_40mhz_10ch_deadline_20260721/`。
+
+后续执行要求：正式 41 帧 AP/表格重跑必须显式记录 `bandwidth_mhz=40`、`num_channels=10`、`channel_estimator=ns3`、`ns3_tb_size_bytes≈899`、`ns3_slot_duration_ms=0.5`、`ns3_subchannel_prbs=10`、`ns3_symbols_per_slot=12`、`ns3_mcs=28`、`communication_deadline_ms=60`。
