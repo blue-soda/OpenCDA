@@ -1457,9 +1457,11 @@ Artifact: `docs/doc_workspace/SGCP/artifacts/edgecooper_singleton_budget_2026072
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
 | EdgeCooper greedy constrained reference | 41 | 35 m | 60 ms | 0.32 | 0.26 | 0.10 | 50.91 | 68/68 | 25.90 / - / 54.00 |
 | Corrected greedy d100 r35 m3 g240 | 11 | 35 m | 100 ms | 0.32 | 0.26 | 0.09 | 49.62 | not replayed | - |
+| Corrected greedy d200 r35 m3 g240 | 11 | 35 m | 200 ms | 0.32 | 0.26 | 0.09 | 49.62 | not replayed | same as d100 |
+| Corrected greedy d200 r35 m3 g240 | 41 | 35 m | 200 ms | 0.32 | 0.26 | 0.10 | 51.33 | not replayed | candidate/matching-limited |
 | Corrected greedy d100 r60 m3 g240 | 11 | 60 m | 100 ms | 0.28 | 0.23 | 0.07 | 53.41 | not replayed | - |
 | Corrected greedy d100 r100 m3 g240 | 11 | 100 m | 100 ms | 0.25 | 0.20 | 0.07 | 56.36 | not replayed | - |
 | Corrected greedy d100 r60 m3 g240 | 41 | 60 m | 100 ms | 0.27 | 0.21 | 0.08 | 54.42 | not replayed | - |
 | Corrected greedy d100 r100 m3 g240 | 41 | 100 m | 100 ms | 0.25 | 0.19 | 0.07 | 55.67 | 73/73 | 26.877 / 53.000 / 55.000 |
 
-结论：对齐 singleton 后，通信量反常下降的问题消失；`r100/d100` 41 帧可达 `55.67 Mbps`，并且 frame `000060` 真实 NS3 replay 满足 60ms max delay。但 AP 降至 `0.25/0.19/0.07`，低于 60ms constrained reference，因此不适合作为更强感知 baseline，只能作为“增加 EdgeCooper 通信并不改善 AP”的诊断点。
+结论：对齐 singleton 后，通信量反常下降的问题消失；`r100/d100` 41 帧可达 `55.67 Mbps`，并且 frame `000060` 真实 NS3 replay 满足 60ms max delay。`35m/200ms` 仅为 `51.33 Mbps`，说明 35m 设置主要受候选链路/greedy matching 限制，不受 deadline 限制。但高通信点 AP 降至 `0.25/0.19/0.07`，低于 60ms constrained reference，因此不适合作为更强感知 baseline，只能作为“增加 EdgeCooper 通信并不改善 AP”的诊断点。

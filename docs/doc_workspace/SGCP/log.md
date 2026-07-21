@@ -7566,3 +7566,16 @@ Corrected 41-frame probe：
 结论：对齐 singleton 后，通信量反常下降问题消失；增加 range/admission budget 可把原版 greedy EdgeCooper 提到约 `55.67 Mbps` 且仍满足 60ms NS3 窗口。但 AP 明显低于原 60ms constrained reference `0.32/0.26/0.10, 50.91 Mbps`，因此该高通信点只能作为诊断，不适合作为更强感知 baseline。
 
 Artifact：`docs/doc_workspace/SGCP/artifacts/edgecooper_singleton_budget_20260722/`。
+
+# 2026-07-22 EdgeCooper 35m/200ms singleton probe
+
+用户要求尝试 `35m / 200ms` 配置。
+
+执行口径保持 corrected protocol-native EdgeCooper：`--clustering singleton --sgcp-receiver-policy all-cavs`，原版 greedy endpoint-disjoint link selection，attentive detector，no late fusion，`40 MHz / 10 target subchannels`，只把 `--selective-frame-deadline-ms` 从 `100` 增至 `200`，range 固定 `35m`。
+
+结果：
+
+- 11 帧：AP `0.32/0.26/0.09`，`6,822,688 bytes / 49.62 Mbps`，与 `35m/100ms` 完全一致；frame `000060` 为 `654,256 bytes / 9 links`。
+- 41 帧：AP `0.32/0.26/0.10`，`26,306,336 bytes / 51.33 Mbps`，仅比 60ms reference `50.91 Mbps` 高约 `0.42 Mbps`。
+
+结论：在 35m 通信候选范围内，EdgeCooper 原版 greedy schedule 基本已经被候选链路和 endpoint-disjoint matching 限制，继续增加 admission deadline 到 200ms 不会显著增加通信量。若目标只是提高通信量，需要扩大候选 range；但此前 `100m/100ms` 虽达 `55.67 Mbps` 且 NS3 可交付，AP 降到 `0.25/0.19/0.07`，不适合作为更强 baseline。
