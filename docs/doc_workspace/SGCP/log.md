@@ -7580,3 +7580,35 @@ Artifact：`docs/doc_workspace/SGCP/artifacts/edgecooper_singleton_budget_202607
 - 追加 NS3 frame `000060` 回放：upload plan 为 `9 links / 68 chunks / 654,256 bytes`；40MHz/10 target subchannels high-capacity 正式参数下 application callback `68/68`，RLC TX/RX `68/68` request-level complete，PHY failures `0`，delay mean/P95/max `25.926/53.000/54.000 ms`，满足 60ms 通信窗口。
 
 结论：在 35m 通信候选范围内，EdgeCooper 原版 greedy schedule 基本已经被候选链路和 endpoint-disjoint matching 限制，继续增加 admission deadline 到 200ms 不会显著增加通信量。若目标只是提高通信量，需要扩大候选 range；但此前 `100m/100ms` 虽达 `55.67 Mbps` 且 NS3 可交付，AP 降到 `0.25/0.19/0.07`，不适合作为更强 baseline。
+
+# 2026-07-22 Experiment package protocol audit
+
+目标：按照当前正式协议 `40 MHz / 10 target subchannels / 100 ms perception cycle / 60 ms communication deadline`，检查外部 INFOCOM 实验目录中除 Table1 以外的表格和图是否还需要更新/重跑。
+
+执行内容：
+
+- 扫描 `C:\Workspace\2026-7-papers\infocom\SGCP\experiment\data` 中所有 CSV 的 `checkpoint`、`bandwidth_mhz`、`num_channels`、`communication_deadline_ms`、`late_fusion`、`clustering`、`resource_allocation`、`raw_lidar_mbps`、`box_mbps`、`total_mbps`、`mbps` 字段。
+- 发现除 40MHz Table1 addendum、SGCP low-budget 和 EdgeCooper budget probe 外，Table A、Table2/3/4/4b/5/6、Figure1-8 的源数据大多仍是 `20 MHz / 10 ch / 100 ms` attentive scaffold。
+- 修正 `table2_fusion_scaffold_attentive.csv` 中 `PureLate_attentive` 的协议字段为 `prediction_nms + singleton + local_detection + box`。
+- 修正 `table5_clustering_ablation_attentive_20260720.csv` 中 Dynamic SGCP coalition 的通信量：`62.536336 raw + 0.741276 box = 63.277612 Mbps`。
+- 重跑 `build_experiment_figures.py`，刷新外部实验目录 figures。
+- 删除误导性的粗糙审计 CSV `data/experiment_consistency_audit_20260722.csv`，新增 `protocol_consistency_audit_20260722.md`。
+- 重生成外部实验包 `MANIFEST.csv`。
+- 更新外部 `README.md`、`protocol_matrix.md`、`table_guidance.md`、`experiment_update_summary.md`、table registry 和 figure registry，将 20260720 图表降级为 legacy 20MHz scaffold 或需重跑。
+
+静态一致性检查结果：
+
+- 所有同时含 `raw_lidar_mbps`、`box_mbps`、`total_mbps`、`mbps` 的结果 CSV 均满足 `mbps = total_mbps = raw_lidar_mbps + box_mbps`。
+- 所有 `prediction_nms` / `inter_cluster_nms` / `global_box_nms` 行均有 box communication accounting 或明确 identity/no-box 解释；不再存在 `missing_trace` 造成的 late-fusion 通信漏算。
+
+后续必须重跑：
+
+- Table 3 / Figure 4 scheduler comparison。
+- Table 2 / Figure 3 fusion ablation。
+- Table 5 / Figure 7 clustering ablation。
+- Table 4 / 4b / Figure 5 sensitivity。
+- Table 6 / Figure 8 global box aggregation。
+- Table A / Figures 1-2 combined/Pareto。
+- Figure 6 bootstrap uncertainty。
+
+OpenCDA 侧新增审计摘要：`docs/doc_workspace/SGCP/experiment_protocol_consistency_audit_20260722.md`。P12 已写入 `target.md`。

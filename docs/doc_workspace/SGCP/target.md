@@ -259,3 +259,30 @@
 - [ ] 每轮优先推进 P0-P4；只有主图表证据稳定后再扩展 P5-P8。
 - [ ] 每次实验前写入 `log.md`，实验后更新 `results.md` / `status.md`。
 - [ ] 代码或论文修改完成并验证后及时 git commit；不得提交无关脏文件。
+
+## P12：2026-07-22 非 Table1 图表 current-protocol 重跑
+
+目的：按照当前正式协议 `40 MHz / 10 target subchannels / 100 ms perception cycle / 60 ms communication deadline`，检查并刷新除 Table1 外的所有表格和图，确保实验目录结果正确、合规且互相不矛盾。
+
+当前审计结论：
+
+- [x] 已盘点 `C:\Workspace\2026-7-papers\infocom\SGCP\experiment` 中所有非 Table1 表格和 Figure 1-8 的数据源、协议字段和通信 accounting。
+- [x] 已修正无需重跑即可修复的标注/通信量问题：Table2 PureLate 协议字段、Table5 Dynamic SGCP late-box 通信量、EdgeCooper 35m/200ms NS3 验证记录。
+- [x] 已删除误导性的粗糙 audit CSV，并新增 `protocol_consistency_audit_20260722.md`；OpenCDA 侧镜像摘要为 `experiment_protocol_consistency_audit_20260722.md`。
+- [x] 已将外部实验包 registry 中 20260720 的 Table A/Table2/Table3/Table4/Table4b/Table5/Table6/Bootstrap 与 Figure1-8 降级为 legacy 20MHz scaffold 或需重跑。
+
+必须重跑并刷新：
+
+- [ ] Table 3 / Figure 4：SGCP-compatible scheduler comparison，所有行使用当前 40MHz/10ch/60ms NS3-calibrated estimator。
+- [ ] Table 2 / Figure 3：fusion scaffold ablation，至少包含 Head-only、Pure late、Clustered early-only、Full SGCP、Full 20-CAV early reference。
+- [ ] Table 5 / Figure 7：clustering ablation，保持 PAPG + inter-cluster NMS，只替换 clustering。
+- [ ] Table 4 / Table 4b / Figure 5：rho/channel/Nmax sensitivity；若部分参数已不适合 40MHz 口径，明确转为 appendix legacy diagnostic。
+- [ ] Table 6 / Figure 8：global box aggregation normalized baselines。
+- [ ] Table A / Figures 1-2：只在上述组件表稳定后重新合成。
+- [ ] Figure 6：bootstrap uncertainty，等待最终 current-protocol 行冻结后重算。
+
+验收标准：
+
+- [ ] 每张表和图的 caption/source registry 必须明确 `checkpoint`、`bandwidth_mhz`、`num_channels`、`communication_deadline_ms`、`late_fusion`、`clustering`、`resource_allocation`。
+- [ ] 所有通信量统一满足 `mbps = total_mbps = raw_lidar_mbps + box_mbps`；late/global/prediction sharing 行必须计入检测框通信量。
+- [ ] 任何 20MHz legacy 图表若保留，必须明确标注为 legacy scaffold diagnostic，不能与 current-protocol 主文结果混用。

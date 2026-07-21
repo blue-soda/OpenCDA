@@ -1458,10 +1458,25 @@ Artifact: `docs/doc_workspace/SGCP/artifacts/edgecooper_singleton_budget_2026072
 | EdgeCooper greedy constrained reference | 41 | 35 m | 60 ms | 0.32 | 0.26 | 0.10 | 50.91 | 68/68 | 25.90 / - / 54.00 |
 | Corrected greedy d100 r35 m3 g240 | 11 | 35 m | 100 ms | 0.32 | 0.26 | 0.09 | 49.62 | not replayed | - |
 | Corrected greedy d200 r35 m3 g240 | 11 | 35 m | 200 ms | 0.32 | 0.26 | 0.09 | 49.62 | not replayed | same as d100 |
-| Corrected greedy d200 r35 m3 g240 | 41 | 35 m | 200 ms | 0.32 | 0.26 | 0.10 | 51.33 | not replayed | candidate/matching-limited |
+| Corrected greedy d200 r35 m3 g240 | 41 | 35 m | 200 ms | 0.32 | 0.26 | 0.10 | 51.33 | 68/68 | 25.926 / 53.000 / 54.000 |
 | Corrected greedy d100 r60 m3 g240 | 11 | 60 m | 100 ms | 0.28 | 0.23 | 0.07 | 53.41 | not replayed | - |
 | Corrected greedy d100 r100 m3 g240 | 11 | 100 m | 100 ms | 0.25 | 0.20 | 0.07 | 56.36 | not replayed | - |
 | Corrected greedy d100 r60 m3 g240 | 41 | 60 m | 100 ms | 0.27 | 0.21 | 0.08 | 54.42 | not replayed | - |
 | Corrected greedy d100 r100 m3 g240 | 41 | 100 m | 100 ms | 0.25 | 0.19 | 0.07 | 55.67 | 73/73 | 26.877 / 53.000 / 55.000 |
 
-结论：对齐 singleton 后，通信量反常下降的问题消失；`r100/d100` 41 帧可达 `55.67 Mbps`，并且 frame `000060` 真实 NS3 replay 满足 60ms max delay。`35m/200ms` 仅为 `51.33 Mbps`，说明 35m 设置主要受候选链路/greedy matching 限制，不受 deadline 限制。但高通信点 AP 降至 `0.25/0.19/0.07`，低于 60ms constrained reference，因此不适合作为更强感知 baseline，只能作为“增加 EdgeCooper 通信并不改善 AP”的诊断点。
+结论：对齐 singleton 后，通信量反常下降的问题消失；`r100/d100` 41 帧可达 `55.67 Mbps`，并且 frame `000060` 真实 NS3 replay 满足 60ms max delay。`35m/200ms` 也已补 NS3 replay：`68/68` callbacks，delay mean/P95/max `25.926/53.000/54.000 ms`，PHY failures `0`。该配置仅为 `51.33 Mbps`，说明 35m 设置主要受候选链路/greedy matching 限制，不受 deadline 限制。但高通信点 AP 降至 `0.25/0.19/0.07`，低于 60ms constrained reference，因此不适合作为更强感知 baseline，只能作为“增加 EdgeCooper 通信并不改善 AP”的诊断点。
+
+## INFOCOM Experiment Package Protocol Audit - 2026-07-22
+
+外部实验包：`C:\Workspace\2026-7-papers\infocom\SGCP\experiment`
+
+当前正式协议：attentive checkpoint，`40 MHz / 10 target subchannels / 100 ms perception cycle / 60 ms communication deadline`，NS3-calibrated estimator `tb_size=899 bytes, slot=0.5 ms, subchannel_prbs=10, MCS=28, PSSCH symbols=12`。
+
+本轮静态审计结论：
+
+- 除 Table1 40MHz addendum、SGCP low-budget、EdgeCooper singleton budget probe 与 NS3 frame-level feasibility artifacts 外，外部实验包中 20260720 的 Table A、Table2/3/4/4b/5/6 与 Figure1-8 大多仍是 `20 MHz / 10 ch / 100 ms` attentive scaffold。
+- 这些 legacy scaffold 结果可用于机制诊断和写作结构参考，但不能写成当前 40MHz/60ms 协议下的最终图表。
+- 已修正 Table2 PureLate 协议字段与 Table5 Dynamic SGCP late-box 通信漏算；所有结果 CSV 中 `mbps = total_mbps = raw_lidar_mbps + box_mbps` 的静态检查通过，late-fusion 行不再存在 `missing_trace` 通信漏算。
+- 外部实验包新增 `protocol_consistency_audit_20260722.md`，OpenCDA 镜像为 `experiment_protocol_consistency_audit_20260722.md`。
+
+后续重跑顺序：Table3/Figure4 scheduler comparison -> Table2/Figure3 fusion ablation -> Table5/Figure7 clustering ablation -> Table4/4b/Figure5 sensitivity -> Table6/Figure8 global box aggregation -> TableA/Figures1-2 combined summaries -> Figure6 bootstrap。
