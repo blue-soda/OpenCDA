@@ -7690,3 +7690,36 @@ OpenCDA 侧新增审计摘要：`docs/doc_workspace/SGCP/experiment_protocol_con
 | Full SGCP current-protocol | 0.64 | 0.60 | 0.25 | 37.05 |
 
 判断：该 Table2/Figure3 也是 diagnostic。Pure late prediction-sharing reference 在低 box payload 下强于 strict-budget Full SGCP，说明当前 60ms PAPG default 不适合直接作为论文主文 fusion ablation。下一步要么恢复/设计 paper-facing PAPG operating point，要么把 strict-budget Table2/Table3 写成 appendix feasibility diagnostic。
+
+# 2026-07-22 Table5 current-protocol diagnostic result
+
+执行内容：在 `docs/doc_workspace/SGCP/artifacts/table5_current_protocol_20260722/` 下重跑 5 个 clustering-only variants：
+
+- `random_balanced`
+- `distance_greedy`
+- `density_greedy_cluster`
+- `mobility_stability_greedy`
+- `fixed_first_frame`
+
+共同协议：attentive checkpoint，PAPG scheduler，inter-cluster box NMS，`40 MHz / 10 target subchannels / 60 ms communication deadline`，NS3 estimator `tb_size=899 bytes`、`slot=0.5 ms`、`subchannel_prbs=10`、`MCS=28`、`PSSCH symbols=12`。Pure late、Dynamic coalition 和 All-in-one reference 分别复用 Table2/Table3 current-protocol artifacts。
+
+新增生成脚本：`docs/doc_workspace/SGCP/artifacts/table5_current_protocol_20260722/build_table5_current_protocol.py`。它生成：
+
+- OpenCDA artifact CSV：`table5_clustering_ablation_current_protocol_20260722.csv`
+- 外部实验目录 CSV：`C:\Workspace\2026-7-papers\infocom\SGCP\experiment\data\table5_clustering_ablation_current_protocol_20260722.csv`
+- 外部 Figure7：`figure7_clustering_ablation_current_protocol_20260722.png/.pdf`
+
+结果：
+
+| Variant | AP@0.3 | AP@0.5 | AP@0.7 | Total Mbps |
+| --- | ---: | ---: | ---: | ---: |
+| Singleton pure late reference | 0.82 | 0.76 | 0.37 | 0.74 |
+| Random balanced clusters | 0.52 | 0.47 | 0.24 | 31.16 |
+| Distance-greedy clusters | 0.55 | 0.53 | 0.31 | 31.25 |
+| Mobility-stability greedy clusters | 0.60 | 0.54 | 0.27 | 31.22 |
+| Density/quality-greedy clusters | 0.62 | 0.56 | 0.36 | 31.24 |
+| Fixed first-frame clusters | 0.63 | 0.56 | 0.22 | 37.11 |
+| Dynamic coalition clusters (SGCP) | 0.64 | 0.60 | 0.25 | 37.05 |
+| All-in-one full raw sharing | 0.85 | 0.83 | 0.48 | 118.71 |
+
+判断：current-protocol Table5 能说明 dynamic coalition 在 AP@0.5 上仍优于 fixed/heuristic clustering，但优势较小，且 AP@0.7 不占优。结合 Pure late reference，该表仍是 diagnostic；最终论文分簇消融需要在 PAPG operating point / strict 60ms budget 叙事确定后再冻结。

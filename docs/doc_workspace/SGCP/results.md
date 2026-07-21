@@ -1524,3 +1524,27 @@ Artifact: `docs/doc_workspace/SGCP/artifacts/table2_current_protocol_20260722/`
 | Full SGCP current-protocol | 0.64 | 0.60 | 0.25 | 36.69 | 0.36 | 37.05 |
 
 结论：该 current-protocol Table2 是重要风险诊断，而不是可直接写入主文的最终 fusion ablation。Pure late prediction-sharing reference 在低通信量下明显强于严格 60ms PAPG default；Clustered early-only 与 Full SGCP 的 AP 都被 raw-LiDAR budget 大幅压低。后续必须与 Table3 一起决定新的 PAPG operating point、是否把 60ms strict default 转为 appendix diagnostic，或如何重新界定 pure-late reference。
+
+## Table5 Current-Protocol Diagnostic Rerun - 2026-07-22
+
+Artifact: `docs/doc_workspace/SGCP/artifacts/table5_current_protocol_20260722/`
+
+外部实验包输出：
+
+- `C:\Workspace\2026-7-papers\infocom\SGCP\experiment\data\table5_clustering_ablation_current_protocol_20260722.csv`
+- `C:\Workspace\2026-7-papers\infocom\SGCP\experiment\figures\figure7_clustering_ablation_current_protocol_20260722.png/.pdf`
+
+协议：attentive checkpoint，PAPG scheduler，inter-cluster NMS，`40 MHz / 10 target subchannels / 60 ms communication deadline`，NS3-calibrated estimator `tb_size=899 bytes, slot=0.5 ms, subchannel_prbs=10, MCS=28, PSSCH symbols=12`。表内 pure late 与 all-in-one 行为 reference，不是 clustering baseline。
+
+| Variant | AP@0.3 | AP@0.5 | AP@0.7 | Total Mbps |
+| --- | ---: | ---: | ---: | ---: |
+| Singleton pure late reference | 0.82 | 0.76 | 0.37 | 0.74 |
+| Random balanced clusters | 0.52 | 0.47 | 0.24 | 31.16 |
+| Distance-greedy clusters | 0.55 | 0.53 | 0.31 | 31.25 |
+| Mobility-stability greedy clusters | 0.60 | 0.54 | 0.27 | 31.22 |
+| Density/quality-greedy clusters | 0.62 | 0.56 | 0.36 | 31.24 |
+| Fixed first-frame clusters | 0.63 | 0.56 | 0.22 | 37.11 |
+| Dynamic coalition clusters (SGCP) | 0.64 | 0.60 | 0.25 | 37.05 |
+| All-in-one full raw sharing | 0.85 | 0.83 | 0.48 | 118.71 |
+
+结论：current-protocol Table5 仍显示 dynamic coalition 在 AP@0.5 上领先 fixed/heuristic clustering，但优势被 strict 60ms budget 压缩；AP@0.7 甚至低于 density-greedy。与 Table2/Table3 一致，该表只能作为诊断，不能作为最终论文分簇消融，除非后续确定新的 PAPG operating point 或改写为 strict-budget appendix。

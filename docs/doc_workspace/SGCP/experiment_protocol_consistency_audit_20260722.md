@@ -57,7 +57,13 @@ budget probe 和 NS3 frame-level feasibility artifacts 外，外部实验包中�
    `0.82/0.76/0.37, 0.74 Mbps`，强于 Full SGCP strict-budget default
    `0.64/0.60/0.25, 37.05 Mbps`；因此只能作为 diagnostic，不能作为
    paper-facing final fusion ablation。
-3. Table 5 / Figure 7：clustering ablation。
+3. Table 5 / Figure 7：clustering ablation。2026-07-22 已新增
+   current-protocol diagnostic rerun：
+   `data/table5_clustering_ablation_current_protocol_20260722.csv` 和
+   `figures/figure7_clustering_ablation_current_protocol_20260722.*`。
+   Dynamic coalition 为 `0.64/0.60/0.25, 37.05 Mbps`，只小幅领先
+   fixed/density/mobility/random，并且 Pure late reference 仍为
+   `0.82/0.76/0.37, 0.74 Mbps`；因此只能作为 diagnostic。
 4. Table 4 / Table 4b / Figure 5：parameter 与 Nmax sensitivity。
 5. Table 6 / Figure 8：global box aggregation normalized baselines。
 6. Table A / Figures 1-2：combined scaffold/Pareto summaries。
