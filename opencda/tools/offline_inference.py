@@ -635,15 +635,23 @@ def run_pcs_rounds_with_deadline(allocator, world, max_rounds=1,
                     break
 
         merge_grid_selection(union_grid_selection, round_selection)
+        selected_links = set()
+        for receiver_id, sender_grids in round_selection.items():
+            for sender_id, grid_ids in sender_grids.items():
+                if grid_ids:
+                    selected_links.add((int(sender_id), int(receiver_id)))
         for link, start_idx in getattr(allocator, 'resource_strategy',
                                        {}).items():
-            union_strategy[(int(link[0]), int(link[1]))] = start_idx
+            normalized_link = (int(link[0]), int(link[1]))
+            if normalized_link in selected_links:
+                union_strategy[normalized_link] = start_idx
         for link, sc_num in getattr(allocator, 'resource_sc_nums',
                                     {}).items():
             normalized_link = (int(link[0]), int(link[1]))
-            union_sc_nums[normalized_link] = max(
-                int(sc_num),
-                int(union_sc_nums.get(normalized_link, 1)))
+            if normalized_link in selected_links:
+                union_sc_nums[normalized_link] = max(
+                    int(sc_num),
+                    int(union_sc_nums.get(normalized_link, 1)))
         for receiver_id, sender_grids in round_selection.items():
             excluded_receiver_grids.setdefault(receiver_id, set())
             for grid_ids in sender_grids.values():

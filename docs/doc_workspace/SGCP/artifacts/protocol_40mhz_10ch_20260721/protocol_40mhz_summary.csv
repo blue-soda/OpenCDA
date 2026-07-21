@@ -1,0 +1,4 @@
+method,protocol,ap_03,ap_05,ap_07,raw_mbps,offline_frame_time_mean_ms,offline_frame_time_max_ms,ns3_planned_requests,ns3_callback_received,ns3_delivery_ratio,ns3_avg_delay_ms,ns3_max_delay_ms,notes
+FullPerception-PCS,singleton receivers; no late fusion; one PCS round,0.23,0.17,0.06,53.551485,43.928701,44.351502,77,77,1.000000,25.714286,54.000000,Deliverable within 60ms communication deadline.
+EdgeCooper V2V protocol adaptation,singleton receivers; no late fusion; global V2V sender selection,0.54,0.48,0.25,275.937186,9.591810,12.918354,348,15,0.043103,127.866667,215.000000,Offline AP is high but concurrent V2V replay overloads NS3.
+FullPerception-PCS repeated-round diagnostic,singleton receivers; no late fusion; rounds=6; offline deadline admission 60ms,0.22,0.17,0.06,65.774767,59.995551,59.995551,97,67,0.690722,30.805970,242.000000,Sequential in-frame replay still exceeds 60ms from frame start and is not paper-facing.

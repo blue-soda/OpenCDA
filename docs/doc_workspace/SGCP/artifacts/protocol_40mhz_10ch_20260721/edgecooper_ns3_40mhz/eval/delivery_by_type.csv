@@ -1,0 +1,2 @@
+upload_type,planned_requests,observed_cam_received,bridge_observed_delivery_ratio,planned_bytes,observed_bytes,avg_delay_ms,p95_delay_ms,max_delay_ms
+edgecooper_global_d60,348,15,0.04310344827586207,3274928,118048,127.86666666666666,207.0,215.0

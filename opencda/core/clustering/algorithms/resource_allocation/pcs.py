@@ -526,11 +526,16 @@ class PCS(ResourceAllocationAlgorithm):
             vehicle_manager.v2x_manager.cluster_state = { 'head_id': vid, 'member_ids': set([vid]) }
         for k, v in self.resource_strategy.items():
             sender_q, receiver_q = k
+            selected_grids = self.grid_selection.get(
+                receiver_q, {}).get(sender_q, [])
+            if not selected_grids:
+                continue
             sender_vm = vehicle_dict[sender_q]
             receiver_vm = vehicle_dict[receiver_q]
             receiver_vm.perception_manager.apply_late_fusion = False
             receiver_vm.perception_manager.do_not_skip_any_cav = True
-            receiver_vm.perception_manager.co_manager.set_grid_selection({sender_q: self.grid_selection[receiver_q][sender_q]})
+            receiver_vm.perception_manager.co_manager.set_grid_selection(
+                {sender_q: selected_grids})
             receiver_vm.v2x_manager.scheduler.set_strategies({k: v})
             receiver_vm.v2x_manager.scheduler.channel_allocation_sc_nums = (
                 getattr(receiver_vm.v2x_manager.scheduler,

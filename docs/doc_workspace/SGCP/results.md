@@ -1388,3 +1388,17 @@ Artifact: `docs/doc_workspace/SGCP/artifacts/ns3_40mhz_10ch_deadline_20260721/`
 | SGCP-PAPG frame `000060`, 10KB chunked | 82 | 783,392 | 82/82 | 27.18 | 54.00 | 55.00 | 0 | 898.91 | Satisfies the 60 ms communication deadline. |
 
 Estimated service rate from observed grant size: `898.91 bytes / 0.5 ms = 14.38 Mbps` per target subchannel, about `143.83 Mbps` across 10 target subchannels. This is an NS3 scheduler/service-rate estimate, not a Shannon-capacity statement.
+
+## Protocol-native PCS / EdgeCooper under 40 MHz / 60ms - 2026-07-21
+
+Artifact: `docs/doc_workspace/SGCP/artifacts/protocol_40mhz_10ch_20260721/`
+
+实验口径：attentive detector，singleton receivers，no SGCP clustering，no inter-cluster late fusion，`40 MHz / 10` target subchannels，`100 ms` perception cycle，`60 ms` communication deadline。NS3 参数为 `--slBandwidthIn100kHz=400 --targetSubchannels=10 --slSubchannelSize=10 --slMcs=28 --slSymbolsPerSlot=12`。
+
+| Method | AP@0.3 | AP@0.5 | AP@0.7 | Raw Mbps | Offline frame time mean/max (ms) | NS3 callbacks | NS3 avg/max delay (ms) | Interpretation |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | --- |
+| FullPerception-PCS, one round | 0.23 | 0.17 | 0.06 | 53.55 | 43.93 / 44.35 | 77/77 | 25.71 / 54.00 | Deliverable within 60ms but low AP. |
+| EdgeCooper V2V protocol adaptation | 0.54 | 0.48 | 0.25 | 275.94 | 9.59 / 12.92 | 15/348 | 127.87 / 215.00 | High offline AP but overloads global concurrent V2V replay. |
+| FullPerception-PCS repeated-round diagnostic | 0.22 | 0.17 | 0.06 | 65.77 | 60.00 / 60.00 | 67/97 | 30.81 / 242.00 | Offline 60ms admission does not translate to reliable NS3 delivery. |
+
+说明：PCS 单轮的真实 NS3 replay 满足 60ms，因此作为 paper-facing PCS 行。PCS repeated-round 虽然按离线 estimator 可填满 60ms，但 simultaneous replay 为 `60/97` callbacks、max `214ms`，sequential in-frame replay 为 `67/97` callbacks、frame-start completion max `242ms`，不能作为可靠 baseline。EdgeCooper V2V 原版 adaptation 的 AP 较高，但 20 个 singleton receivers 全局并发导致 348 chunks 中只有 15 个 application callbacks；论文中必须把该行写为 offline protocol adaptation，同时用 NS3 诊断说明其 deadline infeasibility。

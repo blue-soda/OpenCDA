@@ -7468,3 +7468,17 @@ NS3：
 Artifact：`docs/doc_workspace/SGCP/artifacts/ns3_40mhz_10ch_deadline_20260721/`。
 
 后续执行要求：正式 41 帧 AP/表格重跑必须显式记录 `bandwidth_mhz=40`、`num_channels=10`、`channel_estimator=ns3`、`ns3_tb_size_bytes≈899`、`ns3_slot_duration_ms=0.5`、`ns3_subchannel_prbs=10`、`ns3_symbols_per_slot=12`、`ns3_mcs=28`、`communication_deadline_ms=60`。
+
+# 2026-07-21 Protocol-native PCS / EdgeCooper at 40MHz/10ch/60ms
+
+用户要求在正式 `40 MHz / 10 target subchannels / 60 ms communication deadline` 配置下重测原版 baseline 表中的 PCS 和 EdgeCooper，并给出 AP、通信量、平均延迟、最大延迟；若 PCS 单轮延迟太低，则允许多轮调度直到达到 60ms。
+
+本轮完成：
+
+- 修复 PCS repeated-round deadline trimming 暴露的悬空 link bug：`run_pcs_rounds_with_deadline()` 合并多轮策略时只保留有 grid selection 的 link；`pcs.py` 写回资源策略时跳过没有 selected grids 的 link。该修复不改变 PCS 目标函数，只避免 deadline trimming 后 `KeyError`。
+- PCS 单轮 41 帧：AP `0.23/0.17/0.06`，raw payload `27,445,136 bytes / 53.55 Mbps`，offline frame time mean/max `43.93/44.35 ms`。
+- PCS 单轮真实 NS3 frame `000060`：77 chunks / 727,360 bytes，application callback `77/77`，avg/max delay `25.71/54.00 ms`，RLC complete `77/77`，满足 60ms。
+- PCS repeated-round admission 41 帧：AP `0.22/0.17/0.06`，raw payload `33,709,568 bytes / 65.77 Mbps`，offline admitted time `60.00 ms`。但真实 NS3 不可靠：simultaneous replay `60/97` callbacks、max `214ms`；sequential in-frame replay `67/97` callbacks、frame-start max `242ms`。因此 repeated-round PCS 不进入正式 baseline 表。
+- EdgeCooper V2V protocol adaptation 41 帧：AP `0.54/0.48/0.25`，raw payload `141,417,808 bytes / 275.94 Mbps`。真实 NS3 global concurrent replay frame `000060`：348 chunks / 3,274,928 bytes，application callback `15/348`，avg/max delay `127.87/215.00 ms`。因此该行是 offline AP reference，但 deadline infeasible under concurrent V2V replay。
+
+Artifact：`docs/doc_workspace/SGCP/artifacts/protocol_40mhz_10ch_20260721/`。
