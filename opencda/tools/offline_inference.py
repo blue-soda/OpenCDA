@@ -210,6 +210,11 @@ def parse_args():
                              'baselines using the shared channel estimator. '
                              'Defaults to disabled to preserve fixed-budget '
                              'baseline protocols.')
+    parser.add_argument('--edgecooper-global-comm-range-m', type=float,
+                        default=EDGECOOPER_GLOBAL_COMM_RANGE_M,
+                        help='Communication range for edgecooper_global '
+                             'candidate V2V links. Defaults to 35 m to '
+                             'preserve existing baseline results.')
     parser.add_argument('--ns3-link-quality-csv', default=None,
                         help='Optional rlc_by_request.csv from ns3_log_eval. '
                              'When set, communication_aware selective sharing '
@@ -1763,7 +1768,11 @@ def candidate_member_ids(world, cluster, baseline_name):
             if baseline_name == 'edgecooper_global_hd' and member_id in receiver_ids:
                 continue
             sender_vm = world.get_vehicle_manager(member_id)
-            if vehicle_distance(head_vm, sender_vm) <= EDGECOOPER_GLOBAL_COMM_RANGE_M:
+            comm_range_m = float(getattr(
+                world,
+                '_edgecooper_global_comm_range_m',
+                EDGECOOPER_GLOBAL_COMM_RANGE_M))
+            if vehicle_distance(head_vm, sender_vm) <= comm_range_m:
                 feasible_members.append(member_id)
         return feasible_members
     return [
@@ -2254,19 +2263,9 @@ def trim_selective_grid_selection_to_global_deadline(
     link_entries.sort(key=lambda item: item['entries'][0][:3])
     original_link_count = len(link_entries)
     if baseline_name in ['edgecooper_global', 'edgecooper_global_hd']:
-        matched_links = []
-        occupied_nodes = set()
-        for item in link_entries:
-            sender_id = item['sender_id']
-            receiver_id = item['receiver_id']
-            if sender_id in occupied_nodes or receiver_id in occupied_nodes:
-                continue
-            matched_links.append(item)
-            occupied_nodes.add(sender_id)
-            occupied_nodes.add(receiver_id)
-            if len(matched_links) >= channel_model.num_channels:
-                break
-        link_entries = matched_links
+        link_entries = select_endpoint_disjoint_links(
+            link_entries,
+            max_links=channel_model.num_channels)
 
     admitted = {}
     admitted_bytes = 0
@@ -2306,6 +2305,46 @@ def trim_selective_grid_selection_to_global_deadline(
     }
 
 
+def select_endpoint_disjoint_links(link_entries, max_links):
+    """Pick a strong one-round half-duplex matching for EdgeCooper probes."""
+    if not link_entries or max_links <= 0:
+        return []
+    node_ids = sorted({
+        int(item['sender_id'])
+        for item in link_entries
+    } | {
+        int(item['receiver_id'])
+        for item in link_entries
+    })
+    node_to_bit = {
+        node_id: 1 << index
+        for index, node_id in enumerate(node_ids)
+    }
+    states = {0: (0, 0, 0, ())}
+    for index, item in enumerate(link_entries):
+        sender_id = int(item['sender_id'])
+        receiver_id = int(item['receiver_id'])
+        link_mask = node_to_bit[sender_id] | node_to_bit[receiver_id]
+        link_bytes = sum(int(entry[4]) for entry in item['entries'])
+        # entries are sorted best-first; smaller tuple is higher priority.
+        priority_score = -index
+        snapshot = list(states.items())
+        for mask, value in snapshot:
+            count, total_bytes, priority, chosen = value
+            if count >= max_links or (mask & link_mask):
+                continue
+            new_mask = mask | link_mask
+            candidate = (
+                count + 1,
+                total_bytes + link_bytes,
+                priority + priority_score,
+                chosen + (index,))
+            if candidate[:3] > states.get(new_mask, (-1, -1, -10 ** 9, ()))[:3]:
+                states[new_mask] = candidate
+    best = max(states.values(), key=lambda item: item[:3])
+    return [link_entries[index] for index in best[3]]
+
+
 def apply_selective_sharing_baseline(frame, protocol, ego_cav_id,
                                      baseline_name, receiver_policy,
                                      member_budget, grid_budget,
@@ -2316,7 +2355,8 @@ def apply_selective_sharing_baseline(frame, protocol, ego_cav_id,
                                      bandwidth_mhz=None,
                                      max_upload_points_per_source=None,
                                      channel_model=None,
-                                     selective_frame_deadline_ms=None):
+                                     selective_frame_deadline_ms=None,
+                                     edgecooper_global_comm_range_m=None):
     clear_sgcp_globals()
     world = OfflineCavWorld(
         frame,
@@ -2363,6 +2403,10 @@ def apply_selective_sharing_baseline(frame, protocol, ego_cav_id,
         world._edgecooper_global_cluster_count = len(clusters)
         world._edgecooper_global_receiver_ids = set(
             int(cluster.head_id) for cluster in clusters)
+        world._edgecooper_global_comm_range_m = (
+            EDGECOOPER_GLOBAL_COMM_RANGE_M
+            if edgecooper_global_comm_range_m is None
+            else float(edgecooper_global_comm_range_m))
     for cluster in clusters:
         assign_selective_grid_selection(
             world,
@@ -2418,6 +2462,10 @@ def apply_selective_sharing_baseline(frame, protocol, ego_cav_id,
         metadata['selective_frame_deadline_ms'] = (
             '' if selective_frame_deadline_ms is None
             else selective_frame_deadline_ms)
+        metadata['edgecooper_global_comm_range_m'] = (
+            getattr(world, '_edgecooper_global_comm_range_m', '')
+            if baseline_name in ['edgecooper_global',
+                                 'edgecooper_global_hd'] else '')
         if global_admission is not None:
             metadata['selective_global_budget_bytes'] = (
                 global_admission['budget_bytes'])
@@ -3172,7 +3220,9 @@ def main():
                     args.max_upload_points_per_source),
                 channel_model=frame_channel_model,
                 selective_frame_deadline_ms=(
-                    args.selective_frame_deadline_ms))
+                    args.selective_frame_deadline_ms),
+                edgecooper_global_comm_range_m=(
+                    args.edgecooper_global_comm_range_m))
         elif args.sgcp_constrained:
             protocol = load_protocol(dataset, scenario_id)
             frame_channel_model = build_cli_channel_model(args)

@@ -7519,3 +7519,22 @@ Artifact：`docs/doc_workspace/SGCP/artifacts/edgecooper_deadline_constrained_20
 解释口径：该行应写成 SGCP-PAPG 的 low-budget operating point，而不是替换主线算法。它保留相同分簇、调度和 late fusion，只在已选发送方点云上加 deterministic point cap；适合进入 Pareto/低预算补充表，并可与 EdgeCooper deadline-constrained `0.32/0.26/0.10, 50.91 Mbps` 做同通信量级对照。
 
 Artifact：`docs/doc_workspace/SGCP/artifacts/sgcp_low_budget_20260722/`。
+
+# 2026-07-22 EdgeCooper higher-payload probe
+
+用户希望保留 SGCP-PAPG `0.87/0.81/0.36` 为主要结果，同时再尝试调高 EdgeCooper 通信量。
+
+确认事项：
+
+- low-budget 实验没有改 PAPG 默认参数；`--max-upload-points-per-source` 默认仍为空，主线 no-cap attentive 结果继续是 `0.87/0.81/0.36`。
+- 为增强 EdgeCooper constrained baseline，新增 `--edgecooper-global-comm-range-m` CLI，默认 `35m`，并把 `edgecooper_global/_hd` 的 endpoint-disjoint matching 从 greedy 改为 exact matching：先最大化无端点冲突链路数，再最大化候选 payload。该改动只影响 EdgeCooper/selective baseline，不影响 PAPG。
+
+实验结果：
+
+- 默认 35m/60ms exact matching，41 帧：AP `0.32/0.26/0.11`，raw payload `29,257,712 bytes / 57.09 Mbps`，比旧 greedy constrained `50.91 Mbps` 更高且 AP 不下降。
+- 默认 35m/60ms exact matching，NS3 frame `000060`：72 chunks / 698,224 bytes，application callback `72/72`，RLC TX/RX `787/787`，PHY failures `0`，delay mean/P95/max `26.556/53.000/55.000 ms`。
+- 扩大半径到 100m、deadline 75ms、11 帧：raw payload `62.93 Mbps`，但 AP 降到 `0.23/0.18/0.06`。该点说明硬扩大 EdgeCooper 通信并不会改善感知，不建议进论文主表。
+
+结论：EdgeCooper constrained 可以合理提高到 `57.09 Mbps`，但在严格/可解释协议下难以自然提高到 `65-70 Mbps`；若强行扩大半径或放松 deadline，AP 变差且协议口径更牵强。
+
+Artifact：`docs/doc_workspace/SGCP/artifacts/edgecooper_high_comm_20260722/`。

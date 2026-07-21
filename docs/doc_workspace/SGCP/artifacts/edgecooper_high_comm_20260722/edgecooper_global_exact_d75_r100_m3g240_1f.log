@@ -1,0 +1,130 @@
+﻿Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+conda.exe : C:\Users\sakakibara\miniconda3\envs\opencda\lib\site-packages\torch\nn\functional.py:1806: UserWarning: nn.
+functional.sigmoid is deprecated. Use torch.sigmoid instead.
+At C:\Users\sakakibara\miniconda3\shell\condabin\Conda.psm1:194 char:17
++ ...             & $Env:CONDA_EXE $Env:_CE_M $Env:_CE_CONDA $Command @Othe ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (C:\Users\sakaki...igmoid instead.:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+  warnings.warn("nn.functional.sigmoid is deprecated. Use torch.sigmoid instead.")
+resuming by loading epoch 10000
+frame=1/1 receiver_sample=1/20 scenario=2026_07_15_01_26_56 timestamp=000060 cavs=[1]
+sgcp_constrained receiver=1 policy=all-cavs sources=[1] clusters=20 ra=selective_edgecooper_global comm_bytes=0 selected_grids={}
+fusion_method=early pred_boxes=15 gt_boxes=16
+pred_scores_shape=(15,)
+frame=1/1 receiver_sample=2/20 scenario=2026_07_15_01_26_56 timestamp=000060 cavs=[2]
+sgcp_constrained receiver=2 policy=all-cavs sources=[2] clusters=20 ra=selective_edgecooper_global comm_bytes=0 selected_grids={}
+fusion_method=early pred_boxes=14 gt_boxes=23
+pred_scores_shape=(14,)
+frame=1/1 receiver_sample=3/20 scenario=2026_07_15_01_26_56 timestamp=000060 cavs=[3]
+sgcp_constrained receiver=3 policy=all-cavs sources=[3] clusters=20 ra=selective_edgecooper_global comm_bytes=0 selected_grids={}
+fusion_method=early pred_boxes=16 gt_boxes=7
+pred_scores_shape=(16,)
+frame=1/1 receiver_sample=4/20 scenario=2026_07_15_01_26_56 timestamp=000060 cavs=[4]
+sgcp_constrained receiver=4 policy=all-cavs sources=[4] clusters=20 ra=selective_edgecooper_global comm_bytes=0 selected_grids={}
+fusion_method=early pred_boxes=14 gt_boxes=23
+pred_scores_shape=(14,)
+frame=1/1 receiver_sample=5/20 scenario=2026_07_15_01_26_56 timestamp=000060 cavs=[5, 2]
+sgcp_constrained receiver=5 policy=all-cavs sources=[5, 2] clusters=20 ra=selective_edgecooper_global comm_bytes=77728 selected_grids={2: 54}
+fusion_method=early pred_boxes=11 gt_boxes=18
+pred_scores_shape=(11,)
+frame=1/1 receiver_sample=6/20 scenario=2026_07_15_01_26_56 timestamp=000060 cavs=[6, 1]
+sgcp_constrained receiver=6 policy=all-cavs sources=[6, 1] clusters=20 ra=selective_edgecooper_global comm_bytes=78688 selected_grids={1: 49}
+fusion_method=early pred_boxes=18 gt_boxes=25
+pred_scores_shape=(18,)
+frame=1/1 receiver_sample=7/20 scenario=2026_07_15_01_26_56 timestamp=000060 cavs=[7, 11]
+sgcp_constrained receiver=7 policy=all-cavs sources=[7, 11] clusters=20 ra=selective_edgecooper_global comm_bytes=78496 selected_grids={11: 55}
+fusion_method=early pred_boxes=13 gt_boxes=23
+pred_scores_shape=(13,)
+frame=1/1 receiver_sample=8/20 scenario=2026_07_15_01_26_56 timestamp=000060 cavs=[8, 10]
+sgcp_constrained receiver=8 policy=all-cavs sources=[8, 10] clusters=20 ra=selective_edgecooper_global comm_bytes=77888 selected_grids={10: 55}
+fusion_method=early pred_boxes=11 gt_boxes=32
+pred_scores_shape=(11,)
+frame=1/1 receiver_sample=9/20 scenario=2026_07_15_01_26_56 timestamp=000060 cavs=[9]
+sgcp_constrained receiver=9 policy=all-cavs sources=[9] clusters=20 ra=selective_edgecooper_global comm_bytes=0 selected_grids={}
+fusion_method=early pred_boxes=16 gt_boxes=19
+pred_scores_shape=(16,)
+frame=1/1 receiver_sample=10/20 scenario=2026_07_15_01_26_56 timestamp=000060 cavs=[10]
+sgcp_constrained receiver=10 policy=all-cavs sources=[10] clusters=20 ra=selective_edgecooper_global comm_bytes=0 selected_grids={}
+fusion_method=early pred_boxes=18 gt_boxes=30
+pred_scores_shape=(18,)
+frame=1/1 receiver_sample=11/20 scenario=2026_07_15_01_26_56 timestamp=000060 cavs=[11]
+sgcp_constrained receiver=11 policy=all-cavs sources=[11] clusters=20 ra=selective_edgecooper_global comm_bytes=0 selected_grids={}
+fusion_method=early pred_boxes=16 gt_boxes=19
+pred_scores_shape=(16,)
+frame=1/1 receiver_sample=12/20 scenario=2026_07_15_01_26_56 timestamp=000060 cavs=[12, 17]
+sgcp_constrained receiver=12 policy=all-cavs sources=[12, 17] clusters=20 ra=selective_edgecooper_global comm_bytes=79472 selected_grids={17: 65}
+fusion_method=early pred_boxes=12 gt_boxes=29
+pred_scores_shape=(12,)
+frame=1/1 receiver_sample=13/20 scenario=2026_07_15_01_26_56 timestamp=000060 cavs=[13, 18]
+sgcp_constrained receiver=13 policy=all-cavs sources=[13, 18] clusters=20 ra=selective_edgecooper_global comm_bytes=80048 selected_grids={18: 61}
+fusion_method=early pred_boxes=10 gt_boxes=15
+pred_scores_shape=(10,)
+frame=1/1 receiver_sample=14/20 scenario=2026_07_15_01_26_56 timestamp=000060 cavs=[14]
+sgcp_constrained receiver=14 policy=all-cavs sources=[14] clusters=20 ra=selective_edgecooper_global comm_bytes=0 selected_grids={}
+fusion_method=early pred_boxes=2 gt_boxes=4
+pred_scores_shape=(2,)
+frame=1/1 receiver_sample=15/20 scenario=2026_07_15_01_26_56 timestamp=000060 cavs=[15, 4]
+sgcp_constrained receiver=15 policy=all-cavs sources=[15, 4] clusters=20 ra=selective_edgecooper_global comm_bytes=78176 selected_grids={4: 60}
+fusion_method=early pred_boxes=23 gt_boxes=31
+pred_scores_shape=(23,)
+frame=1/1 receiver_sample=16/20 scenario=2026_07_15_01_26_56 timestamp=000060 cavs=[16, 14]
+sgcp_constrained receiver=16 policy=all-cavs sources=[16, 14] clusters=20 ra=selective_edgecooper_global comm_bytes=80704 selected_grids={14: 53}
+fusion_method=early pred_boxes=12 gt_boxes=23
+pred_scores_shape=(12,)
+frame=1/1 receiver_sample=17/20 scenario=2026_07_15_01_26_56 timestamp=000060 cavs=[17]
+sgcp_constrained receiver=17 policy=all-cavs sources=[17] clusters=20 ra=selective_edgecooper_global comm_bytes=0 selected_grids={}
+fusion_method=early pred_boxes=16 gt_boxes=13
+pred_scores_shape=(16,)
+frame=1/1 receiver_sample=18/20 scenario=2026_07_15_01_26_56 timestamp=000060 cavs=[18]
+sgcp_constrained receiver=18 policy=all-cavs sources=[18] clusters=20 ra=selective_edgecooper_global comm_bytes=0 selected_grids={}
+fusion_method=early pred_boxes=16 gt_boxes=12
+pred_scores_shape=(16,)
+frame=1/1 receiver_sample=19/20 scenario=2026_07_15_01_26_56 timestamp=000060 cavs=[19, 3]
+sgcp_constrained receiver=19 policy=all-cavs sources=[19, 3] clusters=20 ra=selective_edgecooper_global comm_bytes=79632 selected_grids={3: 60}
+fusion_method=early pred_boxes=8 gt_boxes=14
+pred_scores_shape=(8,)
+frame=1/1 receiver_sample=20/20 scenario=2026_07_15_01_26_56 timestamp=000060 cavs=[20, 9]
+sgcp_constrained receiver=20 policy=all-cavs sources=[20, 9] clusters=20 ra=selective_edgecooper_global comm_bytes=75424 selected_grids={9: 46}
+fusion_method=early pred_boxes=21 gt_boxes=30
+pred_scores_shape=(21,)
