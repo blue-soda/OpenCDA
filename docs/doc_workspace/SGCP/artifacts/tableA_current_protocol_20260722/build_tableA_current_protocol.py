@@ -21,6 +21,18 @@ EXPERIMENT = Path(r"C:\Workspace\2026-7-papers\infocom\SGCP\experiment")
 DATA = EXPERIMENT / "data"
 FIG = EXPERIMENT / "figures"
 
+CURRENT_PROTOCOL_DEFAULTS = {
+    "num_channels": "10",
+    "bandwidth_mhz": "40",
+    "communication_deadline_ms": "60",
+    "channel_estimator": "ns3",
+    "ns3_tb_size_bytes": "899",
+    "ns3_slot_duration_ms": "0.5",
+    "ns3_subchannel_prbs": "10",
+    "ns3_symbols_per_slot": "12",
+    "ns3_mcs": "28",
+}
+
 
 SOURCES = {
     "table2": DATA / "table2_fusion_scaffold_current_protocol_20260722.csv",
@@ -44,6 +56,12 @@ def find_row(rows, key, value):
 
 
 def normalize_row(source, row, method, role, status, usage, **overrides):
+    def protocol_value(key):
+        value = row.get(key, "")
+        if value in ("", None):
+            return CURRENT_PROTOCOL_DEFAULTS.get(key, "")
+        return value
+
     raw = {
         "method": method,
         "role": role,
@@ -53,15 +71,16 @@ def normalize_row(source, row, method, role, status, usage, **overrides):
         "clustering": row.get("clustering", ""),
         "resource_allocation": row.get("resource_allocation", ""),
         "receiver_policy": row.get("receiver_policy", ""),
-        "num_channels": row.get("num_channels", ""),
-        "bandwidth_mhz": row.get("bandwidth_mhz", ""),
-        "communication_deadline_ms": row.get("communication_deadline_ms", ""),
-        "channel_estimator": row.get("channel_estimator", ""),
-        "ns3_tb_size_bytes": row.get("ns3_tb_size_bytes", ""),
-        "ns3_slot_duration_ms": row.get("ns3_slot_duration_ms", ""),
-        "ns3_subchannel_prbs": row.get("ns3_subchannel_prbs", ""),
-        "ns3_symbols_per_slot": row.get("ns3_symbols_per_slot", ""),
-        "ns3_mcs": row.get("ns3_mcs", ""),
+        "num_channels": protocol_value("num_channels"),
+        "bandwidth_mhz": protocol_value("bandwidth_mhz"),
+        "communication_deadline_ms": protocol_value(
+            "communication_deadline_ms"),
+        "channel_estimator": protocol_value("channel_estimator"),
+        "ns3_tb_size_bytes": protocol_value("ns3_tb_size_bytes"),
+        "ns3_slot_duration_ms": protocol_value("ns3_slot_duration_ms"),
+        "ns3_subchannel_prbs": protocol_value("ns3_subchannel_prbs"),
+        "ns3_symbols_per_slot": protocol_value("ns3_symbols_per_slot"),
+        "ns3_mcs": protocol_value("ns3_mcs"),
         "ap_03": row.get("ap_03", ""),
         "ap_05": row.get("ap_05", ""),
         "ap_07": row.get("ap_07", ""),
@@ -210,9 +229,11 @@ def write_csv(rows):
     compact_fields = [
         "method", "role", "checkpoint", "late_fusion", "clustering",
         "resource_allocation", "num_channels", "bandwidth_mhz",
-        "communication_deadline_ms", "ap_03", "ap_05", "ap_07", "mbps",
-        "raw_lidar_mbps", "box_mbps", "total_mbps", "baseline_status",
-        "paper_usage",
+        "communication_deadline_ms", "channel_estimator",
+        "ns3_tb_size_bytes", "ns3_slot_duration_ms",
+        "ns3_subchannel_prbs", "ns3_symbols_per_slot", "ns3_mcs",
+        "ap_03", "ap_05", "ap_07", "mbps", "raw_lidar_mbps",
+        "box_mbps", "total_mbps", "baseline_status", "paper_usage",
     ]
     with outputs[2].open("w", newline="", encoding="utf-8") as stream:
         writer = csv.DictWriter(stream, fieldnames=compact_fields)

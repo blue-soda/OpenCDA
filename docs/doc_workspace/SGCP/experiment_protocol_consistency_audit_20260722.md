@@ -100,6 +100,20 @@ budget probe 和 NS3 frame-level feasibility artifacts 外，外部实验包中�
 
 ## 通过的静态一致性检查
 
+2026-07-22 latest navigation cleanup check:
+
+- 外部 `README.md`、`table_guidance.md`、`experiment_update_summary.md`
+  已改为 current-protocol diagnostic set 优先，并将 20260720 表标为
+  legacy scaffold。
+- `tableA_current_protocol` compact CSV 已补齐
+  `channel_estimator/ns3_*` 元数据字段。
+- 外部 `MANIFEST.csv` 已重建，条目数 `128`。
+- 最新检查结论：
+
+```text
+consistency ok: csv widths, communication totals, current protocol fields, registry paths, navigation docs
+```
+
 当前外部结果 CSV 中，所有同时含有
 `raw_lidar_mbps`、`box_mbps`、`total_mbps`、`mbps` 的表均满足：
 

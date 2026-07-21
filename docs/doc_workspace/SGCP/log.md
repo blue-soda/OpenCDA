@@ -7838,3 +7838,23 @@ conda run --no-capture-output -n opencda python docs\doc_workspace\SGCP\artifact
 判断：TableA/Figure1/Figure2 current diagnostic 可以防止实验目录继续混用 legacy 20MHz 图，但不能作为 final paper-facing synthesis。它混合 references、normalized global-box scaffolds、scheduler diagnostics 和 unresolved SGCP operating points。最终汇总图应在选择 `N_max=2`、cap4000 或其他 operating point 后重建。
 
 Figure6 状态：新增 OpenCDA `artifacts/figure6_current_protocol_status_20260722/FIGURE6_STATUS.md` 与外部 `figure6_current_protocol_status_20260722.md`。现有 `uncertainty_bootstrap_attentive.csv` 是 legacy 20MHz，明确降级为 archived background，不生成 current-protocol bootstrap 图。最终行冻结并生成 per-sample eval stats 后再重算。
+
+# 2026-07-22 INFOCOM experiment navigation cleanup and TableA metadata fix
+
+执行内容：检查外部实验包 `C:\Workspace\2026-7-papers\infocom\SGCP\experiment` 的 README、table guidance、summary、registry 与 MANIFEST，修正入口文档中仍优先指向 legacy 20260720 scaffold 的措辞，并将无效的 `edgecooper_original_budget_20260722` probe 明确标为 archived invalid。外部实验目录不在 OpenCDA git 内。
+
+同步修复：`tableA_current_protocol_20260722/build_tableA_current_protocol.py` 现在为缺失元数据的 current-protocol addendum 行补齐 NS3 estimator 字段，并在 compact CSV 中保留 `channel_estimator/ns3_*` 字段。已重跑 TableA 生成脚本，刷新 OpenCDA artifact 与外部 `data/tableA_*current_protocol*` CSV/figures。
+
+验证：
+
+```powershell
+conda run --no-capture-output -n opencda python docs\doc_workspace\SGCP\artifacts\tableA_current_protocol_20260722\build_tableA_current_protocol.py
+```
+
+外部 `MANIFEST.csv` 已重建，条目数 `128`。静态一致性检查通过：
+
+```text
+consistency ok: csv widths, communication totals, current protocol fields, registry paths, navigation docs
+```
+
+结论：除 Table1 外的 Table2/3/4/5/6/TableA/Figure1-8 现在在外部实验目录中均有明确状态：legacy 20MHz scaffold、current 40MHz/60ms diagnostic 或 Figure6 deferred status，不再把旧表误写成 current-protocol final evidence。仍未完成的是论文最终 operating point 冻结后的 paper-facing rerun。
