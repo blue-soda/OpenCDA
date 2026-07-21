@@ -1502,3 +1502,25 @@ Artifact: `docs/doc_workspace/SGCP/artifacts/table3_current_protocol_20260722/`
 | EdgeCooperHD current-protocol | 0.60 | 0.55 | 0.25 | 30.52 | 0.35 | 30.87 |
 
 结论：该 current-protocol rerun 证明当前表格生成、通信 accounting 和 NS3 estimator metadata 已可追溯，但不支持直接替换论文 Table3。严格 60ms budget 下 PAPG 默认只选择约 `37` grids/head，通信量降至 `37.05 Mbps`，AP 明显低于 Random/Density/PACP。后续若要把 Table3 作为主文 scheduler comparison，必须重新审视 PAPG budget/model 参数或调整表格叙事；否则该结果只能作为 appendix diagnostic，旧 20MHz Table3 也不能冒充 current-protocol final。
+
+## Table2 Current-Protocol Diagnostic Rerun - 2026-07-22
+
+Artifact: `docs/doc_workspace/SGCP/artifacts/table2_current_protocol_20260722/`
+
+外部实验包输出：
+
+- `C:\Workspace\2026-7-papers\infocom\SGCP\experiment\data\table2_fusion_scaffold_current_protocol_20260722.csv`
+- `C:\Workspace\2026-7-papers\infocom\SGCP\experiment\figures\figure3_fusion_ablation_current_protocol_20260722.png/.pdf`
+
+协议：attentive checkpoint，`40 MHz / 10 target subchannels / 60 ms communication deadline`，NS3-calibrated estimator `tb_size=899 bytes, slot=0.5 ms, subchannel_prbs=10, MCS=28, PSSCH symbols=12`。Late/prediction rows 计入 box broadcast payload。
+
+| Variant | AP@0.3 | AP@0.5 | AP@0.7 | Raw Mbps | Box Mbps | Total Mbps |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| Head-only current-protocol | 0.26 | 0.22 | 0.09 | 0.00 | 0.25 | 0.25 |
+| Pure late current-protocol | 0.82 | 0.76 | 0.37 | 0.00 | 0.74 | 0.74 |
+| One-cluster early-only current-protocol | 0.85 | 0.83 | 0.48 | 118.71 | 0.00 | 118.71 |
+| Clustered early-only current-protocol | 0.31 | 0.29 | 0.14 | 36.69 | 0.00 | 36.69 |
+| One-cluster early+late current-protocol | 0.85 | 0.83 | 0.48 | 118.71 | 0.00 | 118.71 |
+| Full SGCP current-protocol | 0.64 | 0.60 | 0.25 | 36.69 | 0.36 | 37.05 |
+
+结论：该 current-protocol Table2 是重要风险诊断，而不是可直接写入主文的最终 fusion ablation。Pure late prediction-sharing reference 在低通信量下明显强于严格 60ms PAPG default；Clustered early-only 与 Full SGCP 的 AP 都被 raw-LiDAR budget 大幅压低。后续必须与 Table3 一起决定新的 PAPG operating point、是否把 60ms strict default 转为 appendix diagnostic，或如何重新界定 pure-late reference。

@@ -7658,3 +7658,35 @@ OpenCDA 侧新增审计摘要：`docs/doc_workspace/SGCP/experiment_protocol_con
 | EdgeCooperHD current-protocol | 0.60 | 0.55 | 0.25 | 30.87 |
 
 判断：该 rerun 证明 current-protocol metadata、raw+box accounting 和 Figure4 生成链路已打通，但 PAPG 默认在严格 60ms NS3-estimator budget 下明显不占优；因此该 Table3/Figure4 只能作为 diagnostic，不能替换论文最终 Table3。后续必须调整 PAPG budget/model 或改写 scheduler comparison 叙事，否则旧 20MHz scheduler comparison 也只能标为 legacy scaffold。
+
+# 2026-07-22 Table2 current-protocol diagnostic result
+
+执行内容：在 `docs/doc_workspace/SGCP/artifacts/table2_current_protocol_20260722/` 下完成 4 个独立 41-frame fusion rows，并复用 Table3 PAPG current-protocol row 作为 Full SGCP：
+
+- `head_only_41f`
+- `pure_late_41f`
+- `one_cluster_full_early_41f`
+- `clustered_early_only_41f`
+- `FullSGCP_current_protocol` 复用 `table3_current_protocol_20260722/papg_41f`
+- `OneClusterEarlyLate_current_protocol` 复用 single-cluster early trace，因为 late fusion 是 identity
+
+共同协议：attentive checkpoint，`40 MHz / 10 target subchannels / 60 ms communication deadline`，NS3 estimator `tb_size=899 bytes`、`slot=0.5 ms`、`subchannel_prbs=10`、`MCS=28`、`PSSCH symbols=12`。Late/prediction rows 使用 `80 bytes/box + 64 bytes/message` 计入 box broadcast。
+
+新增生成脚本：`docs/doc_workspace/SGCP/artifacts/table2_current_protocol_20260722/build_table2_current_protocol.py`。它生成：
+
+- OpenCDA artifact CSV：`table2_fusion_scaffold_current_protocol_20260722.csv`
+- 外部实验目录 CSV：`C:\Workspace\2026-7-papers\infocom\SGCP\experiment\data\table2_fusion_scaffold_current_protocol_20260722.csv`
+- 外部 Figure3：`figure3_fusion_ablation_current_protocol_20260722.png/.pdf`
+
+结果：
+
+| Variant | AP@0.3 | AP@0.5 | AP@0.7 | Total Mbps |
+| --- | ---: | ---: | ---: | ---: |
+| Head-only current-protocol | 0.26 | 0.22 | 0.09 | 0.25 |
+| Pure late current-protocol | 0.82 | 0.76 | 0.37 | 0.74 |
+| One-cluster early-only current-protocol | 0.85 | 0.83 | 0.48 | 118.71 |
+| Clustered early-only current-protocol | 0.31 | 0.29 | 0.14 | 36.69 |
+| One-cluster early+late current-protocol | 0.85 | 0.83 | 0.48 | 118.71 |
+| Full SGCP current-protocol | 0.64 | 0.60 | 0.25 | 37.05 |
+
+判断：该 Table2/Figure3 也是 diagnostic。Pure late prediction-sharing reference 在低 box payload 下强于 strict-budget Full SGCP，说明当前 60ms PAPG default 不适合直接作为论文主文 fusion ablation。下一步要么恢复/设计 paper-facing PAPG operating point，要么把 strict-budget Table2/Table3 写成 appendix feasibility diagnostic。
