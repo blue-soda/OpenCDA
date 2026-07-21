@@ -44,6 +44,13 @@ FIELDNAMES = [
     'grid_score_mode',
     'num_channels',
     'bandwidth_mhz',
+    'communication_deadline_ms',
+    'channel_estimator',
+    'ns3_tb_size_bytes',
+    'ns3_slot_duration_ms',
+    'ns3_subchannel_prbs',
+    'ns3_symbols_per_slot',
+    'ns3_mcs',
     'cluster_count_mode',
     'payload_bytes',
     'mbps',
@@ -208,6 +215,20 @@ def parse_trace(path):
             [row.get('num_channels', '') for row in rows]),
         'bandwidth_mhz': most_common(
             [row.get('bandwidth_mhz', '') for row in rows]),
+        'communication_deadline_ms': most_common(
+            [row.get('communication_deadline_ms', '') for row in rows]),
+        'channel_estimator': most_common(
+            [row.get('channel_estimator', '') for row in rows]),
+        'ns3_tb_size_bytes': most_common(
+            [row.get('ns3_tb_size_bytes', '') for row in rows]),
+        'ns3_slot_duration_ms': most_common(
+            [row.get('ns3_slot_duration_ms', '') for row in rows]),
+        'ns3_subchannel_prbs': most_common(
+            [row.get('ns3_subchannel_prbs', '') for row in rows]),
+        'ns3_symbols_per_slot': most_common(
+            [row.get('ns3_symbols_per_slot', '') for row in rows]),
+        'ns3_mcs': most_common(
+            [row.get('ns3_mcs', '') for row in rows]),
         'cluster_count_mode': most_common(
             [row.get('cluster_count', '') for row in rows]),
         'total_trace_comm_bytes': sum(comm_values),

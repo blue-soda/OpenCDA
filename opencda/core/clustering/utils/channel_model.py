@@ -69,6 +69,7 @@ class ChannelModel:
             'channel_estimator': self.mode,
             'bandwidth_mhz': self.bandwidth_mhz,
             'num_channels': self.num_channels,
+            'communication_deadline_ms': self.frame_deadline_s * 1000.0,
             'ns3_tb_size_bytes': self.ns3_tb_size_bytes,
             'ns3_slot_duration_ms': self.ns3_slot_duration_ms,
             'ns3_subchannel_prbs': self.ns3_subchannel_prbs,

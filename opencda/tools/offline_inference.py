@@ -141,6 +141,11 @@ def parse_args():
                         help='Shared channel estimator for all schedulers. '
                              'logical preserves bandwidth/num_channels; ns3 '
                              'uses calibrated TB-size-per-slot service rate.')
+    parser.add_argument('--communication-deadline-ms', type=float,
+                        default=None,
+                        help='Communication budget per perception frame in '
+                             'milliseconds. Defaults to the scenario network '
+                             'time_slot, typically 100 ms.')
     parser.add_argument('--ns3-tb-size-bytes', type=int, default=400,
                         help='NS3-calibrated transport block bytes per '
                              'subchannel grant. Defaults to 400 from current '
@@ -326,6 +331,10 @@ def build_cli_channel_model(args, world=None):
     time_slot = 0.1
     if world is not None:
         time_slot = float(getattr(world.network_manager, 'time_slot', 0.1))
+    if args.communication_deadline_ms is not None:
+        if args.communication_deadline_ms <= 0:
+            raise ValueError('--communication-deadline-ms must be positive')
+        time_slot = float(args.communication_deadline_ms) / 1000.0
     return build_channel_model(
         mode=args.channel_estimator,
         bandwidth_mhz=args.bandwidth_mhz or 20.0,
@@ -2746,6 +2755,8 @@ def trace_row(scenario_id, timestamp, metadata, eval_frame,
         'frame_comm_time_ms': metadata.get('frame_comm_time_ms', ''),
         'num_channels': metadata.get('num_channels', ''),
         'bandwidth_mhz': metadata.get('bandwidth_mhz', ''),
+        'communication_deadline_ms': metadata.get(
+            'communication_deadline_ms', ''),
         'channel_estimator': metadata.get('channel_estimator', ''),
         'ns3_tb_size_bytes': metadata.get('ns3_tb_size_bytes', ''),
         'ns3_slot_duration_ms': metadata.get('ns3_slot_duration_ms', ''),
@@ -2798,6 +2809,7 @@ def write_trace_csv(path, rows):
         'frame_comm_time_ms',
         'num_channels',
         'bandwidth_mhz',
+        'communication_deadline_ms',
         'channel_estimator',
         'ns3_tb_size_bytes',
         'ns3_slot_duration_ms',
@@ -2936,6 +2948,8 @@ def object_diagnostic_rows(scenario_id, timestamp, sample_label, metadata,
             'grid_score_mode': metadata.get('grid_score_mode', ''),
             'num_channels': metadata.get('num_channels', ''),
             'bandwidth_mhz': metadata.get('bandwidth_mhz', ''),
+            'communication_deadline_ms': metadata.get(
+                'communication_deadline_ms', ''),
             'channel_estimator': metadata.get('channel_estimator', ''),
             'ns3_tb_size_bytes': metadata.get('ns3_tb_size_bytes', ''),
             'ns3_slot_duration_ms': metadata.get('ns3_slot_duration_ms', ''),
@@ -2983,6 +2997,7 @@ def write_object_diagnostics_csv(path, rows):
         'grid_score_mode',
         'num_channels',
         'bandwidth_mhz',
+        'communication_deadline_ms',
         'channel_estimator',
         'ns3_tb_size_bytes',
         'ns3_slot_duration_ms',
@@ -3348,6 +3363,9 @@ def main():
                 'grid_score_mode': args.sgcp_grid_score_mode,
                 'num_channels': args.num_channels,
                 'bandwidth_mhz': args.bandwidth_mhz,
+                'communication_deadline_ms': (
+                    '' if args.communication_deadline_ms is None
+                    else args.communication_deadline_ms),
                 'selective_frame_deadline_ms': (
                     '' if args.selective_frame_deadline_ms is None
                     else args.selective_frame_deadline_ms),

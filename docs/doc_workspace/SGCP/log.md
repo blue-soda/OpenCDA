@@ -7581,6 +7581,8 @@ Artifact：`docs/doc_workspace/SGCP/artifacts/edgecooper_singleton_budget_202607
 
 结论：在 35m 通信候选范围内，EdgeCooper 原版 greedy schedule 基本已经被候选链路和 endpoint-disjoint matching 限制，继续增加 admission deadline 到 200ms 不会显著增加通信量。若目标只是提高通信量，需要扩大候选 range；但此前 `100m/100ms` 虽达 `55.67 Mbps` 且 NS3 可交付，AP 降到 `0.25/0.19/0.07`，不适合作为更强 baseline。
 
+复核更新：`docs/doc_workspace/SGCP/artifacts/edgecooper_singleton_budget_20260722/summary.csv` 中若干无 NS3 replay 的行原本少一个空字段，导致 CSV parser 把 notes 读入 `ns3_max_delay_ms`。本轮已修正为空字段占位；AP、bytes、Mbps、NS3 replay 数值均未改变。
+
 # 2026-07-22 Experiment package protocol audit
 
 目标：按照当前正式协议 `40 MHz / 10 target subchannels / 100 ms perception cycle / 60 ms communication deadline`，检查外部 INFOCOM 实验目录中除 Table1 以外的表格和图是否还需要更新/重跑。
@@ -7612,3 +7614,15 @@ Artifact：`docs/doc_workspace/SGCP/artifacts/edgecooper_singleton_budget_202607
 - Figure 6 bootstrap uncertainty。
 
 OpenCDA 侧新增审计摘要：`docs/doc_workspace/SGCP/experiment_protocol_consistency_audit_20260722.md`。P12 已写入 `target.md`。
+
+# 2026-07-22 Table3 current-protocol rerun kickoff
+
+目标：开始重跑 P12 的第一项 Table 3 / Figure 4（SGCP-compatible scheduler comparison），正式协议为 attentive checkpoint、`coalition_game`、`all-cluster-heads`、inter-cluster NMS、`40 MHz / 10 target subchannels / 60 ms communication deadline`、NS3 estimator `tb_size=899 bytes`、`slot=0.5 ms`、`subchannel_prbs=10`、`MCS=28`、`PSSCH symbols=12`。
+
+代码准备：
+
+- `ChannelModel.to_metadata()` 新增 `communication_deadline_ms`。
+- `offline_inference` 新增 `--communication-deadline-ms`，用于统一 PAPG/PCS/selective scheduler 的 frame-level payload budget。
+- `sgcp_aggregate_ap_manifest` 新增读取 `communication_deadline_ms` 与 NS3 estimator metadata 字段，避免 manifest 丢失正式协议信息。
+
+计划先做 3-frame smoke，再重跑 41-frame Table3 rows。
