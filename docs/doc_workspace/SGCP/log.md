@@ -7301,3 +7301,43 @@ C:\Workspace\icdcs-paper\SGCP\experiment_results_20260720
 - `+ global box aggregation` 只改变 evaluation/fusion scaffold，不改变 PCS raw-LiDAR 调度。
 - paper-faithful PCS 低 AP 已定位为 blind-spot proxy 与 raw-LiDAR detector object utility 不匹配；不应继续以 GT-aware/object-aware 方式“修高”原版 FullPerception-PCS。
 - P10.1 已按“可信度修复/边界说明”关闭。若未来新增 object-aware PCS，应命名为 adaptation variant。
+
+# 2026-07-21 16:05 Table 1 PCS receiver-universe alignment
+
+用户指出 Table 1 中 PCS protocol-native 行不应只统计 `all-scheduled-receivers`，否则 PCS 每帧仅约 6 个 receiver samples，而 EdgeCooper V2V 每帧统计 20 个 singleton receivers。按新的对齐规则补跑：
+
+```powershell
+conda run --no-capture-output -n opencda python -m opencda.tools.offline_inference `
+  --dataset-root D:\Data\Carla `
+  --scenario-id 2026_07_15_01_26_56 `
+  --ego-cav-id 1 `
+  --max-frames 0 `
+  --fusion-method early `
+  --coperception-yaml docs\doc_workspace\SGCP\artifacts\early_from_late_checkpoint_20260719\enable_coperception_early_from_attentive.yaml `
+  --sgcp-constrained `
+  --resource-allocation fullperception_pcs `
+  --sgcp-receiver-policy all-cavs `
+  --clustering singleton `
+  --num-channels 10 `
+  --bandwidth-mhz 20 `
+  --sgcp-trace-output C:\Workspace\2026-7-papers\infocom\SGCP\experiment\raw_artifacts\original_baselines_20260720\fullperception_pcs_allcavs_protocol_41f_trace.csv `
+  --eval-stats-output C:\Workspace\2026-7-papers\infocom\SGCP\experiment\raw_artifacts\original_baselines_20260720\fullperception_pcs_allcavs_protocol_41f_eval_stats.csv
+```
+
+结果：
+
+- PCS protocol-native aligned：AP `0.21/0.16/0.06`，payload `6,255,728` bytes / `12.206299 Mbps`。
+- receiver samples：`820`，即 41 帧 x 20 CAV；未调度 receiver 保留 local-only detection。
+- nonzero PCS upload rows：`268`，说明 PCS 调度仍然稀疏；通信量只统计实际 PCS raw-LiDAR upload。
+- current-code 对照 `all-scheduled-receivers/no-late` 也得到同一 payload `6,255,728` bytes，AP `0.18/0.13/0.04`，说明 `all-cavs` 只改变 receiver universe / AP aggregation，不改变当前 PCS 调度。
+
+已更新：
+
+- `C:\Workspace\2026-7-papers\infocom\SGCP\experiment\data\table1_original_protocol_baselines_20260720.csv`
+- `figure0_original_protocol_baselines_ap_bars.png/.pdf`
+- `experiment_update_summary.md`
+- `table_guidance.md`
+- `scripts/add_late_box_totals.py`
+- `MANIFEST.csv`
+
+表 2 `+ global box aggregation` 和表 3 `SGCP-compatible scheduler comparison` 本轮不改机制；它们的 caption 继续明确其不是 protocol-native no-late baseline。
