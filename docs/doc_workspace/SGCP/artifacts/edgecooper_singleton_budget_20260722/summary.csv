@@ -1,0 +1,7 @@
+method,frames,clustering,receiver_policy,range_m,admission_budget_ms,member_budget,grid_budget,ap_03,ap_05,ap_07,raw_lidar_bytes,raw_lidar_mbps,frame000060_bytes,frame000060_links,ns3_callbacks,ns3_avg_delay_ms,ns3_p95_delay_ms,ns3_max_delay_ms,notes
+EdgeCooper greedy constrained reference,41,singleton,all-cavs,35,60,3,117,0.32,0.26,0.10,26091536,50.91,649904,9,68/68,25.90,,54.00,Paper-facing deadline-feasible reference.
+EdgeCooper singleton d100 r35 m3 g240,11,singleton,all-cavs,35,100,3,240,0.32,0.26,0.09,6822688,49.62,654256,9,,,,Corrected 11-frame probe; explicit singleton.
+EdgeCooper singleton d100 r60 m3 g240,11,singleton,all-cavs,60,100,3,240,0.28,0.23,0.07,7344480,53.41,695264,9,,,,Corrected 11-frame probe; explicit singleton.
+EdgeCooper singleton d100 r100 m3 g240,11,singleton,all-cavs,100,100,3,240,0.25,0.20,0.07,7749536,56.36,691280,9,,,,Corrected 11-frame probe; explicit singleton.
+EdgeCooper singleton d100 r60 m3 g240,41,singleton,all-cavs,60,100,3,240,0.27,0.21,0.08,27890944,54.42,695264,9,,,,Full 41-frame corrected probe.
+EdgeCooper singleton d100 r100 m3 g240,41,singleton,all-cavs,100,100,3,240,0.25,0.19,0.07,28530400,55.67,691280,9,73/73,26.877,53.000,55.000,Highest corrected payload probe; NS3-deliverable but lower AP.

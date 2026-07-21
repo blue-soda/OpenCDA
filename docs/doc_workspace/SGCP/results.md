@@ -1444,3 +1444,22 @@ Artifact: `docs/doc_workspace/SGCP/artifacts/edgecooper_original_budget_20260722
 | EdgeCooper old unconstrained demand | 41 | default | none | 0.54 | 0.48 | 0.25 | 275.94 | 15/348 | 127.87 / - / 215.00 |
 
 结论：预算调到 `100 ms` 并不能在原版贪心选择下把 EdgeCooper 自然推到 `60+ Mbps`；测试点只有 `33-34 Mbps`，虽然 r60 点在 NS3 中 49/49 收发且 max delay `55 ms`。旧 `275.94 Mbps` 高通信行仍是 deadline-infeasible diagnostic，不能作为 60ms 内可交付 baseline。论文主表继续使用原版 greedy constrained `0.32/0.26/0.10, 50.91 Mbps`，SGCP-PAPG 主线保持 `0.87/0.81/0.36, 63.28 Mbps`。
+
+Correction: this probe accidentally used `clustering=coalition_game`, so it is not protocol-native EdgeCooper. It is superseded by `edgecooper_singleton_budget_20260722`.
+
+## EdgeCooper Singleton Budget Probe - 2026-07-22
+
+Artifact: `docs/doc_workspace/SGCP/artifacts/edgecooper_singleton_budget_20260722/`
+
+修正口径：显式 `--clustering singleton --sgcp-receiver-policy all-cavs`，保持原版 greedy endpoint-disjoint EdgeCooper 链路选择，只调 range 和 admission budget。
+
+| Variant | Frames | Range | Admission budget | AP@0.3 | AP@0.5 | AP@0.7 | Raw Mbps | NS3 callbacks | NS3 avg/P95/max delay (ms) |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| EdgeCooper greedy constrained reference | 41 | 35 m | 60 ms | 0.32 | 0.26 | 0.10 | 50.91 | 68/68 | 25.90 / - / 54.00 |
+| Corrected greedy d100 r35 m3 g240 | 11 | 35 m | 100 ms | 0.32 | 0.26 | 0.09 | 49.62 | not replayed | - |
+| Corrected greedy d100 r60 m3 g240 | 11 | 60 m | 100 ms | 0.28 | 0.23 | 0.07 | 53.41 | not replayed | - |
+| Corrected greedy d100 r100 m3 g240 | 11 | 100 m | 100 ms | 0.25 | 0.20 | 0.07 | 56.36 | not replayed | - |
+| Corrected greedy d100 r60 m3 g240 | 41 | 60 m | 100 ms | 0.27 | 0.21 | 0.08 | 54.42 | not replayed | - |
+| Corrected greedy d100 r100 m3 g240 | 41 | 100 m | 100 ms | 0.25 | 0.19 | 0.07 | 55.67 | 73/73 | 26.877 / 53.000 / 55.000 |
+
+结论：对齐 singleton 后，通信量反常下降的问题消失；`r100/d100` 41 帧可达 `55.67 Mbps`，并且 frame `000060` 真实 NS3 replay 满足 60ms max delay。但 AP 降至 `0.25/0.19/0.07`，低于 60ms constrained reference，因此不适合作为更强感知 baseline，只能作为“增加 EdgeCooper 通信并不改善 AP”的诊断点。

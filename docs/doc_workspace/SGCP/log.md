@@ -7541,3 +7541,28 @@ Artifact：`docs/doc_workspace/SGCP/artifacts/sgcp_low_budget_20260722/`。
 结论：预算调到 `100ms` 并不能在原版 greedy 选择下把 EdgeCooper 自然推到 `60+ Mbps`；测试点只有 `33-34 Mbps`。因此正式 deadline-feasible EdgeCooper row 仍应使用原版 greedy constrained `0.32/0.26/0.10, 50.91 Mbps`；SGCP-PAPG 主线保持 `0.87/0.81/0.36, 63.28 Mbps`。
 
 Artifact：`docs/doc_workspace/SGCP/artifacts/edgecooper_original_budget_20260722/`。
+
+# 2026-07-22 EdgeCooper singleton budget correction
+
+用户指出 `100m / 100ms` 反而低于 `50.91 Mbps` 不合理，要求立即重跑。
+
+排查结论：
+
+- 第一轮 `edgecooper_original_budget_20260722` 命令漏传 `--clustering singleton`，trace 中显示 `clustering=coalition_game, cluster_count=6`，因此不是 protocol-native EdgeCooper。
+- 已按正确口径重跑：`--clustering singleton --sgcp-receiver-policy all-cavs`，保持原版 greedy endpoint-disjoint EdgeCooper 链路选择，只调 `range`、`admission budget` 和 grid budget。
+
+Corrected 11-frame probe：
+
+- 35m / 100ms / m3g240：AP `0.32/0.26/0.09`，`6,822,688 bytes / 49.62 Mbps`。
+- 60m / 100ms / m3g240：AP `0.28/0.23/0.07`，`7,344,480 bytes / 53.41 Mbps`。
+- 100m / 100ms / m3g240：AP `0.25/0.20/0.07`，`7,749,536 bytes / 56.36 Mbps`。
+
+Corrected 41-frame probe：
+
+- 60m / 100ms / m3g240：AP `0.27/0.21/0.08`，`27,890,944 bytes / 54.42 Mbps`。
+- 100m / 100ms / m3g240：AP `0.25/0.19/0.07`，`28,530,400 bytes / 55.67 Mbps`。
+- 100m / 100ms / m3g240 NS3 frame `000060`：73 chunks / 691,280 bytes，application callback `73/73`，RLC TX/RX `777/777`，PHY failures `0`，delay mean/P95/max `26.877/53.000/55.000 ms`。
+
+结论：对齐 singleton 后，通信量反常下降问题消失；增加 range/admission budget 可把原版 greedy EdgeCooper 提到约 `55.67 Mbps` 且仍满足 60ms NS3 窗口。但 AP 明显低于原 60ms constrained reference `0.32/0.26/0.10, 50.91 Mbps`，因此该高通信点只能作为诊断，不适合作为更强感知 baseline。
+
+Artifact：`docs/doc_workspace/SGCP/artifacts/edgecooper_singleton_budget_20260722/`。
