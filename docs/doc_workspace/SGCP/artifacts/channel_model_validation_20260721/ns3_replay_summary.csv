@@ -1,0 +1,5 @@
+variant,params,fatal,manual_cmd_add,cam_received,consume_events,allocated_mean_bytes,allocated_min_bytes,allocated_max_bytes,delay_mean_ms,delay_p95_ms,delay_max_ms
+NS3 default,default MCS20 symbols9 PSCCH10 RRI5,0,82,82,1991,398.86,4,400,59.57,110,123
+NS3 invalid PSCCH/RRI high-capacity probe,slPscchRbs=4 invalid,1,0,0,0,,,,,,
+NS3 invalid RRI high-capacity probe,RRI1 violates resource selection window,1,82,0,0,,,,,,
+NS3 high MCS/symbols,MCS28 symbols12 PSCCH10 RRI5,0,82,82,881,898.91,40,912,27.18,54,55

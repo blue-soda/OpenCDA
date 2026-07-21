@@ -1,0 +1,5 @@
+variant,rows,nonzero_rows,bytes_total,bytes_mean,frame_time_ms_mean,frame_time_ms_max,channel_estimator,num_channels,bandwidth_mhz,ns3_tb_size_bytes
+SGCP-PAPG logical estimator,6,6,305520,50920.0,203.68,243.65,logical,10,20.0,400
+SGCP-PAPG NS3 estimator,6,6,444608,74101.33,92.63,96.58,ns3,10,20.0,400
+PCS NS3 estimator,20,10,727360,36368.0,99.06,99.06,ns3,10,20.0,400
+EdgeCooper-HD NS3 estimator,6,6,826832,137805.33,17.23,25.43,ns3,10,20.0,400
