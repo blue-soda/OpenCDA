@@ -1480,3 +1480,25 @@ Artifact: `docs/doc_workspace/SGCP/artifacts/edgecooper_singleton_budget_2026072
 - 外部实验包新增 `protocol_consistency_audit_20260722.md`，OpenCDA 镜像为 `experiment_protocol_consistency_audit_20260722.md`。
 
 后续重跑顺序：Table3/Figure4 scheduler comparison -> Table2/Figure3 fusion ablation -> Table5/Figure7 clustering ablation -> Table4/4b/Figure5 sensitivity -> Table6/Figure8 global box aggregation -> TableA/Figures1-2 combined summaries -> Figure6 bootstrap。
+
+## Table3 Current-Protocol Diagnostic Rerun - 2026-07-22
+
+Artifact: `docs/doc_workspace/SGCP/artifacts/table3_current_protocol_20260722/`
+
+外部实验包输出：
+
+- `C:\Workspace\2026-7-papers\infocom\SGCP\experiment\data\table3_scheduler_comparison_current_protocol_20260722.csv`
+- `C:\Workspace\2026-7-papers\infocom\SGCP\experiment\figures\figure4_scheduler_comparison_current_protocol_20260722.png/.pdf`
+
+协议：attentive checkpoint，`coalition_game` clustering，`all-cluster-heads` receiver policy，inter-cluster box NMS，`40 MHz / 10 target subchannels / 60 ms communication deadline`，NS3-calibrated estimator `tb_size=899 bytes, slot=0.5 ms, subchannel_prbs=10, MCS=28, PSSCH symbols=12`。所有行均计入 raw-LiDAR payload 和 late box broadcast payload（`80 bytes/box + 64 bytes/message`，100ms perception cycle）。
+
+| Scheduler | AP@0.3 | AP@0.5 | AP@0.7 | Raw Mbps | Box Mbps | Total Mbps |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| SGCP-PAPG current-protocol | 0.64 | 0.60 | 0.25 | 36.69 | 0.36 | 37.05 |
+| RandomBudget current-protocol | 0.78 | 0.74 | 0.39 | 62.01 | 0.47 | 62.49 |
+| DensityGreedy current-protocol | 0.80 | 0.76 | 0.41 | 75.94 | 0.50 | 76.44 |
+| LinkAwareDensity current-protocol | 0.80 | 0.76 | 0.41 | 75.94 | 0.50 | 76.44 |
+| PACP-LiDAR current-protocol | 0.81 | 0.79 | 0.42 | 86.30 | 0.50 | 86.80 |
+| EdgeCooperHD current-protocol | 0.60 | 0.55 | 0.25 | 30.52 | 0.35 | 30.87 |
+
+结论：该 current-protocol rerun 证明当前表格生成、通信 accounting 和 NS3 estimator metadata 已可追溯，但不支持直接替换论文 Table3。严格 60ms budget 下 PAPG 默认只选择约 `37` grids/head，通信量降至 `37.05 Mbps`，AP 明显低于 Random/Density/PACP。后续若要把 Table3 作为主文 scheduler comparison，必须重新审视 PAPG budget/model 参数或调整表格叙事；否则该结果只能作为 appendix diagnostic，旧 20MHz Table3 也不能冒充 current-protocol final。

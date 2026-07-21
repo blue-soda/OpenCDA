@@ -7626,3 +7626,35 @@ OpenCDA 侧新增审计摘要：`docs/doc_workspace/SGCP/experiment_protocol_con
 - `sgcp_aggregate_ap_manifest` 新增读取 `communication_deadline_ms` 与 NS3 estimator metadata 字段，避免 manifest 丢失正式协议信息。
 
 计划先做 3-frame smoke，再重跑 41-frame Table3 rows。
+
+# 2026-07-22 Table3 current-protocol diagnostic result
+
+执行内容：在 `docs/doc_workspace/SGCP/artifacts/table3_current_protocol_20260722/` 下完成 6 个 41-frame scheduler rows：
+
+- `SGCP_PAPG_current`
+- `RandomBudget_current`
+- `DensityGreedy_current`
+- `LinkAwareDensity_current`
+- `PACP_LiDAR_current`
+- `EdgeCooperHD_current`
+
+共同协议：attentive checkpoint，`coalition_game` clustering，`all-cluster-heads` receiver policy，inter-cluster box NMS，`40 MHz / 10 target subchannels / 60 ms communication deadline`，NS3 estimator `tb_size=899 bytes`、`slot=0.5 ms`、`subchannel_prbs=10`、`MCS=28`、`PSSCH symbols=12`。
+
+新增生成脚本：`docs/doc_workspace/SGCP/artifacts/table3_current_protocol_20260722/build_table3_current_protocol.py`。它从 log/trace 生成：
+
+- OpenCDA artifact CSV：`table3_scheduler_comparison_current_protocol_20260722.csv`
+- 外部实验目录 CSV：`C:\Workspace\2026-7-papers\infocom\SGCP\experiment\data\table3_scheduler_comparison_current_protocol_20260722.csv`
+- 外部 Figure4：`figure4_scheduler_comparison_current_protocol_20260722.png/.pdf`
+
+结果：
+
+| Scheduler | AP@0.3 | AP@0.5 | AP@0.7 | Total Mbps |
+| --- | ---: | ---: | ---: | ---: |
+| SGCP-PAPG current-protocol | 0.64 | 0.60 | 0.25 | 37.05 |
+| RandomBudget current-protocol | 0.78 | 0.74 | 0.39 | 62.49 |
+| DensityGreedy current-protocol | 0.80 | 0.76 | 0.41 | 76.44 |
+| LinkAwareDensity current-protocol | 0.80 | 0.76 | 0.41 | 76.44 |
+| PACP-LiDAR current-protocol | 0.81 | 0.79 | 0.42 | 86.80 |
+| EdgeCooperHD current-protocol | 0.60 | 0.55 | 0.25 | 30.87 |
+
+判断：该 rerun 证明 current-protocol metadata、raw+box accounting 和 Figure4 生成链路已打通，但 PAPG 默认在严格 60ms NS3-estimator budget 下明显不占优；因此该 Table3/Figure4 只能作为 diagnostic，不能替换论文最终 Table3。后续必须调整 PAPG budget/model 或改写 scheduler comparison 叙事，否则旧 20MHz scheduler comparison 也只能标为 legacy scaffold。

@@ -42,7 +42,13 @@ budget probe 和 NS3 frame-level feasibility artifacts 外，外部实验包中�
 
 优先级从高到低：
 
-1. Table 3 / Figure 4：SGCP-compatible scheduler comparison。
+1. Table 3 / Figure 4：SGCP-compatible scheduler comparison。2026-07-22
+   已新增 current-protocol diagnostic rerun：
+   `data/table3_scheduler_comparison_current_protocol_20260722.csv` 和
+   `figures/figure4_scheduler_comparison_current_protocol_20260722.*`。
+   该 rerun 使用当前 40MHz/10ch/60ms 协议，但 PAPG 默认结果为
+   `0.64/0.60/0.25, 37.05 Mbps`，不适合作为 paper-facing final Table3；
+   后续需算法/参数或叙事决策。
 2. Table 2 / Figure 3：fusion scaffold ablation。
 3. Table 5 / Figure 7：clustering ablation。
 4. Table 4 / Table 4b / Figure 5：parameter 与 Nmax sensitivity。

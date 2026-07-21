@@ -273,7 +273,7 @@
 
 必须重跑并刷新：
 
-- [ ] Table 3 / Figure 4：SGCP-compatible scheduler comparison，所有行使用当前 40MHz/10ch/60ms NS3-calibrated estimator。
+- [ ] Table 3 / Figure 4：SGCP-compatible scheduler comparison，所有行使用当前 40MHz/10ch/60ms NS3-calibrated estimator。2026-07-22 已完成 first current-protocol diagnostic rerun，并生成 `table3_scheduler_comparison_current_protocol_20260722.csv` 与 `figure4_scheduler_comparison_current_protocol_20260722`；但默认 PAPG 在严格 60ms budget 下仅 `0.64/0.60/0.25, 37.05 Mbps`，明显弱于 Random/Density/PACP，因此该表只能作为诊断，不能作为 paper-facing final Table3。后续需决定是否调整 PAPG 参数/预算模型、改写 Table3 叙事，或将该表转入 appendix diagnostic。
 - [ ] Table 2 / Figure 3：fusion scaffold ablation，至少包含 Head-only、Pure late、Clustered early-only、Full SGCP、Full 20-CAV early reference。
 - [ ] Table 5 / Figure 7：clustering ablation，保持 PAPG + inter-cluster NMS，只替换 clustering。
 - [ ] Table 4 / Table 4b / Figure 5：rho/channel/Nmax sensitivity；若部分参数已不适合 40MHz 口径，明确转为 appendix legacy diagnostic。
