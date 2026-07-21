@@ -1,0 +1,4 @@
+method,ap_03,ap_05,ap_07,raw_mbps,payload_bytes,ns3_callbacks,ns3_avg_delay_ms,ns3_max_delay_ms,status
+EdgeCooper V2V old per-receiver admission,0.54,0.48,0.25,275.94,141417808,15/348,127.87,215.00,deadline-infeasible diagnostic
+EdgeCooper V2V global byte budget only,0.32,0.26,0.11,86.30,44230800,22/132,139.14,244.00,deadline-infeasible diagnostic
+EdgeCooper V2V deadline-constrained matching,0.32,0.26,0.10,50.91,26091536,68/68,25.90,54.00,paper-facing constrained baseline

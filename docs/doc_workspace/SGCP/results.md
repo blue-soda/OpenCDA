@@ -1402,3 +1402,17 @@ Artifact: `docs/doc_workspace/SGCP/artifacts/protocol_40mhz_10ch_20260721/`
 | FullPerception-PCS repeated-round diagnostic | 0.22 | 0.17 | 0.06 | 65.77 | 60.00 / 60.00 | 67/97 | 30.81 / 242.00 | Offline 60ms admission does not translate to reliable NS3 delivery. |
 
 说明：PCS 单轮的真实 NS3 replay 满足 60ms，因此作为 paper-facing PCS 行。PCS repeated-round 虽然按离线 estimator 可填满 60ms，但 simultaneous replay 为 `60/97` callbacks、max `214ms`，sequential in-frame replay 为 `67/97` callbacks、frame-start completion max `242ms`，不能作为可靠 baseline。EdgeCooper V2V 原版 adaptation 的 AP 较高，但 20 个 singleton receivers 全局并发导致 348 chunks 中只有 15 个 application callbacks；论文中必须把该行写为 offline protocol adaptation，同时用 NS3 诊断说明其 deadline infeasibility。
+
+## EdgeCooper V2V Deadline-Constrained Admission - 2026-07-21
+
+Artifact: `docs/doc_workspace/SGCP/artifacts/edgecooper_deadline_constrained_20260721/`
+
+修正点：`--selective-frame-deadline-ms` 从 per-receiver trimming 改为 per-frame global admission。EdgeCooper V2V 先生成全局候选，再选择无端点冲突的高优先级 matching，最多 10 条并发链路，对齐 10 个 target subchannels；未被调度的 singleton receivers 退回 local-only inference。
+
+| EdgeCooper Variant | AP@0.3 | AP@0.5 | AP@0.7 | Raw Mbps | NS3 callbacks | NS3 avg/max delay (ms) | Interpretation |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | --- |
+| Old per-receiver admission | 0.54 | 0.48 | 0.25 | 275.94 | 15/348 | 127.87 / 215.00 | Not deadline feasible. |
+| Global byte budget only | 0.32 | 0.26 | 0.11 | 86.30 | 22/132 | 139.14 / 244.00 | Payload cap alone is insufficient because endpoint conflicts overload NS3. |
+| Deadline-constrained matching | 0.32 | 0.26 | 0.10 | 50.91 | 68/68 | 25.90 / 54.00 | Use this as the paper-facing constrained EdgeCooper V2V row under the 60ms deadline. |
+
+结论：EdgeCooper V2V 不能继续用 `0.54/0.48/0.25, 275.94 Mbps` 作为可行 baseline；该行只适合作为 “offline unconstrained demand” 诊断。受同一 60ms NS3 通信窗口约束后，EdgeCooper V2V 的正式 protocol-native 结果应写为 `0.32/0.26/0.10, 50.91 Mbps`，NS3 frame `000060` 为 `68/68` callbacks，delay mean/max `25.90/54.00 ms`。

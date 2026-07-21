@@ -2146,6 +2146,166 @@ def assign_selective_grid_selection(world, cluster, baseline_name,
     head_vm.perception_manager.co_manager.set_grid_selection(grid_selection)
 
 
+def collect_receiver_grid_selection(world, clusters):
+    selection = {}
+    for cluster in clusters:
+        receiver_id = int(cluster.head_id)
+        receiver_vm = world.get_vehicle_manager(receiver_id)
+        if receiver_vm is None:
+            continue
+        grid_selection = getattr(
+            receiver_vm.perception_manager.co_manager,
+            'grid_selection',
+            {}) or {}
+        normalized = {}
+        for sender_id, grid_ids in grid_selection.items():
+            grid_ids = list(grid_ids or [])
+            if grid_ids:
+                normalized[int(sender_id)] = grid_ids
+        if normalized:
+            selection[receiver_id] = normalized
+    return selection
+
+
+def apply_receiver_grid_selection(world, clusters, selection):
+    for cluster in clusters:
+        receiver_id = int(cluster.head_id)
+        receiver_vm = world.get_vehicle_manager(receiver_id)
+        if receiver_vm is None:
+            continue
+        co_manager = receiver_vm.perception_manager.co_manager
+        co_manager.clear_grid_selection()
+        co_manager.set_grid_selection(selection.get(receiver_id, {}))
+
+
+def trim_selective_grid_selection_to_global_deadline(
+        world, clusters, baseline_name, deadline_ms, channel_model):
+    """Admit selective-sharing grids under one shared per-frame budget.
+
+    The older selective deadline trim was applied independently to each
+    receiver. For protocol-native all-CAV baselines this let 20 receivers each
+    consume a full deadline budget, while NS3 sees one shared V2V frame. This
+    routine makes the budget global and admits high-priority grids in a fair
+    round-robin order across scheduled links.
+    """
+    original = collect_receiver_grid_selection(world, clusters)
+    budget_bytes = channel_model.payload_budget_bytes(
+        deadline_ms=deadline_ms,
+        subchannels=channel_model.num_channels)
+    if deadline_ms is None or budget_bytes <= 0:
+        return {
+            'budget_bytes': budget_bytes,
+            'admitted_bytes': 0,
+            'candidate_bytes': 0,
+            'admitted_links': 0,
+            'candidate_links': 0,
+        }
+
+    link_entries = []
+    candidate_bytes = 0
+    for receiver_id, sender_grids in original.items():
+        receiver_vm = world.get_vehicle_manager(receiver_id)
+        if receiver_vm is None:
+            continue
+        for sender_id, grid_ids in sender_grids.items():
+            sender_vm = world.get_vehicle_manager(sender_id)
+            if sender_vm is None:
+                continue
+            entries = []
+            for grid_id in grid_ids:
+                points = sender_vm.perception_manager.lidar.\
+                    get_local_points_by_grid_ids([grid_id])
+                grid_bytes = 0 if points is None else int(points.nbytes)
+                if grid_bytes <= 0:
+                    continue
+                candidate_bytes += grid_bytes
+                if baseline_name in ['edgecooper', 'edgecooper_global',
+                                     'edgecooper_global_hd']:
+                    score = edgecooper_grid_score(
+                        receiver_vm,
+                        sender_vm,
+                        grid_id)
+                elif baseline_name == 'pacp_lidar':
+                    score = pacp_lidar_grid_score(
+                        receiver_vm,
+                        sender_vm,
+                        grid_id)
+                else:
+                    score = sender_vm.perception_manager.lidar.\
+                        get_grid_density(grid_id)
+                entries.append((
+                    -float(score),
+                    -float(sender_vm.perception_manager.lidar.
+                           get_grid_density(grid_id)),
+                    str(grid_id),
+                    grid_id,
+                    grid_bytes))
+            entries.sort()
+            if entries:
+                link_entries.append({
+                    'receiver_id': int(receiver_id),
+                    'sender_id': int(sender_id),
+                    'entries': entries,
+                    'cursor': 0,
+                })
+
+    # Higher-priority links get earlier turns, but every selected link can
+    # advance one grid per pass before a link receives a second grid.
+    link_entries.sort(key=lambda item: item['entries'][0][:3])
+    original_link_count = len(link_entries)
+    if baseline_name in ['edgecooper_global', 'edgecooper_global_hd']:
+        matched_links = []
+        occupied_nodes = set()
+        for item in link_entries:
+            sender_id = item['sender_id']
+            receiver_id = item['receiver_id']
+            if sender_id in occupied_nodes or receiver_id in occupied_nodes:
+                continue
+            matched_links.append(item)
+            occupied_nodes.add(sender_id)
+            occupied_nodes.add(receiver_id)
+            if len(matched_links) >= channel_model.num_channels:
+                break
+        link_entries = matched_links
+
+    admitted = {}
+    admitted_bytes = 0
+    while True:
+        advanced = False
+        for item in link_entries:
+            cursor = item['cursor']
+            if cursor >= len(item['entries']):
+                continue
+            _, _, _, grid_id, grid_bytes = item['entries'][cursor]
+            item['cursor'] += 1
+            advanced = True
+            if admitted_bytes + grid_bytes > budget_bytes:
+                continue
+            receiver_id = item['receiver_id']
+            sender_id = item['sender_id']
+            admitted.setdefault(receiver_id, {}).setdefault(
+                sender_id, []).append(grid_id)
+            admitted_bytes += grid_bytes
+            if admitted_bytes >= budget_bytes:
+                break
+        if not advanced or admitted_bytes >= budget_bytes:
+            break
+
+    apply_receiver_grid_selection(world, clusters, admitted)
+    admitted_links = sum(
+        1 for sender_grids in admitted.values()
+        for grid_ids in sender_grids.values() if grid_ids)
+    candidate_links = len(link_entries)
+    return {
+        'budget_bytes': int(budget_bytes),
+        'admitted_bytes': int(admitted_bytes),
+        'candidate_bytes': int(candidate_bytes),
+        'admitted_links': int(admitted_links),
+        'candidate_links': int(candidate_links),
+        'pre_matching_candidate_links': int(original_link_count),
+    }
+
+
 def apply_selective_sharing_baseline(frame, protocol, ego_cav_id,
                                      baseline_name, receiver_policy,
                                      member_budget, grid_budget,
@@ -2212,28 +2372,14 @@ def apply_selective_sharing_baseline(frame, protocol, ego_cav_id,
             grid_budget,
             link_quality=link_quality,
             timestamp=timestamp)
+    global_admission = None
     if selective_frame_deadline_ms is not None:
-        for cluster in clusters:
-            receiver_id = int(cluster.head_id)
-            receiver_vm = world.get_vehicle_manager(receiver_id)
-            if receiver_vm is None:
-                continue
-            current_selection = {
-                receiver_id: getattr(
-                    receiver_vm.perception_manager.co_manager,
-                    'grid_selection',
-                    {}) or {}
-            }
-            trimmed = trim_grid_selection_to_deadline(
-                world,
-                current_selection,
-                {},
-                bandwidth_mhz,
-                num_channels,
-                selective_frame_deadline_ms,
-                channel_model=channel_model)
-            receiver_vm.perception_manager.co_manager.set_grid_selection(
-                trimmed.get(receiver_id, {}))
+        global_admission = trim_selective_grid_selection_to_global_deadline(
+            world,
+            clusters,
+            baseline_name,
+            selective_frame_deadline_ms,
+            channel_model)
 
     if receiver_policy == 'all-cluster-heads':
         receiver_ids = sorted(int(cluster.head_id) for cluster in clusters)
@@ -2272,6 +2418,17 @@ def apply_selective_sharing_baseline(frame, protocol, ego_cav_id,
         metadata['selective_frame_deadline_ms'] = (
             '' if selective_frame_deadline_ms is None
             else selective_frame_deadline_ms)
+        if global_admission is not None:
+            metadata['selective_global_budget_bytes'] = (
+                global_admission['budget_bytes'])
+            metadata['selective_global_admitted_bytes'] = (
+                global_admission['admitted_bytes'])
+            metadata['selective_global_candidate_bytes'] = (
+                global_admission['candidate_bytes'])
+            metadata['selective_global_admitted_links'] = (
+                global_admission['admitted_links'])
+            metadata['selective_global_candidate_links'] = (
+                global_admission['candidate_links'])
         metadata['num_channels'] = num_channels or world.network_manager.subchannel_num
         metadata['bandwidth_mhz'] = bandwidth_mhz or 20.0
         metadata.update(channel_model.to_metadata())

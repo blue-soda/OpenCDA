@@ -19,7 +19,7 @@ All AP results use the attentive detector config
 | Method | Protocol | AP@0.3 | AP@0.5 | AP@0.7 | Raw Mbps | Offline frame time mean/max (ms) | NS3 callback delivery | NS3 delay mean/max (ms) | Notes |
 | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | --- |
 | FullPerception-PCS | singleton receivers, no late fusion, one PCS round | 0.23 | 0.17 | 0.06 | 53.55 | 43.93 / 44.35 | 77/77 | 25.71 / 54.00 | Deliverable within the 60ms communication deadline. |
-| EdgeCooper V2V | singleton receivers, no late fusion, global V2V sender selection | 0.54 | 0.48 | 0.25 | 275.94 | 9.59 / 12.92 | 15/348 | 127.87 / 215.00 | AP is high offline, but the original global concurrent V2V adaptation overloads NS3 under the 60ms deadline. |
+| EdgeCooper V2V | singleton receivers, no late fusion, global V2V sender selection | 0.54 | 0.48 | 0.25 | 275.94 | 9.59 / 12.92 | 15/348 | 127.87 / 215.00 | Deadline-infeasible diagnostic; superseded for paper-facing comparison by `../edgecooper_deadline_constrained_20260721/`. |
 
 ## PCS Multi-Round Diagnostic
 

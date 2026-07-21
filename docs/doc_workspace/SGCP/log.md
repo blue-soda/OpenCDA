@@ -7482,3 +7482,23 @@ Artifact：`docs/doc_workspace/SGCP/artifacts/ns3_40mhz_10ch_deadline_20260721/`
 - EdgeCooper V2V protocol adaptation 41 帧：AP `0.54/0.48/0.25`，raw payload `141,417,808 bytes / 275.94 Mbps`。真实 NS3 global concurrent replay frame `000060`：348 chunks / 3,274,928 bytes，application callback `15/348`，avg/max delay `127.87/215.00 ms`。因此该行是 offline AP reference，但 deadline infeasible under concurrent V2V replay。
 
 Artifact：`docs/doc_workspace/SGCP/artifacts/protocol_40mhz_10ch_20260721/`。
+
+# 2026-07-21 EdgeCooper deadline-constrained admission
+
+用户指出 EdgeCooper V2V 原版适配超过 60ms 延迟上限，要求限制它。
+
+排查结论：
+
+- 旧 `--selective-frame-deadline-ms` 对 selective baseline 的处理是 per-receiver trimming。对于 protocol-native singleton/all-cavs 表，这相当于 20 个 receiver 每个都拿一份 60ms 预算，因此离线 AP 行 `0.54/0.48/0.25, 275.94 Mbps` 虽然能跑 OpenCOOD，但真实 NS3 frame `000060` 只有 `15/348` callbacks，avg/max delay `127.87/215.00 ms`，不可作为 deadline-feasible baseline。
+- 仅改成全局 byte budget 后，41 帧为 `0.32/0.26/0.11, 86.30 Mbps`，frame `000060` plan 为 132 chunks / 1,078,800 bytes；真实 NS3 仍只有 `22/132` callbacks，avg/max `139.14/244.00 ms`。说明总字节数不是唯一瓶颈，端点冲突/半双工 role conflict 同样限制可交付性。
+- 最终修正为 frame-level global admission + endpoint-conflict-free matching：EdgeCooper 候选链路先按 blind-spot/grid priority 排序，再选择最多 10 条无共享端点链路，随后在同一个 60ms NS3-calibrated byte budget 内填充 grid。未被调度的 singleton receivers local-only。
+
+最终结果：
+
+- 41 帧 AP：`0.32/0.26/0.10`。
+- 通信量：`26,091,536 bytes / 50.91 Mbps`。
+- NS3 frame `000060`：68 chunks / 649,904 bytes，application callback `68/68`，avg/max delay `25.90/54.00 ms`，RLC TX/RX `734/734`，PHY failures `0`。
+
+结论：正式 protocol-native baseline 表中，EdgeCooper V2V 若要求 60ms deadline，应使用 constrained matching 行；旧高 AP 行只能作为 deadline-infeasible offline diagnostic。
+
+Artifact：`docs/doc_workspace/SGCP/artifacts/edgecooper_deadline_constrained_20260721/`。
