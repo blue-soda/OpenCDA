@@ -1,0 +1,7 @@
+timestamp,area_id,source_id,target_id,bytes,upload_type,pkt_id,sc_start,sc_num,slot_index,stage,scheduled_delay_ms
+000060,,12,4,78256,sgcp_papg_exact,1,0,1,,,
+000060,,10,11,79248,sgcp_papg_exact,2,1,1,,,
+000060,,14,13,80704,sgcp_papg_exact,3,2,1,,,
+000060,,6,15,72896,sgcp_papg_exact,4,3,1,,,
+000060,,20,16,78544,sgcp_papg_exact,5,4,1,,,
+000060,,3,17,79632,sgcp_papg_exact,6,5,1,,,

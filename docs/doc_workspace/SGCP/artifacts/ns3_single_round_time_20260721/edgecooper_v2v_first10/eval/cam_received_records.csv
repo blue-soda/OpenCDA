@@ -1,0 +1,2 @@
+line_no,request_id,source_node,target_node,bytes,send_timestamp_ms,receive_timestamp_ms,delay_ms,frame_index,is_last_packet,timestamp,area_id,upload_type,plan_index,pkt_id,matched,match_method
+2348,10,12,4,33392,20.0,77.0,57.0,0,1,000060,,edgecooper_v2v_first10_exact,10,10,1,frame_request_id

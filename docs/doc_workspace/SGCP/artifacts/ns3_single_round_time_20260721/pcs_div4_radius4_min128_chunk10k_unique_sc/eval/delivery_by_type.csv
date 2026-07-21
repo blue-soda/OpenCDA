@@ -1,0 +1,2 @@
+upload_type,planned_requests,observed_cam_received,bridge_observed_delivery_ratio,planned_bytes,observed_bytes,avg_delay_ms,p95_delay_ms,max_delay_ms
+pcs_div4_radius4_min128_deadline60,19,19,1.0,161360,161360,28.736842105263158,51.0,67.0

@@ -1,0 +1,1 @@
+﻿planned_requests=19 observed_cam_received=16 bridge_observed_delivery_ratio=0.842105 avg_delay_ms=29.375 p95_delay_ms=51.000 max_delay_ms=67.000 phy_decode_events=362 phy_decode_failures=0 phy_harq_request_events=362 rlc_tx_events=417 rlc_rx_events=362

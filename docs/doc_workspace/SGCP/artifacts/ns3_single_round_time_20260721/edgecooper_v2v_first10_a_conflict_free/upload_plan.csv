@@ -1,0 +1,5 @@
+timestamp,area_id,source_id,target_id,bytes,upload_type,pkt_id,sc_start,sc_num,slot_index,stage,scheduled_delay_ms
+000060,,11,1,72960,edgecooper_v2v_first10_exact,1,0,1,,,
+000060,,1,2,76576,edgecooper_v2v_first10_exact,2,3,1,,,
+000060,,17,3,68768,edgecooper_v2v_first10_exact,3,6,1,,,
+000060,,12,4,33392,edgecooper_v2v_first10_exact,4,9,1,,,

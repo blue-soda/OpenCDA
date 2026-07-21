@@ -1,0 +1,6 @@
+method,plan,cam_chunks,planned_bytes,observed_cam_received,delivery_ratio,avg_delay_ms,p95_delay_ms,max_delay_ms,note
+FullPerception-PCS,div4_radius4_min128_original_channel_allocation,19,161360,16,0.842105,29.375,51.0,67.0,one original PCS link collides on subchannel 2
+FullPerception-PCS,div4_radius4_min128_unique_subchannel_diagnostic,19,161360,19,1.000000,28.736842,51.0,67.0,same payload with conflict-free subchannels
+SGCP-PAPG,chunk10k_original_plan,82,783392,82,1.000000,59.573171,110.0,123.0,complete but max callback exceeds 100 ms
+EdgeCooper-HD,chunk10k_original_plan,68,639408,68,1.000000,53.735294,107.0,108.0,complete but max callback slightly exceeds 100 ms
+EdgeCooper-V2V,protocol_first10_chunk10k_diagnostic,73,696480,32,0.438356,81.812500,177.0,190.0,one-round protocol adaptation overloaded or conflicted

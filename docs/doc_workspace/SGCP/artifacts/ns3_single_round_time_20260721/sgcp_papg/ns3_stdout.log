@@ -1,0 +1,141 @@
+[INFO] Waiting for first Carla data...
+[INFO] Waiting for Carla on port 5556...
+[INFO] Carla connected on port 5556 from 127.0.0.1.
+[INFO] Auto-detected Carla callback host as 127.0.0.1.
+[DEBUG] Raw incoming: {"type": "vehicles_num", "vehicles_num": 20}
+[DEBUG] Received message type: vehicles_num
+[DEBUG] Processing vehicles_num: 20
+[INFO] Vehicles number changed: 0 -> 20
+[INFO] Installing MobilityModel
+[INFO] Installing Internet Stack
+[INFO] NR V2X Mode 2: targetSubchannels=10 totalSubChannel=11 bandwidthIn100kHz=396 slSubchannelSize=10
+实际带宽配置：396 Hz
+OperationBand频率：5.89e+09 Hz, (5.89e+09 - 5.89e+09)
+频率5.89e+09 Hz, (5.89e+09 - 5.89e+09)
+SLINFO.dstL2Id: 1
+SLINFO.dstL2Id: 2
+SLINFO.dstL2Id: 3
+SLINFO.dstL2Id: 4
+SLINFO.dstL2Id: 5
+SLINFO.dstL2Id: 6
+SLINFO.dstL2Id: 7
+SLINFO.dstL2Id: 8
+SLINFO.dstL2Id: 9
+SLINFO.dstL2Id: 10
+SLINFO.dstL2Id: 11
+SLINFO.dstL2Id: 12
+SLINFO.dstL2Id: 13
+SLINFO.dstL2Id: 14
+SLINFO.dstL2Id: 15
+SLINFO.dstL2Id: 16
+SLINFO.dstL2Id: 17
+SLINFO.dstL2Id: 18
+SLINFO.dstL2Id: 19
+SLINFO.dstL2Id: 20
+[INFO] Installing Application
+[INFO] Vehicle 0 IP address: 7.0.0.2
+[INFO] Vehicle 1 IP address: 7.0.0.3
+[INFO] Vehicle 2 IP address: 7.0.0.4
+[INFO] Vehicle 3 IP address: 7.0.0.5
+[INFO] Vehicle 4 IP address: 7.0.0.6
+[INFO] Vehicle 5 IP address: 7.0.0.7
+[INFO] Vehicle 6 IP address: 7.0.0.8
+[INFO] Vehicle 7 IP address: 7.0.0.9
+[INFO] Vehicle 8 IP address: 7.0.0.10
+[INFO] Vehicle 9 IP address: 7.0.0.11
+[INFO] Vehicle 10 IP address: 7.0.0.12
+[INFO] Vehicle 11 IP address: 7.0.0.13
+[INFO] Vehicle 12 IP address: 7.0.0.14
+[INFO] Vehicle 13 IP address: 7.0.0.15
+[INFO] Vehicle 14 IP address: 7.0.0.16
+[INFO] Vehicle 15 IP address: 7.0.0.17
+[INFO] Vehicle 16 IP address: 7.0.0.18
+[INFO] Vehicle 17 IP address: 7.0.0.19
+[INFO] Vehicle 18 IP address: 7.0.0.20
+[INFO] Vehicle 19 IP address: 7.0.0.21
+==== Routing table for Node 0 ====
+Node: 0, Time: +0s, Local time: +0s, Ipv4StaticRouting table
+Destination     Gateway         Genmask         Flags Metric Ref    Use Iface
+127.0.0.0       0.0.0.0         255.0.0.0       U     0      -      -   0
+7.0.0.0         0.0.0.0         255.0.0.0       U     0      -      -   1
+0.0.0.0         7.0.0.1         0.0.0.0         UGS   0      -      -   1
+
+[INFO] NR-V2X Mode2 vehicles initialized: 20 UE nodes.
+[INFO] First data received from Carla!
+[DEBUG] Raw incoming: {"type": "vehicles_position", "vehicles_position": [{"id": 0, "carla_id": 1, "position": {"x": 8.0, "y": -30.31, "z": 0.03}, "velocity": {"x": 0.0, "y": -0.0, "z": 0.0}, "heading": -90.0, "speed": 0.0}, {"id": 1, "carla_id": 10, "position": {"x": -19.4, "y": -5.8, "z": 0.03}, "velocity": {"x": -4.25
+[DEBUG] Received message type: vehicles_position
+[DEBUG] Processing vehicles_position with 20 vehicles
+[INFO] Received Vehicle Position Msg at 0
+[DEBUG] Raw incoming: {"type": "sync_request", "sync_request": {"carla_time": 0.0, "request_time": 1784627146.2643828}}
+[DEBUG] Received message type: sync_request
+[DEBUG] Processing sync_request with carla_time: 0
+[INFO] Received sync_request: CARLA time = 0s, wall clock request time = 1.78463e+09
+[INFO] NS3 current time: 0s, target: 0s
+[INFO] Connecting to Carla on port 5557...
+[INFO] Connected to Carla on port 5557.
+[INFO] Starting simulation!
+[INFO] Time sync ENABLED
+[INFO] Starting synchronized simulation mode
+[INFO] Target time already passed, sending immediate sync_ack (NS3 time: 0s, CARLA target: 0s)
+[INFO] SendMsgToCarla: {"carla_time":0.0,"ns3_time":0.0,"type":"sync_ack"}, send_to_carla_fd: 5
+[INFO] Sent sync_ack: CARLA t=0s, NS3 t=0s
+[DEBUG] Raw incoming: {"type": "transfer_requests", "transfer_requests": [{"source": 12, "target": 4, "size": 78256, "pkt_id": 1, "area_id": "", "upload_type": "sgcp_papg_exact", "stage": "", "scheduled_delay_ms": "", "sc_start": 0, "sc_num": 1}, {"source": 10, "target": 11, "size": 79248, "pkt_id": 2, "area_id": "", "up
+[DEBUG] Received message type: transfer_requests
+[DEBUG] Processing transfer_requests with 10 requests
+[INFO] Transfer request: 12 -> 4, pkt_id: 1, size = 78256 bytes
+[INFO] sender id: 12 sending 78256 bytes to id: 4 subChannel_start: 0 num: 1 tx_power: 0.1 W
+[INFO] Transfer request: 10 -> 11, pkt_id: 2, size = 79248 bytes
+[INFO] sender id: 10 sending 79248 bytes to id: 11 subChannel_start: 1 num: 1 tx_power: 0.1 W
+[INFO] Transfer request: 2 -> 11, pkt_id: 3, size = 77808 bytes
+[INFO] sender id: 2 sending 77808 bytes to id: 11 subChannel_start: 7 num: 1 tx_power: 0.1 W
+[INFO] Transfer request: 14 -> 13, pkt_id: 4, size = 80704 bytes
+[INFO] sender id: 14 sending 80704 bytes to id: 13 subChannel_start: 2 num: 1 tx_power: 0.1 W
+[INFO] Transfer request: 9 -> 13, pkt_id: 5, size = 77728 bytes
+[INFO] sender id: 9 sending 77728 bytes to id: 13 subChannel_start: 8 num: 1 tx_power: 0.1 W
+[INFO] Transfer request: 6 -> 15, pkt_id: 6, size = 72896 bytes
+[INFO] sender id: 6 sending 72896 bytes to id: 15 subChannel_start: 3 num: 1 tx_power: 0.1 W
+[INFO] Transfer request: 20 -> 16, pkt_id: 7, size = 78544 bytes
+[INFO] sender id: 20 sending 78544 bytes to id: 16 subChannel_start: 4 num: 1 tx_power: 0.1 W
+[INFO] Transfer request: 7 -> 16, pkt_id: 8, size = 78528 bytes
+[INFO] sender id: 7 sending 78528 bytes to id: 16 subChannel_start: 6 num: 1 tx_power: 0.1 W
+[INFO] Transfer request: 3 -> 17, pkt_id: 9, size = 79632 bytes
+[INFO] sender id: 3 sending 79632 bytes to id: 17 subChannel_start: 5 num: 1 tx_power: 0.1 W
+[INFO] Transfer request: 18 -> 17, pkt_id: 10, size = 80048 bytes
+[INFO] sender id: 18 sending 80048 bytes to id: 17 subChannel_start: 9 num: 1 tx_power: 0.1 W
+[INFO] Received Transfer Request Msg at 0
+[DEBUG] Raw incoming: {"type": "sync_request", "sync_request": {"carla_time": 3.0, "request_time": 1784627146.3604844}}
+[DEBUG] Received message type: sync_request
+[DEBUG] Processing sync_request with carla_time: 3
+[INFO] Received sync_request: CARLA time = 3s, wall clock request time = 1.78463e+09
+[INFO] NS3 current time: 0s, target: 3s
+[INFO] Advancing NS3 from 0s to 3s (delta 3s)
+[MANUAL_CMD_ADD] src=4 dst=15 scStart=0 scSize=1 maxDataSize=78343 queueSize=1
+CamSenderNR: scheduled CAM, srcL2Id=4, dstL2Id=15, Subchannel=[0, 0], size=78304 bytes
+[MANUAL_CMD_ADD] src=2 dst=3 scStart=1 scSize=1 maxDataSize=79335 queueSize=1
+CamSenderNR: scheduled CAM, srcL2Id=2, dstL2Id=3, Subchannel=[1, 1], size=79296 bytes
+[MANUAL_CMD_ADD] src=12 dst=3 scStart=7 scSize=1 maxDataSize=77895 queueSize=1
+CamSenderNR: scheduled CAM, srcL2Id=12, dstL2Id=3, Subchannel=[7, 7], size=77856 bytes
+[MANUAL_CMD_ADD] src=6 dst=5 scStart=2 scSize=1 maxDataSize=80791 queueSize=1
+CamSenderNR: scheduled CAM, srcL2Id=6, dstL2Id=5, Subchannel=[2, 2], size=80752 bytes
+[MANUAL_CMD_ADD] src=20 dst=5 scStart=8 scSize=1 maxDataSize=77815 queueSize=1
+CamSenderNR: scheduled CAM, srcL2Id=20, dstL2Id=5, Subchannel=[8, 8], size=77776 bytes
+[MANUAL_CMD_ADD] src=17 dst=7 scStart=3 scSize=1 maxDataSize=72983 queueSize=1
+CamSenderNR: scheduled CAM, srcL2Id=17, dstL2Id=7, Subchannel=[3, 3], size=72944 bytes
+[MANUAL_CMD_ADD] src=13 dst=8 scStart=4 scSize=1 maxDataSize=78631 queueSize=1
+CamSenderNR: scheduled CAM, srcL2Id=13, dstL2Id=8, Subchannel=[4, 4], size=78592 bytes
+[MANUAL_CMD_ADD] src=18 dst=8 scStart=6 scSize=1 maxDataSize=78615 queueSize=1
+CamSenderNR: scheduled CAM, srcL2Id=18, dstL2Id=8, Subchannel=[6, 6], size=78576 bytes
+[MANUAL_CMD_ADD] src=14 dst=9 scStart=5 scSize=1 maxDataSize=79719 queueSize=1
+CamSenderNR: scheduled CAM, srcL2Id=14, dstL2Id=9, Subchannel=[5, 5], size=79680 bytes
+[MANUAL_CMD_ADD] src=10 dst=9 scStart=9 scSize=1 maxDataSize=80135 queueSize=1
+CamSenderNR: scheduled CAM, srcL2Id=10, dstL2Id=9, Subchannel=[9, 9], size=80096 bytes
+[INFO] SendMsgToCarla: {"carla_time":3.0,"ns3_time":3.0,"type":"sync_ack"}, send_to_carla_fd: 5
+[INFO] Sent sync_ack: CARLA t=3s, NS3 t=3s
+[INFO] Simulator::Run() returned, syncPending=0, NS3 time: 3s
+[INFO] Sync simulation ended at NS3 time: 3s
+[INFO] Carla disconnected or error on port 5556; waiting for reconnection.
+[INFO] Receiver connection on port 5556 closed.
+[INFO] SendMsgToCarla: {"type": "simulation_end"}, send_to_carla_fd: 5
+[INFO] Disconnected from Carla on port 5557.
+[INFO] pkt_id sent to Carla: 
+1, 2, 3, 4, 5, 6, 7, 8, 9, 10, [INFO] Total volume sent to Carla: 783392 bytes

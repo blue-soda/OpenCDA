@@ -1,0 +1,6 @@
+frame_index,timestamp,request_id,source_node,target_node,area_id,upload_type,planned_bytes,rlc_tx_count,rlc_rx_count,rlc_drop_count,phy_schedule_count,pscch_ok_count,pscch_fail_count,pssch_ok_count,pssch_fail_count,harq_ack_count,harq_nack_count,harq_timeout_count,cam_received,terminal_state
+0,000060,1,8,4,,edgecooper_hd_exact,76544,0,0,0,0,0,0,0,0,0,0,0,0,planned_only
+0,000060,2,1,11,,edgecooper_hd_exact,76928,0,0,0,0,0,0,0,0,0,0,0,0,planned_only
+0,000060,3,10,13,,edgecooper_hd_exact,77568,0,0,0,0,0,0,0,0,0,0,0,0,planned_only
+0,000060,4,6,15,,edgecooper_hd_exact,71760,0,0,0,0,0,0,0,0,0,0,0,0,planned_only
+0,000060,5,7,16,,edgecooper_hd_exact,74048,0,0,0,0,0,0,0,0,0,0,0,0,planned_only

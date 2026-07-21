@@ -1,0 +1,11 @@
+frame_index,timestamp,request_id,source_node,target_node,area_id,upload_type,planned_bytes,rlc_tx_count,rlc_rx_count,rlc_drop_count,phy_schedule_count,pscch_ok_count,pscch_fail_count,pssch_ok_count,pssch_fail_count,harq_ack_count,harq_nack_count,harq_timeout_count,cam_received,terminal_state
+0,000060,1,11,1,,edgecooper_v2v_first10_exact,72960,0,0,0,0,0,0,0,0,0,0,0,0,planned_only
+0,000060,2,4,1,,edgecooper_v2v_first10_exact,75664,0,0,0,0,0,0,0,0,0,0,0,0,planned_only
+0,000060,3,2,1,,edgecooper_v2v_first10_exact,69280,0,0,0,0,0,0,0,0,0,0,0,0,planned_only
+0,000060,4,1,2,,edgecooper_v2v_first10_exact,76576,0,0,0,0,0,0,0,0,0,0,0,0,planned_only
+0,000060,5,11,2,,edgecooper_v2v_first10_exact,69680,0,0,0,0,0,0,0,0,0,0,0,0,planned_only
+0,000060,6,8,2,,edgecooper_v2v_first10_exact,76032,0,0,0,0,0,0,0,0,0,0,0,0,planned_only
+0,000060,7,17,3,,edgecooper_v2v_first10_exact,68768,0,0,0,0,0,0,0,0,0,0,0,0,planned_only
+0,000060,8,16,3,,edgecooper_v2v_first10_exact,76432,0,0,0,0,0,0,0,0,0,0,0,0,planned_only
+0,000060,9,18,3,,edgecooper_v2v_first10_exact,77696,0,0,0,0,0,0,0,0,0,0,0,0,planned_only
+0,000060,10,12,4,,edgecooper_v2v_first10_exact,33392,85,85,0,0,0,0,85,0,0,0,0,1,application_received

@@ -1,0 +1,8 @@
+timestamp,area_id,source_id,target_id,bytes,upload_type,pkt_id,sc_start,sc_num,slot_index,stage,scheduled_delay_ms
+000060,,17,1,44992,pcs_div4_radius4_min128_deadline60,1,6,1,,,
+000060,,20,10,14992,pcs_div4_radius4_min128_deadline60,2,0,1,,,
+000060,,12,11,30000,pcs_div4_radius4_min128_deadline60,3,2,1,,,
+000060,,4,13,10960,pcs_div4_radius4_min128_deadline60,4,1,1,,,
+000060,,18,14,20992,pcs_div4_radius4_min128_deadline60,5,2,1,,,
+000060,,5,15,9424,pcs_div4_radius4_min128_deadline60,6,9,1,,,
+000060,,7,19,30000,pcs_div4_radius4_min128_deadline60,7,4,1,,,

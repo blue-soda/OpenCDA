@@ -1,0 +1,2 @@
+planned_requests,observed_cam_received,matched_cam_received,bridge_observed_delivery_ratio,planned_bytes,observed_bytes,avg_delay_ms,p95_delay_ms,max_delay_ms,note
+73,32,32,0.4383561643835616,696480,298144,81.8125,177.0,190.0,"bridge-observed cam_received callbacks, not PHY-layer trace"

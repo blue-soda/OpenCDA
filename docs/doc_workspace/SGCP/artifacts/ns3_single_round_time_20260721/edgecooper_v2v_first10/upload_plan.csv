@@ -1,0 +1,11 @@
+timestamp,area_id,source_id,target_id,bytes,upload_type,pkt_id,sc_start,sc_num,slot_index,stage,scheduled_delay_ms
+000060,,11,1,72960,edgecooper_v2v_first10_exact,1,0,1,,,
+000060,,4,1,75664,edgecooper_v2v_first10_exact,2,1,1,,,
+000060,,2,1,69280,edgecooper_v2v_first10_exact,3,2,1,,,
+000060,,1,2,76576,edgecooper_v2v_first10_exact,4,3,1,,,
+000060,,11,2,69680,edgecooper_v2v_first10_exact,5,4,1,,,
+000060,,8,2,76032,edgecooper_v2v_first10_exact,6,5,1,,,
+000060,,17,3,68768,edgecooper_v2v_first10_exact,7,6,1,,,
+000060,,16,3,76432,edgecooper_v2v_first10_exact,8,7,1,,,
+000060,,18,3,77696,edgecooper_v2v_first10_exact,9,8,1,,,
+000060,,12,4,33392,edgecooper_v2v_first10_exact,10,9,1,,,

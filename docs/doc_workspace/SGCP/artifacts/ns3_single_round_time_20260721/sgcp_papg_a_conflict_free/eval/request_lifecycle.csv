@@ -1,0 +1,7 @@
+frame_index,timestamp,request_id,source_node,target_node,area_id,upload_type,planned_bytes,rlc_tx_count,rlc_rx_count,rlc_drop_count,phy_schedule_count,pscch_ok_count,pscch_fail_count,pssch_ok_count,pssch_fail_count,harq_ack_count,harq_nack_count,harq_timeout_count,cam_received,terminal_state
+0,000060,1,12,4,,sgcp_papg_exact,78256,0,0,0,0,0,0,0,0,0,0,0,0,planned_only
+0,000060,2,10,11,,sgcp_papg_exact,79248,0,0,0,0,0,0,0,0,0,0,0,0,planned_only
+0,000060,3,14,13,,sgcp_papg_exact,80704,0,0,0,0,0,0,0,0,0,0,0,0,planned_only
+0,000060,4,6,15,,sgcp_papg_exact,72896,0,0,0,0,0,0,0,0,0,0,0,0,planned_only
+0,000060,5,20,16,,sgcp_papg_exact,78544,0,0,0,0,0,0,0,0,0,0,0,0,planned_only
+0,000060,6,3,17,,sgcp_papg_exact,79632,0,0,0,0,0,0,0,0,0,0,0,0,planned_only

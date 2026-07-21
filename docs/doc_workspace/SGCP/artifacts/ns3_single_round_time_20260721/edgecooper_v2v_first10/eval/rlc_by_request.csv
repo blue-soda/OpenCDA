@@ -1,0 +1,11 @@
+frame_index,timestamp,request_id,source_node,target_node,area_id,upload_type,plan_index,planned_bytes,tx_events,rx_events,drop_events,tx_bytes,rx_bytes,drop_bytes,matched,has_rlc_tx,has_rlc_rx,has_rlc_drop,rlc_complete,rlc_partial,rlc_no_rx
+0,000060,1,11,1,,edgecooper_v2v_first10_exact,1,72960,0,0,0,0,0,0,1,0,0,0,0,0,0
+0,000060,2,4,1,,edgecooper_v2v_first10_exact,2,75664,0,0,0,0,0,0,1,0,0,0,0,0,0
+0,000060,3,2,1,,edgecooper_v2v_first10_exact,3,69280,0,0,0,0,0,0,1,0,0,0,0,0,0
+0,000060,4,1,2,,edgecooper_v2v_first10_exact,4,76576,0,0,0,0,0,0,1,0,0,0,0,0,0
+0,000060,5,11,2,,edgecooper_v2v_first10_exact,5,69680,0,0,0,0,0,0,1,0,0,0,0,0,0
+0,000060,6,8,2,,edgecooper_v2v_first10_exact,6,76032,0,0,0,0,0,0,1,0,0,0,0,0,0
+0,000060,7,17,3,,edgecooper_v2v_first10_exact,7,68768,0,0,0,0,0,0,1,0,0,0,0,0,0
+0,000060,8,16,3,,edgecooper_v2v_first10_exact,8,76432,0,0,0,0,0,0,1,0,0,0,0,0,0
+0,000060,9,18,3,,edgecooper_v2v_first10_exact,9,77696,0,0,0,0,0,0,1,0,0,0,0,0,0
+0,000060,10,12,4,,edgecooper_v2v_first10_exact,10,33392,85,85,0,33670,33670,0,1,1,1,0,1,0,0

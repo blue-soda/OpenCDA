@@ -1,0 +1,5 @@
+frame_index,timestamp,request_id,source_node,target_node,area_id,upload_type,plan_index,planned_bytes,tx_events,rx_events,drop_events,tx_bytes,rx_bytes,drop_bytes,matched,has_rlc_tx,has_rlc_rx,has_rlc_drop,rlc_complete,rlc_partial,rlc_no_rx
+0,000060,1,11,1,,edgecooper_v2v_first10_exact,1,72960,0,0,0,0,0,0,1,0,0,0,0,0,0
+0,000060,2,1,2,,edgecooper_v2v_first10_exact,2,76576,0,0,0,0,0,0,1,0,0,0,0,0,0
+0,000060,3,17,3,,edgecooper_v2v_first10_exact,3,68768,0,0,0,0,0,0,1,0,0,0,0,0,0
+0,000060,4,12,4,,edgecooper_v2v_first10_exact,4,33392,85,85,0,33670,33670,0,1,1,1,0,1,0,0

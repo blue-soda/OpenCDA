@@ -1,0 +1,2 @@
+upload_type,planned_requests,observed_cam_received,bridge_observed_delivery_ratio,planned_bytes,observed_bytes,avg_delay_ms,p95_delay_ms,max_delay_ms
+edgecooper_v2v_first10_exact,73,32,0.4383561643835616,696480,298144,81.8125,177.0,190.0

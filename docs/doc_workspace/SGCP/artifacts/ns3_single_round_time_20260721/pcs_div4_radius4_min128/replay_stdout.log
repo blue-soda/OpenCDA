@@ -1,0 +1,44 @@
+﻿Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Connected to NS-3 at ('127.0.0.1', 45790)
+frame=1/1 timestamp=000060 sim_time=0.000 mode=lgcp vehicles=20 clusters=0 requests=7 scheduled=7 slots=0 skipped_unscheduled=0 bytes=161360
+offline_ns3_replay completed frames=1 final_sync_time=3.000
+Listener stopped

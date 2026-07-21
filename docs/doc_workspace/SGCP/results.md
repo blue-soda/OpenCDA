@@ -1329,3 +1329,19 @@ box payload 口径：每个 late-fusion source 每帧广播一次检测框，`80
 | EdgeCooper V2V + global box aggregation | 282.2037 | 2.8661 | 285.0699 |
 
 解释：box payload 相比 raw LiDAR 不大，但必须计入，否则 Pure late / global box aggregation / SGCP two-layer rows 与 no-late raw-LiDAR rows 的通信口径不一致。
+
+## NS3 single-round communication time - 2026-07-21
+
+Artifact：`docs/doc_workspace/SGCP/artifacts/ns3_single_round_time_20260721/`。
+
+统一设置：frame `000060`，NS3 `targetSubchannels=10`，日志显示 `totalSubChannel=11`、`slBandwidthIn100kHz=396`；OpenCDA-online-compatible `10,000 bytes` CAM chunking；时延取 application callback `cam_received` 的 `receive_timestamp - send_timestamp`。
+
+| Method / plan | CAM chunks | Bytes | Callback delivery | Avg delay (ms) | P95 delay (ms) | Max delay (ms) | Note |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | --- |
+| PCS div4/radius4/min128 | 19 | 161,360 | 16/19 | 29.38 | 51.00 | 67.00 | Original PCS channel allocation has one subchannel conflict. |
+| PCS div4/radius4/min128, unique-sc diagnostic | 19 | 161,360 | 19/19 | 28.74 | 51.00 | 67.00 | Same payload with conflict-free subchannels. |
+| SGCP-PAPG | 82 | 783,392 | 82/82 | 59.57 | 110.00 | 123.00 | Complete but exceeds 100 ms in this single-frame replay. |
+| EdgeCooper-HD scaffold | 68 | 639,408 | 68/68 | 53.74 | 107.00 | 108.00 | Complete but slightly exceeds 100 ms. |
+| EdgeCooper V2V protocol-first10 diagnostic | 73 | 696,480 | 32/73 | 81.81 | 177.00 | 190.00 | One-round protocol adaptation is overloaded/conflicted. |
+
+Conclusion：PCS payload can fit within 100 ms after removing a real channel conflict; SGCP and EdgeCooper-HD are NS3-deliverable with chunking but current one-frame max callback times are `123 ms` and `108 ms`. Direct 70-80 KB exact-payload request replay is invalid because it exceeds practical UDP/CAM packet size and bypasses normal LC-buffer consumption.

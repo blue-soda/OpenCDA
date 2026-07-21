@@ -7383,3 +7383,23 @@ conda run --no-capture-output -n opencda python -m opencda.tools.offline_inferen
 - EdgeCooper V2V protocol adaptation 41 帧：raw `282.20 Mbps`；离线 exact-payload demand avg/max `1411.02/1508.43 ms`，当前没有 exact-payload NS3 admission 证据，不能写成 60/100ms 内可完成。
 
 结论：PCS 可通过 deadline admission 严格控制到 60ms，但 AP 仍低，支持“PCS blind-spot proxy 与 raw-LiDAR detector utility 不匹配”的旧结论。SGCP/EdgeCooperHD 的 NS3 证据证明调度请求可成功收发，但若论文要声称 AP 表中的全 raw payload 都在 60ms/100ms 内完成，需要后续补 exact-payload NS3 replay 或校准 PHY throughput model。
+
+# 2026-07-21 23:55 NS3 chunked single-round timing
+
+用户要求使用 NS3 给出 PCS `div4/radius4/min128`、EdgeCooper 和 SGCP 的单轮通信时长。
+
+本轮完成真实 NS3 replay，而不是离线 payload/rate 估算：
+
+- 先确认 direct exact-payload replay 不适合大点云包：SGCP/EdgeCooper 的 70-80 KB request 会被记录为 manual command，但超过实际 UDP/CAM 单包承载后不会形成可消费 LC buffer。该现象解释了早先 direct replay 中 SGCP `0/10` callback、EdgeCooper 只完成小包的异常。
+- 按在线 OpenCDA 逻辑将 raw payload 切为 `max_packet_size=10000 bytes` 的 CAM chunks，并保持子信道指定后重跑 NS3。
+- NS3 设置：`targetSubchannels=10`，日志显示 `totalSubChannel=11`、`slBandwidthIn100kHz=396`；单帧 `000060`，`simTime=5.0`，`drain-seconds=5.0`。
+
+结果：
+
+- PCS `div4/radius4/min128` 原始子信道分配：19 chunks / 161,360 bytes，16/19 callback，avg/p95/max `29.38/51.00/67.00 ms`。失败来自本帧 PCS 两条链路同用 subchannel 2。
+- PCS unique-subchannel diagnostic：19/19 callback，avg/p95/max `28.74/51.00/67.00 ms`。说明 PCS payload 本身可在 100 ms 内完成，问题是当前 PCS 子信道冲突。
+- SGCP-PAPG：82/82 callback，783,392 bytes，avg/p95/max `59.57/110.00/123.00 ms`。
+- EdgeCooper-HD scaffold：68/68 callback，639,408 bytes，avg/p95/max `53.74/107.00/108.00 ms`。
+- EdgeCooper V2V protocol-first10 diagnostic：32/73 callback，696,480 bytes，avg/p95/max observed `81.81/177.00/190.00 ms`；该 protocol adaptation 单轮仍过载/冲突。
+
+详细说明与 raw artifacts：`docs/doc_workspace/SGCP/artifacts/ns3_single_round_time_20260721/NS3_SINGLE_ROUND_TIME.md`。

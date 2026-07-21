@@ -1,0 +1,7 @@
+frame_index,timestamp,request_id,source_node,target_node,area_id,upload_type,plan_index,planned_bytes,tx_events,rx_events,drop_events,tx_bytes,rx_bytes,drop_bytes,matched,has_rlc_tx,has_rlc_rx,has_rlc_drop,rlc_complete,rlc_partial,rlc_no_rx
+0,000060,1,12,4,,sgcp_papg_exact,1,78256,0,0,0,0,0,0,1,0,0,0,0,0,0
+0,000060,2,10,11,,sgcp_papg_exact,2,79248,0,0,0,0,0,0,1,0,0,0,0,0,0
+0,000060,3,14,13,,sgcp_papg_exact,3,80704,0,0,0,0,0,0,1,0,0,0,0,0,0
+0,000060,4,6,15,,sgcp_papg_exact,4,72896,0,0,0,0,0,0,1,0,0,0,0,0,0
+0,000060,5,20,16,,sgcp_papg_exact,5,78544,0,0,0,0,0,0,1,0,0,0,0,0,0
+0,000060,6,3,17,,sgcp_papg_exact,6,79632,0,0,0,0,0,0,1,0,0,0,0,0,0
