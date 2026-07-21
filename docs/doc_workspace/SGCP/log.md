@@ -7768,3 +7768,36 @@ conda run --no-capture-output -n opencda python docs\doc_workspace\SGCP\artifact
 | Target subchannels | 20 | 0.64 | 0.60 | 0.25 | 37.05 |
 
 判断：Table4 current-protocol 诊断已合规生成，但它不能直接进入最终论文支撑旧参数叙事。`N_max=2` 明显优于默认 `N_max=4`，说明后续应优先评估将 current-protocol SGCP operating point 改为 `N_max=2` 并重跑关联表格；否则该表只能作为 appendix diagnostic。
+
+# 2026-07-22 Table6 current-protocol global-box diagnostic result
+
+执行内容：在 `docs/doc_workspace/SGCP/artifacts/table6_current_protocol_20260722/` 下新增构建脚本 `build_table6_current_protocol.py`，实际重跑 41-frame `PCS + global box aggregation` 与 `EdgeCooper + global box aggregation`，并复用 current-protocol Table2/Table3 中的 Pure late、Full SGCP strict default、Full20 early reference。
+
+执行命令：
+
+```powershell
+conda run --no-capture-output -n opencda python docs\doc_workspace\SGCP\artifacts\table6_current_protocol_20260722\build_table6_current_protocol.py
+```
+
+关键子命令：
+
+- PCS：`--sgcp-constrained --resource-allocation fullperception_pcs --sgcp-receiver-policy all-cavs --sgcp-inter-cluster-late-fusion --clustering singleton --channel-estimator ns3 --communication-deadline-ms 60`
+- EdgeCooper：`--selective-sharing-baseline edgecooper_global --selective-member-budget 3 --selective-grid-budget 117 --selective-frame-deadline-ms 60 --edgecooper-global-comm-range-m 35 --sgcp-receiver-policy all-cavs --sgcp-inter-cluster-late-fusion --clustering singleton`
+
+输出：
+
+- OpenCDA artifact CSV：`docs/doc_workspace/SGCP/artifacts/table6_current_protocol_20260722/table6_global_box_aggregation_current_protocol_20260722.csv`
+- 外部实验目录 CSV：`C:\Workspace\2026-7-papers\infocom\SGCP\experiment\data\table6_global_box_aggregation_current_protocol_20260722.csv`
+- 外部 Figure8：`figure8_global_box_aggregation_current_protocol_20260722.png/.pdf`
+
+结果：
+
+| Method | AP@0.3 | AP@0.5 | AP@0.7 | Raw Mbps | Box Mbps | Total Mbps |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| Pure late current-protocol | 0.82 | 0.76 | 0.37 | 0.00 | 0.74 | 0.74 |
+| FullPerception-PCS + global box | 0.83 | 0.77 | 0.38 | 53.54 | 1.00 | 54.54 |
+| EdgeCooper V2V + global box | 0.84 | 0.79 | 0.37 | 50.91 | 0.92 | 51.83 |
+| SGCP-PAPG strict current-protocol | 0.64 | 0.60 | 0.25 | 36.69 | 0.36 | 37.05 |
+| Full 20-CAV early fusion | 0.85 | 0.83 | 0.48 | 118.71 | 0.00 | 118.71 |
+
+判断：该 rerun 证明 Table6 的 current-protocol accounting 与 global-box scaffold 可复现，但它不支持 strict default SGCP 的最终论文叙事。给 PCS/EdgeCooper/Pure late 加 common global box aggregation 后，它们已经接近 Full20Early 的 AP@0.3/0.5；因此最终 Table6 必须等待 `N_max=2` 或其他 SGCP operating point 决策后重组。

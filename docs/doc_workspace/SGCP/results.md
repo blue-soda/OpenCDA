@@ -1575,3 +1575,24 @@ Artifact: `docs/doc_workspace/SGCP/artifacts/table4_current_protocol_20260722/`
 | Target subchannels | 20 | 0.64 | 0.60 | 0.25 | 37.05 |
 
 结论：该 current-protocol Table4 不能继续支撑旧的默认 `N_max=4` 参数叙事。`N_max=2` 在 strict 60ms NS3-estimator 口径下同时提高 AP 和通信量，接近此前用户更满意的主线效果；后续若要冻结 current-protocol 主文图表，应优先评估是否将 SGCP operating point 改为 `N_max=2` 并重跑 Table2/Table3/Table5/TableA/Figure1-2/Figure6，而不是继续沿用 `N_max=4` strict-budget default。
+
+## Table6 Current-Protocol Global-Box Diagnostic Rerun - 2026-07-22
+
+Artifact: `docs/doc_workspace/SGCP/artifacts/table6_current_protocol_20260722/`
+
+外部实验包输出：
+
+- `C:\Workspace\2026-7-papers\infocom\SGCP\experiment\data\table6_global_box_aggregation_current_protocol_20260722.csv`
+- `C:\Workspace\2026-7-papers\infocom\SGCP\experiment\figures\figure8_global_box_aggregation_current_protocol_20260722.png/.pdf`
+
+协议：attentive checkpoint，`40 MHz / 10 target subchannels / 60 ms communication deadline`，NS3-calibrated estimator `tb_size=899 bytes, slot=0.5 ms, subchannel_prbs=10, MCS=28, PSSCH symbols=12`。该表有意给 PCS/EdgeCooper/Pure late 加 common scene-level box aggregation，用于 normalized scaffold 诊断；它不是 protocol-native Table1。
+
+| Method | AP@0.3 | AP@0.5 | AP@0.7 | Raw Mbps | Box Mbps | Total Mbps |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| Pure late current-protocol | 0.82 | 0.76 | 0.37 | 0.00 | 0.74 | 0.74 |
+| FullPerception-PCS + global box | 0.83 | 0.77 | 0.38 | 53.54 | 1.00 | 54.54 |
+| EdgeCooper V2V + global box | 0.84 | 0.79 | 0.37 | 50.91 | 0.92 | 51.83 |
+| SGCP-PAPG strict current-protocol | 0.64 | 0.60 | 0.25 | 36.69 | 0.36 | 37.05 |
+| Full 20-CAV early fusion | 0.85 | 0.83 | 0.48 | 118.71 | 0.00 | 118.71 |
+
+结论：common global box aggregation 会显著抬高 PCS/EdgeCooper/Pure late，因此这张表不支持 strict default SGCP 的主文优势叙事。它的价值是明确“给 baseline 加同样 box aggregation 后，raw-LiDAR scheduler 本身的差距会被 late/global box aggregation 掩盖”。最终 Table6 需要等待 SGCP operating point 决策，尤其是 Table4 暴露的 `N_max=2` 结果。

@@ -73,7 +73,16 @@ budget probe 和 NS3 frame-level feasibility artifacts 外，外部实验包中�
    `N_max=4` 的 strict-budget PAPG `0.64/0.60/0.25, 37.05 Mbps`。
    因此该表是参数敏感性诊断，不能继续支撑旧的默认参数最优叙事；
    target-subchannel panel 也必须标注为有意改变 `num_channels` 的资源敏感性。
-5. Table 6 / Figure 8：global box aggregation normalized baselines。
+5. Table 6 / Figure 8：2026-07-22 已新增 current-protocol diagnostic
+   rerun：
+   `data/table6_global_box_aggregation_current_protocol_20260722.csv` 和
+   `figures/figure8_global_box_aggregation_current_protocol_20260722.*`。
+   该 rerun 显示 common global box aggregation 会显著抬高 baseline：
+   Pure late 为 `0.82/0.76/0.37, 0.74 Mbps`，PCS+global-box 为
+   `0.83/0.77/0.38, 54.54 Mbps`，EdgeCooper+global-box 为
+   `0.84/0.79/0.37, 51.83 Mbps`，而 strict SGCP default 为
+   `0.64/0.60/0.25, 37.05 Mbps`。因此该表只能作为 normalized scaffold
+   诊断，不能作为最终 paper-facing Table6。
 6. Table A / Figures 1-2：combined scaffold/Pareto summaries。
 7. Figure 6：bootstrap uncertainty，待最终行冻结后重算。
 
