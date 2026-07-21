@@ -1,2 +1,0 @@
-planned_requests,requests_with_rlc_tx,requests_with_phy_schedule,requests_with_pssch_ok,requests_with_pssch_fail,requests_with_harq_ack,requests_with_harq_nack,requests_with_rlc_rx,requests_with_cam_received,terminal_application_received,terminal_rlc_rx_only,terminal_pssch_fail,terminal_harq_nack,terminal_harq_timeout,terminal_pscch_fail,terminal_rlc_tx_no_rx,terminal_planned_only,note
-72,72,0,72,0,0,0,72,72,72,0,0,0,0,0,0,0,PHY/HARQ counts are populated only when NS3 emits NRSL_PHY_EVENT or NRSL_HARQ_EVENT request-level logs

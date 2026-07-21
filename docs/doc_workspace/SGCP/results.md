@@ -1429,16 +1429,18 @@ Artifact: `docs/doc_workspace/SGCP/artifacts/sgcp_low_budget_20260722/`
 
 该点与 EdgeCooper deadline-constrained row 的 raw payload `50.91 Mbps` 基本同通信量级，但 AP 明显更高；它适合写入 Pareto 或低预算补充表，作为 “SGCP can be operated at the constrained EdgeCooper traffic level” 的证据。主线 SGCP-PAPG 仍为 `0.87/0.81/0.36`，不要用 low-budget row 替代主方法。
 
-## EdgeCooper Higher-Payload Probe - 2026-07-22
+## EdgeCooper Original-Greedy Budget Probe - 2026-07-22
 
-Artifact: `docs/doc_workspace/SGCP/artifacts/edgecooper_high_comm_20260722/`
+Artifact: `docs/doc_workspace/SGCP/artifacts/edgecooper_original_budget_20260722/`
 
-目的：在保持 SGCP-PAPG 主线 `0.87/0.81/0.36` 的前提下，尝试把 deadline-constrained EdgeCooper V2V 的通信量调高。
+目的：在不修改 EdgeCooper 链路选择算法的前提下，尝试通过参数增大通信量。上一轮 exact matching probe 已移除，因为它改变了 baseline 算法本身。
 
-| Variant | Frames | Range | Deadline | AP@0.3 | AP@0.5 | AP@0.7 | Raw Mbps | NS3 callbacks | NS3 avg/P95/max delay (ms) |
+| Variant | Frames | Range | Admission budget | AP@0.3 | AP@0.5 | AP@0.7 | Raw Mbps | NS3 callbacks | NS3 avg/P95/max delay (ms) |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| EdgeCooper constrained, old greedy matching | 41 | 35 m | 60 ms | 0.32 | 0.26 | 0.10 | 50.91 | 68/68 | 25.90 / - / 54.00 |
-| EdgeCooper constrained, exact matching | 41 | 35 m | 60 ms | 0.32 | 0.26 | 0.11 | 57.09 | 72/72 | 26.556 / 53.000 / 55.000 |
-| EdgeCooper expanded-range diagnostic | 11 | 100 m | 75 ms | 0.23 | 0.18 | 0.06 | 62.93 | not replayed | not recommended |
+| EdgeCooper greedy constrained reference | 41 | 35 m | 60 ms | 0.32 | 0.26 | 0.10 | 50.91 | 68/68 | 25.90 / - / 54.00 |
+| EdgeCooper greedy d100 r35 m3 g200 | 11 | 35 m | 100 ms | 0.29 | 0.24 | 0.08 | 32.96 | not replayed | lower payload |
+| EdgeCooper greedy d100 r60 m3 g240 | 11 | 60 m | 100 ms | 0.27 | 0.21 | 0.07 | 33.90 | 49/49 | 26.878 / 54.000 / 55.000 |
+| EdgeCooper greedy d100 r100 m3 g240 | 11 | 100 m | 100 ms | 0.25 | 0.19 | 0.06 | 34.29 | not replayed | lower AP |
+| EdgeCooper old unconstrained demand | 41 | default | none | 0.54 | 0.48 | 0.25 | 275.94 | 15/348 | 127.87 / - / 215.00 |
 
-结论：可以把 EdgeCooper constrained row 合理调高到 `57.09 Mbps`，同时仍满足 60ms NS3 通信窗口；但想推到 `65-70 Mbps` 需要扩大通信半径/放松协议，当前 11 帧 AP 反而降到 `0.23/0.18/0.06`，不适合作为论文主表 baseline。
+结论：预算调到 `100 ms` 并不能在原版贪心选择下把 EdgeCooper 自然推到 `60+ Mbps`；测试点只有 `33-34 Mbps`，虽然 r60 点在 NS3 中 49/49 收发且 max delay `55 ms`。旧 `275.94 Mbps` 高通信行仍是 deadline-infeasible diagnostic，不能作为 60ms 内可交付 baseline。论文主表继续使用原版 greedy constrained `0.32/0.26/0.10, 50.91 Mbps`，SGCP-PAPG 主线保持 `0.87/0.81/0.36, 63.28 Mbps`。

@@ -7520,21 +7520,24 @@ Artifact：`docs/doc_workspace/SGCP/artifacts/edgecooper_deadline_constrained_20
 
 Artifact：`docs/doc_workspace/SGCP/artifacts/sgcp_low_budget_20260722/`。
 
-# 2026-07-22 EdgeCooper higher-payload probe
+# 2026-07-22 EdgeCooper original-greedy budget probe
 
-用户希望保留 SGCP-PAPG `0.87/0.81/0.36` 为主要结果，同时再尝试调高 EdgeCooper 通信量。
+用户希望保留 SGCP-PAPG `0.87/0.81/0.36` 为主要结果，同时再尝试调高 EdgeCooper 通信量；随后明确不允许修改 EdgeCooper 链路选择算法，因此上一轮 exact matching probe 被撤回。
 
 确认事项：
 
 - low-budget 实验没有改 PAPG 默认参数；`--max-upload-points-per-source` 默认仍为空，主线 no-cap attentive 结果继续是 `0.87/0.81/0.36`。
-- 为增强 EdgeCooper constrained baseline，新增 `--edgecooper-global-comm-range-m` CLI，默认 `35m`，并把 `edgecooper_global/_hd` 的 endpoint-disjoint matching 从 greedy 改为 exact matching：先最大化无端点冲突链路数，再最大化候选 payload。该改动只影响 EdgeCooper/selective baseline，不影响 PAPG。
+- 已把 `edgecooper_global/_hd` 的 endpoint-disjoint matching 恢复为原版 greedy 选择；上一轮 exact matching artifact 已从 git 删除，外部 experiment 目录中的 exact CSV 也已移除。
+- `--edgecooper-global-comm-range-m` 仅作为候选通信范围参数保留，默认 `35m`，不改变默认 EdgeCooper 结果。
 
 实验结果：
 
-- 默认 35m/60ms exact matching，41 帧：AP `0.32/0.26/0.11`，raw payload `29,257,712 bytes / 57.09 Mbps`，比旧 greedy constrained `50.91 Mbps` 更高且 AP 不下降。
-- 默认 35m/60ms exact matching，NS3 frame `000060`：72 chunks / 698,224 bytes，application callback `72/72`，RLC TX/RX `787/787`，PHY failures `0`，delay mean/P95/max `26.556/53.000/55.000 ms`。
-- 扩大半径到 100m、deadline 75ms、11 帧：raw payload `62.93 Mbps`，但 AP 降到 `0.23/0.18/0.06`。该点说明硬扩大 EdgeCooper 通信并不会改善感知，不建议进论文主表。
+- 原版 greedy constrained reference 仍为 41 帧 AP `0.32/0.26/0.10`，raw payload `26,091,536 bytes / 50.91 Mbps`，NS3 frame `000060` 为 `68/68` callbacks、max delay `54ms`。
+- 原版 greedy + admission budget `100ms` + range `35m` + `m3/g200`，11 帧：AP `0.29/0.24/0.08`，raw payload `4,531,664 bytes / 32.96 Mbps`。
+- 原版 greedy + admission budget `100ms` + range `60m` + `m3/g240`，11 帧：AP `0.27/0.21/0.07`，raw payload `4,660,896 bytes / 33.90 Mbps`。NS3 frame `000060`：49 chunks / 461,072 bytes，application callback `49/49`，RLC TX/RX `519/519`，PHY failures `0`，delay mean/P95/max `26.878/54.000/55.000 ms`。
+- 原版 greedy + admission budget `100ms` + range `100m` + `m3/g240`，11 帧：AP `0.25/0.19/0.06`，raw payload `4,714,192 bytes / 34.29 Mbps`。
+- 旧 unconstrained EdgeCooper demand 仍为 41 帧 AP `0.54/0.48/0.25`、`275.94 Mbps`，但真实 NS3 只有 `15/348` callbacks、max delay `215ms`，不能作为 deadline-feasible baseline。
 
-结论：EdgeCooper constrained 可以合理提高到 `57.09 Mbps`，但在严格/可解释协议下难以自然提高到 `65-70 Mbps`；若强行扩大半径或放松 deadline，AP 变差且协议口径更牵强。
+结论：预算调到 `100ms` 并不能在原版 greedy 选择下把 EdgeCooper 自然推到 `60+ Mbps`；测试点只有 `33-34 Mbps`。因此正式 deadline-feasible EdgeCooper row 仍应使用原版 greedy constrained `0.32/0.26/0.10, 50.91 Mbps`；SGCP-PAPG 主线保持 `0.87/0.81/0.36, 63.28 Mbps`。
 
-Artifact：`docs/doc_workspace/SGCP/artifacts/edgecooper_high_comm_20260722/`。
+Artifact：`docs/doc_workspace/SGCP/artifacts/edgecooper_original_budget_20260722/`。

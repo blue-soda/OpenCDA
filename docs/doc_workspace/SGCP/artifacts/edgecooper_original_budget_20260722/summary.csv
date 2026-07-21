@@ -1,0 +1,6 @@
+method,frames,range_m,admission_budget_ms,member_budget,grid_budget,ap_03,ap_05,ap_07,raw_lidar_bytes,raw_lidar_mbps,ns3_frame,ns3_chunks,ns3_bytes,ns3_callbacks,ns3_avg_delay_ms,ns3_p95_delay_ms,ns3_max_delay_ms,notes
+EdgeCooper greedy constrained reference,41,35,60,3,117,0.32,0.26,0.10,26091536,50.91,000060,68,640000,68/68,25.90,,54.00,Paper-facing deadline-feasible EdgeCooper V2V row; original greedy matching.
+EdgeCooper greedy d100 r35 m3 g200,11,35,100,3,200,0.29,0.24,0.08,4531664,32.96,000060,,456464,,,,Budget 100ms does not increase original greedy payload.
+EdgeCooper greedy d100 r60 m3 g240,11,60,100,3,240,0.27,0.21,0.07,4660896,33.90,000060,49,461072,49/49,26.878,54.000,55.000,NS3-deliverable but lower payload and AP than the 60ms constrained reference.
+EdgeCooper greedy d100 r100 m3 g240,11,100,100,3,240,0.25,0.19,0.06,4714192,34.29,000060,,384624,,,,Expanding range does not help the original greedy schedule.
+EdgeCooper old unconstrained demand,41,,none,3,117,0.54,0.48,0.25,141417808,275.94,000060,348,,15/348,127.87,,215.00,Offline high-demand diagnostic only; deadline-infeasible in NS3.

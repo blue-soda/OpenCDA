@@ -2263,9 +2263,19 @@ def trim_selective_grid_selection_to_global_deadline(
     link_entries.sort(key=lambda item: item['entries'][0][:3])
     original_link_count = len(link_entries)
     if baseline_name in ['edgecooper_global', 'edgecooper_global_hd']:
-        link_entries = select_endpoint_disjoint_links(
-            link_entries,
-            max_links=channel_model.num_channels)
+        matched_links = []
+        occupied_nodes = set()
+        for item in link_entries:
+            sender_id = item['sender_id']
+            receiver_id = item['receiver_id']
+            if sender_id in occupied_nodes or receiver_id in occupied_nodes:
+                continue
+            matched_links.append(item)
+            occupied_nodes.add(sender_id)
+            occupied_nodes.add(receiver_id)
+            if len(matched_links) >= channel_model.num_channels:
+                break
+        link_entries = matched_links
 
     admitted = {}
     admitted_bytes = 0
@@ -2303,46 +2313,6 @@ def trim_selective_grid_selection_to_global_deadline(
         'candidate_links': int(candidate_links),
         'pre_matching_candidate_links': int(original_link_count),
     }
-
-
-def select_endpoint_disjoint_links(link_entries, max_links):
-    """Pick a strong one-round half-duplex matching for EdgeCooper probes."""
-    if not link_entries or max_links <= 0:
-        return []
-    node_ids = sorted({
-        int(item['sender_id'])
-        for item in link_entries
-    } | {
-        int(item['receiver_id'])
-        for item in link_entries
-    })
-    node_to_bit = {
-        node_id: 1 << index
-        for index, node_id in enumerate(node_ids)
-    }
-    states = {0: (0, 0, 0, ())}
-    for index, item in enumerate(link_entries):
-        sender_id = int(item['sender_id'])
-        receiver_id = int(item['receiver_id'])
-        link_mask = node_to_bit[sender_id] | node_to_bit[receiver_id]
-        link_bytes = sum(int(entry[4]) for entry in item['entries'])
-        # entries are sorted best-first; smaller tuple is higher priority.
-        priority_score = -index
-        snapshot = list(states.items())
-        for mask, value in snapshot:
-            count, total_bytes, priority, chosen = value
-            if count >= max_links or (mask & link_mask):
-                continue
-            new_mask = mask | link_mask
-            candidate = (
-                count + 1,
-                total_bytes + link_bytes,
-                priority + priority_score,
-                chosen + (index,))
-            if candidate[:3] > states.get(new_mask, (-1, -1, -10 ** 9, ()))[:3]:
-                states[new_mask] = candidate
-    best = max(states.values(), key=lambda item: item[:3])
-    return [link_entries[index] for index in best[3]]
 
 
 def apply_selective_sharing_baseline(frame, protocol, ego_cav_id,
