@@ -7426,3 +7426,29 @@ conda run --no-capture-output -n opencda python -m opencda.tools.offline_inferen
 
 - “40MHz 无法跑 60Mbps”不应写成物理带宽不足；准确说法是当前 NR sidelink Mode-2 默认配置下，应用层 raw-LiDAR burst 受 TB size、grant cadence、RLC/CAM chunking、控制资源和 MCS 共同限制。
 - 若需要容纳更多通信，应显式跑 high-capacity NS3 diagnostic，并让 OpenCDA 使用 `--channel-estimator ns3` 与相同 TB/slot 参数估算。
+
+# 2026-07-21 Channel model validation experiments
+
+用户要求展开实验验证，并允许构建/执行 NS3。
+
+Artifact：`docs/doc_workspace/SGCP/artifacts/channel_model_validation_20260721/`
+
+OpenCDA smoke：
+
+- SGCP-PAPG `logical` estimator，1 frame / 6 cluster-head rows：`305,520 bytes`，mean/max estimated frame time `203.68/243.65 ms`。
+- SGCP-PAPG `ns3` estimator (`tb=400B`, `slot=0.5ms`)，1 frame / 6 rows：`444,608 bytes`，mean/max `92.63/96.58 ms`。PAPG grid budget 明显变化，说明 scheduler 使用了统一 estimator。
+- PCS `ns3` estimator，1 frame / 20 CAV receiver rows：`727,360 bytes`，mean/max `99.06/99.06 ms`；metadata bug 已修复，`bandwidth_mhz=20.0` 正常写入 PCS trace。
+- EdgeCooper-HD `ns3` estimator，1 frame / 6 rows：`826,832 bytes`，mean/max `17.23/25.43 ms`。该 baseline 仍是 fixed member/grid budget；统一 estimator 目前用于 frame-time metadata，deadline trimming 需显式 `--selective-frame-deadline-ms`。
+
+NS3：
+
+- `./ns3 build` 在 `ns-3-dev` 中通过，重新链接 `scratch/vanet/main.cc`。
+- SGCP chunked default replay：82/82 callback，1991 consume events，`allocated_mean=398.86B`，delay mean/p95/max `59.57/110/123 ms`。
+- 非法 high-capacity probe：`slPscchRbs=4` 被 pool factory 拒绝；`slRriMs=1` 违反 resource selection window，均触发 NS3 fatal。
+- 合法 high-capacity probe：`slMcs=28 --slSymbolsPerSlot=12` 保持默认 PSCCH/RRI，82/82 callback，881 consume events，`allocated_mean=898.91B`，delay mean/p95/max `27.18/54/55 ms`。
+
+结论：
+
+- 默认 NS3 的真实服务率与 `ChannelModel(ns3, tb=400B, slot=0.5ms)` 对齐。
+- 提高 MCS/symbols 可以显著增加有效 TB size，使同一 SGCP raw-LiDAR chunk replay 进入 100 ms deadline。
+- 不能简单通过降低 PSCCH RB 或 RRI 增容；这需要同步修改 resource pool/window 约束并重新验证。

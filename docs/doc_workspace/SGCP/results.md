@@ -1345,3 +1345,26 @@ Artifact：`docs/doc_workspace/SGCP/artifacts/ns3_single_round_time_20260721/`�
 | EdgeCooper V2V protocol-first10 diagnostic | 73 | 696,480 | 32/73 | 81.81 | 177.00 | 190.00 | One-round protocol adaptation is overloaded/conflicted. |
 
 Conclusion：PCS payload can fit within 100 ms after removing a real channel conflict; SGCP and EdgeCooper-HD are NS3-deliverable with chunking but current one-frame max callback times are `123 ms` and `108 ms`. Direct 70-80 KB exact-payload request replay is invalid because it exceeds practical UDP/CAM packet size and bypasses normal LC-buffer consumption.
+# 2026-07-21 Unified Channel Model Validation
+
+Source artifact: `docs/doc_workspace/SGCP/artifacts/channel_model_validation_20260721/VALIDATION_SUMMARY.md`
+
+OpenCDA estimator smoke:
+
+| Variant | Rows | Total bytes | Mean frame time ms | Max frame time ms | Estimator |
+|---|---:|---:|---:|---:|---|
+| SGCP-PAPG logical estimator | 6 | 305,520 | 203.68 | 243.65 | logical |
+| SGCP-PAPG NS3 estimator | 6 | 444,608 | 92.63 | 96.58 | ns3 |
+| PCS NS3 estimator | 20 | 727,360 | 99.06 | 99.06 | ns3 |
+| EdgeCooper-HD NS3 estimator | 6 | 826,832 | 17.23 | 25.43 | ns3 |
+
+NS3 replay:
+
+| Variant | Params | Fatal | Manual adds | CAM received | Alloc mean B | Delay mean/P95/max ms |
+|---|---|---:|---:|---:|---:|---|
+| Default | MCS20, symbols9, PSCCH10, RRI5 | 0 | 82 | 82 | 398.86 | 59.57 / 110 / 123 |
+| Invalid PSCCH/RRI probe | `slPscchRbs=4` | 1 | 0 | 0 | - | - |
+| Invalid RRI probe | `slRriMs=1` | 1 | 82 | 0 | - | - |
+| High MCS/symbols | MCS28, symbols12, PSCCH10, RRI5 | 0 | 82 | 82 | 898.91 | 27.18 / 54 / 55 |
+
+Interpretation: the unified NS3 estimator is now experimentally calibrated for the current default. Increasing MCS and PSSCH symbols is a viable high-capacity diagnostic and can bring the same SGCP chunked replay under a 100 ms cycle; changing PSCCH/RRI requires more careful pool-window redesign.

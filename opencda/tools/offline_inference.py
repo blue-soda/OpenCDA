@@ -1653,7 +1653,7 @@ def apply_sgcp_constraint(frame, protocol, ego_cav_id, resource_allocation,
             if hasattr(allocator, 'p') else None)
         metadata['bandwidth_mhz'] = (
             getattr(allocator.p, 'bandwidth_all', 0.0) / (10 ** 6)
-            if hasattr(allocator, 'p') else None)
+            if hasattr(allocator, 'p') else channel_model.bandwidth_mhz)
         metadata['upload_mode'] = upload_mode
         metadata['grid_selection_mode'] = grid_selection_mode
         metadata['grid_score_mode'] = grid_score_mode
