@@ -1416,3 +1416,15 @@ Artifact: `docs/doc_workspace/SGCP/artifacts/edgecooper_deadline_constrained_202
 | Deadline-constrained matching | 0.32 | 0.26 | 0.10 | 50.91 | 68/68 | 25.90 / 54.00 | Use this as the paper-facing constrained EdgeCooper V2V row under the 60ms deadline. |
 
 结论：EdgeCooper V2V 不能继续用 `0.54/0.48/0.25, 275.94 Mbps` 作为可行 baseline；该行只适合作为 “offline unconstrained demand” 诊断。受同一 60ms NS3 通信窗口约束后，EdgeCooper V2V 的正式 protocol-native 结果应写为 `0.32/0.26/0.10, 50.91 Mbps`，NS3 frame `000060` 为 `68/68` callbacks，delay mean/max `25.90/54.00 ms`。
+
+## SGCP Low-Budget Operating Point - 2026-07-22
+
+Artifact: `docs/doc_workspace/SGCP/artifacts/sgcp_low_budget_20260722/`
+
+实验口径：attentive detector，`coalition_game` clustering，`perception_aware_potential_game` scheduler，`all-cluster-heads` receiver policy，inter-cluster box NMS，`40 MHz / 10` target subchannels，`100 ms` perception cycle，`60 ms` communication deadline。低预算控制只使用 `--max-upload-points-per-source 4000`，不改变分簇、调度目标或 late-fusion scaffold。
+
+| Method | AP@0.3 | AP@0.5 | AP@0.7 | Raw LiDAR Mbps | Box Mbps | Total Mbps | NS3 callbacks | NS3 avg/P95/max delay (ms) |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| SGCP-PAPG low-budget, cap=4000 | 0.86 | 0.77 | 0.33 | 51.20 | 0.70 | 51.90 | 70/70 | 23.714 / 46.000 / 46.000 |
+
+该点与 EdgeCooper deadline-constrained row 的 raw payload `50.91 Mbps` 基本同通信量级，但 AP 明显更高；它适合写入 Pareto 或低预算补充表，作为 “SGCP can be operated at the constrained EdgeCooper traffic level” 的证据。主线 SGCP-PAPG 仍为 `0.87/0.81/0.36`，不要用 low-budget row 替代主方法。

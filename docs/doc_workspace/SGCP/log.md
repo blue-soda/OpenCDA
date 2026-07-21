@@ -7502,3 +7502,20 @@ Artifact：`docs/doc_workspace/SGCP/artifacts/protocol_40mhz_10ch_20260721/`。
 结论：正式 protocol-native baseline 表中，EdgeCooper V2V 若要求 60ms deadline，应使用 constrained matching 行；旧高 AP 行只能作为 deadline-infeasible offline diagnostic。
 
 Artifact：`docs/doc_workspace/SGCP/artifacts/edgecooper_deadline_constrained_20260721/`。
+
+# 2026-07-22 SGCP low-budget operating point
+
+用户希望在 EdgeCooper 受 60ms deadline 约束后，尝试一个通信量接近 EdgeCooper constrained row 的 SGCP low-budget 点，避免主表中 SGCP 成为除 full early upper reference 以外通信最高的方法。
+
+执行与结论：
+
+- 保持正式信道口径：`40 MHz / 10 target subchannels / 60 ms communication deadline`，NS3 estimator 使用 `tb_size=899B, slot=0.5ms, subchannel_prbs=10, symbols=12, mcs=28`。
+- 保持 SGCP 机制不变：`coalition_game` clustering、`perception_aware_potential_game` scheduler、`all-cluster-heads` receiver policy、inter-cluster NMS late fusion。
+- 扫描发现 `B_h=1` 过低：11 帧约 `36.8 Mbps`，AP `0.75/0.63/0.21`。
+- 主线 `B_h=2` 11 帧约 `61.5 Mbps`，AP `0.84/0.75/0.32`。
+- 采用 deterministic per-source point cap `--max-upload-points-per-source 4000` 后，41 帧结果为 AP `0.86/0.77/0.33`，raw payload `26,240,000 bytes / 51.20 Mbps`。按当前 box overhead 口径，inter-cluster box broadcast 为 `0.70 Mbps`，total 为 `51.90 Mbps`。
+- 真实 NS3 frame `000060`：70 chunks / 640,000 bytes，application callback `70/70`，RLC TX/RX `720/720`，PHY failures `0`，delay mean/P95/max `23.714/46.000/46.000 ms`，满足 60ms 通信窗口。
+
+解释口径：该行应写成 SGCP-PAPG 的 low-budget operating point，而不是替换主线算法。它保留相同分簇、调度和 late fusion，只在已选发送方点云上加 deterministic point cap；适合进入 Pareto/低预算补充表，并可与 EdgeCooper deadline-constrained `0.32/0.26/0.10, 50.91 Mbps` 做同通信量级对照。
+
+Artifact：`docs/doc_workspace/SGCP/artifacts/sgcp_low_budget_20260722/`。
