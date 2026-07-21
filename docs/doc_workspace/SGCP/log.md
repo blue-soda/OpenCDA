@@ -7357,3 +7357,29 @@ conda run --no-capture-output -n opencda python -m opencda.tools.offline_inferen
 - FullPerception-PCS 的核心目标是有限通信资源下最大化累计感知收益，通信量是约束/效率结果，不是单纯最小化 Mbps；原文调度对象是 blind-spot semantic/features 与链路资源，不天然等价于一次性 raw-LiDAR grid upload。
 - EdgeCooper 的核心目标是 edge-assisted holistic perception；它通过互补性数据选择、relay/channel/packet scheduling 降低冗余，不等价于 20 个 singleton receiver 各自重复请求 raw-LiDAR 的 V2V proxy。
 - SGCP 当前实验协议是一帧映射一次 100 ms cooperative perception cycle，要求 intra-cluster raw-LiDAR 和 inter-cluster boxes 在该 cycle 中完成；因此 Table 3/A 可称为 SGCP-compatible scheduler comparison，Table 1 必须称为 protocol-native / protocol adaptation comparison。
+
+# 2026-07-21 23:05 PCS repeated-round deadline probe
+
+用户要求避免使用 `multi-slot` 一词，并尝试在 `div4/radius4/min128` 下做一帧内多轮 PCS 调度，但总通信时间不超过 60ms，为融合计算等后续阶段留出时间。
+
+代码变更：
+
+- `offline_inference.py` 新增 `--pcs-frame-rounds` 与 `--pcs-frame-deadline-ms`。
+- `fullperception_pcs` 路径支持 repeated-round scheduling：每轮排除前几轮已被 receiver 接受的 blind grids。
+- 若 PCS tentative round 超过剩余 deadline，新增 deadline admission：按每条链路可用子信道数裁剪 grid payload，使被接受的并行链路不超过剩余毫秒。
+- trace 新增 `frame_comm_time_ms`、`pcs_rounds_requested`、`pcs_rounds_accepted`、`pcs_round_comm_time_ms_json`、`pcs_round_comm_bytes_json`。
+
+验证：
+
+- `py_compile` 通过。
+- 1 帧 no-deadline PCS `div4/radius4/min128`：frame `000060` 单轮估算 `245.696 ms`，说明原始 round 已超过 60ms。
+- 1 帧 deadline admission：接受 1 轮，`161,360 bytes`，`60.00 ms`。
+- 11 帧 deadline admission：AP `0.22/0.17/0.07`，70 receiver samples，`1,648,368 bytes`，`11.99 Mbps`，avg/max/min frame communication time 全为 `60.00 ms`，每帧接受 1 轮。
+
+通信时间对照：
+
+- SGCP-PAPG attentive 41 帧：AP 表 raw payload 为 `62.54 Mbps`；按离线 exact-payload/resource model 估算 avg/max frame time 为 `320.38/323.84 ms`。已有真实 NS3 scheduled-request replay 为 110/110 application + RLC complete，avg/p95 callback `23.91/24.00 ms`，但该 NS3 replay 使用 10,000-byte request payload 验证调度/子信道/冲突，不是 AP 表 raw payload 的逐字节 replay。
+- EdgeCooperHD scaffold 41 帧：raw `65.40 Mbps`；离线 exact-payload demand avg/max `327.02/388.54 ms`；已有 scheduled-request NS3 replay 同样 110/110 complete、avg/p95 `23.91/24.00 ms`。
+- EdgeCooper V2V protocol adaptation 41 帧：raw `282.20 Mbps`；离线 exact-payload demand avg/max `1411.02/1508.43 ms`，当前没有 exact-payload NS3 admission 证据，不能写成 60/100ms 内可完成。
+
+结论：PCS 可通过 deadline admission 严格控制到 60ms，但 AP 仍低，支持“PCS blind-spot proxy 与 raw-LiDAR detector utility 不匹配”的旧结论。SGCP/EdgeCooperHD 的 NS3 证据证明调度请求可成功收发，但若论文要声称 AP 表中的全 raw payload 都在 60ms/100ms 内完成，需要后续补 exact-payload NS3 replay 或校准 PHY throughput model。

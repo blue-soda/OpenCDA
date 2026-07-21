@@ -155,6 +155,15 @@ def parse_args():
     parser.add_argument('--pcs-min-spot-grids', type=int, default=None,
                         help='Override minimum grids per PCS blind-spot unit. '
                              'Use to avoid unrealistically tiny blind spots.')
+    parser.add_argument('--pcs-frame-rounds', type=int, default=1,
+                        help='Maximum number of repeated PCS scheduling '
+                             'rounds inside one perception frame. Each round '
+                             'excludes receiver grids already accepted in '
+                             'previous rounds. Defaults to 1.')
+    parser.add_argument('--pcs-frame-deadline-ms', type=float, default=None,
+                        help='Optional per-frame PCS raw-LiDAR communication '
+                             'deadline in milliseconds. Repeated PCS rounds '
+                             'stop before exceeding this deadline.')
     parser.add_argument('--max-upload-points-per-source', type=int,
                         default=None,
                         help='Optional deterministic point budget for each '
@@ -340,6 +349,261 @@ def apply_resource_overrides(resource_allocator, world, num_channels=None,
         resource_allocator.p.bandwidth_per_channel = (
             resource_allocator.p.bandwidth_all /
             resource_allocator.p.num_channels)
+
+
+def clone_grid_selection(grid_selection):
+    return {
+        int(receiver_id): {
+            int(sender_id): set(grid_ids)
+            for sender_id, grid_ids in sender_grids.items()
+        }
+        for receiver_id, sender_grids in (grid_selection or {}).items()
+    }
+
+
+def merge_grid_selection(target, source):
+    for receiver_id, sender_grids in clone_grid_selection(source).items():
+        target.setdefault(receiver_id, {})
+        for sender_id, grid_ids in sender_grids.items():
+            target[receiver_id].setdefault(sender_id, set())
+            target[receiver_id][sender_id].update(grid_ids)
+
+
+def estimate_grid_selection_payload_bytes(world, grid_selection):
+    total_bytes = 0
+    link_bytes = {}
+    for receiver_id, sender_grids in clone_grid_selection(
+            grid_selection).items():
+        for sender_id, grid_ids in sender_grids.items():
+            sender_vm = world.get_vehicle_manager(sender_id)
+            if sender_vm is None:
+                continue
+            selected_points = sender_vm.perception_manager.lidar.\
+                get_local_points_by_grid_ids(grid_ids)
+            if selected_points is None or selected_points.size == 0:
+                payload_bytes = 0
+            else:
+                payload_bytes = int(selected_points.nbytes)
+            link_bytes[(sender_id, receiver_id)] = payload_bytes
+            total_bytes += payload_bytes
+    return total_bytes, link_bytes
+
+
+def estimate_parallel_comm_time_ms(link_bytes, resource_sc_nums,
+                                   bandwidth_mhz, num_channels):
+    """Estimate raw-LiDAR transfer time for one conflict-free round."""
+    if not link_bytes:
+        return 0.0
+    total_bandwidth_bps = float(bandwidth_mhz or 20.0) * (10 ** 6)
+    channel_count = max(int(num_channels or 1), 1)
+    per_channel_bps = total_bandwidth_bps / float(channel_count)
+    max_seconds = 0.0
+    for link, payload_bytes in link_bytes.items():
+        if payload_bytes <= 0:
+            continue
+        sc_num = max(int((resource_sc_nums or {}).get(link, 1)), 1)
+        link_seconds = (
+            float(payload_bytes) * 8.0 /
+            max(per_channel_bps * float(sc_num), 1.0))
+        max_seconds = max(max_seconds, link_seconds)
+    return max_seconds * 1000.0
+
+
+def trim_grid_selection_to_deadline(world, grid_selection, resource_sc_nums,
+                                    bandwidth_mhz, num_channels,
+                                    deadline_ms):
+    """Trim PCS-selected grids so every parallel link fits the remaining time."""
+    if deadline_ms is None:
+        return clone_grid_selection(grid_selection)
+    total_bandwidth_bps = float(bandwidth_mhz or 20.0) * (10 ** 6)
+    channel_count = max(int(num_channels or 1), 1)
+    per_channel_bps = total_bandwidth_bps / float(channel_count)
+    trimmed = {}
+    for receiver_id, sender_grids in clone_grid_selection(
+            grid_selection).items():
+        for sender_id, grid_ids in sender_grids.items():
+            sender_vm = world.get_vehicle_manager(sender_id)
+            if sender_vm is None:
+                continue
+            link = (int(sender_id), int(receiver_id))
+            sc_num = max(int((resource_sc_nums or {}).get(link, 1)), 1)
+            budget_bytes = int(
+                per_channel_bps * float(sc_num) *
+                max(float(deadline_ms), 0.0) / 1000.0 / 8.0)
+            if budget_bytes <= 0:
+                continue
+            lidar = sender_vm.perception_manager.lidar
+
+            def grid_score(grid_id):
+                grid_index = grid_index_from_id(grid_id)
+                if grid_index is None:
+                    grid_index = (999999, 999999)
+                return (
+                    lidar.get_grid_density(grid_id),
+                    -grid_index[0],
+                    -grid_index[1],
+                    str(grid_id))
+
+            selected = []
+            used_bytes = 0
+            for grid_id in sorted(grid_ids, key=grid_score, reverse=True):
+                points = lidar.get_local_points_by_grid_ids([grid_id])
+                grid_bytes = 0 if points is None else int(points.nbytes)
+                if grid_bytes <= 0:
+                    continue
+                if used_bytes + grid_bytes > budget_bytes:
+                    continue
+                selected.append(grid_id)
+                used_bytes += grid_bytes
+            if selected:
+                trimmed.setdefault(int(receiver_id), {})[int(sender_id)] = set(
+                    selected)
+    return trimmed
+
+
+def estimate_eval_frame_comm_time_ms(eval_frame, metadata, bandwidth_mhz,
+                                     num_channels):
+    """Estimate transfer time for an evaluated frame sample."""
+    metadata = metadata or {}
+    receiver_id = int(metadata.get('receiver_id'))
+    total_bandwidth_bps = float(bandwidth_mhz or 20.0) * (10 ** 6)
+    channel_count = max(int(num_channels or 1), 1)
+    channel_allocation = metadata.get('channel_allocation', {}) or {}
+    uploaded_sources = [
+        int(source_id)
+        for source_id in metadata.get('source_cav_ids', [])
+        if int(source_id) != receiver_id
+    ]
+    if not uploaded_sources:
+        return 0.0
+    if channel_allocation:
+        per_channel_bps = total_bandwidth_bps / float(channel_count)
+        max_seconds = 0.0
+        for source_id in uploaded_sources:
+            cav = eval_frame.get(source_id)
+            if cav is None:
+                continue
+            payload_bytes = int(cav['lidar_np'].nbytes)
+            max_seconds = max(
+                max_seconds,
+                float(payload_bytes) * 8.0 / max(per_channel_bps, 1.0))
+        return max_seconds * 1000.0
+    total_bytes = int(metadata.get('communication_bytes', 0) or 0)
+    return (
+        float(total_bytes) * 8.0 /
+        max(total_bandwidth_bps, 1.0) *
+        1000.0)
+
+
+def run_pcs_rounds_with_deadline(allocator, world, max_rounds=1,
+                                 deadline_ms=None):
+    """Run repeated PCS scheduling rounds within one frame deadline."""
+    max_rounds = max(int(max_rounds or 1), 1)
+    if max_rounds == 1 and deadline_ms is None:
+        allocator.run()
+        total_bytes, link_bytes = estimate_grid_selection_payload_bytes(
+            world,
+            getattr(allocator, 'grid_selection', {}))
+        frame_time_ms = estimate_parallel_comm_time_ms(
+            link_bytes,
+            getattr(allocator, 'resource_sc_nums', {}),
+            getattr(allocator, 'bandwidth_all', 20.0 * (10 ** 6)) / (10 ** 6),
+            getattr(allocator, 'lambda_subchannels', 1))
+        return {
+            'pcs_rounds_requested': 1,
+            'pcs_rounds_accepted': 1 if total_bytes > 0 else 0,
+            'pcs_frame_comm_time_ms': frame_time_ms,
+            'pcs_round_comm_time_ms': [frame_time_ms] if total_bytes > 0 else [],
+            'pcs_round_comm_bytes': [total_bytes] if total_bytes > 0 else [],
+        }
+
+    deadline_ms = None if deadline_ms is None else float(deadline_ms)
+    union_grid_selection = {}
+    union_strategy = {}
+    union_sc_nums = {}
+    excluded_receiver_grids = {}
+    round_times = []
+    round_bytes = []
+    accepted_rounds = 0
+
+    for _round_index in range(max_rounds):
+        allocator.clear_resource_allocation_strategy()
+        allocator.excluded_receiver_grids = {
+            int(receiver_id): set(grid_ids)
+            for receiver_id, grid_ids in excluded_receiver_grids.items()
+        }
+        allocator.main()
+        round_selection = clone_grid_selection(
+            getattr(allocator, 'grid_selection', {}))
+        payload_bytes, link_bytes = estimate_grid_selection_payload_bytes(
+            world,
+            round_selection)
+        round_time_ms = estimate_parallel_comm_time_ms(
+            link_bytes,
+            getattr(allocator, 'resource_sc_nums', {}),
+            getattr(allocator, 'bandwidth_all', 20.0 * (10 ** 6)) / (10 ** 6),
+            getattr(allocator, 'lambda_subchannels', 1))
+        if payload_bytes <= 0 or round_time_ms <= 0:
+            break
+        if deadline_ms is not None:
+            remaining_ms = deadline_ms - sum(round_times)
+            if remaining_ms <= 0:
+                break
+            if round_time_ms > remaining_ms:
+                round_selection = trim_grid_selection_to_deadline(
+                    world,
+                    round_selection,
+                    getattr(allocator, 'resource_sc_nums', {}),
+                    getattr(allocator, 'bandwidth_all',
+                            20.0 * (10 ** 6)) / (10 ** 6),
+                    getattr(allocator, 'lambda_subchannels', 1),
+                    remaining_ms)
+                payload_bytes, link_bytes = (
+                    estimate_grid_selection_payload_bytes(
+                        world,
+                        round_selection))
+                round_time_ms = estimate_parallel_comm_time_ms(
+                    link_bytes,
+                    getattr(allocator, 'resource_sc_nums', {}),
+                    getattr(allocator, 'bandwidth_all',
+                            20.0 * (10 ** 6)) / (10 ** 6),
+                    getattr(allocator, 'lambda_subchannels', 1))
+                if payload_bytes <= 0 or round_time_ms <= 0:
+                    break
+                if sum(round_times) + round_time_ms > deadline_ms + 1e-6:
+                    break
+
+        merge_grid_selection(union_grid_selection, round_selection)
+        for link, start_idx in getattr(allocator, 'resource_strategy',
+                                       {}).items():
+            union_strategy[(int(link[0]), int(link[1]))] = start_idx
+        for link, sc_num in getattr(allocator, 'resource_sc_nums',
+                                    {}).items():
+            normalized_link = (int(link[0]), int(link[1]))
+            union_sc_nums[normalized_link] = max(
+                int(sc_num),
+                int(union_sc_nums.get(normalized_link, 1)))
+        for receiver_id, sender_grids in round_selection.items():
+            excluded_receiver_grids.setdefault(receiver_id, set())
+            for grid_ids in sender_grids.values():
+                excluded_receiver_grids[receiver_id].update(grid_ids)
+        round_times.append(round_time_ms)
+        round_bytes.append(payload_bytes)
+        accepted_rounds += 1
+
+    allocator.clear_resource_allocation_strategy()
+    allocator.grid_selection = union_grid_selection
+    allocator.resource_strategy = union_strategy
+    allocator.resource_sc_nums = union_sc_nums
+    allocator.excluded_receiver_grids = {}
+    allocator.update_resource_allocation_strategy()
+    return {
+        'pcs_rounds_requested': max_rounds,
+        'pcs_rounds_accepted': accepted_rounds,
+        'pcs_frame_comm_time_ms': sum(round_times),
+        'pcs_round_comm_time_ms': round_times,
+        'pcs_round_comm_bytes': round_bytes,
+    }
 
 
 def candidate_grids_for_sender(head_vm, sender_vm):
@@ -1187,6 +1451,8 @@ def apply_sgcp_constraint(frame, protocol, ego_cav_id, resource_allocation,
                           pcs_min_overlap_grids=None,
                           pcs_blind_spot_radius=None,
                           pcs_min_spot_grids=None,
+                          pcs_frame_rounds=1,
+                          pcs_frame_deadline_ms=None,
                           coverage_fallback='none',
                           coverage_state=None,
                           max_upload_points_per_source=None,
@@ -1248,7 +1514,15 @@ def apply_sgcp_constraint(frame, protocol, ego_cav_id, resource_allocation,
         pcs_blind_spot_radius=pcs_blind_spot_radius,
         pcs_min_spot_grids=pcs_min_spot_grids)
     allocator.set_clusters(clusters)
-    allocator.run()
+    pcs_round_metadata = {}
+    if resource_allocation == 'fullperception_pcs':
+        pcs_round_metadata = run_pcs_rounds_with_deadline(
+            allocator,
+            world,
+            max_rounds=pcs_frame_rounds,
+            deadline_ms=pcs_frame_deadline_ms)
+    else:
+        allocator.run()
     if grid_selection_mode == 'random':
         randomize_scheduled_grid_selection(world, clusters, timestamp)
     elif grid_selection_mode == 'spatial_diverse':
@@ -1320,6 +1594,22 @@ def apply_sgcp_constraint(frame, protocol, ego_cav_id, resource_allocation,
             '' if not routing_hints else 'enabled')
         metadata['max_upload_points_per_source'] = (
             max_upload_points_per_source or '')
+        metadata['pcs_rounds_requested'] = (
+            pcs_round_metadata.get('pcs_rounds_requested', ''))
+        metadata['pcs_rounds_accepted'] = (
+            pcs_round_metadata.get('pcs_rounds_accepted', ''))
+        metadata['frame_comm_time_ms'] = (
+            pcs_round_metadata.get('pcs_frame_comm_time_ms', ''))
+        metadata['pcs_round_comm_time_ms'] = (
+            pcs_round_metadata.get('pcs_round_comm_time_ms', []))
+        metadata['pcs_round_comm_bytes'] = (
+            pcs_round_metadata.get('pcs_round_comm_bytes', []))
+        if metadata.get('frame_comm_time_ms', '') == '':
+            metadata['frame_comm_time_ms'] = estimate_eval_frame_comm_time_ms(
+                constrained_frame,
+                metadata,
+                metadata.get('bandwidth_mhz') or bandwidth_mhz,
+                metadata.get('num_channels') or num_channels)
         constrained_items.append((constrained_frame, metadata))
     update_coverage_state_from_items(coverage_state, constrained_items)
     return constrained_items
@@ -1782,6 +2072,8 @@ def apply_selective_sharing_baseline(frame, protocol, ego_cav_id,
                                      t_min_stab=None, clustering='coalition_game',
                                      n_max=None, rho_th=None,
                                      link_quality=None, timestamp=None,
+                                     num_channels=None,
+                                     bandwidth_mhz=None,
                                      max_upload_points_per_source=None):
     clear_sgcp_globals()
     world = OfflineCavWorld(
@@ -1867,10 +2159,17 @@ def apply_selective_sharing_baseline(frame, protocol, ego_cav_id,
             if rho_th is None else rho_th)
         metadata['selective_member_budget'] = member_budget
         metadata['selective_grid_budget'] = grid_budget
+        metadata['num_channels'] = num_channels or world.network_manager.subchannel_num
+        metadata['bandwidth_mhz'] = bandwidth_mhz or 20.0
         metadata['ns3_link_quality_csv'] = (
             link_quality['path'] if link_quality else '')
         metadata['max_upload_points_per_source'] = (
             max_upload_points_per_source or '')
+        metadata['frame_comm_time_ms'] = estimate_eval_frame_comm_time_ms(
+            constrained_frame,
+            metadata,
+            metadata['bandwidth_mhz'],
+            metadata['num_channels'])
         constrained_items.append((constrained_frame, metadata))
     return constrained_items
 
@@ -2151,6 +2450,13 @@ def trace_row(scenario_id, timestamp, metadata, eval_frame,
             selected_grid_counts, sort_keys=True),
         'point_counts_json': json.dumps(point_counts, sort_keys=True),
         'communication_bytes': metadata.get('communication_bytes', 0),
+        'frame_comm_time_ms': metadata.get('frame_comm_time_ms', ''),
+        'pcs_rounds_requested': metadata.get('pcs_rounds_requested', ''),
+        'pcs_rounds_accepted': metadata.get('pcs_rounds_accepted', ''),
+        'pcs_round_comm_time_ms_json': json.dumps(
+            metadata.get('pcs_round_comm_time_ms', [])),
+        'pcs_round_comm_bytes_json': json.dumps(
+            metadata.get('pcs_round_comm_bytes', [])),
         'channel_allocation': format_channel_allocation(channel_allocation),
         'missing_channel_sources': ';'.join(
             str(item) for item in missing_channel_sources),
@@ -2187,6 +2493,11 @@ def write_trace_csv(path, rows):
         'selected_grid_counts_json',
         'point_counts_json',
         'communication_bytes',
+        'frame_comm_time_ms',
+        'pcs_rounds_requested',
+        'pcs_rounds_accepted',
+        'pcs_round_comm_time_ms_json',
+        'pcs_round_comm_bytes_json',
         'channel_allocation',
         'missing_channel_sources',
         'pred_boxes',
@@ -2556,6 +2867,8 @@ def main():
                 args.rho_th,
                 link_quality=ns3_link_quality,
                 timestamp=timestamp,
+                num_channels=args.num_channels,
+                bandwidth_mhz=args.bandwidth_mhz,
                 max_upload_points_per_source=(
                     args.max_upload_points_per_source))
         elif args.sgcp_constrained:
@@ -2586,6 +2899,8 @@ def main():
                 pcs_min_overlap_grids=args.pcs_min_overlap_grids,
                 pcs_blind_spot_radius=args.pcs_blind_spot_radius,
                 pcs_min_spot_grids=args.pcs_min_spot_grids,
+                pcs_frame_rounds=args.pcs_frame_rounds,
+                pcs_frame_deadline_ms=args.pcs_frame_deadline_ms,
                 coverage_fallback=args.sgcp_coverage_fallback,
                 coverage_state=sgcp_coverage_state,
                 max_upload_points_per_source=(
@@ -2712,6 +3027,26 @@ def main():
                 'communication_bytes': sum(
                     int((metadata or {}).get('communication_bytes', 0))
                     for _, metadata in frame_items),
+                'frame_comm_time_ms': max(
+                    [
+                        float((metadata or {}).get(
+                            'frame_comm_time_ms', 0) or 0)
+                        for _, metadata in frame_items
+                    ] or [0.0]),
+                'pcs_rounds_requested': max(
+                    [
+                        int((metadata or {}).get(
+                            'pcs_rounds_requested', 0) or 0)
+                        for _, metadata in frame_items
+                    ] or [0]),
+                'pcs_rounds_accepted': max(
+                    [
+                        int((metadata or {}).get(
+                            'pcs_rounds_accepted', 0) or 0)
+                        for _, metadata in frame_items
+                    ] or [0]),
+                'pcs_round_comm_time_ms': [],
+                'pcs_round_comm_bytes': [],
                 'source_cav_ids': sorted(set(
                     source_id
                     for _, metadata in frame_items

@@ -27,6 +27,7 @@ class PCS(ResourceAllocationAlgorithm):
         self.grid_selection: Dict[int, Dict[int, Set[str]]] = {}  # 网格选择：接收方vid -> 发送方vid -> 需要接收的网格ID集合
         self.grid_mAP_cache: Dict[int, Dict[int, float]] = {}  # 网格mAP缓存：vid -> grid_id -> mAP值（预计算）
         self.blind_spots_cache: Dict[Tuple[int, int, int, int], Dict[int, Set[str]]] = {}  # (vid, division, radius, min_grids) -> blind_spot_id -> grids
+        self.excluded_receiver_grids: Dict[int, Set[str]] = {}
         # Raw-LiDAR PCS adaptation default.  The original paper schedules
         # semantic blind-spot features, while our replay transmits point-cloud
         # grids; larger blind-spot units avoid unrealistically tiny uploads.
@@ -70,6 +71,9 @@ class PCS(ResourceAllocationAlgorithm):
         
         blind_spots = {}
         blind_spot_grids = vehicle.req_grids - vehicle.high_density_grids  # 需求范围内的感知薄弱区域
+        blind_spot_grids = blind_spot_grids - self.excluded_receiver_grids.get(
+            int(vid),
+            set())
         if not blind_spot_grids:
             return blind_spots
         
