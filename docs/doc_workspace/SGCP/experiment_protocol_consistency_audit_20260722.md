@@ -83,8 +83,20 @@ budget probe 和 NS3 frame-level feasibility artifacts 外，外部实验包中�
    `0.84/0.79/0.37, 51.83 Mbps`，而 strict SGCP default 为
    `0.64/0.60/0.25, 37.05 Mbps`。因此该表只能作为 normalized scaffold
    诊断，不能作为最终 paper-facing Table6。
-6. Table A / Figures 1-2：combined scaffold/Pareto summaries。
-7. Figure 6：bootstrap uncertainty，待最终行冻结后重算。
+6. Table A / Figures 1-2：2026-07-22 已新增 current-protocol diagnostic
+   synthesis：
+   `data/tableA_combined_current_protocol_diagnostic_20260722.csv`、
+   `data/tableA_compact_current_protocol_diagnostic_20260722.csv`、
+   `figures/figure1_pareto_current_protocol_diagnostic_20260722.*` 和
+   `figures/figure2_combined_current_protocol_diagnostic_20260722.*`。
+   该 synthesis 汇总 Table2/3/4/6 与 SGCP low-budget addendum，但混合了
+   references、normalized global-box scaffolds、scheduler diagnostics 和 unresolved
+   SGCP operating points，因此只能作为诊断视图，不能作为最终 TableA/Figure1/2。
+7. Figure 6：bootstrap uncertainty 当前明确降级。外部实验包新增
+   `figure6_current_protocol_status_20260722.md`，OpenCDA 镜像为
+   `artifacts/figure6_current_protocol_status_20260722/FIGURE6_STATUS.md`。
+   现有 `uncertainty_bootstrap_attentive.csv` 是 legacy 20MHz，不得作为
+   current-protocol evidence；最终行冻结后再用 per-sample eval stats 重算。
 
 ## 通过的静态一致性检查
 

@@ -7801,3 +7801,40 @@ conda run --no-capture-output -n opencda python docs\doc_workspace\SGCP\artifact
 | Full 20-CAV early fusion | 0.85 | 0.83 | 0.48 | 118.71 | 0.00 | 118.71 |
 
 判断：该 rerun 证明 Table6 的 current-protocol accounting 与 global-box scaffold 可复现，但它不支持 strict default SGCP 的最终论文叙事。给 PCS/EdgeCooper/Pure late 加 common global box aggregation 后，它们已经接近 Full20Early 的 AP@0.3/0.5；因此最终 Table6 必须等待 `N_max=2` 或其他 SGCP operating point 决策后重组。
+
+# 2026-07-22 TableA/Figure1/Figure2 current-protocol synthesis and Figure6 status
+
+执行内容：新增 `docs/doc_workspace/SGCP/artifacts/tableA_current_protocol_20260722/build_tableA_current_protocol.py`，从 current-protocol Table2/3/4/6 与 SGCP low-budget addendum 汇总生成 combined diagnostic，不跑新推理。
+
+执行命令：
+
+```powershell
+conda run --no-capture-output -n opencda python docs\doc_workspace\SGCP\artifacts\tableA_current_protocol_20260722\build_tableA_current_protocol.py
+```
+
+输出：
+
+- OpenCDA artifact CSV：`docs/doc_workspace/SGCP/artifacts/tableA_current_protocol_20260722/tableA_combined_current_protocol_diagnostic_20260722.csv`
+- 外部实验目录 CSV：`C:\Workspace\2026-7-papers\infocom\SGCP\experiment\data\tableA_combined_current_protocol_diagnostic_20260722.csv`
+- 外部 compact CSV：`C:\Workspace\2026-7-papers\infocom\SGCP\experiment\data\tableA_compact_current_protocol_diagnostic_20260722.csv`
+- 外部 Figure1：`figure1_pareto_current_protocol_diagnostic_20260722.png/.pdf`
+- 外部 Figure2：`figure2_combined_current_protocol_diagnostic_20260722.png/.pdf`
+
+结果摘要：
+
+| Method | AP@0.3 | AP@0.5 | AP@0.7 | Total Mbps |
+| --- | ---: | ---: | ---: | ---: |
+| Head-only | 0.26 | 0.22 | 0.09 | 0.25 |
+| Pure late | 0.82 | 0.76 | 0.37 | 0.74 |
+| FullPerception-PCS + global box | 0.83 | 0.77 | 0.38 | 54.54 |
+| EdgeCooper V2V + global box | 0.84 | 0.79 | 0.37 | 51.83 |
+| RandomBudget | 0.78 | 0.74 | 0.39 | 62.49 |
+| PACP-LiDAR | 0.81 | 0.79 | 0.42 | 86.80 |
+| SGCP-PAPG strict default | 0.64 | 0.60 | 0.25 | 37.05 |
+| SGCP-PAPG N_max=2 diagnostic | 0.82 | 0.77 | 0.39 | 60.13 |
+| SGCP-PAPG low-budget cap4000 | 0.86 | 0.77 | 0.33 | 51.90 |
+| Full 20-CAV early fusion | 0.85 | 0.83 | 0.48 | 118.71 |
+
+判断：TableA/Figure1/Figure2 current diagnostic 可以防止实验目录继续混用 legacy 20MHz 图，但不能作为 final paper-facing synthesis。它混合 references、normalized global-box scaffolds、scheduler diagnostics 和 unresolved SGCP operating points。最终汇总图应在选择 `N_max=2`、cap4000 或其他 operating point 后重建。
+
+Figure6 状态：新增 OpenCDA `artifacts/figure6_current_protocol_status_20260722/FIGURE6_STATUS.md` 与外部 `figure6_current_protocol_status_20260722.md`。现有 `uncertainty_bootstrap_attentive.csv` 是 legacy 20MHz，明确降级为 archived background，不生成 current-protocol bootstrap 图。最终行冻结并生成 per-sample eval stats 后再重算。

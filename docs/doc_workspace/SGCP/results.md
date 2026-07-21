@@ -1596,3 +1596,41 @@ Artifact: `docs/doc_workspace/SGCP/artifacts/table6_current_protocol_20260722/`
 | Full 20-CAV early fusion | 0.85 | 0.83 | 0.48 | 118.71 | 0.00 | 118.71 |
 
 结论：common global box aggregation 会显著抬高 PCS/EdgeCooper/Pure late，因此这张表不支持 strict default SGCP 的主文优势叙事。它的价值是明确“给 baseline 加同样 box aggregation 后，raw-LiDAR scheduler 本身的差距会被 late/global box aggregation 掩盖”。最终 Table6 需要等待 SGCP operating point 决策，尤其是 Table4 暴露的 `N_max=2` 结果。
+
+## TableA/Figure1/Figure2 Current-Protocol Diagnostic Synthesis - 2026-07-22
+
+Artifact: `docs/doc_workspace/SGCP/artifacts/tableA_current_protocol_20260722/`
+
+外部实验包输出：
+
+- `C:\Workspace\2026-7-papers\infocom\SGCP\experiment\data\tableA_combined_current_protocol_diagnostic_20260722.csv`
+- `C:\Workspace\2026-7-papers\infocom\SGCP\experiment\data\tableA_compact_current_protocol_diagnostic_20260722.csv`
+- `C:\Workspace\2026-7-papers\infocom\SGCP\experiment\figures\figure1_pareto_current_protocol_diagnostic_20260722.png/.pdf`
+- `C:\Workspace\2026-7-papers\infocom\SGCP\experiment\figures\figure2_combined_current_protocol_diagnostic_20260722.png/.pdf`
+
+该 synthesis 不跑新推理，只汇总已完成的 current-protocol Table2/3/4/6 与 SGCP low-budget addendum。
+
+| Method | AP@0.3 | AP@0.5 | AP@0.7 | Total Mbps |
+| --- | ---: | ---: | ---: | ---: |
+| Head-only | 0.26 | 0.22 | 0.09 | 0.25 |
+| Pure late | 0.82 | 0.76 | 0.37 | 0.74 |
+| FullPerception-PCS + global box | 0.83 | 0.77 | 0.38 | 54.54 |
+| EdgeCooper V2V + global box | 0.84 | 0.79 | 0.37 | 51.83 |
+| RandomBudget | 0.78 | 0.74 | 0.39 | 62.49 |
+| PACP-LiDAR | 0.81 | 0.79 | 0.42 | 86.80 |
+| SGCP-PAPG strict default | 0.64 | 0.60 | 0.25 | 37.05 |
+| SGCP-PAPG N_max=2 diagnostic | 0.82 | 0.77 | 0.39 | 60.13 |
+| SGCP-PAPG low-budget cap4000 | 0.86 | 0.77 | 0.33 | 51.90 |
+| Full 20-CAV early fusion | 0.85 | 0.83 | 0.48 | 118.71 |
+
+结论：该 current-protocol synthesis 是“实验目录不混乱”的诊断视图，而不是 final paper table。它清楚显示 strict default SGCP 已不适合作为最终主线；`N_max=2` 与 cap4000 是更值得继续重跑的候选 operating points，但二者尚未完成 Table2/Table3/Table5/Figure6 全链路重算。
+
+## Figure6 Current-Protocol Status - 2026-07-22
+
+Artifact: `docs/doc_workspace/SGCP/artifacts/figure6_current_protocol_status_20260722/FIGURE6_STATUS.md`
+
+外部实验包输出：
+
+- `C:\Workspace\2026-7-papers\infocom\SGCP\experiment\figure6_current_protocol_status_20260722.md`
+
+结论：不生成 current-protocol bootstrap 图。现有 `uncertainty_bootstrap_attentive.csv` 是 legacy `20 MHz / 10 ch`，只能作为 archived background。Bootstrap 需要等最终 paper-facing rows 冻结，并且为那些 rows 输出 per-sample eval stats 后再重算；否则会给 unresolved operating point 制造伪精确置信区间。
