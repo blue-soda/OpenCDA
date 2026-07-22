@@ -172,7 +172,9 @@ def load_metrics(paths):
         with open(path, newline='') as stream:
             reader = csv.DictReader(stream)
             for row in reader:
-                label = row.get('label') or row.get('method') or row.get('name')
+                label = (
+                    row.get('label') or row.get('method') or
+                    row.get('variant') or row.get('name'))
                 if not label:
                     continue
                 metrics[label] = row

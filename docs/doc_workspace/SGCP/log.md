@@ -8015,3 +8015,13 @@ AP 结果：`0.87/0.79/0.37`，raw LiDAR `61.47 Mbps`，box overhead `0.71 Mbps`
   - `docs/doc_workspace/SGCP/artifacts/compute_profile_20260722/compute_profile_protocol_native_20260722.csv`
 - Key current-protocol result after point-feature-inclusive input-adjusted rebuild: Pure late uses about `19.17` detector forwards/frame, point-feature `1.17 GFLOPs/frame`, and total `1714.08 GFLOPs/frame`; SGCP-PAPG uses `6.00` forwards/frame, point-feature `0.83 GFLOPs/frame`, and total `536.94 GFLOPs/frame`; no-clustering EdgeCooper/PCS global-box references are similarly compute-heavy (`1718.82-1775.54 GFLOPs/frame`).
 - Synced CSVs, calibration JSON/stdout, script snapshot and explanation to `C:\Workspace\2026-7-papers\infocom\SGCP\experiment`. This route is auxiliary compute-efficiency evidence, not a new primary metric.
+
+## 2026-07-22 GFLOPs columns merged into paper-facing tables
+
+- Updated `opencda.tools.sgcp_compute_profile` metrics loader so table rows using `variant` can attach AP/Mbps metadata.
+- Regenerated protocol-native compute profile with the deadline-constrained EdgeCooper trace instead of the archived high-demand deadline-infeasible trace.
+- Added clustering-ablation compute profile:
+  - `docs/doc_workspace/SGCP/artifacts/compute_profile_20260722/compute_profile_clustering_current_protocol_20260722.csv`
+  - `docs/doc_workspace/SGCP/artifacts/compute_profile_20260722/compute_profile_clustering_current_protocol_20260722.md`
+- Merged `point_feature_gflops_per_frame`, `detector_gflops_per_frame`, and `gflops_note` into the INFOCOM experiment package source CSVs for Table1/Table2/Table3/Table5/Table6.
+- Updated `C:\Workspace\2026-7-papers\infocom\SGCP\experiment\main_data_tables_20260722.md` so the four core paper-facing tables display `GFLOPs/frame` directly.

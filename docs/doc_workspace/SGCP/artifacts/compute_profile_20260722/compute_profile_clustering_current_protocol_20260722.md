@@ -15,11 +15,14 @@ This file summarizes detector-side compute from offline trace CSVs. GFLOPs are c
 
 | label | ap_03 | ap_05 | ap_07 | total_mbps | detector_calls_per_frame | mean_source_cavs_per_call | mean_input_points_per_frame | mean_pred_boxes_per_frame | input_adjusted_point_feature_gflops_per_frame | profiled_detector_gflops_per_frame | input_adjusted_detector_gflops_per_frame |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| Full 20-CAV early fusion | 0.85 | 0.83 | 0.48 | 118.709323 | 1.000 | 20.000 | 97669.1 | 60.122 | 0.947134 | 89.411751 | 90.297687 |
-| Pure late | 0.82 | 0.76 | 0.37 | 0.739122 | 19.171 | 1.000 | 93608.5 | 102.415 | 1.166777 | 1714.088698 | 1714.082268 |
-| FullPerception-PCS protocol adaptation | 0.23 | 0.17 | 0.06 | 53.550000 | 20.000 | 1.454 | 139506.2 | 299.927 | 1.616974 | 1788.235028 | 1788.628046 |
-| EdgeCooper V2V deadline-constrained adaptation | 0.32 | 0.26 | 0.10 | 50.910000 | 20.000 | 1.423 | 137442.8 | 307.829 | 1.597265 | 1788.235028 | 1788.608337 |
-| SGCP-PAPG | 0.87 | 0.81 | 0.36 | 63.246548 | 6.000 | 2.667 | 78155.9 | 111.024 | 0.831860 | 536.470508 | 536.935181 |
+| Singleton pure late reference | 0.82 | 0.76 | 0.37 | 0.739122 | 19.171 | 1.000 | 93608.5 | 102.415 | 1.166777 | 1714.088698 | 1714.082268 |
+| Random balanced clusters | 0.52 | 0.47 | 0.24 | 31.156574 | 5.000 | 2.000 | 48570.2 | 45.659 | 0.535042 | 447.058757 | 447.287810 |
+| Distance-greedy clusters | 0.55 | 0.53 | 0.31 | 31.246798 | 5.000 | 2.000 | 48673.6 | 40.561 | 0.536030 | 447.058757 | 447.288798 |
+| Mobility-stability greedy clusters | 0.60 | 0.54 | 0.27 | 31.221011 | 5.000 | 2.000 | 48492.2 | 51.634 | 0.534297 | 447.058757 | 447.287065 |
+| Density/quality-greedy clusters | 0.62 | 0.56 | 0.36 | 31.239024 | 5.000 | 2.000 | 48633.8 | 52.098 | 0.535649 | 447.058757 | 447.288417 |
+| Fixed first-frame clusters | 0.63 | 0.56 | 0.22 | 37.105701 | 6.000 | 2.000 | 57955.1 | 50.244 | 0.638907 | 536.470508 | 536.742228 |
+| Dynamic coalition clusters (SGCP) | 0.87 | 0.81 | 0.36 | 63.246548 | 6.000 | 2.667 | 78155.9 | 111.024 | 0.831860 | 536.470508 | 536.935181 |
+| All-in-one full raw sharing | 0.85 | 0.83 | 0.48 | 118.709323 | 1.000 | 20.000 | 97669.1 | 60.122 | 0.947134 | 89.411751 | 90.297687 |
 
 ## Notes
 

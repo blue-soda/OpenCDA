@@ -1719,3 +1719,5 @@ current-protocol compute profile 摘要：
 | Full 20-CAV early fusion | 0.85 | 0.83 | 0.48 | 118.71 | 1.00 | 0.95 | 90.30 |
 
 结论：Pure late / no-clustering global-box reference 的低 Mbps 不代表系统总成本低；它们每帧接近 20 次 detector forward，约为 SGCP-PAPG 的 `3.2x` detector GFLOPs。SGCP-PAPG 用 6 个 cluster-head forward 和 selected member point clouds 达到更高 AP@0.3/AP@0.5，可作为论文附录或讨论中的 compute-efficiency 证据。GFLOPs 覆盖 detector forward 和一部分点云到特征的浮点计算，不包含 voxelization/hash/scatter、NMS、调度、通信序列化、CARLA 或车辆控制。修正后的 input-adjusted 口径会计入点云量相关的 `PillarVFE` 前处理与 PFN 计算，因此 full 20-CAV early fusion 使用 `90.30 GFLOPs/frame` 而不是 singleton 常数。
+
+2026-07-22 追加：已将 GFLOPs 直接合并进 INFOCOM 实验包的 paper-facing 源表，而不只保留在辅助 profile 表中。更新后的 CSV 包括 Table1 protocol-native baseline、Table2 fusion scaffold、Table3 scheduler comparison、Table5 clustering ablation、Table6 global-box aggregation；每行包含 `point_feature_gflops_per_frame`、`detector_gflops_per_frame` 和 `gflops_note`。其中 protocol-native compute profile 已改用 deadline-constrained EdgeCooper trace，避免误用旧的 high-demand deadline-infeasible EdgeCooper 行。
