@@ -1721,3 +1721,22 @@ current-protocol compute profile 摘要：
 结论：Pure late / no-clustering global-box reference 的低 Mbps 不代表系统总成本低；它们每帧接近 20 次 detector forward，约为 SGCP-PAPG 的 `3.2x` detector GFLOPs。SGCP-PAPG 用 6 个 cluster-head forward 和 selected member point clouds 达到更高 AP@0.3/AP@0.5，可作为论文附录或讨论中的 compute-efficiency 证据。GFLOPs 覆盖 detector forward 和一部分点云到特征的浮点计算，不包含 voxelization/hash/scatter、NMS、调度、通信序列化、CARLA 或车辆控制。修正后的 input-adjusted 口径会计入点云量相关的 `PillarVFE` 前处理与 PFN 计算，因此 full 20-CAV early fusion 使用 `90.30 GFLOPs/frame` 而不是 singleton 常数。
 
 2026-07-22 追加：已将 GFLOPs 直接合并进 INFOCOM 实验包的 paper-facing 源表，而不只保留在辅助 profile 表中。更新后的 CSV 包括 Table1 protocol-native baseline、Table2 fusion scaffold、Table3 scheduler comparison、Table5 clustering ablation、Table6 global-box aggregation；每行包含 `point_feature_gflops_per_frame`、`detector_gflops_per_frame` 和 `gflops_note`。其中 protocol-native compute profile 已改用 deadline-constrained EdgeCooper trace，避免误用旧的 high-demand deadline-infeasible EdgeCooper 行。
+
+## Table 1 Lower/Upper Reference Clarification - 2026-07-22
+
+Artifact: `docs/doc_workspace/SGCP/artifacts/table1_no_collaboration_20260722/`
+
+外部实验包更新：
+
+- `C:\Workspace\2026-7-papers\infocom\SGCP\experiment\data\table1_original_protocol_baselines_20260720.csv`
+- `C:\Workspace\2026-7-papers\infocom\SGCP\experiment\main_data_tables_20260722.md`
+- `C:\Workspace\2026-7-papers\infocom\SGCP\experiment\data\compute_profile_protocol_native_20260722.csv`
+
+新增 no-collaboration 下界：不启用早期融合、不启用晚期融合、不共享 raw LiDAR、不共享检测框；每辆 CAV 独立本地检测并作为 singleton receiver sample 进入 pooled aggregate AP 统计。
+
+| Method | Late fusion | Clustering | Evaluated samples | AP@0.3 | AP@0.5 | AP@0.7 | Total Mbps | GFLOPs/frame |
+| --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| No collaboration | none | singleton | 820 | 0.23 | 0.17 | 0.06 | 0.00 | 1788.23 |
+| Centralized all-in-one raw-LiDAR early fusion upper reference | none | all_in_one | 41 | 0.85 | 0.83 | 0.48 | 118.71 | 90.30 |
+
+结论：旧 `Full 20-CAV early fusion` 行不是 protocol-native all-receiver full-broadcast baseline，而是每帧 1 个 all-in-one fused receiver 的 centralized upper reference，因此已重命名。它可以保留为 AP 上界参考，但不能与 PCS/EdgeCooper 的 `singleton + all-cavs` receiver universe 混写为同一种 baseline。真实 all-receiver full early broadcast 需要每辆 CAV 广播/接收所有其他 CAV raw LiDAR，在当前 `40 MHz / 10 target subchannels / 60 ms` 通信窗口下视为不可行，不作为 feasible baseline。

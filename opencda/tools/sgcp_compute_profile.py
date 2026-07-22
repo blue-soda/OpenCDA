@@ -169,14 +169,19 @@ def load_metrics(paths):
     for path in paths:
         if not path or not os.path.exists(path):
             continue
-        with open(path, newline='') as stream:
+        with open(path, newline='', encoding='utf-8-sig') as stream:
             reader = csv.DictReader(stream)
-            for row in reader:
+            for raw_row in reader:
+                row = {}
+                for key, value in raw_row.items():
+                    clean_key = (key or '').lstrip('\ufeff').strip()
+                    row[clean_key] = value
                 label = (
                     row.get('label') or row.get('method') or
                     row.get('variant') or row.get('name'))
                 if not label:
                     continue
+                label = label.strip()
                 metrics[label] = row
     return metrics
 

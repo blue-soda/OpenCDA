@@ -15,7 +15,8 @@ This file summarizes detector-side compute from offline trace CSVs. GFLOPs are c
 
 | label | ap_03 | ap_05 | ap_07 | total_mbps | detector_calls_per_frame | mean_source_cavs_per_call | mean_input_points_per_frame | mean_pred_boxes_per_frame | input_adjusted_point_feature_gflops_per_frame | profiled_detector_gflops_per_frame | input_adjusted_detector_gflops_per_frame |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| Full 20-CAV early fusion | 0.85 | 0.83 | 0.48 | 118.709323 | 1.000 | 20.000 | 97669.1 | 60.122 | 0.947134 | 89.411751 | 90.297687 |
+| Centralized all-in-one raw-LiDAR early fusion upper reference | 0.85 | 0.83 | 0.48 | 118.709323 | 1.000 | 20.000 | 97669.1 | 60.122 | 0.947134 | 89.411751 | 90.297687 |
+| No collaboration | 0.23 | 0.17 | 0.06 | 0.000000 | 20.000 | 1.000 | 97669.1 | 259.927 | 1.217356 | 1788.235028 | 1788.228428 |
 | Pure late | 0.82 | 0.76 | 0.37 | 0.739122 | 19.171 | 1.000 | 93608.5 | 102.415 | 1.166777 | 1714.088698 | 1714.082268 |
 | FullPerception-PCS protocol adaptation | 0.23 | 0.17 | 0.06 | 53.550000 | 20.000 | 1.454 | 139506.2 | 299.927 | 1.616974 | 1788.235028 | 1788.628046 |
 | EdgeCooper V2V deadline-constrained adaptation | 0.32 | 0.26 | 0.10 | 50.910000 | 20.000 | 1.423 | 137442.8 | 307.829 | 1.597265 | 1788.235028 | 1788.608337 |

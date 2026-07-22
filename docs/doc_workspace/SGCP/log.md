@@ -8025,3 +8025,11 @@ AP 结果：`0.87/0.79/0.37`，raw LiDAR `61.47 Mbps`，box overhead `0.71 Mbps`
   - `docs/doc_workspace/SGCP/artifacts/compute_profile_20260722/compute_profile_clustering_current_protocol_20260722.md`
 - Merged `point_feature_gflops_per_frame`, `detector_gflops_per_frame`, and `gflops_note` into the INFOCOM experiment package source CSVs for Table1/Table2/Table3/Table5/Table6.
 - Updated `C:\Workspace\2026-7-papers\infocom\SGCP\experiment\main_data_tables_20260722.md` so the four core paper-facing tables display `GFLOPs/frame` directly.
+
+## 2026-07-22 Table 1 no-collaboration lower reference
+
+- Added a protocol-native no-collaboration lower reference by running `offline_inference` with `singleton`, `receiver_policy=all-cavs`, `upload_mode=head_only`, no scheduled raw-LiDAR uploads, and no late fusion.
+- Result: AP `0.23/0.17/0.06`, `0.00 Mbps`, `820` evaluated singleton receiver-frame samples, trace at `docs/doc_workspace/SGCP/artifacts/table1_no_collaboration_20260722/no_collaboration_41f_trace.csv`.
+- Rebuilt the protocol-native compute profile after hardening `sgcp_compute_profile.load_metrics()` for UTF-8 BOM/whitespace in CSV headers. No-collaboration compute is `1788.23 GFLOPs/frame`; PCS/EdgeCooper protocol rows remain about `20` detector forwards/frame.
+- Renamed the former `Full 20-CAV early fusion` row to `Centralized all-in-one raw-LiDAR early fusion upper reference`. It is one all-in-one fused receiver per frame (`41` samples), not a protocol-native all-receiver full-broadcast baseline. A true all-receiver full early broadcast is considered communication-infeasible under the current `40 MHz / 10 target subchannels / 60 ms` protocol.
+- Synced the change to `C:\Workspace\2026-7-papers\infocom\SGCP\experiment` Table1 CSV, `main_data_tables_20260722.md`, `table_guidance.md`, `experiment_update_summary.md`, and `data/compute_profile_protocol_native_20260722.csv`.
