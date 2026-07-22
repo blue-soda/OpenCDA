@@ -1634,3 +1634,15 @@ Artifact: `docs/doc_workspace/SGCP/artifacts/figure6_current_protocol_status_202
 - `C:\Workspace\2026-7-papers\infocom\SGCP\experiment\figure6_current_protocol_status_20260722.md`
 
 结论：不生成 current-protocol bootstrap 图。现有 `uncertainty_bootstrap_attentive.csv` 是 legacy `20 MHz / 10 ch`，只能作为 archived background。Bootstrap 需要等最终 paper-facing rows 冻结，并且为那些 rows 输出 per-sample eval stats 后再重算；否则会给 unresolved operating point 制造伪精确置信区间。
+
+## SGCP-PAPG Main-Parameter Reproduction - 2026-07-22
+
+Artifact: `docs/doc_workspace/SGCP/artifacts/papg_main_reproduce_current_20260722/`
+
+本轮按用户要求把 SGCP-PAPG 恢复到主线参数，而不是 current diagnostic 中的 strict default：`N_max=4`、`rho_th=3`、`head_rb_budget=2`、attentive detector、coalition clustering、all-cluster-heads、inter-cluster NMS、无 point cap。通信口径使用当前正式设置 `40 MHz / 10 target subchannels / 60 ms`，NS3 estimator 为 `tb_size=899 bytes, slot=0.5 ms, subchannel_prbs=10, MCS=28, PSSCH symbols=12`。
+
+| Run | AP@0.3 | AP@0.5 | AP@0.7 | Raw Mbps | Box Mbps | Total Mbps | Frame time mean / P95 / max |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | --- |
+| SGCP-PAPG restored main, attentive, `N_max=4`, `B_h=2` | 0.87 | 0.79 | 0.37 | 61.47 | 0.71 | 62.18 | 43.68 / 44.12 / 44.32 ms |
+
+解释：该结果复现了旧主线的核心优势和通信量级，并满足 60 ms 约束。与 legacy `0.87/0.81/0.36, 63.28 Mbps` 的差异主要来自当前 NS3 deadline admission 把 per-row selected grids 从旧 trace 的约 `97.22` 降到 `61.67`；这不是 `N_max` 改错，而是当前更严格通信估算的自然结果。此前 `SGCP-PAPG strict default` 的 `0.64/0.60/0.25, 37.05 Mbps` 不应再作为主方法行，因为它使用了默认 `head_rb_budget=1`。

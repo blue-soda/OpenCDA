@@ -1,6 +1,6 @@
 # SGCP 任务清单
 
-更新时间：2026-07-21
+更新时间：2026-07-22
 
 最终目标：完成 SGCP 论文审稿意见响应与实验重构，使所有图表有效、可解释、保护论文叙事，并能证明 SGCP 在大规模 V2V 协同感知中以合理通信量获得更好的 aggregate AP。
 
@@ -12,6 +12,11 @@
 - `SGCP-compatible scheduler comparison` 只能说明“在同一 clustered two-layer fusion scaffold 中哪个调度器更好”，不能混写成完整系统比较。
 - 若任何主文图表结论较差或无法解释，必须先诊断原因；必要时修改 SGCP 算法、调整合理测试场景或重新设计实验协议。不得用不可解释的单点结果硬写论文。
 - 负面结果必须记录到 `log.md` / `results.md`，但只有可解释且支撑叙事的图表进入 `main.tex`。
+
+## 当前最高优先级更新（2026-07-22）
+
+- [x] 恢复 SGCP-PAPG 主参数并复现：`N_max=4`、`rho_th=3`、`head_rb_budget=2`、attentive detector、`40 MHz / 10 target subchannels / 60 ms`、NS3 estimator。41 帧已得到 `0.87/0.79/0.37`、`62.18 Mbps` total、frame communication time mean/P95/max `43.68/44.12/44.32 ms`，满足 60 ms 约束。Artifact：`docs/doc_workspace/SGCP/artifacts/papg_main_reproduce_current_20260722/`。
+- [ ] 用恢复后的 SGCP-PAPG 主参数替换 current-protocol diagnostic 表中的 `strict default` 行，并重建 Table3/TableA/Figure1-2；后续所有正式表格必须显式记录 `coperception-yaml=...enable_coperception_early_from_attentive.yaml`、`N_max=4`、`head_rb_budget=2`、`communication_deadline_ms=60`。
 
 ## 已完成工作压缩摘要
 

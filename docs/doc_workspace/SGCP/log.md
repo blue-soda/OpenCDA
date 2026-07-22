@@ -7858,3 +7858,26 @@ consistency ok: csv widths, communication totals, current protocol fields, regis
 ```
 
 结论：除 Table1 外的 Table2/3/4/5/6/TableA/Figure1-8 现在在外部实验目录中均有明确状态：legacy 20MHz scaffold、current 40MHz/60ms diagnostic 或 Figure6 deferred status，不再把旧表误写成 current-protocol final evidence。仍未完成的是论文最终 operating point 冻结后的 paper-facing rerun。
+
+# 2026-07-22 SGCP-PAPG restored main-parameter reproduction
+
+动机：用户指出历史主结果 `SGCP-PAPG 0.87/0.81/0.36, 62.54 raw + 0.74 box = 63.28 Mbps` 应该也满足 60 ms 约束，要求先把参数调回去，尤其是 `N_max`，并尝试复现。
+
+关键发现：
+
+- `N_max=4` 本身没有改坏；真正导致 current diagnostic `0.64/0.60/0.25, 37.05 Mbps` 的主要差异是该轮使用了默认 `head_rb_budget=1`，不是主线的 `B_h=2`。
+- 第一次手工重跑漏传 `--coperception-yaml docs\doc_workspace\SGCP\artifacts\early_from_late_checkpoint_20260719\enable_coperception_early_from_attentive.yaml`，因此回到了默认 detector；该结果不属于 attentive 表格口径，已判为无效诊断。
+
+最终复现实验命令：
+
+```powershell
+conda run --no-capture-output -n opencda python -m opencda.tools.offline_inference --dataset-root D:\Data\Carla --scenario-id 2026_07_15_01_26_56 --ego-cav-id 1 --max-frames 41 --fusion-method early --coperception-yaml docs\doc_workspace\SGCP\artifacts\early_from_late_checkpoint_20260719\enable_coperception_early_from_attentive.yaml --sgcp-constrained --resource-allocation perception_aware_potential_game --clustering coalition_game --sgcp-receiver-policy all-cluster-heads --sgcp-inter-cluster-late-fusion --sgcp-upload-mode grid --sgcp-grid-selection-mode utility --sgcp-grid-score-mode utility --n-max 4 --rho-th 3 --head-rb-budget 2 --num-channels 10 --bandwidth-mhz 40 --communication-deadline-ms 60 --channel-estimator ns3 --ns3-tb-size-bytes 899 --ns3-slot-duration-ms 0.5 --ns3-subchannel-prbs 10 --ns3-symbols-per-slot 12 --ns3-mcs 28 --sgcp-trace-output docs\doc_workspace\SGCP\artifacts\papg_main_reproduce_current_20260722\papg_attentive_nmax4_bh2_ns3_40mhz_trace.csv --eval-stats-output docs\doc_workspace\SGCP\artifacts\papg_main_reproduce_current_20260722\papg_attentive_nmax4_bh2_ns3_40mhz_eval_stats.csv
+```
+
+结果：
+
+| Run | AP@0.3 | AP@0.5 | AP@0.7 | Raw Mbps | Box Mbps | Total Mbps | Frame time mean / P95 / max |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | --- |
+| attentive, `N_max=4`, `B_h=2`, 40MHz/10ch/60ms NS3 estimator | 0.87 | 0.79 | 0.37 | 61.47 | 0.71 | 62.18 | 43.68 / 44.12 / 44.32 ms |
+
+结论：恢复主线参数后，SGCP-PAPG 回到可写论文的主方法量级，且通信时间满足 60 ms 约束。与旧 legacy `0.87/0.81/0.36, 63.28 Mbps` 的小差别可解释为当前 NS3 deadline admission 更严格：per-row selected grids 从旧 trace 的约 `97.22` 降至 `61.67`。后续 Table3/TableA/Figure1-2 不应再把 `strict default` 当作 SGCP 主方法；需要以本 artifact 或进一步冻结后的同参数 rerun 替换。
