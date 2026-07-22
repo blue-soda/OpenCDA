@@ -35,7 +35,12 @@ Communication estimator:
 | ---: | ---: | ---: | ---: | ---: | ---: | ---: | --- |
 | 100 ms | 0.87 | 0.79 | 0.37 | 61.47 | 0.71 | 62.18 | 43.68 / 44.12 / 44.32 ms |
 
-The 100 ms result is identical to the restored 60 ms result because the restored main schedule already fits under the 60 ms NS3 estimator. Relaxing the deadline to 100 ms does not admit additional senders or grids.
+Correction: this interpretation was superseded by
+`../papg_deadline_fix_20260722/`. The original 60 ms run had a
+deadline-propagation bug: PAPG still used the default `Params.T_ddl=0.1` when
+computing `max_grids_per_rb`. After syncing `Params.T_ddl` with the CLI channel
+model, the corrected 60 ms and 100 ms traces differ. The 100 ms AP result in
+this artifact remains valid.
 
 ## Real NS3 Delay
 
@@ -60,4 +65,6 @@ Measured result:
 | ---: | ---: | ---: | ---: | ---: | --- |
 | 80 | 771,280 | 80/80 | 80/80 | 0 | 26.51 / 53.00 / 55.00 ms |
 
-Interpretation: the 100 ms budget is feasible in real NS3, and the same plan also satisfies the stricter 60 ms communication window. The measured max callback delay is higher than the offline estimator max because the real replay includes 10 KB packet chunking and NS3 protocol processing, but it remains below both 60 ms and 100 ms.
+Interpretation: the 100 ms budget is feasible in real NS3. This exact replay
+also corresponds to the corrected 100 ms trace. It should not be used as
+evidence that corrected 60 ms and 100 ms scheduling are identical.

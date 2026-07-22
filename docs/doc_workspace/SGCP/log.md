@@ -7905,3 +7905,24 @@ AP 结果：`0.87/0.79/0.37`，raw LiDAR `61.47 Mbps`，box overhead `0.71 Mbps`
 | 80 | 771,280 | 80/80 | 80/80 | 0 | 26.51 / 53.00 / 55.00 ms |
 
 注意：第一次 NS3 attempt 因 `./ns3` 启动路径错误导致 bridge 未启动，产生 0/80 的无效 eval；已保留在 `ns3_frame000060/` 作为失败日志，不作为链路结果。有效结果为 `ns3_frame000060_attempt2/`。
+## 2026-07-22 PAPG 60/100 ms Deadline Audit
+
+- User noticed the 100 ms AP/delay result was identical to the restored 60 ms
+  result.
+- Root cause found in `opencda/tools/offline_inference.py`: the CLI deadline
+  reached `ChannelModel`, but `PotentialGame.calculate_max_grids_per_rb()` was
+  called with the default `Params.T_ddl=0.1`, overriding the channel model's
+  frame deadline.
+- Fixed `apply_resource_overrides()` so `resource_allocator.time_slot` and
+  `resource_allocator.p.T_ddl` are set from `channel_model.frame_deadline_s`
+  before `set_clusters()`.
+- Reran SGCP-PAPG attentive, `N_max=4`, `rho_th=3`, `head_rb_budget=2`,
+  40 MHz/10 ch NS3 estimator:
+  - 60 ms: `0.87/0.76/0.38`, raw `58.44 Mbps`, total `59.15 Mbps`, avg grids
+    `36.67`, estimated frame time `40.82/42.08/42.38 ms`.
+  - 100 ms: `0.87/0.79/0.37`, raw `61.47 Mbps`, total `62.18 Mbps`, avg grids
+    `61.67`, estimated frame time `42.76/43.89/44.32 ms`.
+- Reused the earlier real NS3 replay for corrected 100 ms frame `000060`
+  because the corrected 100 ms trace matches the previous 100 ms upload plan:
+  `80/80` callbacks, `80/80` RLC complete, no PHY failures, delay
+  `26.51/53.00/55.00 ms`.

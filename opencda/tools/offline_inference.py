@@ -394,6 +394,8 @@ def apply_resource_overrides(resource_allocator, world, num_channels=None,
             getattr(world.network_manager, 'time_slot', 0.1))
     if channel_model is not None:
         resource_allocator.channel_model = channel_model
+        if hasattr(resource_allocator, 'time_slot'):
+            resource_allocator.time_slot = float(channel_model.frame_deadline_s)
         if hasattr(resource_allocator, 'lambda_subchannels'):
             resource_allocator.lambda_subchannels = channel_model.num_channels
         if hasattr(resource_allocator, 'bandwidth_all'):
@@ -416,6 +418,7 @@ def apply_resource_overrides(resource_allocator, world, num_channels=None,
             resource_allocator.p.num_channels)
     if channel_model is not None:
         resource_allocator.p.channel_model = channel_model
+        resource_allocator.p.T_ddl = float(channel_model.frame_deadline_s)
         resource_allocator.p.num_channels = channel_model.num_channels
         resource_allocator.p.bandwidth_all = channel_model.bandwidth_bps
         resource_allocator.p.bandwidth_per_channel = (

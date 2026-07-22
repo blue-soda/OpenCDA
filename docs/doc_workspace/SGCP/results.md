@@ -1664,3 +1664,19 @@ Artifact: `docs/doc_workspace/SGCP/artifacts/papg_100ms_budget_20260722/`
 | 80 | 80/80 | 80/80 | 0 | 26.51 / 53.00 / 55.00 ms |
 
 结论：100 ms 预算当然可行；更重要的是该 exact replay 的真实 max callback delay 也低于 60 ms，因此 SGCP-PAPG 主线可以继续写作成 `100 ms perception cycle` 内预留 `60 ms communication window` 的可交付配置。
+## 2026-07-22 PAPG Deadline Propagation Fix
+
+The previous identical 60 ms / 100 ms PAPG result was caused by a code-path
+bug, not by a correct saturation finding. `--communication-deadline-ms` built
+the requested `ChannelModel`, but PAPG still passed the default
+`Params.T_ddl=0.1` into `max_grids_per_rb()`. After syncing `p.T_ddl` with the
+channel model before `set_clusters()`, the rerun is:
+
+| Deadline | AP@0.3 | AP@0.5 | AP@0.7 | raw Mbps | late-box Mbps | total Mbps | avg selected grids | estimated frame time mean / P95 / max |
+|---:|---:|---:|---:|---:|---:|---:|---:|---|
+| 60 ms | 0.87 | 0.76 | 0.38 | 58.44 | 0.71 | 59.15 | 36.67 | 40.82 / 42.08 / 42.38 ms |
+| 100 ms | 0.87 | 0.79 | 0.37 | 61.47 | 0.71 | 62.18 | 61.67 | 42.76 / 43.89 / 44.32 ms |
+
+The existing real NS3 replay for corrected 100 ms frame `000060` remains valid:
+`80/80` application callbacks, `80/80` RLC-complete requests, no PHY failures,
+callback delay mean/P95/max `26.51/53.00/55.00 ms`.
