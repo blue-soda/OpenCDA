@@ -1699,23 +1699,23 @@ mean/P95/max `27.18/54.00/55.00 ms`. The one non-complete RLC request is a
 
 Artifact: `docs/doc_workspace/SGCP/artifacts/compute_profile_20260722/`
 
-新增 `opencda.tools.sgcp_compute_profile`，用于从真实 trace 统计 detector calls/frame、输入点数、预测框数和 calibrated GFLOPs/frame。GFLOPs 校准使用 attentive checkpoint、frame `000060`、hook-based Conv2d/ConvTranspose2d/Linear 统计，multiply-add = 2 FLOPs。
+新增 `opencda.tools.sgcp_compute_profile`，用于从真实 trace 统计 detector calls/frame、输入点数、预测框数和 calibrated GFLOPs/frame。GFLOPs 校准使用 attentive checkpoint、frame `000060`、hook-based Conv2d/ConvTranspose2d/Linear/BatchNorm/ReLU 统计，multiply-add = 2 FLOPs；同时加入 `PillarVFE` 中 point-cloud-to-feature 的近似浮点操作，包括 cluster/center feature 构造、mask multiply 和 PFN 前处理。Voxelization/hash/scatter 主要是索引和内存操作，暂不计入 FLOPs。
 
 校准结果：
 
-| Forward | CAVs | Input points | GFLOPs/forward |
-| --- | ---: | ---: | ---: |
-| Singleton local attentive forward | 1 | 4,918 | 89.302374 |
-| Full 20-CAV attentive forward | 20 | 97,623 | 90.096548 |
+| Forward | CAVs | Input points | Point-feature GFLOPs/forward | Total GFLOPs/forward |
+| --- | ---: | ---: | ---: | ---: |
+| Singleton local attentive forward | 1 | 4,918 | 0.061198 | 89.411751 |
+| Full 20-CAV attentive forward | 20 | 97,623 | 0.946693 | 90.297247 |
 
 current-protocol compute profile 摘要：
 
-| Method | AP@0.3 | AP@0.5 | AP@0.7 | Total Mbps | Detector calls/frame | GFLOPs/frame |
-| --- | ---: | ---: | ---: | ---: | ---: | ---: |
-| Pure late | 0.82 | 0.76 | 0.37 | 0.74 | 19.17 | 1711.99 |
-| FullPerception-PCS + global box | 0.83 | 0.77 | 0.38 | 54.54 | 19.85 | 1773.33 |
-| EdgeCooper V2V + global box | 0.84 | 0.79 | 0.37 | 51.83 | 19.22 | 1716.68 |
-| SGCP-PAPG | 0.87 | 0.81 | 0.36 | 63.25 | 6.00 | 536.23 |
-| Full 20-CAV early fusion | 0.85 | 0.83 | 0.48 | 118.71 | 1.00 | 90.10 |
+| Method | AP@0.3 | AP@0.5 | AP@0.7 | Total Mbps | Detector calls/frame | Point-feature GFLOPs/frame | Total GFLOPs/frame |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| Pure late | 0.82 | 0.76 | 0.37 | 0.74 | 19.17 | 1.17 | 1714.08 |
+| FullPerception-PCS + global box | 0.83 | 0.77 | 0.38 | 54.54 | 19.85 | 1.61 | 1775.54 |
+| EdgeCooper V2V + global box | 0.84 | 0.79 | 0.37 | 51.83 | 19.22 | 1.55 | 1718.82 |
+| SGCP-PAPG | 0.87 | 0.81 | 0.36 | 63.25 | 6.00 | 0.83 | 536.94 |
+| Full 20-CAV early fusion | 0.85 | 0.83 | 0.48 | 118.71 | 1.00 | 0.95 | 90.30 |
 
-结论：Pure late / no-clustering global-box reference 的低 Mbps 不代表系统总成本低；它们每帧接近 20 次 detector forward，约为 SGCP-PAPG 的 `3.2x` detector GFLOPs。SGCP-PAPG 用 6 个 cluster-head forward 和 selected member point clouds 达到更高 AP@0.3/AP@0.5，可作为论文附录或讨论中的 compute-efficiency 证据。GFLOPs 只覆盖 detector forward，不包含 NMS、调度、通信序列化、CARLA 或车辆控制。修正后的 input-adjusted 口径会计入 `PillarVFE` Linear 的 point 维度，因此 full 20-CAV early fusion 使用 `90.10 GFLOPs/frame` 而不是 singleton 常数。
+结论：Pure late / no-clustering global-box reference 的低 Mbps 不代表系统总成本低；它们每帧接近 20 次 detector forward，约为 SGCP-PAPG 的 `3.2x` detector GFLOPs。SGCP-PAPG 用 6 个 cluster-head forward 和 selected member point clouds 达到更高 AP@0.3/AP@0.5，可作为论文附录或讨论中的 compute-efficiency 证据。GFLOPs 覆盖 detector forward 和一部分点云到特征的浮点计算，不包含 voxelization/hash/scatter、NMS、调度、通信序列化、CARLA 或车辆控制。修正后的 input-adjusted 口径会计入点云量相关的 `PillarVFE` 前处理与 PFN 计算，因此 full 20-CAV early fusion 使用 `90.30 GFLOPs/frame` 而不是 singleton 常数。

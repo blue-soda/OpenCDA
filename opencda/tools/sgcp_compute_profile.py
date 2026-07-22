@@ -6,7 +6,8 @@ This utility serves two related purposes:
 
 1. Calibrate one OpenCOOD detector forward on a real dumped frame with module
    forward hooks. The hook-based counter currently covers Conv2d,
-   ConvTranspose2d and Linear layers and reports multiply-add as two FLOPs.
+   ConvTranspose2d, Linear, BatchNorm, ReLU, and an approximate PillarVFE
+   point-cloud-to-feature subtotal. It reports multiply-add as two FLOPs.
 2. Convert SGCP/offline-inference trace CSVs into per-method compute profiles:
    detector calls per frame, input points, predicted boxes, payload, and
    calibrated GFLOPs per frame.
@@ -50,7 +51,7 @@ def parse_args():
         help='Optional second calibration JSON with a denser point cloud. '
              'When provided together with --calibration-json, the tool '
              'estimates per-call GFLOPs as fixed Conv/Deconv cost plus a '
-             'linear point-count model for VFE Linear FLOPs.')
+             'point-count model for PillarVFE point-feature FLOPs.')
     parser.add_argument(
         '--calibrated-gflops-per-forward',
         type=float,
@@ -184,34 +185,43 @@ def build_input_adjusted_model(calibration, dense_calibration):
     try:
         point_a = float(calibration['input_points'])
         point_b = float(dense_calibration['input_points'])
-        linear_a = float(
-            calibration.get('flops_by_module_type', {}).get('Linear', 0.0))
-        linear_b = float(
+        point_feature_a = float(
+            calibration.get(
+                'point_feature_flops_per_forward',
+                calibration.get('flops_by_module_type', {}).get('Linear', 0.0)))
+        point_feature_b = float(
             dense_calibration.get(
-                'flops_by_module_type', {}).get('Linear', 0.0))
+                'point_feature_flops_per_forward',
+                dense_calibration.get(
+                    'flops_by_module_type', {}).get('Linear', 0.0)))
         fixed_a = (
-            float(calibration.get(
-                'flops_by_module_type', {}).get('Conv2d', 0.0)) +
-            float(calibration.get(
-                'flops_by_module_type', {}).get('ConvTranspose2d', 0.0)))
+            float(calibration.get('profiled_flops_per_forward', 0.0)) -
+            point_feature_a)
     except (KeyError, TypeError, ValueError):
         return None
     if point_a == point_b:
         return None
-    slope = (linear_b - linear_a) / (point_b - point_a)
-    intercept = linear_a - slope * point_a
+    slope = (point_feature_b - point_feature_a) / (point_b - point_a)
+    intercept = point_feature_a - slope * point_a
     return {
         'fixed_flops': fixed_a,
-        'linear_intercept_flops': intercept,
-        'linear_flops_per_point': slope,
+        'point_feature_intercept_flops': intercept,
+        'point_feature_flops_per_point': slope,
     }
 
 
 def adjusted_gflops_for_points(point_count, model):
-    linear_flops = (
-        model['linear_intercept_flops'] +
-        model['linear_flops_per_point'] * float(point_count))
-    return (model['fixed_flops'] + max(0.0, linear_flops)) / 1e9
+    point_feature_flops = (
+        model['point_feature_intercept_flops'] +
+        model['point_feature_flops_per_point'] * float(point_count))
+    return (model['fixed_flops'] + max(0.0, point_feature_flops)) / 1e9
+
+
+def adjusted_point_feature_gflops_for_points(point_count, model):
+    point_feature_flops = (
+        model['point_feature_intercept_flops'] +
+        model['point_feature_flops_per_point'] * float(point_count))
+    return max(0.0, point_feature_flops) / 1e9
 
 
 def summarize_trace(label, trace_path, metric_row, calibrated_gflops,
@@ -267,9 +277,11 @@ def summarize_trace(label, trace_path, metric_row, calibrated_gflops,
         for timestamp in timestamps
     ]
     adjusted_gflops_per_frame_values = []
+    adjusted_point_feature_gflops_per_frame_values = []
     if input_adjusted_model is not None:
         for timestamp in timestamps:
             frame_gflops = 0.0
+            frame_point_feature_gflops = 0.0
             for row in rows_by_frame[timestamp]:
                 point_counts = read_json_cell(row.get('point_counts_json'), {})
                 row_points = sum(
@@ -277,7 +289,13 @@ def summarize_trace(label, trace_path, metric_row, calibrated_gflops,
                 frame_gflops += adjusted_gflops_for_points(
                     row_points,
                     input_adjusted_model)
+                frame_point_feature_gflops += (
+                    adjusted_point_feature_gflops_for_points(
+                        row_points,
+                        input_adjusted_model))
             adjusted_gflops_per_frame_values.append(frame_gflops)
+            adjusted_point_feature_gflops_per_frame_values.append(
+                frame_point_feature_gflops)
 
     raw_lidar_mbps = to_float(
         metric_row.get('raw_lidar_mbps') if metric_row else None,
@@ -328,6 +346,9 @@ def summarize_trace(label, trace_path, metric_row, calibrated_gflops,
         'input_adjusted_detector_gflops_per_frame': (
             '' if not adjusted_gflops_per_frame_values else
             '%.6f' % mean(adjusted_gflops_per_frame_values)),
+        'input_adjusted_point_feature_gflops_per_frame': (
+            '' if not adjusted_point_feature_gflops_per_frame_values else
+            '%.6f' % mean(adjusted_point_feature_gflops_per_frame_values)),
     }
 
 
@@ -337,48 +358,154 @@ class FlopCounter(object):
         self.handles = []
         self.flops = 0
         self.by_type = defaultdict(float)
+        self.by_scope = defaultdict(float)
+        self.point_feature_flops = 0.0
+
+    def add_flops(self, flops, type_name, scope_name):
+        self.flops += flops
+        self.by_type[type_name] += flops
+        if scope_name:
+            self.by_scope[scope_name] += flops
+        if scope_name and scope_name.startswith('point_feature'):
+            self.point_feature_flops += flops
 
     def __enter__(self):
         import torch.nn as nn
 
-        def conv_hook(module, inputs, output):
-            if output is None:
-                return
-            output_shape = tuple(output.shape)
-            if len(output_shape) < 4:
-                return
-            batch, out_channels, out_h, out_w = output_shape[:4]
-            in_channels = module.in_channels
-            groups = module.groups
-            kernel_h, kernel_w = module.kernel_size
-            macs = (
-                batch * out_channels * out_h * out_w *
-                (in_channels / float(groups)) * kernel_h * kernel_w)
-            flops = 2.0 * macs
-            if module.bias is not None:
-                flops += batch * out_channels * out_h * out_w
-            self.flops += flops
-            self.by_type[type(module).__name__] += flops
+        def make_scope(module_name):
+            if module_name.startswith('pillar_vfe'):
+                return 'point_feature_pillar_vfe'
+            if module_name.startswith('scatter'):
+                return 'scatter'
+            if module_name.startswith('backbone'):
+                return 'bev_backbone'
+            if module_name.endswith('head') or '_head' in module_name:
+                return 'detection_head'
+            return 'other_detector'
 
-        def linear_hook(module, inputs, output):
-            if output is None:
-                return
-            if not hasattr(output, 'shape') or len(output.shape) == 0:
-                return
-            output_elements = int(output.numel())
-            output_vectors = output_elements / float(module.out_features)
-            flops = 2.0 * output_vectors * module.in_features * (
-                module.out_features)
-            if module.bias is not None:
-                flops += output_elements
-            self.flops += flops
-            self.by_type[type(module).__name__] += flops
+        def conv_hook(module_name):
+            def hook(module, inputs, output):
+                if output is None:
+                    return
+                output_shape = tuple(output.shape)
+                if len(output_shape) < 4:
+                    return
+                batch, out_channels, out_h, out_w = output_shape[:4]
+                in_channels = module.in_channels
+                groups = module.groups
+                kernel_h, kernel_w = module.kernel_size
+                macs = (
+                    batch * out_channels * out_h * out_w *
+                    (in_channels / float(groups)) * kernel_h * kernel_w)
+                flops = 2.0 * macs
+                if module.bias is not None:
+                    flops += batch * out_channels * out_h * out_w
+                self.add_flops(
+                    flops,
+                    type(module).__name__,
+                    make_scope(module_name))
+            return hook
 
-        for module in self.model.modules():
+        def linear_hook(module_name):
+            def hook(module, inputs, output):
+                if output is None:
+                    return
+                if not hasattr(output, 'shape') or len(output.shape) == 0:
+                    return
+                output_elements = int(output.numel())
+                output_vectors = output_elements / float(module.out_features)
+                flops = 2.0 * output_vectors * module.in_features * (
+                    module.out_features)
+                if module.bias is not None:
+                    flops += output_elements
+                self.add_flops(
+                    flops,
+                    type(module).__name__,
+                    make_scope(module_name))
+            return hook
+
+        def batchnorm_hook(module_name):
+            def hook(module, inputs, output):
+                if output is None or not hasattr(output, 'numel'):
+                    return
+                # In eval, batch norm is y = x * scale + bias.
+                flops = 2.0 * int(output.numel())
+                self.add_flops(
+                    flops,
+                    type(module).__name__,
+                    make_scope(module_name))
+            return hook
+
+        def pillar_vfe_pre_hook(module, inputs):
+            if not inputs:
+                return
+            batch_dict = inputs[0]
+            if not isinstance(batch_dict, dict):
+                return
+            voxel_features = batch_dict.get('voxel_features')
+            voxel_num_points = batch_dict.get('voxel_num_points')
+            coords = batch_dict.get('voxel_coords')
+            if voxel_features is None or coords is None:
+                return
+            if not hasattr(voxel_features, 'shape') or len(
+                    voxel_features.shape) < 3:
+                return
+            voxel_count = int(voxel_features.shape[0])
+            max_points = int(voxel_features.shape[1])
+            point_channels = int(voxel_features.shape[2])
+            # These are explicit floating-point operations in PillarVFE.forward
+            # before PFNLayer.linear: mean/center/cluster features and masking.
+            flops = 0.0
+            flops += voxel_count * 3 * max(max_points - 1, 0)  # xyz sum
+            flops += voxel_count * 3  # mean divide
+            flops += voxel_count * max_points * 3  # f_cluster subtract
+            flops += voxel_count * 3 * 2  # coord * voxel_size + offset
+            flops += voxel_count * max_points * 3  # f_center subtract
+            if getattr(module, 'with_distance', False):
+                # x^2+y^2+z^2 + two adds + sqrt, approximated as six FLOPs.
+                flops += voxel_count * max_points * 6
+            if getattr(module, 'use_absolute_xyz', False):
+                feature_dim = point_channels + 6
+            else:
+                feature_dim = max(point_channels - 3, 0) + 6
+            if getattr(module, 'with_distance', False):
+                feature_dim += 1
+            flops += voxel_count * max_points * feature_dim  # mask multiply
+
+            self.add_flops(
+                flops,
+                'PillarVFEElementwise',
+                'point_feature_pillar_vfe')
+
+        def relu_hook(module_name):
+            def hook(module, inputs, output):
+                if output is None or not hasattr(output, 'numel'):
+                    return
+                # Treat ReLU as one floating elementwise operation. PFNLayer
+                # uses functional ReLU and is not covered by this module hook.
+                flops = float(int(output.numel()))
+                self.add_flops(
+                    flops,
+                    type(module).__name__,
+                    make_scope(module_name))
+            return hook
+
+        for module_name, module in self.model.named_modules():
+            if module_name == 'pillar_vfe':
+                self.handles.append(
+                    module.register_forward_pre_hook(pillar_vfe_pre_hook))
             if isinstance(module, (nn.Conv2d, nn.ConvTranspose2d)):
-                self.handles.append(module.register_forward_hook(conv_hook))
+                self.handles.append(
+                    module.register_forward_hook(conv_hook(module_name)))
             elif isinstance(module, nn.Linear):
-                self.handles.append(module.register_forward_hook(linear_hook))
+                self.handles.append(
+                    module.register_forward_hook(linear_hook(module_name)))
+            elif isinstance(module, (nn.BatchNorm1d, nn.BatchNorm2d)):
+                self.handles.append(
+                    module.register_forward_hook(batchnorm_hook(module_name)))
+            elif isinstance(module, nn.ReLU):
+                self.handles.append(
+                    module.register_forward_hook(relu_hook(module_name)))
         return self
 
     def __exit__(self, exc_type, exc_value, traceback):
@@ -434,11 +561,20 @@ def calibrate_forward(args):
         'fusion_method': args.fusion_method,
         'coperception_yaml': args.coperception_yaml,
         'input_points': point_count,
-        'flop_policy': 'Conv2d/ConvTranspose2d/Linear hooks; multiply-add=2 FLOPs',
+        'flop_policy': (
+            'Conv2d/ConvTranspose2d/Linear/BatchNorm/ReLU hooks plus '
+            'PillarVFE elementwise estimate; multiply-add=2 FLOPs; '
+            'voxelization/hash/scatter memory ops excluded'),
         'profiled_flops_per_forward': counter.flops,
         'profiled_gflops_per_forward': counter.flops / 1e9,
+        'point_feature_flops_per_forward': counter.point_feature_flops,
+        'point_feature_gflops_per_forward': (
+            counter.point_feature_flops / 1e9),
         'flops_by_module_type': {
             key: value for key, value in sorted(counter.by_type.items())
+        },
+        'flops_by_scope': {
+            key: value for key, value in sorted(counter.by_scope.items())
         },
     }
     if args.calibration_output:
@@ -481,6 +617,7 @@ def write_markdown(path, rows, calibration):
         'mean_source_cavs_per_call',
         'mean_input_points_per_frame',
         'mean_pred_boxes_per_frame',
+        'input_adjusted_point_feature_gflops_per_frame',
         'profiled_detector_gflops_per_frame',
         'input_adjusted_detector_gflops_per_frame',
     ]
@@ -528,7 +665,13 @@ def write_markdown(path, rows, calibration):
         stream.write(
             '- `input_adjusted_detector_gflops_per_frame`, when present, uses '
             'singleton and dense/full calibrations to model point-dependent VFE '
-            'Linear FLOPs on top of fixed BEV Conv/Deconv FLOPs.\n')
+            'point-feature FLOPs on top of fixed BEV Conv/Deconv FLOPs.\n')
+        stream.write(
+            '- `input_adjusted_point_feature_gflops_per_frame` is the '
+            'point-cloud-to-feature floating-point subtotal. It includes '
+            'PillarVFE elementwise feature construction, PFN Linear, BatchNorm '
+            'and simple activation FLOPs when visible to hooks; it excludes '
+            'voxelization/hash/scatter memory/index operations.\n')
     return path
 
 

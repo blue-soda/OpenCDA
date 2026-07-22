@@ -8007,11 +8007,11 @@ AP 结果：`0.87/0.79/0.37`，raw LiDAR `61.47 Mbps`，box overhead `0.71 Mbps`
 - Calibrated attentive detector FLOPs with real frame `000060`.
   A follow-up audit fixed the Linear hook so `PillarVFE` counts the
   `[num_voxels, max_points_per_voxel, channels]` point dimension:
-  - singleton local forward: `89.302374 GFLOPs`, `4,918` input points.
-  - full 20-CAV forward: `90.096548 GFLOPs`, `97,623` input points.
-  - FLOP policy: Conv2d/ConvTranspose2d/Linear hooks, multiply-add = 2 FLOPs.
+  - singleton local forward: `89.411751 GFLOPs`, `4,918` input points, including point-feature subtotal `0.061198 GFLOPs`.
+  - full 20-CAV forward: `90.297247 GFLOPs`, `97,623` input points, including point-feature subtotal `0.946693 GFLOPs`.
+  - FLOP policy: Conv2d/ConvTranspose2d/Linear/BatchNorm/ReLU hooks plus PillarVFE elementwise estimate, multiply-add = 2 FLOPs; voxelization/hash/scatter memory/index operations excluded.
 - Generated trace-derived compute profiles:
   - `docs/doc_workspace/SGCP/artifacts/compute_profile_20260722/compute_profile_current_protocol_20260722.csv`
   - `docs/doc_workspace/SGCP/artifacts/compute_profile_20260722/compute_profile_protocol_native_20260722.csv`
-- Key current-protocol result after input-adjusted rebuild: Pure late uses about `19.17` detector forwards/frame and `1711.99 GFLOPs/frame`; SGCP-PAPG uses `6.00` forwards/frame and `536.23 GFLOPs/frame`; no-clustering EdgeCooper/PCS global-box references are similarly compute-heavy (`1716-1773 GFLOPs/frame`).
+- Key current-protocol result after point-feature-inclusive input-adjusted rebuild: Pure late uses about `19.17` detector forwards/frame, point-feature `1.17 GFLOPs/frame`, and total `1714.08 GFLOPs/frame`; SGCP-PAPG uses `6.00` forwards/frame, point-feature `0.83 GFLOPs/frame`, and total `536.94 GFLOPs/frame`; no-clustering EdgeCooper/PCS global-box references are similarly compute-heavy (`1718.82-1775.54 GFLOPs/frame`).
 - Synced CSVs, calibration JSON/stdout, script snapshot and explanation to `C:\Workspace\2026-7-papers\infocom\SGCP\experiment`. This route is auxiliary compute-efficiency evidence, not a new primary metric.
