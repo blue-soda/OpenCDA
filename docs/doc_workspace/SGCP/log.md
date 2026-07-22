@@ -7958,3 +7958,22 @@ AP 结果：`0.87/0.79/0.37`，raw LiDAR `61.47 Mbps`，box overhead `0.71 Mbps`
   separated from protocol-native baselines; SGCP-PAPG is best on AP@0.3/AP@0.5
   under that scaffold.
 - Regenerated current-protocol figures and the external package manifest.
+
+## 2026-07-22 Table 3 PCS scheduler completion
+
+- User caught that the SGCP-compatible scheduler comparison was missing a PCS
+  row.
+- Reran PCS inside the same Table 3 scaffold: attentive checkpoint,
+  `coalition_game`, `all-cluster-heads`, `inter_cluster_nms`, `40 MHz / 10`
+  target subchannels, `60 ms` communication deadline, NS3 estimator
+  `tb899/slot0.5/prb10/mcs28/symbols12`, and PCS params
+  `div4/radius4/min128`.
+- Command output:
+  `docs/doc_workspace/SGCP/artifacts/table3_current_protocol_20260722/pcs_41f.log`
+  and trace
+  `docs/doc_workspace/SGCP/artifacts/table3_current_protocol_20260722/pcs_41f_trace.csv`.
+- Result: AP `0.50/0.36/0.17`, raw LiDAR `13.16 Mbps`, box overhead
+  `0.55 Mbps`, total `13.70 Mbps`, avg selected grids `16.42`.
+- Updated Table 3 CSV, Figure 4, `main_data_tables_20260722.md`, and external
+  package manifest. This row is PCS-as-scheduler-under-SGCP-scaffold, not the
+  protocol-native PCS baseline in Table 1.
