@@ -8043,3 +8043,13 @@ AP 结果：`0.87/0.79/0.37`，raw LiDAR `61.47 Mbps`，box overhead `0.71 Mbps`
   - PAPG uses one exclusive RB/subchannel per scheduled cluster-head upload and relies on the cluster-head receiver scaffold; it is evaluated through NS3 replay for the selected chunks.
   - `all_in_one` / centralized full-sharing upper reference bypasses these scheduling constraints and builds an all-in-one fused perception sample directly.
 - Updated experiment guidance: `Centralized all-in-one raw-LiDAR early fusion upper reference` is a perception upper reference only. It ignores half-duplex/common-receiver contention and must not be interpreted as 19 simultaneous V2V raw-LiDAR uploads to one CAV.
+
+## 2026-07-22 PCS two-pass 100ms NS3 retest
+
+- User asked to retest PCS with two repeated PCS passes and a total `100 ms` budget, then verify whether actual NS3 delay still fits the `60 ms` communication window.
+- Reran `fullperception_pcs` with `singleton`, `all-cavs`, attentive checkpoint, `div4/radius4/min128`, `communication_range_m=35`, `pcs_frame_rounds=2`, `pcs_frame_deadline_ms=100`, and the NS3-calibrated estimator `tb899/slot0.5/prb10/mcs28/symbols12`.
+- 41-frame offline result: AP `0.35/0.28/0.13`, raw LiDAR `69.76 Mbps`, estimator frame time mean/P95/max `81.97/83.79/84.51 ms`.
+- Built exact frame `000060` upload plan: `95` chunks, `859,248 bytes`, `15` links. NS3 exact replay with the official `40 MHz / 10 target subchannels / slMcs=28 / 12 symbols` setting delivered only `34/95` application callbacks and `35/95` RLC-complete requests; delay mean/P95/max was `56.65/104.00/152.00 ms`.
+- Also tested the earlier two-pass 60ms-estimator PCS trace: frame `000060` had `75` chunks / `673,280 bytes`, but NS3 delivered only `38/75` application callbacks and `39/75` RLC-complete requests; delay mean/P95/max was `66.68/204.00/204.00 ms`.
+- Single-pass PCS-r35 exact replay was latency-feasible but not perfect-delivery: frame `000060` had `53` chunks / `487,440 bytes`, `45/53` application callbacks, `47/53` RLC-complete requests, no PHY failures, delay `22.67/44.00/50.00 ms`.
+- Updated `results.md`, `status.md`, and the external INFOCOM experiment package: Table 1 now uses PCS single-pass r35 `0.30/0.24/0.11, 44.22 Mbps`; two-pass PCS is retained only as an infeasible diagnostic.

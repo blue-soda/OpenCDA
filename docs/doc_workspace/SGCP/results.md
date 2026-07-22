@@ -1785,7 +1785,7 @@ Artifact: `docs/doc_workspace/SGCP/artifacts/pcs_rescue_20260722/`
 - `range=70m`：`0.23/0.18/0.06`。
 - 在 35 m 下继续增大 `min_spot_grids` 或 `min_overlap_grids` 没有收益，`div4/radius4/min128/overlap0/range35m` 是当前最合理 PCS protocol-native baseline。
 
-结论：PCS baseline 弱的主要原因是 raw-LiDAR adaptation 中沿用 100 m 通信候选范围会优先产生远距离、低 object-utility 的 link；将 candidate range 设为 35 m 属于物理参数修正而非算法机制修改。修正后 PCS 明显高于 no-collaboration `0.23/0.17/0.06`，且仍低于 EdgeCooper constrained 和 SGCP-PAPG，比较关系更合理。外部 INFOCOM experiment Table 1 已同步为 `0.30/0.24/0.11, 44.22 Mbps`，但 PCS-r35 exact NS3 replay 还应在最终提交前补一次；当前只有 `offline_ns3_replay --dry-run` frame `000060` 的 `6 requests / 60,000 bytes` plan。
+结论：PCS baseline 弱的主要原因是 raw-LiDAR adaptation 中沿用 100 m 通信候选范围会优先产生远距离、低 object-utility 的 link；将 candidate range 设为 35 m 属于物理参数修正而非算法机制修改。修正后 PCS 明显高于 no-collaboration `0.23/0.17/0.06`，且仍低于 EdgeCooper constrained 和 SGCP-PAPG，比较关系更合理。外部 INFOCOM experiment Table 1 已同步为 `0.30/0.24/0.11, 44.22 Mbps`。后续 exact NS3 replay 显示 single-pass PCS-r35 frame `000060` latency feasible（delay `22.67/44.00/50.00 ms`），但 application delivery 不是满交付（`45/53` callbacks，`47/53` RLC complete）。
 
 #### PCS / EdgeCooper Payload Expansion - 2026-07-22
 
@@ -1811,6 +1811,22 @@ Artifact: `docs/doc_workspace/SGCP/artifacts/baseline_payload_expand_20260722/`
 
 结论：
 
-- PCS 可以合理扩展：同一 PCS 机制在一个 60 ms communication window 内重复执行两次，第二轮排除第一轮已覆盖 receiver grids，通信量从 `44.22` 增到 `55.49 Mbps`，AP 也增到 `0.34/0.27/0.12`。这符合此前讨论的 “PCS 可能需要多次快速稀疏通信完成一帧”，但表格中必须说明它是 two-pass PCS，且 estimator 已经接近/触顶 60 ms；最终还需要 exact NS3 replay。
+- PCS two-pass 只能作为诊断，不作为 paper-facing baseline：同一 PCS 机制重复执行两次时，离线估算会把通信量从 `44.22` 增到 `55.49 Mbps`，AP 增到 `0.34/0.27/0.12`，但 exact NS3 replay 显示 frame `000060` 只有 `38/75` application callbacks，delay mean/P95/max 为 `66.68/204.00/204.00 ms`，超过 60 ms communication window。
 - EdgeCooper 的通信量不能靠非机制参数大幅提高：扩大 range 到 45/60 m 会改变 matching 并降低/不增 payload；增大 grid budget 到 200/300 也基本受候选和 endpoint-disjoint matching 限制。`m3/g200/r35` 是当前最合理的小幅增强点，通信从 `50.91` 到 `51.33 Mbps`，AP 不变。
-- 更新后的 Table 1 比较关系更健康：PCS `55.49 Mbps`、EdgeCooper `51.33 Mbps`、SGCP `63.25 Mbps`。SGCP 仍是最高 raw-LiDAR payload，但差距从约 `12.3 Mbps` 收窄到约 `7.8 Mbps`；同时 SGCP 的 detector GFLOPs/frame 仅约 `536.94`，而 PCS/EdgeCooper singleton receiver universe 约 `1788.6`，因此论文应同时呈现通信和计算效率，而不是只强调 Mbps。
+- 更新后的 Table 1 应回退到 PCS single-pass r35：PCS `0.30/0.24/0.11, 44.22 Mbps`，EdgeCooper `0.32/0.26/0.10, 51.33 Mbps`，SGCP `0.87/0.81/0.36, 63.25 Mbps`。SGCP 仍是最高 raw-LiDAR payload，但 detector GFLOPs/frame 仅约 `536.94`，而 PCS/EdgeCooper singleton receiver universe 约 `1788.6`，因此论文应同时呈现通信和计算效率，而不是只强调 Mbps。
+
+### PCS Two-Pass 100ms NS3 Check - 2026-07-22
+
+Artifact: `docs/doc_workspace/SGCP/artifacts/pcs_2pass_100ms_20260722/`
+
+按用户要求重跑 `div4/radius4/min128/r35` PCS，两轮调度、总预算 `100 ms`。41 帧离线 AP 为 `0.35/0.28/0.13`，raw payload `35,754,384 bytes`，即 `69.76 Mbps`；trace 估算 frame communication time mean/P95/max 为 `81.97/83.79/84.51 ms`。抽 frame `000060` 生成 exact upload plan：`95` chunks、`859,248 bytes`、`15` unique links。
+
+NS3 exact replay 使用正式信道参数 `40 MHz / 10 target subchannels / slMcs=28 / 12 PSSCH symbols / TB≈899B / slot=0.5ms`。两次 replay（`drain=0.8s` 与 `drain=2.0s`）结果一致：
+
+| Variant | Planned chunks | Payload bytes | App callbacks | RLC complete | PHY failures | Delay mean/P95/max |
+| --- | ---: | ---: | ---: | ---: | ---: | --- |
+| PCS two-pass, 60ms estimator | 75 | 673,280 | 38/75 | 39/75 | 2 | 66.68 / 204.00 / 204.00 ms |
+| PCS two-pass, 100ms budget | 95 | 859,248 | 34/95 | 35/95 | 1 | 56.65 / 104.00 / 152.00 ms |
+| PCS single-pass r35 | 53 | 487,440 | 45/53 | 47/53 | 0 | 22.67 / 44.00 / 50.00 ms |
+
+结论：PCS 不能通过两轮或 100ms admission 继续“安全增量”。估算器给出的预算时间低于 NS3 中多 link/chunk 并发后的实际 completion 行为；两轮 PCS 会出现大量 request 只到 RLC partial/no-RX 或未到 application callback。外部 INFOCOM Table 1 已回退到 single-pass PCS-r35 `0.30/0.24/0.11, 44.22 Mbps`，two-pass PCS 仅保留为 infeasible diagnostic。
