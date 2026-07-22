@@ -7881,3 +7881,27 @@ conda run --no-capture-output -n opencda python -m opencda.tools.offline_inferen
 | attentive, `N_max=4`, `B_h=2`, 40MHz/10ch/60ms NS3 estimator | 0.87 | 0.79 | 0.37 | 61.47 | 0.71 | 62.18 | 43.68 / 44.12 / 44.32 ms |
 
 结论：恢复主线参数后，SGCP-PAPG 回到可写论文的主方法量级，且通信时间满足 60 ms 约束。与旧 legacy `0.87/0.81/0.36, 63.28 Mbps` 的小差别可解释为当前 NS3 deadline admission 更严格：per-row selected grids 从旧 trace 的约 `97.22` 降至 `61.67`。后续 Table3/TableA/Figure1-2 不应再把 `strict default` 当作 SGCP 主方法；需要以本 artifact 或进一步冻结后的同参数 rerun 替换。
+
+# 2026-07-22 SGCP-PAPG 100ms budget AP and real NS3 delay
+
+执行内容：按用户要求将 PAPG 主线通信预算从 60 ms 放宽到 100 ms，重跑 41 帧 AP，并对 frame `000060` 生成 exact 10KB CAM chunk upload plan，启动真实 NS3 测量 callback/RLC/PHY 延迟。
+
+AP 命令关键参数：
+
+```powershell
+conda run --no-capture-output -n opencda python -m opencda.tools.offline_inference --dataset-root D:\Data\Carla --scenario-id 2026_07_15_01_26_56 --ego-cav-id 1 --max-frames 41 --fusion-method early --coperception-yaml docs\doc_workspace\SGCP\artifacts\early_from_late_checkpoint_20260719\enable_coperception_early_from_attentive.yaml --sgcp-constrained --resource-allocation perception_aware_potential_game --clustering coalition_game --sgcp-receiver-policy all-cluster-heads --sgcp-inter-cluster-late-fusion --n-max 4 --rho-th 3 --head-rb-budget 2 --num-channels 10 --bandwidth-mhz 40 --communication-deadline-ms 100 --channel-estimator ns3 --ns3-tb-size-bytes 899 --ns3-slot-duration-ms 0.5 --ns3-subchannel-prbs 10 --ns3-symbols-per-slot 12 --ns3-mcs 28
+```
+
+AP 结果：`0.87/0.79/0.37`，raw LiDAR `61.47 Mbps`，box overhead `0.71 Mbps`，total `62.18 Mbps`。估算 frame communication time mean/P95/max 为 `43.68/44.12/44.32 ms`。该结果与 60 ms 预算完全一致，说明 60 ms 已不触顶，100 ms 不会进一步增加 sender/grid。
+
+真实 NS3 replay：
+
+- Artifact: `docs/doc_workspace/SGCP/artifacts/papg_100ms_budget_20260722/ns3_frame000060_attempt2/`
+- Plan: frame `000060`，10 条 source-to-head links，80 个 CAM chunks，`771,280 bytes` payload。
+- NS3 参数：`--slBandwidthIn100kHz=400 --targetSubchannels=10 --slSubchannelSize=10 --slMcs=28 --slSymbolsPerSlot=12`。
+
+| Planned chunks | Payload bytes | App callbacks | RLC complete | PHY failures | Callback delay mean / P95 / max |
+| ---: | ---: | ---: | ---: | ---: | --- |
+| 80 | 771,280 | 80/80 | 80/80 | 0 | 26.51 / 53.00 / 55.00 ms |
+
+注意：第一次 NS3 attempt 因 `./ns3` 启动路径错误导致 bridge 未启动，产生 0/80 的无效 eval；已保留在 `ns3_frame000060/` 作为失败日志，不作为链路结果。有效结果为 `ns3_frame000060_attempt2/`。

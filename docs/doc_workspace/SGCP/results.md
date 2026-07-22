@@ -1646,3 +1646,21 @@ Artifact: `docs/doc_workspace/SGCP/artifacts/papg_main_reproduce_current_2026072
 | SGCP-PAPG restored main, attentive, `N_max=4`, `B_h=2` | 0.87 | 0.79 | 0.37 | 61.47 | 0.71 | 62.18 | 43.68 / 44.12 / 44.32 ms |
 
 解释：该结果复现了旧主线的核心优势和通信量级，并满足 60 ms 约束。与 legacy `0.87/0.81/0.36, 63.28 Mbps` 的差异主要来自当前 NS3 deadline admission 把 per-row selected grids 从旧 trace 的约 `97.22` 降到 `61.67`；这不是 `N_max` 改错，而是当前更严格通信估算的自然结果。此前 `SGCP-PAPG strict default` 的 `0.64/0.60/0.25, 37.05 Mbps` 不应再作为主方法行，因为它使用了默认 `head_rb_budget=1`。
+
+## SGCP-PAPG 100 ms Budget and Real NS3 Delay - 2026-07-22
+
+Artifact: `docs/doc_workspace/SGCP/artifacts/papg_100ms_budget_20260722/`
+
+同一 attentive PAPG 主参数，仅将 `communication_deadline_ms` 从 60 放宽到 100。结果与 60 ms 完全一致，说明当前主调度已经在 60 ms 内完成，没有被 deadline 裁剪：
+
+| Budget | AP@0.3 | AP@0.5 | AP@0.7 | Raw Mbps | Box Mbps | Total Mbps | Est. frame time mean / P95 / max |
+| ---: | ---: | ---: | ---: | ---: | ---: | ---: | --- |
+| 100 ms | 0.87 | 0.79 | 0.37 | 61.47 | 0.71 | 62.18 | 43.68 / 44.12 / 44.32 ms |
+
+真实 NS3 replay 使用 frame `000060` exact chunk plan：10 条 source-to-head 链路、80 个 CAM chunks、`771,280 bytes` payload，NS3 参数为 `slBandwidthIn100kHz=400`、`targetSubchannels=10`、`slSubchannelSize=10`、`slMcs=28`、`slSymbolsPerSlot=12`。
+
+| Planned chunks | App callbacks | RLC complete | PHY failures | Callback delay mean / P95 / max |
+| ---: | ---: | ---: | ---: | --- |
+| 80 | 80/80 | 80/80 | 0 | 26.51 / 53.00 / 55.00 ms |
+
+结论：100 ms 预算当然可行；更重要的是该 exact replay 的真实 max callback delay 也低于 60 ms，因此 SGCP-PAPG 主线可以继续写作成 `100 ms perception cycle` 内预留 `60 ms communication window` 的可交付配置。
