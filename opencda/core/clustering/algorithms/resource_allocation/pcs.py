@@ -36,7 +36,10 @@ class PCS(ResourceAllocationAlgorithm):
         self.blind_spot_adjacency_radius = 4
         self.blind_spot_min_grids = 128
         self.min_overlap_grids = 0
-        self.communication_range_m: Optional[float] = None
+        # Match OpenCDA's default V2V perception range and the EdgeCooper V2V
+        # raw-LiDAR adaptation.  The original 100/200 m fallback remains
+        # available by overriding this attribute to None in diagnostics.
+        self.communication_range_m: Optional[float] = 35.0
         self.active_blind_spot_min_division = self.blind_spot_min_division
         self.bandwidth_all = 20.0 * (10 ** 6)
         self.time_slot = 0.1
