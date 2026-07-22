@@ -7977,3 +7977,26 @@ AP 结果：`0.87/0.79/0.37`，raw LiDAR `61.47 Mbps`，box overhead `0.71 Mbps`
 - Updated Table 3 CSV, Figure 4, `main_data_tables_20260722.md`, and external
   package manifest. This row is PCS-as-scheduler-under-SGCP-scaffold, not the
   protocol-native PCS baseline in Table 1.
+
+## 2026-07-22 EdgeCooper / pure-late scope clarification
+
+- Investigated the apparent mismatch where Table 2 `EdgeCooper V2V + global
+  box` outperformed Table 3 `EdgeCooperHD_current_protocol`, and Table 3 looked
+  weaker than pure late.
+- Root cause: the rows use different late-fusion source scopes.
+  - Table 2 EdgeCooper/PureLate use `singleton + all-cavs + global/prediction
+    box aggregation`: 20 receiver samples per frame.
+  - Table 3 uses `coalition_game + all-cluster-heads + inter_cluster_nms`: 6
+    receiver samples per frame.
+- Trace audit:
+  - Table 2 EdgeCooper global box: 820 rows, 20 rows/frame, about `129.7`
+    predicted boxes/frame before global NMS.
+  - Table 3 EdgeCooperHD head scaffold: 246 rows, 6 rows/frame, about `50.9`
+    predicted boxes/frame before inter-cluster NMS.
+  - Table 3 SGCP-PAPG: 246 rows, 6 rows/frame, about `111.0` predicted
+    boxes/frame, explaining why PAPG remains strong under the head scaffold.
+- Added `ClusterHeadLateOnly_reference` to Table 3: AP `0.26/0.22/0.09`,
+  total `0.25 Mbps`. This is the correct same-scope no-raw-LiDAR reference for
+  Table 3; it is not the 20-CAV pure-late reference.
+- Updated external table guidance and main snapshot so the Table 3 EdgeCooper
+  row is named `EdgeCooper-HD head-scaffold proxy`.

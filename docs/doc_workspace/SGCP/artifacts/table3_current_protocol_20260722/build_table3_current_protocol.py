@@ -28,6 +28,12 @@ RUNS = [
         "perception_aware_potential_game",
     ),
     (
+        "ClusterHeadLateOnly_reference",
+        REPO / "docs/doc_workspace/SGCP/artifacts/table2_current_protocol_20260722/head_only_41f.log",
+        REPO / "docs/doc_workspace/SGCP/artifacts/table2_current_protocol_20260722/head_only_41f_trace.csv",
+        "local_detection_head_only",
+    ),
+    (
         "FullPerceptionPCS_current_protocol",
         ARTIFACT / "pcs_41f.log",
         ARTIFACT / "pcs_41f_trace.csv",
@@ -169,6 +175,13 @@ def build_rows():
                 "the SGCP-compatible coalition + inter-cluster NMS scaffold; "
                 "this is not the protocol-native PCS reproduction in Table 1."
             )
+        if label == "ClusterHeadLateOnly_reference":
+            note += (
+                " Cluster-head late-only reference copied from the current "
+                "fusion ablation. It shows the no-raw-LiDAR baseline under "
+                "the same six-head inter-cluster NMS scope; it is not the "
+                "20-CAV pure-late/global-box reference."
+            )
         rows.append({
             "label": label,
             "ap_03": log["ap_03"],
@@ -237,6 +250,7 @@ def write_figure(rows):
         df[col] = df[col].astype(float)
     label_map = {
         "SGCP_PAPG_main_current_protocol": "SGCP-PAPG",
+        "ClusterHeadLateOnly_reference": "Head-only",
         "FullPerceptionPCS_current_protocol": "PCS",
         "RandomBudget_current_protocol": "Random",
         "DensityGreedy_current_protocol": "Density",
@@ -256,7 +270,7 @@ def write_figure(rows):
             i, 0.025, "%.1f Mbps" % row["total_mbps"],
             ha="center", va="bottom", rotation=90, fontsize=7, color="0.25"
         )
-    ax.set_title("Current-protocol scheduler diagnostic (40MHz/10ch/60ms)")
+    ax.set_title("Current-protocol scheduler comparison (40MHz/10ch/60ms)")
     ax.set_ylabel("Aggregate AP")
     ax.set_ylim(0, 1.0)
     ax.set_xticks(x)
