@@ -1740,3 +1740,49 @@ Artifact: `docs/doc_workspace/SGCP/artifacts/table1_no_collaboration_20260722/`
 | Centralized all-in-one raw-LiDAR early fusion upper reference | none | all_in_one | 41 | 0.85 | 0.83 | 0.48 | 118.71 | 90.30 |
 
 结论：旧 `Full 20-CAV early fusion` 行不是 protocol-native all-receiver full-broadcast baseline，而是每帧 1 个 all-in-one fused receiver 的 centralized upper reference，因此已重命名。它可以保留为 AP 上界参考，但不能与 PCS/EdgeCooper 的 `singleton + all-cavs` receiver universe 混写为同一种 baseline。它也没有建模 half-duplex 或 common-receiver 冲突，不能解释为 19 辆 CAV 在同一 60 ms 通信窗口内同时向同一 CAV 成功发送 raw LiDAR。真实 all-receiver 或 19-to-1 full early broadcast 需要顺序调度或基础设施/backhaul 支持，在当前 `40 MHz / 10 target subchannels / 60 ms` 通信窗口下视为不可行，不作为 feasible baseline。
+
+### Scheduled Receiver Diagnostic
+
+基于 Table 1 trace 和 eval-stats 直接按 `uploaded_source_ids != empty` 子集重算 AP，用于解释 PCS 与 no-collaboration 接近的原因。该诊断不改变 Table 1 的 `all-cavs` aggregate AP 口径。
+
+| Method | Scope | Samples | Avg served receivers/frame | Avg links/frame | AP@0.3 | AP@0.5 | AP@0.7 | Mbps |
+| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| FullPerception-PCS | all-cavs | 820 | 9.07 / 20 | 9.07 | 0.226 | 0.169 | 0.060 | 53.55 |
+| FullPerception-PCS | scheduled receivers only | 372 | 9.07 / 20 | 9.07 | 0.238 | 0.174 | 0.059 | 53.55 |
+| EdgeCooper V2V constrained | all-cavs | 820 | 8.46 / 20 | 8.46 | 0.317 | 0.255 | 0.101 | 50.91 |
+| EdgeCooper V2V constrained | scheduled receivers only | 347 | 8.46 / 20 | 8.46 | 0.400 | 0.337 | 0.147 | 50.91 |
+
+结论：EdgeCooper 即使每帧也只服务约 8--10 个 receiver，被服务 receiver 子集 AP 仍明显提升；PCS 的 scheduled receiver 子集几乎不高于 all-cavs 口径，说明 PCS 当前问题不只是 “只服务 9 个 receiver 被 20 receiver 平均稀释”，而是其 blind-spot link utility 与 raw-LiDAR detector 的 object-level utility 不匹配。后续若要提高 PCS baseline，应优先改进 PCS raw-LiDAR adaptation 的 blind-spot/link utility，而不是改 evaluated receiver universe。
+
+### PCS Receiver/Link Utility Rescue - 2026-07-22
+
+Artifact: `docs/doc_workspace/SGCP/artifacts/pcs_rescue_20260722/`
+
+诊断目标：解释为什么 PCS 的 receiver/link 本身收益也弱，并在不改变 PCS 原始调度机制（candidate links + conflict graph + weight splitting + resource allocation）的前提下，通过 bug/参数修复救回 baseline。
+
+关键发现：
+
+- 旧 PCS `div4/radius4/min128`、默认通信范围约 100 m：41 帧 `0.226/0.169/0.060`、`53.55 Mbps`。实际 scheduled links 的 sender-receiver 距离均值/中位数/max 为 `70.49/76.58/99.93 m`，只有 `18/372` 条 link 在 35 m 内。
+- Deadline-constrained EdgeCooper 受限版：41 帧 `0.317/0.255/0.101`、`50.91 Mbps`。实际 scheduled links 距离均值/中位数/max 为 `27.28/29.55/35.78 m`，`309/347` 条 link 在 35 m 内。
+- PCS 与 EdgeCooper 的上传点数和 bytes 并没有数量级差异：PCS scheduled receiver 平均 `46.95 grids / 4611 points / 73.78 KB`，EdgeCooper 为 `40.20 grids / 4699 points / 75.19 KB`。因此 PCS 弱不是“传得少”，而是 100 m candidate range 让 PCS 选了许多远距离 raw-LiDAR link，这些 link 在 NS3 上可通信但对 receiver detector 的 object-level gain 很弱。
+
+代码修复：
+
+- `opencda.core.clustering.algorithms.resource_allocation.pcs.PCS` 新增 `communication_range_m` 参数，默认 `None` 时保持原 100/200 m 速度规则；显式设置时只限制物理候选 link 范围。
+- `offline_inference.py` 与 `offline_ns3_replay.py` 新增 `--pcs-communication-range-m`。该参数不改变 PCS 的冲突定义、权重拆分或资源分配机制，只改变物理 candidate-link range。
+
+41 帧 rescue 结果：
+
+| PCS setting | Candidate range | AP@0.3 | AP@0.5 | AP@0.7 | Raw Mbps | Samples | Avg links/frame | Link distance mean/median/max |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | --- |
+| PCS default range | 100 m | 0.226 | 0.169 | 0.060 | 53.55 | 820 | 9.07 | 70.49 / 76.58 / 99.93 m |
+| PCS-r35 | 35 m | 0.304 | 0.242 | 0.105 | 44.22 | 820 | 8.44 | 29.80 / 31.53 / 35.75 m |
+
+3 帧参数 sanity：
+
+- `range=35m`：`0.31/0.25/0.09`，avg comm `24.58 KB/sample`。
+- `range=50m`：`0.26/0.20/0.08`。
+- `range=70m`：`0.23/0.18/0.06`。
+- 在 35 m 下继续增大 `min_spot_grids` 或 `min_overlap_grids` 没有收益，`div4/radius4/min128/overlap0/range35m` 是当前最合理 PCS protocol-native baseline。
+
+结论：PCS baseline 弱的主要原因是 raw-LiDAR adaptation 中沿用 100 m 通信候选范围会优先产生远距离、低 object-utility 的 link；将 candidate range 设为 35 m 属于物理参数修正而非算法机制修改。修正后 PCS 明显高于 no-collaboration `0.23/0.17/0.06`，且仍低于 EdgeCooper constrained 和 SGCP-PAPG，比较关系更合理。外部 INFOCOM experiment Table 1 已同步为 `0.30/0.24/0.11, 44.22 Mbps`，但 PCS-r35 exact NS3 replay 还应在最终提交前补一次；当前只有 `offline_ns3_replay --dry-run` frame `000060` 的 `6 requests / 60,000 bytes` plan。

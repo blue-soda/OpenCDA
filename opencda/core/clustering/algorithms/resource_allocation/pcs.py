@@ -36,6 +36,7 @@ class PCS(ResourceAllocationAlgorithm):
         self.blind_spot_adjacency_radius = 4
         self.blind_spot_min_grids = 128
         self.min_overlap_grids = 0
+        self.communication_range_m: Optional[float] = None
         self.active_blind_spot_min_division = self.blind_spot_min_division
         self.bandwidth_all = 20.0 * (10 ** 6)
         self.time_slot = 0.1
@@ -197,10 +198,13 @@ class PCS(ResourceAllocationAlgorithm):
         
         # 计算车辆间距离（使用V2XManager的距离计算方法）
         distance = calculate_distance(sender_vm, receiver_vm)
-        # 通信范围：城市场景100m，高速场景200m（根据车辆速度判断场景）
-        sender_vehicle = common.global_vehicles.get(sender_vid)
-        speed = sender_vehicle.get_speed()  # 车辆速度（km/h）
-        comm_range = 200 if speed >= 60 else 100
+        if self.communication_range_m is not None:
+            comm_range = float(self.communication_range_m)
+        else:
+            # 通信范围：城市场景100m，高速场景200m（根据车辆速度判断场景）
+            sender_vehicle = common.global_vehicles.get(sender_vid)
+            speed = sender_vehicle.get_speed()  # 车辆速度（km/h）
+            comm_range = 200 if speed >= 60 else 100
         return distance <= comm_range
 
     def _precompute_grid_mAP(self):

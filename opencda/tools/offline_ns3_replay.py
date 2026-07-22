@@ -103,6 +103,10 @@ def parse_args():
                              'radius in grid cells.')
     parser.add_argument('--pcs-min-spot-grids', type=int, default=None,
                         help='Override minimum grids per PCS blind-spot unit.')
+    parser.add_argument('--pcs-communication-range-m', type=float,
+                        default=None,
+                        help='Override PCS sender-receiver communication '
+                             'range in meters for protocol replay.')
     parser.add_argument('--rho-th', type=float, default=None,
                         help='Override lidar density_threshold / rho_th for '
                              'SGCP grid candidate construction.')
@@ -226,7 +230,8 @@ def apply_resource_overrides(resource_allocator, world, num_channels=None,
                              pcs_blind_spot_min_division=None,
                              pcs_min_overlap_grids=None,
                              pcs_blind_spot_radius=None,
-                             pcs_min_spot_grids=None):
+                             pcs_min_spot_grids=None,
+                             pcs_communication_range_m=None):
     if num_channels is not None:
         if num_channels <= 0:
             raise ValueError('--num-channels must be positive')
@@ -260,6 +265,12 @@ def apply_resource_overrides(resource_allocator, world, num_channels=None,
         if hasattr(resource_allocator, 'blind_spot_min_grids'):
             resource_allocator.blind_spot_min_grids = int(
                 pcs_min_spot_grids)
+    if pcs_communication_range_m is not None:
+        if pcs_communication_range_m <= 0:
+            raise ValueError('--pcs-communication-range-m must be positive')
+        if hasattr(resource_allocator, 'communication_range_m'):
+            resource_allocator.communication_range_m = float(
+                pcs_communication_range_m)
     if hasattr(resource_allocator, 'time_slot'):
         resource_allocator.time_slot = float(
             getattr(world.network_manager, 'time_slot', 0.1))
@@ -290,7 +301,8 @@ def build_world_and_requests(dataset, scenario_id, timestamp, ego_cav_id,
                              pcs_blind_spot_min_division=None,
                              pcs_min_overlap_grids=None,
                              pcs_blind_spot_radius=None,
-                             pcs_min_spot_grids=None):
+                             pcs_min_spot_grids=None,
+                             pcs_communication_range_m=None):
     frame = dataset.load_frame(
         scenario_id,
         timestamp,
@@ -320,7 +332,8 @@ def build_world_and_requests(dataset, scenario_id, timestamp, ego_cav_id,
         pcs_blind_spot_min_division=pcs_blind_spot_min_division,
         pcs_min_overlap_grids=pcs_min_overlap_grids,
         pcs_blind_spot_radius=pcs_blind_spot_radius,
-        pcs_min_spot_grids=pcs_min_spot_grids)
+        pcs_min_spot_grids=pcs_min_spot_grids,
+        pcs_communication_range_m=pcs_communication_range_m)
     resource_allocator.set_clusters(clusters)
     resource_allocator.run()
 
@@ -637,7 +650,9 @@ def main():
                         args.pcs_blind_spot_min_division),
                     pcs_min_overlap_grids=args.pcs_min_overlap_grids,
                     pcs_blind_spot_radius=args.pcs_blind_spot_radius,
-                    pcs_min_spot_grids=args.pcs_min_spot_grids)
+                    pcs_min_spot_grids=args.pcs_min_spot_grids,
+                    pcs_communication_range_m=(
+                        args.pcs_communication_range_m))
                 cluster_count = len(clusters)
                 request_mode = 'sgcp_%s_%s_%s' % (
                     ra_name,

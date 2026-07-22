@@ -180,6 +180,12 @@ def parse_args():
     parser.add_argument('--pcs-min-spot-grids', type=int, default=None,
                         help='Override minimum grids per PCS blind-spot unit. '
                              'Use to avoid unrealistically tiny blind spots.')
+    parser.add_argument('--pcs-communication-range-m', type=float,
+                        default=None,
+                        help='Override PCS sender-receiver communication '
+                             'range in meters. This changes the physical '
+                             'candidate-link range only, not the PCS '
+                             'scheduling mechanism.')
     parser.add_argument('--pcs-frame-rounds', type=int, default=1,
                         help='Maximum number of repeated PCS scheduling '
                              'rounds inside one perception frame. Each round '
@@ -355,6 +361,7 @@ def apply_resource_overrides(resource_allocator, world, num_channels=None,
                              pcs_min_overlap_grids=None,
                              pcs_blind_spot_radius=None,
                              pcs_min_spot_grids=None,
+                             pcs_communication_range_m=None,
                              channel_model=None):
     if num_channels is not None:
         if num_channels <= 0:
@@ -389,6 +396,12 @@ def apply_resource_overrides(resource_allocator, world, num_channels=None,
         if hasattr(resource_allocator, 'blind_spot_min_grids'):
             resource_allocator.blind_spot_min_grids = int(
                 pcs_min_spot_grids)
+    if pcs_communication_range_m is not None:
+        if pcs_communication_range_m <= 0:
+            raise ValueError('--pcs-communication-range-m must be positive')
+        if hasattr(resource_allocator, 'communication_range_m'):
+            resource_allocator.communication_range_m = float(
+                pcs_communication_range_m)
     if hasattr(resource_allocator, 'time_slot'):
         resource_allocator.time_slot = float(
             getattr(world.network_manager, 'time_slot', 0.1))
@@ -1537,6 +1550,7 @@ def apply_sgcp_constraint(frame, protocol, ego_cav_id, resource_allocation,
                           pcs_min_overlap_grids=None,
                           pcs_blind_spot_radius=None,
                           pcs_min_spot_grids=None,
+                          pcs_communication_range_m=None,
                           pcs_frame_rounds=1,
                           pcs_frame_deadline_ms=None,
                           coverage_fallback='none',
@@ -1606,6 +1620,7 @@ def apply_sgcp_constraint(frame, protocol, ego_cav_id, resource_allocation,
         pcs_min_overlap_grids=pcs_min_overlap_grids,
         pcs_blind_spot_radius=pcs_blind_spot_radius,
         pcs_min_spot_grids=pcs_min_spot_grids,
+        pcs_communication_range_m=pcs_communication_range_m,
         channel_model=channel_model)
     allocator.set_clusters(clusters)
     pcs_round_metadata = {}
@@ -3240,6 +3255,7 @@ def main():
                 pcs_min_overlap_grids=args.pcs_min_overlap_grids,
                 pcs_blind_spot_radius=args.pcs_blind_spot_radius,
                 pcs_min_spot_grids=args.pcs_min_spot_grids,
+                pcs_communication_range_m=args.pcs_communication_range_m,
                 pcs_frame_rounds=args.pcs_frame_rounds,
                 pcs_frame_deadline_ms=args.pcs_frame_deadline_ms,
                 coverage_fallback=args.sgcp_coverage_fallback,
