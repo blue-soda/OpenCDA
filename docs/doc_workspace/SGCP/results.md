@@ -1680,3 +1680,17 @@ channel model before `set_clusters()`, the rerun is:
 The existing real NS3 replay for corrected 100 ms frame `000060` remains valid:
 `80/80` application callbacks, `80/80` RLC-complete requests, no PHY failures,
 callback delay mean/P95/max `26.51/53.00/55.00 ms`.
+
+### 200 ms Budget Probe
+
+Under the same SGCP-PAPG protocol but with `communication_deadline_ms=200`, the
+41-frame result is:
+
+| Deadline | AP@0.3 | AP@0.5 | AP@0.7 | raw Mbps | late-box Mbps | total Mbps | avg selected grids | estimated frame time mean / P95 / max |
+|---:|---:|---:|---:|---:|---:|---:|---:|---|
+| 200 ms | 0.87 | 0.81 | 0.36 | 62.54 | 0.71 | 63.25 | 97.22 | 43.47 / 44.67 / 45.03 ms |
+
+Frame `000060` exact NS3 replay: `82/82` application callbacks, `81/82`
+RLC-complete requests, `881/881` PSSCH OK, no PHY failures, callback delay
+mean/P95/max `27.18/54.00/55.00 ms`. The one non-complete RLC request is a
+`48 bytes` tail chunk that still has an application callback and no drop/failure.

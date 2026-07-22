@@ -16,6 +16,7 @@
 ## 当前最高优先级更新（2026-07-22）
 
 - [x] 更正 SGCP-PAPG deadline 传播：旧 60 ms run 实际在 `max_grids_per_rb` 中仍使用默认 `Params.T_ddl=0.1`。修复后 60 ms 为 `0.87/0.76/0.38`、`59.15 Mbps` total、估算通信时间 `40.82/42.08/42.38 ms`；100 ms 为 `0.87/0.79/0.37`、`62.18 Mbps` total、估算 `42.76/43.89/44.32 ms`。100 ms 的 frame `000060` exact NS3 replay：`80/80` callbacks、`80/80` RLC complete、PHY failures `0`、delay `26.51/53.00/55.00 ms`。Artifact：`docs/doc_workspace/SGCP/artifacts/papg_deadline_fix_20260722/`。
+- [x] 完成 200 ms 预算 PAPG probe 并放入 NS3 核实：41 帧 `0.87/0.81/0.36`、`63.25 Mbps` total、估算通信时间 `43.47/44.67/45.03 ms`；frame `000060` exact NS3 replay 为 `82/82` callbacks、`81/82` RLC complete（唯一非 complete 是 `48 bytes` tail chunk 且应用层已收到）、PHY failures `0`、delay `27.18/54.00/55.00 ms`。Artifact：`docs/doc_workspace/SGCP/artifacts/papg_200ms_budget_20260722/`。
 - [ ] 用恢复后的 SGCP-PAPG 主参数替换 current-protocol diagnostic 表中的 `strict default` 行，并重建 Table3/TableA/Figure1-2；后续所有正式表格必须显式记录 `coperception-yaml=...enable_coperception_early_from_attentive.yaml`、`N_max=4`、`head_rb_budget=2`、`communication_deadline_ms=60`。
 
 ## 已完成工作压缩摘要

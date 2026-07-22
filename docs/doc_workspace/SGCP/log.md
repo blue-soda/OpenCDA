@@ -7926,3 +7926,18 @@ AP 结果：`0.87/0.79/0.37`，raw LiDAR `61.47 Mbps`，box overhead `0.71 Mbps`
   because the corrected 100 ms trace matches the previous 100 ms upload plan:
   `80/80` callbacks, `80/80` RLC complete, no PHY failures, delay
   `26.51/53.00/55.00 ms`.
+
+## 2026-07-22 PAPG 200 ms Budget Probe
+
+- Reran SGCP-PAPG attentive with `communication_deadline_ms=200`,
+  `N_max=4`, `rho_th=3`, `head_rb_budget=2`, 40 MHz/10 ch NS3 estimator.
+- Offline AP result: `0.87/0.81/0.36`.
+- Communication: raw `62.54 Mbps`, late-box `0.71 Mbps`, total `63.25 Mbps`.
+- Trace summary: avg selected grids `97.22`; estimated frame communication time
+  mean/P95/max `43.47/44.67/45.03 ms`.
+- Built frame `000060` upload plan from trace: `10` links, `82` CAM chunks,
+  `783,392 bytes`.
+- NS3 replay result: `82/82` application callbacks, `81/82` RLC-complete
+  requests, `881/881` PSSCH OK, no PHY failures, delay
+  `27.18/54.00/55.00 ms`. The one RLC-incomplete request is a `48 bytes` tail
+  chunk that still reached the application callback.

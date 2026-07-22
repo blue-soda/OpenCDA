@@ -36,10 +36,16 @@ sets both `resource_allocator.time_slot` and `resource_allocator.p.T_ddl` from
 |---:|---:|---:|---:|---:|---:|---:|---:|---|
 | 60 ms | 0.87 | 0.76 | 0.38 | 58.44 | 0.71 | 59.15 | 36.67 | 40.82 / 42.08 / 42.38 ms |
 | 100 ms | 0.87 | 0.79 | 0.37 | 61.47 | 0.71 | 62.18 | 61.67 | 42.76 / 43.89 / 44.32 ms |
+| 200 ms | 0.87 | 0.81 | 0.36 | 62.54 | 0.71 | 63.25 | 97.22 | 43.47 / 44.67 / 45.03 ms |
 
 Interpretation: after the fix, the 60 ms and 100 ms traces differ. The 100 ms
 run recovers the old result because the old "60 ms" trace had effectively used
 the default 100 ms `Params.T_ddl` for grid admission.
+
+The 200 ms probe further increases per-link grid admission but only slightly
+increases raw payload because the number of scheduled links remains fixed by
+`head_rb_budget=2` and many selected regions are already bounded by available
+points.
 
 ## Real NS3 Delay
 
