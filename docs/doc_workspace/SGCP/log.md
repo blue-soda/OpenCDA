@@ -8033,3 +8033,13 @@ AP 结果：`0.87/0.79/0.37`，raw LiDAR `61.47 Mbps`，box overhead `0.71 Mbps`
 - Rebuilt the protocol-native compute profile after hardening `sgcp_compute_profile.load_metrics()` for UTF-8 BOM/whitespace in CSV headers. No-collaboration compute is `1788.23 GFLOPs/frame`; PCS/EdgeCooper protocol rows remain about `20` detector forwards/frame.
 - Renamed the former `Full 20-CAV early fusion` row to `Centralized all-in-one raw-LiDAR early fusion upper reference`. It is one all-in-one fused receiver per frame (`41` samples), not a protocol-native all-receiver full-broadcast baseline. A true all-receiver full early broadcast is considered communication-infeasible under the current `40 MHz / 10 target subchannels / 60 ms` protocol.
 - Synced the change to `C:\Workspace\2026-7-papers\infocom\SGCP\experiment` Table1 CSV, `main_data_tables_20260722.md`, `table_guidance.md`, `experiment_update_summary.md`, and `data/compute_profile_protocol_native_20260722.csv`.
+
+## 2026-07-22 Half-duplex / common-receiver clarification
+
+- User correctly pointed out that 19 CAVs transmitting to the same receiver should not be treated as a feasible simultaneous V2V upload.
+- Code audit:
+  - `pcs.py` Class-A conflict includes shared sender, shared receiver, and sender/receiver role reversal, so links such as multiple senders to one receiver are mutually conflicting.
+  - Deadline-constrained `edgecooper_global` / `edgecooper_global_hd` uses endpoint-disjoint matching before admission.
+  - PAPG uses one exclusive RB/subchannel per scheduled cluster-head upload and relies on the cluster-head receiver scaffold; it is evaluated through NS3 replay for the selected chunks.
+  - `all_in_one` / centralized full-sharing upper reference bypasses these scheduling constraints and builds an all-in-one fused perception sample directly.
+- Updated experiment guidance: `Centralized all-in-one raw-LiDAR early fusion upper reference` is a perception upper reference only. It ignores half-duplex/common-receiver contention and must not be interpreted as 19 simultaneous V2V raw-LiDAR uploads to one CAV.
