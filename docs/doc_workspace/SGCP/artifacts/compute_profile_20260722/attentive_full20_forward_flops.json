@@ -7,12 +7,12 @@
   "flops_by_module_type": {
     "Conv2d": 47147161600.0,
     "ConvTranspose2d": 42100326400.0,
-    "Linear": 26533120.0
+    "Linear": 849059840.0
   },
   "fusion_method": "early",
   "input_points": 97623,
-  "profiled_flops_per_forward": 89274021120.0,
-  "profiled_gflops_per_forward": 89.27402112,
+  "profiled_flops_per_forward": 90096547840.0,
+  "profiled_gflops_per_forward": 90.09654784,
   "scenario_id": "2026_07_15_01_26_56",
   "timestamp": "000060"
 }

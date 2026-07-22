@@ -45,6 +45,13 @@ def parse_args():
         default=None,
         help='Calibration JSON produced by --calibrate-forward.')
     parser.add_argument(
+        '--dense-calibration-json',
+        default=None,
+        help='Optional second calibration JSON with a denser point cloud. '
+             'When provided together with --calibration-json, the tool '
+             'estimates per-call GFLOPs as fixed Conv/Deconv cost plus a '
+             'linear point-count model for VFE Linear FLOPs.')
+    parser.add_argument(
         '--calibrated-gflops-per-forward',
         type=float,
         default=None,
@@ -171,7 +178,44 @@ def load_metrics(paths):
     return metrics
 
 
+def build_input_adjusted_model(calibration, dense_calibration):
+    if not calibration or not dense_calibration:
+        return None
+    try:
+        point_a = float(calibration['input_points'])
+        point_b = float(dense_calibration['input_points'])
+        linear_a = float(
+            calibration.get('flops_by_module_type', {}).get('Linear', 0.0))
+        linear_b = float(
+            dense_calibration.get(
+                'flops_by_module_type', {}).get('Linear', 0.0))
+        fixed_a = (
+            float(calibration.get(
+                'flops_by_module_type', {}).get('Conv2d', 0.0)) +
+            float(calibration.get(
+                'flops_by_module_type', {}).get('ConvTranspose2d', 0.0)))
+    except (KeyError, TypeError, ValueError):
+        return None
+    if point_a == point_b:
+        return None
+    slope = (linear_b - linear_a) / (point_b - point_a)
+    intercept = linear_a - slope * point_a
+    return {
+        'fixed_flops': fixed_a,
+        'linear_intercept_flops': intercept,
+        'linear_flops_per_point': slope,
+    }
+
+
+def adjusted_gflops_for_points(point_count, model):
+    linear_flops = (
+        model['linear_intercept_flops'] +
+        model['linear_flops_per_point'] * float(point_count))
+    return (model['fixed_flops'] + max(0.0, linear_flops)) / 1e9
+
+
 def summarize_trace(label, trace_path, metric_row, calibrated_gflops,
+                    input_adjusted_model,
                     frame_interval_s):
     with open(trace_path, newline='') as stream:
         rows = list(csv.DictReader(stream))
@@ -222,6 +266,18 @@ def summarize_trace(label, trace_path, metric_row, calibrated_gflops,
             for row in rows_by_frame[timestamp])
         for timestamp in timestamps
     ]
+    adjusted_gflops_per_frame_values = []
+    if input_adjusted_model is not None:
+        for timestamp in timestamps:
+            frame_gflops = 0.0
+            for row in rows_by_frame[timestamp]:
+                point_counts = read_json_cell(row.get('point_counts_json'), {})
+                row_points = sum(
+                    to_int(value) for value in point_counts.values())
+                frame_gflops += adjusted_gflops_for_points(
+                    row_points,
+                    input_adjusted_model)
+            adjusted_gflops_per_frame_values.append(frame_gflops)
 
     raw_lidar_mbps = to_float(
         metric_row.get('raw_lidar_mbps') if metric_row else None,
@@ -269,6 +325,9 @@ def summarize_trace(label, trace_path, metric_row, calibrated_gflops,
             '' if gflops_per_frame == '' else '%.6f' % gflops_per_frame),
         'profiled_detector_gflops_per_second_at_10hz': (
             '' if gflops_per_second == '' else '%.6f' % gflops_per_second),
+        'input_adjusted_detector_gflops_per_frame': (
+            '' if not adjusted_gflops_per_frame_values else
+            '%.6f' % mean(adjusted_gflops_per_frame_values)),
     }
 
 
@@ -304,12 +363,14 @@ class FlopCounter(object):
         def linear_hook(module, inputs, output):
             if output is None:
                 return
-            batch = 1
-            if hasattr(output, 'shape') and len(output.shape) > 1:
-                batch = int(output.shape[0])
-            flops = 2.0 * batch * module.in_features * module.out_features
+            if not hasattr(output, 'shape') or len(output.shape) == 0:
+                return
+            output_elements = int(output.numel())
+            output_vectors = output_elements / float(module.out_features)
+            flops = 2.0 * output_vectors * module.in_features * (
+                module.out_features)
             if module.bias is not None:
-                flops += batch * module.out_features
+                flops += output_elements
             self.flops += flops
             self.by_type[type(module).__name__] += flops
 
@@ -421,6 +482,7 @@ def write_markdown(path, rows, calibration):
         'mean_input_points_per_frame',
         'mean_pred_boxes_per_frame',
         'profiled_detector_gflops_per_frame',
+        'input_adjusted_detector_gflops_per_frame',
     ]
     with open(path, 'w') as stream:
         stream.write('# SGCP Profiled GFLOPs Summary\n\n')
@@ -463,6 +525,10 @@ def write_markdown(path, rows, calibration):
         stream.write(
             '- `mean_input_points_per_frame` is trace-derived and therefore '
             'captures fused point-cloud size, not just the number of receivers.\n')
+        stream.write(
+            '- `input_adjusted_detector_gflops_per_frame`, when present, uses '
+            'singleton and dense/full calibrations to model point-dependent VFE '
+            'Linear FLOPs on top of fixed BEV Conv/Deconv FLOPs.\n')
     return path
 
 
@@ -479,6 +545,13 @@ def load_calibration(args):
         return json.load(stream)
 
 
+def load_dense_calibration(args):
+    if not args.dense_calibration_json:
+        return None
+    with open(args.dense_calibration_json) as stream:
+        return json.load(stream)
+
+
 def main():
     args = parse_args()
     calibration = None
@@ -488,6 +561,10 @@ def main():
     loaded_calibration = load_calibration(args)
     if loaded_calibration is not None:
         calibration = loaded_calibration
+    dense_calibration = load_dense_calibration(args)
+    input_adjusted_model = build_input_adjusted_model(
+        calibration,
+        dense_calibration)
     calibrated_gflops = None
     if calibration is not None and calibration.get(
             'profiled_gflops_per_forward') is not None:
@@ -504,6 +581,7 @@ def main():
             trace_path,
             metric_row,
             calibrated_gflops,
+            input_adjusted_model,
             args.frame_interval_s))
     if rows:
         write_csv(args.output_csv, rows)

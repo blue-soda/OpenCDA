@@ -298,8 +298,8 @@
 目的：解释 Pure late / no-clustering global-box reference AP 很强但计算负担更高的问题。该任务不替代主指标 aggregate AP 与 Mbps，只作为论文讨论或附录的 compute-efficiency 证据。
 
 - [x] 新增通用工具 `opencda.tools.sgcp_compute_profile`：支持对真实 OpenCOOD forward 进行 hook-based FLOPs 校准，并从 SGCP trace CSV 统计 detector calls/frame、输入点数、预测框数、raw/box/total Mbps 和 calibrated GFLOPs/frame。
-- [x] 使用 attentive checkpoint 在 frame `000060` 上完成真实 detector forward 校准：singleton forward `89.249203 GFLOPs`，full 20-CAV forward `89.274021 GFLOPs`。Conv/Deconv/Linear hook 口径下二者几乎相同，说明 PointPillar/attentive detector 的计算主要由固定 BEV backbone 主导。
-- [x] 生成 current-protocol compute profile：`docs/doc_workspace/SGCP/artifacts/compute_profile_20260722/compute_profile_current_protocol_20260722.csv`。关键结果：Pure late 约 `19.17` detector forwards/frame、`1710.97 GFLOPs/frame`；SGCP-PAPG 约 `6.00` forwards/frame、`535.50 GFLOPs/frame`；no-clustering EdgeCooper/PCS global-box 约 `19-20` forwards/frame、`1715-1772 GFLOPs/frame`。
+- [x] 使用 attentive checkpoint 在 frame `000060` 上完成真实 detector forward 校准：singleton forward `89.302374 GFLOPs`，full 20-CAV forward `90.096548 GFLOPs`。修正后的 Linear hook 会计入 voxel 内 point 维度；结果显示点云量会影响 VFE Linear FLOPs，但 PointPillar/attentive detector 计算仍主要由固定 BEV backbone 主导。
+- [x] 生成 current-protocol compute profile：`docs/doc_workspace/SGCP/artifacts/compute_profile_20260722/compute_profile_current_protocol_20260722.csv`。关键结果：Pure late 约 `19.17` detector forwards/frame、input-adjusted `1711.99 GFLOPs/frame`；SGCP-PAPG 约 `6.00` forwards/frame、`536.23 GFLOPs/frame`；no-clustering EdgeCooper/PCS global-box 约 `19-20` forwards/frame、`1716-1773 GFLOPs/frame`。
 - [x] 生成 protocol-native compute profile：`docs/doc_workspace/SGCP/artifacts/compute_profile_20260722/compute_profile_protocol_native_20260722.csv`。Table1 PCS/EdgeCooper no-late 原版适配均约 `20` detector forwards/frame、`1784.98 GFLOPs/frame`，但输入点数和通信负载不同。
 - [x] 将 compute profile CSV、校准 JSON/stdout、脚本快照和说明同步到 `C:\Workspace\2026-7-papers\infocom\SGCP\experiment`，用于论文写作 agent 作为附录/讨论素材。
 - [ ] 若论文决定正式加入 compute 图表，基于该 CSV 生成 AP@0.5-vs-GFLOPs 或 AP@0.5/Mbps/GFLOPs 三轴 Pareto 图，并在 caption 中明确 GFLOPs 是 detector-side forward profile，不包含后处理 NMS、通信调度和车辆控制计算。

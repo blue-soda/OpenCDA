@@ -1705,17 +1705,17 @@ Artifact: `docs/doc_workspace/SGCP/artifacts/compute_profile_20260722/`
 
 | Forward | CAVs | Input points | GFLOPs/forward |
 | --- | ---: | ---: | ---: |
-| Singleton local attentive forward | 1 | 4,918 | 89.249203 |
-| Full 20-CAV attentive forward | 20 | 97,623 | 89.274021 |
+| Singleton local attentive forward | 1 | 4,918 | 89.302374 |
+| Full 20-CAV attentive forward | 20 | 97,623 | 90.096548 |
 
 current-protocol compute profile 摘要：
 
 | Method | AP@0.3 | AP@0.5 | AP@0.7 | Total Mbps | Detector calls/frame | GFLOPs/frame |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: |
-| Pure late | 0.82 | 0.76 | 0.37 | 0.74 | 19.17 | 1710.97 |
-| FullPerception-PCS + global box | 0.83 | 0.77 | 0.38 | 54.54 | 19.85 | 1771.92 |
-| EdgeCooper V2V + global box | 0.84 | 0.79 | 0.37 | 51.83 | 19.22 | 1715.33 |
-| SGCP-PAPG | 0.87 | 0.81 | 0.36 | 63.25 | 6.00 | 535.50 |
-| Full 20-CAV early fusion | 0.85 | 0.83 | 0.48 | 118.71 | 1.00 | 89.25 |
+| Pure late | 0.82 | 0.76 | 0.37 | 0.74 | 19.17 | 1711.99 |
+| FullPerception-PCS + global box | 0.83 | 0.77 | 0.38 | 54.54 | 19.85 | 1773.33 |
+| EdgeCooper V2V + global box | 0.84 | 0.79 | 0.37 | 51.83 | 19.22 | 1716.68 |
+| SGCP-PAPG | 0.87 | 0.81 | 0.36 | 63.25 | 6.00 | 536.23 |
+| Full 20-CAV early fusion | 0.85 | 0.83 | 0.48 | 118.71 | 1.00 | 90.10 |
 
-结论：Pure late / no-clustering global-box reference 的低 Mbps 不代表系统总成本低；它们每帧接近 20 次 detector forward，约为 SGCP-PAPG 的 `3.2x` detector GFLOPs。SGCP-PAPG 用 6 个 cluster-head forward 和 selected member point clouds 达到更高 AP@0.3/AP@0.5，可作为论文附录或讨论中的 compute-efficiency 证据。GFLOPs 只覆盖 detector forward，不包含 NMS、调度、通信序列化、CARLA 或车辆控制。
+结论：Pure late / no-clustering global-box reference 的低 Mbps 不代表系统总成本低；它们每帧接近 20 次 detector forward，约为 SGCP-PAPG 的 `3.2x` detector GFLOPs。SGCP-PAPG 用 6 个 cluster-head forward 和 selected member point clouds 达到更高 AP@0.3/AP@0.5，可作为论文附录或讨论中的 compute-efficiency 证据。GFLOPs 只覆盖 detector forward，不包含 NMS、调度、通信序列化、CARLA 或车辆控制。修正后的 input-adjusted 口径会计入 `PillarVFE` Linear 的 point 维度，因此 full 20-CAV early fusion 使用 `90.10 GFLOPs/frame` 而不是 singleton 常数。

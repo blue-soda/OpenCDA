@@ -8004,12 +8004,14 @@ AP 结果：`0.87/0.79/0.37`，raw LiDAR `61.47 Mbps`，box overhead `0.71 Mbps`
 ## 2026-07-22 Profiled GFLOPs route
 
 - Added `opencda.tools.sgcp_compute_profile`.
-- Calibrated attentive detector FLOPs with real frame `000060`:
-  - singleton local forward: `89.249203 GFLOPs`, `4,918` input points.
-  - full 20-CAV forward: `89.274021 GFLOPs`, `97,623` input points.
+- Calibrated attentive detector FLOPs with real frame `000060`.
+  A follow-up audit fixed the Linear hook so `PillarVFE` counts the
+  `[num_voxels, max_points_per_voxel, channels]` point dimension:
+  - singleton local forward: `89.302374 GFLOPs`, `4,918` input points.
+  - full 20-CAV forward: `90.096548 GFLOPs`, `97,623` input points.
   - FLOP policy: Conv2d/ConvTranspose2d/Linear hooks, multiply-add = 2 FLOPs.
 - Generated trace-derived compute profiles:
   - `docs/doc_workspace/SGCP/artifacts/compute_profile_20260722/compute_profile_current_protocol_20260722.csv`
   - `docs/doc_workspace/SGCP/artifacts/compute_profile_20260722/compute_profile_protocol_native_20260722.csv`
-- Key current-protocol result: Pure late uses about `19.17` detector forwards/frame and `1710.97 GFLOPs/frame`; SGCP-PAPG uses `6.00` forwards/frame and `535.50 GFLOPs/frame`; no-clustering EdgeCooper/PCS global-box references are similarly compute-heavy (`1715-1772 GFLOPs/frame`).
+- Key current-protocol result after input-adjusted rebuild: Pure late uses about `19.17` detector forwards/frame and `1711.99 GFLOPs/frame`; SGCP-PAPG uses `6.00` forwards/frame and `536.23 GFLOPs/frame`; no-clustering EdgeCooper/PCS global-box references are similarly compute-heavy (`1716-1773 GFLOPs/frame`).
 - Synced CSVs, calibration JSON/stdout, script snapshot and explanation to `C:\Workspace\2026-7-papers\infocom\SGCP\experiment`. This route is auxiliary compute-efficiency evidence, not a new primary metric.
