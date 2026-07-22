@@ -1830,3 +1830,11 @@ NS3 exact replay 使用正式信道参数 `40 MHz / 10 target subchannels / slMc
 | PCS single-pass r35 | 53 | 487,440 | 45/53 | 47/53 | 0 | 22.67 / 44.00 / 50.00 ms |
 
 结论：PCS 不能通过两轮或 100ms admission 继续“安全增量”。估算器给出的预算时间低于 NS3 中多 link/chunk 并发后的实际 completion 行为；两轮 PCS 会出现大量 request 只到 RLC partial/no-RX 或未到 application callback。外部 INFOCOM Table 1 已回退到 single-pass PCS-r35 `0.30/0.24/0.11, 44.22 Mbps`，two-pass PCS 仅保留为 infeasible diagnostic。
+
+### PCS Single-Pass 100ms Budget Check - 2026-07-22
+
+Artifact: `docs/doc_workspace/SGCP/artifacts/pcs_single_100ms_20260722/`
+
+按用户追问补测“仍然 single-pass，但把 PCS budget 提升到 `100 ms`”。配置与 PCS-r35 paper-facing row 一致，只设置 `pcs_frame_rounds=1`、`pcs_frame_deadline_ms=100`、`communication_deadline_ms=100`。41 帧结果没有变化：AP `0.30/0.24/0.11`，raw payload `22,662,656 bytes`，即 `44.22 Mbps`；trace frame communication time mean/max 为 `41.47/42.71 ms`。
+
+frame `000060` upload plan 为 `53` chunks、`487,440 bytes`、`8` links；其 SHA256 与此前 PCS single-pass r35 exact replay plan 完全相同。因此 NS3 结果沿用同一 exact replay：`45/53` application callbacks、`47/53` RLC complete、PHY failures `0`、delay `22.67/44.00/50.00 ms`。结论是 PCS single-pass 当前不是被 60ms budget 截断，而是被 PCS 机制本身限制：common-node conflict、candidate link range 和每个 receiver 的 blind-spot link selection 使单轮只产生约 `44.22 Mbps`。

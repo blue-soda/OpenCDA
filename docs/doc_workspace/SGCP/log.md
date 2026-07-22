@@ -8053,3 +8053,11 @@ AP 结果：`0.87/0.79/0.37`，raw LiDAR `61.47 Mbps`，box overhead `0.71 Mbps`
 - Also tested the earlier two-pass 60ms-estimator PCS trace: frame `000060` had `75` chunks / `673,280 bytes`, but NS3 delivered only `38/75` application callbacks and `39/75` RLC-complete requests; delay mean/P95/max was `66.68/204.00/204.00 ms`.
 - Single-pass PCS-r35 exact replay was latency-feasible but not perfect-delivery: frame `000060` had `53` chunks / `487,440 bytes`, `45/53` application callbacks, `47/53` RLC-complete requests, no PHY failures, delay `22.67/44.00/50.00 ms`.
 - Updated `results.md`, `status.md`, and the external INFOCOM experiment package: Table 1 now uses PCS single-pass r35 `0.30/0.24/0.11, 44.22 Mbps`; two-pass PCS is retained only as an infeasible diagnostic.
+
+## 2026-07-22 PCS single-pass 100ms budget check
+
+- User asked whether keeping PCS single-pass but raising the PCS budget to `100 ms` would increase payload.
+- Reran `fullperception_pcs` with `pcs_frame_rounds=1`, `pcs_frame_deadline_ms=100`, `communication_deadline_ms=100`, `communication_range_m=35`, attentive checkpoint, singleton all-cavs receiver policy, and the same NS3-calibrated channel estimator.
+- 41-frame result was unchanged from PCS-r35 single-pass: AP `0.30/0.24/0.11`, raw payload `22,662,656 bytes`, `44.22 Mbps`, avg selected grids `14.70`, and frame communication time mean/max `41.47/42.71 ms`.
+- Built frame `000060` upload plan: `53` chunks / `487,440 bytes` / `8` links. Its SHA256 matches the previous PCS-r35 single-pass exact replay upload plan, so the NS3 result is the same: `45/53` application callbacks, `47/53` RLC complete, no PHY failures, delay `22.67/44.00/50.00 ms`.
+- Conclusion: single-pass PCS is not 60ms-budget limited. Raising budget to 100ms does not increase selected links/grids because PCS single-pass is constrained by its conflict graph and one-shot blind-spot link selection. Only repeated PCS passes increase payload, but those fail the exact NS3 deadline/delivery check.
