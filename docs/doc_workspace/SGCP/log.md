@@ -7941,3 +7941,20 @@ AP 结果：`0.87/0.79/0.37`，raw LiDAR `61.47 Mbps`，box overhead `0.71 Mbps`
   requests, `881/881` PSSCH OK, no PHY failures, delay
   `27.18/54.00/55.00 ms`. The one RLC-incomplete request is a `48 bytes` tail
   chunk that still reached the application callback.
+
+## 2026-07-22 INFOCOM experiment table cleanup
+
+- Cleaned `C:\Workspace\2026-7-papers\infocom\SGCP\experiment` after finding
+  that the main snapshot still referenced the deadline-infeasible EdgeCooper
+  demand row and an under-scheduled PCS intermediate row.
+- Updated Table 1 protocol-native baselines to use deadline-feasible rows:
+  FullPerception-PCS `0.23/0.17/0.06, 53.55 Mbps, 77/77 callbacks, max 54 ms`
+  and EdgeCooper V2V `0.32/0.26/0.10, 50.91 Mbps, 68/68 callbacks, max 54 ms`.
+- Added the no-clustering + global box aggregation table to the main snapshot:
+  Pure late `0.82/0.76/0.37, 0.74 Mbps`, PCS+global box
+  `0.83/0.77/0.38, 54.54 Mbps`, EdgeCooper+global box
+  `0.84/0.79/0.37, 51.83 Mbps`, SGCP-PAPG `0.87/0.81/0.36, 63.25 Mbps`.
+- Rewrote the main snapshot so the same-coalition scheduler table is clearly
+  separated from protocol-native baselines; SGCP-PAPG is best on AP@0.3/AP@0.5
+  under that scaffold.
+- Regenerated current-protocol figures and the external package manifest.
