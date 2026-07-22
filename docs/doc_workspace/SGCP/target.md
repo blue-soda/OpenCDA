@@ -17,7 +17,7 @@
 
 - [x] 更正 SGCP-PAPG deadline 传播：旧 60 ms run 实际在 `max_grids_per_rb` 中仍使用默认 `Params.T_ddl=0.1`。修复后 60 ms 为 `0.87/0.76/0.38`、`59.15 Mbps` total、估算通信时间 `40.82/42.08/42.38 ms`；100 ms 为 `0.87/0.79/0.37`、`62.18 Mbps` total、估算 `42.76/43.89/44.32 ms`。100 ms 的 frame `000060` exact NS3 replay：`80/80` callbacks、`80/80` RLC complete、PHY failures `0`、delay `26.51/53.00/55.00 ms`。Artifact：`docs/doc_workspace/SGCP/artifacts/papg_deadline_fix_20260722/`。
 - [x] 完成 200 ms 预算 PAPG probe 并放入 NS3 核实：41 帧 `0.87/0.81/0.36`、`63.25 Mbps` total、估算通信时间 `43.47/44.67/45.03 ms`；frame `000060` exact NS3 replay 为 `82/82` callbacks、`81/82` RLC complete（唯一非 complete 是 `48 bytes` tail chunk 且应用层已收到）、PHY failures `0`、delay `27.18/54.00/55.00 ms`。Artifact：`docs/doc_workspace/SGCP/artifacts/papg_200ms_budget_20260722/`。
-- [ ] 用恢复后的 SGCP-PAPG 主参数替换 current-protocol diagnostic 表中的 `strict default` 行，并重建 Table3/TableA/Figure1-2；后续所有正式表格必须显式记录 `coperception-yaml=...enable_coperception_early_from_attentive.yaml`、`N_max=4`、`head_rb_budget=2`、`communication_deadline_ms=60`。
+- [x] 用恢复后的 SGCP-PAPG 主参数替换 current-protocol diagnostic 表中的 `strict default` 行，并重建 Table3/TableA/Figure1-2；后续所有正式表格必须显式记录 `coperception-yaml=...enable_coperception_early_from_attentive.yaml`、`N_max=4`、`head_rb_budget=2`、`communication_deadline_ms=60`。2026-07-22 已在外部主快照中将 SGCP-PAPG 主行固定为 `0.87/0.81/0.36`、`63.25 Mbps`，并补齐 Table3 PCS 行和同口径 late-only reference。
 
 ## 已完成工作压缩摘要
 
@@ -292,3 +292,14 @@
 - [ ] 每张表和图的 caption/source registry 必须明确 `checkpoint`、`bandwidth_mhz`、`num_channels`、`communication_deadline_ms`、`late_fusion`、`clustering`、`resource_allocation`。
 - [ ] 所有通信量统一满足 `mbps = total_mbps = raw_lidar_mbps + box_mbps`；late/global/prediction sharing 行必须计入检测框通信量。
 - [ ] 任何 20MHz legacy 图表若保留，必须明确标注为 legacy scaffold diagnostic，不能与 current-protocol 主文结果混用。
+
+## P13：Profiled GFLOPs / Detector Compute Fairness
+
+目的：解释 Pure late / no-clustering global-box reference AP 很强但计算负担更高的问题。该任务不替代主指标 aggregate AP 与 Mbps，只作为论文讨论或附录的 compute-efficiency 证据。
+
+- [x] 新增通用工具 `opencda.tools.sgcp_compute_profile`：支持对真实 OpenCOOD forward 进行 hook-based FLOPs 校准，并从 SGCP trace CSV 统计 detector calls/frame、输入点数、预测框数、raw/box/total Mbps 和 calibrated GFLOPs/frame。
+- [x] 使用 attentive checkpoint 在 frame `000060` 上完成真实 detector forward 校准：singleton forward `89.249203 GFLOPs`，full 20-CAV forward `89.274021 GFLOPs`。Conv/Deconv/Linear hook 口径下二者几乎相同，说明 PointPillar/attentive detector 的计算主要由固定 BEV backbone 主导。
+- [x] 生成 current-protocol compute profile：`docs/doc_workspace/SGCP/artifacts/compute_profile_20260722/compute_profile_current_protocol_20260722.csv`。关键结果：Pure late 约 `19.17` detector forwards/frame、`1710.97 GFLOPs/frame`；SGCP-PAPG 约 `6.00` forwards/frame、`535.50 GFLOPs/frame`；no-clustering EdgeCooper/PCS global-box 约 `19-20` forwards/frame、`1715-1772 GFLOPs/frame`。
+- [x] 生成 protocol-native compute profile：`docs/doc_workspace/SGCP/artifacts/compute_profile_20260722/compute_profile_protocol_native_20260722.csv`。Table1 PCS/EdgeCooper no-late 原版适配均约 `20` detector forwards/frame、`1784.98 GFLOPs/frame`，但输入点数和通信负载不同。
+- [x] 将 compute profile CSV、校准 JSON/stdout、脚本快照和说明同步到 `C:\Workspace\2026-7-papers\infocom\SGCP\experiment`，用于论文写作 agent 作为附录/讨论素材。
+- [ ] 若论文决定正式加入 compute 图表，基于该 CSV 生成 AP@0.5-vs-GFLOPs 或 AP@0.5/Mbps/GFLOPs 三轴 Pareto 图，并在 caption 中明确 GFLOPs 是 detector-side forward profile，不包含后处理 NMS、通信调度和车辆控制计算。

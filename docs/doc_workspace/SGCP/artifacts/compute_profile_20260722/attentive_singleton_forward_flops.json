@@ -1,0 +1,18 @@
+{
+  "cav_count": 1,
+  "coperception_yaml": "docs\\doc_workspace\\SGCP\\artifacts\\early_from_late_checkpoint_20260719\\enable_coperception_early_from_attentive.yaml",
+  "dataset_root": "D:\\Data\\Carla",
+  "ego_cav_id": "1",
+  "flop_policy": "Conv2d/ConvTranspose2d/Linear hooks; multiply-add=2 FLOPs",
+  "flops_by_module_type": {
+    "Conv2d": 47147161600.0,
+    "ConvTranspose2d": 42100326400.0,
+    "Linear": 1715200.0
+  },
+  "fusion_method": "early",
+  "input_points": 4918,
+  "profiled_flops_per_forward": 89249203200.0,
+  "profiled_gflops_per_forward": 89.2492032,
+  "scenario_id": "2026_07_15_01_26_56",
+  "timestamp": "000060"
+}

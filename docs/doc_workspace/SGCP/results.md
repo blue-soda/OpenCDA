@@ -1694,3 +1694,28 @@ Frame `000060` exact NS3 replay: `82/82` application callbacks, `81/82`
 RLC-complete requests, `881/881` PSSCH OK, no PHY failures, callback delay
 mean/P95/max `27.18/54.00/55.00 ms`. The one non-complete RLC request is a
 `48 bytes` tail chunk that still has an application callback and no drop/failure.
+
+## Profiled GFLOPs / Detector Compute - 2026-07-22
+
+Artifact: `docs/doc_workspace/SGCP/artifacts/compute_profile_20260722/`
+
+新增 `opencda.tools.sgcp_compute_profile`，用于从真实 trace 统计 detector calls/frame、输入点数、预测框数和 calibrated GFLOPs/frame。GFLOPs 校准使用 attentive checkpoint、frame `000060`、hook-based Conv2d/ConvTranspose2d/Linear 统计，multiply-add = 2 FLOPs。
+
+校准结果：
+
+| Forward | CAVs | Input points | GFLOPs/forward |
+| --- | ---: | ---: | ---: |
+| Singleton local attentive forward | 1 | 4,918 | 89.249203 |
+| Full 20-CAV attentive forward | 20 | 97,623 | 89.274021 |
+
+current-protocol compute profile 摘要：
+
+| Method | AP@0.3 | AP@0.5 | AP@0.7 | Total Mbps | Detector calls/frame | GFLOPs/frame |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| Pure late | 0.82 | 0.76 | 0.37 | 0.74 | 19.17 | 1710.97 |
+| FullPerception-PCS + global box | 0.83 | 0.77 | 0.38 | 54.54 | 19.85 | 1771.92 |
+| EdgeCooper V2V + global box | 0.84 | 0.79 | 0.37 | 51.83 | 19.22 | 1715.33 |
+| SGCP-PAPG | 0.87 | 0.81 | 0.36 | 63.25 | 6.00 | 535.50 |
+| Full 20-CAV early fusion | 0.85 | 0.83 | 0.48 | 118.71 | 1.00 | 89.25 |
+
+结论：Pure late / no-clustering global-box reference 的低 Mbps 不代表系统总成本低；它们每帧接近 20 次 detector forward，约为 SGCP-PAPG 的 `3.2x` detector GFLOPs。SGCP-PAPG 用 6 个 cluster-head forward 和 selected member point clouds 达到更高 AP@0.3/AP@0.5，可作为论文附录或讨论中的 compute-efficiency 证据。GFLOPs 只覆盖 detector forward，不包含 NMS、调度、通信序列化、CARLA 或车辆控制。
