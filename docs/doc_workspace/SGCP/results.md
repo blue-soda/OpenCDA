@@ -2,7 +2,27 @@
 
 本文件只记录经过确认、可复现或准备进入论文/rebuttal 的核心结果。探索性现象先记录在 `log.md`，稳定后再整理到这里。
 
-更新时间：2026-07-19
+更新时间：2026-07-24
+
+## 2026-07-24 Table 4 分簇 Baseline
+
+固定协议：attentive detector、v2xp_cluster_carla 41 帧、20 CAV、40 MHz / 10 target subchannels、NS3-calibrated estimator (`tb_size=899`, `symbols=12`, `mcs=28`)、`cov_potential_game` C->V raw-LiDAR scheduler、all cluster heads as receivers、grid upload、inter-cluster box NMS。该表只替换 clustering。
+
+| Method | Type | Clustering | AP@0.3 | AP@0.5 | AP@0.7 | Raw Mbps | Box Mbps | Total Mbps | GFLOPs/frame |
+|---|---|---|---:|---:|---:|---:|---:|---:|---:|
+| SGCP-CV (ours) | proposed | cov_coalition_game | 0.87 | 0.80 | 0.36 | 60.18 | 0.72 | 60.90 | 536.92 |
+| Random balanced | heuristic | random_balanced | 0.79 | 0.64 | 0.30 | 55.08 | 0.73 | 55.81 | 447.47 |
+| Distance-greedy | heuristic | distance_greedy | 0.80 | 0.69 | 0.35 | 56.32 | 0.58 | 56.90 | 447.48 |
+| Density/quality-greedy | heuristic | density_greedy_cluster | 0.73 | 0.62 | 0.29 | 46.25 | 0.75 | 47.00 | 447.40 |
+| SeAC-inspired | paper baseline | seac_social_adaptive | 0.82 | 0.72 | 0.36 | 56.30 | 0.63 | 56.93 | 447.48 |
+| HHOCNET-inspired | paper baseline | hho_vanet | 0.79 | 0.68 | 0.32 | 54.60 | 0.68 | 55.28 | 447.47 |
+
+论文 baseline 来源：
+
+- SeAC-inspired：Akbar et al., `SeAC: SDN-Enabled Adaptive Clustering Technique for Social-Aware Internet of Vehicles`, IEEE T-ITS 2023, DOI `10.1109/TITS.2023.3237321`；将 SDN/social signal 映射为 CARLA 同帧方向一致性、相对速度、距离和感知区域重叠。
+- HHOCNET-inspired：Ali et al., `Harris Hawks Optimization-Based Clustering Algorithm for Vehicular Ad-Hoc Networks`, IEEE T-ITS 2023, DOI `10.1109/TITS.2023.3257484`；将 HHO 搜索映射为 proximity、relative mobility 和 sensing coverage 上的确定性 multi-start partition search。
+
+结论：没有 baseline 在 AP@0.3/AP@0.5 上超过 SGCP-CV。SeAC-inspired 在 AP@0.7 与 SGCP 持平，但 coverage/medium-IoU AP 更低，可支持“同一调度和 late-fusion scaffold 下，perception-aware dynamic coalition formation 提升 aggregate perception”的叙事。Artifact：`docs/doc_workspace/SGCP/artifacts/table4_clustering_cv_20260724/`；外部 clean package：`C:\Workspace\2026-7-papers\infocom\SGCP\experiment\04_clustering_ablation.md`。
 
 ## FullPerception-PCS singleton late/no-late alignment rerun
 

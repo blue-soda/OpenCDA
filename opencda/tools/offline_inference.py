@@ -34,6 +34,9 @@ from opencda.core.clustering.algorithms.clustering.coalition_game import (
 from opencda.core.clustering.algorithms.clustering.cov_coalition_game import (
     COVCoalitionGame,
 )
+from opencda.core.clustering.algorithms.clustering.paper_baselines import (
+    build_paper_baseline_clusters,
+)
 from opencda.core.clustering.algorithms.clustering.naive_cluster import (
     NaiveCluster,
 )
@@ -89,7 +92,9 @@ def parse_args():
                                  'random_balanced',
                                  'distance_greedy',
                                  'density_greedy_cluster',
-                                 'mobility_stability_greedy'],
+                                 'mobility_stability_greedy',
+                                 'seac_social_adaptive',
+                                 'hho_vanet'],
                         help='Clustering algorithm for SGCP constrained inference.')
     parser.add_argument('--sgcp-receiver-policy',
                         choices=['ego', 'ego-cluster-head',
@@ -1674,6 +1679,32 @@ def build_heuristic_clusters(world, clustering, n_max=None, timestamp=None):
     return clusters
 
 
+def is_offline_constructed_clustering(clustering):
+    return clustering in [
+        'random_balanced',
+        'distance_greedy',
+        'density_greedy_cluster',
+        'mobility_stability_greedy',
+        'seac_social_adaptive',
+        'hho_vanet',
+    ]
+
+
+def build_offline_constructed_clusters(world, clustering, n_max=None,
+                                       timestamp=None):
+    if clustering in ['seac_social_adaptive', 'hho_vanet']:
+        return build_paper_baseline_clusters(
+            world,
+            clustering,
+            n_max=n_max,
+            timestamp=timestamp)
+    return build_heuristic_clusters(
+        world,
+        clustering,
+        n_max=n_max,
+        timestamp=timestamp)
+
+
 def scheduled_receiver_ids(world, fallback_clusters=None):
     receiver_ids = set()
     for vm in world.get_vehicle_managers().values():
@@ -1729,9 +1760,7 @@ def apply_sgcp_constraint(frame, protocol, ego_cav_id, resource_allocation,
         clustering_algorithm = NaiveCluster(world, all_in_one=False)
     elif clustering == 'all_in_one':
         clustering_algorithm = NaiveCluster(world, all_in_one=True)
-    elif clustering in ['random_balanced', 'distance_greedy',
-                        'density_greedy_cluster',
-                        'mobility_stability_greedy']:
+    elif is_offline_constructed_clustering(clustering):
         clustering_algorithm = None
     else:
         raise ValueError('Unknown clustering algorithm: %s' % clustering)
@@ -1743,10 +1772,8 @@ def apply_sgcp_constraint(frame, protocol, ego_cav_id, resource_allocation,
         clustering_algorithm.p.N_max = n_max
     if clustering == 'fixed_first_frame' and fixed_cluster_templates:
         clusters = build_fixed_clusters(world, fixed_cluster_templates)
-    elif clustering in ['random_balanced', 'distance_greedy',
-                        'density_greedy_cluster',
-                        'mobility_stability_greedy']:
-        clusters = build_heuristic_clusters(
+    elif is_offline_constructed_clustering(clustering):
+        clusters = build_offline_constructed_clusters(
             world,
             clustering,
             n_max=n_max,
@@ -2575,9 +2602,7 @@ def apply_selective_sharing_baseline(frame, protocol, ego_cav_id,
         clustering_algorithm = NaiveCluster(world, all_in_one=False)
     elif clustering == 'all_in_one':
         clustering_algorithm = NaiveCluster(world, all_in_one=True)
-    elif clustering in ['random_balanced', 'distance_greedy',
-                        'density_greedy_cluster',
-                        'mobility_stability_greedy']:
+    elif is_offline_constructed_clustering(clustering):
         clustering_algorithm = None
     else:
         raise ValueError('Unknown clustering algorithm: %s' % clustering)
@@ -2587,10 +2612,8 @@ def apply_selective_sharing_baseline(frame, protocol, ego_cav_id,
     if (clustering_algorithm is not None and n_max is not None and
             hasattr(clustering_algorithm, 'p')):
         clustering_algorithm.p.N_max = n_max
-    if clustering in ['random_balanced', 'distance_greedy',
-                      'density_greedy_cluster',
-                      'mobility_stability_greedy']:
-        clusters = build_heuristic_clusters(
+    if is_offline_constructed_clustering(clustering):
+        clusters = build_offline_constructed_clusters(
             world,
             clustering,
             n_max=n_max,

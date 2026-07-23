@@ -8310,3 +8310,38 @@ AP 结果：`0.87/0.79/0.37`，raw LiDAR `61.47 Mbps`，box overhead `0.71 Mbps`
 - K=1 note rows were refreshed for PCS and EdgeCooper-HD under the same scaffold: PCS K=1 `0.58/0.43/0.21`, `11.37 Mbps`; EdgeCooper-HD K=1 `0.72/0.60/0.29`, `31.10 Mbps`.
 - Artifact: `docs/doc_workspace/SGCP/artifacts/table3_cov_scheduler_20260724/`. External document updated: `C:\Workspace\2026-7-papers\infocom\SGCP\experiment\03_scheduler_comparison.md`.
 
+### 2026-07-24 17:45:00 +08:00 - Final Table 4 clustering baselines
+
+Goal: redo Table 4 with exactly 3 heuristic clustering baselines plus 2 formal paper-inspired clustering baselines, under the clean SGCP-CV protocol.
+
+Code changes:
+
+- Added `opencda/core/clustering/algorithms/clustering/paper_baselines.py`.
+- Added `offline_inference --clustering seac_social_adaptive|hho_vanet`.
+- Added artifact scripts:
+  - `docs/doc_workspace/SGCP/artifacts/table4_clustering_cv_20260724/run_table4_clustering_cv.py`
+  - `docs/doc_workspace/SGCP/artifacts/table4_clustering_cv_20260724/build_table4_clustering_cv.py`
+
+Commands:
+
+```powershell
+conda run -n opencda python -m py_compile opencda\tools\offline_inference.py opencda\core\clustering\algorithms\clustering\paper_baselines.py
+conda run -n opencda python docs\doc_workspace\SGCP\artifacts\table4_clustering_cv_20260724\run_table4_clustering_cv.py --force
+conda run -n opencda python docs\doc_workspace\SGCP\artifacts\table4_clustering_cv_20260724\build_table4_clustering_cv.py
+```
+
+Protocol: attentive detector, v2xp_cluster_carla 41 frames, 20 CAVs, 40 MHz / 10 target subchannels, NS3-calibrated estimator (`tb_size=899`, `symbols=12`, `mcs=28`), `cov_potential_game` C->V scheduler, all cluster heads as receivers, grid upload, inter-cluster box NMS. Only clustering changes.
+
+Result:
+
+| Method | AP@0.3 | AP@0.5 | AP@0.7 | Total Mbps | GFLOPs/frame |
+|---|---:|---:|---:|---:|---:|
+| SGCP-CV | 0.87 | 0.80 | 0.36 | 60.90 | 536.92 |
+| Random balanced | 0.79 | 0.64 | 0.30 | 55.81 | 447.47 |
+| Distance-greedy | 0.80 | 0.69 | 0.35 | 56.90 | 447.48 |
+| Density/quality-greedy | 0.73 | 0.62 | 0.29 | 47.00 | 447.40 |
+| SeAC-inspired | 0.82 | 0.72 | 0.36 | 56.93 | 447.48 |
+| HHOCNET-inspired | 0.79 | 0.68 | 0.32 | 55.28 | 447.47 |
+
+External clean package updated: `C:\Workspace\2026-7-papers\infocom\SGCP\experiment\04_clustering_ablation.md`.
+
