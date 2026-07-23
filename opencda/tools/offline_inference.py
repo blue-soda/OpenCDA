@@ -162,6 +162,11 @@ def parse_args():
                         help='Communication budget per perception frame in '
                              'milliseconds. Defaults to the scenario network '
                              'time_slot, typically 100 ms.')
+    parser.add_argument('--sgcp-frame-mbps-budget', type=float, default=None,
+                        help='Optional raw-LiDAR payload budget in Mbps per '
+                             '100 ms perception frame for SGCP grid uploads. '
+                             'This caps selected grid payload after scheduling '
+                             'without changing the scheduler objective.')
     parser.add_argument('--ns3-tb-size-bytes', type=int, default=899,
                         help='NS3-calibrated transport block bytes per '
                              'subchannel grant. Defaults to 899 for the SGCP '
@@ -584,6 +589,99 @@ def trim_grid_selection_to_deadline(world, grid_selection, resource_sc_nums,
                 trimmed.setdefault(int(receiver_id), {})[int(sender_id)] = set(
                     selected)
     return trimmed
+
+
+def trim_grid_selection_to_payload_budget(world, grid_selection,
+                                          max_payload_bytes,
+                                          strategies=None):
+    """Deterministically admit scheduled grids under a frame payload budget."""
+    selection = clone_grid_selection(grid_selection)
+    original_bytes, _ = estimate_grid_selection_payload_bytes(world, selection)
+    if max_payload_bytes is None:
+        return selection, original_bytes, original_bytes
+    max_payload_bytes = int(max_payload_bytes)
+    if max_payload_bytes <= 0:
+        return {}, original_bytes, 0
+
+    scheduled_order = []
+    seen = set()
+    if strategies:
+        for receiver_id in sorted(strategies):
+            for sender_id, _, _, grid_ids in strategies.get(receiver_id, []):
+                receiver_id = int(receiver_id)
+                sender_id = int(sender_id)
+                available = selection.get(receiver_id, {}).get(sender_id, set())
+                for grid_id in grid_ids:
+                    key = (receiver_id, sender_id, grid_id)
+                    if grid_id in available and key not in seen:
+                        scheduled_order.append(key)
+                        seen.add(key)
+
+    leftovers = []
+    for receiver_id, sender_grids in selection.items():
+        for sender_id, grid_ids in sender_grids.items():
+            sender_vm = world.get_vehicle_manager(sender_id)
+            lidar = None if sender_vm is None else sender_vm.perception_manager.lidar
+            for grid_id in grid_ids:
+                key = (int(receiver_id), int(sender_id), grid_id)
+                if key in seen:
+                    continue
+                density = 0.0 if lidar is None else lidar.get_grid_density(grid_id)
+                leftovers.append((density, str(grid_id), key))
+    leftovers.sort(reverse=True)
+
+    trimmed = {}
+    used_bytes = 0
+    for receiver_id, sender_id, grid_id in (
+            scheduled_order + [item[2] for item in leftovers]):
+        sender_vm = world.get_vehicle_manager(sender_id)
+        if sender_vm is None:
+            continue
+        points = sender_vm.perception_manager.lidar.\
+            get_local_points_by_grid_ids([grid_id])
+        grid_bytes = 0 if points is None else int(points.nbytes)
+        if grid_bytes <= 0:
+            continue
+        if used_bytes + grid_bytes > max_payload_bytes:
+            continue
+        trimmed.setdefault(receiver_id, {}).setdefault(sender_id, set()).add(
+            grid_id)
+        used_bytes += grid_bytes
+    return trimmed, original_bytes, used_bytes
+
+
+def apply_grid_selection_to_world(world, grid_selection,
+                                  channel_allocation=None):
+    """Replace offline receiver grid selections and matching channel records."""
+    channel_allocation = dict(channel_allocation or {})
+    for vm in world.get_vehicle_managers().values():
+        vm.perception_manager.co_manager.clear_grid_selection()
+        scheduler = getattr(vm.v2x_manager, 'scheduler', None)
+        if scheduler is not None and hasattr(scheduler, 'clear_strategies'):
+            scheduler.clear_strategies()
+
+    for receiver_id, sender_grids in clone_grid_selection(
+            grid_selection).items():
+        receiver_vm = world.get_vehicle_manager(receiver_id)
+        if receiver_vm is None:
+            continue
+        clean_selection = {
+            int(sender_id): set(grid_ids)
+            for sender_id, grid_ids in sender_grids.items()
+            if grid_ids
+        }
+        if not clean_selection:
+            continue
+        receiver_vm.perception_manager.co_manager.set_grid_selection(
+            clean_selection)
+        scheduler = getattr(receiver_vm.v2x_manager, 'scheduler', None)
+        if scheduler is None:
+            continue
+        schedule = {}
+        for offset, sender_id in enumerate(sorted(clean_selection)):
+            link = (int(sender_id), int(receiver_id))
+            schedule[link] = channel_allocation.get(link, offset)
+        scheduler.set_strategies(schedule)
 
 
 def estimate_eval_frame_comm_time_ms(eval_frame, metadata, bandwidth_mhz,
@@ -1595,7 +1693,8 @@ def apply_sgcp_constraint(frame, protocol, ego_cav_id, resource_allocation,
                           routing_hints=None,
                           routing_hints_max_per_frame=1,
                           channel_model=None,
-                          max_senders_per_receiver=1):
+                          max_senders_per_receiver=1,
+                          sgcp_frame_mbps_budget=None):
     clear_sgcp_globals()
     world = OfflineCavWorld(
         frame,
@@ -1691,6 +1790,30 @@ def apply_sgcp_constraint(frame, protocol, ego_cav_id, resource_allocation,
         timestamp,
         routing_hints,
         max_per_frame=routing_hints_max_per_frame)
+    frame_budget_bytes = ''
+    frame_budget_original_bytes = ''
+    frame_budget_admitted_bytes = ''
+    if sgcp_frame_mbps_budget is not None:
+        if sgcp_frame_mbps_budget <= 0:
+            raise ValueError('--sgcp-frame-mbps-budget must be positive')
+        frame_budget_bytes = int(
+            float(sgcp_frame_mbps_budget) * 1e6 * 0.1 / 8.0)
+        current_selection = collect_receiver_grid_selection(world, clusters)
+        current_channel_allocation = {}
+        for vm in world.get_vehicle_managers().values():
+            scheduler = getattr(vm.v2x_manager, 'scheduler', None)
+            current_channel_allocation.update(
+                getattr(scheduler, 'channel_allocation', {}) or {})
+        trimmed_selection, frame_budget_original_bytes, \
+            frame_budget_admitted_bytes = trim_grid_selection_to_payload_budget(
+                world,
+                current_selection,
+                frame_budget_bytes,
+                strategies=getattr(allocator, 'strategies', None))
+        apply_grid_selection_to_world(
+            world,
+            trimmed_selection,
+            channel_allocation=current_channel_allocation)
     if receiver_policy == 'all-cluster-heads':
         receiver_ids = sorted(int(cluster.head_id) for cluster in clusters)
     elif receiver_policy == 'all-scheduled-receivers':
@@ -1748,6 +1871,14 @@ def apply_sgcp_constraint(frame, protocol, ego_cav_id, resource_allocation,
         metadata['max_senders_per_receiver'] = max(
             1,
             int(max_senders_per_receiver or 1))
+        metadata['sgcp_frame_mbps_budget'] = (
+            '' if sgcp_frame_mbps_budget is None
+            else sgcp_frame_mbps_budget)
+        metadata['sgcp_frame_budget_bytes'] = frame_budget_bytes
+        metadata['sgcp_frame_budget_original_bytes'] = (
+            frame_budget_original_bytes)
+        metadata['sgcp_frame_budget_admitted_bytes'] = (
+            frame_budget_admitted_bytes)
         metadata['pcs_rounds_requested'] = (
             pcs_round_metadata.get('pcs_rounds_requested', ''))
         metadata['pcs_rounds_accepted'] = (
@@ -2838,6 +2969,14 @@ def trace_row(scenario_id, timestamp, metadata, eval_frame,
         'bandwidth_mhz': metadata.get('bandwidth_mhz', ''),
         'communication_deadline_ms': metadata.get(
             'communication_deadline_ms', ''),
+        'sgcp_frame_mbps_budget': metadata.get(
+            'sgcp_frame_mbps_budget', ''),
+        'sgcp_frame_budget_bytes': metadata.get(
+            'sgcp_frame_budget_bytes', ''),
+        'sgcp_frame_budget_original_bytes': metadata.get(
+            'sgcp_frame_budget_original_bytes', ''),
+        'sgcp_frame_budget_admitted_bytes': metadata.get(
+            'sgcp_frame_budget_admitted_bytes', ''),
         'max_senders_per_receiver': metadata.get(
             'max_senders_per_receiver', ''),
         'channel_estimator': metadata.get('channel_estimator', ''),
@@ -2894,6 +3033,10 @@ def write_trace_csv(path, rows):
         'num_channels',
         'bandwidth_mhz',
         'communication_deadline_ms',
+        'sgcp_frame_mbps_budget',
+        'sgcp_frame_budget_bytes',
+        'sgcp_frame_budget_original_bytes',
+        'sgcp_frame_budget_admitted_bytes',
         'max_senders_per_receiver',
         'channel_estimator',
         'ns3_tb_size_bytes',
@@ -3341,7 +3484,8 @@ def main():
                     args.sgcp_routing_hints_max_per_frame),
                 channel_model=frame_channel_model,
                 max_senders_per_receiver=(
-                    args.max_senders_per_receiver))
+                    args.max_senders_per_receiver),
+                sgcp_frame_mbps_budget=args.sgcp_frame_mbps_budget)
         for _, metadata in frame_items:
             if metadata is not None:
                 metadata['coperception_yaml'] = args.coperception_yaml

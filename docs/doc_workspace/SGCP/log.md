@@ -8277,3 +8277,12 @@ AP 结果：`0.87/0.79/0.37`，raw LiDAR `61.47 Mbps`，box overhead `0.71 Mbps`
 - Updated external Markdown-only clean package at `C:\Workspace\2026-7-papers\infocom\SGCP\experiment`: proposed-method rows now use `SGCP-CV`, `cov_coalition_game`, and `cov_potential_game`; `06_parameter_sensitivity.md` is fully replaced by the new C/V sweep.
 - Marked Table 3 scheduler scaffold and older Table 4 heuristic rows as retained scaffold baselines that still need rerun under `cov_coalition_game` if they become final paper-facing one-variable comparisons.
 
+### 2026-07-24 01:05:00 +08:00 - Low-rho and raw-Mbps budget sensitivity
+
+- Added `--sgcp-frame-mbps-budget` to `opencda.tools.offline_inference`. It caps final scheduled raw-LiDAR grid payload per 100 ms frame after scheduling, while box-level late-fusion payload remains counted separately.
+- Reran the formal SGCP-CV parameter sensitivity artifact with additional `rho_th=0.001/0.003/0.005` and raw-LiDAR Mbps budgets `1/5/10/20/40/60/100/200`.
+- Low `rho_th` result: `0.001/0.003/0.005/0.01` all give AP `0.74/0.61/0.24`, total `32.74 Mbps`, confirming the very-low-density regime is a real under-communication plateau.
+- Raw-Mbps budget curve: `1/5/10/20/40/60/100/200 Mbps` gives AP `0.50/0.36/0.16`, `0.52/0.38/0.17`, `0.60/0.46/0.21`, `0.70/0.58/0.28`, `0.81/0.73/0.34`, `0.87/0.80/0.35`, `0.87/0.80/0.36`, `0.87/0.80/0.36`.
+- Interpretation: SGCP-CV reaches the main operating region around `60 Mbps`; `100/200 Mbps` are saturated. The previous main parameter choices remain well supported: `rho_th=2--3`, `N_max=4`, target subchannels `10`, and no raw cap for the headline run.
+- Updated external clean package `C:\Workspace\2026-7-papers\infocom\SGCP\experiment\06_parameter_sensitivity.md`; the directory remains Markdown-only.
+

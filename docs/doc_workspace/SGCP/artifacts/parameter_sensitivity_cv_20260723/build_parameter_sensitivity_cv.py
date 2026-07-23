@@ -48,6 +48,9 @@ BASE_ARGS = [
 ]
 
 RUNS = [
+    {"group": "rho_th", "setting": "0.001", "stem": "rho0p001", "extra": ["--rho-th", "0.001"]},
+    {"group": "rho_th", "setting": "0.003", "stem": "rho0p003", "extra": ["--rho-th", "0.003"]},
+    {"group": "rho_th", "setting": "0.005", "stem": "rho0p005", "extra": ["--rho-th", "0.005"]},
     {"group": "rho_th", "setting": "0.01", "stem": "rho0p01", "extra": ["--rho-th", "0.01"]},
     {"group": "rho_th", "setting": "0.03", "stem": "rho0p03", "extra": ["--rho-th", "0.03"]},
     {"group": "rho_th", "setting": "0.05", "stem": "rho0p05", "extra": ["--rho-th", "0.05"]},
@@ -70,6 +73,14 @@ RUNS = [
     {"group": "communication_budget_ms", "setting": "100", "stem": "budget100", "extra": ["--communication-deadline-ms", "100"]},
     {"group": "communication_budget_ms", "setting": "200", "stem": "base", "extra": [], "reuse": True},
     {"group": "communication_budget_ms", "setting": "300", "stem": "budget300", "extra": ["--communication-deadline-ms", "300"]},
+    {"group": "raw_mbps_budget", "setting": "1", "stem": "mbps1", "extra": ["--sgcp-frame-mbps-budget", "1"]},
+    {"group": "raw_mbps_budget", "setting": "5", "stem": "mbps5", "extra": ["--sgcp-frame-mbps-budget", "5"]},
+    {"group": "raw_mbps_budget", "setting": "10", "stem": "mbps10", "extra": ["--sgcp-frame-mbps-budget", "10"]},
+    {"group": "raw_mbps_budget", "setting": "20", "stem": "mbps20", "extra": ["--sgcp-frame-mbps-budget", "20"]},
+    {"group": "raw_mbps_budget", "setting": "40", "stem": "mbps40", "extra": ["--sgcp-frame-mbps-budget", "40"]},
+    {"group": "raw_mbps_budget", "setting": "60", "stem": "mbps60", "extra": ["--sgcp-frame-mbps-budget", "60"]},
+    {"group": "raw_mbps_budget", "setting": "100", "stem": "mbps100", "extra": ["--sgcp-frame-mbps-budget", "100"]},
+    {"group": "raw_mbps_budget", "setting": "200", "stem": "mbps200", "extra": ["--sgcp-frame-mbps-budget", "200"]},
 ]
 
 AP_PATTERN = re.compile(
@@ -207,6 +218,8 @@ def parse_trace(path):
         "bandwidth_mhz": most_common([row.get("bandwidth_mhz", "") for row in rows]),
         "communication_deadline_ms": most_common(
             [row.get("communication_deadline_ms", "") for row in rows]),
+        "sgcp_frame_mbps_budget": most_common(
+            [row.get("sgcp_frame_mbps_budget", "") for row in rows]),
         "box_bytes": box_bytes,
         "box_mbps": box_bytes * 8.0 / duration_s / 1e6,
     }
@@ -242,6 +255,7 @@ def build_rows():
             "num_channels": trace["num_channels"],
             "bandwidth_mhz": trace["bandwidth_mhz"],
             "communication_budget_ms": trace["communication_deadline_ms"],
+            "raw_mbps_budget": trace["sgcp_frame_mbps_budget"],
             "checkpoint": "attentive",
             "artifact_stem": run["stem"],
             "trace_path": str((ARTIFACT / ("%s_trace.csv" % run["stem"])).relative_to(REPO)),
@@ -322,12 +336,13 @@ def write_markdown(rows):
         ("rho_th", "rho_th"),
         ("N_max", "N_max"),
         ("target_subchannels", "Target Subchannels"),
-        ("communication_budget_ms", "Communication Budget"),
+        ("communication_budget_ms", "Communication Deadline"),
+        ("raw_mbps_budget", "Raw LiDAR Mbps Budget"),
     ]
     lines = [
         "# SGCP Parameter Sensitivity",
         "",
-        "Protocol: attentive detector, v2xp_cluster_carla, 41 frames, 20 CAVs, 40 MHz total bandwidth, NS3-calibrated estimator, formal SGCP C/V algorithm, cov_coalition_game V-only clustering, cov_potential_game scheduler with C coverage stage followed by V target stage, all cluster heads as receivers, grid upload, inter-cluster box NMS. Unless varied, N_max=4, rho_th=3, head_rb_budget=2, target subchannels=10, and scheduler communication budget=200 ms. The headline point is retained because exact NS3-calibrated trace estimates stay below the 60 ms communication portion of the 100 ms perception cycle.",
+        "Protocol: attentive detector, v2xp_cluster_carla, 41 frames, 20 CAVs, 40 MHz total bandwidth, NS3-calibrated estimator, formal SGCP C/V algorithm, cov_coalition_game V-only clustering, cov_potential_game scheduler with C coverage stage followed by V target stage, all cluster heads as receivers, grid upload, inter-cluster box NMS. Unless varied, N_max=4, rho_th=3, head_rb_budget=2, target subchannels=10, and scheduler communication deadline=200 ms. The headline point is retained because exact NS3-calibrated trace estimates stay below the 60 ms communication portion of the 100 ms perception cycle. Raw LiDAR Mbps Budget caps scheduled grid payload per 100 ms perception frame after scheduling; box-level NMS payload is still added separately in Total Mbps.",
         "",
         "Box-level communication for inter-cluster NMS is included in total Mbps.",
         "",

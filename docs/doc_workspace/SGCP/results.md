@@ -2095,3 +2095,25 @@ Key parameter findings:
 | Communication budget | 40/60/100/200/300 ms gives total Mbps `53.61/57.44/60.19/60.90/60.90`; AP saturates by 100--200 ms under this trace. |
 
 Remaining caution: Table 3 scheduler comparison and older heuristic rows in Table 4 still include retained scaffold baselines from the previous `coalition_game/PAPG` setup. They are marked as retained scaffold data in the external clean package and should be rerun under `cov_coalition_game` if used as final paper-facing one-variable comparisons.
+
+#### Low rho and raw-Mbps budget additions
+
+Artifact remains `docs/doc_workspace/SGCP/artifacts/parameter_sensitivity_cv_20260723/`. `offline_inference` now supports `--sgcp-frame-mbps-budget`, a post-scheduler deterministic raw-grid payload cap per 100 ms perception frame. This is distinct from `communication_deadline_ms`: the former controls admitted raw payload, while the latter controls channel-time feasibility.
+
+| Sweep | Result |
+| --- | --- |
+| `rho_th=0.001/0.003/0.005` | All three match the `0.01` low-density plateau: AP `0.74/0.61/0.24`, raw `32.17 Mbps`, box `0.57 Mbps`, total `32.74 Mbps`, avg selected grids `53.83`. |
+| Raw Mbps budget `1/5/10/20/40/60/100/200` | AP rises from `0.50/0.36/0.16` at `1 Mbps` to `0.87/0.80/0.35` at `60 Mbps`, then saturates at `0.87/0.80/0.36` for `100/200 Mbps`. |
+
+Detailed budget table:
+
+| Raw budget Mbps | AP@0.3 | AP@0.5 | AP@0.7 | Raw Mbps | Box Mbps | Total Mbps | Avg selected grids |
+| ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| 1 | 0.50 | 0.36 | 0.16 | 1.00 | 0.46 | 1.46 | 0.76 |
+| 5 | 0.52 | 0.38 | 0.17 | 5.00 | 0.47 | 5.47 | 2.32 |
+| 10 | 0.60 | 0.46 | 0.21 | 10.00 | 0.50 | 10.50 | 10.61 |
+| 20 | 0.70 | 0.58 | 0.28 | 20.00 | 0.57 | 20.57 | 26.41 |
+| 40 | 0.81 | 0.73 | 0.34 | 40.00 | 0.67 | 40.67 | 51.32 |
+| 60 | 0.87 | 0.80 | 0.35 | 59.43 | 0.72 | 60.15 | 81.61 |
+| 100 | 0.87 | 0.80 | 0.36 | 60.18 | 0.72 | 60.90 | 85.73 |
+| 200 | 0.87 | 0.80 | 0.36 | 60.18 | 0.72 | 60.90 | 85.73 |
