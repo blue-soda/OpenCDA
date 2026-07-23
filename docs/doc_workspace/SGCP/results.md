@@ -2001,3 +2001,30 @@ Artifact: `docs/doc_workspace/SGCP/artifacts/cov_game_current_protocol_20260723/
 Trace: `6` cluster-head detector sources/frame、`10` scheduled links/frame、`582.27` selected grids/frame、frame communication time mean/max `44.55/45.03 ms`、mean input points/frame `78163.0`。该结果不低于当前主表 SGCP-PAPG。
 
 调参结论：第一版 COV coalition 若让车辆级 standalone coverage/object terms 权重过高，会形成 `9--16` 个簇头并削弱 AP@0.5/AP@0.7。最终版本让 coalition membership 由 stable multi-view complementarity 主导，coverage/object relevance 主要在 block-level scheduler 中实现。这更符合分层机制：分簇提供稳定局部多视角联盟，调度决定哪些目标相关 raw-LiDAR blocks 被传输。
+
+### Unified COV Formula Revision + O/V Ablation - 2026-07-23
+
+Artifact: `docs/doc_workspace/SGCP/artifacts/cov_unified_v3_current_protocol_20260723/`
+
+按用户要求，已将 COV 分簇和 COV 调度统一为同一个 grid-level 公式，并去掉 `0.35/0.55` 等不适合写入论文的经验系数。令 `q_i(g)` 为发送车辆在 grid `g` 上的归一化点云质量，`q_r(g)` 为接收侧质量；调度侧 `r` 是簇头，分簇侧 `r` 是候选联盟的最大 grid 质量：
+
+```text
+C = q_i(g) * (1 - q_r(g))
+O = q_i(g)
+V = q_i(g) if q_r(g) > 0 else 0
+U = C + O + V - L
+```
+
+分簇侧默认只激活 `V`，因为 coalition formation 的目标是形成稳定、多视角互补的早期融合局部联盟；调度侧默认使用完整 `C+O+V-L`。正确 current-protocol 参数必须包含 attentive yaml 与 NS3 校准项 `tb_size=899 B, symbols=12, MCS=28`，否则会误用默认 `tb_size=400 B` 导致 grid budget 和 AP 降低。
+
+41 帧结果：
+
+| Variant | Cluster terms | Scheduler terms | AP@0.3 | AP@0.5 | AP@0.7 | Raw Mbps | Avg source CAVs | Avg selected grids |
+| --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| Main unified COV | V | C+O+V-L | 0.87 | 0.81 | 0.37 | 62.55 | 2.67 | 96.92 |
+| Cluster O only | O | C+O+V-L | 0.81 | 0.71 | 0.34 | 62.83 | 3.00 | 116.80 |
+| Cluster O+V | O+V | C+O+V-L | 0.87 | 0.81 | 0.37 | 62.55 | 2.67 | 96.92 |
+| Scheduler w/o V | V | C+O-L | 0.87 | 0.81 | 0.36 | 62.54 | 2.67 | 97.00 |
+| Scheduler w/o O | V | C+V-L | 0.87 | 0.81 | 0.36 | 62.54 | 2.67 | 96.93 |
+
+结论：分簇侧 `V` 是关键；`O` 单独用于分簇会破坏局部多视角结构并降低 AP。调度侧 O/V 消融在该场景上差异较小，完整 C/O/V/L 保留最高 AP@0.7。该版本比旧 PAPG 主点 `0.87/0.81/0.36` 不低，并将 AP@0.7 提升到 `0.37`。

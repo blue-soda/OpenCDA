@@ -8214,3 +8214,17 @@ AP 结果：`0.87/0.79/0.37`，raw LiDAR `61.47 Mbps`，box overhead `0.71 Mbps`
 - Tuning finding: vehicle-level standalone C/O terms caused cluster fragmentation (9--16 heads) and lower AP. Validated coalition utility is stable multi-view dominated; block-level scheduler carries explicit C/O/V/L scoring.
 - Artifact: docs/doc_workspace/SGCP/artifacts/cov_game_current_protocol_20260723/.
 
+### 2026-07-23 20:51:00 +08:00 - Unified COV formula and O/V ablation
+
+- Reworked only the new COV files, keeping original coalition/PAPG files untouched.
+- Unified clustering and scheduling formulas around grid-level terms: `C=q_i(1-q_r)`, `O=q_i`, `V=q_i` if the receiver/coalition also observes the grid, and `U=C+O+V-L`.
+- Important protocol correction: runs must explicitly pass the attentive yaml and NS3-calibrated estimator `tb_size=899`, `symbols=12`, `MCS=28`; otherwise offline inference falls back to `tb_size=400/symbols=9/MCS=20` and reproduces a lower grid budget/result.
+- Correct current-protocol unified COV 41-frame result: AP `0.87/0.81/0.37`, raw `62.55 Mbps`, avg source CAVs `2.67`, avg selected grids `96.92`.
+- O/V ablation completed:
+  - Cluster O-only: `0.81/0.71/0.34`, raw `62.83 Mbps`.
+  - Cluster O+V: `0.87/0.81/0.37`, raw `62.55 Mbps`.
+  - Scheduler w/o V: `0.87/0.81/0.36`, raw `62.54 Mbps`.
+  - Scheduler w/o O: `0.87/0.81/0.36`, raw `62.54 Mbps`.
+- Interpretation: coalition formation should be written as stable multi-view grouping; O-only grouping fragments/weakens the coalition structure. The full C/O/V/L scheduler remains the best high-IoU point.
+- Artifact: docs/doc_workspace/SGCP/artifacts/cov_unified_v3_current_protocol_20260723/.
+
