@@ -2117,3 +2117,13 @@ Detailed budget table:
 | 60 | 0.87 | 0.80 | 0.35 | 59.43 | 0.72 | 60.15 | 81.61 |
 | 100 | 0.87 | 0.80 | 0.36 | 60.18 | 0.72 | 60.90 | 85.73 |
 | 200 | 0.87 | 0.80 | 0.36 | 60.18 | 0.72 | 60.90 | 85.73 |
+
+#### Next-frame stability window check
+
+Artifact: `docs/doc_workspace/SGCP/artifacts/frame_interval_stability_20260724/`
+
+`offline_inference` now defaults coalition-game stability prediction to the inferred perception frame interval instead of the legacy `Params.T_min_stab=1.0s`. For the current v2xp dump, `fixed_delta_seconds=0.05` and timestamp stride `000060 -> 000062` imply `0.1s`. The 41-frame SGCP-CV main configuration (`cov_coalition_game`, `N_max=4`, `rho_th=3`) was compared against the old `1.0s` horizon:
+
+| Old stability horizon | New stability horizon | Compared frames | Mismatch frames | Conclusion |
+| ---: | ---: | ---: | ---: | --- |
+| 1.0 s | 0.1 s | 41 | 0 | Identical coalition membership/head assignments; no AP/Mbps rerun needed |

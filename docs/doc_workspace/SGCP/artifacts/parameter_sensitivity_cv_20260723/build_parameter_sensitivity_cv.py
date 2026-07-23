@@ -249,7 +249,7 @@ def build_rows():
             "upload_mode": trace["upload_mode"],
             "num_channels": trace["num_channels"],
             "bandwidth_mhz": trace["bandwidth_mhz"],
-            "communication_budget_ms": trace["communication_deadline_ms"],
+            "communication_deadline_ms": trace["communication_deadline_ms"],
             "raw_mbps_budget": trace["sgcp_frame_mbps_budget"],
             "checkpoint": "attentive",
             "artifact_stem": run["stem"],
@@ -336,7 +336,7 @@ def write_markdown(rows):
     lines = [
         "# SGCP Parameter Sensitivity",
         "",
-        "Protocol: attentive detector, v2xp_cluster_carla, 41 frames, 20 CAVs, 40 MHz total bandwidth, NS3-calibrated estimator, formal SGCP C/V algorithm, cov_coalition_game V-only clustering, cov_potential_game scheduler with C coverage stage followed by V target stage, all cluster heads as receivers, grid upload, inter-cluster box NMS. Unless varied, N_max=4, rho_th=3, head_rb_budget=2, target subchannels=10, and raw-LiDAR payload is not artificially capped. The headline point is retained because exact NS3-calibrated trace estimates stay below the 60 ms communication portion of the 100 ms perception cycle. Raw LiDAR Mbps Budget caps scheduled grid payload per 100 ms perception frame after scheduling; box-level NMS payload is still added separately in Total Mbps.",
+        "Protocol: attentive detector, v2xp_cluster_carla, 41 frames, 20 CAVs, 40 MHz total bandwidth, NS3-calibrated estimator, formal SGCP C/V algorithm, cov_coalition_game next-frame motion-stability regularized V-only clustering, cov_potential_game scheduler with C coverage stage followed by V target stage, all cluster heads as receivers, grid upload, inter-cluster box NMS. Unless varied, N_max=4, rho_th=3, head_rb_budget=2, target subchannels=10, and raw-LiDAR payload is not artificially capped. The headline point is retained because exact NS3-calibrated trace estimates stay below the 60 ms communication portion of the 100 ms perception cycle. Raw LiDAR Mbps Budget caps scheduled grid payload per 100 ms perception frame after scheduling; box-level NMS payload is still added separately in Total Mbps.",
         "",
         "Box-level communication for inter-cluster NMS is included in total Mbps.",
         "",

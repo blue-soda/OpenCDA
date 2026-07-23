@@ -8293,3 +8293,10 @@ AP 结果：`0.87/0.79/0.37`，raw LiDAR `61.47 Mbps`，box overhead `0.71 Mbps`
 - Removed tracked deadline-sweep trace/eval CSVs (`budget40/60/100/300`) from the current SGCP-CV artifact. The raw-Mbps budget sweep now fully replaces that table for paper-facing use.
 - Updated clean package README/plot/data-quality notes to describe four sensitivity panels: `rho_th`, `N_max`, target subchannels, and Raw LiDAR Mbps Budget.
 
+### 2026-07-24 10:55:00 +08:00 - Next-frame coalition stability window
+
+- Updated `opencda.tools.offline_inference` so the default coalition stability prediction window is inferred from the actual perception frame interval instead of legacy `Params.T_min_stab=1.0s`. Explicit `--t-min-stab` still overrides this value for diagnostics.
+- In the current v2xp dump, `data_protocol.yaml` has `world.fixed_delta_seconds=0.05` and timestamps advance by 2 ticks, so the inferred next-frame interval is `0.1s`.
+- Added `docs/doc_workspace/SGCP/artifacts/frame_interval_stability_20260724/compare_cov_clusters.py` and ran it on the 41-frame SGCP-CV main configuration (`cov_coalition_game`, `N_max=4`, `rho_th=3`).
+- Result: old `1.0s` horizon and new `0.1s` next-frame horizon produce identical coalition head/member assignments for all 41 frames (`mismatch_frames=0`). Therefore the current SGCP-CV AP/Mbps tables do not need rerun for this cleanup.
+

@@ -1,5 +1,7 @@
 # SGCP 当前状态
 
+2026-07-24：已将离线 `offline_inference` 的 coalition stability prediction window 默认值从旧 `Params.T_min_stab=1.0s` 改为从数据协议推导的实际感知帧间隔。当前 v2xp dump 中 `fixed_delta_seconds=0.05`、timestamp 步长为 2，因此 next-frame interval 为 `0.1s`。新增 artifact `docs/doc_workspace/SGCP/artifacts/frame_interval_stability_20260724/compare_cov_clusters.py`，对 41 帧主配置 `cov_coalition_game`、`N_max=4`、`rho_th=3` 比较旧 `1.0s` 与新 `0.1s`，结果 `mismatch_frames=0`，分簇完全等价。因此当前 SGCP-CV 主结果无需重跑；论文可写为 next-frame motion-stability regularized V-only coalition formation，而不再把 `T_min_stab` 作为独立超参数。
+
 2026-07-22：已更正 PAPG deadline 传播问题。旧 60 ms run 实际在 `max_grids_per_rb` 中仍使用默认 `Params.T_ddl=0.1`；修复后 60/100 ms 不再一致。更正结果：60 ms 为 `0.87/0.76/0.38`、`59.15 Mbps` total、估算通信时间 `40.82/42.08/42.38 ms`；100 ms 为 `0.87/0.79/0.37`、`62.18 Mbps` total、估算 `42.76/43.89/44.32 ms`。既有 NS3 frame `000060` replay 仍对应修复后的 100 ms trace：`80/80` delivered，delay `26.51/53.00/55.00 ms`。
 
 2026-07-22：完成 200 ms 预算 PAPG probe。41 帧 AP 为 `0.87/0.81/0.36`，raw `62.54 Mbps`，late-box `0.71 Mbps`，total `63.25 Mbps`，估算通信时间 `43.47/44.67/45.03 ms`。frame `000060` NS3 exact replay：`82/82` application callbacks，`81/82` RLC-complete（唯一例外为 `48 bytes` tail chunk，应用层已收到），`881/881` PSSCH OK，无 PHY failure，delay `27.18/54.00/55.00 ms`。

@@ -138,7 +138,10 @@ def parse_args():
                         help='Maximum diagnostic routing-hint replacements '
                              'per frame. Defaults to 1.')
     parser.add_argument('--t-min-stab', type=float, default=None,
-                        help='Override CoalitionGame Params.T_min_stab in seconds. Use 0 for no stability window.')
+                        help='Override CoalitionGame stability prediction '
+                             'window in seconds. Defaults to the inferred '
+                             'perception frame interval; use 0 for no '
+                             'stability window.')
     parser.add_argument('--n-max', type=int, default=None,
                         help='Override CoalitionGame Params.N_max.')
     parser.add_argument('--rho-th', type=float, default=None,
@@ -324,6 +327,23 @@ def load_protocol(dataset, scenario_id):
         return {}
     with open(protocol_path, 'r') as stream:
         return yaml.load(stream, Loader=yaml.Loader)
+
+
+def fixed_delta_from_protocol(protocol, fallback=0.05):
+    try:
+        return float(protocol['world']['fixed_delta_seconds'])
+    except (KeyError, TypeError, ValueError):
+        return fallback
+
+
+def frame_interval_seconds(timestamps, fixed_delta_seconds):
+    if len(timestamps) >= 2:
+        try:
+            return ((int(timestamps[1]) - int(timestamps[0])) *
+                    fixed_delta_seconds)
+        except ValueError:
+            pass
+    return fixed_delta_seconds
 
 
 def cav_sort_key(cav_id):
@@ -3375,6 +3395,10 @@ def main():
         else:
             scenario_id = args.scenario_id
         frames = [(scenario_id, args.timestamp)]
+        protocol_for_timing = load_protocol(dataset, scenario_id)
+        effective_t_min_stab = (
+            args.t_min_stab if args.t_min_stab is not None
+            else fixed_delta_from_protocol(protocol_for_timing))
     else:
         if args.scenario_id is None:
             scenario_id = next(iter(dataset.scenarios.keys()))
@@ -3387,6 +3411,13 @@ def main():
             selected = timestamps[args.start_index:
                                   args.start_index + args.max_frames]
         frames = [(scenario_id, timestamp) for timestamp in selected]
+        protocol_for_timing = load_protocol(dataset, scenario_id)
+        interval_source = timestamps[args.start_index:args.start_index + 2]
+        effective_t_min_stab = (
+            args.t_min_stab if args.t_min_stab is not None
+            else frame_interval_seconds(
+                interval_source,
+                fixed_delta_from_protocol(protocol_for_timing)))
 
     for index, (scenario_id, timestamp) in enumerate(frames, start=1):
         frame = dataset.load_frame(
@@ -3426,7 +3457,7 @@ def main():
                 else args.sgcp_receiver_policy,
                 args.selective_member_budget,
                 args.selective_grid_budget,
-                args.t_min_stab,
+                effective_t_min_stab,
                 args.clustering,
                 args.n_max,
                 args.rho_th,
@@ -3453,7 +3484,7 @@ def main():
                 args.resource_allocation,
                 late_receiver_policy if args.sgcp_inter_cluster_late_fusion
                 else args.sgcp_receiver_policy,
-                args.t_min_stab,
+                effective_t_min_stab,
                 args.clustering,
                 args.n_max,
                 args.rho_th,
