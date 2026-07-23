@@ -8238,3 +8238,16 @@ AP 结果：`0.87/0.79/0.37`，raw LiDAR `61.47 Mbps`，box overhead `0.71 Mbps`
 - Added `coperception_yaml` to SGCP trace CSV rows.
 - Validation: `py_compile` passed, and a 1-frame constrained COV smoke test without explicit yaml/NS3 calibration args wrote trace metadata `coperception_yaml=...enable_coperception_early_from_attentive.yaml`, `channel_estimator=ns3`, `ns3_tb_size_bytes=899`, `ns3_symbols_per_slot=12`, `ns3_mcs=28`.
 
+### 2026-07-23 21:42:00 +08:00 - Clean C/V scheduler repair
+
+- User pointed out that the previous scheduler-side O/V ablation was invalid: target scoring still added selected O and V, and the implementation also contained connected-component/top-utility priors.
+- Kept the already pushed version as repository history (`5eb644d`) and then cleaned only the new COV scheduler path.
+- Updated `cov_potential_game.py`:
+  - candidate grids are exactly grids with `C+V>0`;
+  - coverage stage selects top grids by `C` and scores links by `sum C`;
+  - target stage selects top grids by `V` and scores links by `sum V`;
+  - no connected-component score, top-U prior, object term, or communication-cost term is used in this clean scheduler.
+- 3-frame smoke passed: `0.83/0.76/0.27`, raw trace valid.
+- 41-frame current-protocol result: AP `0.87/0.80/0.36`, raw `60.18 Mbps`, uploaded senders/sample `1.67`, source CAVs/sample `2.67`, selected grids/sample `85.73`.
+- Artifact: `docs/doc_workspace/SGCP/artifacts/cov_clean_cv_scheduler_20260723/`.
+

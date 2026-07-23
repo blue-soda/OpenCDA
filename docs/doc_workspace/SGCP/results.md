@@ -2028,3 +2028,25 @@ U = C + O + V - L
 | Scheduler w/o O | V | C+V-L | 0.87 | 0.81 | 0.36 | 62.54 | 2.67 | 96.93 |
 
 结论：分簇侧 `V` 是关键；`O` 单独用于分簇会破坏局部多视角结构并降低 AP。调度侧 O/V 消融在该场景上差异较小，完整 C/O/V/L 保留最高 AP@0.7。该版本比旧 PAPG 主点 `0.87/0.81/0.36` 不低，并将 AP@0.7 提升到 `0.37`。
+
+### Clean C/V Scheduler Revision - 2026-07-23
+
+Artifact: `docs/doc_workspace/SGCP/artifacts/cov_clean_cv_scheduler_20260723/`
+
+用户指出上一版 COV scheduler 中仍隐藏了 `top U_g` 与 connected-component utility prior，导致 scheduler-side O/V 消融不干净。该意见成立：旧调度侧 O/V 消融只能作为 invalid diagnostic，不能作为论文证据。
+
+已清洗 `cov_potential_game.py`：
+
+- 分簇仍维持 V-only，不改变 validated coalition grouping 叙事。
+- 候选 grid 定义为 `C+V>0`。
+- Coverage stage 只按 `C` 排序和打分。
+- Target/quality stage 只按 `V` 排序和打分。
+- 不再使用 connected-component 选择/加分，也不再使用 `sum(top U_g)` prior。
+
+41 帧 current-protocol 结果：
+
+| Method | AP@0.3 | AP@0.5 | AP@0.7 | Raw Mbps | Uploaded senders/sample | Source CAVs/sample | Selected grids/sample |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| Clean C/V scheduler | 0.87 | 0.80 | 0.36 | 60.18 | 1.67 | 2.67 | 85.73 |
+
+相比上一版 mixed COV `0.87/0.81/0.37` 略低，但机制现在是可解释的两阶段调度：第一阶段补范围，第二阶段做多视角质量增强。

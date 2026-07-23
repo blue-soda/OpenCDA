@@ -328,5 +328,6 @@
 - [x] 完成 current-protocol 41 帧实验：attentive、40 MHz、10 target subchannels、NS3 estimator、`communication_deadline_ms=200`、`N_max=4`、`rho_th=3`、`head_rb_budget=2`、all cluster heads、inter-cluster NMS。结果 `0.87/0.81/0.36`，raw `62.55 Mbps`，box `0.74 Mbps`，total `63.29 Mbps`，`536.94 GFLOPs/frame`，不低于 PAPG 主点。
 - [x] 按用户要求统一分簇侧和调度侧 COV 公式：grid-level `C=q_i(1-q_r)`、`O=q_i`、`V=q_i * 1[q_r>0]`，vehicle-to-coalition utility 由同一 grid 公式求和得到；去除 `0.35/0.55` 等难以写入论文的经验系数。
 - [x] 完成 O/V 内部消融：cluster O-only `0.81/0.71/0.34` 明显退化；cluster V-only 与 O+V 均为 `0.87/0.81/0.37`；scheduler w/o O 或 w/o V 均为 `0.87/0.81/0.36`。结论：分簇侧 V 是关键，完整调度 C/O/V/L 给出最高 AP@0.7。
+- [x] 根据用户质疑修正上一条：旧 scheduler-side O/V 消融不干净，因为 target score 仍直接加入 O/V 且含 connected-component/top-U prior，不能作为论文证据。已重写 `cov_potential_game.py` 为 clean C/V two-stage scheduler：candidate grids 为 `C+V>0`，coverage stage only `C`，target stage only `V`，不使用 connected-component/top-U prior。41 帧结果 `0.87/0.80/0.36`、raw `60.18 Mbps`。
 - [ ] 论文方法节后续需要用 COV 分层叙事替换 PAPG 工程叙事：coalition stage = stable local multi-view groups；scheduler stage = block-level C/O/V/L marginal utility；late aggregation = global coverage recovery with reduced detector GFLOPs。
 - [ ] 若将 COV 作为最终算法名进入论文主文，需要将 clean experiment package 的主表方法名从 SGCP-PAPG 更新为 SGCP-COV，并保留 PAPG/PotentialGame 对照为机制诊断或消融。
