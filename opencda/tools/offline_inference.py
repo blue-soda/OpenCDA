@@ -46,6 +46,15 @@ from opencda.core.ml_libs.opencood_manager import OpenCOODManager
 
 
 EDGECOOPER_GLOBAL_COMM_RANGE_M = 35.0
+DEFAULT_COPERCEPTION_YAML = (
+    'docs/doc_workspace/SGCP/artifacts/'
+    'early_from_late_checkpoint_20260719/'
+    'enable_coperception_early_from_attentive.yaml')
+
+
+def repo_root():
+    return os.path.abspath(
+        os.path.join(os.path.dirname(os.path.realpath(__file__)), '../..'))
 
 
 def parse_args():
@@ -61,8 +70,10 @@ def parse_args():
                         help='Ego CAV folder id. Defaults to the first CAV.')
     parser.add_argument('--fusion-method', default=None,
                         help='Override coperception fusion method.')
-    parser.add_argument('--coperception-yaml', default=None,
-                        help='Path to enable_coperception.yaml.')
+    parser.add_argument('--coperception-yaml',
+                        default=DEFAULT_COPERCEPTION_YAML,
+                        help='Path to enable_coperception.yaml. Defaults to '
+                             'the SGCP attentive current-protocol config.')
     parser.add_argument('--max-frames', type=int, default=1,
                         help='Number of frames to test. Use 0 for all frames.')
     parser.add_argument('--start-index', type=int, default=0,
@@ -140,30 +151,32 @@ def parse_args():
                         help='Override SGCP resource allocation channel count.')
     parser.add_argument('--bandwidth-mhz', type=float, default=None,
                         help='Override SGCP total bandwidth in MHz.')
-    parser.add_argument('--channel-estimator', default='logical',
+    parser.add_argument('--channel-estimator', default='ns3',
                         choices=['logical', 'ns3'],
                         help='Shared channel estimator for all schedulers. '
-                             'logical preserves bandwidth/num_channels; ns3 '
-                             'uses calibrated TB-size-per-slot service rate.')
+                             'Defaults to ns3, the SGCP current-protocol '
+                             'calibrated TB-size-per-slot service rate; '
+                             'logical preserves bandwidth/num_channels.')
     parser.add_argument('--communication-deadline-ms', type=float,
                         default=None,
                         help='Communication budget per perception frame in '
                              'milliseconds. Defaults to the scenario network '
                              'time_slot, typically 100 ms.')
-    parser.add_argument('--ns3-tb-size-bytes', type=int, default=400,
+    parser.add_argument('--ns3-tb-size-bytes', type=int, default=899,
                         help='NS3-calibrated transport block bytes per '
-                             'subchannel grant. Defaults to 400 from current '
-                             'single-round timing logs.')
+                             'subchannel grant. Defaults to 899 for the SGCP '
+                             '40 MHz / 10 target-subchannel protocol.')
     parser.add_argument('--ns3-slot-duration-ms', type=float, default=0.5,
                         help='NR slot duration used by the NS3 estimator. '
                              'Defaults to 0.5 ms for numerology 1.')
     parser.add_argument('--ns3-subchannel-prbs', type=int, default=10,
                         help='NS3 sidelink PRBs per logical subchannel.')
-    parser.add_argument('--ns3-symbols-per-slot', type=int, default=9,
+    parser.add_argument('--ns3-symbols-per-slot', type=int, default=12,
                         help='PSSCH symbols per slot used by NS3 manual '
                              'scheduler TB sizing.')
-    parser.add_argument('--ns3-mcs', type=int, default=20,
-                        help='NS3 sidelink MCS used by manual scheduler.')
+    parser.add_argument('--ns3-mcs', type=int, default=28,
+                        help='NS3 sidelink MCS used by manual scheduler. '
+                             'Defaults to SGCP current-protocol MCS 28.')
     parser.add_argument('--head-rb-budget', type=int, default=None,
                         help='Override PotentialGame per-head RB budget B_h. '
                              'Defaults to 1 to preserve the original SGCP '
@@ -283,11 +296,13 @@ def parse_args():
 
 def load_coperception_params(yaml_path, fusion_method=None):
     if yaml_path is None:
-        repo_root = os.path.abspath(
-            os.path.join(os.path.dirname(os.path.realpath(__file__)), '../..'))
         yaml_path = os.path.join(
-            repo_root,
+            repo_root(),
             'opencda/scenario_testing/config_yaml/enable_coperception.yaml')
+    elif not os.path.isabs(yaml_path):
+        candidate = os.path.join(repo_root(), yaml_path)
+        if os.path.exists(candidate):
+            yaml_path = candidate
 
     params = OmegaConf.load(yaml_path)['enable_coperception']['coperception']
     params = OmegaConf.to_container(params, resolve=True)
@@ -2794,6 +2809,7 @@ def trace_row(scenario_id, timestamp, metadata, eval_frame,
         'timestamp': timestamp,
         'receiver_id': receiver_id,
         'receiver_policy': metadata.get('receiver_policy', ''),
+        'coperception_yaml': metadata.get('coperception_yaml', ''),
         'resource_allocation': metadata.get('resource_allocation', ''),
         'upload_mode': metadata.get('upload_mode', ''),
         'grid_selection_mode': metadata.get('grid_selection_mode', ''),
@@ -2856,6 +2872,7 @@ def write_trace_csv(path, rows):
         'timestamp',
         'receiver_id',
         'receiver_policy',
+        'coperception_yaml',
         'resource_allocation',
         'upload_mode',
         'grid_selection_mode',
@@ -3325,6 +3342,9 @@ def main():
                 channel_model=frame_channel_model,
                 max_senders_per_receiver=(
                     args.max_senders_per_receiver))
+        for _, metadata in frame_items:
+            if metadata is not None:
+                metadata['coperception_yaml'] = args.coperception_yaml
         if args.sgcp_inter_cluster_late_fusion:
             pred_tensors = []
             pred_scores = []
@@ -3431,6 +3451,7 @@ def main():
                       0 if fused_gt is None else fused_gt.shape[0]))
             aggregate_metadata = {
                 'receiver_id': args.ego_cav_id,
+                'coperception_yaml': args.coperception_yaml,
                 'resource_allocation': (
                     'selective_%s' % args.selective_sharing_baseline
                     if args.selective_sharing_baseline is not None

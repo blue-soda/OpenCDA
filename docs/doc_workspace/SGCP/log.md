@@ -8228,3 +8228,13 @@ AP 结果：`0.87/0.79/0.37`，raw LiDAR `61.47 Mbps`，box overhead `0.71 Mbps`
 - Interpretation: coalition formation should be written as stable multi-view grouping; O-only grouping fragments/weakens the coalition structure. The full C/O/V/L scheduler remains the best high-IoU point.
 - Artifact: docs/doc_workspace/SGCP/artifacts/cov_unified_v3_current_protocol_20260723/.
 
+### 2026-07-23 21:12:00 +08:00 - Main-protocol defaults
+
+- Updated `opencda/tools/offline_inference.py` defaults so SGCP reruns no longer need to explicitly pass the detector/network calibration knobs:
+  - `--coperception-yaml` defaults to `docs/doc_workspace/SGCP/artifacts/early_from_late_checkpoint_20260719/enable_coperception_early_from_attentive.yaml`.
+  - `--channel-estimator` defaults to `ns3`.
+  - `--ns3-tb-size-bytes`, `--ns3-symbols-per-slot`, and `--ns3-mcs` default to `899`, `12`, and `28`.
+- Added relative-path resolution for custom `--coperception-yaml` paths inside the repository.
+- Added `coperception_yaml` to SGCP trace CSV rows.
+- Validation: `py_compile` passed, and a 1-frame constrained COV smoke test without explicit yaml/NS3 calibration args wrote trace metadata `coperception_yaml=...enable_coperception_early_from_attentive.yaml`, `channel_estimator=ns3`, `ns3_tb_size_bytes=899`, `ns3_symbols_per_slot=12`, `ns3_mcs=28`.
+
