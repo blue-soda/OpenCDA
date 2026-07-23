@@ -8300,3 +8300,13 @@ AP 结果：`0.87/0.79/0.37`，raw LiDAR `61.47 Mbps`，box overhead `0.71 Mbps`
 - Added `docs/doc_workspace/SGCP/artifacts/frame_interval_stability_20260724/compare_cov_clusters.py` and ran it on the 41-frame SGCP-CV main configuration (`cov_coalition_game`, `N_max=4`, `rho_th=3`).
 - Result: old `1.0s` horizon and new `0.1s` next-frame horizon produce identical coalition head/member assignments for all 41 frames (`mismatch_frames=0`). Therefore the current SGCP-CV AP/Mbps tables do not need rerun for this cleanup.
 
+### 2026-07-24 02:10:00 +08:00 - Clean Table 3 scheduler rerun
+
+- Updated the clean INFOCOM experiment package at `C:\Workspace\2026-7-papers\infocom\SGCP\experiment`.
+- Kept AP@0.7 in all active tables, removed the `Samples` column from Table 1, and removed paper-facing `200 ms admission budget` reporting. Admission parameters are now described only as internal scheduler controls.
+- Reran Table 3 non-SGCP scheduler rows under the formal SGCP-compatible scaffold: attentive detector, `cov_coalition_game`, all cluster heads, grid upload, inter-cluster NMS, 40 MHz / 10 target subchannels, NS3 estimator `tb_size=899`, `symbols=12`, `mcs=28`, and K=2 where receiver-side concurrency applies.
+- Per user instruction, SGCP-CV in Table 3 uses the selected Raw LiDAR Mbps Budget sweep row: AP `0.87/0.80/0.36`, raw/box/total `60.18/0.72/60.90 Mbps`, `536.92 GFLOPs/frame`, avg selected grids `85.73`.
+- New Table 3 rows: Cluster-head late only `0.42/0.30/0.13`, `0.45 Mbps`; FullPerception-PCS `0.61/0.46/0.22`, `13.42 Mbps`; Random `0.85/0.75/0.36`, `62.47 Mbps`; Density/Link-aware density `0.86/0.78/0.38`, `76.69 Mbps`; PACP-LiDAR `0.88/0.78/0.37`, `87.06 Mbps`; EdgeCooper-HD `0.81/0.70/0.32`, `53.19 Mbps`.
+- K=1 note rows were refreshed for PCS and EdgeCooper-HD under the same scaffold: PCS K=1 `0.58/0.43/0.21`, `11.37 Mbps`; EdgeCooper-HD K=1 `0.72/0.60/0.29`, `31.10 Mbps`.
+- Artifact: `docs/doc_workspace/SGCP/artifacts/table3_cov_scheduler_20260724/`. External document updated: `C:\Workspace\2026-7-papers\infocom\SGCP\experiment\03_scheduler_comparison.md`.
+

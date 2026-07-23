@@ -2127,3 +2127,24 @@ Artifact: `docs/doc_workspace/SGCP/artifacts/frame_interval_stability_20260724/`
 | Old stability horizon | New stability horizon | Compared frames | Mismatch frames | Conclusion |
 | ---: | ---: | ---: | ---: | --- |
 | 1.0 s | 0.1 s | 41 | 0 | Identical coalition membership/head assignments; no AP/Mbps rerun needed |
+
+#### Table 3 formal C/V scheduler comparison rerun
+
+Artifact: `docs/doc_workspace/SGCP/artifacts/table3_cov_scheduler_20260724/`
+
+External clean package document: `C:\Workspace\2026-7-papers\infocom\SGCP\experiment\03_scheduler_comparison.md`
+
+Protocol: attentive detector, 41-frame `v2xp_cluster_carla` replay, 20 CAVs, 40 MHz / 10 target subchannels, NS3-calibrated estimator (`tb_size=899`, `symbols=12`, `mcs=28`), `cov_coalition_game` clustering, all cluster heads as receivers, grid raw-LiDAR upload, inter-cluster box NMS. SGCP-CV uses the selected Raw LiDAR Mbps Budget sweep row. Baseline scheduler rows report K=2 where receiver-side concurrency applies.
+
+| Method | Scheduler | AP@0.3 | AP@0.5 | AP@0.7 | Raw Mbps | Box Mbps | Total Mbps | GFLOPs/frame | Avg grids |
+| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| SGCP-CV | cov_potential_game | 0.87 | 0.80 | 0.36 | 60.18 | 0.72 | 60.90 | 536.92 | 85.73 |
+| Cluster-head late only | local_detection_head_only | 0.42 | 0.30 | 0.13 | 0.00 | 0.45 | 0.45 | 536.47 | 0.00 |
+| FullPerception-PCS | fullperception_pcs | 0.61 | 0.46 | 0.22 | 12.90 | 0.53 | 13.42 | 536.56 | 13.29 |
+| Random budget | selective_random | 0.85 | 0.75 | 0.36 | 61.75 | 0.72 | 62.47 | 536.93 | 103.20 |
+| Density greedy | selective_density | 0.86 | 0.78 | 0.38 | 75.94 | 0.74 | 76.69 | 537.04 | 103.20 |
+| Link-aware density | selective_communication_aware | 0.86 | 0.78 | 0.38 | 75.94 | 0.74 | 76.69 | 537.04 | 103.20 |
+| PACP-LiDAR | selective_pacp_lidar | 0.88 | 0.78 | 0.37 | 86.30 | 0.76 | 87.06 | 537.11 | 94.98 |
+| EdgeCooper-HD | selective_edgecooper_global_hd | 0.81 | 0.70 | 0.32 | 52.49 | 0.70 | 53.19 | 536.86 | 71.74 |
+
+K=1 note under the same scaffold: FullPerception-PCS `0.58/0.43/0.21`, total `11.37 Mbps`; EdgeCooper-HD `0.72/0.60/0.29`, total `31.10 Mbps`.
