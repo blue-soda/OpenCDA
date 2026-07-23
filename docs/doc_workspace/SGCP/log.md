@@ -8268,3 +8268,12 @@ AP 结果：`0.87/0.79/0.37`，raw LiDAR `61.47 Mbps`，box overhead `0.71 Mbps`
 - Conclusion: adding C to coalition formation creates more but smaller clusters and weakens early-fusion quality; keep coalition formation V-only and leave coverage repair to the scheduler C stage.
 - Artifact: `docs/doc_workspace/SGCP/artifacts/cov_cluster_cv_ablation_20260723/`.
 
+### 2026-07-24 00:20:00 +08:00 - SGCP-CV experiment package update and parameter sensitivity
+
+- Built new artifact `docs/doc_workspace/SGCP/artifacts/parameter_sensitivity_cv_20260723/` from a copied and updated parameter-sensitivity runner.
+- Reran 19 unique 41-frame configurations using the formal method: attentive detector, `cov_coalition_game` V-only clustering, `cov_potential_game` C->V scheduler, all cluster heads, grid upload, inter-cluster box NMS, 40 MHz / 10 target subchannels unless varied.
+- Headline row: AP `0.87/0.80/0.36`, raw `60.18 Mbps`, box `0.72 Mbps`, total `60.90 Mbps`, `536.92 GFLOPs/frame`, avg source CAVs `2.67`, avg selected grids `85.73`.
+- Parameter sweep highlights: `rho_th=0.01` drops to `0.74/0.61/0.24` at `32.74 Mbps`; `rho_th=2--3` saturates near the headline result. `N_max=4` keeps best AP@0.7. Target subchannels `5/10/20` produce `0.71/0.59/0.24`, `0.87/0.80/0.36`, `0.87/0.81/0.35`. Communication budgets `40/60/100/200/300 ms` produce total Mbps `53.61/57.44/60.19/60.90/60.90`.
+- Updated external Markdown-only clean package at `C:\Workspace\2026-7-papers\infocom\SGCP\experiment`: proposed-method rows now use `SGCP-CV`, `cov_coalition_game`, and `cov_potential_game`; `06_parameter_sensitivity.md` is fully replaced by the new C/V sweep.
+- Marked Table 3 scheduler scaffold and older Table 4 heuristic rows as retained scaffold baselines that still need rerun under `cov_coalition_game` if they become final paper-facing one-variable comparisons.
+

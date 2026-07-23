@@ -2076,3 +2076,22 @@ Artifact: `docs/doc_workspace/SGCP/artifacts/cov_cluster_cv_ablation_20260723/`
 | Coalition C+V ablation | C+V | C | V | 0.86 | 0.75 | 0.31 | 60.18 | 6.88 | 2.45 | 72.39 |
 
 结论：C+V 分簇没有改善覆盖收益，反而生成更多、更小的簇，削弱早期融合质量；这支持论文中“分簇负责多视角质量 V，调度第一阶段负责覆盖补偿 C”的职责划分。
+
+#### Formal SGCP-CV parameter sensitivity rerun
+
+Artifact: `docs/doc_workspace/SGCP/artifacts/parameter_sensitivity_cv_20260723/`
+
+Protocol: attentive detector, `cov_coalition_game` V-only clustering, `cov_potential_game` C->V scheduler, 41 frames, 40 MHz, 10 target subchannels, NS3-calibrated estimator, all cluster heads as receivers, grid upload, inter-cluster box NMS. The clean INFOCOM experiment package at `C:\Workspace\2026-7-papers\infocom\SGCP\experiment` has been updated to use this SGCP-CV result.
+
+Headline SGCP-CV row: AP `0.87/0.80/0.36`, raw `60.18 Mbps`, box `0.72 Mbps`, total `60.90 Mbps`, GFLOPs/frame `536.92`, avg source CAVs `2.67`, avg selected grids `85.73`.
+
+Key parameter findings:
+
+| Sweep | Best/anchor observation |
+| --- | --- |
+| `rho_th` | Very low density thresholds now have visible impact: `rho=0.01` gives `0.74/0.61/0.24`, total `32.74 Mbps`; saturation begins around `rho=2--3`, reaching `0.87/0.80/0.36`, total `60.37--60.90 Mbps`. |
+| `N_max` | `N_max=4` is the best balanced point for AP@0.7; `N_max=3` has AP `0.88/0.79/0.33`, while `N_max=5/6` drop to `0.85/0.77/0.33`. |
+| Target subchannels | 5 channels is clearly insufficient (`0.71/0.59/0.24`, total `30.76 Mbps`); 10 channels is the main operating point; 20 channels improves AP@0.5 to `0.81` but not AP@0.7. |
+| Communication budget | 40/60/100/200/300 ms gives total Mbps `53.61/57.44/60.19/60.90/60.90`; AP saturates by 100--200 ms under this trace. |
+
+Remaining caution: Table 3 scheduler comparison and older heuristic rows in Table 4 still include retained scaffold baselines from the previous `coalition_game/PAPG` setup. They are marked as retained scaffold data in the external clean package and should be rerun under `cov_coalition_game` if used as final paper-facing one-variable comparisons.
