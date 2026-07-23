@@ -1838,3 +1838,134 @@ Artifact: `docs/doc_workspace/SGCP/artifacts/pcs_single_100ms_20260722/`
 按用户追问补测“仍然 single-pass，但把 PCS budget 提升到 `100 ms`”。配置与 PCS-r35 paper-facing row 一致，只设置 `pcs_frame_rounds=1`、`pcs_frame_deadline_ms=100`、`communication_deadline_ms=100`。41 帧结果没有变化：AP `0.30/0.24/0.11`，raw payload `22,662,656 bytes`，即 `44.22 Mbps`；trace frame communication time mean/max 为 `41.47/42.71 ms`。
 
 frame `000060` upload plan 为 `53` chunks、`487,440 bytes`、`8` links；其 SHA256 与此前 PCS single-pass r35 exact replay plan 完全相同。因此 NS3 结果沿用同一 exact replay：`45/53` application callbacks、`47/53` RLC complete、PHY failures `0`、delay `22.67/44.00/50.00 ms`。结论是 PCS single-pass 当前不是被 60ms budget 截断，而是被 PCS 机制本身限制：common-node conflict、candidate link range 和每个 receiver 的 blind-spot link selection 使单轮只产生约 `44.22 Mbps`。
+
+### Table 1 K Sensitivity - Receiver Concurrent Inbound - 2026-07-22
+
+Artifact: `docs/doc_workspace/SGCP/artifacts/table1_k2_20260722/`
+
+按用户要求，当前 Table 1 默认结果保持不变，并给 PCS / EdgeCooper 增加参数 `K`：同一接收方在同一通信窗口内最多允许多少个发送方通过不同子信道并行传输。默认 `K=1` 保留原来的 common-receiver hard conflict / endpoint-disjoint matching；`K=2` 只放宽接收方并行入链路数，sender half-duplex、frame deadline admission、35 m candidate range、attentive checkpoint、singleton all-cavs receiver universe 和 no-late-fusion protocol-native 口径均不变。
+
+| Method | K | AP@0.3 | AP@0.5 | AP@0.7 | Mbps | GFLOPs/frame | Mean source CAVs/call |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| FullPerception-PCS protocol adaptation | 1 | 0.30 | 0.24 | 0.11 | 44.22 | 1788.56 | 1.454 |
+| FullPerception-PCS protocol adaptation | 2 | 0.31 | 0.25 | 0.11 | 49.97 | 1788.60 | 1.489 |
+| EdgeCooper V2V deadline-constrained adaptation | 1 | 0.32 | 0.26 | 0.10 | 51.33 | 1788.61 | 1.423 |
+| EdgeCooper V2V deadline-constrained adaptation | 2 | 0.34 | 0.27 | 0.11 | 60.34 | 1788.68 | 1.495 |
+
+结论：放宽到 `K=2` 会小幅增加 baseline 通信量和 AP，但不会改变主结论。PCS 从 `44.22` 增至 `49.97 Mbps`、AP 增至 `0.31/0.25/0.11`；EdgeCooper 从 `51.33` 增至 `60.34 Mbps`、AP 增至 `0.34/0.27/0.11`。两者仍显著低于 SGCP-PAPG 的 `0.87/0.81/0.36`，且仍需约 `20` detector forwards/frame（约 `1788.6 GFLOPs/frame`），而 SGCP-PAPG 为约 `6` forwards/frame（约 `536.94 GFLOPs/frame`）。
+
+数据文件：
+
+- `docs/doc_workspace/SGCP/artifacts/table1_k2_20260722/table1_k_sensitivity_protocol_native_20260722.csv`
+- `docs/doc_workspace/SGCP/artifacts/table1_k2_20260722/table1_k2_protocol_addendum_20260722.csv`
+- `docs/doc_workspace/SGCP/artifacts/table1_k2_20260722/compute_profile_table1_k2_protocol_addendum_20260722.csv`
+- 外部实验包镜像：`C:\Workspace\2026-7-papers\infocom\SGCP\experiment\data\table1_k_sensitivity_protocol_native_20260722.csv`
+
+### Current-Protocol K-Aware Addenda for Other Tables - 2026-07-23
+
+Artifacts:
+
+- `docs/doc_workspace/SGCP/artifacts/table6_k_aligned_20260723/`
+- `docs/doc_workspace/SGCP/artifacts/table3_k_aligned_20260723/`
+- 外部实验包：`C:\Workspace\2026-7-papers\infocom\SGCP\experiment`
+
+目标：在 Table 1 已固定为 attentive、`40 MHz / 10 target subchannels / 60 ms`、PCS `div4/radius4/min128/r35`、EdgeCooper `35 m / member budget 3 / grid budget 200`、`K=1/2` 之后，用相同口径修复/补充其他表和图，并补齐 GFLOPs 列。
+
+#### No-clustering + global box aggregation K sensitivity
+
+Source CSV: `C:\Workspace\2026-7-papers\infocom\SGCP\experiment\data\table6_global_box_k_sensitivity_current_protocol_20260723.csv`
+
+Figure: `C:\Workspace\2026-7-papers\infocom\SGCP\experiment\figures\figure8b_global_box_k_sensitivity_current_protocol_20260723.png/.pdf`
+
+| Method | K | AP@0.3 | AP@0.5 | AP@0.7 | Total Mbps | GFLOPs/frame |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| FullPerception-PCS + global box | 1 | 0.84 | 0.68 | 0.30 | 45.90 | 1731.86 |
+| FullPerception-PCS + global box | 2 | 0.84 | 0.69 | 0.30 | 51.91 | 1731.90 |
+| EdgeCooper V2V + global box | 1 | 0.85 | 0.71 | 0.33 | 52.98 | 1718.83 |
+| EdgeCooper V2V + global box | 2 | 0.84 | 0.71 | 0.32 | 62.08 | 1718.89 |
+
+Key correction: the older global-box PCS row used a less aligned PCS configuration. The new K=1 PCS row is aligned to Table 1 (`r35/div4/radius4/min128`) and therefore reports `45.90 Mbps` total including box sharing, not the older `54.54 Mbps` row. The K=2 rows are sensitivity addenda, not replacements for default K=1.
+
+#### Same-coalition scheduler K sensitivity
+
+Source CSV: `C:\Workspace\2026-7-papers\infocom\SGCP\experiment\data\table3_scheduler_k_sensitivity_current_protocol_20260723.csv`
+
+Figure: `C:\Workspace\2026-7-papers\infocom\SGCP\experiment\figures\figure4b_scheduler_k_sensitivity_current_protocol_20260723.png/.pdf`
+
+| Method | K | AP@0.3 | AP@0.5 | AP@0.7 | Total Mbps | GFLOPs/frame |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| FullPerception-PCS under SGCP scaffold | 1 | 0.57 | 0.42 | 0.21 | 11.16 | 536.55 |
+| FullPerception-PCS under SGCP scaffold | 2 | 0.59 | 0.44 | 0.21 | 12.29 | 536.56 |
+| EdgeCooper-HD under SGCP scaffold | 1 | 0.71 | 0.59 | 0.29 | 30.62 | 536.69 |
+| EdgeCooper-HD under SGCP scaffold | 2 | 0.81 | 0.70 | 0.32 | 52.06 | 536.85 |
+
+Interpretation: K=2 substantially strengthens EdgeCooper-HD under the SGCP-compatible scaffold, but it also increases communication to `52.06 Mbps`; SGCP-PAPG remains stronger on AP@0.3/AP@0.5 in the default same-scaffold table (`0.87/0.81/0.36`, `63.25 Mbps`, `536.94 GFLOPs/frame`). These addenda should be written as receiver-capability sensitivity, not as protocol-native baseline replacement.
+
+#### Table 4 GFLOPs repair
+
+`C:\Workspace\2026-7-papers\infocom\SGCP\experiment\data\table4_parameter_sensitivity_current_protocol_20260722.csv` now includes:
+
+- `detector_calls_per_frame`
+- `point_feature_gflops_per_frame`
+- `detector_gflops_per_frame`
+- `gflops_note`
+
+Notable compute reading: `N_max=2` has about `10.10` detector calls/frame and `903.28 GFLOPs/frame`, while most 6-head settings are about `6.00` detector calls/frame and `536.7 GFLOPs/frame`. This helps explain that the stronger `N_max=2` sensitivity row buys AP partly by increasing cluster-head detector compute.
+
+#### K-aware combined diagnostics and Figure5b
+
+为了避免把 mixed diagnostic 误写成原版 baseline 主表，本轮新增独立的 K-aware 综合视图，而不是覆盖原 Figure1/Figure2：
+
+- `C:\Workspace\2026-7-papers\infocom\SGCP\experiment\data\tableA_kaware_current_protocol_diagnostic_20260723.csv`
+- `C:\Workspace\2026-7-papers\infocom\SGCP\experiment\data\tableA_kaware_compact_current_protocol_diagnostic_20260723.csv`
+- `C:\Workspace\2026-7-papers\infocom\SGCP\experiment\figures\figure1b_kaware_current_protocol_ap05_gflops_20260723.png/.pdf`
+- `C:\Workspace\2026-7-papers\infocom\SGCP\experiment\figures\figure2b_kaware_current_protocol_ap_bars_20260723.png/.pdf`
+- `C:\Workspace\2026-7-papers\infocom\SGCP\experiment\figures\figure5b_parameter_sensitivity_gflops_current_protocol_20260723.png/.pdf`
+
+Final static check:
+
+- K-aware Table1/Table3/Table6/TableA CSVs all expose protocol fields and GFLOPs columns.
+- `table4_parameter_sensitivity_current_protocol_20260722.csv` exposes GFLOPs columns.
+- All checked rows with `raw_lidar_mbps`, `box_mbps`, and `total_mbps` satisfy `raw_lidar_mbps + box_mbps = total_mbps`.
+- All new PNG/PDF figures exist and are non-empty.
+
+2026-07-23 final repair: the earlier mixed diagnostic tables `tableA_combined_current_protocol_diagnostic_20260722.csv` and `tableA_compact_current_protocol_diagnostic_20260722.csv` now also expose `detector_calls_per_frame`, `point_feature_gflops_per_frame`, `detector_gflops_per_frame`, and `gflops_note`. The `SGCP-PAPG low-budget cap4000` row was recomputed from its own 41-frame trace, giving `6.00` detector calls/frame, `0.7473` point-feature GFLOPs/frame, and `536.85` total detector GFLOPs/frame. The final CSV audit covered 17 current-protocol/K-sensitivity files and passed GFLOPs presence plus `raw_lidar_mbps + box_mbps = total_mbps` checks.
+### Clean-package Parameter Sensitivity - 2026-07-23
+
+Artifact: `docs/doc_workspace/SGCP/artifacts/parameter_sensitivity_current_protocol_20260723/`
+
+Protocol: attentive detector, 41 frames, 20 CAVs, 40 MHz, 10 target subchannels unless varied, NS3-calibrated estimator, PAPG + coalition-game + inter-cluster box NMS. Unless varied: `N_max=4`, `rho_th=3`, `head_rb_budget=2`, scheduler admission budget `200 ms`. Total Mbps includes raw LiDAR and inter-cluster box-sharing payload.
+
+| Sweep | Setting | AP@0.3 | AP@0.5 | AP@0.7 | Total Mbps | GFLOPs/frame | Avg grids |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| rho_th | 0.1 | 0.86 | 0.78 | 0.32 | 63.16 | 580.55 | 90.61 |
+| rho_th | 0.3 | 0.87 | 0.81 | 0.33 | 63.32 | 547.84 | 95.75 |
+| rho_th | 0.5 | 0.88 | 0.81 | 0.34 | 63.33 | 547.84 | 95.55 |
+| rho_th | 1 | 0.87 | 0.81 | 0.36 | 63.30 | 536.94 | 97.24 |
+| rho_th | 2 | 0.87 | 0.81 | 0.36 | 63.28 | 536.94 | 97.25 |
+| rho_th | 3 | 0.87 | 0.81 | 0.36 | 63.28 | 536.94 | 97.22 |
+| N_max | 2 | 0.85 | 0.73 | 0.32 | 61.54 | 903.29 | 55.04 |
+| N_max | 3 | 0.88 | 0.81 | 0.36 | 63.19 | 626.35 | 76.55 |
+| N_max | 4 | 0.87 | 0.81 | 0.36 | 63.28 | 536.94 | 97.22 |
+| N_max | 5 | 0.88 | 0.80 | 0.34 | 63.35 | 536.94 | 97.43 |
+| N_max | 6 | 0.88 | 0.80 | 0.34 | 63.35 | 536.94 | 97.43 |
+| target_subchannels | 5 | 0.74 | 0.61 | 0.24 | 31.69 | 536.70 | 49.38 |
+| target_subchannels | 10 | 0.87 | 0.81 | 0.36 | 63.28 | 536.94 | 97.22 |
+| target_subchannels | 20 | 0.88 | 0.81 | 0.36 | 68.82 | 536.98 | 105.19 |
+| communication_budget_ms | 40 | 0.85 | 0.76 | 0.38 | 54.99 | 536.87 | 23.33 |
+| communication_budget_ms | 60 | 0.87 | 0.76 | 0.38 | 59.13 | 536.90 | 36.67 |
+| communication_budget_ms | 100 | 0.87 | 0.79 | 0.37 | 62.18 | 536.93 | 61.67 |
+| communication_budget_ms | 200 | 0.87 | 0.81 | 0.36 | 63.28 | 536.94 | 97.22 |
+| communication_budget_ms | 300 | 0.87 | 0.81 | 0.36 | 63.28 | 536.94 | 97.22 |
+
+Interpretation: `rho_th` is insensitive in this scene; 10 target subchannels is the knee; 20 target subchannels adds little AP but more payload. Communication budget saturates after 200 ms in the scheduler admission model, while the headline payload remains justified by prior exact NS3 replay with max callback delay below 60 ms. `N_max=2` raises compute to about `903 GFLOPs/frame`; `N_max=4` keeps the headline AP with about `537 GFLOPs/frame`.
+
+Follow-up density diagnosis after user review:
+
+- Single-frame probe saved to `docs/doc_workspace/SGCP/artifacts/parameter_sensitivity_current_protocol_20260723/single_frame_grid_density_000060.txt`.
+- Frame `000060`, CAVs `1/4/11/13/15`: each CAV has about `4.7k--4.9k` local points over `961` grids, but only `49--60` grids are nonzero (`5.1%--6.2%`).
+- Nonzero-grid density median is only `0.11--0.20`; nonzero p90 is about `0.99--1.60`.
+- `rho_th=2/3/5` often affects only `1--5` very dense grids per CAV. Example CAV 4: high grids are `4/4/2` for `rho=2/3/5`; CAV 15: high grids are `1/1/1`.
+- Therefore the original `rho=1/2/3` sweep was not strong paper evidence for parameter sensitivity; it mainly probed the high-density tail. The follow-up low-density sweep `rho=0.1/0.3/0.5/1.0` has now been run. It shows degradation at `rho=0.1` (`0.86/0.78/0.32`) and saturation from about `rho=1` upward (`0.87/0.81/0.36`). If a stronger density story is needed, use normalized density percentiles rather than absolute `rho_th`.
+- The communication-budget table should not use `Avg selected grids` alone as a payload proxy. Trace audit shows budget `40 -> 200 ms` increases selected grids/sample `23.33 -> 97.22`, but uploaded points/frame only `42,456 -> 48,857`; newly admitted grids are mostly sparse. Future table columns should include uploaded links/frame, uploaded points/frame, and bytes/selected-grid.
+- Per user request, an even lower grid-count-calibrated rho sweep was added. With `10 m x 10 m` grids, `rho_th=0.01/0.03/0.05/0.10` corresponds to about `1/3/5/10` points per grid. Results: `rho=0.01` `0.86/0.78/0.34`, `63.08 Mbps`, `563.10 GFLOPs`; `rho=0.03` `0.86/0.77/0.32`, `63.13 Mbps`, `565.28 GFLOPs`; `rho=0.05` `0.86/0.78/0.32`, `63.16 Mbps`, `580.55 GFLOPs`; `rho=0.10` `0.86/0.78/0.32`, `63.16 Mbps`, `580.55 GFLOPs`. Best high-IoU result remains around `rho>=1`.

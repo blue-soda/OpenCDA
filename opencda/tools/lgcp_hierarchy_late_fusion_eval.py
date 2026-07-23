@@ -28,8 +28,21 @@ from opencda.tools.lgcp_area_confidence_eval import (
     load_lgcp_config,
     slice_tensor_by_area,
 )
+from opencda.tools.lgcp_pointpillar_rsu_bev_fusion import (
+    build_planned_area_bounds,
+    filter_boxes_to_planned_areas,
+    generate_gt,
+    load_frame_for_reference,
+)
+from opencda.tools.lgcp_v2xvit_area_point_crop_eval import (
+    candidate_cavs_from_plan,
+    normalize_cav_id,
+)
 from opencda.tools.offline_inference import load_coperception_params
 from opencood.utils import eval_utils
+
+
+WORLD_IDENTITY_POSE = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
 
 
 def parse_args():
@@ -45,6 +58,20 @@ def parse_args():
     parser.add_argument('--fusion-method', default=None,
                         help='OpenCOOD fusion method. Defaults to coperception yaml.')
     parser.add_argument('--coperception-yaml', default=None)
+    parser.add_argument('--postprocess-score-threshold', type=float,
+                        default=None,
+                        help='Optional OpenCOOD postprocessor score threshold '
+                             'override.')
+    parser.add_argument('--global-gt-cav-id', default=None,
+                        help='Optional reference CAV/RSU id for one global '
+                             'planned-area GT sample per frame. If omitted, '
+                             'the legacy leader-local GT concatenation is '
+                             'used.')
+    parser.add_argument('--global-reference-z-override', type=float,
+                        default=None,
+                        help='Optional z override for --global-gt-cav-id.')
+    parser.add_argument('--grid-size-x', type=float, default=10.0)
+    parser.add_argument('--grid-size-y', type=float, default=6.0)
     parser.add_argument('--start-index', type=int, default=0,
                         help='Frame index in assignment-plan timestamp order.')
     parser.add_argument('--max-frames', type=int, default=1,
@@ -118,6 +145,61 @@ def run_inference(manager, dataset, scenario_id, timestamp, ego_id, cav_ids):
         'gt_box_tensor': ret[2],
         'ego_lidar_pose': ego_lidar_pose,
     }
+
+
+def resolve_reference_pose(dataset, scenario_id, timestamp, reference_cav_id,
+                           z_override=None):
+    frame = dataset.load_frame(
+        scenario_id,
+        timestamp,
+        ego_cav_id=reference_cav_id,
+        cav_ids=[reference_cav_id],
+        add_transformation=False)
+    key = normalize_cav_id(reference_cav_id)
+    if key not in frame:
+        raise ValueError('reference_cav_id %s not found at %s' %
+                         (reference_cav_id, timestamp))
+    reference_pose = list(frame[key]['params']['lidar_pose'])
+    if z_override is not None:
+        reference_pose[2] = float(z_override)
+    return reference_pose
+
+
+def generate_global_planned_gt(manager, dataset, scenario_id, timestamp,
+                               reference_cav_id, reference_z_override,
+                               frame_plan, cav_ids, grid_size_x,
+                               grid_size_y):
+    reference_pose = resolve_reference_pose(
+        dataset,
+        scenario_id,
+        timestamp,
+        reference_cav_id,
+        reference_z_override)
+    frame = load_frame_for_reference(
+        dataset,
+        scenario_id,
+        timestamp,
+        cav_ids,
+        reference_pose,
+        reference_cav_id)
+    reformat_data_dict = manager.opencood_dataset.get_item_test(
+        frame,
+        reference_pose)
+    output_dict = manager.opencood_dataset.collate_batch_test(
+        [reformat_data_dict])
+    gt_batch = manager.to_device(output_dict)
+    gt_ref = generate_gt(manager, gt_batch)
+    gt_world = tensor_to_world(gt_ref, reference_pose)
+    planned_bounds = build_planned_area_bounds(
+        frame_plan,
+        grid_size_x,
+        grid_size_y)
+    gt_planned, _ = filter_boxes_to_planned_areas(
+        gt_world,
+        None,
+        WORLD_IDENTITY_POSE,
+        planned_bounds)
+    return gt_planned
 
 
 def tensor_to_world(tensor, lidar_pose):
@@ -200,7 +282,14 @@ def main():
     coperception_params = load_coperception_params(
         args.coperception_yaml,
         args.fusion_method)
+    coperception_params['_dataset_root_override'] = args.dataset_root
     manager = OpenCOODManager(coperception_params)
+    post_processor = manager.opencood_dataset.post_processor
+    original_threshold = post_processor.params['target_args'][
+        'score_threshold']
+    if args.postprocess_score_threshold is not None:
+        post_processor.params['target_args']['score_threshold'] = (
+            args.postprocess_score_threshold)
 
     inference_cache = {}
     leader_rows = []
@@ -211,110 +300,134 @@ def main():
         0.7: {'tp': [], 'fp': [], 'gt': 0},
     }
 
-    for frame_index, timestamp in enumerate(timestamps, start=1):
-        frame_plan = grouped[timestamp]
-        if args.max_areas_per_frame:
-            frame_plan = frame_plan[:args.max_areas_per_frame]
+    try:
+        for frame_index, timestamp in enumerate(timestamps, start=1):
+            frame_plan = grouped[timestamp]
+            if args.max_areas_per_frame:
+                frame_plan = frame_plan[:args.max_areas_per_frame]
 
-        area_pred_tensors = []
-        area_scores = []
-        area_gt_tensors = []
-        group_calls = set()
-        box_template = None
+            area_pred_tensors = []
+            area_scores = []
+            area_gt_tensors = []
+            group_calls = set()
+            box_template = None
 
-        for row in frame_plan:
-            area_id = row['area_id']
-            leader_id = str(row['leader_id'])
-            members = parse_members(row['group_members'])
-            if leader_id not in members:
-                members = [leader_id] + members
-            members = list(OrderedDict((str(member), None)
-                                       for member in members).keys())
-            cache_key = (timestamp, leader_id, tuple(members))
-            if cache_key not in inference_cache:
-                inference_cache[cache_key] = run_inference(
+            for row in frame_plan:
+                area_id = row['area_id']
+                leader_id = str(row['leader_id'])
+                members = parse_members(row['group_members'])
+                if leader_id not in members:
+                    members = [leader_id] + members
+                members = list(OrderedDict((str(member), None)
+                                           for member in members).keys())
+                cache_key = (timestamp, leader_id, tuple(members))
+                if cache_key not in inference_cache:
+                    inference_cache[cache_key] = run_inference(
+                        manager,
+                        dataset,
+                        args.scenario_id,
+                        timestamp,
+                        leader_id,
+                        members)
+                group_calls.add(cache_key)
+                ret = inference_cache[cache_key]
+
+                pred_world = tensor_to_world(
+                    ret['pred_box_tensor'],
+                    ret['ego_lidar_pose'])
+                gt_world = tensor_to_world(
+                    ret['gt_box_tensor'],
+                    ret['ego_lidar_pose'])
+                if box_template is None:
+                    box_template = (
+                        gt_world if gt_world is not None else pred_world)
+
+                area_pred, area_score = filter_tensor_by_area_world(
+                    pred_world,
+                    ret['pred_score'],
+                    area_id,
+                    lgcp_config)
+                area_gt, _ = filter_tensor_by_area_world(
+                    gt_world,
+                    None,
+                    area_id,
+                    lgcp_config)
+                if area_gt is None:
+                    area_gt = empty_like_box(gt_world)
+
+                if area_pred is not None and int(area_pred.shape[0]) > 0:
+                    area_pred_tensors.append(area_pred)
+                    area_scores.append(area_score)
+                if area_gt is not None and int(area_gt.shape[0]) > 0:
+                    area_gt_tensors.append(area_gt)
+
+                leader_rows.append(OrderedDict({
+                    'scenario_id': args.scenario_id,
+                    'timestamp': timestamp,
+                    'area_id': area_id,
+                    'leader_id': leader_id,
+                    'group_members': ';'.join(members),
+                    'group_size': len(members),
+                    'group_confidence': row.get('group_confidence', ''),
+                    'area_pred_count': 0 if area_pred is None
+                    else int(area_pred.shape[0]),
+                    'area_gt_count': 0 if area_gt is None
+                    else int(area_gt.shape[0]),
+                }))
+
+            fused_pred = None
+            fused_score = None
+            if area_pred_tensors:
+                fused_pred, fused_score = manager.naive_late_fusion(
+                    area_pred_tensors,
+                    area_scores,
+                    iou_threshold=args.late_nms_thresh)
+            if args.global_gt_cav_id is not None:
+                fused_gt = generate_global_planned_gt(
                     manager,
                     dataset,
                     args.scenario_id,
                     timestamp,
-                    leader_id,
-                    members)
-            group_calls.add(cache_key)
-            ret = inference_cache[cache_key]
+                    args.global_gt_cav_id,
+                    args.global_reference_z_override,
+                    frame_plan,
+                    candidate_cavs_from_plan(
+                        frame_plan,
+                        args.global_gt_cav_id,
+                        manager.opencood_dataset.max_cav),
+                    args.grid_size_x,
+                    args.grid_size_y)
+            else:
+                fused_gt = safe_cat(area_gt_tensors, box_template)
+            if int(fused_gt.shape[0]) > 0:
+                update_stats(result_stat, fused_pred, fused_score, fused_gt)
 
-            pred_world = tensor_to_world(
-                ret['pred_box_tensor'],
-                ret['ego_lidar_pose'])
-            gt_world = tensor_to_world(
-                ret['gt_box_tensor'],
-                ret['ego_lidar_pose'])
-            if box_template is None:
-                box_template = gt_world if gt_world is not None else pred_world
-
-            area_pred, area_score = filter_tensor_by_area_world(
-                pred_world,
-                ret['pred_score'],
-                area_id,
-                lgcp_config)
-            area_gt, _ = filter_tensor_by_area_world(
-                gt_world,
-                None,
-                area_id,
-                lgcp_config)
-            if area_gt is None:
-                area_gt = empty_like_box(gt_world)
-
-            if area_pred is not None and int(area_pred.shape[0]) > 0:
-                area_pred_tensors.append(area_pred)
-                area_scores.append(area_score)
-            if area_gt is not None and int(area_gt.shape[0]) > 0:
-                area_gt_tensors.append(area_gt)
-
-            leader_rows.append(OrderedDict({
+            frame_rows.append(OrderedDict({
                 'scenario_id': args.scenario_id,
                 'timestamp': timestamp,
-                'area_id': area_id,
-                'leader_id': leader_id,
-                'group_members': ';'.join(members),
-                'group_size': len(members),
-                'group_confidence': row.get('group_confidence', ''),
-                'area_pred_count': 0 if area_pred is None
-                else int(area_pred.shape[0]),
-                'area_gt_count': 0 if area_gt is None else int(area_gt.shape[0]),
+                'planned_areas': len(frame_plan),
+                'unique_group_inference_calls': len(group_calls),
+                'leader_local_pred_boxes': sum(
+                    int(tensor.shape[0]) for tensor in area_pred_tensors),
+                'leader_local_gt_boxes': sum(
+                    int(tensor.shape[0]) for tensor in area_gt_tensors),
+                'rsu_fused_pred_boxes': 0 if fused_pred is None
+                else int(fused_pred.shape[0]),
+                'rsu_fused_gt_boxes': int(fused_gt.shape[0]),
             }))
-
-        fused_pred = None
-        fused_score = None
-        if area_pred_tensors:
-            fused_pred, fused_score = manager.naive_late_fusion(
-                area_pred_tensors,
-                area_scores,
-                iou_threshold=args.late_nms_thresh)
-        fused_gt = safe_cat(area_gt_tensors, box_template)
-        if int(fused_gt.shape[0]) > 0:
-            update_stats(result_stat, fused_pred, fused_score, fused_gt)
-
-        frame_rows.append(OrderedDict({
-            'scenario_id': args.scenario_id,
-            'timestamp': timestamp,
-            'planned_areas': len(frame_plan),
-            'unique_group_inference_calls': len(group_calls),
-            'leader_local_pred_boxes': sum(
-                int(tensor.shape[0]) for tensor in area_pred_tensors),
-            'leader_local_gt_boxes': sum(
-                int(tensor.shape[0]) for tensor in area_gt_tensors),
-            'rsu_fused_pred_boxes': 0 if fused_pred is None
-            else int(fused_pred.shape[0]),
-            'rsu_fused_gt_boxes': int(fused_gt.shape[0]),
-        }))
-        print('frame=%s/%s timestamp=%s areas=%s groups=%s pred=%s gt=%s' % (
-            frame_index,
-            len(timestamps),
-            timestamp,
-            len(frame_plan),
-            len(group_calls),
-            frame_rows[-1]['rsu_fused_pred_boxes'],
-            frame_rows[-1]['rsu_fused_gt_boxes']))
+            print(
+                'frame=%s/%s timestamp=%s areas=%s groups=%s pred=%s gt=%s' %
+                (
+                    frame_index,
+                    len(timestamps),
+                    timestamp,
+                    len(frame_plan),
+                    len(group_calls),
+                    frame_rows[-1]['rsu_fused_pred_boxes'],
+                    frame_rows[-1]['rsu_fused_gt_boxes']))
+    finally:
+        post_processor.params['target_args']['score_threshold'] = (
+            original_threshold)
 
     summary_rows = [OrderedDict({
         'frames': len(timestamps),
@@ -364,6 +477,14 @@ def main():
         'max_frames': args.max_frames,
         'max_areas_per_frame': args.max_areas_per_frame,
         'late_nms_thresh': args.late_nms_thresh,
+        'score_threshold': (
+            args.postprocess_score_threshold
+            if args.postprocess_score_threshold is not None
+            else original_threshold),
+        'global_gt_cav_id': args.global_gt_cav_id,
+        'global_reference_z_override': args.global_reference_z_override,
+        'grid_size_x': args.grid_size_x,
+        'grid_size_y': args.grid_size_y,
         'timestamps': timestamps,
         'note': (
             'Box-level hierarchy late fusion. This calls OpenCOOD but does '

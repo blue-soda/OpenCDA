@@ -40,6 +40,7 @@ class PCS(ResourceAllocationAlgorithm):
         # raw-LiDAR adaptation.  The original 100/200 m fallback remains
         # available by overriding this attribute to None in diagnostics.
         self.communication_range_m: Optional[float] = 35.0
+        self.max_senders_per_receiver = 1
         self.active_blind_spot_min_division = self.blind_spot_min_division
         self.bandwidth_all = 20.0 * (10 ** 6)
         self.time_slot = 0.1
@@ -363,7 +364,15 @@ class PCS(ResourceAllocationAlgorithm):
                 if link == other_link:
                     continue
                 sender_p, receiver_p, spot_p = other_link
-                if sender_q == sender_p or receiver_q == receiver_p or sender_q == receiver_p or sender_p == receiver_q:
+                same_sender = sender_q == sender_p
+                same_receiver = receiver_q == receiver_p
+                half_duplex_cross = (
+                    sender_q == receiver_p or sender_p == receiver_q)
+                if (same_sender or half_duplex_cross or
+                        (same_receiver and
+                         int(getattr(self,
+                                     'max_senders_per_receiver',
+                                     1)) <= 1)):
                     conflicts["A"].add(other_link)
             
             # 计算B类冲突（同子信道+干扰范围内）
@@ -432,6 +441,17 @@ class PCS(ResourceAllocationAlgorithm):
         a_conflicts = self.link_conflicts[q_t]["A"]
         if a_conflicts & P_t1:
             return P_t1, None
+
+        sender_q, receiver_q, spot_id = q_t
+        max_inbound = max(
+            1,
+            int(getattr(self, 'max_senders_per_receiver', 1)))
+        same_receiver_links = [
+            p for p in P_t1
+            if int(p[1]) == int(receiver_q) and int(p[0]) != int(sender_q)
+        ]
+        if len(same_receiver_links) >= max_inbound:
+            return P_t1, None
         
         # 计算可用子信道
         available_subchannels = set(range(self.lambda_subchannels))
@@ -456,7 +476,6 @@ class PCS(ResourceAllocationAlgorithm):
         
         if start_idx is not None:
             # 分配子信道并更新网格选择
-            sender_q, receiver_q, spot_id = q_t
             self.resource_strategy[(sender_q, receiver_q)] = start_idx
             self.resource_sc_nums[(sender_q, receiver_q)] = c_qt
             # 获取盲spot网格并记录

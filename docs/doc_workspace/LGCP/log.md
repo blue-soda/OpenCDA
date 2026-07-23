@@ -3733,3 +3733,1677 @@ by type：
 - 结论：
   - 短期论文安全口径应是 feature-path feasibility、coverage 和 byte boundary。
   - 感知质量主证据继续使用 box-level hierarchy late-fusion；若坚持 neural AP，需要 affine/grid-sample 校准、feature normalization 或 retrained aggregation head。
+
+## RSU BEV attentive fusion with reference-aligned point slices
+
+- 新增脚本：
+  - `opencda/tools/lgcp_pointpillar_rsu_bev_fusion.py`
+- 目标：
+  - 不再对 leader-local feature slice 做 nearest/bilinear warp。
+  - 改为先将每个 area-task group 的成员点云按 world-coordinate LGCP area 裁剪，再投到统一 reference/RSU lidar frame。
+  - 用 `pointpillar_attentive_fusion` 的 `pillar_vfe + scatter` 为每个 area leader 生成 `1 x 64 x 200 x 704` scatter BEV canvas。
+  - 将所有 leader scatter BEV stack 后送入原始 `AttBEVBackbone + cls/reg heads`，实现 RSU 侧 BEV feature-level attentive fusion。
+- 关键实现边界：
+  - 不修改 SGCP 实验代码。
+  - 不修改 OpenCOOD checkpoint 或模型定义。
+  - 默认 `--query-mode mean` 会在 leader stack 前加入一个 synthetic mean RSU query canvas，因为当前 `AttFusion` 原生返回第一个 agent query 的融合结果；`--query-mode first_leader` 可保留 OpenCOOD 原始 ego-first 语义。
+  - 通信量同时记录 member-to-leader raw area point bytes、leader-to-RSU full scatter bytes、以及 sparse nonzero BEV cell bytes。
+- 验证命令：
+  - `python -m py_compile opencda\tools\lgcp_pointpillar_rsu_bev_fusion.py`
+  - `conda run -n opencda python -m opencda.tools.lgcp_pointpillar_rsu_bev_fusion --dataset-root D:\Data\Carla --scenario-id 2026_07_15_02_33_21 --assignment-plan docs\doc_workspace\LGCP\experiments\hierarchy_plan\20260718_lgcp_carla_hierarchy_plan_area23_11f\area_assignment_plan.csv --output-dir docs\doc_workspace\LGCP\experiments\hierarchy_plan\20260720_lgcp_pointpillar_rsu_bev_fusion_smoke_1f2a --max-frames 1 --max-areas-per-frame 2 --fusion-method intermediate_attentive --reference-cav-id 1 --grid-size-x 10 --grid-size-y 6 --query-mode mean`
+- 输出目录：
+  - `docs/doc_workspace/LGCP/experiments/hierarchy_plan/20260720_lgcp_pointpillar_rsu_bev_fusion_smoke_1f2a`
+- 结果：
+  - frames: `1`
+  - valid leader features: `2`
+  - leader feature stack: `2 x 64 x 200 x 704`
+  - fusion input: `3 x 64 x 200 x 704`，其中第一个为 mean query canvas
+  - RSU backbone output: `1 x 384 x 100 x 352`
+  - psm / rm: `1 x 2 x 100 x 352` / `1 x 14 x 100 x 352`
+  - pred / GT boxes: `4 / 72`
+  - AP@0.3 / AP@0.5 / AP@0.7: `0.055556 / 0.055556 / 0.041667`
+  - member-to-leader raw area bytes: `15088`
+  - leader feature full bytes: `36044800`
+  - leader feature sparse-cell bytes: `54784`
+- 观察：
+  - 链路已闭合：area point slicing、reference-frame coordinate alignment、PointPillar scatter encoding、RSU attentive BEV fusion、postprocess 和 AP 统计均跑通。
+  - 该 smoke 只覆盖 1 帧 2 area，AP 数值不能作为论文结果。
+  - sparse-cell leader feature byte accounting 已明显小于 full scatter canvas，但后续必须明确 packet 形式和压缩口径。
+- 结论：
+  - 这条路线比此前 nearest/bilinear feature warp 更符合 OpenCOOD attentive checkpoint 的原生对齐假设。
+  - 下一步应扩大到 Top-23 / Top-30 首帧完整 area，并比较 `query-mode mean` 与 `first_leader`；若 AP 仍低，再考虑 feature normalization 或轻量 retrained RSU aggregation head。
+
+## RSU BEV attentive fusion planned-area evaluation
+
+- 新增脚本改动：
+  - `opencda/tools/lgcp_pointpillar_rsu_bev_fusion.py`
+  - 新增 `--eval-scope full|planned_areas`，默认 `full` 保持旧 smoke 兼容。
+  - `planned_areas` 会将 prediction / GT box center 投到 world frame 后，只保留当前 run 中 LGCP planned areas 内的框，避免用局部 area 输入评价全局 GT。
+- 目标：
+  - 检查前一轮 2-area AP 极低是否主要来自 coverage/GT scope 不匹配。
+  - 在完整 Top-23 首帧下比较 `query-mode mean` 与 `first_leader`。
+  - 用低阈值 `0.05` 诊断 RSU BEV attentive 输出是否只是置信度校准偏低。
+- 命令摘要：
+  - `python -m py_compile opencda\tools\lgcp_pointpillar_rsu_bev_fusion.py`
+  - Top-23 首帧 `mean + planned_areas` 默认阈值 `0.20`：
+    - 输出目录：`docs/doc_workspace/LGCP/experiments/hierarchy_plan/20260720_lgcp_pointpillar_rsu_bev_fusion_area23_1f_mean_planned`
+  - Top-23 首帧 `first_leader + planned_areas` 默认阈值 `0.20`：
+    - 输出目录：`docs/doc_workspace/LGCP/experiments/hierarchy_plan/20260720_lgcp_pointpillar_rsu_bev_fusion_area23_1f_firstleader_planned`
+  - Top-23 首帧 `mean + planned_areas + score_threshold=0.05`：
+    - 输出目录：`docs/doc_workspace/LGCP/experiments/hierarchy_plan/20260720_lgcp_pointpillar_rsu_bev_fusion_area23_1f_mean_planned_thr005`
+  - Top-23 首帧 `first_leader + planned_areas + score_threshold=0.05`：
+    - 输出目录：`docs/doc_workspace/LGCP/experiments/hierarchy_plan/20260720_lgcp_pointpillar_rsu_bev_fusion_area23_1f_firstleader_planned_thr005`
+  - Top-23 3 帧 `mean + planned_areas + score_threshold=0.05`：
+    - 输出目录：`docs/doc_workspace/LGCP/experiments/hierarchy_plan/20260720_lgcp_pointpillar_rsu_bev_fusion_area23_3f_mean_planned_thr005`
+- 结果：
+  - Top-23 首帧默认阈值 `0.20`：
+    - `mean`: score max `0.127877`，raw pred boxes `0`，planned-area GT `38`，AP 全为 `0`。
+    - `first_leader`: score max `0.142288`，raw pred boxes `0`，planned-area GT `38`，AP 全为 `0`。
+  - Top-23 首帧阈值 `0.05`：
+    - `mean`: pred / GT `6 / 38`，AP@0.3 / AP@0.5 / AP@0.7 = `0.157895 / 0.131579 / 0.131579`。
+    - `first_leader`: pred / GT `3 / 38`，AP@0.3 / AP@0.5 / AP@0.7 = `0.052632 / 0.052632 / 0.026316`。
+  - Top-23 3 帧阈值 `0.05`：
+    - frames / area rows: `3 / 69`
+    - mean pred / GT boxes: `6.333333 / 38.000000`
+    - AP@0.3 / AP@0.5 / AP@0.7 = `0.166667 / 0.130019 / 0.119298`
+    - member-to-leader raw area bytes: `138304`
+    - leader full scatter bytes: `1243545600`
+    - leader sparse-cell bytes: `1587712`
+- 观察：
+  - 完整 Top-23 + planned-area scope 修复了“2 area 输入打全局 GT”的评价不公平问题，但默认阈值下仍无预测框。
+  - 低阈值 `0.05` 后可以产生少量有效框，说明 reference-aligned point slice -> scatter BEV -> attentive backbone 的几何链路不是完全失效。
+  - `mean` query 明显优于 `first_leader`，但二者都远低于 box-level hierarchy AP，说明主要问题不是 query 选择，而是预训练 detection head 对稀疏 area-leader scatter canvas 的分布不适配。
+  - full scatter leader feature byte 极高，sparse-cell accounting 才接近可讨论通信负载；后续必须定义 sparse feature packet 或压缩格式。
+- 结论：
+  - 当前 RSU BEV attentive fusion 可作为机制原型和 feasibility evidence。
+  - 暂不能作为论文主性能结果；若要继续追求 model-level AP，需要至少做 feature normalization / score calibration，并很可能需要轻量 fine-tune 或训练 RSU aggregation head。
+
+## RSU BEV attentive fusion 11-frame stability run
+
+- 输出目录：
+  - `docs/doc_workspace/LGCP/experiments/hierarchy_plan/20260720_lgcp_pointpillar_rsu_bev_fusion_area23_11f_mean_planned_thr005`
+- 命令摘要：
+  - `conda run -n opencda python -m opencda.tools.lgcp_pointpillar_rsu_bev_fusion --dataset-root D:\Data\Carla --scenario-id 2026_07_15_02_33_21 --assignment-plan docs\doc_workspace\LGCP\experiments\hierarchy_plan\20260718_lgcp_carla_hierarchy_plan_area23_11f\area_assignment_plan.csv --output-dir docs\doc_workspace\LGCP\experiments\hierarchy_plan\20260720_lgcp_pointpillar_rsu_bev_fusion_area23_11f_mean_planned_thr005 --max-frames 11 --fusion-method intermediate_attentive --reference-cav-id 1 --grid-size-x 10 --grid-size-y 6 --query-mode mean --eval-scope planned_areas --postprocess-score-threshold 0.05`
+- 结果：
+  - frames / area rows: `11 / 253`
+  - mean pred / GT boxes: `6.818182 / 37.363636`
+  - AP@0.3 / AP@0.5 / AP@0.7 = `0.182482 / 0.136468 / 0.099602`
+  - member-to-leader raw area bytes: `527840`
+  - leader full scatter bytes: `4559667200`
+  - leader sparse-cell bytes: `5950080`
+- 观察：
+  - 11 帧结果延续 3 帧结果，说明低 AP 不是单帧偶然，而是稳定的模型分布失配。
+  - 每帧 prediction 数量稳定在 `6-8` 个，而 planned-area GT 约 `36-38` 个，主要瓶颈是 score/head 对稀疏 leader-area scatter canvas 不适配。
+  - sparse-cell feature bytes 比 full scatter canvas 小很多，但仍需要明确 leader-to-RSU sparse feature packet 格式，否则不能作为通信收益 claim。
+- 结论：
+  - reference-aligned point-slice -> leader scatter BEV -> RSU attentive fusion 是可运行机制链路。
+  - 直接复用 `pointpillar_attentive_fusion` checkpoint 不能提供论文级 AP；下一步应转向 feature/score calibration 与 RSU aggregation head retraining，或将 neural path 收窄为 feasibility / limitation。
+
+## RSU BEV attentive score-threshold sweep
+
+- 目标：
+  - 检查 11 帧 RSU BEV attentive AP 低是否主要来自 postprocess score threshold / calibration。
+  - 在不改模型、不改 checkpoint 的前提下，对同一 Top-23 planned-area 11 帧运行比较 `0.005/0.01/0.02/0.05`。
+- 输出目录：
+  - `docs/doc_workspace/LGCP/experiments/hierarchy_plan/20260720_lgcp_pointpillar_rsu_bev_fusion_area23_11f_mean_planned_thr0005`
+  - `docs/doc_workspace/LGCP/experiments/hierarchy_plan/20260720_lgcp_pointpillar_rsu_bev_fusion_area23_11f_mean_planned_thr001`
+  - `docs/doc_workspace/LGCP/experiments/hierarchy_plan/20260720_lgcp_pointpillar_rsu_bev_fusion_area23_11f_mean_planned_thr002`
+  - `docs/doc_workspace/LGCP/experiments/hierarchy_plan/20260720_lgcp_pointpillar_rsu_bev_fusion_area23_11f_mean_planned_thr005`
+- 结果：
+
+| Score threshold | Pred boxes / frame | AP@0.3 | AP@0.5 | AP@0.7 |
+| ---: | ---: | ---: | ---: | ---: |
+| `0.005` | `67.454545` | `0.484971` | `0.331495` | `0.101267` |
+| `0.010` | `40.909091` | `0.637777` | `0.463679` | `0.136646` |
+| `0.020` | `19.636364` | `0.450929` | `0.333014` | `0.132677` |
+| `0.050` | `6.818182` | `0.182482` | `0.136468` | `0.099602` |
+
+- 观察：
+  - `0.01` 明显优于 `0.005/0.02/0.05`，说明低 AP 不只是几何链路问题，score calibration 是关键瓶颈之一。
+  - `0.005` 会产生过多低质量框，AP@0.5 反而下降；`0.02/0.05` 则召回不足。
+  - 即使在当前同场景阈值调参最优点，AP@0.7 仍只有 `0.136646`，明显弱于 box-level hierarchy / strong flat baselines。
+- 结论：
+  - RSU BEV attentive route 可以通过后处理校准从“几乎不可用”提升到“有感知信号”，但还不能作为论文主性能结果。
+  - 若继续模型级路线，下一步应在独立 validation split 上做 calibration，并训练或微调 RSU aggregation head；短期写作仍应把该路线定位为 feasibility / calibration boundary。
+
+## RSU BEV attentive query-mode comparison
+
+- 目标：
+  - 在 score threshold `0.01` 下比较 `mean` / `first_leader` / `zero` 三种 query-mode。
+  - 检查上一轮 AP 提升是否依赖 synthetic mean query，还是任意 query 占位都能得到类似结果。
+- 输出目录：
+  - `docs/doc_workspace/LGCP/experiments/hierarchy_plan/20260720_lgcp_pointpillar_rsu_bev_fusion_area23_11f_mean_planned_thr001`
+  - `docs/doc_workspace/LGCP/experiments/hierarchy_plan/20260720_lgcp_pointpillar_rsu_bev_fusion_area23_11f_firstleader_planned_thr001`
+  - `docs/doc_workspace/LGCP/experiments/hierarchy_plan/20260720_lgcp_pointpillar_rsu_bev_fusion_area23_11f_zero_planned_thr001`
+- 结果：
+
+| Query mode | Pred boxes / frame | AP@0.3 | AP@0.5 | AP@0.7 |
+| --- | ---: | ---: | ---: | ---: |
+| `mean` | `40.909091` | `0.637777` | `0.463679` | `0.136646` |
+| `first_leader` | `26.909091` | `0.435864` | `0.278095` | `0.067018` |
+| `zero` | `24.090909` | `0.476781` | `0.261325` | `0.054635` |
+
+- 观察：
+  - `mean` query 明显优于 `first_leader` 和 `zero`，说明 synthetic mean RSU query 不是随意占位，而是在当前未训练 checkpoint 下提供了更接近全局查询的输入分布。
+  - `first_leader` 与 `zero` 均能产生检测信号，但 AP@0.5 / AP@0.7 明显更弱。
+- 结论：
+  - 当前原型应继续默认 `query-mode mean`。
+  - 论文中不能把 `mean` query 写成完整训练过的 RSU aggregation mechanism；它只能作为无训练原型的 query workaround。若继续模型级路线，应训练显式 RSU query / aggregation head。
+
+## RSU BEV attentive temporal holdout threshold check
+
+- 目标：
+  - 将同一 11 帧序列按时间切分，使用后 6 帧 `000070-000080` 复核 `0.005/0.01/0.02/0.05` threshold sweep。
+  - 判断 `0.01` 是否只是在完整 11 帧上后验挑出的偶然点。
+- 输出目录：
+  - `docs/doc_workspace/LGCP/experiments/hierarchy_plan/20260720_lgcp_pointpillar_rsu_bev_fusion_area23_val6_mean_planned_thr0005`
+  - `docs/doc_workspace/LGCP/experiments/hierarchy_plan/20260720_lgcp_pointpillar_rsu_bev_fusion_area23_val6_mean_planned_thr001`
+  - `docs/doc_workspace/LGCP/experiments/hierarchy_plan/20260720_lgcp_pointpillar_rsu_bev_fusion_area23_val6_mean_planned_thr002`
+  - `docs/doc_workspace/LGCP/experiments/hierarchy_plan/20260720_lgcp_pointpillar_rsu_bev_fusion_area23_val6_mean_planned_thr005`
+- 结果：
+
+| Score threshold | Pred boxes / frame | AP@0.3 | AP@0.5 | AP@0.7 |
+| ---: | ---: | ---: | ---: | ---: |
+| `0.005` | `67.500000` | `0.522418` | `0.381124` | `0.093956` |
+| `0.010` | `42.166667` | `0.649422` | `0.495974` | `0.119201` |
+| `0.020` | `20.166667` | `0.470008` | `0.368083` | `0.134940` |
+| `0.050` | `7.166667` | `0.194570` | `0.148743` | `0.084005` |
+
+- 观察：
+  - 后 6 帧 holdout 中 `0.01` 仍是 AP@0.3 / AP@0.5 最优点，支持上一轮 score calibration 结论。
+  - AP@0.7 在后 6 帧中由 `0.02` 略高，但整体仍很低，说明高 IoU localization / box quality 仍是短板。
+- 结论：
+  - `0.01` 可作为当前同场景 temporal holdout 下的 prototype threshold。
+  - 这不是真正独立多场景 validation；论文中若报告该数值，只能作为 calibration diagnostic / feasibility boundary。
+
+## RSU BEV attentive train5-to-val6 calibration check
+
+- 目标：
+  - 补跑前 5 帧 `000060-000068` 的 threshold sweep，模拟 train split 上选择 score threshold。
+  - 对照上一轮后 6 帧 `000070-000080`，形成最小 train5-to-val6 calibration 闭环。
+- 输出目录：
+  - `docs/doc_workspace/LGCP/experiments/hierarchy_plan/20260720_lgcp_pointpillar_rsu_bev_fusion_area23_train5_mean_planned_thr0005`
+  - `docs/doc_workspace/LGCP/experiments/hierarchy_plan/20260720_lgcp_pointpillar_rsu_bev_fusion_area23_train5_mean_planned_thr001`
+  - `docs/doc_workspace/LGCP/experiments/hierarchy_plan/20260720_lgcp_pointpillar_rsu_bev_fusion_area23_train5_mean_planned_thr002`
+  - `docs/doc_workspace/LGCP/experiments/hierarchy_plan/20260720_lgcp_pointpillar_rsu_bev_fusion_area23_train5_mean_planned_thr005`
+- 结果：
+
+| Split | Score threshold | Pred boxes / frame | AP@0.3 | AP@0.5 | AP@0.7 |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| train5 | `0.005` | `67.400000` | `0.546083` | `0.371240` | `0.141289` |
+| train5 | `0.010` | `39.400000` | `0.657273` | `0.470975` | `0.174367` |
+| train5 | `0.020` | `19.000000` | `0.437342` | `0.312345` | `0.147231` |
+| train5 | `0.050` | `6.400000` | `0.168421` | `0.128286` | `0.114463` |
+| val6 | `0.010` | `42.166667` | `0.649422` | `0.495974` | `0.119201` |
+
+- 观察：
+  - 前 5 帧按 AP@0.3 / AP@0.5 / AP@0.7 都会选择 `0.01`。
+  - 后 6 帧使用同一 `0.01` 仍保持 AP@0.5 `0.495974`，说明 score calibration 的收益在同场景时间切分上可复现。
+  - AP@0.7 从 train5 的 `0.174367` 降到 val6 的 `0.119201`，高 IoU box quality 仍不稳定。
+- 结论：
+  - 当前可说：RSU BEV attentive prototype 在同场景 train5-to-val6 calibration 下，`0.01` score threshold 有稳定收益。
+  - 仍不能说：已经完成独立 validation 或可作为论文主性能 claim。下一步若坚持模型级结果，需要多场景 validation 或训练 RSU aggregation head。
+
+## RSU BEV attentive calibration summary document
+
+- 新增文档：
+  - `docs/doc_workspace/LGCP/rsu_bev_attentive_calibration.md`
+- 目标：
+  - 将分散在多个 run 目录中的 RSU BEV attentive threshold sweep、query-mode comparison、train5-to-val6 calibration 和 communication accounting 汇总到一个入口。
+  - 明确该路线的论文安全口径：只能作为 feature-path feasibility / calibration boundary / limitation，不能作为主性能表。
+- 内容：
+  - Threshold sweep: `0.01` 在 11 帧 AP@0.3 / AP@0.5 上最优。
+  - Query-mode comparison: `mean` 优于 `first_leader` 和 `zero`，但仍是未训练 RSU query workaround。
+  - Train5-to-val6 check: train5 选择 `0.01`，val6 AP@0.5 `0.495974`。
+  - Communication accounting: leader full scatter BEV 不可通信化，sparse-cell packet 仍需显式格式定义。
+- 结论：
+  - 后续若继续模型级路线，应转向训练显式 RSU query / aggregation head 和多场景 validation。
+  - 若短期写论文修订，应把 neural / BEV feature route 写成可运行机制与边界，不应写成已完成主感知质量结果。
+
+## RSU BEV aggregation training plan
+
+- 新增文档：
+  - `docs/doc_workspace/LGCP/rsu_bev_training_plan.md`
+- 目标：
+  - 回答如果继续把 RSU BEV attentive route 推进为模型级结果，需要训练什么、复用什么、改哪些代码、工作量和风险。
+- 代码审计：
+  - OpenCOOD 训练入口为 `opencood/opencood/tools/train.py`。
+  - 模型创建和 checkpoint 加载在 `opencood/opencood/tools/train_utils.py`。
+  - 当前 PointPillar attentive 模型为 `opencood/opencood/models/point_pillar_intermediate.py`，其 backbone 为 `AttBEVBackbone`。
+  - 现有 `IntermediateFusionDataset` 的 batch 语义是 ego/reference CAV + multi-CAV `record_len`，与 LGCP timestamp + area leader packets + RSU query 语义不同。
+- 结论：
+  - 不能只靠改 YAML 直接训练 LGCP RSU BEV route。
+  - 需要新增 LGCP RSU BEV training sample export、dataset/collate、model wrapper 和显式 RSU query / aggregation head。
+  - 短期论文修订仍建议收窄为 feasibility / calibration boundary；长期研究可按 plan 进入训练闭环。
+
+## RSU BEV sparse training sample export
+
+- 新增脚本：
+  - `opencda/tools/lgcp_rsu_bev_training_sample_export.py`
+- 目标：
+  - 将 reference-aligned point-slice -> leader scatter BEV 的中间结果导出为 future dataset/model wrapper 可读取的 sparse training samples。
+  - 不保存完整 dense scatter canvas，改为保存 `[leader, y, x]` sparse indices 和 `64` 维 BEV features。
+- 验证：
+  - `python -m py_compile opencda\tools\lgcp_rsu_bev_training_sample_export.py`
+  - 1 帧 2 area smoke：
+    - 输出目录：`docs/doc_workspace/LGCP/experiments/rsu_bev_training_samples/20260720_rsu_bev_sparse_smoke_1f2a`
+    - sparse cells: `428`
+    - planned-area GT boxes: `6`
+    - sample npz bytes: `15566`
+  - Top-23 11 帧 full export：
+    - 输出目录：`docs/doc_workspace/LGCP/experiments/rsu_bev_training_samples/20260720_rsu_bev_sparse_area23_11f`
+    - frames: `11`
+    - planned-area GT boxes: `411`
+    - compressed sample npz bytes: `1439391`
+    - member raw area point bytes: `527840`
+    - leader sparse feature bytes: `5950080`
+- 样本字段：
+  - `dense_shape`
+  - `sparse_indices`
+  - `sparse_features`
+  - `area_ids`
+  - `leader_ids`
+  - `reference_pose`
+  - `planned_area_centers`
+  - `gt_boxes`
+  - per-area byte accounting fields
+- 结论：
+  - Phase 1 sample export 已闭环，可作为后续 dataset/model wrapper 的输入。
+  - Sparse BEV sample 格式适合训练落盘，但通信 accounting 仍高于 raw area point slice；论文通信收益仍应以 raw / area-slice accounting 为主。
+
+## RSU BEV sparse dataset helper
+
+- 新增代码：
+  - `opencda/core/ml_libs/lgcp_rsu_bev_dataset.py`
+- 目标：
+  - 读取 `lgcp_rsu_bev_training_sample_export.py` 导出的 sparse NPZ。
+  - 支持 sparse-only inspection，避免默认还原 Top-23 dense BEV 时占用大量内存。
+  - 支持训练时 dense reconstruction、`mean/zero/first_leader` query stack、`record_len` 和 PointPillar `label_dict` 生成。
+- 验证：
+  - `python -m py_compile opencda\core\ml_libs\lgcp_rsu_bev_dataset.py`
+  - smoke sample:
+    - input leader dense shape: `2 x 64 x 200 x 704`
+    - `query-mode=mean` spatial features: `3 x 64 x 200 x 704`
+    - `record_len`: `[3]`
+    - `pos_equal_one`: `1 x 100 x 352 x 2`
+    - `targets`: `1 x 100 x 352 x 14`
+    - GT boxes: `6 x 8 x 3`
+  - Top-23 11-frame sparse-only sample:
+    - dataset length: `11`
+    - first dense shape metadata: `23 x 64 x 200 x 704`
+    - first sparse indices: `4136 x 3`
+    - first sparse features: `4136 x 64`
+    - `record_len_value`: `24`
+    - first GT boxes: `38 x 8 x 3`
+- 结论：
+  - Phase 2 dataset helper 的最低可用版本已完成。
+  - 下一步如果继续模型级路线，应新增 `lgcp_rsu_bev_attentive` model wrapper，直接接收 `spatial_features + record_len` 并训练显式 RSU query / head。
+
+## RSU BEV attentive model wrapper smoke
+
+- 新增代码：
+  - `opencood/opencood/models/lgcp_rsu_bev_attentive.py`
+- 目标：
+  - 跳过 `PillarVFE` / `PointPillarScatter`，直接接收 LGCP sparse dataset helper 还原的 scatter BEV。
+  - 复用 `AttBEVBackbone + cls_head + reg_head`。
+  - 支持 `query_mode=input` 复用 dataset 已构造 query stack。
+  - 支持 `query_mode=learnable_channel` 从 `leader_features + leader_record_len` 构造显式 RSU query。
+- 验证：
+  - `python -m py_compile opencood\opencood\models\lgcp_rsu_bev_attentive.py`
+  - `train_utils.create_model` 可通过 `core_method: lgcp_rsu_bev_attentive` 找到 `LgcpRsuBevAttentive`。
+  - 1-frame 2-area smoke：
+    - `query_mode=input`:
+      - `psm`: `1 x 2 x 100 x 352`
+      - `rm`: `1 x 14 x 100 x 352`
+      - PointPillarLoss: `11.465249914900221`
+    - `query_mode=learnable_channel`:
+      - `psm`: `1 x 2 x 100 x 352`
+      - `rm`: `1 x 14 x 100 x 352`
+      - PointPillarLoss: `1432.6074481449284`
+      - RSU query gradient sum: `22637.666015625`
+- 结论：
+  - Phase 3 model wrapper 的最低训练闭环已打通：dataset -> model -> loss -> query gradient。
+  - 当前 loss 数值只是 smoke，不代表性能；后续若继续，应接入 YAML / train loop，加载 attentive checkpoint 的 backbone/head 权重，并在 train/val split 上训练显式 RSU query / head。
+
+## RSU BEV train-loop smoke
+
+- 新增脚本：
+  - `opencda/tools/lgcp_rsu_bev_train_smoke.py`
+- 目标：
+  - 在不接入 OpenCOOD 原生 dataset registry 的前提下，先验证 LGCP sparse sample dataset -> RSU BEV model wrapper -> PointPillarLoss -> optimizer -> validation trace 的最小训练循环。
+- 命令：
+  - `python -m py_compile opencda\tools\lgcp_rsu_bev_train_smoke.py`
+  - `conda run -n opencda python -m opencda.tools.lgcp_rsu_bev_train_smoke --train-root docs\doc_workspace\LGCP\experiments\rsu_bev_training_samples\20260720_rsu_bev_sparse_smoke_1f2a --val-root docs\doc_workspace\LGCP\experiments\rsu_bev_training_samples\20260720_rsu_bev_sparse_smoke_1f2a --output-dir docs\doc_workspace\LGCP\experiments\rsu_bev_training\20260720_rsu_bev_train_smoke_1f2a --query-mode learnable_channel --dataset-query-mode mean --freeze-mode query_heads --lr 0.0001 --epochs 1 --max-train-steps 1 --max-val-steps 1 --device cpu`
+- 输出目录：
+  - `docs/doc_workspace/LGCP/experiments/rsu_bev_training/20260720_rsu_bev_train_smoke_1f2a`
+- 结果：
+  - trainable parameters: `6224`
+  - train final loss: `11.980690373`
+  - val final loss: `0.610613982`
+  - psm shape: `1 x 2 x 100 x 352`
+  - rm shape: `1 x 14 x 100 x 352`
+- 观察：
+  - `query_heads` freeze mode 只训练 learnable RSU query 和 heads，参数量很小。
+  - train/val 使用同一个 1-frame 2-area smoke sample，因此 loss 不能解释为泛化或性能提升。
+- 结论：
+  - Phase 3.5 train-loop smoke 已闭环。
+  - 下一步如果继续模型级路线，应先解决 Top-23 dense BEV 显存压力，再做 train5/val6 或多场景训练；短期论文仍不应使用该 smoke 作为性能结果。
+
+## RSU BEV Top-5 train5 / val6 smoke
+
+- 时间：2026-07-20
+- 目标：
+  - 避开 Top-23 dense BEV 在 CPU / 内存上的压力，先用 Top-5 planned areas 验证真实 train split / val split 的训练链路。
+  - 该实验只验证 `sparse sample -> dataset -> lgcp_rsu_bev_attentive -> PointPillarLoss -> optimizer -> validation trace`，不作为论文 AP 结果。
+- 样本导出：
+  - train root：`docs/doc_workspace/LGCP/experiments/rsu_bev_training_samples/20260720_rsu_bev_sparse_top5_train5`
+    - frames: `5`
+    - GT boxes: `60`
+    - sample npz bytes: `143715`
+    - member upload bytes: `85696`
+    - leader sparse feature bytes: `589056`
+  - val root：`docs/doc_workspace/LGCP/experiments/rsu_bev_training_samples/20260720_rsu_bev_sparse_top5_val6`
+    - frames: `6`
+    - GT boxes: `72`
+    - sample npz bytes: `199553`
+    - member upload bytes: `115216`
+    - leader sparse feature bytes: `829056`
+- 训练命令：
+  - `conda run -n opencda python -m opencda.tools.lgcp_rsu_bev_train_smoke --train-root docs\doc_workspace\LGCP\experiments\rsu_bev_training_samples\20260720_rsu_bev_sparse_top5_train5 --val-root docs\doc_workspace\LGCP\experiments\rsu_bev_training_samples\20260720_rsu_bev_sparse_top5_val6 --output-dir docs\doc_workspace\LGCP\experiments\rsu_bev_training\20260720_rsu_bev_train_top5_train5_val6_smoke --query-mode learnable_channel --dataset-query-mode mean --freeze-mode query_heads --lr 0.0001 --epochs 1 --max-train-steps 2 --max-val-steps 2 --device cpu`
+- 输出目录：
+  - `docs/doc_workspace/LGCP/experiments/rsu_bev_training/20260720_rsu_bev_train_top5_train5_val6_smoke`
+- 结果：
+  - trainable parameters: `6224`
+  - train samples / val samples: `5 / 6`
+  - train loss trace:
+    - frame `000060`: `6.825837248`
+    - frame `000062`: `4.661619867`
+  - val loss trace:
+    - frame `000070`: `0.902511302`
+    - frame `000072`: `0.847593252`
+  - output shapes:
+    - `psm`: `1 x 2 x 100 x 352`
+    - `rm`: `1 x 14 x 100 x 352`
+- 观察：
+  - Top-5 split 训练链路可运行，且能使用独立 val frames 输出 loss trace。
+  - `query_heads` 仅训练 learnable RSU query 和 heads，参数量小，适合作为快速可行性检查。
+  - 当前没有 AP evaluation、没有多场景验证、没有 threshold calibration，不应写成模型性能提升。
+- 结论：
+  - Phase 3.6 Top-5 train5 / val6 smoke 已完成。
+  - 下一步若继续神经特征路线，应扩展到 Top-23 或多场景，并加入固定 validation threshold 的 AP evaluation；若以短期论文修订为目标，应把该路线收敛为 feasibility / limitation。
+
+## RSU BEV Top-5 validation AP hook smoke
+
+- 时间：2026-07-20
+- 代码变更：
+  - `opencda/tools/lgcp_rsu_bev_train_smoke.py` 新增可选 `--eval-ap` 和 `--postprocess-score-threshold`。
+  - 开启后，在 validation 阶段调用 OpenCOOD postprocessor，并用 sparse sample 内的 `gt_boxes` 统计 AP@0.3 / AP@0.5 / AP@0.7。
+  - 默认不启用 AP hook，不改变原有 loss-only smoke 行为。
+- 验证：
+  - `python -m py_compile opencda\tools\lgcp_rsu_bev_train_smoke.py`
+- 命令：
+  - `conda run -n opencda python -m opencda.tools.lgcp_rsu_bev_train_smoke --train-root docs\doc_workspace\LGCP\experiments\rsu_bev_training_samples\20260720_rsu_bev_sparse_top5_train5 --val-root docs\doc_workspace\LGCP\experiments\rsu_bev_training_samples\20260720_rsu_bev_sparse_top5_val6 --output-dir docs\doc_workspace\LGCP\experiments\rsu_bev_training\20260720_rsu_bev_train_top5_train5_val6_ap_smoke --query-mode learnable_channel --dataset-query-mode mean --freeze-mode query_heads --lr 0.0001 --epochs 1 --max-train-steps 2 --max-val-steps 2 --device cpu --eval-ap --postprocess-score-threshold 0.01`
+- 输出目录：
+  - `docs/doc_workspace/LGCP/experiments/rsu_bev_training/20260720_rsu_bev_train_top5_train5_val6_ap_smoke`
+- 结果：
+  - train final loss: `4.661619867`
+  - val final loss: `0.847593252`
+  - val samples evaluated: `2`
+  - val GT boxes: `24`
+  - val predicted samples: `57`
+  - score threshold: `0.01`
+  - AP@0.3 / AP@0.5 / AP@0.7: `0.758776 / 0.682186 / 0.285283`
+- 观察：
+  - AP hook 已闭环，可以用于后续 Top-23 或多场景 validation calibration。
+  - 该 run 只评估 Top-5 areas 的前 2 个 val frames，且训练只跑 2 step；AP 数值不能进入 `results.md` 或论文主表。
+- 结论：
+  - 训练链路现在不仅能输出 loss，也能输出 validation AP。
+  - 下一步最有价值的是扩大到全部 val6 / Top-23，或把 AP hook 作为后续多场景训练的标准输出。
+
+## RSU BEV Top-5 full val6 AP smoke
+
+- 时间：2026-07-20
+- 目标：
+  - 将上一轮 Top-5 val2 AP hook 扩展到完整 Top-5 train5 / val6 split。
+  - 确认 AP hook 能覆盖全部 6 个 validation frames，并观察 val2 与 val6 之间的 AP 波动。
+- 命令：
+  - `conda run -n opencda python -m opencda.tools.lgcp_rsu_bev_train_smoke --train-root docs\doc_workspace\LGCP\experiments\rsu_bev_training_samples\20260720_rsu_bev_sparse_top5_train5 --val-root docs\doc_workspace\LGCP\experiments\rsu_bev_training_samples\20260720_rsu_bev_sparse_top5_val6 --output-dir docs\doc_workspace\LGCP\experiments\rsu_bev_training\20260720_rsu_bev_train_top5_train5_val6_full_ap_smoke --query-mode learnable_channel --dataset-query-mode mean --freeze-mode query_heads --lr 0.0001 --epochs 1 --max-train-steps 5 --max-val-steps 6 --device cpu --eval-ap --postprocess-score-threshold 0.01`
+- 输出目录：
+  - `docs/doc_workspace/LGCP/experiments/rsu_bev_training/20260720_rsu_bev_train_top5_train5_val6_full_ap_smoke`
+- 结果：
+  - train samples / val samples：`5 / 6`
+  - train final loss：`4.150855602`
+  - val final loss：`0.919490865`
+  - val samples evaluated：`6`
+  - val GT boxes：`72`
+  - val predicted samples：`166`
+  - score threshold：`0.01`
+  - AP@0.3 / AP@0.5 / AP@0.7：`0.563040 / 0.499721 / 0.164391`
+- 观察：
+  - 完整 val6 AP@0.5 从 val2 smoke 的 `0.682186` 回落到 `0.499721`，AP@0.7 从 `0.285283` 回落到 `0.164391`。
+  - 这说明 val2 过小，容易高估；完整 val6 更符合此前“AP@0.7 仍弱”的判断。
+- 结论：
+  - Top-5 完整 split 的训练和 AP calibration smoke 已完成。
+  - 当前结果仍不进入 `results.md`：它只覆盖单场景、Top-5 planned areas、1 epoch / 5 train steps，不能支撑论文主性能 claim。
+  - 下一步若继续模型级路线，应尝试 Top-23 full validation 或多场景，并考虑训练更多 head/query step；若短期修订，仍建议将 neural route 写成 feasibility / limitation。
+
+## RSU BEV Top-5 val6 threshold sweep
+
+- 时间：2026-07-20
+- 代码变更：
+  - `opencda/tools/lgcp_rsu_bev_train_smoke.py` 新增 `--ap-score-thresholds`，可在同一次 validation pass 中输出多行 threshold AP summary。
+  - `--postprocess-score-threshold` 保持兼容；当 `--ap-score-thresholds` 非空时由 sweep 列表覆盖。
+- 验证：
+  - `python -m py_compile opencda\tools\lgcp_rsu_bev_train_smoke.py`
+- 命令：
+  - `conda run -n opencda python -m opencda.tools.lgcp_rsu_bev_train_smoke --train-root docs\doc_workspace\LGCP\experiments\rsu_bev_training_samples\20260720_rsu_bev_sparse_top5_train5 --val-root docs\doc_workspace\LGCP\experiments\rsu_bev_training_samples\20260720_rsu_bev_sparse_top5_val6 --output-dir docs\doc_workspace\LGCP\experiments\rsu_bev_training\20260720_rsu_bev_train_top5_val6_threshold_sweep --query-mode learnable_channel --dataset-query-mode mean --freeze-mode query_heads --lr 0.0001 --epochs 1 --max-train-steps 5 --max-val-steps 6 --device cpu --eval-ap --ap-score-thresholds '0.005,0.01,0.02,0.05,0.1'`
+- 输出目录：
+  - `docs/doc_workspace/LGCP/experiments/rsu_bev_training/20260720_rsu_bev_train_top5_val6_threshold_sweep`
+- 结果：
+
+| Score threshold | Pred samples | AP@0.3 | AP@0.5 | AP@0.7 |
+| ---: | ---: | ---: | ---: | ---: |
+| `0.005` | `420` | `0.337772` | `0.301497` | `0.107598` |
+| `0.01` | `166` | `0.563040` | `0.499721` | `0.164391` |
+| `0.02` | `96` | `0.808087` | `0.717947` | `0.226872` |
+| `0.05` | `67` | `0.820811` | `0.806983` | `0.245818` |
+| `0.1` | `40` | `0.555556` | `0.555556` | `0.201811` |
+
+- 观察：
+  - Top-5 val6 的 AP 对 score threshold 高度敏感。
+  - `0.005` 产生 420 个 prediction samples，假阳性过多；`0.1` prediction samples 降到 40，开始漏检。
+  - 当前 sweep 中 threshold `0.05` 的 AP@0.5 最好，为 `0.806983`；AP@0.7 仍只有 `0.245818`。
+- 结论：
+  - Validation AP calibration 工具已具备多阈值 sweep 能力。
+  - 该结果仍是单场景 Top-5 smoke，只能说明 calibration sensitivity，不能证明 LGCP neural feature route 已达到论文主性能要求。
+  - 下一步应优先尝试 Top-23 / 多场景 sweep，或将 neural route 在论文中明确降级为 feasibility / limitation。
+
+## V2X-ViT compressed feature payload probe
+
+- 时间：2026-07-20
+- 动机：
+  - 当前 `pointpillar_attentive_fusion` route 传输的是 `pillar_vfe + scatter` 后的 `64 x H x W` scatter BEV，第二跳 feature bytes 明显大于第一次 area point slice。
+  - 用户设想更接近“backbone 之后、fusion 模块之前”的特征传输；`pointpillar_v2xvit_fusion` 正好包含 `BaseBEVBackbone -> shrink_conv -> NaiveCompressor -> V2XTransformer`。
+- 新增脚本：
+  - `opencda/tools/lgcp_v2xvit_feature_probe.py`
+- 代码路径：
+  - 复用 LGCP area point-slice pipeline：member CAV 点云按 area 切片，投到统一 reference frame。
+  - 使用 V2X-ViT checkpoint 的 `pillar_vfe + scatter + backbone + shrink_conv + naive_compressor.encoder`。
+  - 统计三种 leader-to-RSU payload：
+    - scatter sparse bytes：作为当前 attentive scatter route 的同口径对照。
+    - compressed full bytes：完整 compressed latent canvas。
+    - compressed crop bytes：只传每个 planned area 对应的 compressed latent crop，并加 `1` cell halo。
+- CoBEVT checkpoint 检查：
+  - `opencood/logs/pointpillar_cobevt_fusion/config.yaml` 实际使用 `CamIntermediateFusionDataset`、`RgbPreprocessor`、`corpbevt`、`CameraBevPostprocessor` 和 segmentation loss。
+  - 当前不适合作为 LGCP LiDAR point-slice detection route 的直接替换 checkpoint。
+- V2X-ViT Top-5 首帧 smoke：
+  - 输出目录：`docs/doc_workspace/LGCP/experiments/hierarchy_plan/20260720_lgcp_v2xvit_feature_probe_top5_1f`
+  - compressed latent shape：`5 x 8 x 48 x 176`
+  - member area point bytes：`17216`
+  - scatter sparse bytes：`125440`
+  - compressed full bytes：`675840`
+  - compressed crop bytes：`4848`
+- V2X-ViT Top-23 11 帧 probe：
+  - 输出目录：`docs/doc_workspace/LGCP/experiments/hierarchy_plan/20260720_lgcp_v2xvit_feature_probe_area23_11f`
+  - compressed latent shape per frame：`23 x 8 x 48 x 176`
+  - member area point bytes：`527840` total，`47985.45 bytes/frame`
+  - scatter sparse bytes：`5949952` total，`540904.73 bytes/frame`
+  - compressed full bytes：`34197504` total，`3108864.00 bytes/frame`
+  - compressed crop bytes：`248912` total，`22628.36 bytes/frame`
+- 关键比例：
+  - scatter sparse / member raw area points：`11.27x`
+  - compressed full / member raw area points：`64.79x`
+  - compressed crop / member raw area points：`0.47x`
+  - compressed crop / scatter sparse：`0.04x`
+- 观察：
+  - V2X-ViT compressed full canvas 仍然太大，不能直接通信化。
+  - V2X-ViT compressed area crop 非常有希望：Top-23 11 帧第二跳只约 `22.63 KB/frame`，低于第一次 area point slice 的 `47.99 KB/frame`。
+  - 这说明问题不在“中期特征一定比点云大”，而在“传输 scatter BEV 或 full canvas 的层级/格式不合适”。
+- area size 讨论：
+  - 调大 area 会增加第一次点云切片 bytes，也会增加 area crop feature cells；如果传 full canvas，feature 形状不变但通信量过大。
+  - 如果传 compressed area crop，feature bytes 会随 crop area 增长，但由于 V2X-ViT compressed grid 分辨率较低、channel 只有 `8`，增长速度可能仍低于 raw point bytes。
+  - 该方向可以作为 sensitivity：较大 area 更容易解释 feature bytes / point bytes 的优势，但会牺牲 LGCP 的精细 area selection 和调度粒度。
+- 结论：
+  - 新模型方向值得继续，优先级高于继续压当前 attentive scatter BEV。
+  - 下一步应实现 V2X-ViT compressed crop 的 RSU assembly / decoder / transformer / detection probe，验证通信量优势是否能同时保留 AP。
+
+## V2X-ViT compressed feature RSU detection smoke
+
+- 时间：2026-07-20
+- 目标：
+  - 验证 V2X-ViT compressed feature route 不仅能统计通信量，还能接回 RSU 侧 decoder / V2XTransformer / detection heads。
+  - 对比 `packet-mode=crop` 与 `packet-mode=full`，判断 AP 低是否主要由 area crop 丢信息导致。
+- 新增脚本：
+  - `opencda/tools/lgcp_v2xvit_rsu_detection_probe.py`
+- 流程：
+  - area point slices -> `pillar_vfe + scatter + BaseBEVBackbone + shrink_conv + NaiveCompressor.encoder`
+  - RSU 侧按 `crop/full` packet mode 装配 compressed latent
+  - `NaiveCompressor.decoder`
+  - mean RSU query + V2XTransformer
+  - detection heads + planned-area AP
+- 验证：
+  - `python -m py_compile opencda\tools\lgcp_v2xvit_rsu_detection_probe.py`
+- Top-5 首帧 crop-mode：
+  - 输出目录：`docs/doc_workspace/LGCP/experiments/hierarchy_plan/20260720_lgcp_v2xvit_rsu_detection_top5_1f_crop`
+  - compressed shape：`5 x 8 x 48 x 176`
+  - decoded shape：`5 x 256 x 48 x 176`
+  - fusion input：`6 x 256 x 48 x 176`
+  - fused feature：`1 x 256 x 48 x 176`
+  - psm / rm：`1 x 2 x 48 x 176` / `1 x 14 x 48 x 176`
+  - pred / GT boxes：`18 / 12`
+  - AP@0.3 / AP@0.5 / AP@0.7：`0.468204 / 0.065476 / 0.000000`
+- Top-5 首帧 full-latent upper bound：
+  - 输出目录：`docs/doc_workspace/LGCP/experiments/hierarchy_plan/20260720_lgcp_v2xvit_rsu_detection_top5_1f_full`
+  - pred / GT boxes：`4 / 12`
+  - AP@0.3 / AP@0.5 / AP@0.7：`0.333333 / 0.229167 / 0.000000`
+- 观察：
+  - V2X-ViT compressed route 的接口已经打通：compressed latent 可以装配、decode、进入 transformer，并输出 detection。
+  - full-latent AP@0.5 高于 crop-mode，但仍很低，说明问题不只是 crop 丢信息。
+  - 当前最大疑点是 V2X-ViT 原 checkpoint 的 ego/query 语义与 LGCP RSU area-packet 语义不匹配；mean RSU query 仍是 workaround。
+- 结论：
+  - V2X-ViT route 在通信量上明显优于 scatter BEV，但检测质量仍未闭环。
+  - 下一步如果继续，应做 threshold/query sweep、小 area 数到 Top-23 扩展，以及显式 RSU query / head 微调；短期论文仍只能把它写成 promising feature-packet route，而不是主性能结果。
+
+## V2X-ViT RSU detection threshold sweep
+
+- 时间：2026-07-20
+- 代码变更：
+  - `opencda/tools/lgcp_v2xvit_rsu_detection_probe.py` 新增 `--score-thresholds`，支持一次输出多阈值 AP summary。
+- 验证：
+  - `python -m py_compile opencda\tools\lgcp_v2xvit_rsu_detection_probe.py`
+- 目标：
+  - 判断上一轮 V2X-ViT crop/full detection AP 低是否只是 postprocess score threshold 没调好。
+- Top-5 首帧 crop-mode threshold sweep：
+  - 输出目录：`docs/doc_workspace/LGCP/experiments/hierarchy_plan/20260720_lgcp_v2xvit_rsu_detection_top5_1f_crop_thr_sweep`
+  - thresholds：`0.005, 0.01, 0.02, 0.05, 0.1`
+  - pred / GT boxes：`18 / 12`
+  - 所有阈值下 AP@0.3 / AP@0.5 / AP@0.7 均为：`0.468204 / 0.065476 / 0.000000`
+- Top-5 首帧 full-latent threshold sweep：
+  - 输出目录：`docs/doc_workspace/LGCP/experiments/hierarchy_plan/20260720_lgcp_v2xvit_rsu_detection_top5_1f_full_thr_sweep`
+  - thresholds：`0.005, 0.01, 0.02, 0.05, 0.1`
+  - pred / GT boxes：`4 / 12`
+  - 所有阈值下 AP@0.3 / AP@0.5 / AP@0.7 均为：`0.333333 / 0.229167 / 0.000000`
+- 观察：
+  - `0.005` 到 `0.1` 之间预测数量完全不变，说明这些 predictions 的 score 都高于 `0.1`。
+  - AP 低不是简单 score threshold calibration 问题。
+  - full-latent upper bound 也低，继续指向 query 语义、RSU area-packet 输入分布、V2X-ViT ego-centered training assumption 不匹配。
+- 结论：
+  - V2X-ViT compressed crop 解决了 byte boundary，但 detection quality 需要训练或更合理的 RSU query / packet semantic adaptation。
+  - 下一步不应继续单纯扫 score threshold；应做 query-mode sweep 或实现显式 RSU query/head 微调。
+
+## V2X-ViT RSU detection query-mode sweep
+
+- 时间：2026-07-20
+- 目标：
+  - 在 threshold sweep 排除简单 score calibration 后，检查 V2X-ViT route 是否主要受 query 语义影响。
+  - 对比 `mean` / `zero` / `first` 三种 query-mode，其中 `first` 表示不插入 synthetic RSU query，直接使用第一个 leader feature 作为 V2XTransformer 输出 query。
+- 输出目录：
+  - `docs/doc_workspace/LGCP/experiments/hierarchy_plan/20260720_lgcp_v2xvit_rsu_detection_top5_1f_crop_zero`
+  - `docs/doc_workspace/LGCP/experiments/hierarchy_plan/20260720_lgcp_v2xvit_rsu_detection_top5_1f_crop_first`
+  - `docs/doc_workspace/LGCP/experiments/hierarchy_plan/20260720_lgcp_v2xvit_rsu_detection_top5_1f_full_zero`
+  - `docs/doc_workspace/LGCP/experiments/hierarchy_plan/20260720_lgcp_v2xvit_rsu_detection_top5_1f_full_first`
+- 结果：
+
+| Packet mode | Query mode | Pred / GT | AP@0.3 | AP@0.5 | AP@0.7 |
+| --- | --- | ---: | ---: | ---: | ---: |
+| crop | mean | `18 / 12` | `0.468204` | `0.065476` | `0.000000` |
+| crop | zero | `13 / 12` | `0.083333` | `0.037037` | `0.000000` |
+| crop | first | `7 / 12` | `0.583333` | `0.476190` | `0.113095` |
+| full latent | mean | `4 / 12` | `0.333333` | `0.229167` | `0.000000` |
+| full latent | zero | `0 / 12` | `0.000000` | `0.000000` | `0.000000` |
+| full latent | first | `15 / 12` | `0.980769` | `0.731481` | `0.273810` |
+
+- 观察：
+  - Query mode 是 V2X-ViT RSU route 的强影响因素。
+  - `first` 明显优于 `mean` / `zero`，说明原 V2X-ViT checkpoint 很依赖第 0 个 agent / ego query 的语义。
+  - `crop + first` 在通信友好 packet 下 AP@0.5 达到 `0.476190`，比 `crop + mean` 的 `0.065476` 明显更好。
+  - `full + first` 作为 upper-bound payload AP@0.5 达到 `0.731481`，说明模型本身并非完全不适合 LGCP area packet；关键在 query 与 packet 语义。
+- 结论：
+  - V2X-ViT route 的下一步应优先围绕 query 语义推进，而不是继续扫 score threshold。
+  - `first` 不能直接作为最终 RSU global query 机制，但可作为 upper-bound / diagnostic，证明训练显式 RSU query 或选择更合理 leader query 有价值。
+  - 下一步应扩展 `crop + first` 到更多 areas / frames，并设计 learnable RSU query 或 leader-query selection。
+
+## V2X-ViT crop+first multi-frame / area-count check
+
+- 时间：2026-07-20
+- 目标：
+  - 将上一轮 Top-5 首帧 `crop+first` 的正向信号扩展到 11 帧，检查是否只是首帧偶然结果。
+  - 将 Top-5 扩到 Top-10 首帧，检查 first-query diagnostic 是否随 area 数增加仍可用。
+- Top-5 11-frame crop+first：
+  - 输出目录：`docs/doc_workspace/LGCP/experiments/hierarchy_plan/20260720_lgcp_v2xvit_rsu_detection_top5_11f_crop_first`
+  - frames：`11`
+  - pred / GT samples：`66 / 132`
+  - AP@0.3 / AP@0.5 / AP@0.7：`0.500000 / 0.369657 / 0.081239`
+  - compressed crop cells：`3354`
+  - estimated compressed crop bytes：`53664` total / `4878.55 bytes/frame`
+- Top-10 1-frame crop+first：
+  - 输出目录：`docs/doc_workspace/LGCP/experiments/hierarchy_plan/20260720_lgcp_v2xvit_rsu_detection_top10_1f_crop_first`
+  - pred / GT boxes：`2 / 22`
+  - AP@0.3 / AP@0.5 / AP@0.7：`0.090909 / 0.090909 / 0.022727`
+  - compressed crop cells：`609`
+- 观察：
+  - Top-5 11-frame 仍有检测信号，但 AP@0.5 从首帧 `0.476190` 降到 `0.369657`，AP@0.7 仍弱。
+  - Top-10 首帧明显退化，说明 `first` query 对 area/leader 顺序和覆盖范围敏感，不是可扩展 RSU global query。
+  - 通信量仍非常小：Top-5 11-frame compressed crop 约 `4.88 KB/frame`。
+- 结论：
+  - V2X-ViT compressed crop route 的 byte boundary 继续成立。
+  - 当前 first-query 只能作为 diagnostic / upper-bound，不能作为 LGCP RSU global aggregation 机制。
+  - 下一步应实现 learnable RSU query / head 微调，或设计稳定的 leader-query selection，而不是继续直接扩大 `first`。
+
+## V2X-ViT leader-query selection diagnostic
+
+- 时间：2026-07-20
+- 代码变更：
+  - `opencda/tools/lgcp_v2xvit_rsu_detection_probe.py` 新增 `--leader-query-selection`：
+    - `plan_order`
+    - `max_area_points`
+    - `max_member_upload`
+    - `max_group_size`
+  - 默认 `plan_order` 保持旧行为；该参数主要用于 `query-mode=first` 的诊断。
+- 验证：
+  - `python -m py_compile opencda\tools\lgcp_v2xvit_rsu_detection_probe.py`
+- 目标：
+  - 检查 Top-10 首帧 `crop+first` 退化是否可通过简单重排第 0 个 leader query 修复。
+- 结果：
+
+| Setting | Query leader | Pred / GT | AP@0.3 | AP@0.5 | AP@0.7 |
+| --- | --- | ---: | ---: | ---: | ---: |
+| Top-10 crop+first plan order | plan first | `2 / 22` | `0.090909` | `0.090909` | `0.022727` |
+| Top-10 crop+first max area points | `12_9 / leader 5` | `2 / 22` | `0.090909` | `0.090909` | `0.022727` |
+| Top-10 crop+first max group size | `12_9 / leader 5` | `2 / 22` | `0.090909` | `0.090909` | `0.022727` |
+
+- 观察：
+  - `max_area_points` 与 `max_group_size` 均选择同一个 query leader，且结果与 plan order 无差异。
+  - 简单启发式 leader query selection 不能修复 Top-10 退化。
+  - 并行运行 `max_member_upload` 时因 V2X-ViT 多进程资源占用超时，已停止遗留 Python 进程；本轮不继续消耗时间补跑，因为前两种启发式已给出明确负面信号。
+- 结论：
+  - V2X-ViT route 后续应转向 learnable RSU query / head 微调，或更系统的 query 训练，而不是手工选择某个 leader 作为全局 query。
+
+## V2X-ViT explicit RSU query/head train smoke
+
+- 时间：2026-07-20
+- 目标：
+  - 将 V2X-ViT compressed packet route 从纯推理 probe 推进到最小训练闭环。
+  - 验证 area point slices -> compressed leader packet -> RSU learnable query -> V2XTransformer -> detection heads -> PointPillarLoss 的梯度链路可运行。
+- 新增代码：
+  - `opencood/opencood/models/lgcp_v2xvit_rsu.py`
+    - 输入 `compressed_features` 或 `decoded_features`。
+    - 复用 `NaiveCompressor.decoder`、`V2XTransformer`、`cls_head`、`reg_head`。
+    - 支持 `input` / `mean` / `zero` / `learnable_channel` RSU query。
+  - `opencda/tools/lgcp_v2xvit_rsu_train_smoke.py`
+    - 在线复用 LGCP area 点云切片与 V2X-ViT feature encoder，生成 1-step train sample。
+    - 默认冻结 checkpoint 主体，只训练 RSU query 和 detection heads。
+- 验证：
+  - `python -m py_compile opencood\opencood\models\lgcp_v2xvit_rsu.py opencda\tools\lgcp_v2xvit_rsu_train_smoke.py`
+- 运行命令：
+
+```powershell
+conda run -n opencda python -m opencda.tools.lgcp_v2xvit_rsu_train_smoke --dataset-root D:\Data\Carla --scenario-id 2026_07_15_02_33_21 --assignment-plan docs\doc_workspace\LGCP\experiments\hierarchy_plan\20260718_lgcp_carla_hierarchy_plan_area23_11f\area_assignment_plan.csv --output-dir docs\doc_workspace\LGCP\experiments\hierarchy_plan\20260720_lgcp_v2xvit_rsu_train_smoke_1f2a --fusion-method intermediate_v2xvit --reference-cav-id 1 --max-frames 1 --max-areas-per-frame 2 --grid-size-x 10 --grid-size-y 6 --packet-mode crop --query-mode learnable_channel --freeze-mode query_heads --max-train-steps 1 --device cpu
+```
+
+- 输出目录：
+  - `docs/doc_workspace/LGCP/experiments/hierarchy_plan/20260720_lgcp_v2xvit_rsu_train_smoke_1f2a`
+- 结果：
+  - train steps：`1`
+  - trainable parameters：`4368`
+  - train final loss：`24.775737337`
+  - query gradient norm：`348.719512939`
+  - compressed input shape：`2 x 8 x 48 x 176`
+  - output shapes：`psm 1 x 2 x 48 x 176`，`rm 1 x 14 x 48 x 176`
+  - planned areas / valid leader features / GT boxes：`2 / 2 / 6`
+- 结论：
+  - V2X-ViT compressed feature route 已具备显式 RSU query/head 微调的最小代码闭环。
+  - 该结果只说明 loss 和 gradient path 可运行，不是感知性能结果，不进入 `results.md`。
+  - 下一步应扩大到 train/val split，并增加 validation AP hook；若 AP@0.7 仍弱，再考虑解冻 V2XTransformer 后层或停止 neural feature 主线。
+
+## V2X-ViT explicit RSU query/head train-val AP smoke
+
+- 时间：2026-07-20
+- 目标：
+  - 将上一轮 1-step train smoke 扩展为 train / validation / AP hook 最小闭环。
+  - 验证 `lgcp_v2xvit_rsu_train_smoke.py` 可以生成 `loss_trace.csv`、`train_summary.csv` 和 `val_ap_summary.csv`。
+- 代码变更：
+  - `opencda/tools/lgcp_v2xvit_rsu_train_smoke.py` 新增：
+    - `--val-start-index`
+    - `--val-max-frames`
+    - `--max-val-steps`
+    - `--eval-ap`
+    - `--ap-score-thresholds`
+  - validation 阶段复用 planned-area GT，并将 prediction 也过滤到同一 planned-area scope。
+- 验证：
+  - `conda run -n opencda python -m py_compile opencda\tools\lgcp_v2xvit_rsu_train_smoke.py opencood\opencood\models\lgcp_v2xvit_rsu.py`
+- 运行命令：
+
+```powershell
+conda run -n opencda python -m opencda.tools.lgcp_v2xvit_rsu_train_smoke --dataset-root D:\Data\Carla --scenario-id 2026_07_15_02_33_21 --assignment-plan docs\doc_workspace\LGCP\experiments\hierarchy_plan\20260718_lgcp_carla_hierarchy_plan_area23_11f\area_assignment_plan.csv --output-dir docs\doc_workspace\LGCP\experiments\hierarchy_plan\20260720_lgcp_v2xvit_rsu_trainval_smoke_1f2a --fusion-method intermediate_v2xvit --reference-cav-id 1 --start-index 0 --max-frames 1 --val-start-index 1 --val-max-frames 1 --max-areas-per-frame 2 --grid-size-x 10 --grid-size-y 6 --packet-mode crop --query-mode learnable_channel --freeze-mode query_heads --max-train-steps 1 --max-val-steps 1 --eval-ap --ap-score-thresholds '0.01,0.05' --device cpu
+```
+
+- 输出目录：
+  - `docs/doc_workspace/LGCP/experiments/hierarchy_plan/20260720_lgcp_v2xvit_rsu_trainval_smoke_1f2a`
+- 结果：
+  - train timestamp / val timestamp：`000060 / 000062`
+  - train final loss / val final loss：`24.375071751 / 22.165417312`
+  - trainable parameters：`4368`
+  - query gradient norm：`342.033935547`
+  - val predictions / GT boxes：`7 / 6`
+  - thresholds `0.01` 和 `0.05` 均为 AP@0.3/0.5/0.7 `0.055556 / 0.055556 / 0.000000`
+- 结论：
+  - V2X-ViT compressed route 已具备 train / val / AP hook 闭环。
+  - 当前只训练 1 step、2 areas、1 val frame，AP 数值只用于确认评估链路，不是性能结论。
+  - 下一步应跑 Top-5 train5 / val6 级别的 smoke，并视 AP@0.7 决定是否从 `query_heads` 扩展到解冻 V2XTransformer 后层。
+
+## V2X-ViT explicit RSU query/head Top-5 train5 / val6 smoke
+
+- 时间：2026-07-20
+- 目标：
+  - 将 V2X-ViT explicit RSU query/head 从极小 `1+1` smoke 扩大到与 PointPillar RSU BEV attentive 相同的 Top-5 train5 / val6 诊断规模。
+  - 检查仅训练 learnable RSU query + detection heads 是否足以校准 compressed area-crop route。
+- 运行命令：
+
+```powershell
+conda run -n opencda python -m opencda.tools.lgcp_v2xvit_rsu_train_smoke --dataset-root D:\Data\Carla --scenario-id 2026_07_15_02_33_21 --assignment-plan docs\doc_workspace\LGCP\experiments\hierarchy_plan\20260718_lgcp_carla_hierarchy_plan_area23_11f\area_assignment_plan.csv --output-dir docs\doc_workspace\LGCP\experiments\hierarchy_plan\20260720_lgcp_v2xvit_rsu_trainval_top5_train5_val6 --fusion-method intermediate_v2xvit --reference-cav-id 1 --start-index 0 --max-frames 5 --val-start-index 5 --val-max-frames 6 --max-areas-per-frame 5 --grid-size-x 10 --grid-size-y 6 --packet-mode crop --query-mode learnable_channel --freeze-mode query_heads --max-train-steps 5 --max-val-steps 6 --eval-ap --ap-score-thresholds '0.01,0.05,0.1' --device cpu
+```
+
+- 输出目录：
+  - `docs/doc_workspace/LGCP/experiments/hierarchy_plan/20260720_lgcp_v2xvit_rsu_trainval_top5_train5_val6`
+- 结果：
+  - train / val steps：`5 / 6`
+  - trainable parameters：`4368`
+  - train final loss / val final loss：`13.608617907 / 13.522501738`
+  - query gradient norm：`177.555145264`
+  - val GT / pred samples：`72 / 86`
+  - thresholds `0.01 / 0.05 / 0.1` 均为 AP@0.3/0.5/0.7 `0.053819 / 0.030382 / 0.000000`
+- 观察：
+  - 训练 loss 从 `14.415974994` 降到 `13.608617907`，说明优化链路仍有效。
+  - validation AP 很低，且 score threshold 不影响结果，和 earlier threshold sweep 一致。
+  - 与 PointPillar scatter RSU BEV attentive 的 Top-5 val6 threshold `0.05` AP@0.5 `0.806983` / AP@0.7 `0.245818` 相比，V2X-ViT compressed route 只训练 query+heads 明显不够。
+- 结论：
+  - V2X-ViT compressed area-crop route 的 byte boundary 仍然有吸引力，但 `query_heads` 冻结策略不能形成可用检测性能。
+  - 下一步若继续 neural feature 主线，应尝试解冻 V2XTransformer 后层或更系统的 RSU query/fusion 微调；否则应把 V2X-ViT route 保留为通信可行但模型语义未闭环的 limitation。
+
+## V2X-ViT query_fusion_heads freeze mode sanity check
+
+- 时间：2026-07-20
+- 目标：
+  - 为上一轮 Top-5 `query_heads` 负向诊断准备更强训练策略。
+  - 增加可训练 RSU query + V2XTransformer fusion + detection heads 的 freeze mode。
+- 代码变更：
+  - `opencda/tools/lgcp_v2xvit_rsu_train_smoke.py`
+    - `--freeze-mode` 新增 `query_fusion_heads`。
+    - 该模式冻结 encoder / decoder，但训练 `rsu_query_channel`、`fusion_net`、`cls_head`、`reg_head`。
+- 验证：
+  - `conda run -n opencda python -m py_compile opencda\tools\lgcp_v2xvit_rsu_train_smoke.py`
+- 运行命令：
+
+```powershell
+conda run -n opencda python -m opencda.tools.lgcp_v2xvit_rsu_train_smoke --dataset-root D:\Data\Carla --scenario-id 2026_07_15_02_33_21 --assignment-plan docs\doc_workspace\LGCP\experiments\hierarchy_plan\20260718_lgcp_carla_hierarchy_plan_area23_11f\area_assignment_plan.csv --output-dir docs\doc_workspace\LGCP\experiments\hierarchy_plan\20260720_lgcp_v2xvit_rsu_trainval_1f2a_query_fusion_heads --fusion-method intermediate_v2xvit --reference-cav-id 1 --start-index 0 --max-frames 1 --val-start-index 1 --val-max-frames 1 --max-areas-per-frame 2 --grid-size-x 10 --grid-size-y 6 --packet-mode crop --query-mode learnable_channel --freeze-mode query_fusion_heads --max-train-steps 1 --max-val-steps 1 --eval-ap --ap-score-thresholds '0.01,0.05' --device cpu
+```
+
+- 输出目录：
+  - `docs/doc_workspace/LGCP/experiments/hierarchy_plan/20260720_lgcp_v2xvit_rsu_trainval_1f2a_query_fusion_heads`
+- 结果：
+  - trainable parameters：`5490569`
+  - train / val loss：`24.629682239 / 9.806766111`
+  - query gradient norm：`348.058624268`
+  - val AP@0.3/0.5/0.7：`0.041667 / 0.041667 / 0.000000`
+- 结论：
+  - `query_fusion_heads` 模式可运行，可作为下一轮 Top-5 train5 / val6 的候选策略。
+  - 1-step AP 仍只用于确认链路，不作为性能判断。
+
+## V2X-ViT query_fusion_heads Top-5 train5 / val6 smoke
+
+- 时间：2026-07-20
+- 目标：
+  - 验证解冻 V2XTransformer fusion + detection heads + RSU query 是否能修复 `query_heads` 冻结策略的低 AP。
+  - 使用与上一轮 `query_heads` 相同的 Top-5 train5 / val6 split，便于直接比较。
+- 运行命令：
+
+```powershell
+conda run -n opencda python -m opencda.tools.lgcp_v2xvit_rsu_train_smoke --dataset-root D:\Data\Carla --scenario-id 2026_07_15_02_33_21 --assignment-plan docs\doc_workspace\LGCP\experiments\hierarchy_plan\20260718_lgcp_carla_hierarchy_plan_area23_11f\area_assignment_plan.csv --output-dir docs\doc_workspace\LGCP\experiments\hierarchy_plan\20260720_lgcp_v2xvit_rsu_trainval_top5_train5_val6_query_fusion_heads --fusion-method intermediate_v2xvit --reference-cav-id 1 --start-index 0 --max-frames 5 --val-start-index 5 --val-max-frames 6 --max-areas-per-frame 5 --grid-size-x 10 --grid-size-y 6 --packet-mode crop --query-mode learnable_channel --freeze-mode query_fusion_heads --max-train-steps 5 --max-val-steps 6 --eval-ap --ap-score-thresholds '0.01,0.05,0.1' --device cpu
+```
+
+- 输出目录：
+  - `docs/doc_workspace/LGCP/experiments/hierarchy_plan/20260720_lgcp_v2xvit_rsu_trainval_top5_train5_val6_query_fusion_heads`
+- 结果：
+  - train / val steps：`5 / 6`
+  - trainable parameters：`5490569`
+  - train final loss / val final loss：`2.266083973 / 2.659839972`
+  - query gradient norm：`9.641363144`
+  - val GT / pred samples：
+    - threshold `0.01`：`72 / 96`
+    - threshold `0.05`：`72 / 96`
+    - threshold `0.1`：`72 / 28`
+  - AP@0.3/0.5/0.7：
+    - threshold `0.01`：`0.018649 / 0.003945 / 0.000000`
+    - threshold `0.05`：`0.018649 / 0.003945 / 0.000000`
+    - threshold `0.1`：`0.000694 / 0.000000 / 0.000000`
+- 对比上一轮：
+  - `query_heads` Top-5 val6 AP@0.3/0.5/0.7 为 `0.053819 / 0.030382 / 0.000000`。
+  - `query_fusion_heads` loss 大幅下降，但 AP 反而更低。
+- 结论：
+  - 当前 V2X-ViT compressed crop + 小样本微调路线存在明显 optimization/perception mismatch：loss 能下降，但 planned-area AP 不改善。
+  - 继续投入完整训练前，应谨慎；短期论文主证据不应依赖该 route。
+  - 更稳妥口径：V2X-ViT compressed area crop 证明 byte boundary 可行，但 RSU/global query 语义需要专门数据规模和训练设计；当前 LGCP 主性能 claim 应回到 box-level hierarchy late-fusion 与 raw/area-slice accounting。
+
+## V2X-ViT native intermediate fusion with RSU ego and area point crops
+
+- 时间：2026-07-20
+- 背景：
+  - 新思路不是手工裁剪 compressed latent，也不是把 area leader packet 当作 agent feature。
+  - 改为在点云通信层裁剪：每个真实 agent 的 `lidar_np` 只保留 planned-area union 内的点，随后完全复用原 V2X-ViT intermediate inference 流程。
+  - RSU 作为 ego/reference slot；其他输入仍是真实 CAV agent，因此 `record_len` / `prior_encoding` / `spatial_correction_matrix` 语义更接近原 checkpoint。
+- 新增代码：
+  - `opencda/tools/lgcp_v2xvit_area_point_crop_eval.py`
+    - `--ego-cav-id -1`：RSU 作为 ego。
+    - `--reference-z-override`：将高架 RSU ego 坐标的 z 调整到车载 checkpoint 可处理高度。
+    - 输出 `summary.csv`、`frame_summary.csv`、`cav_area_points.csv`。
+- 关键实现 caveat：
+  - 真实 RSU LiDAR pose 为 `z=12m`，而 `pointpillar_v2xvit_fusion` 的 LiDAR range 是车辆传感器高度附近。
+  - 若直接用真实 RSU z，地面点投到 RSU 坐标约为 `z=-10m`，会被预处理全部裁掉并导致 empty voxel。
+  - 当前 smoke 使用 `--reference-z-override 2.0`，保留 RSU x/y/yaw，但用车载高度作为 OpenCOOD reference z，并将 RSU 自身点云变换到该 reference。
+- 验证：
+  - `conda run -n opencda python -m py_compile opencda\tools\lgcp_v2xvit_area_point_crop_eval.py`
+- 1-frame Top-5 command：
+
+```powershell
+conda run -n opencda python -m opencda.tools.lgcp_v2xvit_area_point_crop_eval --dataset-root D:\Data\Carla --scenario-id 2026_07_15_02_33_21 --assignment-plan docs\doc_workspace\LGCP\experiments\hierarchy_plan\20260718_lgcp_carla_hierarchy_plan_area23_11f\area_assignment_plan.csv --output-dir docs\doc_workspace\LGCP\experiments\hierarchy_plan\20260720_lgcp_v2xvit_area_point_crop_rsu_ego_top5_1f_z2 --fusion-method intermediate_v2xvit --ego-cav-id -1 --reference-z-override 2.0 --start-index 0 --max-frames 1 --max-areas-per-frame 5 --max-cavs 5 --grid-size-x 10 --grid-size-y 6 --eval-scope planned_areas --postprocess-score-threshold 0.05
+```
+
+- 1-frame Top-5 result：
+  - AP@0.3/0.5/0.7：`0.222222 / 0.222222 / 0.111111`
+  - pred / GT：`2 / 9`
+  - CAV area upload bytes：`88704`
+  - RSU ego area bytes：`2688`
+- 11-frame Top-5 command：
+
+```powershell
+conda run -n opencda python -m opencda.tools.lgcp_v2xvit_area_point_crop_eval --dataset-root D:\Data\Carla --scenario-id 2026_07_15_02_33_21 --assignment-plan docs\doc_workspace\LGCP\experiments\hierarchy_plan\20260718_lgcp_carla_hierarchy_plan_area23_11f\area_assignment_plan.csv --output-dir docs\doc_workspace\LGCP\experiments\hierarchy_plan\20260720_lgcp_v2xvit_area_point_crop_rsu_ego_top5_11f_z2 --fusion-method intermediate_v2xvit --ego-cav-id -1 --reference-z-override 2.0 --start-index 0 --max-frames 11 --max-areas-per-frame 5 --max-cavs 5 --grid-size-x 10 --grid-size-y 6 --eval-scope planned_areas --postprocess-score-threshold 0.05
+```
+
+- 11-frame Top-5 result：
+  - AP@0.3/0.5/0.7：`0.228011 / 0.208964 / 0.011765`
+  - pred / GT：`21 / 85`
+  - CAV area upload bytes：`1108432` total / `100766.55 bytes/frame`
+  - RSU ego area bytes：`72128` total
+  - total area point bytes：`107323.64 bytes/frame`
+- 结论：
+  - 该路线明显比 V2X-ViT compressed latent RSU route 更合理：AP 没有崩到接近 0，说明保持原 model intermediate fusion 语义是对的。
+  - AP@0.7 仍弱，且当前只用 Top-5 areas / max 5 agents / 单场景 11 帧，因此仍是 smoke。
+  - 这条路线符合“点云区域裁剪通信 + 原模型 intermediate fusion”的论文机制解释，可作为下一步更稳的 neural/model-level hierarchy 候选。
+  - 后续应做 threshold sweep、Top-10/Top-23 area 扩展和与 box-level hierarchy / PointPillar scatter route 的同口径比较。
+
+## Attentive native intermediate fusion with RSU ego and area point crops
+
+- 时间：2026-07-21
+- 目标：
+  - 回答同样的“点云区域裁剪通信 + 原模型 intermediate fusion + RSU ego”处理方式下，`pointpillar_attentive_fusion` 的 AP 如何。
+  - 与 2026-07-20 的 V2X-ViT point-crop native route 做同口径对照。
+- 运行设置：
+  - dataset：`D:\Data\Carla\2026_07_15_02_33_21`
+  - assignment plan：`docs\doc_workspace\LGCP\experiments\hierarchy_plan\20260718_lgcp_carla_hierarchy_plan_area23_11f\area_assignment_plan.csv`
+  - ego：RSU `-1`
+  - `--reference-z-override 2.0`
+  - Top-5 planned areas，11 frames，max 5 agents，planned-area eval scope。
+- 低阈值 command：
+
+```powershell
+conda run -n opencda python -m opencda.tools.lgcp_v2xvit_area_point_crop_eval --dataset-root D:\Data\Carla --scenario-id 2026_07_15_02_33_21 --assignment-plan docs\doc_workspace\LGCP\experiments\hierarchy_plan\20260718_lgcp_carla_hierarchy_plan_area23_11f\area_assignment_plan.csv --output-dir docs\doc_workspace\LGCP\experiments\hierarchy_plan\20260721_lgcp_attentive_area_point_crop_rsu_ego_top5_11f_z2_thr005 --fusion-method intermediate_attentive --ego-cav-id -1 --reference-z-override 2.0 --start-index 0 --max-frames 11 --max-areas-per-frame 5 --max-cavs 5 --grid-size-x 10 --grid-size-y 6 --eval-scope planned_areas --postprocess-score-threshold 0.05
+```
+
+- 低阈值结果：
+  - AP@0.3/0.5/0.7：`0.615115 / 0.420702 / 0.244483`
+  - pred / GT：`76 / 85`
+  - CAV area upload bytes：`100766.55 bytes/frame`
+- 默认阈值 command：
+
+```powershell
+conda run -n opencda python -m opencda.tools.lgcp_v2xvit_area_point_crop_eval --dataset-root D:\Data\Carla --scenario-id 2026_07_15_02_33_21 --assignment-plan docs\doc_workspace\LGCP\experiments\hierarchy_plan\20260718_lgcp_carla_hierarchy_plan_area23_11f\area_assignment_plan.csv --output-dir docs\doc_workspace\LGCP\experiments\hierarchy_plan\20260721_lgcp_attentive_area_point_crop_rsu_ego_top5_11f_z2_defaultthr --fusion-method intermediate_attentive --ego-cav-id -1 --reference-z-override 2.0 --start-index 0 --max-frames 11 --max-areas-per-frame 5 --max-cavs 5 --grid-size-x 10 --grid-size-y 6 --eval-scope planned_areas
+```
+
+- 默认阈值结果：
+  - checkpoint default score threshold：`0.20`
+  - AP@0.3/0.5/0.7：`0.282353 / 0.282353 / 0.203315`
+  - pred / GT：`24 / 85`
+  - CAV area upload bytes：`100766.55 bytes/frame`
+- 对比 V2X-ViT point-crop native route：
+  - V2X-ViT Top-5 11-frame threshold `0.05` AP@0.3/0.5/0.7：`0.228011 / 0.208964 / 0.011765`
+  - attentive Top-5 11-frame threshold `0.05` AP@0.3/0.5/0.7：`0.615115 / 0.420702 / 0.244483`
+- 结论：
+  - V2X-ViT point-crop AP@0.3 `0.228011` 是合理的：它与 AP@0.5 `0.208964` 接近，说明少量预测中能命中的框大多已经超过 IoU 0.5；真正弱点是 AP@0.7 `0.011765`，即定位质量不足。
+  - 同样输入处理下 attentive 明显更稳，说明 area point crop 机制本身没有导致 AP 崩溃。
+  - 后续若要走“点云区域裁剪通信 + 原模型 intermediate fusion”作为模型级主线，优先用 attentive checkpoint 做 Top-10/Top-23 和 threshold sweep；V2X-ViT 可作为对照或说明模型结构/checkpoint 适配风险。
+
+## Where2comm checkpoint with LGCP external area mask
+
+- 时间：2026-07-22
+- 目标：
+  - 验证是否可以复用 `C:\Workspace\OpenCOOD\checkpoints\where2comm_10e` 的 PointPillar backbone、affine alignment、attentive fusion 和 detection heads。
+  - 用 LGCP planned-area BEV mask 替代 Where2comm 原始 objectness/confidence BEV-cell selector，形成“LGCP 区域选择 + 可选择中期特征融合”的最小闭环。
+- 新增 / 修改：
+  - `opencood/opencood/models/fuse_modules/fusion_in_one.py`
+    - 补回 Where2comm `fusion: att` 所需的 scaled-dot-product attentive fusion。
+    - 支持 `external_comm_mask` 和 `external_comm_recon`，并支持 `external_ego_full` / `external_rate_exclude_ego` 语义。
+  - `opencood/opencood/tools/train_utils.py`
+    - loader 兼容 `net_epoch_bestval_at6.pth` 文件名。
+  - `opencood/opencood/data_utils/datasets/__init__.py`
+    - dataset builder 兼容外部 checkpoint 中的小写 `fusion.core_method: intermediate`。
+  - `opencda/core/ml_libs/opencood_manager.py`
+    - 增加可选 `_dataset_root_override`，并在外部 checkpoint 测试时将 `train_params.max_cav` 对齐到 `model.args.max_cav`。
+  - `opencda/tools/lgcp_where2comm_area_mask_eval.py`
+    - 新增 LGCP Where2comm area-mask runner。
+    - `mask-mode=lgcp_area`：planned areas 生成 RSU/ego reference BEV mask，作为 Where2comm 外部通信 mask。
+    - `mask-mode=none`：退回 Where2comm 内部 objectness mask。
+    - `mask-mode=full`：全特征通信上界。
+    - 输出 `frame_summary.csv`、`feature_scale_summary.csv`、`cav_area_points.csv` 和 `summary.csv`。
+  - `opencda/scenario_testing/config_yaml/lgcp_carla.yaml` 与 `enable_coperception.yaml`
+    - 新增 `intermediate_where2comm: C:/Workspace/OpenCOOD/checkpoints/where2comm_10e` 模型别名。
+- 验证：
+
+```powershell
+conda run -n opencda python -m py_compile opencda\tools\lgcp_where2comm_area_mask_eval.py opencood\opencood\models\fuse_modules\fusion_in_one.py opencood\opencood\models\point_pillar_comm_multiscale.py opencood\opencood\tools\train_utils.py opencood\opencood\data_utils\datasets\__init__.py opencda\core\ml_libs\opencood_manager.py
+```
+
+- 1-frame Top-5 LGCP area-mask command：
+
+```powershell
+conda run -n opencda python -m opencda.tools.lgcp_where2comm_area_mask_eval --dataset-root D:\Data\Carla --scenario-id 2026_07_15_02_33_21 --assignment-plan docs\doc_workspace\LGCP\experiments\hierarchy_plan\20260718_lgcp_carla_hierarchy_plan_area23_11f\area_assignment_plan.csv --output-dir docs\doc_workspace\LGCP\experiments\hierarchy_plan\20260722_lgcp_where2comm_area_mask_top5_1f_z2 --fusion-method intermediate_where2comm --ego-cav-id -1 --reference-z-override 2.0 --max-frames 1 --max-areas-per-frame 5 --max-cavs 5 --grid-size-x 10 --grid-size-y 6 --eval-scope planned_areas --postprocess-score-threshold 0.05
+```
+
+- 1-frame Top-5 comparison：
+
+| Mask mode | AP@0.3 | AP@0.5 | AP@0.7 | Comm rate | Second-hop Mbps |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| LGCP area | 0.666667 | 0.666667 | 0.277778 | 0.011344 | 27.607041 |
+| Where2comm internal | 0.888889 | 0.750000 | 0.369048 | 0.019065 | 44.083200 |
+| Full | 0.666667 | 0.537037 | 0.277778 | 1.000000 | 2422.210560 |
+
+- 11-frame Top-5 LGCP area-mask command：
+
+```powershell
+conda run -n opencda python -m opencda.tools.lgcp_where2comm_area_mask_eval --dataset-root D:\Data\Carla --scenario-id 2026_07_15_02_33_21 --assignment-plan docs\doc_workspace\LGCP\experiments\hierarchy_plan\20260718_lgcp_carla_hierarchy_plan_area23_11f\area_assignment_plan.csv --output-dir docs\doc_workspace\LGCP\experiments\hierarchy_plan\20260722_lgcp_where2comm_area_mask_top5_11f_z2 --fusion-method intermediate_where2comm --ego-cav-id -1 --reference-z-override 2.0 --max-frames 11 --max-areas-per-frame 5 --max-cavs 5 --grid-size-x 10 --grid-size-y 6 --eval-scope planned_areas --postprocess-score-threshold 0.05
+```
+
+- 11-frame Top-5 comparison：
+
+| Mask mode | AP@0.3 | AP@0.5 | AP@0.7 | Comm rate | Second-hop Mbps |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| LGCP area | 0.614944 | 0.411297 | 0.116882 | 0.010549 | 25.559041 |
+| LGCP area + dilation 1 | 0.730799 | 0.608572 | 0.098913 | 0.014206 | 35.069208 |
+| Where2comm internal | 0.801557 | 0.649291 | 0.163261 | 0.017476 | 39.112146 |
+
+- 结论：
+  - 复用 `where2comm_10e` checkpoint 并用 LGCP planned-area mask 替代 BEV-cell selector 已端到端跑通。
+  - 内部 Where2comm mask 在同一 RSU ego / point-crop 语义下可达到 AP@0.5 `0.649291`，说明 checkpoint/fusion route 本身可用。
+  - LGCP 几何 area mask 在 11 帧下 AP@0.5 为 `0.411297`，与 attentive point-crop native route 的 `0.420702` 接近；dilation 1 可提升到 `0.608572`，但 AP@0.7 没有同步改善。
+  - 当前第二跳特征通信仍是 Mbps 级：area mask 约 `25.56 Mbps`，dilation 1 约 `35.07 Mbps`，内部 mask 约 `39.11 Mbps`。这比 full feature 上界低很多，但仍不是低 KB 级。
+  - 下一步应优先测试 `LGCP area ∩ Where2comm objectness`、Top-10/Top-23 area 扩展、只传 leader BEV 而不是所有 CAV BEV 的更严格 LGCP 版本，并复核 mask metadata / index overhead。
+
+## Where2comm checkpoint with LGCP area-objectness intersection
+
+- 时间：2026-07-22
+- 目标：
+  - 保留 LGCP planned-area 作为区域语义边界，同时复用 Where2comm checkpoint 自身的 objectness/confidence BEV-cell selector。
+  - 验证 `LGCP area ∩ Where2comm objectness` 能否降低二跳 feature 通信量，并避免纯几何 area mask 带来的无目标 cells 上传。
+- 新增 / 修改：
+  - `opencood/opencood/models/fuse_modules/fusion_in_one.py`
+    - `Where2comm` 增加 `external_mask_mode='intersection'`。
+    - 当传入 `external_comm_mask` 且 mode 为 `intersection` 时，先生成内部 objectness mask，再与外部 LGCP area mask 相乘，并复用 `external_ego_full` / `external_rate_exclude_ego` 统计非 ego 通信率。
+  - `opencda/tools/lgcp_where2comm_area_mask_eval.py`
+    - `--mask-mode` 新增 `lgcp_area_objectness`。
+    - 该模式仍由 planned areas 生成 RSU/ego reference BEV mask，但融合模块内部执行 area mask 与 objectness mask 的交集。
+- 验证：
+
+```powershell
+conda run -n opencda python -m py_compile opencood/opencood/models/fuse_modules/fusion_in_one.py opencda/tools/lgcp_where2comm_area_mask_eval.py
+```
+
+- 11-frame Top-5 area-objectness command：
+
+```powershell
+conda run -n opencda python -m opencda.tools.lgcp_where2comm_area_mask_eval --dataset-root D:\Data\Carla --scenario-id 2026_07_15_02_33_21 --assignment-plan docs\doc_workspace\LGCP\experiments\hierarchy_plan\20260718_lgcp_carla_hierarchy_plan_area23_11f\area_assignment_plan.csv --output-dir docs\doc_workspace\LGCP\experiments\hierarchy_plan\20260722_lgcp_where2comm_area_objectness_top5_11f_z2 --fusion-method intermediate_where2comm --ego-cav-id -1 --reference-z-override 2.0 --max-frames 11 --max-areas-per-frame 5 --max-cavs 5 --grid-size-x 10 --grid-size-y 6 --eval-scope planned_areas --postprocess-score-threshold 0.05 --mask-mode lgcp_area_objectness
+```
+
+- 11-frame Top-5 area-objectness + dilation 1 command：
+
+```powershell
+conda run -n opencda python -m opencda.tools.lgcp_where2comm_area_mask_eval --dataset-root D:\Data\Carla --scenario-id 2026_07_15_02_33_21 --assignment-plan docs\doc_workspace\LGCP\experiments\hierarchy_plan\20260718_lgcp_carla_hierarchy_plan_area23_11f\area_assignment_plan.csv --output-dir docs\doc_workspace\LGCP\experiments\hierarchy_plan\20260722_lgcp_where2comm_area_objectness_top5_11f_z2_dilate1 --fusion-method intermediate_where2comm --ego-cav-id -1 --reference-z-override 2.0 --max-frames 11 --max-areas-per-frame 5 --max-cavs 5 --grid-size-x 10 --grid-size-y 6 --eval-scope planned_areas --postprocess-score-threshold 0.05 --mask-mode lgcp_area_objectness --mask-dilation-cells 1
+```
+
+- 11-frame Top-5 comparison：
+
+| Mask mode | AP@0.3 | AP@0.5 | AP@0.7 | Comm rate | Second-hop Mbps |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| LGCP area | 0.614944 | 0.411297 | 0.116882 | 0.010549 | 25.559041 |
+| LGCP area + dilation 1 | 0.730799 | 0.608572 | 0.098913 | 0.014206 | 35.069208 |
+| LGCP area ∩ objectness | 0.715218 | 0.565188 | 0.202143 | 0.005577 | 12.964771 |
+| LGCP area ∩ objectness + dilation 1 | 0.801557 | 0.658694 | 0.162600 | 0.006948 | 16.180131 |
+| Where2comm internal | 0.801557 | 0.649291 | 0.163261 | 0.017476 | 39.112146 |
+
+- 结论：
+  - `LGCP area ∩ objectness` 是当前最有希望的模型级路线：相对纯 area mask，通信从 `25.56 Mbps` 降到 `12.96 Mbps`，AP@0.5 从 `0.411297` 升到 `0.565188`，AP@0.7 从 `0.116882` 升到 `0.202143`。
+  - `LGCP area ∩ objectness + dilation 1` 在 AP@0.5 上略高于 Where2comm internal mask（`0.658694` vs `0.649291`），二跳通信量约为 internal mask 的 `41.37%`（`16.18 Mbps` vs `39.11 Mbps`）。
+  - 该结果仍是单场景 Top-5 11 帧 smoke，不能直接写成论文最终主表，但足以把后续优先级从 V2X-ViT compressed route 转向 Where2comm area-objectness route。
+  - 下一步应扩展 Top-10 / Top-23 area，复核 leader-only feature packet 语义和 mask/index metadata overhead，并将第一次 member-to-leader 点云 area slices 与第二次 leader-to-RSU feature cells 分开统计。
+
+## Where2comm area-objectness Top-10 / Top-23 scale boundary
+
+- 时间：2026-07-22
+- 目标：
+  - 将 `LGCP area ∩ objectness + dilation 1` 从 Top-5 扩展到 Top-10 / Top-23 planned areas。
+  - 用 Where2comm internal mask 做同口径对照，判断 AP 下降来自 LGCP selector 还是当前 `max_cav=5` / checkpoint 覆盖限制。
+- 运行设置：
+  - dataset：`D:\Data\Carla\2026_07_15_02_33_21`
+  - checkpoint：`C:\Workspace\OpenCOOD\checkpoints\where2comm_10e`
+  - ego：RSU `-1`
+  - `--reference-z-override 2.0`
+  - 11 frames，max 5 agents，planned-area eval scope，score threshold `0.05`。
+- 11-frame comparison：
+
+| Scope | Mask mode | AP@0.3 | AP@0.5 | AP@0.7 | Comm rate | Second-hop Mbps |
+| --- | --- | ---: | ---: | ---: | ---: | ---: |
+| Top-5 | LGCP area ∩ objectness + dilation 1 | 0.801557 | 0.658694 | 0.162600 | 0.006948 | 16.180131 |
+| Top-5 | Where2comm internal | 0.801557 | 0.649291 | 0.163261 | 0.017476 | 39.112146 |
+| Top-10 | LGCP area ∩ objectness + dilation 1 | 0.621132 | 0.270222 | 0.046635 | 0.013907 | 32.213179 |
+| Top-10 | Where2comm internal | 0.604083 | 0.264850 | 0.045591 | 0.027124 | 57.886721 |
+| Top-23 | LGCP area ∩ objectness + dilation 1 | 0.539764 | 0.227966 | 0.033903 | 0.025454 | 57.985399 |
+| Top-23 | Where2comm internal | 0.552924 | 0.240054 | 0.032983 | 0.039782 | 84.149530 |
+
+- 结论：
+  - Top-10 / Top-23 下，交集 selector 仍稳定低于 internal mask 的通信量：Top-10 为 `55.65%`，Top-23 为 `68.91%`。
+  - AP 下降在 internal mask 中同样出现，说明主因不是 LGCP selector，而是当前 checkpoint / runner 的 `max_cav=5` 与更大 planned-area eval scope 覆盖不足。
+  - 当前 Where2comm route 最适合作为 Top-5 area 的模型级机制证据；若要支撑 Top-23，需要解除 `max_cav=5` 语义限制、改为真正 leader packet 汇总，或训练/微调 RSU global aggregation。
+
+## Where2comm leader-once second-hop accounting
+
+- 时间：2026-07-22
+- 目标：
+  - 明确当前 Where2comm runner 的通信统计语义。
+  - 增加 LGCP leader-to-RSU 汇总包的 lower-bound proxy，避免把“模型输入中的多个 CAV feature”直接等同于“二跳所有 CAV 分别向 RSU 上传 feature”。
+- 新增 / 修改：
+  - `opencda/tools/lgcp_where2comm_area_mask_eval.py`
+    - `feature_scale_summary.csv` 新增 `leader_once_cells` / `leader_once_bits_per_frame`。
+    - `frame_summary.csv` 新增 `second_hop_leader_once_bits` / `second_hop_leader_once_bytes`。
+    - `summary.csv` 新增 `avg_second_hop_leader_once_bits_per_frame` / `avg_second_hop_leader_once_mbps`。
+  - 语义说明：
+    - `second_hop_feature_bits`：保留原 Where2comm non-ego CAV sender 口径，即每个非 ego agent 都上传被选 cells。
+    - `second_hop_leader_once_bits`：LGCP leader-to-RSU lower-bound 口径，同一帧 union selected cells 只按一次 leader 汇总包计。
+- 验证：
+
+```powershell
+conda run -n opencda python -m py_compile opencda/tools/lgcp_where2comm_area_mask_eval.py opencood/opencood/models/fuse_modules/fusion_in_one.py
+```
+
+- Top-5 area-objectness + dilation 1 leader-once rerun：
+
+```powershell
+conda run -n opencda python -m opencda.tools.lgcp_where2comm_area_mask_eval --dataset-root D:\Data\Carla --scenario-id 2026_07_15_02_33_21 --assignment-plan docs\doc_workspace\LGCP\experiments\hierarchy_plan\20260718_lgcp_carla_hierarchy_plan_area23_11f\area_assignment_plan.csv --output-dir docs\doc_workspace\LGCP\experiments\hierarchy_plan\20260722_lgcp_where2comm_area_objectness_top5_11f_z2_dilate1_leader_once --fusion-method intermediate_where2comm --ego-cav-id -1 --reference-z-override 2.0 --max-frames 11 --max-areas-per-frame 5 --max-cavs 5 --grid-size-x 10 --grid-size-y 6 --eval-scope planned_areas --postprocess-score-threshold 0.05 --mask-mode lgcp_area_objectness --mask-dilation-cells 1
+```
+
+- 结果：
+  - AP@0.3/0.5/0.7：`0.801557 / 0.658694 / 0.162600`
+  - non-ego CAV sender second-hop：`16.180131 Mbps`
+  - leader-once lower-bound second-hop：`4.045033 Mbps`
+  - member-to-leader area point upload：`100766.545455 bytes/frame`
+- 结论：
+  - leader-once 口径将 Top-5 最优配置的二跳从 `16.18 Mbps` 降到 `4.05 Mbps`，符合“leader 先局部汇总，再上传 RSU”的 LGCP 通信叙事。
+  - 该 lower-bound 还不是完整论文通信模型：后续仍需按 area packet 统计 mask/index metadata，并区分多个 leader / 多 area packet 可能带来的重复 cells。
+
+## Where2comm per-leader box hierarchy diagnostic
+
+- 时间：2026-07-22
+- 目标：
+  - 回答 Top-23 低 AP 是否仅由当前单次 `RSU + 4 CAV` 输入覆盖不足造成。
+  - 复用 LGCP assignment plan 中每个 area 的真实 `leader_id/group_members`，逐 area 调用 Where2comm checkpoint，再由 RSU 做 box-level late fusion。
+  - 修正旧 box-level evaluator 的 GT 口径：新增 global planned-area GT，避免逐 leader-local GT 拼接造成重复或与 RSU planned-area 口径不一致。
+- 新增 / 修改：
+  - `opencda/tools/lgcp_hierarchy_late_fusion_eval.py`
+    - 支持 `_dataset_root_override`，可直接加载外部 `intermediate_where2comm` checkpoint。
+    - 新增 `--postprocess-score-threshold`。
+    - 新增 `--global-gt-cav-id` / `--global-reference-z-override`，用于每帧生成单份 RSU/global planned-area GT。
+    - global GT 生成时按 OpenCOOD dataset `max_cav` 限制候选 CAV，避免 Where2comm `max_cav=5` pairwise matrix 越界。
+- 验证：
+
+```powershell
+conda run -n opencda python -m py_compile opencda/tools/lgcp_hierarchy_late_fusion_eval.py
+```
+
+- Top-23 command：
+
+```powershell
+conda run -n opencda python -m opencda.tools.lgcp_hierarchy_late_fusion_eval --dataset-root D:\Data\Carla --scenario-id 2026_07_15_02_33_21 --assignment-plan docs\doc_workspace\LGCP\experiments\hierarchy_plan\20260718_lgcp_carla_hierarchy_plan_area23_11f\area_assignment_plan.csv --output-dir docs\doc_workspace\LGCP\experiments\hierarchy_plan\20260722_lgcp_where2comm_box_hierarchy_top23_11f_thr005_globalgt --fusion-method intermediate_where2comm --max-frames 11 --max-areas-per-frame 23 --postprocess-score-threshold 0.05 --global-gt-cav-id -1 --global-reference-z-override 2.0 --grid-size-x 10 --grid-size-y 6
+```
+
+- Top-5 command：
+
+```powershell
+conda run -n opencda python -m opencda.tools.lgcp_hierarchy_late_fusion_eval --dataset-root D:\Data\Carla --scenario-id 2026_07_15_02_33_21 --assignment-plan docs\doc_workspace\LGCP\experiments\hierarchy_plan\20260718_lgcp_carla_hierarchy_plan_area23_11f\area_assignment_plan.csv --output-dir docs\doc_workspace\LGCP\experiments\hierarchy_plan\20260722_lgcp_where2comm_box_hierarchy_top5_11f_thr005_globalgt --fusion-method intermediate_where2comm --max-frames 11 --max-areas-per-frame 5 --postprocess-score-threshold 0.05 --global-gt-cav-id -1 --global-reference-z-override 2.0 --grid-size-x 10 --grid-size-y 6
+```
+
+- 结果：
+
+| Scope | Assignment rows | Cached group calls | GT | Pred samples | AP@0.3 | AP@0.5 | AP@0.7 |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| Top-5 | 55 | 55 | 85 | 75 | 0.264252 | 0.074938 | 0.007897 |
+| Top-23 | 253 | 210 | 290 | 203 | 0.165041 | 0.056061 | 0.002896 |
+
+- 结论：
+  - 该 diagnostic 确认了一个重要边界：Where2comm checkpoint 的有效性能来自 intermediate feature fusion，而不是每个 leader 独立检测后做 box-level late fusion。
+  - 即使 Top-5 使用真实 leader group，box-level hierarchy 的 AP@0.5 也只有 `0.074938`，远低于 Top-5 single-pass area-objectness intermediate fusion 的 `0.658694`。
+  - 因此，Top-23 不能靠“多 leader 检测框拼接”补救；下一步必须做 leader feature packet 级汇总，即 leader local point/feature aggregation 后，将 feature packet 上传 RSU 再做 feature-level fusion / detection。
+
+## Where2comm leader point aggregation -> feature packet -> RSU feature fusion
+
+- 时间：2026-07-22
+- 目标：
+  - 按当前确认的 LGCP 语义实现真正的两跳模型级 pipeline：
+    - 第一跳：member CAV 上传 point-cloud area slice 给 leader。
+    - leader：合并 leader 自己点云与 member area slices，并编码成 feature packet。
+    - 第二跳：leader feature packet 上传 RSU。
+    - RSU：对多个 leader feature packets 做 Where2comm multiscale feature fusion，再跑 detection heads。
+- 新增：
+  - `opencda/tools/lgcp_where2comm_leader_feature_fusion.py`
+    - 每个 `area_assignment_plan.csv` row 生成一个 leader packet。
+    - packet 内点云来自该 area 的 `leader_id/group_members`，统一投影到 RSU/reference pose。
+    - 使用 `where2comm_10e` 的 `pillar_vfe -> scatter -> backbone -> multiscale features` 编码 leader packets。
+    - RSU 侧使用 `fusion_in_one.Where2comm` 的 attentive feature fusion，支持 `lgcp_area_objectness` 外部 mask 交集模式。
+    - 输出 `frame_summary.csv`、`leader_packets.csv`、`feature_scale_summary.csv`、`summary.csv`。
+- 验证：
+
+```powershell
+conda run -n opencda python -m py_compile opencda/tools/lgcp_where2comm_leader_feature_fusion.py
+```
+
+- Top-5 command：
+
+```powershell
+conda run -n opencda python -m opencda.tools.lgcp_where2comm_leader_feature_fusion --dataset-root D:\Data\Carla --scenario-id 2026_07_15_02_33_21 --assignment-plan docs\doc_workspace\LGCP\experiments\hierarchy_plan\20260718_lgcp_carla_hierarchy_plan_area23_11f\area_assignment_plan.csv --output-dir docs\doc_workspace\LGCP\experiments\hierarchy_plan\20260722_lgcp_where2comm_leader_feature_top5_11f_areaobj_dilate1_refposefix --fusion-method intermediate_where2comm --reference-cav-id -1 --reference-z-override 2.0 --max-frames 11 --max-areas-per-frame 5 --grid-size-x 10 --grid-size-y 6 --query-mode mean --mask-mode lgcp_area_objectness --mask-dilation-cells 1 --eval-scope planned_areas --postprocess-score-threshold 0.05
+```
+
+- Top-23 command：
+
+```powershell
+conda run -n opencda python -m opencda.tools.lgcp_where2comm_leader_feature_fusion --dataset-root D:\Data\Carla --scenario-id 2026_07_15_02_33_21 --assignment-plan docs\doc_workspace\LGCP\experiments\hierarchy_plan\20260718_lgcp_carla_hierarchy_plan_area23_11f\area_assignment_plan.csv --output-dir docs\doc_workspace\LGCP\experiments\hierarchy_plan\20260722_lgcp_where2comm_leader_feature_top23_11f_areaobj_dilate1_refposefix --fusion-method intermediate_where2comm --reference-cav-id -1 --reference-z-override 2.0 --max-frames 11 --max-areas-per-frame 23 --grid-size-x 10 --grid-size-y 6 --query-mode mean --mask-mode lgcp_area_objectness --mask-dilation-cells 1 --eval-scope planned_areas --postprocess-score-threshold 0.05
+```
+
+- 结果：
+
+| Scope / setting | Query | Threshold | Valid leader packets/frame | GT | Pred samples | AP@0.3 | AP@0.5 | AP@0.7 | Member upload KB/frame | Second-hop Mbps |
+| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| Top-5 | mean | 0.05 | 3.73 | 85 | 102 | 0.708405 | 0.599561 | 0.038212 | 18.26 | 7.274124 |
+| Top-5 | mean | 0.01 | 3.73 | 85 | 187 | 0.486070 | 0.398927 | 0.029329 | 18.26 | 7.274124 |
+| Top-5 | first_leader | 0.05 | 3.73 | 85 | 102 | 0.583483 | 0.484305 | 0.051957 | 18.26 | 5.123724 |
+| Top-5 | zero | 0.05 | 3.73 | 85 | 101 | 0.588811 | 0.434281 | 0.027582 | 18.26 | 7.274124 |
+| Top-23 | mean | 0.05 | 17.36 | 290 | 55 | 0.157367 | 0.157367 | 0.000123 | 47.99 | 25.600930 |
+| Top-23 | mean | 0.01 | 17.36 | 290 | 361 | 0.220698 | 0.106400 | 0.001051 | 47.99 | 25.600930 |
+
+- 结论：
+  - 该工具首次实现了“member 点云 area slice -> leader point aggregation -> leader feature packet -> RSU feature fusion/detection”的完整 offline 闭环。
+  - Top-5 下 AP@0.5 `0.599561`，已经明显高于 per-leader box hierarchy 的 `0.074938`，证明 feature-level RSU fusion 是正确方向。
+  - Top-5 leader-packet AP@0.5 仍低于 CAV-level single-pass `area ∩ objectness + dilation1` 的 `0.658694`，但通信更接近 LGCP 语义：member-to-leader 只统计成员点云上传约 `18.26 KB/frame`，leader 自有点云不计入第一跳，leader-to-RSU feature 为 `7.27 Mbps`。
+  - Top-23 解除 `max_cav=5` 后仍只有 AP@0.5 `0.157367`，说明大范围问题不只是 agent count，而是 untrained RSU query / leader-packet feature distribution / multi-packet fusion 语义不匹配。
+  - score threshold `0.01` 在 Top-23 让预测数从 `55` 增到 `361`，但 AP@0.5 降到 `0.106400`，因此不是简单 threshold calibration。
+  - 下一步若要让 Top-23 成为主结果，需要微调或训练 RSU feature aggregation，而不是继续调 box-level late fusion 或单纯放宽 threshold。
+
+## Where2comm 4-leader reassignment + leader-granularity feature packet diagnostic
+
+- 时间：2026-07-22
+- 目标：
+  - 按用户设想把 LGCP 参数改为每帧最多 4 个 Leader。
+  - 让这 4 个 Leader 接管更多 members 与 areas。
+  - RSU 侧不再接收一堆 per-area feature packet，而是每个 Leader 合并其负责的多个 areas 后上传一个 feature packet。
+- 新增/修改：
+  - `opencda/tools/lgcp_reassign_limited_leaders.py`
+    - 读取既有 `area_assignment_plan.csv`。
+    - 每帧按 `priority_sum` 选出 4 个候选 Leader。
+    - 将 23 个 selected areas 重新分配给这 4 个 Leader，代价包含 leader 到 area center 距离、当前负载惩罚和原 group member bonus。
+    - 输出不覆盖原始 plan 的 `area_assignment_plan.csv` 与 `leader_reassignment_summary.csv`。
+  - `opencda/tools/lgcp_where2comm_leader_feature_fusion.py`
+    - 新增 `--packet-granularity area|leader`。
+    - `leader` 模式下同一 Leader 负责的多个 area rows 会合并成一个 packet，点云合并后编码，area mask 使用多个 area 的 union。
+- 4-Leader plan command：
+
+```powershell
+conda run -n opencda python -m opencda.tools.lgcp_reassign_limited_leaders --assignment-plan docs\doc_workspace\LGCP\experiments\hierarchy_plan\20260718_lgcp_carla_hierarchy_plan_area23_11f\area_assignment_plan.csv --dataset-root D:\Data\Carla --scenario-id 2026_07_15_02_33_21 --output-dir docs\doc_workspace\LGCP\experiments\hierarchy_plan\20260722_lgcp_carla_hierarchy_plan_area23_4leaders --max-leaders 4 --max-areas-per-frame 23 --leader-score priority_sum --load-weight 8.0 --member-bonus 30.0
+```
+
+- 评估 command：
+
+```powershell
+conda run -n opencda python -m opencda.tools.lgcp_where2comm_leader_feature_fusion --dataset-root D:\Data\Carla --scenario-id 2026_07_15_02_33_21 --assignment-plan docs\doc_workspace\LGCP\experiments\hierarchy_plan\20260722_lgcp_carla_hierarchy_plan_area23_4leaders\area_assignment_plan.csv --output-dir docs\doc_workspace\LGCP\experiments\hierarchy_plan\20260722_lgcp_where2comm_leader_feature_top23_4leaders_11f_areaobj_dilate1 --fusion-method intermediate_where2comm --reference-cav-id -1 --reference-z-override 2.0 --max-frames 11 --max-areas-per-frame 23 --grid-size-x 10 --grid-size-y 6 --query-mode mean --packet-granularity leader --mask-mode lgcp_area_objectness --mask-dilation-cells 1 --eval-scope planned_areas --postprocess-score-threshold 0.05
+```
+
+- 结果：
+
+| Setting | Areas/frame | Leaders/frame | Valid leader packets/frame | GT | Pred samples | AP@0.3 | AP@0.5 | AP@0.7 | Member upload KB/frame | Leader own KB/frame | Second-hop Mbps |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| Top-23 original per-area packets | 23 | 17.36 packets | 17.36 | 290 | 55 | 0.157367 | 0.157367 | 0.000123 | 47.99 | n/a | 25.600930 |
+| Top-23 reassigned 4 leaders, leader packets, thr 0.05 | 23 | 4 | 3.73 | 290 | 305 | 0.650372 | 0.412919 | 0.021884 | 227.50 | 119.04 | 24.865513 |
+| Top-23 reassigned 4 leaders, leader packets, thr 0.01 | 23 | 4 | 3.73 | 290 | 432 | 0.578643 | 0.357752 | 0.016061 | 227.50 | 119.04 | 24.865513 |
+| Top-23 reassigned 5 leaders, leader packets, thr 0.05 | 23 | 5 | 4.27 | 290 | 305 | 0.642838 | 0.409177 | 0.030923 | 191.92 | 154.20 | 24.886924 |
+| Top-23 reassigned 6 leaders, leader packets, thr 0.05 | 23 | 6 | 5.09 | 290 | 302 | 0.658934 | 0.452508 | 0.026470 | 154.50 | 191.46 | 24.707258 |
+
+- 结论：
+  - 4-Leader reassignment 明显缓解了原 Top-23 per-area packet 语义崩坏，AP@0.5 从 `0.157367` 提升到 `0.412919`。
+  - 5-Leader reassignment 的 AP@0.5 为 `0.409177`，与 4-Leader 的 `0.412919` 基本持平略低；AP@0.7 从 `0.021884` 小幅升至 `0.030923`。
+  - 6-Leader reassignment 的 AP@0.5 进一步升至 `0.452508`，第一跳 member upload 降至 `154.50 KB/frame`；这说明在当前启发式分配下，增加 Leader 可以减少 leader-local aggregation 噪声并降低 member relay 负载。
+  - 4/5/6-Leader 结果仍低于 Top-5 leader-packet 的 AP@0.5 `0.599561`，说明大范围 Top-23 仍存在 RSU global aggregation / feature distribution mismatch。
+  - 0.01 threshold 让预测数从 `305` 增到 `432`，AP@0.5 下降到 `0.357752`，所以当前最优点仍是 threshold `0.05`。
+  - 4-Leader route 更接近 checkpoint 的 `max_cav=5` 输入假设：RSU ego + 最多 4 个 leader packets。5/6-Leader 会在部分帧形成 `ego + 5/6 leader packets`，超过训练时常见输入语义，但代码路径可运行。
+  - 第一跳 member-to-leader 上传从原 Top-23 的 `47.99 KB/frame` 增至 4-Leader `227.50 KB/frame`、5-Leader `191.92 KB/frame`、6-Leader `154.50 KB/frame`。这条趋势说明 Leader 数越多，成员被强制转发给远端 Leader 的代价越低，但第二跳 feature Mbps 仍基本维持在 `24-25 Mbps`。
+  - 下一步可以在 3/4/5/6/7 Leader、不同 `load_weight/member_bonus` 和 area budget 上做 sweep，寻找 AP 与第一跳 upload 的平衡点。
+
+## Where2comm CAV count limit probe
+
+- 时间：2026-07-22
+- 目标：
+  - 明确 `C:\Workspace\OpenCOOD\checkpoints\where2comm_10e` 的 CAV 数上限，后续作为 LGCP Leader 数上限的依据。
+  - 区分三种口径：checkpoint/YAML 声明上限、当前代码路径实际 runtime 上限、当前 LGCP 场景下的 AP/通信实用上限。
+- 配置审计：
+  - `config.yaml` 中 `model.args.max_cav = 5`。
+  - 同一 YAML 中 `train_params.max_cav = 2`，但 OpenCDA `OpenCOODManager` 当前会将 `train_params.max_cav` 对齐到 `model.args.max_cav`，因此 canonical OpenCDA/OpenCOOD 数据入口的保守上限是 total CAV `5`。
+  - Where2comm multiscale fusion 本身没有固定 agent-count 权重；`fusion_in_one.py` 通过 `record_len` 动态 `regroup`，attention 复杂度随 CAV 数增长，主要受显存/时间限制。
+- 新增 probe：
+  - `opencda/tools/lgcp_where2comm_cav_limit_probe.py`
+  - 使用真实 Where2comm 三尺度 feature 尺寸 `96x352 / 48x176 / 24x88` 和通道数 `64 / 128 / 256`，直接调用 checkpoint 对应的 fusion modules。
+  - 输出保存到：
+    - `docs/doc_workspace/LGCP/experiments/hierarchy_plan/20260722_lgcp_where2comm_cav_limit_probe/synthetic_cav_limit.csv`
+    - `docs/doc_workspace/LGCP/experiments/hierarchy_plan/20260722_lgcp_where2comm_cav_limit_probe/lgcp_leader_sweep_4_13.csv`
+- Synthetic runtime 结果：
+
+| Total CAV count | Result |
+| ---: | --- |
+| 5 / 8 / 10 / 13 / 16 / 20 / 24 / 32 | OK |
+| 48 / 64 / 96 / 128 / 160 / 192 / 224 / 232 | OK |
+| 234 / 236 / 240 / 256 | CUDA OOM |
+
+- LGCP Top-23 leader sweep 结果：
+
+| Max leaders | Valid leader packets/frame | AP@0.3 | AP@0.5 | AP@0.7 | Member upload KB/frame | Second-hop Mbps |
+| ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| 4 | 3.727273 | 0.650372 | 0.412919 | 0.021884 | 227.50 | 24.865513 |
+| 5 | 4.272727 | 0.642838 | 0.409177 | 0.030923 | 191.92 | 24.886924 |
+| 6 | 5.090909 | 0.658934 | 0.452508 | 0.026470 | 154.50 | 24.707258 |
+| 7 | 5.909091 | 0.669542 | 0.484321 | 0.026363 | 132.88 | 24.756596 |
+| 8 | 6.454545 | 0.623809 | 0.459635 | 0.035736 | 99.98 | 24.767767 |
+| 9 | 7.090909 | 0.606688 | 0.424237 | 0.056009 | 93.32 | 24.861789 |
+| 10 | 7.909091 | 0.555164 | 0.393419 | 0.051890 | 70.54 | 25.187608 |
+| 11 | 8.181818 | 0.553259 | 0.384355 | 0.045574 | 60.82 | 25.210880 |
+| 12 | 8.181818 | 0.553259 | 0.384355 | 0.045574 | 55.68 | 25.210880 |
+| 13 | 8.272727 | 0.541581 | 0.381057 | 0.043158 | 56.06 | 25.210880 |
+
+- 结论：
+  - 严格 checkpoint / dataset 声明口径：total CAV cap 为 `5`，LGCP Leader cap 应为 `4`。
+  - 当前自定义 LGCP feature-packet runtime 口径：Where2comm fusion 算子没有 5-CAV 硬上限；当前 CUDA 环境用真实 feature 尺寸验证到 total CAV `232` 可运行，`234` 开始 OOM，因此 runtime-only Leader cap 可写为 `231`，但这没有训练语义保证。
+  - 当前 LGCP Top-23 实验口径：在 4-13 Leader sweep 中，AP@0.5 最优是 `7` Leader，对应 `0.484321`；继续增加 Leader 会降低第一跳上传，但 AP@0.5 开始下降。
+  - 后续建议：代码参数上可以设硬安全阈值 `max_total_cav_runtime=232`，但论文/实验默认不要用这个数。LGCP leader sweep 的实用上限建议先设为 `7`，同时保留 checkpoint-conservative 对照 `4`。
+
+## All-20-CAV point cloud upload to RSU upper-bound diagnostic
+
+- 时间：2026-07-22
+- 背景确认：
+  - `opencda/scenario_testing/config_yaml/lgcp_carla.yaml` 明确记录 `target_total_vehicle_num: 100`、`target_cav_num: 20`，并说明为 20 intelligent / managed vehicles + 80 unmanaged background vehicles。
+  - 当前导出数据目录 `D:\Data\Carla\2026_07_15_02_33_21` 包含 `-1` RSU 与 `1..20` 共 20 个 CAV 目录，因此离线数据是 `20 CAV + 1 RSU`。
+- 新增脚本：
+  - `opencda/tools/lgcp_where2comm_all_cav_to_rsu_eval.py`
+  - 支持两种诊断口径：
+    - `per_cav_where2comm`：20 个 CAV 各自上传完整 raw LiDAR 到 RSU 坐标系，再作为 20 个 agent packets 做 Where2comm intermediate fusion。
+    - `centralized_raw`：20 个 CAV 上传完整 raw LiDAR 后，RSU 先把点云合并为一个 centralized raw point cloud，再单次检测。
+- 命令摘要：
+
+```powershell
+conda run -n opencda python -m opencda.tools.lgcp_where2comm_all_cav_to_rsu_eval --dataset-root D:\Data\Carla --scenario-id 2026_07_15_02_33_21 --output-dir docs\doc_workspace\LGCP\experiments\hierarchy_plan\20260722_lgcp_where2comm_all20cav_to_rsu_11f_objectness_thr005 --fusion-method intermediate_where2comm --reference-cav-id -1 --reference-z-override 2.0 --max-frames 11 --query-mode mean --mask-mode objectness --postprocess-score-threshold 0.05
+
+conda run -n opencda python -m opencda.tools.lgcp_where2comm_all_cav_to_rsu_eval --dataset-root D:\Data\Carla --scenario-id 2026_07_15_02_33_21 --output-dir docs\doc_workspace\LGCP\experiments\hierarchy_plan\20260722_lgcp_where2comm_all20cav_to_rsu_11f_centralized_raw_thr005 --fusion-method intermediate_where2comm --reference-cav-id -1 --reference-z-override 2.0 --max-frames 11 --query-mode first_leader --aggregation-mode centralized_raw --mask-mode objectness --postprocess-score-threshold 0.05
+```
+
+- 结果：
+
+| Setting | Threshold | Valid packets/frame | GT | Pred samples | AP@0.3 | AP@0.5 | AP@0.7 | Raw upload KB/frame | Feature Mbps |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| 20 CAV per-CAV Where2comm | 0.05 | 19.00 | 542 | 343 | 0.590709 | 0.358292 | 0.021621 | 1603.89 | 512.565848 |
+| 20 CAV per-CAV Where2comm | 0.01 | 19.00 | 542 | 723 | 0.514916 | 0.274701 | 0.014300 | 1603.89 | 512.565848 |
+| 20 CAV centralized raw | 0.05 | 1.00 | 542 | 798 | 0.651840 | 0.487223 | 0.080560 | 1603.89 | 0.000000 |
+| 20 CAV centralized raw | 0.01 | 1.00 | 542 | 875 | 0.616936 | 0.461427 | 0.075630 | 1603.89 | 0.000000 |
+| LGCP Top-23 7-Leader feature packet | 0.05 | 5.91 | 290 planned-area | 289 | 0.669542 | 0.484321 | 0.026363 | 132.88 member upload | 24.756596 |
+
+- 观察：
+  - per-CAV Where2comm 全量点云上传并不自动变强，AP@0.5 只有 `0.358292`，低于 7-Leader 的 `0.484321`。原因是 RSU/global query + 20 agent feature fusion 明显偏离 checkpoint 训练语义。
+  - centralized raw 是更贴近“点云全部传到 RSU 后集中处理”的 upper-bound 口径，AP@0.5 为 `0.487223`，只比 7-Leader 的 `0.484321` 高 `0.002902`。
+  - centralized raw 的 AP@0.7 为 `0.080560`，明显高于 7-Leader 的 `0.026363`，说明全量点云集中处理确实改善了高 IoU box quality，但 AP@0.5 收益很小。
+  - raw upload 成本约 `1.64 MB/frame`，约为 7-Leader member upload `132.88 KB/frame` 的 `12.1x`；因此当前 7-Leader LGCP 在 AP@0.5 上接近 all-raw centralized upper bound，但通信量低得多。
+- 结论：
+  - 当前场景确认为 `20 CAV + 1 RSU + 80 background vehicles`。
+  - “20 CAV 全量点云传 RSU”最好的当前 AP@0.5 是 centralized raw `0.487223`。
+  - 这为 LGCP 7-Leader 提供了一个很强的参照：LGCP 7-Leader AP@0.5 `0.484321`，几乎追平全量 centralized raw，但第一跳只需约 `132.88 KB/frame`，而全量 raw upload 约 `1603.89 KB/frame`。
+
+## Attentive early checkpoint centralized raw upper-bound diagnostic
+
+- 时间：2026-07-22
+- 背景确认：
+  - 上一节 `20 CAV centralized raw` 使用的是 `intermediate_where2comm` / `C:\Workspace\OpenCOOD\checkpoints\where2comm_10e` 的 PointPillar backbone/head，只是把 20 CAV raw point cloud 先合并成一个 RSU packet；它不是 SGCP 的 attentive early detector。
+  - SGCP 已有 attentive checkpoint 移植的早期融合权重：`docs/doc_workspace/SGCP/artifacts/early_from_late_checkpoint_20260719/pointpillar_early_from_attentive_weights`，配置入口为 `enable_coperception_early_from_attentive.yaml`。
+- 新增脚本：
+  - `opencda/tools/lgcp_attentive_early_all_cav_to_rsu_eval.py`
+  - 口径：20 个 CAV 上传完整 raw LiDAR 到 RSU 坐标系，RSU 先合并为一个 centralized raw point cloud，再用 SGCP attentive-derived early PointPillar detector 单次检测。
+  - 为避免 RSU 传感器 `z=12m` 与车载 checkpoint 的 z-range 不匹配，沿用 `--reference-z-override 2.0`，保留 RSU 的 x/y/yaw。
+- 命令摘要：
+
+```powershell
+conda run -n opencda python opencda\tools\lgcp_attentive_early_all_cav_to_rsu_eval.py --dataset-root D:\Data\Carla --scenario-id 2026_07_15_02_33_21 --output-dir docs\doc_workspace\LGCP\experiments\hierarchy_plan\20260722_lgcp_attentive_early_all20cav_to_rsu_11f_centralized_raw_thr020 --coperception-yaml docs\doc_workspace\SGCP\artifacts\early_from_late_checkpoint_20260719\enable_coperception_early_from_attentive.yaml --fusion-method early --reference-cav-id -1 --reference-z-override 2.0 --max-frames 11 --postprocess-score-threshold 0.20
+```
+
+- 结果：
+
+| Setting | Threshold | Valid packets/frame | GT | Pred samples | AP@0.3 | AP@0.5 | AP@0.7 | Raw upload KB/frame |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| 20 CAV centralized raw + attentive early detector | 0.05 | 1.00 | 542 | 617 | 0.799015 | 0.746692 | 0.424014 | 1603.89 |
+| 20 CAV centralized raw + attentive early detector | 0.20 | 1.00 | 542 | 463 | 0.816923 | 0.779641 | 0.470207 | 1603.89 |
+| 20 CAV centralized raw + Where2comm detector | 0.05 | 1.00 | 542 | 798 | 0.651840 | 0.487223 | 0.080560 | 1603.89 |
+| LGCP Top-23 7-Leader feature packet | 0.05 | 5.91 | 290 planned-area | 289 | 0.669542 | 0.484321 | 0.026363 | 132.88 member upload |
+
+- 观察：
+  - 使用 attentive-derived early detector 后，centralized raw upper bound 明显升高，AP@0.5 从 Where2comm detector 的 `0.487223` 提升到 `0.779641`，AP@0.7 从 `0.080560` 提升到 `0.470207`。
+  - 这说明此前 centralized raw AP 偏低主要来自 Where2comm checkpoint / detection route 与 centralized raw 单包语义不匹配，而不是“20 CAV 点云合并到 RSU”本身不可行。
+  - 该结果是 all-raw centralized upper bound：通信量仍是 `1603.89 KB/frame`，不能直接作为 LGCP 低通信分层机制的性能结果，但可作为检测器选择和上界参照。
+
+## SGCP attentive-derived checkpoint for leader BEV feature -> RSU AttFusion
+
+- 时间：2026-07-22
+- 目标：
+  - 使用 SGCP `pointpillar_early_from_attentive_weights/latest.pth`，但以 `point_pillar_intermediate` / `AttBEVBackbone` 实例化模型，测试 `leader BEV feature -> RSU attentive fusion -> detection`。
+  - 不修改 SGCP 代码，不覆盖原 checkpoint。
+- 非破坏式配置：
+  - 新增 LGCP model dir：`docs/doc_workspace/LGCP/experiments/model_dirs/pointpillar_intermediate_from_sgcp_attentive_early`
+  - `config.yaml` 复制自 `opencood/logs/pointpillar_attentive_fusion/config.yaml`，保持 intermediate attentive model definition。
+  - `latest.pth` 是指向 SGCP `pointpillar_early_from_attentive_weights/latest.pth` 的 hardlink；两者 tensor 已确认完全一致。
+  - 新增 coperception YAML：`docs/doc_workspace/LGCP/experiments/model_dirs/enable_coperception_intermediate_from_sgcp_attentive_early.yaml`
+- 代码改动：
+  - `opencda/tools/lgcp_pointpillar_rsu_bev_fusion.py`
+  - 新增 `--reference-z-override`，可用 RSU x/y/yaw 同时把 z 调到车载 checkpoint 的有效 lidar range。
+  - 新增 `--packet-granularity area|leader`。默认 `area` 保持旧行为；`leader` 会把同一 leader 接管的多个 area 合并成一个 leader BEV feature packet。
+- 命令摘要：
+
+```powershell
+conda run -n opencda python -m opencda.tools.lgcp_pointpillar_rsu_bev_fusion --dataset-root D:\Data\Carla --scenario-id 2026_07_15_02_33_21 --assignment-plan docs\doc_workspace\LGCP\experiments\hierarchy_plan\20260722_lgcp_carla_hierarchy_plan_area23_7leaders\area_assignment_plan.csv --output-dir docs\doc_workspace\LGCP\experiments\hierarchy_plan\20260722_lgcp_sgcp_attentive_intermediate_rsu_bev_top23_7leaders_11f_z2_thr005_leaderpkt --coperception-yaml docs\doc_workspace\LGCP\experiments\model_dirs\enable_coperception_intermediate_from_sgcp_attentive_early.yaml --fusion-method intermediate_attentive --reference-cav-id -1 --reference-z-override 2.0 --max-frames 11 --grid-size-x 10 --grid-size-y 6 --query-mode mean --packet-granularity leader --eval-scope planned_areas --postprocess-score-threshold 0.05
+```
+
+- 结果：
+
+| Setting | Packet granularity | Valid leader packets/frame | GT | Pred samples | AP@0.3 | AP@0.5 | AP@0.7 | Member upload KB/frame | Sparse BEV feature KB/frame | Dense full BEV MB/frame |
+| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| Top-5 first 5 areas | area | 3.73 | 93 | 95 | 0.940917 | 0.828329 | 0.534530 | 4.95 | 83.00 | 64.07 |
+| Top-23 original assignment | area | 17.36 | 313 | 42 | 0.134185 | 0.134185 | 0.102179 | 26.81 | 340.80 | 298.47 |
+| Top-23 7-Leader reassignment | leader | 5.91 | 313 | 223 | 0.663529 | 0.556226 | 0.252941 | 88.42 | 339.25 | 101.56 |
+
+- 观察：
+  - Top-5 下该路线表现很强，AP@0.5 `0.828329`、AP@0.7 `0.534530`，说明 SGCP/attentive 权重以 intermediate model 形式用于 RSU BEV fusion 是可行的。
+  - Top-23 原始 per-area packet 退化严重，AP@0.5 只有 `0.134185`，原因是每帧 17-18 个 area packets 偏离 checkpoint 的 ego-first / limited-agent 训练语义。
+  - Top-23 7-Leader leader-packet 版恢复到 AP@0.5 `0.556226`、AP@0.7 `0.252941`，明显优于原始 per-area packet，也高于 Where2comm 7-Leader 的 AP@0.5 `0.484321`。
+  - dense full BEV canvas 传输不可接受；当前可讨论的 feature 通信口径只能是 sparse nonzero BEV cells 或进一步压缩后的 feature packet。
+
+## Small LGCP Town03 roundabout dataset
+
+- 时间：2026-07-22
+- 背景：
+  - LGCP 论文正文的实验设置写到：OPV2V 场景包含传统车辆和 `2 to 7` 个 CAV；V2XSet 场景包含传统车辆和 `2 to 7` 个智能体；检测范围设置为 `280m x 80m`，RoI grid 为 `10m x 6m`；CARLA/OpenCDA/NS3 co-simulation 用于进一步研究 `5 to 30` 个 CAV 的多车部署。
+  - 当前 `lgcp_carla` 是 `20 CAV + 1 RSU + 80 background vehicles`，对模型级 neural feature fusion 偏难，也偏离 OpenCOOD checkpoint 常见训练智能体数量。
+- 新增小场景：
+  - `opencda/scenario_testing/lgcp_carla_small.py`
+  - `opencda/scenario_testing/config_yaml/lgcp_carla_small.yaml`
+  - Town03 环岛与 RSU 位置保持不变。
+  - 车辆规模：`8 CAV + 28 background vehicles = 36 vehicles`。
+  - RoI：`120m x 60m`，grid 仍为 `10m x 6m`。
+- 数据导出：
+
+```powershell
+$env:OPENCDA_DATA_DUMP_ROOT='D:\Data\Carla'
+$env:OPENCDA_DATADUMP_TICKS='100'
+$env:OPENCDA_CLEAN_WORLD_ON_INIT='1'
+$env:OPENCDA_CARLA_CLIENT_TIMEOUT='180'
+$env:OPENCDA_USE_CURRENT_CARLA_WORLD='1'
+conda run -n opencda python opencda.py -t lgcp_carla_small --dump --debug
+```
+
+- 离线数据集：
+  - `D:\Data\Carla\2026_07_22_20_04_41`
+  - agent folders：`-1` RSU + `1..8` CAV。
+  - saved frames：`21`，timestamps `000060..000100`。
+  - offline smoke：early detector 首帧输出 `30 pred / 36 GT`。
+- 小场景 LGCP 中间文件：
+  - area confidence：`docs/doc_workspace/LGCP/experiments/small_scene/20260722_lgcp_carla_small_area_confidence_21f`
+  - hierarchy plan：`docs/doc_workspace/LGCP/experiments/small_scene/20260722_lgcp_carla_small_hierarchy_plan_top10_21f`
+  - Top-10 plan summary：`area_count_mean=10`，`avg_group_size_mean=1.552381`，`leader_count_mean=5.714286`，`leader_max_load_mean=4.666667`，`total_byte_proxy_mean=77.88KB/frame`。
+- SGCP attentive leader-BEV route on small scene:
+  - output：`docs/doc_workspace/LGCP/experiments/small_scene/20260722_lgcp_small_sgcp_attentive_intermediate_rsu_bev_top10_21f_z2_thr005_leaderpkt`
+  - `packet_granularity=leader`，`query_mode=mean`，`eval_scope=planned_areas`。
+  - AP@0.3/AP@0.5/AP@0.7：`0.800311 / 0.755478 / 0.393690`
+  - GT / pred samples：`294 / 247`
+  - member-to-leader upload：`272448 bytes total`，约 `12.67KB/frame`
+  - sparse BEV feature：`5046784 bytes total`，约 `234.69KB/frame`
+- 结论：
+  - 小场景成功构造并导出为 OPV2V-style 离线数据集。
+  - 该场景明显更适合调试 LGCP model-level feature fusion：智能体数量接近 OPV2V/V2XSet，planned-area AP@0.5 达到 `0.755478`，AP@0.7 达到 `0.393690`。
+  - 论文表述中应将其标为 small-scale diagnostic / model-mechanism validation，不能替代 `5 to 30 CAV` co-simulation 的 scalability evidence。
+
+## Easy Town03 ordinary-intersection diagnostic scene
+
+- 时间：2026-07-22
+- 背景：
+  - 用户指出 `lgcp_carla_small` 仍是环岛，希望改成普通十字路口，并希望最佳 early fusion AP@0.3 达到 `0.90+`。
+  - 第一版普通路口配置使用矩形 `range` 采样，CARLA `get_waypoint()` 会把矩形内部分采样点吸附到相邻居民区道路，导致车辆偏离十字路口。
+- 当前修正：
+  - 新增 `opencda/scenario_testing/lgcp_carla_intersection_easy.py`。
+  - 新增 `opencda/scenario_testing/config_yaml/lgcp_carla_intersection_easy.yaml`。
+  - 当前配置选择 Town03 普通 junction 近似中心 `(1.10, 133.72)`，不再使用矩形 `range`，背景车全部使用显式 CARLA spawn points。
+- 导出与评估：
+  - `D:\Data\Carla\2026_07_22_20_26_17`：4 CAV + 6 background，36 帧；default early with RSU AP@0.3/0.5/0.7 = `0.76 / 0.75 / 0.68`。
+  - `D:\Data\Carla\2026_07_22_20_31_56`：4 CAV + 0 background，26 帧；default early CAV-only AP@0.3/0.5/0.7 = `0.69 / 0.69 / 0.69`。
+  - `D:\Data\Carla\2026_07_22_20_37_27`：2 CAV + 0 background，21 帧；default early CAV-only AP@0.3/0.5/0.7 = `0.52 / 0.52 / 0.52`。
+  - `D:\Data\Carla\2026_07_22_20_44_26`：当前 2 CAV + 16 background 显式点位版本，21 帧；default early with RSU AP@0.3/0.5/0.7 = `0.75 / 0.73 / 0.52`；排除 RSU 为 `0.42 / 0.41 / 0.17`；SGCP attentive-derived early checkpoint 为 `0.70 / 0.70 / 0.53`。
+- 诊断：
+  - 车辆偏离路口的问题已由显式 spawn points 修复。
+  - AP@0.3 `>= 0.90` 尚未达成。object diagnostics 显示多数 GT 可以匹配，但稳定高分 false positives / 低分 true positives 压低 AP。
+  - 已给 `opencda/tools/offline_inference.py` 增加 `--postprocess-nms-thresh` 诊断开关；强 NMS 未能去除主导 FP，说明这些 FP 不是简单重叠重复框。
+
+## Easy intersection 10-CAV / 10-background update
+
+- 时间：2026-07-22
+- 用户判断：`2 CAV + 16 background` 中 CAV 数量过少，融合 AP 偏低可以理解；需要改为 `10 CAV + 10 background`。
+- 配置更新：
+  - `opencda/scenario_testing/config_yaml/lgcp_carla_intersection_easy.yaml`
+  - `target_cav_num=10`
+  - `target_total_vehicle_num=20`
+  - `single_cav_list` 扩展到 10 个显式 CAV spawn points。
+  - `carla_traffic_manager.vehicle_list` 保留 10 个显式 background spawn points。
+  - 仍然不使用矩形 `range`，避免车辆被吸附到居民区。
+- 数据导出：
+  - dataset：`D:\Data\Carla\2026_07_22_22_00_04`
+  - frames：`21`
+  - CAV dirs：`10`
+  - runtime log：`CARLA traffic flow generated, with 10 vehicles and 0 vms`
+- Early fusion AP probes:
+  - default early + RSU, score threshold `0.20`：AP@0.3/0.5/0.7 = `0.86 / 0.86 / 0.77`
+  - threshold sweep：`0.10` -> `0.76 / 0.76 / 0.68`; `0.15` -> `0.85 / 0.85 / 0.75`; `0.25` -> `0.84 / 0.84 / 0.75`
+  - SGCP attentive-derived early + RSU, threshold `0.20`：`0.86 / 0.86 / 0.78`
+  - default early, 10 CAV-only excluding RSU：`0.72 / 0.72 / 0.63`
+- 结论：
+  - 增加到 10 CAV 后，ordinary intersection AP@0.3 从 `0.75` 提升到 `0.86`，说明 CAV 数量确实是主要限制之一。
+  - 当前仍未达到 AP@0.3 `0.90+` gate，但已经接近；下一步可继续微调固定点位或换更干净的普通路口。
+
+## Easy intersection LGCP hierarchy run
+
+- 时间：2026-07-22
+- 口径确认：
+  - 当前 ordinary-intersection 10-CAV 场景的 full early fusion 上界采用最佳已测值：`0.86 / 0.86 / 0.78`。
+  - 这是 full-scene early-fusion sanity upper bound；LGCP planned-area 结果和 full-scene 结果需要分开解释。
+- 输入数据：
+  - dataset：`D:\Data\Carla\2026_07_22_22_00_04`
+  - config：`opencda/scenario_testing/config_yaml/lgcp_carla_intersection_easy.yaml`
+  - scale：`10 CAV + 1 RSU + 10 background vehicles`
+- Area confidence：
+  - output：`docs/doc_workspace/LGCP/experiments/small_scene/20260722_lgcp_intersection10_area_confidence_21f`
+  - records：`19880`
+  - 每帧 RoI GT objects：`4`
+  - recall@0.5：每帧 `1.000000`
+- Hierarchy plan：
+  - output：`docs/doc_workspace/LGCP/experiments/small_scene/20260722_lgcp_intersection10_hierarchy_plan_top10_21f`
+  - Top areas/frame：`10`
+  - avg group size：`1.700000`
+  - local upload packets/frame：`7.000000`
+  - leader upload packets/frame：`10.000000`
+  - leader count/frame：`8.000000`
+  - leader max load：`4.000000`
+  - plan byte proxy：`92640 bytes/frame`
+- SGCP attentive leader-BEV -> RSU attentive fusion：
+  - planned-area output：`docs/doc_workspace/LGCP/experiments/small_scene/20260722_lgcp_intersection10_sgcp_attentive_intermediate_rsu_bev_top10_21f_z2_thr005_leaderpkt`
+  - full-scope output：`docs/doc_workspace/LGCP/experiments/small_scene/20260722_lgcp_intersection10_sgcp_attentive_intermediate_rsu_bev_top10_21f_z2_thr005_leaderpkt_fullscope`
+  - packet granularity：`leader`
+  - query mode：`mean`
+  - reference：RSU `-1` with `--reference-z-override 2.0`
+  - planned-area AP@0.3/0.5/0.7：`0.868668 / 0.797311 / 0.733363`
+  - full-scope AP@0.3/0.5/0.7：`0.813771 / 0.746923 / 0.687017`
+  - first-hop member upload：`377888 bytes total`，约 `17.57KB/frame`
+  - second-hop sparse BEV feature：`4539136 bytes total`，约 `211.08KB/frame`
+  - dense full BEV feature：`3027763200 bytes total`，约 `137.50MB/frame`，仅作为不可用上界。
+- 结论：
+  - 该普通十字路口 10-CAV 场景已经适合作为 LGCP model-mechanism validation 场景。
+  - 在 full-scope 口径下，LGCP leader-BEV 路线相对 full early upper bound `0.86/0.86/0.78` 保留了大部分 AP。
+  - planned-area 口径下 AP@0.3 `0.868668`、AP@0.7 `0.733363`，说明 Top-10 area 的局部到全局链路质量较好。
+  - 下一步重点不是继续证明能跑通，而是降低 second-hop sparse feature bytes，或给 feature packet compression / leader count / area budget 做 sweep。
+
+## Easy intersection limited-Leader sweep
+
+- 时间：2026-07-22
+- 用户约束：10-CAV 普通十字路口场景中，Leader 数量限制为至多 5 个；尝试 `K=3/4/5`。
+- 输入：
+  - dataset：`D:\Data\Carla\2026_07_22_22_00_04`
+  - base plan：`docs/doc_workspace/LGCP/experiments/small_scene/20260722_lgcp_intersection10_hierarchy_plan_top10_21f/area_assignment_plan.csv`
+  - reassignment：`opencda.tools.lgcp_reassign_limited_leaders --load-weight 8 --member-bonus 30`
+  - fusion：`opencda.tools.lgcp_pointpillar_rsu_bev_fusion`
+  - checkpoint route：`docs/doc_workspace/LGCP/experiments/model_dirs/enable_coperception_intermediate_from_sgcp_attentive_early.yaml`
+  - fusion method：`intermediate_attentive`
+  - packet granularity：`leader`
+  - reference：RSU `-1` with `--reference-z-override 2.0`
+  - frames：`21`
+- 输出：
+  - K=3 plan：`docs/doc_workspace/LGCP/experiments/small_scene/20260722_lgcp_intersection10_hierarchy_plan_top10_3leaders_21f`
+  - K=4 plan：`docs/doc_workspace/LGCP/experiments/small_scene/20260722_lgcp_intersection10_hierarchy_plan_top10_4leaders_21f`
+  - K=5 plan：`docs/doc_workspace/LGCP/experiments/small_scene/20260722_lgcp_intersection10_hierarchy_plan_top10_5leaders_21f`
+  - K=3 planned/full：`20260722_lgcp_intersection10_sgcp_attentive_intermediate_rsu_bev_top10_3leaders_21f_z2_thr005_leaderpkt` / `_fullscope`
+  - K=4 planned/full：`20260722_lgcp_intersection10_sgcp_attentive_intermediate_rsu_bev_top10_4leaders_21f_z2_thr005_leaderpkt` / `_fullscope`
+  - K=5 planned/full：`20260722_lgcp_intersection10_sgcp_attentive_intermediate_rsu_bev_top10_5leaders_21f_z2_thr005_leaderpkt` / `_fullscope`
+
+| Max leaders | Leaders | Area load | Avg group size | Max group size | Planned AP@0.3/0.5/0.7 | Full AP@0.3/0.5/0.7 | Member KB/frame | Sparse BEV KB/frame | Dense full BEV MB/frame |
+| ---: | --- | --- | ---: | ---: | --- | --- | ---: | ---: | ---: |
+| 3 | `6;9;8` | `6:5;9:4;8:1` | 2.10 | 4 | `0.809229/0.798743/0.660574` | `0.710024/0.700737/0.578433` | 68.28 | 218.57 | 51.56 |
+| 4 | `6;9;8;4` | `6:3;9:3;8:1;4:3` | 2.00 | 4 | `0.865886/0.798881/0.744764` | `0.811164/0.748394/0.697697` | 48.40 | 215.55 | 68.75 |
+| 5 | `6;9;8;4;3` | `6:3;9:2;8:1;4:2;3:2` | 1.80 | 4 | `0.865886/0.804755/0.752848` | `0.811164/0.753897/0.705270` | 36.37 | 214.58 | 85.94 |
+
+- 结论：
+  - K=3 过于激进：full-scope AP@0.5 降到 `0.700737`，AP@0.7 降到 `0.578433`。
+  - K=4 已基本恢复到原 8-Leader full-scope baseline：`0.811164/0.748394/0.697697` vs `0.813771/0.746923/0.687017`。
+  - K=5 相比 K=4 进一步提高 AP@0.5/AP@0.7 到 `0.753897/0.705270`，且第一跳 member upload 进一步降到 `36.37KB/frame`。
+  - 由于当前 sparse BEV upload 是按非零 cell 计，K=3/4/5 的二跳 sparse BEV 约 `214-219KB/frame`，差异很小；dense full BEV 会随 Leader 数线性增长，仅作为不可用上界。
+  - 在“最多 5 个 Leader”约束下，K=5 是当前推荐点；K=4 可作为更保守的 checkpoint-friendly 对照。
+
+## Easy intersection K=5 Where2comm leader-feature check
+
+- 时间：2026-07-22
+- 目的：保持 ordinary-intersection 10-CAV Top-10 / K=5 Leader assignment 不变，将 RSU feature-level fusion 从 SGCP attentive-derived route 换成 Where2comm checkpoint，检查 AP 与通信量。
+- 输入：
+  - dataset：`D:\Data\Carla\2026_07_22_22_00_04`
+  - assignment：`docs/doc_workspace/LGCP/experiments/small_scene/20260722_lgcp_intersection10_hierarchy_plan_top10_5leaders_21f/area_assignment_plan.csv`
+  - checkpoint：`C:\Workspace\OpenCOOD\checkpoints\where2comm_10e`
+  - command entry：`opencda.tools.lgcp_where2comm_leader_feature_fusion`
+  - `--max-areas-per-frame 10`
+  - `--packet-granularity leader`
+  - `--mask-mode lgcp_area_objectness --mask-dilation-cells 1`
+  - `--query-mode mean`
+  - reference：RSU `-1` with `--reference-z-override 2.0`
+- 输出：
+  - planned-area：`docs/doc_workspace/LGCP/experiments/small_scene/20260722_lgcp_intersection10_where2comm_leader_feature_top10_5leaders_21f_areaobj_dilate1_planned`
+  - full-scope：`docs/doc_workspace/LGCP/experiments/small_scene/20260722_lgcp_intersection10_where2comm_leader_feature_top10_5leaders_21f_areaobj_dilate1_fullscope`
+
+| Method | Scope | Leaders | Area load | Avg group | Member KB/frame | 2nd-hop feature | 2nd-hop KB/frame | AP@0.3 | AP@0.5 | AP@0.7 | GT | Pred samples |
+| --- | --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| Where2comm leader-feature | planned areas | `6;9;8;4;3` | `6:3;9:2;8:1;4:2;3:2` | 1.80 | 36.37 | 15.083032 Mbps | 184.12 | 0.759775 | 0.743407 | 0.381554 | 252 | 344 |
+| Where2comm leader-feature | full scope | `6;9;8;4;3` | `6:3;9:2;8:1;4:2;3:2` | 1.80 | 36.37 | 15.083032 Mbps | 184.12 | 0.643896 | 0.629983 | 0.323233 | 269 | 386 |
+
+- Planned vs Full：
+  - `planned areas`：只评估 LGCP Top-10 selected areas 内的预测框和 GT；它回答“LGCP 已决定关注并上传的区域里，融合质量如何”。
+  - `full scope`：对整帧/整 RoI 的预测框和 GT 评估；未被 Top-10 覆盖的目标会计入漏检，选中区域外的预测会计入误检；它更接近论文主表需要的 scene-level perception quality。
+- 结论：
+  - Where2comm K=5 的 AP@0.5 尚可：planned-area `0.743407`，full-scope `0.629983`。
+  - AP@0.7 明显弱于 SGCP attentive-derived K=5：Where2comm full `0.323233` vs attentive full `0.705270`。
+  - Where2comm 的二跳 feature 通信约 `184.12KB/frame`，低于 attentive sparse BEV 的 `214.58KB/frame`，但质量损失较大。
+  - 当前 K=5 主线仍建议使用 SGCP attentive-derived leader-BEV route；Where2comm 可作为 communication-aware checkpoint 对照。
+
+## Easy intersection coarse-area rerun
+
+- 时间：2026-07-22
+- 动机：用户指出当前 `90m x 70m` RoI 被 `10m x 6m` grid 切成约 `108` 个小 area，虽然只选择 Top-10，但每个 area 内点云太少，使“原始点云应比中间特征更大”的通信直觉不成立。
+- 配置更新：
+  - 文件：`opencda/scenario_testing/config_yaml/lgcp_carla_intersection_easy.yaml`
+  - `lgcp.roi.grid_size`：从 `[10.0, 6.0]` 改为 `[30.0, 24.0]`
+  - RoI 保持 `[90.0, 70.0]`，因此理论总 area 数为 `ceil(90/30) x ceil(70/24) = 3 x 3 = 9`
+  - 只修改 LGCP area 划分；LiDAR debug grid 仍保持 `10.0`，避免影响可视化和此前传感器调试。
+- 离线复算：
+  - area confidence：`docs/doc_workspace/LGCP/experiments/small_scene/20260722_lgcp_intersection10_bigarea_area_confidence_21f`
+  - all-area plan：`docs/doc_workspace/LGCP/experiments/small_scene/20260722_lgcp_intersection10_bigarea_hierarchy_plan_all9_21f`
+  - K=5 reassignment：`docs/doc_workspace/LGCP/experiments/small_scene/20260722_lgcp_intersection10_bigarea_hierarchy_plan_all9_5leaders_21f`
+  - attentive planned/full：`20260722_lgcp_intersection10_bigarea_sgcp_attentive_all9_5leaders_21f_z2_thr005_leaderpkt` / `_fullscope`
+  - Where2comm planned/full：`20260722_lgcp_intersection10_bigarea_where2comm_all9_5leaders_21f_areaobj_dilate1_planned` / `_fullscope`
+- Area / hierarchy summary：
+  - area records：`2079 = 21 frames x 9 areas x 11 agents`
+  - all-area plan：`9` areas/frame，`4` member-to-leader packets/frame，`9` leader uploads/frame
+  - K=5 leaders：`8;1;2;10;6`
+  - area load：`8:2;1:2;2:2;10:2;6:1`
+  - avg group size：`1.777778`
+
+| Route | Scope | Areas/frame | Leaders | Member KB/frame | 2nd-hop feature KB/frame | 2nd-hop Mbps | AP@0.3 | AP@0.5 | AP@0.7 | GT | Pred |
+| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| SGCP attentive-derived | planned areas | 9 | 5 | 94.60 | 916.46 |  | 0.618795 | 0.610993 | 0.583450 | 264 | 446 |
+| SGCP attentive-derived | full scope | 9 | 5 | 94.60 | 916.46 |  | 0.607293 | 0.599637 | 0.572605 | 269 | 446 |
+| Where2comm `area_objectness+dilation1` | planned areas | 9 | 5 | 94.60 | 382.02 | 31.294902 | 0.480339 | 0.480339 | 0.365534 | 243 | 532 |
+| Where2comm `area_objectness+dilation1` | full scope | 9 | 5 | 94.60 | 382.02 | 31.294902 | 0.470654 | 0.470654 | 0.358164 | 248 | 532 |
+| Where2comm `area_objectness+dilation0` | planned areas | 9 | 5 | 94.60 | 359.56 | 29.455116 | 0.480319 | 0.480319 | 0.371061 | 243 | 532 |
+
+- 结论：
+  - 目标“总 area 数约 10”已达成：当前实际为 `9` 个大 area。
+  - 第一跳 member 点云从旧 K=5 的 `36.37KB/frame` 升到 `94.60KB/frame`，说明大 area 确实让 raw point slice 更大。
+  - 但二跳中间特征仍高于第一跳：attentive sparse BEV 为 `916.46KB/frame`，Where2comm 为 `382.02KB/frame`；不加 dilation 也仍为 `359.56KB/frame`。
+  - 这说明问题不只是 area 过小。当前 feature packet 统计随 BEV cell coverage 增长较快，Where2comm 虽有 objectness 选择，但在大 area 下 mask 仍覆盖过多 cells。
+  - 下一步若要符合“中间特征显著小于原始点云”的论文直觉，需要继续做 feature compression / stricter objectness threshold / top-k cell budget / quantization，而不是单纯继续放大 area。
+
+## Where2comm feature-size accounting note
+
+- 时间：2026-07-23
+- 目的：回答 Where2comm 如何筛选 BEV feature，以及 raw point cloud、直接生成的 dense BEV feature、Where2comm sparse feature 三者大小何时满足 `raw < feature` 或 `raw > feature`。
+- 代码依据：
+  - `opencood/opencood/models/comm_modules/where2comm.py`：`Communication.forward()` 对单车 `psm_single` 做 sigmoid、anchor max、可选 Gaussian smoothing，再用 `threshold=0.01` 或 `k_ratio` 生成 BEV cell mask。
+  - `opencood/opencood/models/point_pillar_comm_multiscale.py`：Where2comm 在三层 multiscale feature 上逐层执行，当前 checkpoint 三层 payload 分别为 `64x96x352`、`128x48x176`、`256x24x88`，未启用 channel compression。
+  - `opencda/tools/lgcp_where2comm_area_mask_eval.py`：通信量估计为 `selected_cells x payload_channels x feature_value_bits`，默认 `feature_value_bits=16`。
+  - `opencda/tools/lgcp_pointpillar_rsu_bev_fusion.py`：raw point slice 按 `points x 4 float32 = points x 16 bytes` 统计。
+- 理论大小：
+  - Where2comm 三尺度 dense full feature：每个 non-ego agent 约 `7392 KB`；5 个 leader packets 约 `36960 KB/frame`。
+  - SGCP attentive scatter dense full BEV：5 leaders 约 `85.94 MiB/frame`。
+  - Where2comm 当前所谓压缩不是低维编码，而是 sparse cell selection；每个保留 cell 仍上传原始多尺度 feature values。
+
+| Case | Raw point slice KB/frame | Raw points/frame | Where2comm selected feature KB/frame | Dense Where2comm 5-agent feature KB/frame | Feature/raw | Selected/full |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| fine Top-10 K=5 full | 36.37 | 2328 | 184.12 | 36960 | 5.06x | 0.0050 |
+| coarse 9-area K=5 dilation1 full | 94.60 | 6055 | 382.02 | 36960 | 4.04x | 0.0103 |
+| coarse 9-area K=5 dilation0 planned | 94.60 | 6055 | 359.56 | 36960 | 3.80x | 0.0097 |
+
+- Break-even rule：
+  - raw bytes = `N_points x 16`
+  - selected feature bytes = `sum_s(selected_cells_s x channels_s x 16 bits / 8)`
+  - raw point cloud is larger only when `N_points > selected_feature_bytes / 16`
+  - 当前 break-even：
+    - fine K=5：需要约 `11784` raw points/frame，实际只有 `2328`
+    - coarse K=5 dilation1：需要约 `24449` raw points/frame，实际只有 `6055`
+    - coarse K=5 dilation0：需要约 `23012` raw points/frame，实际只有 `6055`
+- 结论：
+  - 当前 intersection10 场景中，raw point slices 比 Where2comm selected features 小，不满足“中间特征比原始点云更省”的叙事。
+  - Where2comm 相比 dense full feature 确实省得很多，只保留约 `0.5%-1.0%` dense feature payload；问题是 dense feature 本身每 cell 通道数高，所以稀疏后仍可能比稀疏点云大。
+  - 对网络论文而言，后续不必把重点转到训练，而应把通信核算写成条件式：当 area 内点云足够密、raw point slice 点数超过 break-even 时，Where2comm sparse feature 才比 raw point slice 更省；否则 raw slice 反而更省。

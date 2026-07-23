@@ -22,6 +22,12 @@ COM_RANGE = 70
 
 def build_dataset(dataset_cfg, visualize=False, train=True):
     dataset_name = dataset_cfg['fusion']['core_method']
+    dataset_name = {
+        'late': 'LateFusionDataset',
+        'early': 'EarlyFusionDataset',
+        'intermediate': 'IntermediateFusionDataset',
+    }.get(dataset_name, dataset_name)
+    dataset_cfg['fusion']['core_method'] = dataset_name
     error_message = f"{dataset_name} is not found. " \
                     f"Please add your processor file's name in opencood/" \
                     f"data_utils/datasets/init.py"

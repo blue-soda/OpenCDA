@@ -2167,6 +2167,241 @@ Interpretation:
 
 ## R4：Model-Level Feature Hierarchy Boundary
 
+### 2026-07-22：Where2comm 4-Leader Feature-Packet Diagnostic
+
+本次结果用于验证“少数 Leader 接管更多 members 与 areas”是否能缓解 Top-23 大范围下的 RSU feature fusion 退化。实验将原 Top-23 assignment 每帧重分配给最多 4 个 Leader，并让每个 Leader 只上传一个合并后的 feature packet。
+
+输出目录：
+
+```text
+docs/doc_workspace/LGCP/experiments/hierarchy_plan/20260722_lgcp_carla_hierarchy_plan_area23_4leaders
+docs/doc_workspace/LGCP/experiments/hierarchy_plan/20260722_lgcp_where2comm_leader_feature_top23_4leaders_11f_areaobj_dilate1
+docs/doc_workspace/LGCP/experiments/hierarchy_plan/20260722_lgcp_where2comm_leader_feature_top23_4leaders_11f_areaobj_dilate1_thr001
+```
+
+| Setting | AP@0.3 | AP@0.5 | AP@0.7 | GT | Pred samples | Valid leader packets/frame | Member upload KB/frame | Second-hop Mbps |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| Top-5 leader feature packet, threshold 0.05 | 0.708405 | 0.599561 | 0.038212 | 85 | 102 | 3.73 | 18.26 | 7.274124 |
+| Top-23 per-area feature packet, threshold 0.05 | 0.157367 | 0.157367 | 0.000123 | 290 | 55 | 17.36 | 47.99 | 25.600930 |
+| Top-23 4-leader feature packet, threshold 0.05 | 0.650372 | 0.412919 | 0.021884 | 290 | 305 | 3.73 | 227.50 | 24.865513 |
+| Top-23 4-leader feature packet, threshold 0.01 | 0.578643 | 0.357752 | 0.016061 | 290 | 432 | 3.73 | 227.50 | 24.865513 |
+| Top-23 5-leader feature packet, threshold 0.05 | 0.642838 | 0.409177 | 0.030923 | 290 | 305 | 4.27 | 191.92 | 24.886924 |
+| Top-23 6-leader feature packet, threshold 0.05 | 0.658934 | 0.452508 | 0.026470 | 290 | 302 | 5.09 | 154.50 | 24.707258 |
+| Top-23 7-leader feature packet, threshold 0.05 | 0.669542 | 0.484321 | 0.026363 | 290 | 289 | 5.91 | 132.88 | 24.756596 |
+| Top-23 8-leader feature packet, threshold 0.05 | 0.623809 | 0.459635 | 0.035736 | 290 | 279 | 6.45 | 99.98 | 24.767767 |
+| Top-23 13-leader feature packet, threshold 0.05 | 0.541581 | 0.381057 | 0.043158 | 290 | 249 | 8.27 | 56.06 | 25.210880 |
+
+结论：
+
+- 4-Leader reassignment 将 Top-23 AP@0.5 从 `0.157367` 提升到 `0.412919`，说明原 Top-23 的主要问题之一是 per-area packet 过多且偏离 checkpoint 的 `ego + limited CAVs` 语义。
+- 5-Leader 的 AP@0.5 `0.409177` 与 4-Leader `0.412919` 基本持平，AP@0.7 略高，但没有解决 Top-23 质量差距。
+- 6-Leader 的 AP@0.5 进一步升至 `0.452508`，同时第一跳 member-to-leader 上传降至 `154.50 KB/frame`；在当前启发式重分配下，它优于 4/5-Leader。
+- 7-Leader 是 4-13 sweep 中 AP@0.5 最高点，达到 `0.484321`；继续增加到 8-13 后 AP@0.5 下降。
+- 第一跳通信随 Leader 数增加下降：4-Leader `227.50 KB/frame`，7-Leader `132.88 KB/frame`，13-Leader `56.06 KB/frame`；第二跳 feature 仍基本稳定在 `24-25 Mbps`。
+- checkpoint/YAML 严格声明的 total CAV cap 是 `5`，即保守 Leader cap 为 `4`；但 synthetic Where2comm fusion probe 证明当前 runtime 没有 5-CAV shape 硬上限，真实三尺度 feature 在当前 CUDA 环境下可跑到 total CAV `232`，`234` 开始 OOM。论文主实验不应使用 runtime OOM 上限，应把 7-Leader 作为当前 Top-23 的实用 sweep 上限/默认候选。
+
+### 2026-07-22：All-20-CAV Point Cloud To RSU
+
+本次结果回答“20 辆 CAV 的点云全部传到 RSU 后能得到多少 AP”。当前 `lgcp_carla` 数据为 `20 CAV + 1 RSU + 80 background vehicles`。
+
+输出目录：
+
+```text
+docs/doc_workspace/LGCP/experiments/hierarchy_plan/20260722_lgcp_where2comm_all20cav_to_rsu_11f_objectness_thr005
+docs/doc_workspace/LGCP/experiments/hierarchy_plan/20260722_lgcp_where2comm_all20cav_to_rsu_11f_centralized_raw_thr005
+```
+
+| Setting | Scope | AP@0.3 | AP@0.5 | AP@0.7 | GT | Raw upload KB/frame | Feature Mbps |
+| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| 20 CAV per-CAV Where2comm | full scene | 0.590709 | 0.358292 | 0.021621 | 542 | 1603.89 | 512.565848 |
+| 20 CAV centralized raw | full scene | 0.651840 | 0.487223 | 0.080560 | 542 | 1603.89 | 0.000000 |
+| LGCP 7-Leader feature packet | planned areas | 0.669542 | 0.484321 | 0.026363 | 290 | 132.88 member upload | 24.756596 |
+
+结论：
+
+- 直接把 20 个 CAV 作为 20 个 Where2comm agents 融合，AP@0.5 只有 `0.358292`，说明更多 agent 并不自动更好。
+- 更合理的 raw centralized upper bound 是先在 RSU 合并 20 CAV 点云再检测，AP@0.5 为 `0.487223`。
+- LGCP 7-Leader 的 AP@0.5 `0.484321` 几乎追平 centralized raw upper bound，但第一跳点云上传约为 `132.88 KB/frame`，只有 all-raw upload `1603.89 KB/frame` 的约 `8.29%`。
+
+### 2026-07-22：Attentive Early Centralized Raw Upper Bound
+
+上面的 `20 CAV centralized raw` 使用的是 Where2comm checkpoint 的检测 route。为确认 SGCP 中 attentive checkpoint 移植的 early-fusion 权重是否更适合 centralized raw，本次新增同场景、同 20 CAV、同 RSU reference 的对照。
+
+输出目录：
+
+```text
+docs/doc_workspace/LGCP/experiments/hierarchy_plan/20260722_lgcp_attentive_early_all20cav_to_rsu_11f_centralized_raw_thr005
+docs/doc_workspace/LGCP/experiments/hierarchy_plan/20260722_lgcp_attentive_early_all20cav_to_rsu_11f_centralized_raw_thr020
+```
+
+| Setting | Detector checkpoint | Threshold | AP@0.3 | AP@0.5 | AP@0.7 | GT | Pred samples | Raw upload KB/frame |
+| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| 20 CAV centralized raw | SGCP attentive-derived early | 0.05 | 0.799015 | 0.746692 | 0.424014 | 542 | 617 | 1603.89 |
+| 20 CAV centralized raw | SGCP attentive-derived early | 0.20 | 0.816923 | 0.779641 | 0.470207 | 542 | 463 | 1603.89 |
+| 20 CAV centralized raw | Where2comm route | 0.05 | 0.651840 | 0.487223 | 0.080560 | 542 | 798 | 1603.89 |
+| LGCP 7-Leader feature packet | Where2comm leader packet | 0.05 | 0.669542 | 0.484321 | 0.026363 | 290 planned-area | 289 | 132.88 member upload |
+
+结论：
+
+- 20 CAV centralized raw 之前确实用的是 Where2comm checkpoint；SGCP attentive early 权重不是同一个 detector。
+- attentive early detector 在当前 LGCP 11 帧场景上给出更合理的 all-raw centralized upper bound：AP@0.5 `0.779641`、AP@0.7 `0.470207`。
+- 这会改变后续表述：LGCP 7-Leader 不能再被说成“几乎追平 all-raw centralized upper bound”；它只能说是接近 Where2comm 同检测 route 的 centralized raw 诊断。真正的 all-raw early-fusion 上界仍显著更高，但通信成本约 `1603.89 KB/frame`。
+
+### 2026-07-22：SGCP Attentive-Derived Leader BEV To RSU Fusion
+
+本次把 SGCP `pointpillar_early_from_attentive_weights/latest.pth` 放入 intermediate attentive model definition 中使用。由于 `AttFusion` 无可学习参数，该 checkpoint 与 `opencood/logs/pointpillar_attentive_fusion/latest.pth` 的 142 个 tensor 完全一致；差别在于本次显式以 `point_pillar_intermediate` / `AttBEVBackbone` 运行 `leader BEV feature -> RSU AttFusion -> detection`。
+
+输出目录：
+
+```text
+docs/doc_workspace/LGCP/experiments/model_dirs/pointpillar_intermediate_from_sgcp_attentive_early
+docs/doc_workspace/LGCP/experiments/hierarchy_plan/20260722_lgcp_sgcp_attentive_intermediate_rsu_bev_top5_11f_z2_thr005
+docs/doc_workspace/LGCP/experiments/hierarchy_plan/20260722_lgcp_sgcp_attentive_intermediate_rsu_bev_top23_11f_z2_thr005
+docs/doc_workspace/LGCP/experiments/hierarchy_plan/20260722_lgcp_sgcp_attentive_intermediate_rsu_bev_top23_7leaders_11f_z2_thr005_leaderpkt
+```
+
+| Setting | Packet granularity | AP@0.3 | AP@0.5 | AP@0.7 | GT | Pred samples | Leader packets/frame | Member upload KB/frame | Sparse feature KB/frame |
+| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| Top-5 first 5 areas | area | 0.940917 | 0.828329 | 0.534530 | 93 | 95 | 3.73 | 4.95 | 83.00 |
+| Top-23 original assignment | area | 0.134185 | 0.134185 | 0.102179 | 313 | 42 | 17.36 | 26.81 | 340.80 |
+| Top-23 7-Leader reassignment | leader | 0.663529 | 0.556226 | 0.252941 | 313 | 223 | 5.91 | 88.42 | 339.25 |
+| Where2comm Top-23 7-Leader | leader | 0.669542 | 0.484321 | 0.026363 | 290 planned-area | 289 | 5.91 | 132.88 | feature Mbps 24.756596 |
+
+结论：
+
+- SGCP attentive-derived checkpoint 可以用于 leader BEV feature -> RSU attentive fusion，但不是通过拆出融合权重，而是通过 intermediate model definition 激活无参数 `AttFusion`。
+- Top-5 的 AP@0.5 `0.828329` / AP@0.7 `0.534530` 是当前最强的 model-level hierarchy positive signal。
+- Top-23 不能直接用 per-area packets；改成 7-Leader leader packets 后 AP@0.5 恢复到 `0.556226`，且 AP@0.7 `0.252941` 明显高于 Where2comm 7-Leader。
+- Dense full BEV feature 仍不可作为通信量 claim；后续主线应围绕 sparse BEV cell packet、压缩 feature packet、metadata overhead 和多 seed validation。
+
+### 2026-07-22：Small Town03 Diagnostic Dataset
+
+为降低 100 车密集环岛对 model-level feature fusion 的难度，本次新增小规模 Town03 环岛数据集。它保留 LGCP 论文中的 RoI/grid 思路，但规模接近 OPV2V/V2XSet checkpoint 的训练分布。
+
+场景与数据：
+
+| Item | Value |
+| --- | --- |
+| Scenario | `lgcp_carla_small` |
+| Config | `opencda/scenario_testing/config_yaml/lgcp_carla_small.yaml` |
+| Dataset | `D:\Data\Carla\2026_07_22_20_04_41` |
+| Agents | `8 CAV + 1 RSU` |
+| Background | `28 vehicles` |
+| Frames | `21` |
+| RoI / grid | `120m x 60m` / `10m x 6m` |
+
+LGCP Top-10 hierarchy plan:
+
+| Frames | Areas/frame | Avg group size | Avg leader count | Avg leader max load | Byte proxy/frame |
+| ---: | ---: | ---: | ---: | ---: | ---: |
+| 21 | 10.00 | 1.552381 | 5.714286 | 4.666667 | 77.88 KB |
+
+SGCP attentive-derived leader-BEV route:
+
+| Setting | Packet granularity | AP@0.3 | AP@0.5 | AP@0.7 | GT | Pred samples | Member upload KB/frame | Sparse feature KB/frame |
+| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| Small Town03 Top-10 | leader | 0.800311 | 0.755478 | 0.393690 | 294 | 247 | 12.67 | 234.69 |
+
+结论：
+
+- 小场景已完成 CARLA 导出、离线 area confidence、hierarchy plan 和 leader-BEV attentive evaluation。
+- AP@0.5 `0.755478` / AP@0.7 `0.393690` 显示它适合作为 model-mechanism validation 和调参场景。
+- 论文使用时应标注为 small-scale diagnostic，不替代 5-30 CAV co-simulation 的 scalability 证据。
+
+### 2026-07-22：Ordinary Intersection Easy-Scene Attempts
+
+| Dataset | Variant | Frames | Early model | AP@0.3 | AP@0.5 | AP@0.7 | Note |
+| --- | --- | ---: | --- | ---: | ---: | ---: | --- |
+| `D:\Data\Carla\2026_07_22_20_26_17` | 4 CAV + 6 background, fixed spawn | 36 | default early, with RSU | 0.76 | 0.75 | 0.68 | Vehicle placement fixed; AP gate not met. |
+| `D:\Data\Carla\2026_07_22_20_31_56` | 4 CAV + 0 background | 26 | default early, CAV only | 0.69 | 0.69 | 0.69 | Fewer vehicles did not improve AP. |
+| `D:\Data\Carla\2026_07_22_20_37_27` | 2 CAV + 0 background | 21 | default early, CAV only | 0.52 | 0.52 | 0.52 | GT matched, but FP ranking suppresses AP. |
+| `D:\Data\Carla\2026_07_22_20_44_26` | 2 CAV + 16 background, fixed spawn | 21 | default early, with RSU | 0.75 | 0.73 | 0.52 | Current ordinary-intersection config. |
+| `D:\Data\Carla\2026_07_22_20_44_26` | 2 CAV + 16 background, fixed spawn | 21 | SGCP attentive-derived early, with RSU | 0.70 | 0.70 | 0.53 | Alternative early checkpoint did not improve AP. |
+| `D:\Data\Carla\2026_07_22_22_00_04` | 10 CAV + 10 background, fixed spawn | 21 | default early, with RSU | 0.86 | 0.86 | 0.77 | Current best ordinary-intersection result. |
+| `D:\Data\Carla\2026_07_22_22_00_04` | 10 CAV + 10 background, fixed spawn | 21 | SGCP attentive-derived early, with RSU | 0.86 | 0.86 | 0.78 | Slightly better AP@0.7. |
+| `D:\Data\Carla\2026_07_22_22_00_04` | 10 CAV + 10 background, fixed spawn | 21 | default early, CAV only | 0.72 | 0.72 | 0.63 | RSU point cloud helps in this scene. |
+
+Conclusion: ordinary-intersection placement is fixed by explicit spawn points, but AP@0.3 `>= 0.90` remains open. The next step is to search a cleaner non-roundabout junction / road geometry or calibrate detector postprocessing beyond score/NMS sweeps.
+
+### 2026-07-22：Intersection10 LGCP Hierarchy Result
+
+Baseline upper bound for this diagnostic scene:
+
+| Scene | Method | Scope | AP@0.3 | AP@0.5 | AP@0.7 |
+| --- | --- | --- | ---: | ---: | ---: |
+| `D:\Data\Carla\2026_07_22_22_00_04` | Best full early fusion with RSU | full scene | 0.86 | 0.86 | 0.78 |
+
+LGCP hierarchy result:
+
+| Method | Scope | Areas/frame | Leaders/frame | Member upload KB/frame | Sparse BEV KB/frame | AP@0.3 | AP@0.5 | AP@0.7 | GT | Pred samples |
+| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| SGCP attentive leader-BEV -> RSU attentive | planned areas | 10 | 8 | 17.57 | 211.08 | 0.868668 | 0.797311 | 0.733363 | 252 | 294 |
+| SGCP attentive leader-BEV -> RSU attentive | full scope | 10 | 8 | 17.57 | 211.08 | 0.813771 | 0.746923 | 0.687017 | 269 | 294 |
+
+Limited-Leader sweep under the same Top-10 area budget:
+
+| Max leaders | Scope | Leaders | Area load | Avg group | Member upload KB/frame | Sparse BEV KB/frame | AP@0.3 | AP@0.5 | AP@0.7 | GT | Pred samples |
+| ---: | --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| 3 | planned areas | `6;9;8` | `6:5;9:4;8:1` | 2.10 | 68.28 | 218.57 | 0.809229 | 0.798743 | 0.660574 | 252 | 316 |
+| 3 | full scope | `6;9;8` | `6:5;9:4;8:1` | 2.10 | 68.28 | 218.57 | 0.710024 | 0.700737 | 0.578433 | 269 | 340 |
+| 4 | planned areas | `6;9;8;4` | `6:3;9:3;8:1;4:3` | 2.00 | 48.40 | 215.55 | 0.865886 | 0.798881 | 0.744764 | 252 | 294 |
+| 4 | full scope | `6;9;8;4` | `6:3;9:3;8:1;4:3` | 2.00 | 48.40 | 215.55 | 0.811164 | 0.748394 | 0.697697 | 269 | 294 |
+| 5 | planned areas | `6;9;8;4;3` | `6:3;9:2;8:1;4:2;3:2` | 1.80 | 36.37 | 214.58 | 0.865886 | 0.804755 | 0.752848 | 252 | 294 |
+| 5 | full scope | `6;9;8;4;3` | `6:3;9:2;8:1;4:2;3:2` | 1.80 | 36.37 | 214.58 | 0.811164 | 0.753897 | 0.705270 | 269 | 294 |
+
+K=5 checkpoint comparison:
+
+| Checkpoint route | Scope | Mask / packet | Leaders | Member upload KB/frame | 2nd-hop feature KB/frame | AP@0.3 | AP@0.5 | AP@0.7 | GT | Pred samples |
+| --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| SGCP attentive-derived | planned areas | leader sparse BEV | 5 | 36.37 | 214.58 | 0.865886 | 0.804755 | 0.752848 | 252 | 294 |
+| SGCP attentive-derived | full scope | leader sparse BEV | 5 | 36.37 | 214.58 | 0.811164 | 0.753897 | 0.705270 | 269 | 294 |
+| Where2comm | planned areas | `area_objectness+dilation1`, leader | 5 | 36.37 | 184.12 | 0.759775 | 0.743407 | 0.381554 | 252 | 344 |
+| Where2comm | full scope | `area_objectness+dilation1`, leader | 5 | 36.37 | 184.12 | 0.643896 | 0.629983 | 0.323233 | 269 | 386 |
+
+Interpretation:
+
+- The full-scene upper bound is still the best early-fusion result, `0.86/0.86/0.78`.
+- The planned-area AP is not directly comparable with full-scene AP because it evaluates only LGCP-selected areas.
+- Full-scope LGCP retains most of the scene-level upper-bound AP, while using the local-to-global leader packet route.
+- Limiting to 4 or 5 Leaders removes the earlier 8-Leader over-partitioning concern without hurting full-scope AP. K=5 is the current preferred setting under the `<=5` constraint; K=4 is the conservative checkpoint-friendly comparison point.
+- Where2comm uses fewer second-hop feature bytes than SGCP attentive-derived sparse BEV on K=5 (`184.12` vs `214.58 KB/frame`), but its high-IoU AP drops sharply. It is useful as a communication-aware checkpoint baseline, not the current main-quality route.
+- The remaining bottleneck is communication: SGCP attentive-derived sparse BEV feature upload is still about `214-219 KB/frame`, so compression / area budget / feature-cell selection are now the right next axes.
+
+Coarse-area rerun:
+
+| Setting | Total areas | Area size | Route | Scope | Member upload KB/frame | 2nd-hop feature KB/frame | AP@0.3 | AP@0.5 | AP@0.7 |
+| --- | ---: | --- | --- | --- | ---: | ---: | ---: | ---: | ---: |
+| Old Top-10 selected from fine grid | 101 active / 108 theoretical | `10m x 6m` | SGCP attentive-derived K=5 | full scope | 36.37 | 214.58 | 0.811164 | 0.753897 | 0.705270 |
+| Old Top-10 selected from fine grid | 101 active / 108 theoretical | `10m x 6m` | Where2comm K=5 | full scope | 36.37 | 184.12 | 0.643896 | 0.629983 | 0.323233 |
+| New all-area coarse grid | 9 active / 9 theoretical | `30m x 24m` | SGCP attentive-derived K=5 | full scope | 94.60 | 916.46 | 0.607293 | 0.599637 | 0.572605 |
+| New all-area coarse grid | 9 active / 9 theoretical | `30m x 24m` | Where2comm K=5 `dilation1` | full scope | 94.60 | 382.02 | 0.470654 | 0.470654 | 0.358164 |
+| New all-area coarse grid | 9 active / 9 theoretical | `30m x 24m` | Where2comm K=5 `dilation0` | planned areas | 94.60 | 359.56 | 0.480319 | 0.480319 | 0.371061 |
+
+Interpretation:
+
+- The coarse grid fixes the semantic mismatch: the scene now has about ten LGCP areas in total (`9`), not Top-10 selected from over one hundred small cells.
+- It increases first-hop raw point slices as expected (`36.37 -> 94.60 KB/frame`), but current second-hop features are still larger than first-hop raw slices.
+- Where2comm remains more communication efficient than SGCP attentive-derived sparse BEV on coarse areas, but its AP is lower. This suggests the next communication fix should be feature-cell budget / thresholding / quantization, not merely larger areas.
+
+Where2comm size-accounting interpretation:
+
+| Payload type | Current formula / source | Typical size in intersection10 K=5 |
+| --- | --- | ---: |
+| Raw point slice | `points x 4 float32` | fine `36.37 KB/frame`, coarse `94.60 KB/frame` |
+| SGCP attentive dense scatter BEV | full `leader x 64 x 200 x 704` feature payload | `85.94 MiB/frame` |
+| Where2comm dense multiscale feature | full `64x96x352 + 128x48x176 + 256x24x88`, 16-bit values | `7392 KB/agent`, `36960 KB/5 agents` |
+| Where2comm selected sparse feature | selected BEV cells after objectness mask | fine `184.12 KB/frame`, coarse `359.56-382.02 KB/frame` |
+
+Break-even against raw point slices:
+
+| Case | Raw points/frame | Selected feature KB/frame | Break-even raw points | Current relation |
+| --- | ---: | ---: | ---: | --- |
+| fine Top-10 K=5 Where2comm | 2328 | 184.12 | 11784 | raw is smaller |
+| coarse 9-area K=5 Where2comm dilation1 | 6055 | 382.02 | 24449 | raw is smaller |
+| coarse 9-area K=5 Where2comm dilation0 | 6055 | 359.56 | 23012 | raw is smaller |
+
+Where2comm is therefore highly efficient relative to dense BEV feature transmission, retaining only about `0.5%-1.0%` of the full multiscale feature payload in these runs. It is not automatically smaller than raw area point slices. For the network-paper argument, this should be written as a conditional communication trade-off: sparse intermediate features dominate when the selected area contains enough raw points or when the feature mask/quantization budget is sufficiently tight; sparse raw point slices dominate in low-density areas.
+
 ### 2026-07-18：Nearest vs Bilinear Coordinate-Warp AP Probe
 
 本次结果用于判断当前 PointPillar neural feature hierarchy 是否能直接形成论文级 AP。实验复用 Top-23 首帧 leader-local feature slices，以 CAV 1 为 reference canvas，比较 nearest 与 bilinear 的 `reference -> world -> leader` coordinate warp。

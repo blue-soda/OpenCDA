@@ -226,6 +226,12 @@ def parse_args():
                         help='Communication range for edgecooper_global '
                              'candidate V2V links. Defaults to 35 m to '
                              'preserve existing baseline results.')
+    parser.add_argument('--max-senders-per-receiver', type=int, default=1,
+                        help='Receiver-side concurrent inbound-link capacity '
+                             'for orthogonal resources. Defaults to 1 to '
+                             'preserve the endpoint-disjoint Table 1 PCS and '
+                             'EdgeCooper baselines; K=2 is a protocol '
+                             'capability sensitivity.')
     parser.add_argument('--ns3-link-quality-csv', default=None,
                         help='Optional rlc_by_request.csv from ns3_log_eval. '
                              'When set, communication_aware selective sharing '
@@ -264,6 +270,10 @@ def parse_args():
                         help='Temporarily override the OpenCOOD '
                              'postprocessor target score_threshold. Useful '
                              'for detector checkpoint calibration probes.')
+    parser.add_argument('--postprocess-nms-thresh', type=float, default=None,
+                        help='Temporarily override the OpenCOOD '
+                             'postprocessor nms_thresh for detector '
+                             'checkpoint calibration probes.')
     return parser.parse_args()
 
 
@@ -362,7 +372,8 @@ def apply_resource_overrides(resource_allocator, world, num_channels=None,
                              pcs_blind_spot_radius=None,
                              pcs_min_spot_grids=None,
                              pcs_communication_range_m=None,
-                             channel_model=None):
+                             channel_model=None,
+                             max_senders_per_receiver=None):
     if num_channels is not None:
         if num_channels <= 0:
             raise ValueError('--num-channels must be positive')
@@ -402,6 +413,12 @@ def apply_resource_overrides(resource_allocator, world, num_channels=None,
         if hasattr(resource_allocator, 'communication_range_m'):
             resource_allocator.communication_range_m = float(
                 pcs_communication_range_m)
+    if max_senders_per_receiver is not None:
+        if max_senders_per_receiver <= 0:
+            raise ValueError('--max-senders-per-receiver must be positive')
+        if hasattr(resource_allocator, 'max_senders_per_receiver'):
+            resource_allocator.max_senders_per_receiver = int(
+                max_senders_per_receiver)
     if hasattr(resource_allocator, 'time_slot'):
         resource_allocator.time_slot = float(
             getattr(world.network_manager, 'time_slot', 0.1))
@@ -1558,7 +1575,8 @@ def apply_sgcp_constraint(frame, protocol, ego_cav_id, resource_allocation,
                           max_upload_points_per_source=None,
                           routing_hints=None,
                           routing_hints_max_per_frame=1,
-                          channel_model=None):
+                          channel_model=None,
+                          max_senders_per_receiver=1):
     clear_sgcp_globals()
     world = OfflineCavWorld(
         frame,
@@ -1621,7 +1639,8 @@ def apply_sgcp_constraint(frame, protocol, ego_cav_id, resource_allocation,
         pcs_blind_spot_radius=pcs_blind_spot_radius,
         pcs_min_spot_grids=pcs_min_spot_grids,
         pcs_communication_range_m=pcs_communication_range_m,
-        channel_model=channel_model)
+        channel_model=channel_model,
+        max_senders_per_receiver=max_senders_per_receiver)
     allocator.set_clusters(clusters)
     pcs_round_metadata = {}
     if resource_allocation == 'fullperception_pcs':
@@ -1705,6 +1724,9 @@ def apply_sgcp_constraint(frame, protocol, ego_cav_id, resource_allocation,
             '' if not routing_hints else 'enabled')
         metadata['max_upload_points_per_source'] = (
             max_upload_points_per_source or '')
+        metadata['max_senders_per_receiver'] = max(
+            1,
+            int(max_senders_per_receiver or 1))
         metadata['pcs_rounds_requested'] = (
             pcs_round_metadata.get('pcs_rounds_requested', ''))
         metadata['pcs_rounds_accepted'] = (
@@ -2215,7 +2237,8 @@ def apply_receiver_grid_selection(world, clusters, selection):
 
 
 def trim_selective_grid_selection_to_global_deadline(
-        world, clusters, baseline_name, deadline_ms, channel_model):
+        world, clusters, baseline_name, deadline_ms, channel_model,
+        max_senders_per_receiver=1):
     """Admit selective-sharing grids under one shared per-frame budget.
 
     The older selective deadline trim was applied independently to each
@@ -2291,15 +2314,23 @@ def trim_selective_grid_selection_to_global_deadline(
     original_link_count = len(link_entries)
     if baseline_name in ['edgecooper_global', 'edgecooper_global_hd']:
         matched_links = []
-        occupied_nodes = set()
+        occupied_senders = set()
+        receiver_loads = defaultdict(int)
+        max_inbound = max(1, int(max_senders_per_receiver or 1))
         for item in link_entries:
             sender_id = item['sender_id']
             receiver_id = item['receiver_id']
-            if sender_id in occupied_nodes or receiver_id in occupied_nodes:
+            sender_blocked = (
+                sender_id in occupied_senders or
+                receiver_loads.get(sender_id, 0) > 0)
+            receiver_blocked = (
+                receiver_id in occupied_senders or
+                receiver_loads.get(receiver_id, 0) >= max_inbound)
+            if sender_blocked or receiver_blocked:
                 continue
             matched_links.append(item)
-            occupied_nodes.add(sender_id)
-            occupied_nodes.add(receiver_id)
+            occupied_senders.add(sender_id)
+            receiver_loads[receiver_id] += 1
             if len(matched_links) >= channel_model.num_channels:
                 break
         link_entries = matched_links
@@ -2339,6 +2370,9 @@ def trim_selective_grid_selection_to_global_deadline(
         'admitted_links': int(admitted_links),
         'candidate_links': int(candidate_links),
         'pre_matching_candidate_links': int(original_link_count),
+        'max_senders_per_receiver': max(
+            1,
+            int(max_senders_per_receiver or 1)),
     }
 
 
@@ -2353,7 +2387,8 @@ def apply_selective_sharing_baseline(frame, protocol, ego_cav_id,
                                      max_upload_points_per_source=None,
                                      channel_model=None,
                                      selective_frame_deadline_ms=None,
-                                     edgecooper_global_comm_range_m=None):
+                                     edgecooper_global_comm_range_m=None,
+                                     max_senders_per_receiver=1):
     clear_sgcp_globals()
     world = OfflineCavWorld(
         frame,
@@ -2420,7 +2455,8 @@ def apply_selective_sharing_baseline(frame, protocol, ego_cav_id,
             clusters,
             baseline_name,
             selective_frame_deadline_ms,
-            channel_model)
+            channel_model,
+            max_senders_per_receiver=max_senders_per_receiver)
 
     if receiver_policy == 'all-cluster-heads':
         receiver_ids = sorted(int(cluster.head_id) for cluster in clusters)
@@ -2463,6 +2499,9 @@ def apply_selective_sharing_baseline(frame, protocol, ego_cav_id,
             getattr(world, '_edgecooper_global_comm_range_m', '')
             if baseline_name in ['edgecooper_global',
                                  'edgecooper_global_hd'] else '')
+        metadata['max_senders_per_receiver'] = max(
+            1,
+            int(max_senders_per_receiver or 1))
         if global_admission is not None:
             metadata['selective_global_budget_bytes'] = (
                 global_admission['budget_bytes'])
@@ -2775,6 +2814,8 @@ def trace_row(scenario_id, timestamp, metadata, eval_frame,
         'bandwidth_mhz': metadata.get('bandwidth_mhz', ''),
         'communication_deadline_ms': metadata.get(
             'communication_deadline_ms', ''),
+        'max_senders_per_receiver': metadata.get(
+            'max_senders_per_receiver', ''),
         'channel_estimator': metadata.get('channel_estimator', ''),
         'ns3_tb_size_bytes': metadata.get('ns3_tb_size_bytes', ''),
         'ns3_slot_duration_ms': metadata.get('ns3_slot_duration_ms', ''),
@@ -2828,6 +2869,7 @@ def write_trace_csv(path, rows):
         'num_channels',
         'bandwidth_mhz',
         'communication_deadline_ms',
+        'max_senders_per_receiver',
         'channel_estimator',
         'ns3_tb_size_bytes',
         'ns3_slot_duration_ms',
@@ -3144,6 +3186,11 @@ def main():
                 args.postprocess_score_threshold)
         print('postprocess_score_threshold_override=%.6f' %
               args.postprocess_score_threshold)
+    if args.postprocess_nms_thresh is not None:
+        manager.opencood_dataset.post_processor.params['nms_thresh'] = (
+            args.postprocess_nms_thresh)
+        print('postprocess_nms_thresh_override=%.6f' %
+              args.postprocess_nms_thresh)
     sgcp_summaries = []
     sgcp_trace_rows = []
     object_rows = []
@@ -3225,7 +3272,9 @@ def main():
                 selective_frame_deadline_ms=(
                     args.selective_frame_deadline_ms),
                 edgecooper_global_comm_range_m=(
-                    args.edgecooper_global_comm_range_m))
+                    args.edgecooper_global_comm_range_m),
+                max_senders_per_receiver=(
+                    args.max_senders_per_receiver))
         elif args.sgcp_constrained:
             protocol = load_protocol(dataset, scenario_id)
             frame_channel_model = build_cli_channel_model(args)
@@ -3265,7 +3314,9 @@ def main():
                 routing_hints=sgcp_routing_hints,
                 routing_hints_max_per_frame=(
                     args.sgcp_routing_hints_max_per_frame),
-                channel_model=frame_channel_model)
+                channel_model=frame_channel_model,
+                max_senders_per_receiver=(
+                    args.max_senders_per_receiver))
         if args.sgcp_inter_cluster_late_fusion:
             pred_tensors = []
             pred_scores = []

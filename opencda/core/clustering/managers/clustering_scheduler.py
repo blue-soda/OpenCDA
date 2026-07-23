@@ -1,3 +1,4 @@
+from opencda.core.clustering.algorithms.resource_allocation.naive_ra import NaiveRA
 from opencda.core.networking.scheduler import Scheduler
 import networkx as nx
 from typing import Dict, List, Tuple, Optional, Set

@@ -31,6 +31,17 @@ class OpenCOODManager(object):
         self.fusion_method = fusion_method
         self.opt = argparse.Namespace(model_dir=models[fusion_method])
         hypes = yaml_utils.load_yaml(None, self.opt)
+        dataset_root_override = coperception_params.get(
+            '_dataset_root_override')
+        if dataset_root_override:
+            hypes['root_dir'] = dataset_root_override
+            hypes['validate_dir'] = dataset_root_override
+            hypes['test_dir'] = dataset_root_override
+            model_max_cav = hypes.get('model', {}).get('args', {}).get(
+                'max_cav')
+            if model_max_cav is not None:
+                hypes.setdefault('train_params', {})['max_cav'] = (
+                    model_max_cav)
         self.model = train_utils.create_model(hypes)
         if torch.cuda.is_available():
             self.model.cuda()

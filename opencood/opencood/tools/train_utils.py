@@ -35,24 +35,26 @@ def load_saved_model(saved_path, model):
 
     def findLastCheckpoint(save_dir):
         if os.path.exists(os.path.join(saved_path, 'latest.pth')):
-            return 10000
+            return 10000, os.path.join(saved_path, 'latest.pth')
         file_list = glob.glob(os.path.join(save_dir, '*epoch*.pth'))
         if file_list:
-            epochs_exist = []
+            checkpoints = []
             for file_ in file_list:
-                result = re.findall(".*epoch(.*).pth.*", file_)
-                epochs_exist.append(int(result[0]))
-            initial_epoch_ = max(epochs_exist)
+                result = re.findall(r'.*epoch(?:_bestval_at)?(\d+)\.pth.*',
+                                    file_)
+                if result:
+                    checkpoints.append((int(result[0]), file_))
+            if checkpoints:
+                initial_epoch_, model_file_ = max(
+                    checkpoints, key=lambda item: item[0])
+            else:
+                initial_epoch_, model_file_ = 0, None
         else:
-            initial_epoch_ = 0
-        return initial_epoch_
+            initial_epoch_, model_file_ = 0, None
+        return initial_epoch_, model_file_
 
-    initial_epoch = findLastCheckpoint(saved_path)
+    initial_epoch, model_file = findLastCheckpoint(saved_path)
     if initial_epoch > 0:
-        model_file = os.path.join(saved_path,
-                         'net_epoch%d.pth' % initial_epoch) \
-            if initial_epoch != 10000 else os.path.join(saved_path,
-                         'latest.pth')
         print('resuming by loading epoch %d' % initial_epoch)
         checkpoint = torch.load(
             model_file,

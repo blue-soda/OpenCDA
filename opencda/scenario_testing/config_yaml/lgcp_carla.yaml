@@ -126,6 +126,7 @@ coperception:
     early: 'opencood/logs/pointpillar_early_fusion'
     intermediate_v2xvit: 'opencood/logs/pointpillar_v2xvit_fusion'
     intermediate_attentive: 'opencood/logs/pointpillar_attentive_fusion'
+    intermediate_where2comm: 'C:/Workspace/OpenCOOD/checkpoints/where2comm_10e'
     intermediate_cobevt: 'opencood/logs/pointpillar_cobevt_fusion'
     late: 'opencood/logs/pointpillar_late_fusion'
   fusion_method: 'early'
