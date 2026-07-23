@@ -1,6 +1,6 @@
 # SGCP Parameter Sensitivity
 
-Protocol: attentive detector, v2xp_cluster_carla, 41 frames, 20 CAVs, 40 MHz total bandwidth, NS3-calibrated estimator, formal SGCP C/V algorithm, cov_coalition_game V-only clustering, cov_potential_game scheduler with C coverage stage followed by V target stage, all cluster heads as receivers, grid upload, inter-cluster box NMS. Unless varied, N_max=4, rho_th=3, head_rb_budget=2, target subchannels=10, and scheduler communication deadline=200 ms. The headline point is retained because exact NS3-calibrated trace estimates stay below the 60 ms communication portion of the 100 ms perception cycle. Raw LiDAR Mbps Budget caps scheduled grid payload per 100 ms perception frame after scheduling; box-level NMS payload is still added separately in Total Mbps.
+Protocol: attentive detector, v2xp_cluster_carla, 41 frames, 20 CAVs, 40 MHz total bandwidth, NS3-calibrated estimator, formal SGCP C/V algorithm, cov_coalition_game V-only clustering, cov_potential_game scheduler with C coverage stage followed by V target stage, all cluster heads as receivers, grid upload, inter-cluster box NMS. Unless varied, N_max=4, rho_th=3, head_rb_budget=2, target subchannels=10, and raw-LiDAR payload is not artificially capped. The headline point is retained because exact NS3-calibrated trace estimates stay below the 60 ms communication portion of the 100 ms perception cycle. Raw LiDAR Mbps Budget caps scheduled grid payload per 100 ms perception frame after scheduling; box-level NMS payload is still added separately in Total Mbps.
 
 Box-level communication for inter-cluster NMS is included in total Mbps.
 
@@ -38,16 +38,6 @@ Box-level communication for inter-cluster NMS is included in total Mbps.
 | 5 | 0.71 | 0.59 | 0.24 | 30.20 | 0.57 | 30.76 | 536.69 | 1.83 | 47.33 |
 | 10 | 0.87 | 0.80 | 0.36 | 60.18 | 0.72 | 60.90 | 536.92 | 2.67 | 85.73 |
 | 20 | 0.87 | 0.81 | 0.35 | 65.61 | 0.73 | 66.34 | 536.96 | 2.81 | 92.50 |
-
-## Communication Deadline
-
-| Setting | AP@0.3 | AP@0.5 | AP@0.7 | Raw LiDAR Mbps | Box Mbps | Total Mbps | GFLOPs/frame | Avg source CAVs | Avg selected grids |
-| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| 40 | 0.84 | 0.75 | 0.38 | 52.96 | 0.65 | 53.61 | 536.86 | 2.67 | 23.33 |
-| 60 | 0.86 | 0.77 | 0.38 | 56.76 | 0.68 | 57.44 | 536.89 | 2.67 | 36.67 |
-| 100 | 0.87 | 0.79 | 0.36 | 59.48 | 0.70 | 60.19 | 536.91 | 2.67 | 61.35 |
-| 200 | 0.87 | 0.80 | 0.36 | 60.18 | 0.72 | 60.90 | 536.92 | 2.67 | 85.73 |
-| 300 | 0.87 | 0.80 | 0.36 | 60.18 | 0.72 | 60.90 | 536.92 | 2.67 | 85.73 |
 
 ## Raw LiDAR Mbps Budget
 

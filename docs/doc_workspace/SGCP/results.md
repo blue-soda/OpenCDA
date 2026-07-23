@@ -2092,13 +2092,13 @@ Key parameter findings:
 | `rho_th` | Very low density thresholds now have visible impact: `rho=0.01` gives `0.74/0.61/0.24`, total `32.74 Mbps`; saturation begins around `rho=2--3`, reaching `0.87/0.80/0.36`, total `60.37--60.90 Mbps`. |
 | `N_max` | `N_max=4` is the best balanced point for AP@0.7; `N_max=3` has AP `0.88/0.79/0.33`, while `N_max=5/6` drop to `0.85/0.77/0.33`. |
 | Target subchannels | 5 channels is clearly insufficient (`0.71/0.59/0.24`, total `30.76 Mbps`); 10 channels is the main operating point; 20 channels improves AP@0.5 to `0.81` but not AP@0.7. |
-| Communication budget | 40/60/100/200/300 ms gives total Mbps `53.61/57.44/60.19/60.90/60.90`; AP saturates by 100--200 ms under this trace. |
+| Raw-LiDAR Mbps budget | `1/5/10/20/40/60/100/200 Mbps` gives a monotonic AP/communication Pareto curve; performance reaches the main operating region around `60 Mbps` and saturates at `100/200 Mbps`. |
 
 Remaining caution: Table 3 scheduler comparison and older heuristic rows in Table 4 still include retained scaffold baselines from the previous `coalition_game/PAPG` setup. They are marked as retained scaffold data in the external clean package and should be rerun under `cov_coalition_game` if used as final paper-facing one-variable comparisons.
 
 #### Low rho and raw-Mbps budget additions
 
-Artifact remains `docs/doc_workspace/SGCP/artifacts/parameter_sensitivity_cv_20260723/`. `offline_inference` now supports `--sgcp-frame-mbps-budget`, a post-scheduler deterministic raw-grid payload cap per 100 ms perception frame. This is distinct from `communication_deadline_ms`: the former controls admitted raw payload, while the latter controls channel-time feasibility.
+Artifact remains `docs/doc_workspace/SGCP/artifacts/parameter_sensitivity_cv_20260723/`. `offline_inference` now supports `--sgcp-frame-mbps-budget`, a post-scheduler deterministic raw-grid payload cap per 100 ms perception frame. This raw-Mbps cap fully replaces the old ms-deadline table in the paper-facing parameter sensitivity package; `communication_deadline_ms` remains only a feasibility/protocol constraint.
 
 | Sweep | Result |
 | --- | --- |
