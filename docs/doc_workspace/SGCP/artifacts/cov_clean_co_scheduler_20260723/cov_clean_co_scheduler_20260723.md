@@ -3,7 +3,9 @@
 ## Protocol
 
 - Clustering: `cov_coalition_game`, default V-only coalition utility
-- Scheduler: `cov_potential_game` with `OPENCDA_COV_TARGET_TERM=object`
+- Scheduler: historical `cov_potential_game` C->O ablation path from commit
+  `241653a`; the current formal scheduler has since been cleaned back to C->V
+  only.
 - Coverage stage: select top grids by `C`
 - Target/quality stage: select top grids by `O`
 - Candidate grids: `C + O > 0`
@@ -29,6 +31,8 @@ receiver-overlap quality `V=q_i(g) * 1[q_h(g)>0]` rank many candidate grids
 similarly. The V objective is marginally more communication-efficient here.
 
 ## Reproduction
+
+Historical reproduction at commit `241653a`:
 
 ```powershell
 $env:OPENCDA_COV_TARGET_TERM='object'

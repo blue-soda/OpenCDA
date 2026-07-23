@@ -2055,7 +2055,7 @@ Artifact: `docs/doc_workspace/SGCP/artifacts/cov_clean_cv_scheduler_20260723/`
 
 Artifact: `docs/doc_workspace/SGCP/artifacts/cov_clean_co_scheduler_20260723/`
 
-在分簇仍保持 V-only 的前提下，将 clean scheduler 第二阶段从 `V` 切换为 `O=q_i(g)`，即“先补 C，再强化 O”。候选 grid 对应改为 `C+O>0`，不使用 connected-component/top-U prior。
+历史消融：在分簇仍保持 V-only 的前提下，将 clean scheduler 第二阶段从 `V` 切换为 `O=q_i(g)`，即“先补 C，再强化 O”。该消融保存在 commit `241653a`；当前正式代码已经收敛为只保留 C->V。
 
 | Variant | Cluster objective | Coverage stage | Target stage | AP@0.3 | AP@0.5 | AP@0.7 | Raw Mbps | Selected grids/sample |
 | --- | --- | --- | --- | ---: | ---: | ---: | ---: | ---: |
@@ -2063,3 +2063,16 @@ Artifact: `docs/doc_workspace/SGCP/artifacts/cov_clean_co_scheduler_20260723/`
 | Clean C->O | V | C | O | 0.87 | 0.80 | 0.36 | 60.70 | 94.38 |
 
 结论：C->O 与 C->V 在 AP 上一致，但 C->O 多传约 `0.52 Mbps` 且 selected grids/sample 更多，说明在 V-only 分簇后，调度层 O/V 候选高度相关；V 作为第二阶段目标更省通信。
+
+#### Coalition C+V internal ablation
+
+Artifact: `docs/doc_workspace/SGCP/artifacts/cov_cluster_cv_ablation_20260723/`
+
+正式 C/V 代码清洗后，调度器固定为第一阶段 `C=q_i(g)(1-q_h(g))`、第二阶段 `V=q_i(g) * 1[q_h(g)>0]`；分簇侧默认只用 `V`，消融时使用 `OPENCDA_COV_CLUSTER_TERMS=coverage+view`。
+
+| Variant | Coalition terms | Scheduler stage 1 | Scheduler stage 2 | AP@0.3 | AP@0.5 | AP@0.7 | Raw Mbps | Late sources/frame | Source CAVs/sample | Selected grids/sample |
+| --- | --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| Formal SGCP C/V | V | C | V | 0.87 | 0.80 | 0.36 | 60.18 | 6.00 | 2.67 | 85.73 |
+| Coalition C+V ablation | C+V | C | V | 0.86 | 0.75 | 0.31 | 60.18 | 6.88 | 2.45 | 72.39 |
+
+结论：C+V 分簇没有改善覆盖收益，反而生成更多、更小的簇，削弱早期融合质量；这支持论文中“分簇负责多视角质量 V，调度第一阶段负责覆盖补偿 C”的职责划分。

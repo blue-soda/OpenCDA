@@ -8259,3 +8259,12 @@ AP 结果：`0.87/0.79/0.37`，raw LiDAR `61.47 Mbps`，box overhead `0.71 Mbps`
 - Comparison: clean C->V is `0.87/0.80/0.36`, raw `60.18 Mbps`, selected grids/sample `85.73`. C->O has no AP gain and slightly higher communication, supporting V as the more efficient second-stage quality objective under V-only clusters.
 - Artifact: `docs/doc_workspace/SGCP/artifacts/cov_clean_co_scheduler_20260723/`.
 
+### 2026-07-23 23:10:00 +08:00 - Formal C/V cleanup and coalition C+V ablation
+
+- Cleaned `cov_potential_game.py` back to the formal C/V scheduler: stage 1 uses only C, stage 2 uses only V, candidates require `C+V>0`, and the temporary C->O environment switch is removed from the official scheduler path.
+- Cleaned `cov_coalition_game.py` to C/V terms only. Coalition C/V uses the same grid-level formulas as scheduling, with coalition quality `q_S(g)=max_{j in S} q_j(g)`.
+- Re-ran formal V-only clustering after cleanup: AP `0.87/0.80/0.36`, raw `60.18 Mbps`, selected grids/sample `85.73`, mean/max communication time `41.70/45.03 ms`.
+- Ran coalition C+V ablation with `OPENCDA_COV_CLUSTER_TERMS=coverage+view`: AP `0.86/0.75/0.31`, raw `60.18 Mbps`, selected grids/sample `72.39`, mean/max communication time `43.06/45.03 ms`.
+- Conclusion: adding C to coalition formation creates more but smaller clusters and weakens early-fusion quality; keep coalition formation V-only and leave coverage repair to the scheduler C stage.
+- Artifact: `docs/doc_workspace/SGCP/artifacts/cov_cluster_cv_ablation_20260723/`.
+

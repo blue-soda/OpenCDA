@@ -1,19 +1,16 @@
 # -*- coding: utf-8 -*-
-"""Clean two-stage potential-game scheduler for SGCP.
+"""Clean C/V two-stage potential-game scheduler for SGCP.
 
 This scheduler intentionally keeps the objective simple and auditable:
 
 * coverage stage scores a sender-grid action only by ``C``;
-* target/quality stage scores it only by the configured quality term;
-* candidate grids are those with positive ``C + quality``.
+* target/quality stage scores it only by ``V``;
+* candidate grids are those with positive ``C + V``.
 
 The coalition game remains V-only by default, so cluster formation keeps the
 validated multi-view grouping behavior while this scheduler cleanly separates
-coverage recovery from quality refinement.  The default quality term is ``V``;
-set ``OPENCDA_COV_TARGET_TERM=object`` for the clean C-then-O ablation.
+coverage recovery from multi-view refinement.
 """
-
-import os
 
 from opencda.core.clustering.algorithms.resource_allocation.perception_aware_potential_game import (
     PerceptionAwarePotentialGame,
@@ -28,19 +25,13 @@ class COVPotentialGame(PerceptionAwarePotentialGame):
         super(COVPotentialGame, self).__init__(cav_world)
         self.grid_score_mode = 'cov_utility'
         self.last_utility_breakdown = {}
-        self.target_term = os.environ.get(
-            'OPENCDA_COV_TARGET_TERM',
-            'view').strip().lower()
-        if self.target_term not in {'view', 'object'}:
-            self.target_term = 'view'
 
     def grid_utility_components(self, cluster, grid_id, member_id,
                                 member_grid_density):
-        """Return C/O/V terms for one sender-grid action."""
+        """Return C/V terms for one sender-grid action."""
         if member_grid_density <= 0:
             return {
                 'coverage': 0.0,
-                'object': 0.0,
                 'view': 0.0,
                 'utility': 0.0,
             }
@@ -54,16 +45,12 @@ class COVPotentialGame(PerceptionAwarePotentialGame):
             rho_th)
         head_quality = self.grid_utility_density(head_density, rho_th)
         coverage_gain = member_quality * max(0.0, 1.0 - head_quality)
-        object_gain = member_quality
         view_gain = member_quality if head_quality > 0.0 else 0.0
-        quality_gain = (
-            object_gain if self.target_term == 'object' else view_gain)
 
         return {
             'coverage': coverage_gain,
-            'object': object_gain,
             'view': view_gain,
-            'utility': max(0.0, coverage_gain + quality_gain),
+            'utility': max(0.0, coverage_gain + view_gain),
         }
 
     def grid_score(self, cluster, grid_id, member_grid_density):
@@ -88,7 +75,7 @@ class COVPotentialGame(PerceptionAwarePotentialGame):
     def _stage_grid_score(self, components, mode):
         if mode == 'coverage':
             return components['coverage']
-        return components[self.target_term]
+        return components['view']
 
     def _select_stage_grids(self, cluster, member_id, candidates,
                             component_by_grid, mode):
@@ -150,7 +137,6 @@ class COVPotentialGame(PerceptionAwarePotentialGame):
 
         selected_components = {
             'coverage': 0.0,
-            'object': 0.0,
             'view': 0.0,
         }
         for grid_id in selected:
@@ -159,10 +145,10 @@ class COVPotentialGame(PerceptionAwarePotentialGame):
                 selected_components[name] += components[name]
 
         coverage_score = selected_components['coverage']
-        quality_score = selected_components[self.target_term]
+        view_score = selected_components['view']
 
         if mode == 'target':
-            score = quality_score
+            score = view_score
         else:
             score = coverage_score
         if score <= 0.0:
@@ -171,15 +157,15 @@ class COVPotentialGame(PerceptionAwarePotentialGame):
             'member_id': member_id,
             'score': score,
             'coverage_score': coverage_score,
-            'object_score': quality_score,
+            # Keep the inherited tie-breaker/log field name, but its value is
+            # the explicit V score in this C/V scheduler.
+            'object_score': view_score,
             'selected': selected,
             'candidate_count': len(candidates),
             'peak': max(
                 self._stage_grid_score(component_by_grid[grid_id], mode)
                 for grid_id in candidates),
             'cov_coverage': selected_components['coverage'],
-            'cov_object': selected_components['object'],
             'cov_view': selected_components['view'],
             'cov_cost': 0.0,
-            'target_term': self.target_term,
         }

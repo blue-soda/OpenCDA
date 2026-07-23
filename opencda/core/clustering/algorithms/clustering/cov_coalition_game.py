@@ -1,16 +1,16 @@
 # -*- coding: utf-8 -*-
-"""COV utility coalition game for SGCP.
+"""C/V utility coalition game for SGCP.
 
 This variant keeps coalition formation and head election unchanged, but writes
-vehicle-to-coalition utility as the grid-level C/O/V/L utility aggregated over
+vehicle-to-coalition utility as the grid-level C/V/L utility aggregated over
 candidate grids:
 
-    U(i | S) = sum_g [C(i,g|S) + O(i,g) + V(i,g|S)] - L(i,S)
+    U(i | S) = sum_g [C(i,g|S) + V(i,g|S)] - L(i,S)
 
 The default coalition objective uses the ``V`` term only.  This matches the
 hierarchical SGCP narrative: coalition formation builds stable multi-view
 groups for high-quality early fusion, while the scheduler later selects the
-actual raw-LiDAR blocks using the complete C/O/V/L utility.
+actual raw-LiDAR blocks using the clean C/V utility.
 """
 
 import math
@@ -36,8 +36,6 @@ class COVCoalitionGame(CoalitionGame):
         aliases = {
             'c': 'coverage',
             'coverage': 'coverage',
-            'o': 'object',
-            'object': 'object',
             'v': 'view',
             'view': 'view',
             'l': 'cost',
@@ -92,22 +90,24 @@ class COVCoalitionGame(CoalitionGame):
         coalition_quality = self._coalition_grid_quality(coalition, grid_id)
         return {
             'coverage': vehicle_quality * max(0.0, 1.0 - coalition_quality),
-            'object': vehicle_quality,
             'view': vehicle_quality if coalition_quality > 0.0 else 0.0,
         }
 
     def _candidate_grids(self, vehicle_id, coalition):
         vehicle = common.global_vehicles[int(vehicle_id)]
+        candidate_grids = set()
+        if 'coverage' in self.active_terms:
+            candidate_grids |= set(vehicle.sens_grids) & set(
+                coalition.req_grids)
         if 'view' in self.active_terms:
-            return set(vehicle.sens_grids) & set(coalition.sens_grids)
-        return set(vehicle.sens_grids) & set(coalition.req_grids)
+            candidate_grids |= set(vehicle.sens_grids) & set(
+                coalition.sens_grids)
+        return candidate_grids
 
     def _compose_utility(self, components):
         utility = 0.0
         if 'coverage' in self.active_terms:
             utility += components['coverage']
-        if 'object' in self.active_terms:
-            utility += components['object']
         if 'view' in self.active_terms:
             utility += components['view']
         if 'cost' in self.active_terms:
@@ -125,7 +125,6 @@ class COVCoalitionGame(CoalitionGame):
                 'utility': 0.0,
             }
         coverage = 0.0
-        obj = 0.0
         view = 0.0
         candidate_grids = self._candidate_grids(vehicle_id, coalition)
         for grid_id in candidate_grids:
@@ -134,7 +133,6 @@ class COVCoalitionGame(CoalitionGame):
                 coalition,
                 grid_id)
             coverage += components['coverage']
-            obj += components['object']
             view += components['view']
         cost = self._communication_cost(vehicle_id, coalition)
         stability = self.stability_cost(vehicle_id, coalition)
@@ -144,14 +142,12 @@ class COVCoalitionGame(CoalitionGame):
             stability = 1.0
         utility = self._compose_utility({
             'coverage': coverage,
-            'object': obj,
             'view': view,
             'cost': cost,
         })
         utility *= stability
         return {
             'coverage': coverage,
-            'object': obj,
             'view': view,
             'cost': cost,
             'stability': stability,
