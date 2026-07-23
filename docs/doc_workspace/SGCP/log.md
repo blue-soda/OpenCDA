@@ -8195,3 +8195,12 @@ AP 结果：`0.87/0.79/0.37`，raw LiDAR `61.47 Mbps`，box overhead `0.71 Mbps`
   - `rho=0.05`: AP `0.86/0.78/0.32`, raw/box/total `62.46/0.70/63.16 Mbps`, `580.55 GFLOPs/frame`.
   - `rho=0.10`: AP `0.86/0.78/0.32`, total `63.16 Mbps`, `580.55 GFLOPs/frame`.
 - Interpretation: lowering rho to the one/few-points-per-grid region does not improve AP; AP@0.7 is best at `rho>=1`. The current table now has a meaningful low-density sweep rather than only the saturated `1/2/3` range.
+
+### 2026-07-23 17:31:27 +08:00 - Original PotentialGame current-protocol check
+
+- Committed and pushed tracked repository state first: dcb658 Update SGCP and LGCP experiment state.
+- Ran original potential_game under the same clean protocol as SGCP-PAPG main point: attentive, 41 frames, coalition_game, all-cluster-heads, inter-cluster NMS, 40 MHz, 10 target subchannels, NS3 estimator, 200 ms admission, N_max=4, rho_th=3, head_rb_budget=2.
+- Result: AP  .81/0.74/0.36, raw 54.56 Mbps, box  .71 Mbps, total 55.27 Mbps, 536.88 GFLOPs/frame.
+- Compared with PAPG  .87/0.81/0.36, total 63.28 Mbps, 536.94 GFLOPs/frame; PotentialGame schedules the same 10 links/frame and 6 detector calls/frame but selects fewer/less useful grids (544.44 vs 583.32 grids/frame).
+- Artifact: docs/doc_workspace/SGCP/artifacts/potential_game_current_protocol_20260723/.
+

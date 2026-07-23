@@ -1969,3 +1969,13 @@ Follow-up density diagnosis after user review:
 - Therefore the original `rho=1/2/3` sweep was not strong paper evidence for parameter sensitivity; it mainly probed the high-density tail. The follow-up low-density sweep `rho=0.1/0.3/0.5/1.0` has now been run. It shows degradation at `rho=0.1` (`0.86/0.78/0.32`) and saturation from about `rho=1` upward (`0.87/0.81/0.36`). If a stronger density story is needed, use normalized density percentiles rather than absolute `rho_th`.
 - The communication-budget table should not use `Avg selected grids` alone as a payload proxy. Trace audit shows budget `40 -> 200 ms` increases selected grids/sample `23.33 -> 97.22`, but uploaded points/frame only `42,456 -> 48,857`; newly admitted grids are mostly sparse. Future table columns should include uploaded links/frame, uploaded points/frame, and bytes/selected-grid.
 - Per user request, an even lower grid-count-calibrated rho sweep was added. With `10 m x 10 m` grids, `rho_th=0.01/0.03/0.05/0.10` corresponds to about `1/3/5/10` points per grid. Results: `rho=0.01` `0.86/0.78/0.34`, `63.08 Mbps`, `563.10 GFLOPs`; `rho=0.03` `0.86/0.77/0.32`, `63.13 Mbps`, `565.28 GFLOPs`; `rho=0.05` `0.86/0.78/0.32`, `63.16 Mbps`, `580.55 GFLOPs`; `rho=0.10` `0.86/0.78/0.32`, `63.16 Mbps`, `580.55 GFLOPs`. Best high-IoU result remains around `rho>=1`.
+
+### Original PotentialGame Current-Protocol Check - 2026-07-23
+
+Artifact: `docs/doc_workspace/SGCP/artifacts/potential_game_current_protocol_20260723/`
+
+按用户要求，在与 SGCP-PAPG 主点完全相同的 clean protocol 下重跑原始 `potential_game`：attentive checkpoint、41 frames、`coalition_game`、`all-cluster-heads`、grid raw-LiDAR upload、inter-cluster box NMS、40 MHz、10 target subchannels、NS3-calibrated estimator、`communication_deadline_ms=200`、`N_max=4`、`rho_th=3`、`head_rb_budget=2`。
+
+结果：原始 PotentialGame 为 `0.81/0.74/0.36`，raw LiDAR `54.56 Mbps`，box sharing `0.71 Mbps`，total `55.27 Mbps`，GFLOPs/frame `536.88`。同口径 PAPG 主点为 `0.87/0.81/0.36`，raw LiDAR `62.54 Mbps`，box sharing `0.74 Mbps`，total `63.28 Mbps`，GFLOPs/frame `536.94`。
+
+诊断：两者都是 `6` late-fused cluster-head detector calls/frame、`10` scheduled links/frame、`10` unique uploaded source CAVs/frame；PotentialGame selected grids/frame 为 `544.44`，PAPG 为 `583.32`。PotentialGame 的估算通信时延 mean/max 为 `44.11/45.03 ms`，PAPG 为 `44.55/45.03 ms`。因此差异不是 compute 或 link count，而是 grid/action quality：原始 PotentialGame 的硬密度覆盖逻辑更容易错过需要多视角确认的目标区域，导致 AP@0.3 `-0.06`、AP@0.5 `-0.07`，AP@0.7 持平。
