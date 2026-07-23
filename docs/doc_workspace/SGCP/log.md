@@ -8251,3 +8251,11 @@ AP 结果：`0.87/0.79/0.37`，raw LiDAR `61.47 Mbps`，box overhead `0.71 Mbps`
 - 41-frame current-protocol result: AP `0.87/0.80/0.36`, raw `60.18 Mbps`, uploaded senders/sample `1.67`, source CAVs/sample `2.67`, selected grids/sample `85.73`.
 - Artifact: `docs/doc_workspace/SGCP/artifacts/cov_clean_cv_scheduler_20260723/`.
 
+### 2026-07-23 22:10:00 +08:00 - Clean C->O scheduler ablation
+
+- Added clean target objective switch to `cov_potential_game.py`: default `OPENCDA_COV_TARGET_TERM=view` preserves C->V; `OPENCDA_COV_TARGET_TERM=object` runs C->O.
+- Ran 3-frame smoke and 41-frame current-protocol experiment with V-only clustering and second-stage O objective.
+- Result: AP `0.87/0.80/0.36`, raw `60.70 Mbps`, uploaded senders/sample `1.67`, source CAVs/sample `2.67`, selected grids/sample `94.38`.
+- Comparison: clean C->V is `0.87/0.80/0.36`, raw `60.18 Mbps`, selected grids/sample `85.73`. C->O has no AP gain and slightly higher communication, supporting V as the more efficient second-stage quality objective under V-only clusters.
+- Artifact: `docs/doc_workspace/SGCP/artifacts/cov_clean_co_scheduler_20260723/`.
+

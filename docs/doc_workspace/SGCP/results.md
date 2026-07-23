@@ -2050,3 +2050,16 @@ Artifact: `docs/doc_workspace/SGCP/artifacts/cov_clean_cv_scheduler_20260723/`
 | Clean C/V scheduler | 0.87 | 0.80 | 0.36 | 60.18 | 1.67 | 2.67 | 85.73 |
 
 相比上一版 mixed COV `0.87/0.81/0.37` 略低，但机制现在是可解释的两阶段调度：第一阶段补范围，第二阶段做多视角质量增强。
+
+#### Clean C->O internal ablation
+
+Artifact: `docs/doc_workspace/SGCP/artifacts/cov_clean_co_scheduler_20260723/`
+
+在分簇仍保持 V-only 的前提下，将 clean scheduler 第二阶段从 `V` 切换为 `O=q_i(g)`，即“先补 C，再强化 O”。候选 grid 对应改为 `C+O>0`，不使用 connected-component/top-U prior。
+
+| Variant | Cluster objective | Coverage stage | Target stage | AP@0.3 | AP@0.5 | AP@0.7 | Raw Mbps | Selected grids/sample |
+| --- | --- | --- | --- | ---: | ---: | ---: | ---: | ---: |
+| Clean C->V | V | C | V | 0.87 | 0.80 | 0.36 | 60.18 | 85.73 |
+| Clean C->O | V | C | O | 0.87 | 0.80 | 0.36 | 60.70 | 94.38 |
+
+结论：C->O 与 C->V 在 AP 上一致，但 C->O 多传约 `0.52 Mbps` 且 selected grids/sample 更多，说明在 V-only 分簇后，调度层 O/V 候选高度相关；V 作为第二阶段目标更省通信。
