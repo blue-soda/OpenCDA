@@ -1979,3 +1979,25 @@ Artifact: `docs/doc_workspace/SGCP/artifacts/potential_game_current_protocol_202
 结果：原始 PotentialGame 为 `0.81/0.74/0.36`，raw LiDAR `54.56 Mbps`，box sharing `0.71 Mbps`，total `55.27 Mbps`，GFLOPs/frame `536.88`。同口径 PAPG 主点为 `0.87/0.81/0.36`，raw LiDAR `62.54 Mbps`，box sharing `0.74 Mbps`，total `63.28 Mbps`，GFLOPs/frame `536.94`。
 
 诊断：两者都是 `6` late-fused cluster-head detector calls/frame、`10` scheduled links/frame、`10` unique uploaded source CAVs/frame；PotentialGame selected grids/frame 为 `544.44`，PAPG 为 `583.32`。PotentialGame 的估算通信时延 mean/max 为 `44.11/45.03 ms`，PAPG 为 `44.55/45.03 ms`。因此差异不是 compute 或 link count，而是 grid/action quality：原始 PotentialGame 的硬密度覆盖逻辑更容易错过需要多视角确认的目标区域，导致 AP@0.3 `-0.06`、AP@0.5 `-0.07`，AP@0.7 持平。
+
+### COV Coalition + COV Potential Game - 2026-07-23
+
+Artifact: `docs/doc_workspace/SGCP/artifacts/cov_game_current_protocol_20260723/`
+
+按用户要求新增两份算法文件，不改动旧算法实现：
+
+- `opencda/core/clustering/algorithms/clustering/cov_coalition_game.py`
+- `opencda/core/clustering/algorithms/resource_allocation/cov_potential_game.py`
+
+新算法论文级效用为 `Delta U = Delta C + Delta O + Delta V - L`。分簇层仍然是 coalition formation，但将车辆加入联盟的边际收益表述为 expected C/O/V/L；调度层仍然是 two-stage potential game，并在 block/link/action 粒度显式计算 coverage/object/view/cost components。
+
+完整 41 帧 current-protocol 结果：
+
+| Method | AP@0.3 | AP@0.5 | AP@0.7 | Raw Mbps | Box Mbps | Total Mbps | GFLOPs/frame |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| PAPG main point | 0.87 | 0.81 | 0.36 | 62.54 | 0.74 | 63.28 | 536.94 |
+| COV coalition + COV potential game | 0.87 | 0.81 | 0.36 | 62.55 | 0.74 | 63.29 | 536.94 |
+
+Trace: `6` cluster-head detector sources/frame、`10` scheduled links/frame、`582.27` selected grids/frame、frame communication time mean/max `44.55/45.03 ms`、mean input points/frame `78163.0`。该结果不低于当前主表 SGCP-PAPG。
+
+调参结论：第一版 COV coalition 若让车辆级 standalone coverage/object terms 权重过高，会形成 `9--16` 个簇头并削弱 AP@0.5/AP@0.7。最终版本让 coalition membership 由 stable multi-view complementarity 主导，coverage/object relevance 主要在 block-level scheduler 中实现。这更符合分层机制：分簇提供稳定局部多视角联盟，调度决定哪些目标相关 raw-LiDAR blocks 被传输。

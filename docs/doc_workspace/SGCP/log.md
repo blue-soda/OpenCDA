@@ -8204,3 +8204,13 @@ AP 结果：`0.87/0.79/0.37`，raw LiDAR `61.47 Mbps`，box overhead `0.71 Mbps`
 - Compared with PAPG  .87/0.81/0.36, total 63.28 Mbps, 536.94 GFLOPs/frame; PotentialGame schedules the same 10 links/frame and 6 detector calls/frame but selects fewer/less useful grids (544.44 vs 583.32 grids/frame).
 - Artifact: docs/doc_workspace/SGCP/artifacts/potential_game_current_protocol_20260723/.
 
+
+### 2026-07-23 19:03:37 +08:00 - COV coalition and COV potential-game implementation
+
+- Added new algorithm files without modifying existing algorithm implementations: opencda/core/clustering/algorithms/clustering/cov_coalition_game.py and opencda/core/clustering/algorithms/resource_allocation/cov_potential_game.py.
+- Registered cov_coalition_game in clustering CLI/factory and cov_potential_game/cov_pg in resource-allocation builder.
+- Ran full current-protocol 41-frame experiment: attentive, 40 MHz, 10 target subchannels, NS3 estimator, 200 ms admission, N_max=4, rho_th=3, head_rb_budget=2, all cluster heads, inter-cluster NMS.
+- Final COV result: AP  .87/0.81/0.36, raw 62.55 Mbps, box  .74 Mbps, total 63.29 Mbps, 536.94 GFLOPs/frame; not lower than PAPG main point.
+- Tuning finding: vehicle-level standalone C/O terms caused cluster fragmentation (9--16 heads) and lower AP. Validated coalition utility is stable multi-view dominated; block-level scheduler carries explicit C/O/V/L scoring.
+- Artifact: docs/doc_workspace/SGCP/artifacts/cov_game_current_protocol_20260723/.
+

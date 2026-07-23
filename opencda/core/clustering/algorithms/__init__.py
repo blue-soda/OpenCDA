@@ -4,11 +4,15 @@ from typing import Dict, Type
 
 # Import from existing locations for now
 from opencda.core.clustering.algorithms.clustering.coalition_game import CoalitionGame
+from opencda.core.clustering.algorithms.clustering.cov_coalition_game import (
+    COVCoalitionGame,
+)
 from opencda.core.clustering.algorithms.clustering.naive_cluster import NaiveCluster
 
 # Clustering algorithms registry
 CLUSTERING_ALGORITHMS: Dict[str, Type] = {
     'coalition_game': CoalitionGame,
+    'cov_coalition_game': COVCoalitionGame,
     'naive': NaiveCluster,
 }
 

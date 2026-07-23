@@ -317,3 +317,14 @@
 - [x] TableA / Figure1 / Figure2 current-protocol combined diagnostic：已新增独立 K-aware diagnostic，不覆盖主 Figure1/2。源表为 `tableA_kaware_current_protocol_diagnostic_20260723.csv` 与 `tableA_kaware_compact_current_protocol_diagnostic_20260723.csv`；图为 `figure1b_kaware_current_protocol_ap05_gflops_20260723.*` 与 `figure2b_kaware_current_protocol_ap_bars_20260723.*`。写作边界：这是 mixed diagnostic addendum，不能称为 original-baseline table。
 - [x] Figure5 parameter sensitivity：已生成 `figure5b_parameter_sensitivity_gflops_current_protocol_20260723.*`，展示 AP@0.5 与 detector GFLOPs/frame。该图明确 `N_max=2` 的 AP 提升对应约 `903.28 GFLOPs/frame`。
 - [x] 最终静态检查：所有 current-protocol paper-facing/addendum CSV 均显式标注 checkpoint、bandwidth、num_channels、deadline、late_fusion、clustering、resource_allocation；所有启用 late/global box 的行满足 `mbps = raw_lidar_mbps + box_mbps`；所有进入主快照的表格均有 GFLOPs 列或明确 source profile。
+
+## P15：COV unified game algorithm for paper narrative
+
+目的：将旧 coalition game + PAPG 的经验结果重构为统一的 `Delta U = Delta C + Delta O + Delta V - L` 论文叙事，同时保持早期融合 + 分簇 + 晚期聚合的分层机制，并保证实验效果不低于当前主表。
+
+- [x] 新增分簇算法文件 `opencda/core/clustering/algorithms/clustering/cov_coalition_game.py`，保留 coalition formation 思路，将车辆加入联盟的边际收益写成 expected C/O/V/L utility。验证后采用 stable multi-view complementarity 主导的 coalition utility，避免 standalone C/O 项导致过度碎片化。
+- [x] 新增资源调度算法文件 `opencda/core/clustering/algorithms/resource_allocation/cov_potential_game.py`，保留 PAPG 的 two-stage potential-game 结构，并在 block/link/action 粒度显式计算 coverage、object、view、cost components。
+- [x] 完成 factory/CLI 注册：`cov_coalition_game`、`cov_potential_game`、`cov_pg`。
+- [x] 完成 current-protocol 41 帧实验：attentive、40 MHz、10 target subchannels、NS3 estimator、`communication_deadline_ms=200`、`N_max=4`、`rho_th=3`、`head_rb_budget=2`、all cluster heads、inter-cluster NMS。结果 `0.87/0.81/0.36`，raw `62.55 Mbps`，box `0.74 Mbps`，total `63.29 Mbps`，`536.94 GFLOPs/frame`，不低于 PAPG 主点。
+- [ ] 论文方法节后续需要用 COV 分层叙事替换 PAPG 工程叙事：coalition stage = stable local multi-view groups；scheduler stage = block-level C/O/V/L marginal utility；late aggregation = global coverage recovery with reduced detector GFLOPs。
+- [ ] 若将 COV 作为最终算法名进入论文主文，需要将 clean experiment package 的主表方法名从 SGCP-PAPG 更新为 SGCP-COV，并保留 PAPG/PotentialGame 对照为机制诊断或消融。

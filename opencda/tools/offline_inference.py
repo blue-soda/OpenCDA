@@ -31,6 +31,9 @@ from opencda.core.common.offline_replay import (
 from opencda.core.clustering.algorithms.clustering.coalition_game import (
     CoalitionGame,
 )
+from opencda.core.clustering.algorithms.clustering.cov_coalition_game import (
+    COVCoalitionGame,
+)
 from opencda.core.clustering.algorithms.clustering.naive_cluster import (
     NaiveCluster,
 )
@@ -69,7 +72,8 @@ def parse_args():
     parser.add_argument('--resource-allocation', default='potential_game',
                         help='SGCP resource allocation algorithm for constrained inference.')
     parser.add_argument('--clustering', default='coalition_game',
-                        choices=['coalition_game', 'fixed_first_frame',
+                        choices=['coalition_game', 'cov_coalition_game',
+                                 'fixed_first_frame',
                                  'singleton', 'all_in_one',
                                  'random_balanced',
                                  'distance_greedy',
@@ -1585,6 +1589,8 @@ def apply_sgcp_constraint(frame, protocol, ego_cav_id, resource_allocation,
         density_threshold=rho_th)
     if clustering in ['coalition_game', 'fixed_first_frame']:
         clustering_algorithm = CoalitionGame(world)
+    elif clustering == 'cov_coalition_game':
+        clustering_algorithm = COVCoalitionGame(world)
     elif clustering == 'singleton':
         clustering_algorithm = NaiveCluster(world, all_in_one=False)
     elif clustering == 'all_in_one':
@@ -2397,6 +2403,8 @@ def apply_selective_sharing_baseline(frame, protocol, ego_cav_id,
         density_threshold=rho_th)
     if clustering == 'coalition_game':
         clustering_algorithm = CoalitionGame(world)
+    elif clustering == 'cov_coalition_game':
+        clustering_algorithm = COVCoalitionGame(world)
     elif clustering == 'singleton':
         clustering_algorithm = NaiveCluster(world, all_in_one=False)
     elif clustering == 'all_in_one':
