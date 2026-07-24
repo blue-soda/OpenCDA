@@ -34,6 +34,10 @@ from opencda.core.clustering.algorithms.clustering.coalition_game import (
 from opencda.core.clustering.algorithms.clustering.cov_coalition_game import (
     COVCoalitionGame,
 )
+from opencda.core.clustering.algorithms.clustering.\
+    potential_verified_cov_coalition_game import (
+    PotentialVerifiedCOVCoalitionGame,
+)
 from opencda.core.clustering.algorithms.clustering.paper_baselines import (
     build_paper_baseline_clusters,
 )
@@ -87,6 +91,8 @@ def parse_args():
                         help='SGCP resource allocation algorithm for constrained inference.')
     parser.add_argument('--clustering', default='coalition_game',
                         choices=['coalition_game', 'cov_coalition_game',
+                                 'potential_verified_cov_coalition_game',
+                                 'pv_cov_coalition_game',
                                  'fixed_first_frame',
                                  'singleton', 'all_in_one',
                                  'random_balanced',
@@ -1756,6 +1762,9 @@ def apply_sgcp_constraint(frame, protocol, ego_cav_id, resource_allocation,
         clustering_algorithm = CoalitionGame(world)
     elif clustering == 'cov_coalition_game':
         clustering_algorithm = COVCoalitionGame(world)
+    elif clustering in ['potential_verified_cov_coalition_game',
+                        'pv_cov_coalition_game']:
+        clustering_algorithm = PotentialVerifiedCOVCoalitionGame(world)
     elif clustering == 'singleton':
         clustering_algorithm = NaiveCluster(world, all_in_one=False)
     elif clustering == 'all_in_one':
@@ -2598,6 +2607,9 @@ def apply_selective_sharing_baseline(frame, protocol, ego_cav_id,
         clustering_algorithm = CoalitionGame(world)
     elif clustering == 'cov_coalition_game':
         clustering_algorithm = COVCoalitionGame(world)
+    elif clustering in ['potential_verified_cov_coalition_game',
+                        'pv_cov_coalition_game']:
+        clustering_algorithm = PotentialVerifiedCOVCoalitionGame(world)
     elif clustering == 'singleton':
         clustering_algorithm = NaiveCluster(world, all_in_one=False)
     elif clustering == 'all_in_one':

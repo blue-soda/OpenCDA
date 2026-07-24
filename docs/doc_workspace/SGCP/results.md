@@ -4,6 +4,25 @@
 
 更新时间：2026-07-24
 
+## 2026-07-24 Potential-Verified C/V Coalition Variant
+
+为回应论文方法证明中“每个 accepted coalition migration 是否满足 `J_i^C > 0`”的问题，新增可证明迁移接纳版本 `potential_verified_cov_coalition_game` / `pv_cov_coalition_game`。该版本保留 C/V 车辆迁移 proposal，但提交迁移前显式计算受影响的 source coalition 与 target coalition 的 partition-potential increment：
+
+`Delta Phi_C = Phi_C(Pi_{i->S'}) - Phi_C(Pi)`。
+
+只有 `Delta Phi_C > 0` 时才 commit，因此可支持：每个 accepted migration 满足 `J_i^C > 0`，`Phi_C` 单调增加，有限 partition space 下过程终止。实现文件：`opencda/core/clustering/algorithms/clustering/potential_verified_cov_coalition_game.py`。
+
+41 帧 current protocol 结果：
+
+| Method | AP@0.3 | AP@0.5 | AP@0.7 | Raw Mbps | Avg clusters/frame | Avg source CAVs/sample | Avg selected grids/sample |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| Formal SGCP-CV (`cov_coalition_game`) | 0.87 | 0.80 | 0.36 | 60.18 | 6.00 | 1.67 | 85.73 |
+| Potential-verified SGCP-CV (`pv_cov_coalition_game`) | 0.84 | 0.74 | 0.31 | 59.17 | 6.15 | 1.63 | 60.20 |
+
+分簇是否变化：变化明显。`pv_cov_coalition_game` 与正式 `cov_coalition_game` 在 `40/41` 个 timestamp 的 coalition 集合不同；相同 coalition 交集为 `138` 个，正式 C/V 总 coalition 样本 `246` 个，potential-verified 总 coalition 样本 `252` 个。典型帧 `000060` 中正式 C/V 为 6 簇，而 potential-verified 为 7 簇，并将 `(9,13,14,19)` 拆成 `(9,14,19)` 与 `(10,13)`，同时改变 `(1,2,10,11)` 为 `(1,2,8,11)`。
+
+结论：该增强版能够支撑严格 potential-verified admission 证明，但不是“同一分簇结果加证明”；它会更保守，降低 selected grids 与 AP。主表目前仍应保留性能更好的 formal SGCP-CV，若论文方法节采用严格证明，应同步说明 enhanced admission protocol 与 replay 结果差异，或继续调优该 variant。
+
 ## 2026-07-24 Table 4 分簇 Baseline
 
 固定协议：attentive detector、v2xp_cluster_carla 41 帧、20 CAV、40 MHz / 10 target subchannels、NS3-calibrated estimator (`tb_size=899`, `symbols=12`, `mcs=28`)、`cov_potential_game` C->V raw-LiDAR scheduler、all cluster heads as receivers、grid upload、inter-cluster box NMS。该表只替换 clustering。

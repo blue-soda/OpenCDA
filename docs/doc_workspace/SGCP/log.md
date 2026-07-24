@@ -8368,6 +8368,27 @@ Final checks:
 - No active clean-package text says Table4 is pending or contains legacy/PAPG/scaffold rows as final results.
 - Exact-payload NS3 replay for every final row is now listed only as optional validation; it is not required to interpret the current clean package.
 
+### 2026-07-24 16:10:00 +08:00 - Potential-verified C/V coalition admission
+
+Motivation: paper writer noted that the current C/V coalition migration condition only proves the moving vehicle's proxy utility improves, not that the partition potential increment `J_i^C` is positive.
+
+Implementation:
+
+- Added `opencda/core/clustering/algorithms/clustering/potential_verified_cov_coalition_game.py`.
+- Registered CLI aliases `potential_verified_cov_coalition_game` and `pv_cov_coalition_game` in `opencda/tools/offline_inference.py`.
+- Admission rule: a vehicle still proposes migration using the C/V proxy utility, but the move is committed only if the exact affected-coalition potential increment is positive:
+  `Delta Phi_C = phi(S_src\{i}) + phi(S_tgt union {i}) - phi(S_src) - phi(S_tgt) > 0`.
+- This check only needs the source and target coalition summaries, so it matches the distributed potential-verified admission story.
+
+Validation:
+
+```powershell
+python -m py_compile opencda\core\clustering\algorithms\clustering\potential_verified_cov_coalition_game.py opencda\tools\offline_inference.py
+conda run -n opencda python -m opencda.tools.offline_inference --dataset-root D:\Data\Carla --scenario-id 2026_07_15_01_26_56 --ego-cav-id 1 --max-frames 41 --fusion-method early --sgcp-constrained --clustering pv_cov_coalition_game --resource-allocation cov_potential_game --sgcp-receiver-policy all-cluster-heads --sgcp-upload-mode grid --sgcp-inter-cluster-late-fusion --sgcp-grid-selection-mode utility --sgcp-grid-score-mode utility --bandwidth-mhz 40 --num-channels 10 --channel-estimator ns3 --ns3-tb-size-bytes 899 --ns3-slot-duration-ms 0.5 --ns3-subchannel-prbs 10 --ns3-symbols-per-slot 12 --ns3-mcs 28 --n-max 4 --rho-th 3 --head-rb-budget 2 --sgcp-frame-mbps-budget 200
+```
+
+Result: `0.84/0.74/0.31`, raw `59.17 Mbps`, average `6.15` clusters/frame, average selected grids/sample `60.20`. Formal SGCP-CV baseline for the same protocol remains `0.87/0.80/0.36`, raw `60.18 Mbps`, average `6.00` clusters/frame, selected grids/sample `85.73`. Cluster sets differ in `40/41` timestamps, so the strict admission check materially changes coalition formation and should be treated as a proof-oriented variant.
+
 ### 2026-07-24 12:57:42 +08:00 - Clean package parameter/algorithm documentation pass
 
 Target: `C:\Workspace\2026-7-papers\infocom\SGCP\experiment`.
