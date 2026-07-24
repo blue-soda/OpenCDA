@@ -23,6 +23,8 @@
 
 结论：该增强版能够支撑严格 potential-verified admission 证明，但不是“同一分簇结果加证明”；它会更保守，降低 selected grids 与 AP。主表目前仍应保留性能更好的 formal SGCP-CV，若论文方法节采用严格证明，应同步说明 enhanced admission protocol 与 replay 结果差异，或继续调优该 variant。
 
+后续 rescue 尝试：在不改变 `Phi_C` 定义的前提下，将迁移搜索改为遍历所有 candidate coalitions，并在满足 proxy improvement 且 `Delta Phi_C > 0` 的候选中选择 proxy utility 最高者；同时将迁移后的 head 更新行为对齐正式 SGCP-CV，不额外强制重选目标 head。41 帧结果仍为 `0.84/0.74/0.31`、raw `59.17 Mbps`、selected grids/sample `60.20`。因此当前性能下降主要来自严格 affected-potential admission 本身，而不是“最佳 proxy 迁移被拒后未尝试次优候选”或额外 head 重选造成的实现偏差。
+
 ## 2026-07-24 Table 4 分簇 Baseline
 
 固定协议：attentive detector、v2xp_cluster_carla 41 帧、20 CAV、40 MHz / 10 target subchannels、NS3-calibrated estimator (`tb_size=899`, `symbols=12`, `mcs=28`)、`cov_potential_game` C->V raw-LiDAR scheduler、all cluster heads as receivers、grid upload、inter-cluster box NMS。该表只替换 clustering。

@@ -8389,6 +8389,14 @@ conda run -n opencda python -m opencda.tools.offline_inference --dataset-root D:
 
 Result: `0.84/0.74/0.31`, raw `59.17 Mbps`, average `6.15` clusters/frame, average selected grids/sample `60.20`. Formal SGCP-CV baseline for the same protocol remains `0.87/0.80/0.36`, raw `60.18 Mbps`, average `6.00` clusters/frame, selected grids/sample `85.73`. Cluster sets differ in `40/41` timestamps, so the strict admission check materially changes coalition formation and should be treated as a proof-oriented variant.
 
+Follow-up rescue attempt without changing `Phi_C`:
+
+- Changed migration search from "verify only the best proxy target" to "scan all target coalitions and choose the best proxy-improving candidate among moves with `Delta Phi_C > 0`".
+- Aligned head-update behavior with formal SGCP-CV: target head is not forcibly re-elected after every accepted migration; only grid bits are refreshed when the head remains valid.
+- Re-ran 41 frames at `docs/doc_workspace/SGCP/artifacts/potential_verified_cov_cluster_20260724/candidate_scan_head_aligned_41f/`.
+
+Result remains exactly `0.84/0.74/0.31`, raw `59.17 Mbps`, average selected grids/sample `60.20`. Conclusion: the performance drop is not caused by failing to try second-best target coalitions or by extra head re-election. It comes from the strict affected-potential admission constraint under the current `Phi_C` definition.
+
 ### 2026-07-24 12:57:42 +08:00 - Clean package parameter/algorithm documentation pass
 
 Target: `C:\Workspace\2026-7-papers\infocom\SGCP\experiment`.

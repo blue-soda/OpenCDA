@@ -58,12 +58,6 @@ class PotentialVerifiedCOVCoalitionGame(COVCoalitionGame):
             self.coalition_potential(target_after))
         return after - before, before, after
 
-    def _reelect_head(self, coalition):
-        if coalition is None or not coalition.members:
-            return
-        coalition.head_id = coalition.elect_head()
-        coalition.grid_bits = coalition.compute_grid_bits()
-
     def coalition_formation(self, max_iter=20):
         self.check_is_ok()
         self.ego_coalition_be_first()
@@ -82,8 +76,7 @@ class PotentialVerifiedCOVCoalitionGame(COVCoalitionGame):
                     logger.info('Vehicle %s is not in any coalition.', vid)
                     continue
                 current_contribution = self.current_contribution(current, vid)
-                best_delta = current_contribution
-                best_coalition = current
+                best_candidate = None
                 for coalition in list(self.coalitions):
                     if coalition is current:
                         continue
@@ -91,44 +84,52 @@ class PotentialVerifiedCOVCoalitionGame(COVCoalitionGame):
                         self.capacity_stats['full_candidate_skips'] += 1
                         continue
                     delta = self.marginal_contribution(coalition, vid)
-                    if delta > best_delta:
-                        best_delta = delta
-                        best_coalition = coalition
+                    proxy_accept = delta > current_contribution * self.p.ita
+                    phi_delta, phi_before, phi_after = (
+                        self.affected_potential_delta(
+                            vid,
+                            current,
+                            coalition))
+                    check = {
+                        'vehicle_id': int(vid),
+                        'source_members': sorted(int(item)
+                                                 for item in current.members),
+                        'target_members': sorted(int(item)
+                                                 for item in
+                                                 coalition.members),
+                        'proxy_before': float(current_contribution),
+                        'proxy_after': float(delta),
+                        'phi_before': float(phi_before),
+                        'phi_after': float(phi_after),
+                        'phi_delta': float(phi_delta),
+                        'proxy_accept': bool(proxy_accept),
+                        'accepted': False,
+                    }
+                    self.last_potential_checks.append(check)
+                    if not proxy_accept or phi_delta <= 1e-9:
+                        continue
+                    candidate = {
+                        'coalition': coalition,
+                        'proxy_after': delta,
+                        'phi_delta': phi_delta,
+                        'phi_before': phi_before,
+                        'phi_after': phi_after,
+                        'check': check,
+                    }
+                    if best_candidate is None:
+                        best_candidate = candidate
+                    elif (delta, phi_delta) > (
+                            best_candidate['proxy_after'],
+                            best_candidate['phi_delta']):
+                        best_candidate = candidate
 
-                proxy_accept = (
-                    best_coalition is not current and
-                    best_delta > current_contribution * self.p.ita)
-                if not proxy_accept:
+                if best_candidate is None:
                     continue
 
-                phi_delta, phi_before, phi_after = (
-                    self.affected_potential_delta(
-                        vid,
-                        current,
-                        best_coalition))
-                self.last_potential_checks.append({
-                    'vehicle_id': int(vid),
-                    'source_members': sorted(int(item)
-                                             for item in current.members),
-                    'target_members': sorted(int(item)
-                                             for item in
-                                             best_coalition.members),
-                    'proxy_before': float(current_contribution),
-                    'proxy_after': float(best_delta),
-                    'phi_before': float(phi_before),
-                    'phi_after': float(phi_after),
-                    'phi_delta': float(phi_delta),
-                    'accepted': bool(phi_delta > 1e-9),
-                })
-                if phi_delta <= 1e-9:
-                    logger.info(
-                        'Reject vehicle %s migration by potential check: '
-                        'proxy %.4f -> %.4f, delta_phi %.6f',
-                        vid,
-                        current_contribution,
-                        best_delta,
-                        phi_delta)
-                    continue
+                best_coalition = best_candidate['coalition']
+                best_delta = best_candidate['proxy_after']
+                phi_delta = best_candidate['phi_delta']
+                best_candidate['check']['accepted'] = True
 
                 logger.info(
                     'Accept vehicle %s migration: %s -> %s, '
@@ -144,8 +145,10 @@ class PotentialVerifiedCOVCoalitionGame(COVCoalitionGame):
                 if current.size() == 0:
                     self.coalitions.remove(current)
                     current = None
-                self._reelect_head(current)
-                self._reelect_head(best_coalition)
+                if current is not None and current.head_id in current.members:
+                    current.grid_bits = current.compute_grid_bits()
+                if best_coalition.head_id in best_coalition.members:
+                    best_coalition.grid_bits = best_coalition.compute_grid_bits()
                 updated = True
             if not updated:
                 break
@@ -157,4 +160,3 @@ class PotentialVerifiedCOVCoalitionGame(COVCoalitionGame):
         for coalition in self.coalitions:
             logger.info('[%s]', coalition.members)
         return self.coalitions
-
