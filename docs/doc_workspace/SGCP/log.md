@@ -8405,7 +8405,15 @@ Second rescue attempt with revised `Phi_C`:
 - Kept the best proxy-improving target selection among potential-positive candidates.
 - Aligned vehicle iteration order with formal SGCP-CV (`common.global_vehicles.keys()` rather than sorted ids).
 
-41-frame result: AP `0.87/0.79/0.35`, raw `59.48 Mbps`, average `6.00` clusters/frame, `1.67` uploaded sources/sample, selected grids/sample `61.35`. This largely rescues the proof-compatible variant while preserving the strict `J_i^C > 0` admission property. Artifact: `docs/doc_workspace/SGCP/artifacts/potential_verified_cov_cluster_20260724/pairwise_v_order_aligned_41f/`.
+41-frame result with an accidentally lower `100 ms` admission deadline: AP `0.87/0.79/0.35`, raw `59.48 Mbps`, average `6.00` clusters/frame, `1.67` uploaded sources/sample, selected grids/sample `61.35`. This indicated that pairwise `Phi_C` largely rescued the proof-compatible variant, but the selected-grid count was still lower than the formal current-protocol run.
+
+Final aligned rerun:
+
+```powershell
+conda run -n opencda python -m opencda.tools.offline_inference --dataset-root D:\Data\Carla --scenario-id 2026_07_15_01_26_56 --ego-cav-id 1 --max-frames 41 --fusion-method early --sgcp-constrained --clustering pv_cov_coalition_game --resource-allocation cov_potential_game --sgcp-receiver-policy all-cluster-heads --sgcp-upload-mode grid --sgcp-inter-cluster-late-fusion --sgcp-grid-selection-mode utility --sgcp-grid-score-mode utility --bandwidth-mhz 40 --num-channels 10 --communication-deadline-ms 200 --channel-estimator ns3 --ns3-tb-size-bytes 899 --ns3-slot-duration-ms 0.5 --ns3-subchannel-prbs 10 --ns3-symbols-per-slot 12 --ns3-mcs 28 --n-max 4 --rho-th 3 --head-rb-budget 2 --sgcp-frame-mbps-budget 200
+```
+
+Aligned result: AP `0.87/0.80/0.36`, raw `60.18 Mbps`, average `6.00` clusters/frame, `1.67` uploaded sources/sample, selected grids/sample `85.73`. This matches the formal SGCP-CV current-protocol result while preserving the strict `J_i^C > 0` admission property. Artifact: `docs/doc_workspace/SGCP/artifacts/potential_verified_cov_cluster_20260724/pairwise_v_order_aligned_200ms_41f/`.
 
 ### 2026-07-24 12:57:42 +08:00 - Clean package parameter/algorithm documentation pass
 

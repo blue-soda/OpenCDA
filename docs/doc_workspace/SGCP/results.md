@@ -18,13 +18,13 @@
 |---|---:|---:|---:|---:|---:|---:|---:|
 | Formal SGCP-CV (`cov_coalition_game`) | 0.87 | 0.80 | 0.36 | 60.18 | 6.00 | 1.67 | 85.73 |
 | PV, leave-one-out potential | 0.84 | 0.74 | 0.31 | 59.17 | 6.15 | 1.63 | 60.20 |
-| PV, pairwise multi-view potential | 0.87 | 0.79 | 0.35 | 59.48 | 6.00 | 1.67 | 61.35 |
+| PV, pairwise multi-view potential | 0.87 | 0.80 | 0.36 | 60.18 | 6.00 | 1.67 | 85.73 |
 
 旧 leave-one-out potential 分簇变化明显。`pv_cov_coalition_game` 与正式 `cov_coalition_game` 在 `40/41` 个 timestamp 的 coalition 集合不同；相同 coalition 交集为 `138` 个，正式 C/V 总 coalition 样本 `246` 个，旧 potential-verified 总 coalition 样本 `252` 个。典型帧 `000060` 中正式 C/V 为 6 簇，而旧 potential-verified 为 7 簇，并将 `(9,13,14,19)` 拆成 `(9,14,19)` 与 `(10,13)`，同时改变 `(1,2,10,11)` 为 `(1,2,8,11)`。
 
-结论：直接用 `phi(S)=sum_i u_i(S\{i})` 的 leave-one-out potential 会过度保守；改为 coalition-level pairwise multi-view potential 后，证明口径仍成立，并且 AP 基本恢复到正式 SGCP-CV 附近。当前 pairwise 版可以作为论文方法节的 potential-verified admission 实现候选；主表是否替换仍需谨慎，因为 AP@0.5/AP@0.7 比正式 SGCP-CV 低 `0.01`，但它能支撑更强的收敛证明。
+结论：直接用 `phi(S)=sum_i u_i(S\{i})` 的 leave-one-out potential 会过度保守；改为 coalition-level pairwise multi-view potential 后，证明口径仍成立，并且在对齐 current-protocol 的内部 `communication_deadline_ms=200` 后，AP、raw Mbps、平均簇数、上传源数量和 selected grids 均与正式 SGCP-CV 一致。当前 pairwise 版可以作为论文方法节的 potential-verified admission 实现候选，支撑更强的收敛证明。
 
-调试记录：在不改变 `Phi_C` 定义时，遍历所有 candidate coalitions、选择 best potential-positive target、并对齐 head-update 行为后，结果仍为 `0.84/0.74/0.31`。真正有效的修复是修改 `Phi_C` 为 pairwise multi-view value，并将车辆遍历顺序对齐正式 SGCP-CV。Artifact：`docs/doc_workspace/SGCP/artifacts/potential_verified_cov_cluster_20260724/pairwise_v_order_aligned_41f/`。
+调试记录：在不改变 `Phi_C` 定义时，遍历所有 candidate coalitions、选择 best potential-positive target、并对齐 head-update 行为后，结果仍为 `0.84/0.74/0.31`。真正有效的修复是修改 `Phi_C` 为 pairwise multi-view value，并将车辆遍历顺序对齐正式 SGCP-CV。一次 `100 ms` admission deadline 复验得到 `0.87/0.79/0.35`、raw `59.48 Mbps`，略低于正式 SGCP-CV；随后使用 current-protocol 内部 `200 ms` admission deadline 重跑后恢复到 `0.87/0.80/0.36`、raw `60.18 Mbps`。Artifact：`docs/doc_workspace/SGCP/artifacts/potential_verified_cov_cluster_20260724/pairwise_v_order_aligned_200ms_41f/`。
 
 ## 2026-07-24 Table 4 分簇 Baseline
 
