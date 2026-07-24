@@ -8397,6 +8397,16 @@ Follow-up rescue attempt without changing `Phi_C`:
 
 Result remains exactly `0.84/0.74/0.31`, raw `59.17 Mbps`, average selected grids/sample `60.20`. Conclusion: the performance drop is not caused by failing to try second-best target coalitions or by extra head re-election. It comes from the strict affected-potential admission constraint under the current `Phi_C` definition.
 
+Second rescue attempt with revised `Phi_C`:
+
+- Replaced leave-one-out coalition potential with coalition-level pairwise multi-view potential:
+  `phi(S)=sum_{i<j in S} sum_{g in G_i^sens intersect G_j^sens} min(q_i(g), q_j(g))`.
+- Kept the exact affected-potential admission check `Delta Phi_C > 0`.
+- Kept the best proxy-improving target selection among potential-positive candidates.
+- Aligned vehicle iteration order with formal SGCP-CV (`common.global_vehicles.keys()` rather than sorted ids).
+
+41-frame result: AP `0.87/0.79/0.35`, raw `59.48 Mbps`, average `6.00` clusters/frame, `1.67` uploaded sources/sample, selected grids/sample `61.35`. This largely rescues the proof-compatible variant while preserving the strict `J_i^C > 0` admission property. Artifact: `docs/doc_workspace/SGCP/artifacts/potential_verified_cov_cluster_20260724/pairwise_v_order_aligned_41f/`.
+
 ### 2026-07-24 12:57:42 +08:00 - Clean package parameter/algorithm documentation pass
 
 Target: `C:\Workspace\2026-7-papers\infocom\SGCP\experiment`.

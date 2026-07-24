@@ -2,9 +2,9 @@
 """Potential-verified C/V coalition game for SGCP.
 
 This variant strengthens ``cov_coalition_game`` with an explicit local
-partition-potential admission check.  A vehicle may still propose a migration
-from its own proxy utility, but the migration is committed only when the exact
-potential increment of the two affected coalitions is positive.
+partition-potential admission check.  Vehicles still rank migrations by the
+C/V proxy utility, but a migration is committed only when it increases the
+pairwise multi-view potential of the two affected coalitions.
 """
 
 from opencda.core.clustering.algorithms.clustering.cov_coalition_game import (
@@ -15,32 +15,43 @@ from opencda.log.logger_config import logger
 
 
 class PotentialVerifiedCOVCoalitionGame(COVCoalitionGame):
-    """C/V coalition formation with exact affected-potential admission."""
+    """C/V coalition formation with exact pairwise-potential admission."""
 
     def __init__(self, cav_world):
         super(PotentialVerifiedCOVCoalitionGame, self).__init__(cav_world)
         self.last_potential_checks = []
 
-    @staticmethod
-    def _make_shadow_coalition(members):
-        return common.Cluster(set(int(item) for item in members))
-
-    def _member_utility_inside(self, member_id, members):
-        """Utility of ``member_id`` against the other members of its coalition."""
-        peers = set(int(item) for item in members if int(item) != int(member_id))
-        if not peers:
+    def _pairwise_view_value(self, first_id, second_id):
+        """Symmetric pairwise multi-view value for two CAVs."""
+        first = common.global_vehicles.get(int(first_id))
+        second = common.global_vehicles.get(int(second_id))
+        if first is None or second is None:
             return 0.0
-        shadow = self._make_shadow_coalition(peers)
-        return self.cov_marginal_utility(shadow, int(member_id))['utility']
+        shared_grids = set(first.sens_grids) & set(second.sens_grids)
+        value = 0.0
+        for grid_id in shared_grids:
+            value += min(
+                self._density_quality(first_id, grid_id),
+                self._density_quality(second_id, grid_id))
+        return value
+
+    def _coalition_view_value(self, members):
+        """Pairwise multi-view potential within a coalition."""
+        members = sorted(int(item) for item in members)
+        if len(members) <= 1:
+            return 0.0
+        view_value = 0.0
+        for i, first_id in enumerate(members):
+            for second_id in members[i + 1:]:
+                view_value += self._pairwise_view_value(first_id, second_id)
+        return view_value
 
     def coalition_potential(self, members):
-        """Coalition-level potential as sum of member C/V utilities."""
+        """Coalition-level potential: pairwise multi-view value."""
         members = set(int(item) for item in members)
         if len(members) <= 1:
             return 0.0
-        return sum(
-            self._member_utility_inside(member_id, members)
-            for member_id in sorted(members))
+        return self._coalition_view_value(members)
 
     def affected_potential_delta(self, vehicle_id, source, target):
         """Return exact potential increment for moving one vehicle."""
@@ -70,7 +81,7 @@ class PotentialVerifiedCOVCoalitionGame(COVCoalitionGame):
                 '--- Potential-verified C/V Coalition Iteration %d ---',
                 iteration + 1)
             updated = False
-            for vid in sorted(common.global_vehicles.keys()):
+            for vid in common.global_vehicles.keys():
                 current = self.find_coalition(vid)
                 if current is None:
                     logger.info('Vehicle %s is not in any coalition.', vid)

@@ -17,13 +17,14 @@
 | Method | AP@0.3 | AP@0.5 | AP@0.7 | Raw Mbps | Avg clusters/frame | Avg source CAVs/sample | Avg selected grids/sample |
 |---|---:|---:|---:|---:|---:|---:|---:|
 | Formal SGCP-CV (`cov_coalition_game`) | 0.87 | 0.80 | 0.36 | 60.18 | 6.00 | 1.67 | 85.73 |
-| Potential-verified SGCP-CV (`pv_cov_coalition_game`) | 0.84 | 0.74 | 0.31 | 59.17 | 6.15 | 1.63 | 60.20 |
+| PV, leave-one-out potential | 0.84 | 0.74 | 0.31 | 59.17 | 6.15 | 1.63 | 60.20 |
+| PV, pairwise multi-view potential | 0.87 | 0.79 | 0.35 | 59.48 | 6.00 | 1.67 | 61.35 |
 
-分簇是否变化：变化明显。`pv_cov_coalition_game` 与正式 `cov_coalition_game` 在 `40/41` 个 timestamp 的 coalition 集合不同；相同 coalition 交集为 `138` 个，正式 C/V 总 coalition 样本 `246` 个，potential-verified 总 coalition 样本 `252` 个。典型帧 `000060` 中正式 C/V 为 6 簇，而 potential-verified 为 7 簇，并将 `(9,13,14,19)` 拆成 `(9,14,19)` 与 `(10,13)`，同时改变 `(1,2,10,11)` 为 `(1,2,8,11)`。
+旧 leave-one-out potential 分簇变化明显。`pv_cov_coalition_game` 与正式 `cov_coalition_game` 在 `40/41` 个 timestamp 的 coalition 集合不同；相同 coalition 交集为 `138` 个，正式 C/V 总 coalition 样本 `246` 个，旧 potential-verified 总 coalition 样本 `252` 个。典型帧 `000060` 中正式 C/V 为 6 簇，而旧 potential-verified 为 7 簇，并将 `(9,13,14,19)` 拆成 `(9,14,19)` 与 `(10,13)`，同时改变 `(1,2,10,11)` 为 `(1,2,8,11)`。
 
-结论：该增强版能够支撑严格 potential-verified admission 证明，但不是“同一分簇结果加证明”；它会更保守，降低 selected grids 与 AP。主表目前仍应保留性能更好的 formal SGCP-CV，若论文方法节采用严格证明，应同步说明 enhanced admission protocol 与 replay 结果差异，或继续调优该 variant。
+结论：直接用 `phi(S)=sum_i u_i(S\{i})` 的 leave-one-out potential 会过度保守；改为 coalition-level pairwise multi-view potential 后，证明口径仍成立，并且 AP 基本恢复到正式 SGCP-CV 附近。当前 pairwise 版可以作为论文方法节的 potential-verified admission 实现候选；主表是否替换仍需谨慎，因为 AP@0.5/AP@0.7 比正式 SGCP-CV 低 `0.01`，但它能支撑更强的收敛证明。
 
-后续 rescue 尝试：在不改变 `Phi_C` 定义的前提下，将迁移搜索改为遍历所有 candidate coalitions，并在满足 proxy improvement 且 `Delta Phi_C > 0` 的候选中选择 proxy utility 最高者；同时将迁移后的 head 更新行为对齐正式 SGCP-CV，不额外强制重选目标 head。41 帧结果仍为 `0.84/0.74/0.31`、raw `59.17 Mbps`、selected grids/sample `60.20`。因此当前性能下降主要来自严格 affected-potential admission 本身，而不是“最佳 proxy 迁移被拒后未尝试次优候选”或额外 head 重选造成的实现偏差。
+调试记录：在不改变 `Phi_C` 定义时，遍历所有 candidate coalitions、选择 best potential-positive target、并对齐 head-update 行为后，结果仍为 `0.84/0.74/0.31`。真正有效的修复是修改 `Phi_C` 为 pairwise multi-view value，并将车辆遍历顺序对齐正式 SGCP-CV。Artifact：`docs/doc_workspace/SGCP/artifacts/potential_verified_cov_cluster_20260724/pairwise_v_order_aligned_41f/`。
 
 ## 2026-07-24 Table 4 分簇 Baseline
 
