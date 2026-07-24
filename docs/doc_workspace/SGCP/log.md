@@ -8368,3 +8368,20 @@ Final checks:
 - No active clean-package text says Table4 is pending or contains legacy/PAPG/scaffold rows as final results.
 - Exact-payload NS3 replay for every final row is now listed only as optional validation; it is not required to interpret the current clean package.
 
+### 2026-07-24 12:57:42 +08:00 - Clean package parameter/algorithm documentation pass
+
+Target: `C:\Workspace\2026-7-papers\infocom\SGCP\experiment`.
+
+Completed:
+
+- Added `09_parameters_and_algorithms.md`, covering paper-facing dataset/environment parameters, network/channel parameters, SGCP-CV parameters, metric definitions, C/V formulas, next-frame stability, and pseudocode for coalition formation, C->V scheduling, and inter-cluster box aggregation.
+- Appended baseline algorithm notes to `01_protocol_native_baselines.md`, `02_global_box_and_fusion.md`, `03_scheduler_comparison.md`, and `04_clustering_ablation.md`.
+- Marked implementation paths for SGCP-CV, PCS, offline selective scheduler baselines, and paper-inspired clustering baselines.
+- Added references for FullPerception, EdgeCooper, PACP, SeAC, and HHOCNET where those baselines are paper-derived or paper-inspired.
+- Updated `README.md` and `MANIFEST.md` to include the new document.
+
+Validation:
+
+- Clean-package keyword scan for legacy/PAPG/admission-budget/old-protocol residue returns no hits.
+- No experiment values were changed in this pass.
+

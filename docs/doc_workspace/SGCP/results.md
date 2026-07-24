@@ -2180,3 +2180,9 @@ Protocol: attentive detector, 41-frame `v2xp_cluster_carla` replay, 20 CAVs, 40 
 | EdgeCooper-HD | selective_edgecooper_global_hd | 0.81 | 0.70 | 0.32 | 52.49 | 0.70 | 53.19 | 536.86 | 71.74 |
 
 K=1 note under the same scaffold: FullPerception-PCS `0.58/0.43/0.21`, total `11.37 Mbps`; EdgeCooper-HD `0.72/0.60/0.29`, total `31.10 Mbps`.
+
+#### Clean package parameter and algorithm documentation
+
+External document: `C:\Workspace\2026-7-papers\infocom\SGCP\experiment\09_parameters_and_algorithms.md`
+
+This document now records the paper-facing environment/dataset/network/SGCP parameters, C/V utility definitions, next-frame stability formula, SGCP-CV pseudocode and source paths. Table 1/2/3/4 documents now also include baseline algorithm notes and pseudocode where needed. No numeric experiment result changed in this documentation-only pass.
