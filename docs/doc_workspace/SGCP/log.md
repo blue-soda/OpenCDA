@@ -8345,3 +8345,26 @@ Result:
 
 External clean package updated: `C:\Workspace\2026-7-papers\infocom\SGCP\experiment\04_clustering_ablation.md`.
 
+### 2026-07-24 18:25:00 +08:00 - Clean package consistency audit and Table 2 C/V alignment
+
+Audit target: `C:\Workspace\2026-7-papers\infocom\SGCP\experiment`.
+
+Findings and fixes:
+
+- Detected that `02_global_box_and_fusion.md` fusion scaffold ablation still had `HeadOnly` and `ClusteredEarlyOnly` rows from the older `coalition_game + perception_aware_potential_game` scaffold.
+- Replaced `HeadOnly` with the already rerun C/V Table3 row: `cov_coalition_game + local_detection_head_only + inter_cluster_nms`, AP `0.42/0.30/0.13`, total `0.45 Mbps`, `536.47 GFLOPs/frame`.
+- Reran `ClusteredEarlyOnly` with the formal C/V protocol and no inter-cluster late fusion:
+
+```powershell
+conda run -n opencda python -m opencda.tools.offline_inference --dataset-root D:\Data\Carla --scenario-id 2026_07_15_01_26_56 --ego-cav-id 1 --max-frames 41 --fusion-method early --coperception-yaml docs\doc_workspace\SGCP\artifacts\early_from_late_checkpoint_20260719\enable_coperception_early_from_attentive.yaml --sgcp-constrained --clustering cov_coalition_game --resource-allocation cov_potential_game --sgcp-receiver-policy all-cluster-heads --sgcp-upload-mode grid --sgcp-grid-selection-mode utility --sgcp-grid-score-mode utility --bandwidth-mhz 40 --num-channels 10 --channel-estimator ns3 --ns3-tb-size-bytes 899 --ns3-slot-duration-ms 0.5 --ns3-subchannel-prbs 10 --ns3-symbols-per-slot 12 --ns3-mcs 28 --n-max 4 --rho-th 3 --head-rb-budget 2 --sgcp-frame-mbps-budget 200 --sgcp-trace-output docs\doc_workspace\SGCP\artifacts\table2_fusion_cv_20260724\clustered_early_only_cv_trace.csv --eval-stats-output docs\doc_workspace\SGCP\artifacts\table2_fusion_cv_20260724\clustered_early_only_cv_eval_stats.csv
+```
+
+Result: `ClusteredEarlyOnly` C/V AP `0.50/0.44/0.21`, raw/total `59.48 Mbps`, `536.91 GFLOPs/frame`.
+
+Final checks:
+
+- All Markdown tables with `Raw Mbps`/`Box Mbps`/`Total Mbps` satisfy `Raw + Box = Total` within rounding tolerance.
+- SGCP-CV rows are consistent across Table1/2/3/4: `0.87/0.80/0.36`, total `60.90 Mbps`, `536.92 GFLOPs/frame`.
+- No active clean-package text says Table4 is pending or contains legacy/PAPG/scaffold rows as final results.
+- Exact-payload NS3 replay for every final row is now listed only as optional validation; it is not required to interpret the current clean package.
+

@@ -24,6 +24,18 @@
 
 结论：没有 baseline 在 AP@0.3/AP@0.5 上超过 SGCP-CV。SeAC-inspired 在 AP@0.7 与 SGCP 持平，但 coverage/medium-IoU AP 更低，可支持“同一调度和 late-fusion scaffold 下，perception-aware dynamic coalition formation 提升 aggregate perception”的叙事。Artifact：`docs/doc_workspace/SGCP/artifacts/table4_clustering_cv_20260724/`；外部 clean package：`C:\Workspace\2026-7-papers\infocom\SGCP\experiment\04_clustering_ablation.md`。
 
+## 2026-07-24 Clean Package Consistency Audit
+
+审计对象：`C:\Workspace\2026-7-papers\infocom\SGCP\experiment`。
+
+修复内容：`02_global_box_and_fusion.md` 的 fusion scaffold ablation 已统一为正式 C/V 口径。`ClusteredEarlyOnly` 补跑结果为 AP `0.50/0.44/0.21`，raw/total `59.48 Mbps`，`536.91 GFLOPs/frame`；`HeadOnly` 改用 Table3 C/V head-only 结果 `0.42/0.30/0.13`，total `0.45 Mbps`，`536.47 GFLOPs/frame`。
+
+最终一致性结论：
+
+- 所有含 Raw/Box/Total 的 Markdown 表格均满足 `Raw + Box = Total`。
+- SGCP-CV 在 Table1/2/3/4 中一致为 AP `0.87/0.80/0.36`、total `60.90 Mbps`、`536.92 GFLOPs/frame`。
+- 清洁包不再包含需要补充才能解释当前表格的数据项；exact-payload NS3 全量 replay 仅作为 reviewer 追问 deadline 时的 optional validation。
+
 ## FullPerception-PCS singleton late/no-late alignment rerun
 
 2026-07-20/21 根据用户指出的理论约束重跑：在 `clustering=singleton`、`resource_allocation=fullperception_pcs`、`20 MHz / 10 ch` 下，是否启用 late/global box aggregation 不应改变 PCS 调度。
