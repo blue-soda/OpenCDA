@@ -2221,4 +2221,6 @@ This probe keeps the formal SGCP-PV clustering (`pv_cov_coalition_game`) and all
 
 Follow-up `60 Mbps` cap check: AP remains `0.83/0.75/0.33`, raw `55.40 Mbps`, box `0.67 Mbps`, total `56.07 Mbps`, avg uploaded sources/receiver sample `1.67`, avg selected grids/receiver sample `90.05`. This confirms the probe is not disadvantaged by using a looser budget; it naturally schedules about `56 Mbps` under the current policy.
 
+Two-stage dynamic marginal follow-up: new scheduler `dynamic_marginal_two_stage_potential_game` uses dynamic marginal `q_i(g)(1-Q_r^A(g))` as the first-stage coverage term and restores the second-stage multi-view term `V=q_i(g)1[q_h(g)>0]`. With a direct `60 Mbps` raw cap, 41-frame result is AP `0.87/0.80/0.35`, raw `59.43 Mbps`, box `0.72 Mbps`, total `60.15 Mbps`, avg selected grids/receiver sample `81.61`. With the non-binding `200 Mbps` ceiling, it reproduces the headline row: AP `0.87/0.80/0.36`, raw `60.18 Mbps`, box `0.72 Mbps`, total `60.90 Mbps`, avg selected grids/receiver sample `85.73`.
+
 Conclusion: the dynamic marginal objective is useful for problem-formulation discussion, but this first single-stage implementation is weaker than the current SGCP-PV headline C->V scheduler (`0.87/0.80/0.36`, total `60.90 Mbps`). It should remain a diagnostic/probe unless future tuning recovers AP.
