@@ -2217,6 +2217,8 @@ External document: `C:\Workspace\2026-7-papers\infocom\SGCP\experiment\10_dynami
 
 This probe keeps the formal SGCP-PV clustering (`pv_cov_coalition_game`) and all headline parameters unchanged, but replaces the reported C->V scheduler with a new single-stage dynamic marginal scheduler (`dynamic_marginal_potential_game`). The dynamic score is `q_i(g) * (1 - Q_r^A(g))`, and `Q_r^A(g)` is updated after each accepted upload to model diminishing returns.
 
-41-frame result: AP `0.83/0.75/0.33`, raw `55.43 Mbps`, box `0.67 Mbps`, total `56.10 Mbps`, avg uploaded sources/receiver sample `1.67`, avg selected grids/receiver sample `90.27`.
+41-frame result with the same non-binding `200 Mbps` raw-LiDAR admission ceiling used by the headline sweep row: AP `0.83/0.75/0.33`, raw `55.43 Mbps`, box `0.67 Mbps`, total `56.10 Mbps`, avg uploaded sources/receiver sample `1.67`, avg selected grids/receiver sample `90.27`.
+
+Follow-up `60 Mbps` cap check: AP remains `0.83/0.75/0.33`, raw `55.40 Mbps`, box `0.67 Mbps`, total `56.07 Mbps`, avg uploaded sources/receiver sample `1.67`, avg selected grids/receiver sample `90.05`. This confirms the probe is not disadvantaged by using a looser budget; it naturally schedules about `56 Mbps` under the current policy.
 
 Conclusion: the dynamic marginal objective is useful for problem-formulation discussion, but this first single-stage implementation is weaker than the current SGCP-PV headline C->V scheduler (`0.87/0.80/0.36`, total `60.90 Mbps`). It should remain a diagnostic/probe unless future tuning recovers AP.
