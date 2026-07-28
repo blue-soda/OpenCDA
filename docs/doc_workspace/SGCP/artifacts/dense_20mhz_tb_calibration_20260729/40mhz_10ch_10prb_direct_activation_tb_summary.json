@@ -1,0 +1,21 @@
+{
+  "ns3_command": "wsl bash -lc cd /home/sakakibara/workspace/carla-ns3-co-simulation/ns-3-dev && ./ns3 run 'scratch/vanet/main.cc --simTime=3.0 --enableTimeSync=true --carlaHost=auto --targetSubchannels=10 --slBandwidthIn100kHz=400 --slSubchannelSize=10 --slMcs=28 --slSymbolsPerSlot=12 --slPscchRbs=10 --slRriMs=5 --slBearerActivationGuardMs=1 --nrSlZeroTimeSendDelayMs=0'",
+  "windows_ns3_root": "C:\\Workspace\\carla-ns3-co-simulation\\ns-3-dev",
+  "wsl_ns3_root": "/home/sakakibara/workspace/carla-ns3-co-simulation/ns-3-dev",
+  "probe_returncode": 0,
+  "ns3_returncode": 1,
+  "manual_add": 2,
+  "manual_reject": 0,
+  "manual_consume": 48,
+  "callbacks": 0,
+  "allocated_events": 48,
+  "allocated_min_bytes": 19,
+  "allocated_mean_bytes": 838.71,
+  "allocated_median_bytes": 912.0,
+  "allocated_max_bytes": 912,
+  "recommended_tb_size_bytes": 912,
+  "target_subchannels": 10,
+  "sl_bandwidth_in_100khz": 400,
+  "sl_subchannel_size_prb": 10,
+  "notes": "Recommended estimator TB size is the median observed MANUAL_CMD_CONSUME allocated bytes for one subchannel grant under MCS28 and 12 PSSCH symbols."
+}

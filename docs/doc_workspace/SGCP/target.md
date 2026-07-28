@@ -332,3 +332,16 @@
 - [ ] 论文方法节后续需要用 COV 分层叙事替换 PAPG 工程叙事：coalition stage = stable local multi-view groups；scheduler stage = block-level C/O/V/L marginal utility；late aggregation = global coverage recovery with reduced detector GFLOPs。
 - [x] 若将 COV 作为最终算法名进入论文主文，需要将 clean experiment package 的主表方法名从 SGCP-PAPG 更新为 SGCP-COV，并保留 PAPG/PotentialGame 对照为机制诊断或消融。2026-07-24 已更新外部 clean experiment package 为 SGCP-CV，并保留 PotentialGame/PAPG 相关结果为机制诊断。
 - [x] 为论文证明需求新增 exact potential-verified coalition admission variant：`potential_verified_cov_coalition_game.py`。该版本将迁移提交条件增强为 source/target affected potential increment `Delta Phi_C > 0`，可证明每个 accepted migration 满足 `J_i^C > 0` 并保证有限 partition space 下终止。旧 leave-one-out `Phi_C` 结果为 `0.84/0.74/0.31`；改为 pairwise multi-view `Phi_C`、对齐正式 SGCP-CV 迭代顺序并使用 current-protocol 内部 `communication_deadline_ms=200` 后，41 帧结果恢复到 `0.87/0.80/0.36`、raw `60.18 Mbps`，可作为 proof-compatible variant。
+
+## P16：2026-07-29 Dense-LiDAR rerun and realtime protocol cleanup
+
+目的：验证 AP@0.7 是否受原 41 帧点云稀疏影响，并在 Guard=1 ms、zero-time send delay=0 ms 的控制面协议下，重做 dense-LiDAR 版本的主要实验包。
+
+- [x] 新增并导出 `v2xp_cluster_carla_dense` 数据集：20 CAVs，41 frames/CAV (`000060-000140`)，LiDAR `32 channels / 320000 points/s / 20 Hz / 50 m`，数据集路径 `D:\Data\Carla\2026_07_29_02_32_08`。
+- [x] 完成 Guard/zero-time/broadcast/unicast 控制面 NS3 因子实验，并更新 `C:\Workspace\2026-7-papers\infocom\SGCP\experiment\10_realtime_feasibility.md`：Guard `1 ms`、zero-time send delay `0 ms`、activation-synchronized send 是 dense 系列采用的控制面协议；控制面 compact summary 支持 broadcast/groupcast，raw-LiDAR 数据面仍为 scheduled unicast。
+- [x] 修复 dense offline replay 的 per-link deadline trimming：普通 SGCP grid upload 先按实际 grid payload 执行 60 ms per-link admission，再执行全局 raw-Mbps cap。
+- [x] 完成 dense headline operating point：`40 MHz / 10ch / tb899 / deadline60 / raw budget60 / N_max=5 / rho_th=1`，结果 `0.84/0.78/0.56`，raw/box/total `59.58/0.79/60.37 Mbps`，`606.62 GFLOPs/frame`。
+- [x] 完成 dense Table 1/2/3/4 和 GFLOPs 结果包，输出到 `C:\Workspace\2026-7-papers\infocom\SGCP\experiment-0729-dense-ver`。
+- [x] 完成 exact NS3 20MHz 校准检查：当前 NR sidelink resource pool 不支持 `20 MHz / 10ch / 5PRB`，合法 exact 20MHz 为 `5ch / 10PRB`，per-subchannel TB 约 `912 B/grant`。因此 dense 20MHz 行只作为 logical diagnostic，不进入 exact-NS3 paper-facing 主表。
+- [x] 刷新 dense-ver `00-10`、README、MANIFEST，静态检查无 pending placeholder 或旧 sparse 主参数残留。
+- [ ] 可选：若后续论文需要合法 exact 20MHz sensitivity，再单独重跑 `20 MHz / 5ch / 10PRB` AP 表；这不是当前 dense 主表必要项。

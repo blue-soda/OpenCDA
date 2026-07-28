@@ -8643,3 +8643,28 @@ Dense SGCP experiments:
   `02_global_box_and_fusion.md`, `03_scheduler_comparison.md`,
   `04_clustering_ablation.md`, `README.md`, and `MANIFEST.md`.
 
+### 2026-07-29 05:20:00 +08:00 - Dense package audit and exact 20MHz NS3 calibration
+
+- Completed exact NS3 TB probes for dense channel calibration using activation-aware
+  direct bridge injection (`guard=1 ms`, `nrSlZeroTimeSendDelayMs=0`).
+- Confirmed the requested exact `20 MHz / 10 target subchannels` configuration
+  is not legal in the current NR sidelink resource pool because it requires
+  `slSubchannelSize=5 PRB`; NS3 rejects this with
+  `Invalid subchannel size in RBs : 5`.
+- Ran legal `20 MHz / 5 target subchannels / 10 PRB` probe. Median per-subchannel
+  TB size is `912 B/grant`, matching the `40 MHz / 10 target subchannels /
+  10 PRB` sanity probe (`912 B/grant`). The practical difference is the number
+  of parallel subchannels, not per-subchannel TB size.
+- Added artifact note:
+  `docs/doc_workspace/SGCP/artifacts/dense_20mhz_tb_calibration_20260729/20mhz_tb_calibration.md`.
+- Refreshed the external dense package
+  `C:\Workspace\2026-7-papers\infocom\SGCP\experiment-0729-dense-ver`:
+  `00_protocol_and_metrics.md`, `05_baseline_reproduction_parameters.md`,
+  `06_parameter_sensitivity.md`, `07_plot_data_and_suggestions.md`,
+  `08_data_quality_and_remaining_work.md`, `09_parameters_and_algorithms.md`,
+  `10_realtime_feasibility.md`, `README.md`, and `MANIFEST.md`.
+- Dense package scan now has no pending-placeholder or stale sparse-parameter
+  hits. The paper-facing dense setting remains `40 MHz / 10ch`; the 20MHz row
+  is explicitly marked as a logical diagnostic, not exact NS3-calibrated paper
+  evidence.
+
