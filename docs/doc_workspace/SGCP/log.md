@@ -8579,3 +8579,33 @@ Dense SGCP experiments:
 - External dense package updated:
   `C:\Workspace\2026-7-papers\infocom\SGCP\experiment-0729-dense-ver\01_dense_lidar_sgcp_hyperparameters.md`.
 
+### 2026-07-29 04:10:00 +08:00 - Dense Table 1 baseline/GFLOPs refresh and 20MHz check
+
+- Reran dense Table 1 protocol-native baselines on
+  `D:\Data\Carla\2026_07_29_02_32_08`:
+  - Centralized all-in-one raw-LiDAR upper reference:
+    `0.90/0.90/0.80`, raw `337.08 Mbps`, `90.55 GFLOPs/frame`.
+  - No collaboration: `0.55/0.50/0.34`, `0 Mbps`,
+    `1788.73 GFLOPs/frame`.
+  - Pure late: `0.81/0.73/0.52`, box `1.95 Mbps`,
+    `1745.11 GFLOPs/frame`.
+  - FullPerception-PCS: `0.54/0.49/0.34`, raw `70.49 Mbps`,
+    `1788.97 GFLOPs/frame`.
+  - EdgeCooper V2V constrained adaptation: `0.51/0.46/0.31`,
+    raw `86.30 Mbps`, `1789.02 GFLOPs/frame`.
+  - SGCP: `0.84/0.78/0.56`, total `60.37 Mbps`,
+    `606.62 GFLOPs/frame`.
+- Computed dense GFLOPs calibrations:
+  `dense_singleton_forward_flops.json`,
+  `dense_full20_forward_flops.json`, and
+  `compute/dense_table1_compute_profile.md`.
+- Reran provisional 20MHz/10ch deadline-aware SGCP after per-link trimming:
+  `tb_size=450`, `deadline=60 ms`, raw budget `40 Mbps`, `N_max=5`,
+  `rho_th=1`. Result: `0.80/0.74/0.51`, raw `24.01 Mbps`,
+  link-time mean/P95/max `49.18/60.00/60.00 ms`.
+- Updated external dense package:
+  `C:\Workspace\2026-7-papers\infocom\SGCP\experiment-0729-dense-ver\01_protocol_native_baselines.md`,
+  `01_dense_lidar_sgcp_hyperparameters.md`, `README.md`, and
+  `MANIFEST.md`. The manifest now explicitly marks old Table 2/3/4 files as
+  pending dense rerun placeholders.
+
