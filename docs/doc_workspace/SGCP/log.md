@@ -8432,3 +8432,104 @@ Validation:
 - Clean-package keyword scan for legacy/PAPG/admission-budget/old-protocol residue returns no hits.
 - No experiment values were changed in this pass.
 
+### 2026-07-29 01:40:00 +08:00 - NS3 control-plane batch-step diagnosis
+
+Question: why did the compact control-plane probe require `batch_step_ms=11`, and can the NR sidelink RLC buffer-status-report timer explain the `10 ms` failure?
+
+Completed:
+
+- Added a backward-compatible NS3 parameter `--nrSlRbsTimerMs`; default remains `10`, so old NS3 commands preserve previous behavior.
+- Built NS3 successfully after the change.
+- Ran 60-packet aggregated three-round control probes with `nrSlRbsTimerMs=10/5/2/1`.
+- Result: reducing the RLC BSR timer does not reduce the reliable batch-step threshold. For all tested timer values, `batch_step_ms=10` delivers `50/60`, while `11` delivers `60/60`.
+- Parsed request IDs in the failing `step=10` run and found the missing requests are `11-20`, i.e. the second 10-packet batch.
+- Root cause: the current NS3 script activates NR sidelink bearers at `slBearersActivationTime + 10 ms = 11 ms`; without a first-gap guard, the second batch is injected at `10 ms`, before bearer activation.
+- Verified without changing NS3 parameters: adding probe-side `--first-gap-ms 11` makes `batch_step_ms=10` reliable (`60/60`, max receive `52 ms`), and diagnostic subsequent steps of `1/2/3/4/5 ms` also deliver `60/60`.
+
+Artifacts:
+
+- `docs/doc_workspace/SGCP/artifacts/control_plane_ns3_20260728/NS3_CONTROL_PARAMS_RESTORE_POINT.md`
+- `docs/doc_workspace/SGCP/artifacts/control_plane_ns3_20260728/RBS_TIMER_PROBE_20260729.md`
+- `docs/doc_workspace/SGCP/artifacts/control_plane_ns3_20260728/ACTIVATION_GAP_PROBE_20260729.md`
+
+Clean package update:
+
+- `C:\Workspace\2026-7-papers\infocom\SGCP\experiment\10_realtime_feasibility.md` now states that the old `10 ms` failure is a startup activation-boundary artifact, not a steady-state RLC timer limit.
+
+### 2026-07-29 02:05:00 +08:00 - NR sidelink bearer activation guard sweep
+
+Question: can the current 10 ms NR sidelink bearer activation guard be shortened?
+
+Completed:
+
+- Added `--slBearerActivationGuardMs`; default remains `10`, so previous experiments are reproducible without changing commands.
+- Verified from `NrSlHelper::ActivateNrSlBearer()` that the helper schedules the caller-provided activation time and does not enforce a 10 ms minimum.
+- Built NS3 successfully after the parameterized change.
+- Ran the 60-packet aggregated three-round control profile without a probe-side first-gap guard.
+
+Results:
+
+- `guard=10 ms, step=10 ms`: `50/60`.
+- `guard=5 ms, step=6 ms`: `60/60`, max receive `31 ms`.
+- `guard=2 ms, step=3 ms`: `60/60`, max receive `21 ms`.
+- `guard=1 ms, step=2 ms`: `60/60`, max receive `21 ms`.
+- `guard=0 ms, step=1 ms`: `60/60`, max receive `21 ms`.
+
+Conclusion: the 10 ms activation guard is conservative and configurable. It should remain the default for backward-compatible reproduction unless a paper section explicitly reports an optimized startup configuration.
+
+Artifact:
+
+- `docs/doc_workspace/SGCP/artifacts/control_plane_ns3_20260728/BEARER_GUARD_PROBE_20260729.md`
+
+Follow-up confirmation:
+
+- Complete three-round aggregated-summary profile with `--slBearerActivationGuardMs=1` and `batch_step_ms=2`: `60/60` callbacks, `60/60` RLC RX, `60/60` PHY decode OK, max receive timestamp `21 ms`, mean/max delay `1/1 ms`.
+- Artifact: `docs/doc_workspace/SGCP/artifacts/control_plane_ns3_20260728/FULL_3ROUND_AGGREGATED_GUARD1_CONFIRM_20260729.md`.
+- Interpretation: aggregated summaries are sufficient at the algorithm-information level because SGCP-PV needs compact per-CAV grid-quality summaries, membership summaries, and pairwise `W_ij`/affected-potential deltas, not raw LiDAR or one CAM per logical admission check. Current NS3 replay is a control-plane feasibility probe, not a fully distributed online implementation.
+
+Zero-time send-delay probe:
+
+- Added `--nrSlZeroTimeSendDelayMs`; default remains `20 ms`, preserving previous experiments.
+- Added probe-only `--pre-send-sync-ms` to advance NS3 to the activation boundary before the first transfer batch.
+- If `zeroTimeSendDelay=0` but first batch is still injected at simulator time zero, the run loses `10/60` packets.
+- With `guard=1 ms`, `pre_send_sync=2 ms`, `zeroTimeSendDelay=0`, complete three-round aggregated summaries deliver `60/60`; max receive is `13 ms` at `step=2 ms` and `8 ms` at diagnostic `step=1 ms`.
+- Artifact: `docs/doc_workspace/SGCP/artifacts/control_plane_ns3_20260728/ZERO_TIME_SEND_DELAY_PROBE_20260729.md`.
+
+### 2026-07-29 02:18:00 +08:00 - NS3 broadcast control-plane verification
+
+Question: since cluster heads are not known before coalition formation, should SGCP control summaries use broadcast/groupcast, and can the current NS3 path actually do that?
+
+Completed:
+
+- Added optional NS3 broadcast control bearer support without changing default unicast behavior:
+  - `--enableControlBroadcast`
+  - `--controlBroadcastAddress`
+  - `--controlBroadcastL2Id`
+- Added `cast_type=broadcast` handling in `ProcessData_TransferRequests()`. Broadcast requests use multicast IP `225.0.0.0`, destination L2 ID `255`, and still pass the requested subchannel start/width to the manual scheduler.
+- Added `--cast-type broadcast` to the synthetic control-plane probe.
+- Built NS3 successfully.
+
+NS3 command:
+
+```bash
+./ns3 run 'scratch/vanet/main.cc --simTime=3.0 --enableTimeSync=true --carlaHost=auto --targetSubchannels=10 --slMcs=28 --slSymbolsPerSlot=12 --slPscchRbs=10 --slRriMs=5 --slBearerActivationGuardMs=1 --nrSlZeroTimeSendDelayMs=0 --enableControlBroadcast=true'
+```
+
+Results:
+
+- One-round 20-packet broadcast smoke test: `20` packets, `200` application callbacks, `200` RLC RX, max receive timestamp `4 ms`.
+- Complete aggregated control profile: `70` broadcast packets (`60` coalition summaries + `6` scheduler summaries + `4` grants), `699/700` expected half-duplex fanout callbacks, `699` RLC RX, `70` manual resources applied, max receive timestamp `15 ms`.
+- The callback fanout is lower than `packets x 19` because a 10-subchannel batch has 10 simultaneous transmitters; those transmitting vehicles are half-duplex and do not receive the other simultaneous broadcasts. The practical fanout bound is therefore about 10 receivers per broadcast packet under the tested batching pattern.
+- The single missing callback is deterministic in the tested seed: request `69`, sender `9`, missing receiver `20`. Every broadcast request still reached at least 9 non-transmitting receivers.
+
+Conclusion:
+
+- Yes, broadcast/groupcast is the better abstraction for SGCP control summaries.
+- The current NS3 path now supports and verifies actual one-to-many broadcast delivery for control summaries.
+- Raw-LiDAR grid payloads should remain unicast/manual-subchannel data-plane transmissions.
+- The clean realtime document has been updated to use the broadcast control-plane probe (`15 ms`) while retaining the earlier unicast-summary check (`21 ms`) as a conservative startup comparison.
+
+Artifact:
+
+- `docs/doc_workspace/SGCP/artifacts/control_plane_ns3_20260728/BROADCAST_CONTROL_PROBE_20260729.md`
+
