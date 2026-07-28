@@ -8533,3 +8533,49 @@ Artifact:
 
 - `docs/doc_workspace/SGCP/artifacts/control_plane_ns3_20260728/BROADCAST_CONTROL_PROBE_20260729.md`
 
+### 2026-07-29 03:25:00 +08:00 - Guard/zero-delay sweep and dense-LiDAR export
+
+Control-plane follow-up:
+
+- Ran a 16-case factorial sweep over `cast={unicast,broadcast}`,
+  `timing={at_zero,after_activation}`, `guard={0,1} ms`, and
+  `zeroTimeSendDelay={0,1} ms`.
+- Result: `at_zero` loses the first 10-request batch (`60/70` unicast or
+  `600/700` broadcast callbacks); `after_activation` delivers `70/70` unicast
+  and `699/700` broadcast callbacks with max receive `14-15 ms`.
+- Conclusion: optimized control exchange should start after bearer activation;
+  dense-series protocol uses `guard=1 ms`, `zero-time send delay=0 ms`, and
+  explicit pre-send activation sync.
+- Artifact:
+  `docs/doc_workspace/SGCP/artifacts/control_plane_ns3_20260728/GUARD_ZERO_SWEEP_20260729.md`.
+
+Dense data export:
+
+- Added `v2xp_cluster_carla_dense` as a same-layout dense-LiDAR variant:
+  `32 channels`, `320000 points/s`, `20 Hz` rotation, `50 m` range.
+- Exported dataset with
+  `conda run --no-capture-output -n opencda python opencda.py -t v2xp_cluster_carla_dense --dump`.
+- Output: `D:\Data\Carla\2026_07_29_02_32_08`; 20 CAVs, 41 frames per CAV,
+  `000060-000140`, total 820 PCDs.
+- First-frame points per CAV are about `12973-14331`, confirming dense sampling.
+- CARLA was stopped after export.
+
+Dense SGCP experiments:
+
+- 3-frame smoke, 40MHz/no cap: `0.91/0.87/0.68`.
+- 41-frame 40MHz/no cap: `0.89/0.85/0.67`, raw `147.09 Mbps`, but individual
+  link time exceeds the 60 ms data-plane window.
+- 41-frame 40MHz/60Mbps cap before per-link deadline fix:
+  `0.87/0.82/0.61`, but per-link time still exceeded 60 ms.
+- Fixed `offline_inference.py` so ordinary SGCP grid upload first applies
+  per-link payload deadline trimming using actual selected-grid bytes, then
+  applies global raw-Mbps trimming.
+- Deadline-aware dense candidate:
+  `N_max=5`, `rho_th=1`, 40MHz/10ch, `tb=899`, `deadline=60 ms`,
+  `raw budget=60 Mbps` gives `0.84/0.78/0.56`, raw `59.58 Mbps`,
+  link-time mean/P95/max `41.83/60.00/60.00 ms`.
+- Widening the raw budget to `80 Mbps` gives the same AP and `68.41 Mbps`,
+  so it is not preferred.
+- External dense package updated:
+  `C:\Workspace\2026-7-papers\infocom\SGCP\experiment-0729-dense-ver\01_dense_lidar_sgcp_hyperparameters.md`.
+

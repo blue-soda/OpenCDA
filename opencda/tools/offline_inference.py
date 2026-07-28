@@ -1849,17 +1849,39 @@ def apply_sgcp_constraint(frame, protocol, ego_cav_id, resource_allocation,
     frame_budget_bytes = ''
     frame_budget_original_bytes = ''
     frame_budget_admitted_bytes = ''
+    current_selection = collect_receiver_grid_selection(world, clusters)
+    current_channel_allocation = {}
+    for vm in world.get_vehicle_managers().values():
+        scheduler = getattr(vm.v2x_manager, 'scheduler', None)
+        current_channel_allocation.update(
+            getattr(scheduler, 'channel_allocation', {}) or {})
+    deadline_ms = (
+        channel_model.frame_deadline_s * 1000.0
+        if channel_model is not None else None)
+    if (upload_mode == 'grid' and resource_allocation != 'fullperception_pcs'
+            and deadline_ms is not None):
+        link_sc_nums = {
+            (int(sender_id), int(receiver_id)): 1
+            for (sender_id, receiver_id) in current_channel_allocation
+        }
+        deadline_trimmed_selection = trim_grid_selection_to_deadline(
+            world,
+            current_selection,
+            link_sc_nums,
+            bandwidth_mhz=bandwidth_mhz,
+            num_channels=num_channels,
+            deadline_ms=deadline_ms,
+            channel_model=channel_model)
+        apply_grid_selection_to_world(
+            world,
+            deadline_trimmed_selection,
+            channel_allocation=current_channel_allocation)
+        current_selection = deadline_trimmed_selection
     if sgcp_frame_mbps_budget is not None:
         if sgcp_frame_mbps_budget <= 0:
             raise ValueError('--sgcp-frame-mbps-budget must be positive')
         frame_budget_bytes = int(
             float(sgcp_frame_mbps_budget) * 1e6 * 0.1 / 8.0)
-        current_selection = collect_receiver_grid_selection(world, clusters)
-        current_channel_allocation = {}
-        for vm in world.get_vehicle_managers().values():
-            scheduler = getattr(vm.v2x_manager, 'scheduler', None)
-            current_channel_allocation.update(
-                getattr(scheduler, 'channel_allocation', {}) or {})
         trimmed_selection, frame_budget_original_bytes, \
             frame_budget_admitted_bytes = trim_grid_selection_to_payload_budget(
                 world,

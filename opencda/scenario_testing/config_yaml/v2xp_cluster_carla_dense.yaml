@@ -1,0 +1,79 @@
+description: |-
+  Dense-LiDAR variant of v2xp_cluster_carla for SGCP offline dataset export.
+  The traffic layout, CAV count, and cooperative-perception model settings match
+  v2xp_cluster_carla; only the vehicle LiDAR sampling rate is increased.
+
+blueprint:
+  use_multi_class_bp: false
+  bp_meta_path: "opencda/assets/blueprint_meta/bbx_stats_0911.json"
+  bp_class_sample_prob:
+    car: 0.5
+    truck: 0.1
+    bus: 0.1
+    bicycle: 0.1
+    motorcycle: 0.1
+
+carla_traffic_manager:
+  sync_mode: true
+  global_distance: 5
+  global_speed_perc: -10
+  set_osm_mode: true
+  auto_lane_change: true
+  random: true
+  ignore_lights_percentage: 100
+  vehicle_list: ~
+  range:
+    - [-50, 40, -100, 100, 3.5, 15, 99, 19]
+
+scenario:
+  single_cav_list:
+    -
+      spawn_position: [8.00, -30.31, 0.3, 0, -90, 0]
+      destination: [8.00, -41, 1.0]
+      behavior:
+        local_planner:
+          debug_trajectory: false
+          debug: false
+
+vehicle_base:
+  sensing:
+    perception:
+      lidar:
+        visualize: true
+        channels: 32
+        range: 50
+        points_per_second: 320000
+        rotation_frequency: 20
+        upper_fov: 10.0
+        lower_fov: -30.0
+        dropoff_general_rate: 0.0
+        dropoff_intensity_limit: 1.0
+        dropoff_zero_intensity: 0.0
+        noise_stddev: 0.0
+        enable_grids: false
+
+traffic_vehicle_base:
+  sensing:
+    perception:
+      lidar:
+        visualize: false
+        channels: 32
+        range: 50
+        points_per_second: 320000
+        rotation_frequency: 20
+        upper_fov: 10.0
+        lower_fov: -30.0
+        dropoff_general_rate: 0.0
+        dropoff_intensity_limit: 1.0
+        dropoff_zero_intensity: 0.0
+        noise_stddev: 0.0
+        enable_grids: false
+
+coperception:
+  models:
+    early: 'opencood/logs/pointpillar_early_fusion'
+    intermediate_v2xvit: 'opencood/logs/pointpillar_v2xvit_fusion'
+    intermediate_attentive: 'opencood/logs/pointpillar_attentive_fusion'
+    intermediate_cobevt: 'opencood/logs/pointpillar_cobevt_fusion'
+    late: 'opencood/logs/pointpillar_late_fusion'
+  fusion_method: 'early'
