@@ -8609,3 +8609,37 @@ Dense SGCP experiments:
   `MANIFEST.md`. The manifest now explicitly marks old Table 2/3/4 files as
   pending dense rerun placeholders.
 
+### 2026-07-29 04:45:00 +08:00 - Dense Table 2/3/4 reruns
+
+- Added dense automation scripts:
+  - `docs/doc_workspace/SGCP/artifacts/table2_dense_20260729/run_table2_dense.py`
+  - `docs/doc_workspace/SGCP/artifacts/table2_dense_20260729/build_table2_dense.py`
+  - `docs/doc_workspace/SGCP/artifacts/table3_dense_20260729/run_table3_dense.py`
+  - `docs/doc_workspace/SGCP/artifacts/table3_dense_20260729/build_table3_dense.py`
+  - `docs/doc_workspace/SGCP/artifacts/table4_dense_20260729/run_table4_dense.py`
+  - `docs/doc_workspace/SGCP/artifacts/table4_dense_20260729/build_table4_dense.py`
+- Dense Table 2 global-box/fusion scaffold completed:
+  - SGCP: `0.84/0.78/0.56`, total `60.37 Mbps`,
+    `606.62 GFLOPs/frame`.
+  - Pure late: `0.81/0.73/0.52`, total `1.95 Mbps`,
+    `1745.11 GFLOPs/frame`.
+  - PCS + global box: `0.81/0.74/0.53`, total `72.70 Mbps`,
+    `1749.70 GFLOPs/frame`.
+  - EdgeCooper + global box: `0.81/0.74/0.53`, total `88.32 Mbps`,
+    `1745.39 GFLOPs/frame`.
+  - Clustered early only: `0.57/0.52/0.37`, total `41.02 Mbps`.
+- Dense Table 3 scheduler comparison completed under fixed PV clustering and
+  inter-cluster NMS. SGCP: `0.84/0.78/0.56`, total `60.37 Mbps`.
+  Higher-payload random/density/EdgeCooper-HD rows use `86-87 Mbps`; random
+  reaches AP@0.7 `0.60`, so the dense scheduler table must be framed as a
+  communication-accuracy-compute tradeoff rather than an AP-only dominance
+  table. PCS was rerun with `--pcs-frame-deadline-ms 60`; final PCS row is
+  `0.82/0.74/0.54`, total `21.88 Mbps`, P95/max link time `60/60 ms`.
+- Dense Table 4 clustering ablation completed. SGCP `0.84/0.78/0.56` beats all
+  tested clustering baselines: random `0.65/0.57/0.37`, distance-greedy
+  `0.77/0.72/0.51`, density-greedy `0.66/0.56/0.35`, SeAC-inspired
+  `0.67/0.61/0.41`, HHOCNET-inspired `0.67/0.59/0.38`.
+- External dense package updated:
+  `02_global_box_and_fusion.md`, `03_scheduler_comparison.md`,
+  `04_clustering_ablation.md`, `README.md`, and `MANIFEST.md`.
+
