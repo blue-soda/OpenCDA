@@ -50,6 +50,14 @@ from opencda.core.clustering.utils.channel_model import build_channel_model
 from opencda.core.clustering.algorithms.resource_allocation import (
     build_resource_allocator,
 )
+from opencda.core.clustering.algorithms.resource_allocation.\
+    edgecooper_pmax import (
+    edgecooper_baseline_names,
+    edgecooper_base_baseline,
+    is_edgecooper_pmax_baseline,
+    resolve_pmax_density_cap_rho,
+    trim_pmax_selection_to_global_deadline,
+)
 from opencda.core.ml_libs.opencood_manager import OpenCOODManager
 
 
@@ -252,10 +260,8 @@ def parse_args():
                                  'greedy_density', 'communication_aware',
                                  'pacp_lidar',
                                  'global_selective_proxy',
-                                 'cluster_local_selective_proxy',
-                                 'edgecooper',
-                                 'edgecooper_global',
-                                 'edgecooper_global_hd'],
+                                 'cluster_local_selective_proxy'] +
+                                edgecooper_baseline_names(),
                         help='Run a selective-sharing or RSU/edge-assisted baseline instead of SGCP PPS.')
     parser.add_argument('--selective-member-budget', type=int, default=2,
                         help='Maximum uploaded non-head members per receiver for selective baseline.')
@@ -272,6 +278,12 @@ def parse_args():
                         help='Communication range for edgecooper_global '
                              'candidate V2V links. Defaults to 35 m to '
                              'preserve existing baseline results.')
+    parser.add_argument('--edgecooper-pmax-density-cap-rho', type=float,
+                        default=None,
+                        help='OpenCDA grid-level residual density cap for '
+                             'EdgeCooper Pmax-style partial point upload. '
+                             'Defaults to --rho-th, then protocol rho_th, '
+                             'then 2.0.')
     parser.add_argument('--max-senders-per-receiver', type=int, default=1,
                         help='Receiver-side concurrent inbound-link capacity '
                              'for orthogonal resources. Defaults to 1 to '
@@ -2133,6 +2145,7 @@ def ns3_link_quality(link_quality, timestamp, source_id, target_id):
 
 
 def candidate_member_ids(world, cluster, baseline_name):
+    baseline_name = edgecooper_base_baseline(baseline_name)
     head_id = int(cluster.head_id)
     if baseline_name in ['global_selective_proxy', 'edgecooper']:
         return [
@@ -2389,6 +2402,7 @@ def select_edgecooper_grids(head_vm, sender_vm, candidates, count,
 
 def select_baseline_members(world, cluster, baseline_name, member_budget,
                             link_quality=None, timestamp=None):
+    baseline_name = edgecooper_base_baseline(baseline_name)
     head_id = int(cluster.head_id)
     head_vm = world.get_vehicle_manager(head_id)
     members = candidate_member_ids(world, cluster, baseline_name)
@@ -2473,6 +2487,7 @@ def select_baseline_members(world, cluster, baseline_name, member_budget,
 def assign_selective_grid_selection(world, cluster, baseline_name,
                                     member_budget, grid_budget,
                                     link_quality=None, timestamp=None):
+    baseline_name = edgecooper_base_baseline(baseline_name)
     head_id = int(cluster.head_id)
     head_vm = world.get_vehicle_manager(head_id)
     selected_members = select_baseline_members(
@@ -2725,8 +2740,18 @@ def apply_selective_sharing_baseline(frame, protocol, ego_cav_id,
                                      channel_model=None,
                                      selective_frame_deadline_ms=None,
                                      edgecooper_global_comm_range_m=None,
-                                     max_senders_per_receiver=1):
+                                     max_senders_per_receiver=1,
+                                     edgecooper_pmax_density_cap_rho=None):
     clear_sgcp_globals()
+    public_baseline_name = baseline_name
+    base_baseline_name = edgecooper_base_baseline(baseline_name)
+    edgecooper_pmax_enabled = is_edgecooper_pmax_baseline(baseline_name)
+    effective_rho_th = (
+        extract_lidar_density_threshold(protocol)
+        if rho_th is None else rho_th)
+    pmax_density_cap_rho = resolve_pmax_density_cap_rho(
+        edgecooper_pmax_density_cap_rho,
+        effective_rho_th)
     world = OfflineCavWorld(
         frame,
         ego_id=ego_cav_id,
@@ -2768,7 +2793,7 @@ def apply_selective_sharing_baseline(frame, protocol, ego_cav_id,
             bandwidth_mhz=bandwidth_mhz or 20.0,
             num_channels=num_channels or world.network_manager.subchannel_num,
             frame_deadline_s=getattr(world.network_manager, 'time_slot', 0.1))
-    if baseline_name in ['edgecooper_global', 'edgecooper_global_hd']:
+    if base_baseline_name in ['edgecooper_global', 'edgecooper_global_hd']:
         world._edgecooper_global_sender_loads = {}
         world._edgecooper_global_cluster_count = len(clusters)
         world._edgecooper_global_receiver_ids = set(
@@ -2781,20 +2806,36 @@ def apply_selective_sharing_baseline(frame, protocol, ego_cav_id,
         assign_selective_grid_selection(
             world,
             cluster,
-            baseline_name,
+            base_baseline_name,
             member_budget,
             grid_budget,
             link_quality=link_quality,
             timestamp=timestamp)
     global_admission = None
     if selective_frame_deadline_ms is not None:
-        global_admission = trim_selective_grid_selection_to_global_deadline(
-            world,
-            clusters,
-            baseline_name,
-            selective_frame_deadline_ms,
-            channel_model,
-            max_senders_per_receiver=max_senders_per_receiver)
+        if edgecooper_pmax_enabled:
+            admitted_selection, global_admission = (
+                trim_pmax_selection_to_global_deadline(
+                    world,
+                    collect_receiver_grid_selection(world, clusters),
+                    public_baseline_name,
+                    selective_frame_deadline_ms,
+                    channel_model,
+                    edgecooper_grid_score,
+                    max_senders_per_receiver=max_senders_per_receiver,
+                    density_cap_rho=pmax_density_cap_rho))
+            apply_receiver_grid_selection(
+                world,
+                clusters,
+                admitted_selection)
+        else:
+            global_admission = trim_selective_grid_selection_to_global_deadline(
+                world,
+                clusters,
+                base_baseline_name,
+                selective_frame_deadline_ms,
+                channel_model,
+                max_senders_per_receiver=max_senders_per_receiver)
 
     if receiver_policy == 'all-cluster-heads':
         receiver_ids = sorted(int(cluster.head_id) for cluster in clusters)
@@ -2815,10 +2856,13 @@ def apply_selective_sharing_baseline(frame, protocol, ego_cav_id,
             frame,
             world,
             receiver_id,
-            max_upload_points_per_source=max_upload_points_per_source)
+            max_upload_points_per_source=max_upload_points_per_source,
+            upload_density_cap_rho=(
+                pmax_density_cap_rho if edgecooper_pmax_enabled else None),
+            upload_density_cap_seed='edgecooper-pmax-%s' % timestamp)
         metadata['cluster_count'] = len(clusters)
         metadata['resource_allocation'] = (
-            'selective_%s' % baseline_name)
+            'selective_%s' % public_baseline_name)
         metadata['clustering'] = clustering
         metadata['receiver_policy'] = receiver_policy
         metadata['t_min_stab'] = (
@@ -2826,8 +2870,7 @@ def apply_selective_sharing_baseline(frame, protocol, ego_cav_id,
         metadata['n_max'] = (
             common.Params().N_max if n_max is None else n_max)
         metadata['rho_th'] = (
-            extract_lidar_density_threshold(protocol)
-            if rho_th is None else rho_th)
+            effective_rho_th)
         metadata['selective_member_budget'] = member_budget
         metadata['selective_grid_budget'] = grid_budget
         metadata['selective_frame_deadline_ms'] = (
@@ -2835,8 +2878,8 @@ def apply_selective_sharing_baseline(frame, protocol, ego_cav_id,
             else selective_frame_deadline_ms)
         metadata['edgecooper_global_comm_range_m'] = (
             getattr(world, '_edgecooper_global_comm_range_m', '')
-            if baseline_name in ['edgecooper_global',
-                                 'edgecooper_global_hd'] else '')
+            if base_baseline_name in ['edgecooper_global',
+                                      'edgecooper_global_hd'] else '')
         metadata['max_senders_per_receiver'] = max(
             1,
             int(max_senders_per_receiver or 1))
@@ -2851,6 +2894,11 @@ def apply_selective_sharing_baseline(frame, protocol, ego_cav_id,
                 global_admission['admitted_links'])
             metadata['selective_global_candidate_links'] = (
                 global_admission['candidate_links'])
+            if edgecooper_pmax_enabled:
+                metadata['edgecooper_pmax_density_cap_rho'] = (
+                    global_admission.get(
+                        'edgecooper_pmax_density_cap_rho',
+                        pmax_density_cap_rho))
         metadata['num_channels'] = num_channels or world.network_manager.subchannel_num
         metadata['bandwidth_mhz'] = bandwidth_mhz or 20.0
         metadata.update(channel_model.to_metadata())
@@ -3140,6 +3188,21 @@ def trace_row(scenario_id, timestamp, metadata, eval_frame,
         'selective_frame_deadline_ms': metadata.get(
             'selective_frame_deadline_ms',
             ''),
+        'selective_global_budget_bytes': metadata.get(
+            'selective_global_budget_bytes',
+            ''),
+        'selective_global_admitted_bytes': metadata.get(
+            'selective_global_admitted_bytes',
+            ''),
+        'selective_global_candidate_bytes': metadata.get(
+            'selective_global_candidate_bytes',
+            ''),
+        'selective_global_admitted_links': metadata.get(
+            'selective_global_admitted_links',
+            ''),
+        'selective_global_candidate_links': metadata.get(
+            'selective_global_candidate_links',
+            ''),
         'cluster_member_ids': ';'.join(
             str(item) for item in metadata.get('cluster_member_ids', [])),
         'source_cav_ids': ';'.join(str(item) for item in source_ids),
@@ -3163,6 +3226,8 @@ def trace_row(scenario_id, timestamp, metadata, eval_frame,
             'sgcp_frame_budget_admitted_bytes', ''),
         'upload_density_cap_rho': metadata.get(
             'upload_density_cap_rho', ''),
+        'edgecooper_pmax_density_cap_rho': metadata.get(
+            'edgecooper_pmax_density_cap_rho', ''),
         'upload_density_cap_seed': metadata.get(
             'upload_density_cap_seed', ''),
         'max_senders_per_receiver': metadata.get(
@@ -3211,6 +3276,11 @@ def write_trace_csv(path, rows):
         'clustering',
         'cluster_count',
         'selective_frame_deadline_ms',
+        'selective_global_budget_bytes',
+        'selective_global_admitted_bytes',
+        'selective_global_candidate_bytes',
+        'selective_global_admitted_links',
+        'selective_global_candidate_links',
         'cluster_member_ids',
         'source_cav_ids',
         'uploaded_source_ids',
@@ -3226,6 +3296,7 @@ def write_trace_csv(path, rows):
         'sgcp_frame_budget_original_bytes',
         'sgcp_frame_budget_admitted_bytes',
         'upload_density_cap_rho',
+        'edgecooper_pmax_density_cap_rho',
         'upload_density_cap_seed',
         'max_senders_per_receiver',
         'channel_estimator',
@@ -3643,7 +3714,9 @@ def main():
                 edgecooper_global_comm_range_m=(
                     args.edgecooper_global_comm_range_m),
                 max_senders_per_receiver=(
-                    args.max_senders_per_receiver))
+                    args.max_senders_per_receiver),
+                edgecooper_pmax_density_cap_rho=(
+                    args.edgecooper_pmax_density_cap_rho))
         elif args.sgcp_constrained:
             protocol = load_protocol(dataset, scenario_id)
             frame_channel_model = build_cli_channel_model(args)
