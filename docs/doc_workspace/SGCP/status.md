@@ -388,3 +388,12 @@ SGCP 工作与仓库中以下部分关系最紧密：
 - Dense Table 2/3/4 reruns are now complete in `C:\Workspace\2026-7-papers\infocom\SGCP\experiment-0729-dense-ver`. Table 2 shows SGCP `0.84/0.78/0.56`, total `60.37 Mbps`, `606.62 GFLOPs/frame`, improving over pure late/global-box rows (`0.81/0.73-0.74/0.52-0.53`) with much lower GFLOPs than all-CAV box aggregation (`~1745 GFLOPs/frame`). Table 3 scheduler comparison shows dense local heads are strong; SGCP is lower payload than random/density/EdgeCooper-HD (`60.37 Mbps` vs `86-87 Mbps`) but AP@0.7 is not always the highest (`random` reaches `0.60` at higher payload). This table should be narrated as communication-accuracy-compute tradeoff, not a strict AP-only win. Table 4 clustering ablation is favorable: SGCP `0.84/0.78/0.56` beats random/distance/density/SeAC/HHOCNET-inspired clustering, with distance-greedy the closest at `0.77/0.72/0.51`.
 - Exact dense 20MHz channel calibration is complete. Current NS3 rejects the requested `20 MHz / 10 target subchannels / 5 PRB` layout (`Invalid subchannel size in RBs : 5`). The legal exact 20MHz setting is `5 target subchannels / 10 PRB`, and its median per-subchannel TB size is `912 B/grant`, the same as the 40MHz/10ch/10PRB sanity probe. Therefore the dense paper-facing setting remains `40 MHz / 10ch`; the existing 20MHz dense row is a logical half-bandwidth diagnostic rather than exact NS3-calibrated evidence.
 - External dense package `C:\Workspace\2026-7-papers\infocom\SGCP\experiment-0729-dense-ver` has been refreshed through files `00-10`, README, and MANIFEST. Static scan found no `pending` placeholders or stale sparse main-parameter hits. Dense realtime document now reports dense data-plane payload (`59.58 Mbps`, trace max `59.996 ms`) while keeping control-plane Guard/zero-delay/broadcast evidence.
+- Dense 120Mbps `rho_th` diagnostic is complete. With no explicit 60ms deadline
+  and the scenario default 100ms link window, the best point is `rho_th=1`:
+  `0.85/0.80/0.59`, raw `67.51 Mbps`. With relaxed
+  `--communication-deadline-ms 200`, the best point is `rho_th=5`:
+  `0.87/0.82/0.61`, raw `93.75 Mbps`, max link time `127 ms`. This improves
+  the deadline-feasible dense main row (`0.84/0.78/0.56`) but still remains
+  below centralized all-in-one (`0.90/0.90/0.80`), so the remaining AP gap is
+  not purely caused by the 60Mbps frame budget. Artifact:
+  `docs/doc_workspace/SGCP/artifacts/dense_120mbps_rho_20260729/`.

@@ -8668,3 +8668,22 @@ Dense SGCP experiments:
   is explicitly marked as a logical diagnostic, not exact NS3-calibrated paper
   evidence.
 
+### 2026-07-29 11:35:00 +08:00 - Dense 120Mbps rho_th diagnostic
+
+- Ran dense-LiDAR SGCP `rho_th` sweep with raw-LiDAR frame budget increased to
+  `120 Mbps`, fixed `N_max=5`, 40MHz/10ch, NS3 estimator `tb=899`.
+- Default no-explicit-60ms run falls back to the scenario `100 ms` link window.
+  Best point is `rho_th=1`: AP `0.85/0.80/0.59`, raw `67.51 Mbps`, max link
+  time `100.00 ms`.
+- Relaxed `--communication-deadline-ms 200` diagnostic gives best point
+  `rho_th=5`: AP `0.87/0.82/0.61`, raw `93.75 Mbps`, max link time
+  `127.00 ms`.
+- Interpretation: doubling the dense raw budget improves AP modestly but still
+  does not approach centralized all-in-one `0.90/0.90/0.80`. The gap is not only
+  a 60Mbps frame-budget issue; it also comes from hierarchical receiver policy,
+  limited detector participants, and scheduled grid selection.
+- Artifacts:
+  `docs/doc_workspace/SGCP/artifacts/dense_120mbps_rho_20260729/`;
+  external dense package updated at
+  `C:\Workspace\2026-7-papers\infocom\SGCP\experiment-0729-dense-ver\06_parameter_sensitivity.md`.
+
