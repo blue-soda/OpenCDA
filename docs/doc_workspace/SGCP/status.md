@@ -404,3 +404,14 @@ SGCP 工作与仓库中以下部分关系最紧密：
   mean/P95/max `60.98/121/136 ms`; frame `000060` (`96.59 Mbps`) delivers
   `123/124` callbacks with `60.01/131/137 ms`. Keep this row as relaxed-budget
   AP headroom only.
+- Dense follow-up probe has resolved the apparent 60Mbps discrepancy: with
+  balanced 10-subchannel endpoint-disjoint links, NS3 supports `68 Mbps` in
+  `58 ms` and `84 Mbps` in `69 ms`; the slower `93.75 Mbps` diagnostic was
+  caused by only 6 parallel links and >200KB per-link payloads. Four requested
+  dense experiments at `rho_th=5` are complete. Dynamic C/V scheduling alone
+  does not improve AP, but deterministic density-capped upload
+  (`rho_cap=5`, max 500 points/grid) improves SGCP to `0.85/0.81/0.64` at the
+  60ms/68Mbps point and `0.85/0.81/0.65` at the 70ms/84Mbps point while using
+  only `55.9-59.4 Mbps` actual raw payload. Treat this as a strong candidate
+  mechanism for the dense update; it is currently documented as exploratory,
+  not yet a frozen table replacement.

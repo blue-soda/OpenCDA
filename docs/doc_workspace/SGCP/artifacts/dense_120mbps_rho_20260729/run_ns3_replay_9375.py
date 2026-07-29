@@ -57,6 +57,11 @@ def parse_args():
     parser.add_argument("--sl-rri-ms", type=int, default=5)
     parser.add_argument("--sync-timeout", type=float, default=30.0)
     parser.add_argument("--pre-send-sync-seconds", type=float, default=0.005)
+    parser.add_argument("--max-payload-bytes", type=int, default=None,
+                        help="Optional prefix payload cap for capacity sweeps.")
+    parser.add_argument("--max-bytes-per-link", type=int, default=None,
+                        help="Optional payload cap applied independently to "
+                             "each source-target-subchannel link.")
     return parser.parse_args()
 
 
@@ -69,30 +74,67 @@ def load_vehicles(dataset_root, scenario_id, timestamp):
     return vehicles
 
 
-def read_requests(upload_plan, timestamp):
+def read_requests(upload_plan, timestamp, max_payload_bytes=None,
+                  max_bytes_per_link=None):
     requests = []
     total_bytes = 0
     links = set()
+    link_bytes = {}
     with open(upload_plan, newline="", encoding="utf-8") as stream:
         for row in csv.DictReader(stream):
             if row.get("timestamp") != timestamp:
                 continue
+            request_size = int(float(row["bytes"]))
+            if (max_payload_bytes is not None and
+                    total_bytes + request_size > max_payload_bytes):
+                break
+            link_key = (
+                int(float(row["source_id"])),
+                int(float(row["target_id"])),
+                int(float(row.get("sc_start") or 0)),
+                int(float(row.get("sc_num") or 1)))
+            if max_bytes_per_link is not None:
+                used = link_bytes.get(link_key, 0)
+                if used + request_size > max_bytes_per_link:
+                    continue
             request = {
-                "source": int(float(row["source_id"])),
-                "target": int(float(row["target_id"])),
-                "size": int(float(row["bytes"])),
+                "source": link_key[0],
+                "target": link_key[1],
+                "size": request_size,
                 "pkt_id": int(float(row.get("pkt_id") or len(requests) + 1)),
-                "sc_start": int(float(row.get("sc_start") or 0)),
-                "sc_num": int(float(row.get("sc_num") or 1)),
+                "sc_start": link_key[2],
+                "sc_num": link_key[3],
             }
             if row.get("upload_type"):
                 request["upload_type"] = row["upload_type"]
             requests.append(request)
             total_bytes += request["size"]
             links.add((request["source"], request["target"]))
+            link_bytes[link_key] = link_bytes.get(link_key, 0) + request_size
     if not requests:
         raise ValueError("No requests found for timestamp %s in %s" % (timestamp, upload_plan))
     return requests, total_bytes, links
+
+
+def write_effective_upload_plan(path, timestamp, requests):
+    with open(path, "w", newline="", encoding="utf-8") as stream:
+        writer = csv.DictWriter(stream, fieldnames=[
+            "timestamp", "area_id", "source_id", "target_id", "bytes",
+            "upload_type", "pkt_id", "sc_start", "sc_num",
+        ])
+        writer.writeheader()
+        for request in requests:
+            writer.writerow({
+                "timestamp": timestamp,
+                "area_id": "",
+                "source_id": request["source"],
+                "target_id": request["target"],
+                "bytes": request["size"],
+                "upload_type": request.get("upload_type", "ns3_replay"),
+                "pkt_id": request["pkt_id"],
+                "sc_start": request["sc_start"],
+                "sc_num": request["sc_num"],
+            })
 
 
 def ns3_command(args):
@@ -165,7 +207,11 @@ def percentile(values, pct):
 
 def run_bridge(args, stdout_path, probe_stdout_path):
     vehicles = load_vehicles(args.dataset_root, args.scenario_id, args.timestamp)
-    requests, total_bytes, links = read_requests(args.upload_plan, args.timestamp)
+    requests, total_bytes, links = read_requests(
+        args.upload_plan,
+        args.timestamp,
+        max_payload_bytes=args.max_payload_bytes,
+        max_bytes_per_link=args.max_bytes_per_link)
     with open(probe_stdout_path, "w", encoding="utf-8") as out:
         out.write("vehicles=%d requests=%d links=%d bytes=%d\n" % (
             len(vehicles), len(requests), len(links), total_bytes))
@@ -247,7 +293,13 @@ def main():
             ns3_proc.kill()
             ns3_proc.wait(timeout=5)
 
-    requests, total_bytes, links = read_requests(args.upload_plan, args.timestamp)
+    requests, total_bytes, links = read_requests(
+        args.upload_plan,
+        args.timestamp,
+        max_payload_bytes=args.max_payload_bytes,
+        max_bytes_per_link=args.max_bytes_per_link)
+    effective_upload_plan = output_dir / "effective_upload_plan.csv"
+    write_effective_upload_plan(effective_upload_plan, args.timestamp, requests)
     cam_records = parse_cam_records(ns3_stdout)
     delays = [item["delay_ms"] for item in cam_records]
     requested_ids = {request["pkt_id"] for request in requests}
@@ -264,6 +316,8 @@ def main():
         "planned_requests": len(requests),
         "planned_links": len(links),
         "planned_bytes": total_bytes,
+        "logical_mbps_at_100ms": round(total_bytes * 8.0 / 1e5, 6),
+        "effective_upload_plan": str(effective_upload_plan),
         "application_callbacks": len(cam_records),
         "unique_callback_requests": len(callback_ids),
         "missing_callback_requests": len(requested_ids - callback_ids),

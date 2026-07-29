@@ -26,6 +26,7 @@ from opencda.core.common.offline_replay import (
     apply_cluster_state,
     build_constrained_frame,
     clear_sgcp_globals,
+    estimate_density_capped_grid_bytes,
     select_sgcp_receiver_id,
 )
 from opencda.core.clustering.algorithms.clustering.coalition_game import (
@@ -237,6 +238,15 @@ def parse_args():
                              'uploaded source CAV after grid/full-cluster '
                              'selection. This keeps scheduling semantics '
                              'unchanged while probing payload/AP tradeoff.')
+    parser.add_argument('--upload-density-cap-rho', type=float,
+                        default=None,
+                        help='Optional per-grid upload density cap in '
+                             'points/m^2. In grid-upload mode, each selected '
+                             'grid transmits at most rho * grid_area points '
+                             'with a deterministic random seed. The same cap '
+                             'is used for payload/deadline accounting.')
+    parser.add_argument('--upload-density-cap-seed', default='sgcp-density-cap',
+                        help='Stable seed prefix for --upload-density-cap-rho.')
     parser.add_argument('--selective-sharing-baseline', default=None,
                         choices=['random', 'nearest', 'density',
                                  'greedy_density', 'communication_aware',
@@ -528,7 +538,8 @@ def merge_grid_selection(target, source):
             target[receiver_id][sender_id].update(grid_ids)
 
 
-def estimate_grid_selection_payload_bytes(world, grid_selection):
+def estimate_grid_selection_payload_bytes(world, grid_selection,
+                                          upload_density_cap_rho=None):
     total_bytes = 0
     link_bytes = {}
     for receiver_id, sender_grids in clone_grid_selection(
@@ -537,12 +548,10 @@ def estimate_grid_selection_payload_bytes(world, grid_selection):
             sender_vm = world.get_vehicle_manager(sender_id)
             if sender_vm is None:
                 continue
-            selected_points = sender_vm.perception_manager.lidar.\
-                get_local_points_by_grid_ids(grid_ids)
-            if selected_points is None or selected_points.size == 0:
-                payload_bytes = 0
-            else:
-                payload_bytes = int(selected_points.nbytes)
+            payload_bytes = estimate_density_capped_grid_bytes(
+                sender_vm.perception_manager.lidar,
+                grid_ids,
+                density_cap_rho=upload_density_cap_rho)
             link_bytes[(sender_id, receiver_id)] = payload_bytes
             total_bytes += payload_bytes
     return total_bytes, link_bytes
@@ -571,7 +580,8 @@ def estimate_parallel_comm_time_ms(link_bytes, resource_sc_nums,
 
 def trim_grid_selection_to_deadline(world, grid_selection, resource_sc_nums,
                                     bandwidth_mhz, num_channels,
-                                    deadline_ms, channel_model=None):
+                                    deadline_ms, channel_model=None,
+                                    upload_density_cap_rho=None):
     """Trim PCS-selected grids so every parallel link fits the remaining time."""
     if deadline_ms is None:
         return clone_grid_selection(grid_selection)
@@ -608,8 +618,10 @@ def trim_grid_selection_to_deadline(world, grid_selection, resource_sc_nums,
             selected = []
             used_bytes = 0
             for grid_id in sorted(grid_ids, key=grid_score, reverse=True):
-                points = lidar.get_local_points_by_grid_ids([grid_id])
-                grid_bytes = 0 if points is None else int(points.nbytes)
+                grid_bytes = estimate_density_capped_grid_bytes(
+                    lidar,
+                    [grid_id],
+                    density_cap_rho=upload_density_cap_rho)
                 if grid_bytes <= 0:
                     continue
                 if used_bytes + grid_bytes > budget_bytes:
@@ -624,10 +636,14 @@ def trim_grid_selection_to_deadline(world, grid_selection, resource_sc_nums,
 
 def trim_grid_selection_to_payload_budget(world, grid_selection,
                                           max_payload_bytes,
-                                          strategies=None):
+                                          strategies=None,
+                                          upload_density_cap_rho=None):
     """Deterministically admit scheduled grids under a frame payload budget."""
     selection = clone_grid_selection(grid_selection)
-    original_bytes, _ = estimate_grid_selection_payload_bytes(world, selection)
+    original_bytes, _ = estimate_grid_selection_payload_bytes(
+        world,
+        selection,
+        upload_density_cap_rho=upload_density_cap_rho)
     if max_payload_bytes is None:
         return selection, original_bytes, original_bytes
     max_payload_bytes = int(max_payload_bytes)
@@ -668,9 +684,10 @@ def trim_grid_selection_to_payload_budget(world, grid_selection,
         sender_vm = world.get_vehicle_manager(sender_id)
         if sender_vm is None:
             continue
-        points = sender_vm.perception_manager.lidar.\
-            get_local_points_by_grid_ids([grid_id])
-        grid_bytes = 0 if points is None else int(points.nbytes)
+        grid_bytes = estimate_density_capped_grid_bytes(
+            sender_vm.perception_manager.lidar,
+            [grid_id],
+            density_cap_rho=upload_density_cap_rho)
         if grid_bytes <= 0:
             continue
         if used_bytes + grid_bytes > max_payload_bytes:
@@ -1751,7 +1768,9 @@ def apply_sgcp_constraint(frame, protocol, ego_cav_id, resource_allocation,
                           routing_hints_max_per_frame=1,
                           channel_model=None,
                           max_senders_per_receiver=1,
-                          sgcp_frame_mbps_budget=None):
+                          sgcp_frame_mbps_budget=None,
+                          upload_density_cap_rho=None,
+                          upload_density_cap_seed='sgcp-density-cap'):
     clear_sgcp_globals()
     world = OfflineCavWorld(
         frame,
@@ -1871,7 +1890,8 @@ def apply_sgcp_constraint(frame, protocol, ego_cav_id, resource_allocation,
             bandwidth_mhz=bandwidth_mhz,
             num_channels=num_channels,
             deadline_ms=deadline_ms,
-            channel_model=channel_model)
+            channel_model=channel_model,
+            upload_density_cap_rho=upload_density_cap_rho)
         apply_grid_selection_to_world(
             world,
             deadline_trimmed_selection,
@@ -1887,7 +1907,8 @@ def apply_sgcp_constraint(frame, protocol, ego_cav_id, resource_allocation,
                 world,
                 current_selection,
                 frame_budget_bytes,
-                strategies=getattr(allocator, 'strategies', None))
+                strategies=getattr(allocator, 'strategies', None),
+                upload_density_cap_rho=upload_density_cap_rho)
         apply_grid_selection_to_world(
             world,
             trimmed_selection,
@@ -1912,7 +1933,11 @@ def apply_sgcp_constraint(frame, protocol, ego_cav_id, resource_allocation,
             world,
             receiver_id,
             upload_mode=upload_mode,
-            max_upload_points_per_source=max_upload_points_per_source)
+            max_upload_points_per_source=max_upload_points_per_source,
+            upload_density_cap_rho=upload_density_cap_rho,
+            upload_density_cap_seed='%s-%s' % (
+                upload_density_cap_seed,
+                timestamp or ''))
         metadata['cluster_count'] = len(clusters)
         metadata['resource_allocation'] = resource_allocation
         metadata['clustering'] = clustering
@@ -1946,6 +1971,9 @@ def apply_sgcp_constraint(frame, protocol, ego_cav_id, resource_allocation,
             '' if not routing_hints else 'enabled')
         metadata['max_upload_points_per_source'] = (
             max_upload_points_per_source or '')
+        metadata['upload_density_cap_rho'] = upload_density_cap_rho or ''
+        metadata['upload_density_cap_seed'] = (
+            upload_density_cap_seed if upload_density_cap_rho else '')
         metadata['max_senders_per_receiver'] = max(
             1,
             int(max_senders_per_receiver or 1))
@@ -3054,6 +3082,10 @@ def trace_row(scenario_id, timestamp, metadata, eval_frame,
             'sgcp_frame_budget_original_bytes', ''),
         'sgcp_frame_budget_admitted_bytes': metadata.get(
             'sgcp_frame_budget_admitted_bytes', ''),
+        'upload_density_cap_rho': metadata.get(
+            'upload_density_cap_rho', ''),
+        'upload_density_cap_seed': metadata.get(
+            'upload_density_cap_seed', ''),
         'max_senders_per_receiver': metadata.get(
             'max_senders_per_receiver', ''),
         'channel_estimator': metadata.get('channel_estimator', ''),
@@ -3114,6 +3146,8 @@ def write_trace_csv(path, rows):
         'sgcp_frame_budget_bytes',
         'sgcp_frame_budget_original_bytes',
         'sgcp_frame_budget_admitted_bytes',
+        'upload_density_cap_rho',
+        'upload_density_cap_seed',
         'max_senders_per_receiver',
         'channel_estimator',
         'ns3_tb_size_bytes',
@@ -3573,7 +3607,9 @@ def main():
                 channel_model=frame_channel_model,
                 max_senders_per_receiver=(
                     args.max_senders_per_receiver),
-                sgcp_frame_mbps_budget=args.sgcp_frame_mbps_budget)
+                sgcp_frame_mbps_budget=args.sgcp_frame_mbps_budget,
+                upload_density_cap_rho=args.upload_density_cap_rho,
+                upload_density_cap_seed=args.upload_density_cap_seed)
         for _, metadata in frame_items:
             if metadata is not None:
                 metadata['coperception_yaml'] = args.coperception_yaml

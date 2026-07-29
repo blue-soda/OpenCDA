@@ -28,6 +28,9 @@ from opencda.core.clustering.algorithms.resource_allocation.dynamic_marginal_pot
 from opencda.core.clustering.algorithms.resource_allocation.dynamic_marginal_two_stage_potential_game import (
     DynamicMarginalTwoStagePotentialGame,
 )
+from opencda.core.clustering.algorithms.resource_allocation.dynamic_cv_potential_game import (
+    DynamicCVPotentialGame,
+)
 from opencda.core.clustering.algorithms.resource_allocation.balanced_perception_aware_potential_game import (
     BalancedPerceptionAwarePotentialGame,
 )
@@ -70,6 +73,10 @@ RESOURCE_ALLOCATION_ALGORITHMS = {
     'dynamic_marginal_two_stage_pg': DynamicMarginalTwoStagePotentialGame,
     'dynamic_marginal_two_stage': DynamicMarginalTwoStagePotentialGame,
     'dm2pg': DynamicMarginalTwoStagePotentialGame,
+    'dynamic_cv_potential_game': DynamicCVPotentialGame,
+    'dynamic_cv_pg': DynamicCVPotentialGame,
+    'dynamic_cv': DynamicCVPotentialGame,
+    'dcvpg': DynamicCVPotentialGame,
     'balanced_perception_aware_potential_game':
         BalancedPerceptionAwarePotentialGame,
     'balanced_perception_aware_pg': BalancedPerceptionAwarePotentialGame,

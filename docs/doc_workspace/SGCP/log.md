@@ -8702,3 +8702,34 @@ Dense SGCP experiments:
   intended `60 ms` data-plane window; it remains a relaxed-budget AP-headroom
   diagnostic, not the dense headline operating point.
 
+### 2026-07-29 13:35:00 +08:00 - Dense dynamic C/V and density-capped upload probe
+
+- Corrected the dense capacity interpretation with balanced 10-subchannel NS3
+  probes under Guard `1 ms`, zero-time send delay `0 ms`, `40 MHz / 10ch`:
+  `68 Mbps` (`85 KB/link`) finishes with max `58 ms`, `72 Mbps` with max
+  `61 ms`; `84 Mbps` (`105 KB/link`) finishes with max `69 ms`, `88 Mbps`
+  with max `72 ms`.
+- Implemented optional per-grid density-capped upload:
+  `--upload-density-cap-rho`. For `rho_cap=5` and 10 m grids, each selected
+  grid uploads at most `500` deterministically sampled points; payload/deadline
+  accounting uses the same cap.
+- Added isolated `dynamic_cv_potential_game` scheduler probe. It keeps the
+  SGCP two-stage structure but updates receiver evidence after each accepted
+  upload: Stage 1 `C=q_i(1-Q_r^A)`, Stage 2 `V=q_i` if `Q_r^A>0`.
+- Ran the requested dense 41-frame experiments at the measured 60/70 ms
+  balanced-capacity budgets (`68/84 Mbps`) with `rho_th=5`:
+  - Static full upload: `0.80/0.74/0.54`, `67.97 Mbps` at 60 ms;
+    `0.81/0.74/0.53`, `83.91 Mbps` at 70 ms.
+  - Dynamic C/V full upload: same AP at 60 ms, `0.81/0.74/0.52` at 70 ms.
+  - Static density-capped upload: `0.85/0.81/0.64`, `55.91 Mbps` at 60 ms;
+    `0.85/0.81/0.65`, `59.38 Mbps` at 70 ms.
+  - Dynamic C/V + density cap: tied with static cap within rounding,
+    `0.85/0.81/0.64` and `0.85/0.81/0.65`.
+- Interpretation: dynamic C/V alone is not useful in this dense scene; the
+  robust gain comes from density-capped grid upload, which improves AP and
+  lowers actual payload by avoiding over-dense transmitted grids.
+- Artifacts:
+  `docs/doc_workspace/SGCP/artifacts/dense_dynamic_cv_densitycap_20260729/`;
+  external dense package updated with
+  `C:\Workspace\2026-7-papers\infocom\SGCP\experiment-0729-dense-ver\11_dynamic_cv_and_density_cap_probe.md`.
+

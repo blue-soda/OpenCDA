@@ -344,10 +344,55 @@ def deterministic_point_budget(points, max_points, seed):
     return points[indices]
 
 
+def density_cap_points_per_grid(lidar, density_cap_rho):
+    """Return the maximum uploaded points per grid for a density cap."""
+    if density_cap_rho is None or density_cap_rho <= 0:
+        return None
+    grid_area = float(lidar.grid_size) * float(lidar.grid_size)
+    return max(1, int(math.ceil(float(density_cap_rho) * grid_area)))
+
+
+def select_grid_points_with_density_cap(lidar, grid_id_list,
+                                        density_cap_rho=None,
+                                        seed_prefix=''):
+    """Return selected grid points with a deterministic per-grid density cap."""
+    max_points = density_cap_points_per_grid(lidar, density_cap_rho)
+    if max_points is None:
+        return lidar.get_local_points_by_grid_ids(grid_id_list)
+
+    selected = []
+    for grid_id in sorted(set(grid_id_list), key=str):
+        grid_points = lidar.grid_local_points.get(grid_id, [])
+        if not grid_points:
+            continue
+        if len(grid_points) <= max_points:
+            selected.extend(grid_points)
+            continue
+        rng = random.Random('%s-%s-density-cap' % (seed_prefix, grid_id))
+        indices = sorted(rng.sample(range(len(grid_points)), max_points))
+        selected.extend(grid_points[index] for index in indices)
+    if not selected:
+        return np.empty((0, 4), dtype=np.float32)
+    return np.asarray(selected, dtype=np.float32)
+
+
+def estimate_density_capped_grid_bytes(lidar, grid_id_list,
+                                       density_cap_rho=None):
+    """Estimate selected bytes without materializing the sampled points."""
+    max_points = density_cap_points_per_grid(lidar, density_cap_rho)
+    point_count = 0
+    for grid_id in set(grid_id_list):
+        count = len(lidar.grid_local_points.get(grid_id, []))
+        point_count += count if max_points is None else min(count, max_points)
+    return int(point_count * 4 * 4)
+
+
 def build_constrained_frame(frame, world, receiver_id,
                             include_unconstrained_cluster=False,
                             upload_mode='grid',
-                            max_upload_points_per_source=None):
+                            max_upload_points_per_source=None,
+                            upload_density_cap_rho=None,
+                            upload_density_cap_seed=''):
     """
     Build an OpenCOOD frame using online SGCP grid-upload semantics.
 
@@ -394,8 +439,15 @@ def build_constrained_frame(frame, world, receiver_id,
             sender_vm = world.get_vehicle_manager(sender_id)
             if sender_vm is None:
                 continue
-            selected_points = sender_vm.perception_manager.lidar.\
-                get_local_points_by_grid_ids(grid_ids)
+            seed = '%s-%s-%s' % (
+                upload_density_cap_seed,
+                receiver_id,
+                sender_id)
+            selected_points = select_grid_points_with_density_cap(
+                sender_vm.perception_manager.lidar,
+                grid_ids,
+                density_cap_rho=upload_density_cap_rho,
+                seed_prefix=seed)
             if selected_points is None or selected_points.size == 0:
                 continue
             selected_points = deterministic_point_budget(
@@ -441,5 +493,6 @@ def build_constrained_frame(frame, world, receiver_id,
                     'channel_allocation', {}) or {}),
         'upload_mode': upload_mode,
         'max_upload_points_per_source': max_upload_points_per_source or '',
+        'upload_density_cap_rho': upload_density_cap_rho or '',
     }
     return constrained, metadata
