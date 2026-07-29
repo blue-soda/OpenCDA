@@ -8761,3 +8761,18 @@ Dense SGCP experiments:
 - Artifact:
   `docs/doc_workspace/SGCP/artifacts/dense_dynamic_cv_sensitivity_20260729/`.
 
+### 2026-07-29 21:35:00 +08:00 - rho_th neighbor check
+
+- User noted that `rho_th=2` being better than `1/5` does not prove it is better
+  than nearby higher values. Skipped `1.5/2.5` per follow-up instruction and
+  reran only `rho_th=3` and `rho_th=4`.
+- Command:
+  `conda run --no-capture-output -n opencda python docs\doc_workspace\SGCP\artifacts\dense_dynamic_cv_sensitivity_20260729\build_dense_dynamic_cv_sensitivity.py --phase rho --rho-value 3 --rho-value 4 --force`
+- Results:
+  - `rho_th=3`: AP `0.85/0.80/0.58`, raw/box/total
+    `35.57/0.82/36.40 Mbps`, `594.00 GFLOPs/frame`, avg selected grids `32.84`.
+  - `rho_th=4`: AP `0.83/0.78/0.58`, raw/box/total
+    `40.10/0.79/40.89 Mbps`, `594.04 GFLOPs/frame`, avg selected grids `24.05`.
+- Rebuilt the full rho summary with `0.1/0.2/0.5/1/2/3/4/5/10`. `rho_th=2`
+  remains the best tested point.
+

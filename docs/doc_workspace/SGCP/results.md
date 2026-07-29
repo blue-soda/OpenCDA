@@ -2249,10 +2249,13 @@ after every admitted grid upload.
 | 0.5 | 0.83 | 0.76 | 0.55 | 9.27 | 0.89 | 10.16 | 620.00 | 2.44 | 49.47 |
 | 1 | 0.85 | 0.79 | 0.58 | 16.61 | 0.91 | 17.52 | 606.96 | 2.47 | 58.13 |
 | 2 | 0.86 | 0.81 | 0.58 | 28.42 | 0.87 | 29.28 | 593.95 | 2.51 | 47.94 |
+| 3 | 0.85 | 0.80 | 0.58 | 35.57 | 0.82 | 36.40 | 594.00 | 2.51 | 32.84 |
+| 4 | 0.83 | 0.78 | 0.58 | 40.10 | 0.79 | 40.89 | 594.04 | 2.51 | 24.05 |
 | 5 | 0.83 | 0.78 | 0.58 | 43.97 | 0.77 | 44.74 | 594.07 | 2.51 | 19.54 |
 | 10 | 0.80 | 0.75 | 0.55 | 49.57 | 0.72 | 50.30 | 594.11 | 2.51 | 8.96 |
 
-Conclusion: `rho_th=2` is the current best operating point. It reaches
+Conclusion: `rho_th=2` is the current best operating point among tested values,
+including the higher-density neighbors `rho_th=3/4`. It reaches
 `0.86/0.81/0.58` with only `29.28 Mbps` total payload. Raw-budget sweeps for
 `rho_th=1/2/5` confirm that `rho_th=2` saturates by the `40 Mbps` raw cap; giving
 up to `84 Mbps` is non-binding under receiver-side density saturation.

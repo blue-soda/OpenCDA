@@ -116,6 +116,10 @@ def replace_arg(args, name, value):
     return updated
 
 
+def slug(value):
+    return str(value).replace(".", "p").replace("-", "m")
+
+
 def make_command(run):
     args = list(BASE_ARGS)
     args = replace_arg(args, "--rho-th", run["rho_th"])
@@ -126,9 +130,18 @@ def make_command(run):
     return ["conda", "run", "--no-capture-output", "-n", "opencda", "python"] + args
 
 
-def all_runs(phase):
+def rho_runs(rho_values=None):
     runs = []
-    if phase in ("rho", "all"):
+    if rho_values:
+        for rho_th in rho_values:
+            runs.append({
+                "group": "rho_th",
+                "setting": str(rho_th),
+                "stem": "rho_sweep_rho%s" % slug(rho_th),
+                "rho_th": str(rho_th),
+                "raw_budget": "68",
+            })
+    else:
         for stem, rho_th in RHO_RUNS:
             runs.append({
                 "group": "rho_th",
@@ -137,22 +150,30 @@ def all_runs(phase):
                 "rho_th": rho_th,
                 "raw_budget": "68",
             })
+    return runs
+
+
+def all_runs(phase, rho_values=None):
+    runs = []
+    if phase in ("rho", "all"):
+        runs.extend(rho_runs(rho_values=rho_values))
     if phase == "budget":
         raise ValueError("Use --budget-rho for budget-only runs.")
     return runs
 
 
-def budget_runs(rho_values):
+def budget_runs(rho_values, budget_values=None):
     runs = []
+    values = budget_values or BUDGET_VALUES
     for rho_th in rho_values:
-        rho_stem = str(rho_th).replace(".", "p")
-        for budget in BUDGET_VALUES:
+        rho_stem = slug(rho_th)
+        for budget in values:
             runs.append({
                 "group": "raw_mbps_budget",
-                "setting": budget,
-                "stem": "budget_rho%s_mbps%s" % (rho_stem, budget),
+                "setting": str(budget),
+                "stem": "budget_rho%s_mbps%s" % (rho_stem, slug(budget)),
                 "rho_th": str(rho_th),
-                "raw_budget": budget,
+                "raw_budget": str(budget),
             })
     return runs
 
@@ -415,6 +436,10 @@ def main():
                         default="rho")
     parser.add_argument("--budget-rho", action="append", default=[],
                         help="rho_th value for budget sweep; repeatable.")
+    parser.add_argument("--rho-value", action="append", default=[],
+                        help="rho_th value for rho sweep; repeatable.")
+    parser.add_argument("--budget-value", action="append", default=[],
+                        help="Raw-LiDAR Mbps budget value; repeatable.")
     parser.add_argument("--force", action="store_true")
     parser.add_argument("--skip-run", action="store_true")
     args = parser.parse_args()
@@ -422,12 +447,15 @@ def main():
     if args.phase == "budget":
         if not args.budget_rho:
             raise ValueError("--phase budget requires --budget-rho")
-        runs = budget_runs(args.budget_rho)
+        runs = budget_runs(args.budget_rho,
+                           budget_values=args.budget_value or None)
     else:
-        runs = all_runs(args.phase)
+        runs = all_runs(args.phase, rho_values=args.rho_value or None)
         if args.phase == "all":
             budget_rho = args.budget_rho or ["5"]
-            runs.extend(budget_runs(budget_rho))
+            runs.extend(budget_runs(
+                budget_rho,
+                budget_values=args.budget_value or None))
     runs = prepare_runs(runs)
     if not args.skip_run:
         run_experiments(runs, force=args.force)

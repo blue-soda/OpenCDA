@@ -430,3 +430,10 @@ SGCP 工作与仓库中以下部分关系最紧密：
   `C:\Workspace\2026-7-papers\infocom\SGCP\experiment\06_parameter_sensitivity.md`.
   Raw artifacts:
   `docs/doc_workspace/SGCP/artifacts/dense_dynamic_cv_sensitivity_20260729/`.
+- Follow-up neighbor rho check requested by the user is complete. Skipped
+  `rho_th=1.5/2.5` per instruction and reran only `rho_th=3/4` under the same
+  dense dynamic C/V protocol. Results: `rho_th=3` gives AP
+  `0.85/0.80/0.58`, raw/box/total `35.57/0.82/36.40 Mbps`; `rho_th=4` gives
+  AP `0.83/0.78/0.58`, raw/box/total `40.10/0.79/40.89 Mbps`. Thus
+  `rho_th=2` remains the best tested point, while higher `rho_th` increases
+  realized payload but reduces selected-grid diversity and does not improve AP.
