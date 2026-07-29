@@ -2259,3 +2259,24 @@ including the higher-density neighbors `rho_th=3/4`. It reaches
 `0.86/0.81/0.58` with only `29.28 Mbps` total payload. Raw-budget sweeps for
 `rho_th=1/2/5` confirm that `rho_th=2` saturates by the `40 Mbps` raw cap; giving
 up to `84 Mbps` is non-binding under receiver-side density saturation.
+
+### Dense SGCP rho Pareto source data update
+
+User requested a paper-facing rho Pareto curve because the internal raw
+admission cap is not the real communication metric. Current conclusion: keep
+`Raw budget` only as a reproducibility knob; plot `Total Mbps` against AP.
+Completed extra budget sweeps for `rho_th=3/4` and rebuilt the combined
+`rho_th=1/2/3/4/5` Pareto table in
+`C:\Workspace\2026-7-papers\infocom\SGCP\experiment\06_parameter_sensitivity.md`.
+
+AP@0.5 non-dominated front:
+
+| rho_th | Total Mbps | AP@0.3 | AP@0.5 | AP@0.7 |
+| ---: | ---: | ---: | ---: | ---: |
+| 4 | 1.64 | 0.79 | 0.71 | 0.48 |
+| 1 | 1.68 | 0.80 | 0.72 | 0.50 |
+| 2 | 5.71 | 0.82 | 0.74 | 0.51 |
+| 1 | 5.81 | 0.83 | 0.77 | 0.55 |
+| 2 | 10.78 | 0.83 | 0.78 | 0.55 |
+| 1 | 17.52 | 0.85 | 0.79 | 0.57 |
+| 2 | 29.28 | 0.86 | 0.81 | 0.58 |

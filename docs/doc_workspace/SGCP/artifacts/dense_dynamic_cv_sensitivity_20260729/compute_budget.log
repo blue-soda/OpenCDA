@@ -1,3 +1,3 @@
-compute_profile_rows=24
+compute_profile_rows=40
 output_csv=C:\Workspace\OpenCDA\docs\doc_workspace\SGCP\artifacts\dense_dynamic_cv_sensitivity_20260729\compute_budget.csv
 summary_md=C:\Workspace\OpenCDA\docs\doc_workspace\SGCP\artifacts\dense_dynamic_cv_sensitivity_20260729\compute_budget.md

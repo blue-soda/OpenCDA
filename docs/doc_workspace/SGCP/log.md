@@ -8776,3 +8776,24 @@ Dense SGCP experiments:
 - Rebuilt the full rho summary with `0.1/0.2/0.5/1/2/3/4/5/10`. `rho_th=2`
   remains the best tested point.
 
+### 2026-07-29 22:55:00 +08:00 - SGCP rho Pareto curve source data
+
+- User clarified that `Raw budget` is an internal scheduler admission cap and
+  should not be used as the paper-facing x-axis. The curve should use actual
+  `Raw LiDAR Mbps` / `Total Mbps`, with `Total Mbps` preferred because box-level
+  aggregation overhead is part of the system cost.
+- Completed missing budget sweeps for `rho_th=3/4`:
+  `conda run --no-capture-output -n opencda python docs\doc_workspace\SGCP\artifacts\dense_dynamic_cv_sensitivity_20260729\build_dense_dynamic_cv_sensitivity.py --phase budget --budget-rho 3 --budget-rho 4 --budget-value 1 --budget-value 5 --budget-value 10 --budget-value 20 --budget-value 40 --budget-value 60 --budget-value 68 --budget-value 84 --force`
+- Rebuilt combined `rho_th=1/2/3/4/5` budget summary with `--skip-run`.
+- Key saturation points:
+  - `rho_th=1`: saturates at total `17.52 Mbps`, AP `0.85/0.79/0.57`.
+  - `rho_th=2`: saturates at total `29.28 Mbps`, AP `0.86/0.81/0.58`.
+  - `rho_th=3`: saturates at total `36.40 Mbps`, AP `0.85/0.80/0.58`.
+  - `rho_th=4`: saturates near total `40.13-40.89 Mbps`, AP `0.83/0.78/0.58`.
+  - `rho_th=5`: saturates at total `44.74 Mbps`, AP `0.83/0.78/0.58`.
+- Updated clean package:
+  `C:\Workspace\2026-7-papers\infocom\SGCP\experiment\06_parameter_sensitivity.md`
+  now contains the paper-facing SGCP rho Pareto source table and AP@0.5
+  non-dominated front; `07_plot_data_and_suggestions.md` now recommends plotting
+  one polyline per `rho_th=1/2/3/4/5` with `Total Mbps` on the x-axis.
+

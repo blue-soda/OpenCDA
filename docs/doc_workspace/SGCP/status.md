@@ -437,3 +437,10 @@ SGCP 工作与仓库中以下部分关系最紧密：
   AP `0.83/0.78/0.58`, raw/box/total `40.10/0.79/40.89 Mbps`. Thus
   `rho_th=2` remains the best tested point, while higher `rho_th` increases
   realized payload but reduces selected-grid diversity and does not improve AP.
+- SGCP rho Pareto curve source data is now complete for
+  `rho_th=1/2/3/4/5` with internal raw admission caps
+  `1/5/10/20/40/60/68/84 Mbps`. The clean package no longer treats the raw cap
+  as a paper-facing metric; the curve uses actual `Total Mbps` on the x-axis.
+  AP@0.5 front ends at `rho_th=2`, total `29.28 Mbps`, AP
+  `0.86/0.81/0.58`. `rho_th=1` saturates at about `17.52 Mbps`; `rho_th=3/4/5`
+  can spend more payload but do not improve AP.
