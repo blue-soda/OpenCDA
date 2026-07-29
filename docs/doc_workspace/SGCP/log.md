@@ -8687,3 +8687,18 @@ Dense SGCP experiments:
   external dense package updated at
   `C:\Workspace\2026-7-papers\infocom\SGCP\experiment-0729-dense-ver\06_parameter_sensitivity.md`.
 
+### 2026-07-29 12:05:00 +08:00 - NS3 replay for dense 93.75 Mbps diagnostic
+
+- Replayed the relaxed dense SGCP `rho_th=5`, `120 Mbps`-budget diagnostic
+  point through exact NS3 under `40 MHz / 10ch`, Guard `1 ms`, zero-time send
+  delay `0 ms`, and activation-synchronized transfer injection.
+- Frame `000060` (`96.59 Mbps` logical load): `123/124` application callbacks,
+  RLC TX/RX `1346/1345`, PHY failures `1`, delay mean/P95/max
+  `60.01/131/137 ms`.
+- Frame `000076` (`92.34 Mbps`, closest to the 41-frame `93.75 Mbps` average):
+  `118/118` application callbacks, RLC TX/RX `1286/1286`, PHY failures `0`,
+  delay mean/P95/max `60.98/121/136 ms`.
+- Conclusion: the `93.75 Mbps` row is mostly deliverable but exceeds the
+  intended `60 ms` data-plane window; it remains a relaxed-budget AP-headroom
+  diagnostic, not the dense headline operating point.
+

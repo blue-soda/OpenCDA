@@ -397,3 +397,10 @@ SGCP 工作与仓库中以下部分关系最紧密：
   below centralized all-in-one (`0.90/0.90/0.80`), so the remaining AP gap is
   not purely caused by the 60Mbps frame budget. Artifact:
   `docs/doc_workspace/SGCP/artifacts/dense_120mbps_rho_20260729/`.
+- Exact NS3 replay of the `93.75 Mbps` relaxed diagnostic under `40 MHz / 10ch`,
+  Guard `1 ms`, zero-time send delay `0 ms`, and activation-synchronized
+  injection confirms it is not a 60ms data-plane point. Near-average frame
+  `000076` (`92.34 Mbps`) delivers `118/118` app callbacks with delay
+  mean/P95/max `60.98/121/136 ms`; frame `000060` (`96.59 Mbps`) delivers
+  `123/124` callbacks with `60.01/131/137 ms`. Keep this row as relaxed-budget
+  AP headroom only.
