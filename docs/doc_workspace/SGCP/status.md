@@ -444,3 +444,8 @@ SGCP 工作与仓库中以下部分关系最紧密：
   AP@0.5 front ends at `rho_th=2`, total `29.28 Mbps`, AP
   `0.86/0.81/0.58`. `rho_th=1` saturates at about `17.52 Mbps`; `rho_th=3/4/5`
   can spend more payload but do not improve AP.
+- High-cap verification for `rho_th=1/2` is complete with raw admission caps
+  `100/150/200/300 Mbps`. `rho_th=1` remains at raw/total about
+  `16.61/17.52 Mbps`; `rho_th=2` remains at `28.42/29.28 Mbps`. Thus increasing
+  the internal cap beyond `84 Mbps` does not increase actual communication or
+  AP for these thresholds.

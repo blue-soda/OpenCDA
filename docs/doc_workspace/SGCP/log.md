@@ -8797,3 +8797,18 @@ Dense SGCP experiments:
   non-dominated front; `07_plot_data_and_suggestions.md` now recommends plotting
   one polyline per `rho_th=1/2/3/4/5` with `Total Mbps` on the x-axis.
 
+### 2026-07-29 23:45:00 +08:00 - High-cap check for rho_th=1/2
+
+- User requested higher budgets for `rho_th=1/2` because AP had not obviously
+  converged while Raw LiDAR Mbps increased in the low-budget regime.
+- Command:
+  `conda run --no-capture-output -n opencda python docs\doc_workspace\SGCP\artifacts\dense_dynamic_cv_sensitivity_20260729\build_dense_dynamic_cv_sensitivity.py --phase budget --budget-rho 1 --budget-rho 2 --budget-value 100 --budget-value 150 --budget-value 200 --budget-value 300 --force`
+- Results:
+  - `rho_th=1`, caps `100/150/200/300`: actual total remains
+    `17.52/17.52/17.50/17.52 Mbps`; AP remains around `0.85/0.79/0.57-0.58`.
+  - `rho_th=2`, caps `100/150/200/300`: actual total remains exactly
+    `29.28 Mbps`; AP remains `0.86/0.81/0.58`.
+- Conclusion: the low-density thresholds are truly saturated by the residual
+  density cap and positive-gain candidate exhaustion. The earlier Pareto curve
+  did not stop too early.
+

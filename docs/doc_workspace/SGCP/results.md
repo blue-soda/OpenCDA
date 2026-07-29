@@ -2280,3 +2280,20 @@ AP@0.5 non-dominated front:
 | 2 | 10.78 | 0.83 | 0.78 | 0.55 |
 | 1 | 17.52 | 0.85 | 0.79 | 0.57 |
 | 2 | 29.28 | 0.86 | 0.81 | 0.58 |
+
+High-cap check for `rho_th=1/2`:
+
+| rho_th | Raw admission cap (Mbps) | Raw Mbps | Total Mbps | AP@0.3 | AP@0.5 | AP@0.7 |
+| ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| 1 | 100 | 16.61 | 17.52 | 0.85 | 0.79 | 0.57 |
+| 1 | 150 | 16.61 | 17.52 | 0.85 | 0.79 | 0.58 |
+| 1 | 200 | 16.59 | 17.50 | 0.85 | 0.79 | 0.57 |
+| 1 | 300 | 16.61 | 17.52 | 0.85 | 0.79 | 0.58 |
+| 2 | 100 | 28.42 | 29.28 | 0.86 | 0.81 | 0.58 |
+| 2 | 150 | 28.42 | 29.28 | 0.86 | 0.81 | 0.58 |
+| 2 | 200 | 28.42 | 29.28 | 0.86 | 0.81 | 0.58 |
+| 2 | 300 | 28.42 | 29.28 | 0.86 | 0.81 | 0.58 |
+
+This verifies that the `rho_th=1/2` plateaus are not caused by too small a raw
+admission-cap sweep. The scheduler has no additional positive-gain residual
+density uploads under those thresholds.
