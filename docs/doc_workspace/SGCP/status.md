@@ -449,3 +449,7 @@ SGCP 工作与仓库中以下部分关系最紧密：
   `16.61/17.52 Mbps`; `rho_th=2` remains at `28.42/29.28 Mbps`. Thus increasing
   the internal cap beyond `84 Mbps` does not increase actual communication or
   AP for these thresholds.
+- Clean-package hyperparameter reporting has been simplified: the active
+  parameter-sensitivity document now contains only the SGCP `rho_th` Pareto
+  table. `N_max` is derived from `ceil(N / floor(K / B_h))`, and channel count
+  is treated as a fixed network setting rather than a hyperparameter sweep.

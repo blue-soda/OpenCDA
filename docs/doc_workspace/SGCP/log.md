@@ -8812,3 +8812,16 @@ Dense SGCP experiments:
   density cap and positive-gain candidate exhaustion. The earlier Pareto curve
   did not stop too early.
 
+### 2026-07-30 00:10:00 +08:00 - Clean hyperparameter table simplification
+
+- Updated
+  `C:\Workspace\2026-7-papers\infocom\SGCP\experiment\06_parameter_sensitivity.md`
+  to keep only one paper-facing SGCP rho Pareto table.
+- Removed the active reporting of `N_max` and channel-count sweeps from the
+  hyperparameter document. `N_max` is now stated as derived from
+  `ceil(N / floor(K / B_h))`; channel count remains part of the fixed network
+  protocol.
+- The document explicitly states that all tested `rho_th` values reach
+  communication saturation or AP convergence, and that `rho_th=2` at
+  `29.28 Total Mbps` is the best saturation point.
+
