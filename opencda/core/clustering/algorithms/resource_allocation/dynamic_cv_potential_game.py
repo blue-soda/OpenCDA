@@ -4,12 +4,13 @@
 This variant keeps the formal SGCP two-stage structure but updates receiver
 evidence after every accepted upload:
 
-* Stage 1 coverage: C(i,g|r,A) = q_i(g) * (1 - Q_r^A(g)).
-* Stage 2 view refinement: V(i,g|r,A) = q_i(g) if Q_r^A(g) > 0 else 0.
+* Stage 1 coverage: C(i,g|r,A) = min(q_i(g), 1 - Q_r^A(g)).
+* Stage 2 view refinement: V(i,g|r,A) = min(q_i(g), 1 - Q_r^A(g))
+  if Q_r^A(g) > 0 else 0.
 
-It is isolated from the paper-facing ``cov_potential_game`` so we can test
-whether dense point clouds benefit from accounting for already-collected grid
-evidence during scheduling.
+Both stages use the same residual-density gain as the density-saturated upload
+path, so the score of a sender-grid action matches the remaining amount that
+can actually be transmitted before the receiver grid reaches ``rho_th``.
 """
 
 from opencda.core.clustering.algorithms.resource_allocation.dynamic_marginal_two_stage_potential_game import (
@@ -31,4 +32,4 @@ class DynamicCVPotentialGame(DynamicMarginalTwoStagePotentialGame):
         current_quality = self._current_evidence(head_id, grid_id)
         if current_quality <= 0.0:
             return 0.0
-        return member_quality
+        return min(member_quality, max(0.0, 1.0 - current_quality))

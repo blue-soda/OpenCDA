@@ -376,6 +376,44 @@ def select_grid_points_with_density_cap(lidar, grid_id_list,
     return np.asarray(selected, dtype=np.float32)
 
 
+def select_grid_points_with_remaining_cap(lidar, grid_id_list, remaining_by_grid,
+                                          seed_prefix=''):
+    """Return selected grid points while consuming receiver-grid residual caps.
+
+    Returns:
+        tuple: ``(points, contributed_grid_count)``.  The count only includes
+        grids that actually contribute at least one point after residual-density
+        clipping.
+    """
+    if remaining_by_grid is None:
+        return lidar.get_local_points_by_grid_ids(grid_id_list), len(
+            set(grid_id_list))
+
+    selected = []
+    contributed_grid_count = 0
+    for grid_id in sorted(set(grid_id_list), key=str):
+        remaining = int(remaining_by_grid.get(grid_id, 0))
+        if remaining <= 0:
+            continue
+        grid_points = lidar.grid_local_points.get(grid_id, [])
+        if not grid_points:
+            continue
+        take = min(len(grid_points), remaining)
+        if take >= len(grid_points):
+            selected.extend(grid_points)
+        else:
+            rng = random.Random('%s-%s-density-residual' % (
+                seed_prefix,
+                grid_id))
+            indices = sorted(rng.sample(range(len(grid_points)), take))
+            selected.extend(grid_points[index] for index in indices)
+        contributed_grid_count += 1
+        remaining_by_grid[grid_id] = remaining - take
+    if not selected:
+        return np.empty((0, 4), dtype=np.float32), 0
+    return np.asarray(selected, dtype=np.float32), contributed_grid_count
+
+
 def estimate_density_capped_grid_bytes(lidar, grid_id_list,
                                        density_cap_rho=None):
     """Estimate selected bytes without materializing the sampled points."""
@@ -432,7 +470,22 @@ def build_constrained_frame(frame, world, receiver_id,
         raise ValueError('Unknown SGCP upload_mode: %s' % upload_mode)
 
     if upload_mode == 'grid':
-        for sender_id, grid_ids in grid_selection.items():
+        residual_by_grid = None
+        max_grid_points = density_cap_points_per_grid(
+            receiver_vm.perception_manager.lidar,
+            upload_density_cap_rho)
+        if max_grid_points is not None:
+            residual_by_grid = {}
+            for grid_ids in grid_selection.values():
+                for grid_id in grid_ids:
+                    if grid_id in residual_by_grid:
+                        continue
+                    receiver_points = receiver_vm.perception_manager.lidar.\
+                        grid_local_points.get(grid_id, [])
+                    residual_by_grid[grid_id] = max(
+                        0,
+                        max_grid_points - len(receiver_points))
+        for sender_id, grid_ids in sorted(grid_selection.items()):
             sender_id = int(sender_id)
             if sender_id == receiver_id or sender_id not in frame:
                 continue
@@ -443,11 +496,20 @@ def build_constrained_frame(frame, world, receiver_id,
                 upload_density_cap_seed,
                 receiver_id,
                 sender_id)
-            selected_points = select_grid_points_with_density_cap(
-                sender_vm.perception_manager.lidar,
-                grid_ids,
-                density_cap_rho=upload_density_cap_rho,
-                seed_prefix=seed)
+            if residual_by_grid is None:
+                selected_points = select_grid_points_with_density_cap(
+                    sender_vm.perception_manager.lidar,
+                    grid_ids,
+                    density_cap_rho=upload_density_cap_rho,
+                    seed_prefix=seed)
+                contributed_grid_count = len(set(grid_ids))
+            else:
+                selected_points, contributed_grid_count = (
+                    select_grid_points_with_remaining_cap(
+                    sender_vm.perception_manager.lidar,
+                    grid_ids,
+                    residual_by_grid,
+                    seed_prefix=seed))
             if selected_points is None or selected_points.size == 0:
                 continue
             selected_points = deterministic_point_budget(
@@ -459,7 +521,7 @@ def build_constrained_frame(frame, world, receiver_id,
                 selected_points,
                 is_ego=False)
             communication_bytes += int(selected_points.nbytes)
-            selected_grid_counts[sender_id] = len(grid_ids)
+            selected_grid_counts[sender_id] = contributed_grid_count
 
     if upload_mode == 'full_cluster' or (
             include_unconstrained_cluster and not grid_selection):

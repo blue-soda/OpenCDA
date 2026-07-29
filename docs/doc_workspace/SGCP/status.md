@@ -415,3 +415,18 @@ SGCP 工作与仓库中以下部分关系最紧密：
   only `55.9-59.4 Mbps` actual raw payload. Treat this as a strong candidate
   mechanism for the dense update; it is currently documented as exploratory,
   not yet a frozen table replacement.
+- Dense dynamic C/V + receiver-side density-capped upload parameter sweep is
+  complete and supersedes the earlier exploratory `rho_cap=5` point. The
+  implementation now uses the same residual quality/cap in scoring and actual
+  upload: Stage 1/2 grid gain is based on the receiver's current residual
+  density, and the replay consumes residual receiver-grid capacity after every
+  accepted upload. With a fixed `68 Mbps` raw admission budget, the best
+  operating point is `rho_th=2`: AP `0.86/0.81/0.58`, raw/box/total
+  `28.42/0.87/29.28 Mbps`, `593.95 GFLOPs/frame`, average `2.51` source CAVs
+  and `47.94` actually contributed grids per receiver sample. Budget sweeps for
+  `rho_th=1/2/5` show `rho_th=2` reaches its plateau at a realized total
+  payload of `29.28 Mbps`; increasing the raw admission cap to `84 Mbps` is
+  non-binding. Canonical clean-package parameter document updated:
+  `C:\Workspace\2026-7-papers\infocom\SGCP\experiment\06_parameter_sensitivity.md`.
+  Raw artifacts:
+  `docs/doc_workspace/SGCP/artifacts/dense_dynamic_cv_sensitivity_20260729/`.

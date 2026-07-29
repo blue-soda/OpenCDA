@@ -26,7 +26,7 @@ from opencda.core.common.offline_replay import (
     apply_cluster_state,
     build_constrained_frame,
     clear_sgcp_globals,
-    estimate_density_capped_grid_bytes,
+    density_cap_points_per_grid,
     select_sgcp_receiver_id,
 )
 from opencda.core.clustering.algorithms.clustering.coalition_game import (
@@ -538,20 +538,76 @@ def merge_grid_selection(target, source):
             target[receiver_id][sender_id].update(grid_ids)
 
 
+def _init_receiver_grid_remaining(world, receiver_id, grid_selection,
+                                  upload_density_cap_rho=None):
+    if upload_density_cap_rho is None or upload_density_cap_rho <= 0:
+        return None
+    receiver_vm = world.get_vehicle_manager(receiver_id)
+    if receiver_vm is None:
+        return None
+    receiver_lidar = receiver_vm.perception_manager.lidar
+    max_points = density_cap_points_per_grid(
+        receiver_lidar,
+        upload_density_cap_rho)
+    if max_points is None:
+        return None
+    remaining = {}
+    sender_grids = clone_grid_selection(grid_selection).get(
+        int(receiver_id),
+        {})
+    for grid_ids in sender_grids.values():
+        for grid_id in grid_ids:
+            if grid_id in remaining:
+                continue
+            receiver_count = len(receiver_lidar.grid_local_points.get(
+                grid_id,
+                []))
+            remaining[grid_id] = max(0, max_points - receiver_count)
+    return remaining
+
+
+def _estimate_grid_bytes_with_remaining(lidar, grid_id, remaining_by_grid):
+    if remaining_by_grid is None:
+        return int(len(lidar.grid_local_points.get(grid_id, [])) * 4 * 4)
+    remaining = int(remaining_by_grid.get(grid_id, 0))
+    if remaining <= 0:
+        return 0
+    point_count = min(
+        len(lidar.grid_local_points.get(grid_id, [])),
+        remaining)
+    return int(point_count * 4 * 4)
+
+
 def estimate_grid_selection_payload_bytes(world, grid_selection,
                                           upload_density_cap_rho=None):
     total_bytes = 0
     link_bytes = {}
     for receiver_id, sender_grids in clone_grid_selection(
             grid_selection).items():
-        for sender_id, grid_ids in sender_grids.items():
+        remaining = _init_receiver_grid_remaining(
+            world,
+            receiver_id,
+            grid_selection,
+            upload_density_cap_rho=upload_density_cap_rho)
+        for sender_id, grid_ids in sorted(sender_grids.items()):
             sender_vm = world.get_vehicle_manager(sender_id)
             if sender_vm is None:
                 continue
-            payload_bytes = estimate_density_capped_grid_bytes(
-                sender_vm.perception_manager.lidar,
-                grid_ids,
-                density_cap_rho=upload_density_cap_rho)
+            lidar = sender_vm.perception_manager.lidar
+            payload_bytes = 0
+            for grid_id in sorted(set(grid_ids), key=str):
+                grid_bytes = _estimate_grid_bytes_with_remaining(
+                    lidar,
+                    grid_id,
+                    remaining)
+                if grid_bytes <= 0:
+                    continue
+                payload_bytes += grid_bytes
+                if remaining is not None:
+                    remaining[grid_id] = max(
+                        0,
+                        int(remaining.get(grid_id, 0)) -
+                        int(grid_bytes / (4 * 4)))
             link_bytes[(sender_id, receiver_id)] = payload_bytes
             total_bytes += payload_bytes
     return total_bytes, link_bytes
@@ -592,7 +648,12 @@ def trim_grid_selection_to_deadline(world, grid_selection, resource_sc_nums,
     trimmed = {}
     for receiver_id, sender_grids in clone_grid_selection(
             grid_selection).items():
-        for sender_id, grid_ids in sender_grids.items():
+        remaining = _init_receiver_grid_remaining(
+            world,
+            receiver_id,
+            grid_selection,
+            upload_density_cap_rho=upload_density_cap_rho)
+        for sender_id, grid_ids in sorted(sender_grids.items()):
             sender_vm = world.get_vehicle_manager(sender_id)
             if sender_vm is None:
                 continue
@@ -618,16 +679,21 @@ def trim_grid_selection_to_deadline(world, grid_selection, resource_sc_nums,
             selected = []
             used_bytes = 0
             for grid_id in sorted(grid_ids, key=grid_score, reverse=True):
-                grid_bytes = estimate_density_capped_grid_bytes(
+                grid_bytes = _estimate_grid_bytes_with_remaining(
                     lidar,
-                    [grid_id],
-                    density_cap_rho=upload_density_cap_rho)
+                    grid_id,
+                    remaining)
                 if grid_bytes <= 0:
                     continue
                 if used_bytes + grid_bytes > budget_bytes:
                     continue
                 selected.append(grid_id)
                 used_bytes += grid_bytes
+                if remaining is not None:
+                    remaining[grid_id] = max(
+                        0,
+                        int(remaining.get(grid_id, 0)) -
+                        int(grid_bytes / (4 * 4)))
             if selected:
                 trimmed.setdefault(int(receiver_id), {})[int(sender_id)] = set(
                     selected)
@@ -679,15 +745,23 @@ def trim_grid_selection_to_payload_budget(world, grid_selection,
 
     trimmed = {}
     used_bytes = 0
+    remaining_by_receiver = {}
     for receiver_id, sender_id, grid_id in (
             scheduled_order + [item[2] for item in leftovers]):
         sender_vm = world.get_vehicle_manager(sender_id)
         if sender_vm is None:
             continue
-        grid_bytes = estimate_density_capped_grid_bytes(
+        if receiver_id not in remaining_by_receiver:
+            remaining_by_receiver[receiver_id] = _init_receiver_grid_remaining(
+                world,
+                receiver_id,
+                selection,
+                upload_density_cap_rho=upload_density_cap_rho)
+        remaining = remaining_by_receiver[receiver_id]
+        grid_bytes = _estimate_grid_bytes_with_remaining(
             sender_vm.perception_manager.lidar,
-            [grid_id],
-            density_cap_rho=upload_density_cap_rho)
+            grid_id,
+            remaining)
         if grid_bytes <= 0:
             continue
         if used_bytes + grid_bytes > max_payload_bytes:
@@ -695,6 +769,11 @@ def trim_grid_selection_to_payload_budget(world, grid_selection,
         trimmed.setdefault(receiver_id, {}).setdefault(sender_id, set()).add(
             grid_id)
         used_bytes += grid_bytes
+        if remaining is not None:
+            remaining[grid_id] = max(
+                0,
+                int(remaining.get(grid_id, 0)) -
+                int(grid_bytes / (4 * 4)))
     return trimmed, original_bytes, used_bytes
 
 

@@ -2224,3 +2224,35 @@ Follow-up `60 Mbps` cap check: AP remains `0.83/0.75/0.33`, raw `55.40 Mbps`, bo
 Two-stage dynamic marginal follow-up: new scheduler `dynamic_marginal_two_stage_potential_game` uses dynamic marginal `q_i(g)(1-Q_r^A(g))` as the first-stage coverage term and restores the second-stage multi-view term `V=q_i(g)1[q_h(g)>0]`. With a direct `60 Mbps` raw cap, 41-frame result is AP `0.87/0.80/0.35`, raw `59.43 Mbps`, box `0.72 Mbps`, total `60.15 Mbps`, avg selected grids/receiver sample `81.61`. With the non-binding `200 Mbps` ceiling, it reproduces the headline row: AP `0.87/0.80/0.36`, raw `60.18 Mbps`, box `0.72 Mbps`, total `60.90 Mbps`, avg selected grids/receiver sample `85.73`.
 
 Conclusion: the dynamic marginal objective is useful for problem-formulation discussion, but this first single-stage implementation is weaker than the current SGCP-PV headline C->V scheduler (`0.87/0.80/0.36`, total `60.90 Mbps`). It should remain a diagnostic/probe unless future tuning recovers AP.
+
+#### Dense dynamic C/V + density-capped upload sensitivity
+
+Artifact: `docs/doc_workspace/SGCP/artifacts/dense_dynamic_cv_sensitivity_20260729/`
+
+External clean package document:
+`C:\Workspace\2026-7-papers\infocom\SGCP\experiment\06_parameter_sensitivity.md`
+
+Protocol: dense `v2xp_cluster_carla` dump `2026_07_29_02_32_08`, 20 CAVs, 41
+frames, attentive detector, `40 MHz / 10ch`, NS3 estimator `tb_size=899`,
+`slot=0.5 ms`, `symbols=12`, `mcs=28`,
+`potential_verified_cov_coalition_game` clustering, `dynamic_cv` scheduling,
+all cluster heads as receivers, grid upload, inter-cluster box NMS. `rho_th`
+and upload density cap are unified; receiver-side residual density is updated
+after every admitted grid upload.
+
+`rho_th` sweep at raw budget `68 Mbps`:
+
+| rho_th | AP@0.3 | AP@0.5 | AP@0.7 | Raw Mbps | Box Mbps | Total Mbps | GFLOPs/frame | Avg source CAVs | Avg selected grids |
+| ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| 0.1 | 0.79 | 0.71 | 0.48 | 2.07 | 0.76 | 2.84 | 604.67 | 2.48 | 33.55 |
+| 0.2 | 0.80 | 0.73 | 0.50 | 3.97 | 0.83 | 4.79 | 619.96 | 2.44 | 39.44 |
+| 0.5 | 0.83 | 0.76 | 0.55 | 9.27 | 0.89 | 10.16 | 620.00 | 2.44 | 49.47 |
+| 1 | 0.85 | 0.79 | 0.58 | 16.61 | 0.91 | 17.52 | 606.96 | 2.47 | 58.13 |
+| 2 | 0.86 | 0.81 | 0.58 | 28.42 | 0.87 | 29.28 | 593.95 | 2.51 | 47.94 |
+| 5 | 0.83 | 0.78 | 0.58 | 43.97 | 0.77 | 44.74 | 594.07 | 2.51 | 19.54 |
+| 10 | 0.80 | 0.75 | 0.55 | 49.57 | 0.72 | 50.30 | 594.11 | 2.51 | 8.96 |
+
+Conclusion: `rho_th=2` is the current best operating point. It reaches
+`0.86/0.81/0.58` with only `29.28 Mbps` total payload. Raw-budget sweeps for
+`rho_th=1/2/5` confirm that `rho_th=2` saturates by the `40 Mbps` raw cap; giving
+up to `84 Mbps` is non-binding under receiver-side density saturation.

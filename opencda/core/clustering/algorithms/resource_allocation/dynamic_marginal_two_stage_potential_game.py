@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 """Two-stage dynamic marginal scheduler for SGCP probes.
 
-The first stage uses the receiver-local dynamic marginal gain
+The first stage uses the receiver-local residual-density gain
 
-    q_i(g) * (1 - Q_h^A(g)),
+    min(q_i(g), 1 - Q_h^A(g)),
 
 where ``Q_h^A(g)`` is updated after accepted uploads.  The second stage uses
 the same multi-view refinement term as the clean C/V scheduler:

@@ -5,7 +5,7 @@ This scheduler is a single-stage counterpart to ``cov_potential_game``.  It
 scores each sender-grid action by the current receiver-side marginal evidence
 gain
 
-    q_i(g) * (1 - Q_h^A(g)),
+    min(q_i(g), 1 - Q_h^A(g)),
 
 where ``Q_h^A(g)`` is updated after every accepted upload.  The update gives
 repeated uploads to the same head/grid a diminishing return while keeping the
@@ -58,7 +58,7 @@ class DynamicMarginalPotentialGame(COVPotentialGame):
         for grid_id in selected_grids:
             current = self._current_evidence(head_id, grid_id)
             quality = self._member_quality(head_id, member_id, grid_id)
-            updated = 1.0 - (1.0 - current) * (1.0 - quality)
+            updated = current + min(quality, max(0.0, 1.0 - current))
             self.dynamic_evidence[head_id][str(grid_id)] = min(1.0, updated)
 
     def _grid_marginal_score(self, head_id, member_id, grid_id):
@@ -66,7 +66,7 @@ class DynamicMarginalPotentialGame(COVPotentialGame):
         if quality <= 0.0:
             return 0.0
         current = self._current_evidence(head_id, grid_id)
-        return quality * max(0.0, 1.0 - current)
+        return min(quality, max(0.0, 1.0 - current))
 
     def _score_candidate(self, cluster, member_id, mode='dynamic'):
         del mode

@@ -8733,3 +8733,31 @@ Dense SGCP experiments:
   external dense package updated with
   `C:\Workspace\2026-7-papers\infocom\SGCP\experiment-0729-dense-ver\11_dynamic_cv_and_density_cap_probe.md`.
 
+### 2026-07-29 21:10:00 +08:00 - Dense dynamic C/V sensitivity rerun with unified rho_th cap
+
+- Cleaned the implementation so `dynamic_cv` scoring and actual upload both use
+  receiver-side residual density. `rho_th` and upload density cap are now the
+  same variable in the experiment protocol. The replay consumes each receiver
+  grid's remaining capacity after every accepted sender-grid upload, and trace
+  `selected_grid_counts` now counts grids that actually contribute points after
+  residual clipping.
+- Validation:
+  `conda run -n opencda python -m py_compile opencda\core\common\offline_replay.py opencda\tools\offline_inference.py opencda\core\clustering\algorithms\resource_allocation\dynamic_cv_potential_game.py opencda\core\clustering\algorithms\resource_allocation\dynamic_marginal_potential_game.py`
+  passed; `git diff --check` passed on the touched files.
+- Ran `rho_th=0.1/0.2/0.5/1/2/5/10` at raw budget `68 Mbps` with dense dataset
+  `2026_07_29_02_32_08`, attentive checkpoint, `40 MHz / 10ch`, NS3 estimator
+  `tb=899`, `communication_deadline_ms=60`, `potential_verified_cov_coalition_game`,
+  and `dynamic_cv`.
+- Best point: `rho_th=2`, AP `0.86/0.81/0.58`, raw/box/total
+  `28.42/0.87/29.28 Mbps`, `593.95 GFLOPs/frame`, average source CAVs `2.51`,
+  average actually contributed grids `47.94`.
+- Ran raw-LiDAR budget sweep for `rho_th=1/2/5` at budgets
+  `1/5/10/20/40/60/68/84 Mbps`. `rho_th=2` reaches the same best AP from the
+  `40 Mbps` cap onward; higher caps are non-binding because residual density is
+  already saturated.
+- Updated canonical clean package:
+  `C:\Workspace\2026-7-papers\infocom\SGCP\experiment\06_parameter_sensitivity.md`,
+  plus README/protocol/plot/audit notes.
+- Artifact:
+  `docs/doc_workspace/SGCP/artifacts/dense_dynamic_cv_sensitivity_20260729/`.
+
