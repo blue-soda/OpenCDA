@@ -2297,3 +2297,61 @@ High-cap check for `rho_th=1/2`:
 This verifies that the `rho_th=1/2` plateaus are not caused by too small a raw
 admission-cap sweep. The scheduler has no additional positive-gain residual
 density uploads under those thresholds.
+
+#### Multi-backbone and multi-scene supplement
+
+Artifact root:
+`docs/doc_workspace/SGCP/artifacts/multi_backbone_20260731/`
+
+External clean-package documents:
+
+- `C:\Workspace\2026-7-papers\infocom\SGCP\experiment-dense-lidar-ver\12_multibackbone_voxelnet_table1.md`
+- `C:\Workspace\2026-7-papers\infocom\SGCP\experiment-dense-lidar-ver\13_multiscene_town06_table1.md`
+
+VoxelNet on the original 41-frame dense scene (`v2xp_cluster_carla_dense`,
+20 CAVs, attentive/dense protocol otherwise unchanged):
+
+| Method | AP@0.3 | AP@0.5 | AP@0.7 | Raw Mbps | Box Mbps | Total Mbps | GFLOPs/frame | Calls/frame |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| Centralized all-in-one raw-LiDAR upper ref | 0.98 | 0.98 | 0.89 | 337.08 | 0.00 | 337.08 | 159.42 | 1.00 |
+| No collaboration | 0.43 | 0.41 | 0.28 | 0.00 | 0.00 | 0.00 | 3188.50 | 20.00 |
+| Pure late | 0.97 | 0.94 | 0.71 | 0.00 | 1.40 | 1.40 | 3188.50 | 20.00 |
+| FullPerception-PCS | 0.44 | 0.42 | 0.28 | 70.49 | 0.00 | 70.49 | 3188.50 | 20.00 |
+| EdgeCooper-Pmax V2V adaptation | 0.47 | 0.45 | 0.31 | 86.30 | 0.00 | 86.30 | 3188.50 | 20.00 |
+| PACP-LiDAR V2V adaptation | 0.40 | 0.38 | 0.26 | 86.30 | 0.00 | 86.30 | 3188.50 | 20.00 |
+| SGCP | 0.88 | 0.86 | 0.62 | 27.84 | 0.69 | 28.52 | 1057.65 | 6.63 |
+
+Town06 second-scene dataset:
+`D:\Data\Carla\2026_07_31_02_24_35`, Town06, same dense LiDAR, 10 CAVs,
+20 background vehicles, 31 frames/CAV.
+
+PointPillar-attentive Table 1 on Town06:
+
+| Method | AP@0.3 | AP@0.5 | AP@0.7 | Raw Mbps | Box Mbps | Total Mbps | GFLOPs/frame | Calls/frame |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| Centralized all-in-one raw-LiDAR upper ref | 1.00 | 1.00 | 0.98 | 147.23 | 0.00 | 147.23 | 90.59 | 1.00 |
+| No collaboration | 0.74 | 0.71 | 0.54 | 0.00 | 0.00 | 0.00 | 894.87 | 10.00 |
+| Pure late | 0.91 | 0.89 | 0.82 | 0.00 | 0.79 | 0.79 | 894.87 | 10.00 |
+| FullPerception-PCS | 0.71 | 0.69 | 0.54 | 36.35 | 0.00 | 36.35 | 895.14 | 10.00 |
+| EdgeCooper-Pmax V2V adaptation | 0.83 | 0.82 | 0.71 | 69.14 | 0.00 | 69.14 | 895.39 | 10.00 |
+| PACP-LiDAR V2V adaptation | 0.74 | 0.72 | 0.56 | 81.15 | 0.00 | 81.15 | 895.48 | 10.00 |
+| SGCP | 0.96 | 0.94 | 0.81 | 15.42 | 0.50 | 15.92 | 470.65 | 5.26 |
+
+VoxelNet Table 1 on Town06:
+
+| Method | AP@0.3 | AP@0.5 | AP@0.7 | Raw Mbps | Box Mbps | Total Mbps | GFLOPs/frame | Calls/frame |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| Centralized all-in-one raw-LiDAR upper ref | 1.00 | 1.00 | 0.99 | 147.23 | 0.00 | 147.23 | 159.42 | 1.00 |
+| No collaboration | 0.59 | 0.59 | 0.47 | 0.00 | 0.00 | 0.00 | 1594.25 | 10.00 |
+| Pure late | 0.97 | 0.97 | 0.88 | 0.00 | 0.59 | 0.59 | 1594.25 | 10.00 |
+| FullPerception-PCS | 0.59 | 0.58 | 0.48 | 36.35 | 0.00 | 36.35 | 1594.25 | 10.00 |
+| EdgeCooper-Pmax V2V adaptation | 0.75 | 0.74 | 0.64 | 69.14 | 0.00 | 69.14 | 1594.25 | 10.00 |
+| PACP-LiDAR V2V adaptation | 0.63 | 0.63 | 0.51 | 81.15 | 0.00 | 81.15 | 1594.25 | 10.00 |
+| SGCP | 0.96 | 0.96 | 0.83 | 15.42 | 0.40 | 15.83 | 838.27 | 5.26 |
+
+Interpretation: the multi-backbone and multi-scene evidence supports the same
+paper claim as the dense PointPillar main table: SGCP is not a
+PointPillar-only artifact and remains favorable on a different road topology.
+The VoxelNet runs also show that very strong pure-late AP can coexist with much
+higher detector-call/GFLOPs cost, which should be explained as a compute-limited
+tradeoff rather than a communication-only comparison.

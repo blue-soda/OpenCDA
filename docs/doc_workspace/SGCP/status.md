@@ -453,3 +453,23 @@ SGCP 工作与仓库中以下部分关系最紧密：
   parameter-sensitivity document now contains only the SGCP `rho_th` Pareto
   table. `N_max` is derived from `ceil(N / floor(K / B_h))`, and channel count
   is treated as a fixed network setting rather than a hyperparameter sweep.
+- Multi-backbone / multi-scene supplement completed for the writing agent.
+  VoxelNet early-fusion checkpoint was patched to the OpenCDA/OpenCOOD dense
+  validation layout and used to rerun dense Table 1 on the original 41-frame
+  dense scene. The VoxelNet Table 1 headline is: centralized all-in-one upper
+  reference `0.98/0.98/0.89` at `337.08 Mbps`, no collaboration
+  `0.43/0.41/0.28`, pure late `0.97/0.94/0.71`, FullPerception-PCS
+  `0.44/0.42/0.28` at `70.49 Mbps`, EdgeCooper-Pmax
+  `0.47/0.45/0.31` at `86.30 Mbps`, PACP-LiDAR `0.40/0.38/0.26` at
+  `86.30 Mbps`, and SGCP `0.88/0.86/0.62` at `28.52 Mbps`.
+- New Town06 dense scene was exported at `D:\Data\Carla\2026_07_31_02_24_35`
+  using the same dense LiDAR setting, 10 CAVs, 20 background vehicles, and 31
+  frames per CAV. CARLA was closed after export. Table 1 was rerun on this
+  scene with PointPillar-attentive and VoxelNet. PointPillar SGCP reaches
+  `0.96/0.94/0.81` at `15.92 Mbps`; VoxelNet SGCP reaches `0.96/0.96/0.83`
+  at `15.83 Mbps`. Both backbones outperform protocol-native baselines on this
+  second scene while using much less raw-LiDAR payload than EdgeCooper/PACP.
+- External dense package now includes
+  `C:\Workspace\2026-7-papers\infocom\SGCP\experiment-dense-lidar-ver\12_multibackbone_voxelnet_table1.md`
+  and
+  `C:\Workspace\2026-7-papers\infocom\SGCP\experiment-dense-lidar-ver\13_multiscene_town06_table1.md`.

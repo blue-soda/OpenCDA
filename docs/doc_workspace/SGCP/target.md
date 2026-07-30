@@ -345,3 +345,28 @@
 - [x] 完成 exact NS3 20MHz 校准检查：当前 NR sidelink resource pool 不支持 `20 MHz / 10ch / 5PRB`，合法 exact 20MHz 为 `5ch / 10PRB`，per-subchannel TB 约 `912 B/grant`。因此 dense 20MHz 行只作为 logical diagnostic，不进入 exact-NS3 paper-facing 主表。
 - [x] 刷新 dense-ver `00-10`、README、MANIFEST，静态检查无 pending placeholder 或旧 sparse 主参数残留。
 - [ ] 可选：若后续论文需要合法 exact 20MHz sensitivity，再单独重跑 `20 MHz / 5ch / 10PRB` AP 表；这不是当前 dense 主表必要项。
+
+## P17：2026-07-31 Multi-backbone and multi-scene supplement
+
+目的：回应写作 agent 对 SGCP 泛化证据的要求，补充一个非 PointPillar
+backbone 的同协议 Table 1，以及一个不同道路拓扑、10 CAV / 20 background
+的新场景 Table 1。
+
+- [x] 从用户给定 checkpoint 中优先选择 VoxelNet，并完成可运行的 early-fusion
+  配置适配。保留原 checkpoint 权重，不修改 `C:\Workspace\OpenCOOD`。
+- [x] 在原 41 帧 dense 场景上使用 VoxelNet rerun Table 1。结果合理且支持
+  SGCP 结论：SGCP `0.88/0.86/0.62`，total `28.52 Mbps`，显著高于
+  protocol-native V2V baselines，同时低于 centralized all-in-one upper
+  reference。
+- [x] 新增并导出 Town06 dense second-scene dataset：
+  `D:\Data\Carla\2026_07_31_02_24_35`，10 CAVs，20 background vehicles，
+  31 frames/CAV，LiDAR 参数与 dense 主场景一致。CARLA 导出后已关闭。
+- [x] 在 Town06 second scene 上完成 PointPillar-attentive Table 1：
+  SGCP `0.96/0.94/0.81`，total `15.92 Mbps`。
+- [x] 在 Town06 second scene 上完成 VoxelNet Table 1：
+  SGCP `0.96/0.96/0.83`，total `15.83 Mbps`。
+- [x] 将补充结果写入外部 dense clean package：
+  `12_multibackbone_voxelnet_table1.md` 与
+  `13_multiscene_town06_table1.md`，并更新 MANIFEST。
+- [ ] 可选：若论文需要更完整的 multi-backbone 表，可继续尝试 SECOND/Pixor；
+  当前硬性要求“任意新 backbone 跑出一个合理 Table 1”已经由 VoxelNet 满足。

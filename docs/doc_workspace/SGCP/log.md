@@ -8825,3 +8825,24 @@ Dense SGCP experiments:
   communication saturation or AP convergence, and that `rho_th=2` at
   `29.28 Total Mbps` is the best saturation point.
 
+### 2026-07-31 03:35:00 +08:00 - Multi-backbone and Town06 second-scene supplement
+
+- Completed the writing-agent requested multi-backbone/multi-scene experiment
+  supplement.
+- VoxelNet early-fusion checkpoint was extracted from the user-provided
+  `voxelnet_early_fusion.zip`, patched only at the config/path level, and used
+  to rerun dense Table 1 on the original 41-frame scene.
+- VoxelNet dense Table 1 headline: SGCP `0.88/0.86/0.62`, raw/box/total
+  `27.84/0.69/28.52 Mbps`, `1057.65 GFLOPs/frame`; centralized all-in-one
+  upper reference `0.98/0.98/0.89` at `337.08 Mbps`.
+- Exported a second dense scene in Town06:
+  `D:\Data\Carla\2026_07_31_02_24_35`, 10 CAVs, 20 background vehicles,
+  31 frames/CAV, same dense LiDAR parameters. CARLA was closed after dumping.
+- Town06 PointPillar-attentive Table 1: SGCP `0.96/0.94/0.81`, total
+  `15.92 Mbps`.
+- Town06 VoxelNet Table 1: SGCP `0.96/0.96/0.83`, total `15.83 Mbps`.
+- Added external clean-package documents:
+  `C:\Workspace\2026-7-papers\infocom\SGCP\experiment-dense-lidar-ver\12_multibackbone_voxelnet_table1.md`
+  and
+  `C:\Workspace\2026-7-papers\infocom\SGCP\experiment-dense-lidar-ver\13_multiscene_town06_table1.md`.
+
