@@ -11,7 +11,10 @@ import random
 from collections import defaultdict
 
 from opencda.core.clustering.algorithms.resource_allocation.\
-    selective_baseline_common import candidate_grids_for_sender
+    selective_baseline_common import (
+        candidate_grids_for_sender,
+        grid_index_from_id,
+    )
 
 
 def randomize_scheduled_grid_selection(world, clusters, timestamp):
@@ -98,13 +101,6 @@ def select_spatially_diverse_grids(head_vm, sender_vm, candidates, count):
         selected.append(best_grid)
         remaining.remove(best_grid)
     return selected
-
-
-def grid_index_from_id(grid_id):
-    try:
-        return tuple(int(item) for item in str(grid_id).split('_'))
-    except (TypeError, ValueError):
-        return None
 
 
 def grid_l1_distance(grid_a, grid_b):

@@ -66,6 +66,7 @@ from opencda.core.clustering.algorithms.resource_allocation.\
     EDGECOOPER_GLOBAL_COMM_RANGE_M,
     apply_receiver_grid_selection,
     collect_receiver_grid_selection,
+    grid_index_from_id,
 )
 from opencda.core.clustering.algorithms.resource_allocation.\
     selective_baselines import (

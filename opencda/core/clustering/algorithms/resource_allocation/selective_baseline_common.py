@@ -33,6 +33,13 @@ def vehicle_distance(vm_a, vm_b):
         (pos_a.y - pos_b.y) ** 2) ** 0.5
 
 
+def grid_index_from_id(grid_id):
+    try:
+        return tuple(int(item) for item in str(grid_id).split('_'))
+    except (TypeError, ValueError):
+        return None
+
+
 def ns3_link_quality(link_quality, timestamp, source_id, target_id):
     if not link_quality:
         return None
