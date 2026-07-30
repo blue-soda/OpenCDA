@@ -2174,6 +2174,24 @@ def candidate_member_ids(world, cluster, baseline_name):
             if vehicle_distance(head_vm, sender_vm) <= comm_range_m:
                 feasible_members.append(member_id)
         return feasible_members
+    if baseline_name == 'pacp_lidar' and len(cluster.members) <= 1:
+        # Protocol-native singleton evaluation still needs a global candidate
+        # sender pool; otherwise PACP-LiDAR degenerates into local-only
+        # inference because every singleton cluster contains only the receiver.
+        head_vm = world.get_vehicle_manager(head_id)
+        feasible_members = []
+        comm_range_m = float(getattr(
+            world,
+            '_pacp_lidar_global_comm_range_m',
+            EDGECOOPER_GLOBAL_COMM_RANGE_M))
+        for member_id in sorted(world.get_vehicle_managers().keys()):
+            member_id = int(member_id)
+            if member_id == head_id:
+                continue
+            sender_vm = world.get_vehicle_manager(member_id)
+            if vehicle_distance(head_vm, sender_vm) <= comm_range_m:
+                feasible_members.append(member_id)
+        return feasible_members
     return [
         int(member_id) for member_id in sorted(cluster.members)
         if int(member_id) != head_id
@@ -2664,7 +2682,8 @@ def trim_selective_grid_selection_to_global_deadline(
     # advance one grid per pass before a link receives a second grid.
     link_entries.sort(key=lambda item: item['entries'][0][:3])
     original_link_count = len(link_entries)
-    if baseline_name in ['edgecooper_global', 'edgecooper_global_hd']:
+    if baseline_name in ['edgecooper_global', 'edgecooper_global_hd',
+                         'pacp_lidar']:
         matched_links = []
         occupied_senders = set()
         receiver_loads = defaultdict(int)
