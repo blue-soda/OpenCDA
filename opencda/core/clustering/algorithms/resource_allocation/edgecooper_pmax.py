@@ -122,6 +122,38 @@ def _endpoint_matched_links(link_entries, baseline_name, max_senders_per_receive
     return matched
 
 
+def _endpoint_matched_link_batches(link_entries, baseline_name,
+                                   max_senders_per_receiver, num_channels):
+    """Greedily split candidate links into orthogonal resource batches.
+
+    A single 40 MHz / 10ch perception frame contains more than one scheduling
+    instant inside the data-plane deadline.  The endpoint constraints apply to
+    each orthogonal batch, not to the entire 60 ms frame.  Returning a flattened
+    batch order lets the byte-budget admission below reuse the channel pool
+    until the frame budget is exhausted.
+    """
+    if baseline_name not in ['edgecooper_global', 'edgecooper_global_hd']:
+        return [list(link_entries)]
+
+    remaining = list(link_entries)
+    batches = []
+    while remaining:
+        batch = _endpoint_matched_links(
+            remaining,
+            baseline_name,
+            max_senders_per_receiver,
+            num_channels)
+        if not batch:
+            break
+        batch_ids = set(id(item) for item in batch)
+        batches.append(batch)
+        remaining = [
+            item for item in remaining
+            if id(item) not in batch_ids
+        ]
+    return batches
+
+
 def trim_pmax_selection_to_global_deadline(
         world,
         selection,
@@ -198,11 +230,12 @@ def trim_pmax_selection_to_global_deadline(
 
     link_entries.sort(key=lambda item: item['entries'][0][:3])
     pre_matching_candidate_links = len(link_entries)
-    link_entries = _endpoint_matched_links(
+    link_batches = _endpoint_matched_link_batches(
         link_entries,
         base_name,
         max_senders_per_receiver,
         channel_model.num_channels)
+    link_entries = [item for batch in link_batches for item in batch]
 
     remaining_by_receiver = {
         receiver_id: _init_remaining(
@@ -252,6 +285,7 @@ def trim_pmax_selection_to_global_deadline(
         'candidate_bytes': int(candidate_bytes),
         'admitted_links': int(admitted_links),
         'candidate_links': int(len(link_entries)),
+        'candidate_batches': int(len(link_batches)),
         'pre_matching_candidate_links': int(pre_matching_candidate_links),
         'max_senders_per_receiver': max(
             1,
