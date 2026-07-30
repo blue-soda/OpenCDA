@@ -392,7 +392,8 @@ def build_selective_world_and_requests(dataset, scenario_id, timestamp,
                                        baseline_name, member_budget,
                                        grid_budget, include_unscheduled=False,
                                        num_channels=None, rho_th=None):
-    from opencda.tools.offline_inference import assign_selective_grid_selection
+    from opencda.core.clustering.algorithms.resource_allocation.\
+        selective_baselines import assign_selective_grid_selection
 
     frame = dataset.load_frame(
         scenario_id,
