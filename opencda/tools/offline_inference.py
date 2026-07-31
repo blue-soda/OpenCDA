@@ -355,6 +355,12 @@ def parse_args():
                         help='Temporarily override the OpenCOOD '
                              'postprocessor nms_thresh for detector '
                              'checkpoint calibration probes.')
+    parser.add_argument('--local-preserving-output', action='store_true',
+                        help='For each cooperative receiver sample, also run '
+                             'a local-only detector for the receiver and NMS '
+                             'local boxes with cooperative early-fusion boxes. '
+                             'This preserves local perception as a fallback '
+                             'without changing communication payload.')
     return parser.parse_args()
 
 
@@ -1970,6 +1976,52 @@ def is_empty_pillar_error(error):
          'indices=torch.Size([0, 4])' in message))
 
 
+def frame_cav(eval_frame, cav_id):
+    cav_id = int(cav_id)
+    if cav_id in eval_frame:
+        return eval_frame[cav_id]
+    cav_id_text = str(cav_id)
+    if cav_id_text in eval_frame:
+        return eval_frame[cav_id_text]
+    return None
+
+
+def receiver_local_frame(eval_frame, receiver_id):
+    receiver_id = int(receiver_id)
+    cav = frame_cav(eval_frame, receiver_id)
+    if cav is None:
+        return None
+    return OrderedDict([(receiver_id, cav)])
+
+
+def apply_local_preserving_output(manager, eval_frame, receiver_id,
+                                  cooperative_pred, cooperative_score,
+                                  target_lidar_pose,
+                                  debug_output=False):
+    local_frame = receiver_local_frame(eval_frame, receiver_id)
+    if local_frame is None:
+        return cooperative_pred, cooperative_score, 0, 0
+    ret = run_opencood_inference(
+        manager,
+        local_frame,
+        target_lidar_pose,
+        debug_output=debug_output)
+    local_pred, local_score = ret[0:2]
+    local_pred_count = 0 if local_pred is None else local_pred.shape[0]
+    if local_pred is None or local_score is None:
+        return cooperative_pred, cooperative_score, 1, local_pred_count
+
+    pred_tensors = []
+    pred_scores = []
+    if cooperative_pred is not None and cooperative_score is not None:
+        pred_tensors.append(cooperative_pred)
+        pred_scores.append(cooperative_score)
+    pred_tensors.append(local_pred)
+    pred_scores.append(local_score)
+    fused = manager.naive_late_fusion(pred_tensors, pred_scores)
+    return fused[0], fused[1], 1, local_pred_count
+
+
 def format_channel_allocation(channel_allocation):
     items = []
     for link, subchannel in sorted(channel_allocation.items()):
@@ -2069,6 +2121,13 @@ def trace_row(scenario_id, timestamp, metadata, eval_frame,
             'upload_density_cap_rho', ''),
         'edgecooper_pmax_density_cap_rho': metadata.get(
             'edgecooper_pmax_density_cap_rho', ''),
+        'local_preserving_output': int(bool(metadata.get(
+            'local_preserving_output', False))),
+        'local_preserving_extra_calls': metadata.get(
+            'local_preserving_extra_calls', ''),
+        'local_preserving_extra_point_counts_json': json.dumps(
+            metadata.get('local_preserving_extra_point_counts', {}),
+            sort_keys=True),
         'upload_density_cap_seed': metadata.get(
             'upload_density_cap_seed', ''),
         'max_senders_per_receiver': metadata.get(
@@ -2138,6 +2197,9 @@ def write_trace_csv(path, rows):
         'sgcp_frame_budget_admitted_bytes',
         'upload_density_cap_rho',
         'edgecooper_pmax_density_cap_rho',
+        'local_preserving_output',
+        'local_preserving_extra_calls',
+        'local_preserving_extra_point_counts_json',
         'upload_density_cap_seed',
         'max_senders_per_receiver',
         'channel_estimator',
@@ -2650,6 +2712,31 @@ def main():
                               sgcp_metadata['communication_bytes']))
                     continue
                 pred_box_tensor, pred_score, gt_box_tensor = ret[0:3]
+                if (args.local_preserving_output and
+                        sgcp_metadata is not None and
+                        any(int(source_id) != int(sgcp_metadata['receiver_id'])
+                            for source_id in
+                            sgcp_metadata.get('source_cav_ids', []))):
+                    pred_box_tensor, pred_score, extra_calls, local_count = (
+                        apply_local_preserving_output(
+                            manager,
+                            eval_frame,
+                            sgcp_metadata['receiver_id'],
+                            pred_box_tensor,
+                            pred_score,
+                            target_ego_lidar_pose,
+                            debug_output=args.debug_opencood_output))
+                    sgcp_metadata['local_preserving_output'] = True
+                    sgcp_metadata['local_preserving_extra_calls'] = extra_calls
+                    receiver_cav = frame_cav(
+                        eval_frame, sgcp_metadata['receiver_id'])
+                    sgcp_metadata['local_preserving_extra_point_counts'] = {
+                        int(sgcp_metadata['receiver_id']):
+                        0 if receiver_cav is None else
+                        int(receiver_cav['lidar_np'].shape[0])
+                    }
+                    sgcp_metadata['local_preserving_local_pred_boxes'] = (
+                        local_count)
                 if pred_box_tensor is not None and pred_score is not None:
                     pred_tensors.append(pred_box_tensor)
                     pred_scores.append(pred_score)
@@ -2822,6 +2909,31 @@ def main():
                 debug_output=args.debug_opencood_output)
 
             pred_box_tensor, pred_score, gt_box_tensor = ret[0:3]
+            if (args.local_preserving_output and
+                    sgcp_metadata is not None and
+                    any(int(source_id) != int(sgcp_metadata['receiver_id'])
+                        for source_id in
+                        sgcp_metadata.get('source_cav_ids', []))):
+                pred_box_tensor, pred_score, extra_calls, local_count = (
+                    apply_local_preserving_output(
+                        manager,
+                        eval_frame,
+                        sgcp_metadata['receiver_id'],
+                        pred_box_tensor,
+                        pred_score,
+                        ego_lidar_pose,
+                        debug_output=args.debug_opencood_output))
+                sgcp_metadata['local_preserving_output'] = True
+                sgcp_metadata['local_preserving_extra_calls'] = extra_calls
+                receiver_cav = frame_cav(
+                    eval_frame, sgcp_metadata['receiver_id'])
+                sgcp_metadata['local_preserving_extra_point_counts'] = {
+                    int(sgcp_metadata['receiver_id']):
+                    0 if receiver_cav is None else
+                    int(receiver_cav['lidar_np'].shape[0])
+                }
+                sgcp_metadata['local_preserving_local_pred_boxes'] = (
+                    local_count)
             pred_count = (
                 0 if pred_box_tensor is None else pred_box_tensor.shape[0])
             gt_count = 0 if gt_box_tensor is None else gt_box_tensor.shape[0]

@@ -1,0 +1,31 @@
+{
+  "cav_count": 20,
+  "coperception_yaml": "docs\\doc_workspace\\SGCP\\artifacts\\early_from_late_checkpoint_20260719\\enable_coperception_early_from_attentive.yaml",
+  "dataset_root": "D:\\Data\\Carla",
+  "ego_cav_id": "1",
+  "flop_policy": "Conv2d/Conv3d/ConvTranspose2d/Linear/BatchNorm/ReLU hooks, sparse-3D active-output proxy, and PillarVFE/MeanVFE elementwise estimate; multiply-add=2 FLOPs; voxelization/hash/scatter memory/index ops excluded",
+  "flops_by_module_type": {
+    "BatchNorm1d": 107638784.0,
+    "BatchNorm2d": 68710400.0,
+    "Conv2d": 47147161600.0,
+    "ConvTranspose2d": 42100326400.0,
+    "Linear": 1076387840.0,
+    "PillarVFEElementwise": 16135306.0,
+    "ReLU": 34355200.0
+  },
+  "flops_by_scope": {
+    "bev_backbone": 88917452800.0,
+    "detection_head": 433100800.0,
+    "point_feature_pillar_vfe": 1200161930.0
+  },
+  "fusion_method": "early",
+  "input_points": 277236,
+  "point_dependent_flops_per_forward": 1200161930.0,
+  "point_dependent_gflops_per_forward": 1.20016193,
+  "point_feature_flops_per_forward": 1200161930.0,
+  "point_feature_gflops_per_forward": 1.20016193,
+  "profiled_flops_per_forward": 90550715530.0,
+  "profiled_gflops_per_forward": 90.55071553,
+  "scenario_id": "2026_07_29_02_32_08",
+  "timestamp": "000060"
+}

@@ -192,15 +192,24 @@ def build_input_adjusted_model(calibration, dense_calibration):
     try:
         point_a = float(calibration['input_points'])
         point_b = float(dense_calibration['input_points'])
+        scope_a = calibration.get('flops_by_scope', {})
+        scope_b = dense_calibration.get('flops_by_scope', {})
         point_feature_a = float(
             calibration.get(
                 'point_feature_flops_per_forward',
-                calibration.get('flops_by_module_type', {}).get('Linear', 0.0)))
+                calibration.get(
+                    'point_dependent_flops_per_forward',
+                    calibration.get(
+                        'flops_by_module_type', {}).get('Linear', 0.0))))
         point_feature_b = float(
             dense_calibration.get(
                 'point_feature_flops_per_forward',
                 dense_calibration.get(
-                    'flops_by_module_type', {}).get('Linear', 0.0)))
+                    'point_dependent_flops_per_forward',
+                    dense_calibration.get(
+                        'flops_by_module_type', {}).get('Linear', 0.0))))
+        point_feature_a += float(scope_a.get('sparse_3d_backbone', 0.0))
+        point_feature_b += float(scope_b.get('sparse_3d_backbone', 0.0))
         fixed_a = (
             float(calibration.get('profiled_flops_per_forward', 0.0)) -
             point_feature_a)
@@ -240,8 +249,6 @@ def summarize_trace(label, trace_path, metric_row, calibrated_gflops,
     timestamps = sorted({row.get('timestamp', '') for row in rows})
     frame_count = len(timestamps) if timestamps else 0
     detector_calls_total = len(active_rows)
-    calls_per_frame = (
-        detector_calls_total / float(frame_count) if frame_count else 0.0)
 
     rows_by_frame = defaultdict(list)
     for row in active_rows:
@@ -251,6 +258,8 @@ def summarize_trace(label, trace_path, metric_row, calibrated_gflops,
     uploaded_source_counts = []
     selected_grids = []
     input_points = []
+    local_preserving_extra_calls = []
+    local_preserving_extra_points = []
     pred_boxes = []
     comm_bytes = []
     comm_time_ms = []
@@ -265,12 +274,26 @@ def summarize_trace(label, trace_path, metric_row, calibrated_gflops,
         selected_grids.append(
             sum(to_int(value) for value in selected_grid_counts.values()))
         input_points.append(sum(to_int(value) for value in point_counts.values()))
+        local_preserving_extra_calls.append(
+            to_int(row.get('local_preserving_extra_calls'), 0))
+        extra_point_counts = read_json_cell(
+            row.get('local_preserving_extra_point_counts_json'), {})
+        local_preserving_extra_points.append(
+            sum(to_int(value) for value in extra_point_counts.values()))
         pred_boxes.append(to_int(row.get('pred_boxes'), 0))
         comm_bytes.append(to_float(row.get('communication_bytes'), 0.0))
         comm_time_ms.append(to_float(row.get('frame_comm_time_ms'), 0.0))
 
-    calls_per_frame_values = [len(rows_by_frame[timestamp])
-                              for timestamp in timestamps]
+    detector_calls_total += sum(local_preserving_extra_calls)
+    calls_per_frame = (
+        detector_calls_total / float(frame_count) if frame_count else 0.0)
+
+    calls_per_frame_values = [
+        len(rows_by_frame[timestamp]) +
+        sum(to_int(row.get('local_preserving_extra_calls'), 0)
+            for row in rows_by_frame[timestamp])
+        for timestamp in timestamps
+    ]
     pred_boxes_per_frame_values = [
         sum(to_int(row.get('pred_boxes'), 0)
             for row in rows_by_frame[timestamp])
@@ -280,6 +303,10 @@ def summarize_trace(label, trace_path, metric_row, calibrated_gflops,
         sum(
             sum(to_int(value) for value in read_json_cell(
                 row.get('point_counts_json'), {}).values())
+            +
+            sum(to_int(value) for value in read_json_cell(
+                row.get('local_preserving_extra_point_counts_json'),
+                {}).values())
             for row in rows_by_frame[timestamp])
         for timestamp in timestamps
     ]
@@ -300,6 +327,16 @@ def summarize_trace(label, trace_path, metric_row, calibrated_gflops,
                     adjusted_point_feature_gflops_for_points(
                         row_points,
                         input_adjusted_model))
+                extra_point_counts = read_json_cell(
+                    row.get('local_preserving_extra_point_counts_json'), {})
+                for point_count in extra_point_counts.values():
+                    frame_gflops += adjusted_gflops_for_points(
+                        to_int(point_count),
+                        input_adjusted_model)
+                    frame_point_feature_gflops += (
+                        adjusted_point_feature_gflops_for_points(
+                            to_int(point_count),
+                            input_adjusted_model))
             adjusted_gflops_per_frame_values.append(frame_gflops)
             adjusted_point_feature_gflops_per_frame_values.append(
                 frame_point_feature_gflops)
@@ -382,6 +419,10 @@ class FlopCounter(object):
         def make_scope(module_name):
             if module_name.startswith('pillar_vfe'):
                 return 'point_feature_pillar_vfe'
+            if module_name.startswith('mean_vfe'):
+                return 'point_feature_mean_vfe'
+            if module_name.startswith('backbone_3d'):
+                return 'sparse_3d_backbone'
             if module_name.startswith('scatter'):
                 return 'scatter'
             if module_name.startswith('backbone'):
@@ -407,6 +448,63 @@ class FlopCounter(object):
                 flops = 2.0 * macs
                 if module.bias is not None:
                     flops += batch * out_channels * out_h * out_w
+                self.add_flops(
+                    flops,
+                    type(module).__name__,
+                    make_scope(module_name))
+            return hook
+
+        def conv3d_hook(module_name):
+            def hook(module, inputs, output):
+                if output is None or not hasattr(output, 'shape'):
+                    return
+                output_shape = tuple(output.shape)
+                if len(output_shape) < 5:
+                    return
+                batch, out_channels, out_d, out_h, out_w = output_shape[:5]
+                in_channels = module.in_channels
+                groups = module.groups
+                kernel_d, kernel_h, kernel_w = module.kernel_size
+                macs = (
+                    batch * out_channels * out_d * out_h * out_w *
+                    (in_channels / float(groups)) *
+                    kernel_d * kernel_h * kernel_w)
+                flops = 2.0 * macs
+                if module.bias is not None:
+                    flops += batch * out_channels * out_d * out_h * out_w
+                self.add_flops(
+                    flops,
+                    type(module).__name__,
+                    make_scope(module_name))
+            return hook
+
+        def sparse_conv_hook(module_name):
+            def hook(module, inputs, output):
+                if output is None or not hasattr(output, 'features'):
+                    return
+                features = output.features
+                if features is None or not hasattr(features, 'shape'):
+                    return
+                active_outputs = int(features.shape[0])
+                out_channels = int(getattr(module, 'out_channels',
+                                           features.shape[-1]))
+                in_channels = int(getattr(module, 'in_channels',
+                                          out_channels))
+                kernel_size = getattr(module, 'kernel_size', 1)
+                if isinstance(kernel_size, int):
+                    kernel_volume = kernel_size ** 3
+                else:
+                    kernel_volume = 1
+                    for value in kernel_size:
+                        kernel_volume *= int(value)
+                # Sparse convolution FLOPs depend on the active rulebook. The
+                # rulebook is backend-internal, so this uses the standard
+                # active-output upper-bound proxy.
+                flops = (
+                    2.0 * active_outputs * in_channels * out_channels *
+                    kernel_volume)
+                if getattr(module, 'bias', None) is not None:
+                    flops += active_outputs * out_channels
                 self.add_flops(
                     flops,
                     type(module).__name__,
@@ -484,6 +582,35 @@ class FlopCounter(object):
                 'PillarVFEElementwise',
                 'point_feature_pillar_vfe')
 
+        def mean_vfe_pre_hook(module, inputs):
+            if not inputs:
+                return
+            batch_dict = inputs[0]
+            if not isinstance(batch_dict, dict):
+                return
+            voxel_features = batch_dict.get('voxel_features')
+            voxel_num_points = batch_dict.get('voxel_num_points')
+            if voxel_features is None or voxel_num_points is None:
+                return
+            if not hasattr(voxel_features, 'shape') or len(
+                    voxel_features.shape) < 3:
+                return
+            voxel_count = int(voxel_features.shape[0])
+            max_points = int(voxel_features.shape[1])
+            channels = int(voxel_features.shape[2])
+            try:
+                actual_points = int(voxel_num_points.sum().item())
+            except Exception:
+                actual_points = voxel_count * max_points
+            # MeanVFE computes per-voxel channel sums and divides by the number
+            # of points. Count floating additions over actual points plus one
+            # division per output channel.
+            flops = actual_points * channels + voxel_count * channels
+            self.add_flops(
+                flops,
+                'MeanVFEElementwise',
+                'point_feature_mean_vfe')
+
         def relu_hook(module_name):
             def hook(module, inputs, output):
                 if output is None or not hasattr(output, 'numel'):
@@ -501,9 +628,23 @@ class FlopCounter(object):
             if module_name == 'pillar_vfe':
                 self.handles.append(
                     module.register_forward_pre_hook(pillar_vfe_pre_hook))
+            if module_name == 'mean_vfe':
+                self.handles.append(
+                    module.register_forward_pre_hook(mean_vfe_pre_hook))
             if isinstance(module, (nn.Conv2d, nn.ConvTranspose2d)):
                 self.handles.append(
                     module.register_forward_hook(conv_hook(module_name)))
+            elif isinstance(module, nn.Conv3d):
+                self.handles.append(
+                    module.register_forward_hook(conv3d_hook(module_name)))
+            elif (hasattr(module, 'weight') and
+                  module.__class__.__name__ in [
+                      'SubMConv3d',
+                      'SparseConv3d',
+                      'SparseInverseConv3d']):
+                self.handles.append(
+                    module.register_forward_hook(
+                        sparse_conv_hook(module_name)))
             elif isinstance(module, nn.Linear):
                 self.handles.append(
                     module.register_forward_hook(linear_hook(module_name)))
@@ -569,14 +710,21 @@ def calibrate_forward(args):
         'coperception_yaml': args.coperception_yaml,
         'input_points': point_count,
         'flop_policy': (
-            'Conv2d/ConvTranspose2d/Linear/BatchNorm/ReLU hooks plus '
-            'PillarVFE elementwise estimate; multiply-add=2 FLOPs; '
-            'voxelization/hash/scatter memory ops excluded'),
+            'Conv2d/Conv3d/ConvTranspose2d/Linear/BatchNorm/ReLU hooks, '
+            'sparse-3D active-output proxy, and PillarVFE/MeanVFE '
+            'elementwise estimate; multiply-add=2 FLOPs; '
+            'voxelization/hash/scatter memory/index ops excluded'),
         'profiled_flops_per_forward': counter.flops,
         'profiled_gflops_per_forward': counter.flops / 1e9,
         'point_feature_flops_per_forward': counter.point_feature_flops,
         'point_feature_gflops_per_forward': (
             counter.point_feature_flops / 1e9),
+        'point_dependent_flops_per_forward': (
+            counter.point_feature_flops +
+            counter.by_scope.get('sparse_3d_backbone', 0.0)),
+        'point_dependent_gflops_per_forward': (
+            (counter.point_feature_flops +
+             counter.by_scope.get('sparse_3d_backbone', 0.0)) / 1e9),
         'flops_by_module_type': {
             key: value for key, value in sorted(counter.by_type.items())
         },

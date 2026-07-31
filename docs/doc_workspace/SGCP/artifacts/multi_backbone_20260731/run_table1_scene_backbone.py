@@ -145,6 +145,7 @@ def main():
     parser.add_argument("--output-dir", required=True)
     parser.add_argument("--n-max", type=int, required=True)
     parser.add_argument("--sgcp-budget-mbps", type=float, default=40.0)
+    parser.add_argument("--local-preserving-output", action="store_true")
     parser.add_argument("--force", action="store_true")
     parser.add_argument("--only", default=None)
     args = parser.parse_args()
@@ -171,10 +172,14 @@ def main():
     if args.only:
         only = {item.strip() for item in args.only.split(",") if item.strip()}
     output_dir = Path(args.output_dir)
+    local_preserving_runs = {"pcs", "edgecooper_pmax", "pacp_lidar"}
     for run in build_runs(args.n_max, args.sgcp_budget_mbps):
         if only is not None and run["name"] not in only:
             continue
-        run_one(base_args, output_dir, run["name"], run["args"],
+        extra_args = list(run["args"])
+        if args.local_preserving_output and run["name"] in local_preserving_runs:
+            extra_args.append("--local-preserving-output")
+        run_one(base_args, output_dir, run["name"], extra_args,
                 force=args.force)
 
 
