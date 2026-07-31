@@ -1,0 +1,22 @@
+enable_coperception:
+  vehicle_base: &vehicle_base
+    sensing: &base_sensing
+      perception: &base_perception
+        activate: true
+        coperception: true
+        perception_frequency: 10
+        enable_communicate: true
+        enable_show_gt: true
+    v2x: &base_v2x
+      enabled: true
+      communication_range: 35
+      beacon_frequency: 20
+      loc_noise: 0.0
+      yaw_noise: 0.0
+      speed_noise: 0.0
+      lag: 0
+  coperception:
+    models:
+      early: 'docs/doc_workspace/SGCP/artifacts/multi_backbone_20260731/voxelnet_early_from_attentive_compression_patched'
+      late: 'opencood/logs/pointpillar_late_fusion'
+    fusion_method: 'early'

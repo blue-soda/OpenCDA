@@ -483,3 +483,11 @@ SGCP 工作与仓库中以下部分关系最紧密：
   (`6.63` vs `19.51` dense; `5.26` vs `10.00` Town06). External clean-package
   document:
   `C:\Workspace\2026-7-papers\infocom\SGCP\experiment-dense-lidar-ver\15_multibackbone_second_subset.md`.
+- Other backbone migration probe is complete. VoxelNet attentive-to-early is
+  runnable but not recommended: dense SGCP drops to `0.83/0.80/0.64` while
+  pure late is `0.88/0.86/0.69`; Town06 SGCP is `0.97/0.95/0.86` vs pure late
+  `0.96/0.95/0.89`. VoxelNet attentive-compression-to-early is a negative
+  diagnostic (`0.72/0.61/0.14` dense SGCP) because compression-specific modules
+  are ignored by the early-fusion model. Keep SECOND attentive-to-early as the
+  strongest migrated-backbone evidence. Summary document:
+  `C:\Workspace\2026-7-papers\infocom\SGCP\experiment-dense-lidar-ver\16_backbone_weight_migration_probe.md`.

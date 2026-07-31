@@ -8868,3 +8868,23 @@ Dense SGCP experiments:
 - Added clean-package document:
   `C:\Workspace\2026-7-papers\infocom\SGCP\experiment-dense-lidar-ver\15_multibackbone_second_subset.md`.
 
+### 2026-07-31 20:05:00 +08:00 - Other backbone migration probe
+
+- User requested trying other backbone migration effects after SECOND.
+- Found available VoxelNet attentive checkpoint:
+  `C:\Users\sakakibara\Downloads\voxelnet_attentive_fusion.zip`. It is
+  key-compatible with the VoxelNet early model, so created
+  `voxelnet_early_from_attentive_patched` and
+  `enable_coperception_voxelnet_att2early.yaml`.
+- VoxelNet attentive-to-early result: dense pure late `0.88/0.86/0.69`, dense
+  SGCP `0.83/0.80/0.64`; Town06 pure late `0.96/0.95/0.89`, Town06 SGCP
+  `0.97/0.95/0.86`. This migration is runnable but not recommended for the
+  main paper result because dense SGCP weakens.
+- Also tested VoxelNet attentive-compression-to-early. The checkpoint contains
+  all early keys but adds compression-specific modules; `strict=False` loading
+  ignores those modules. It runs but gives poor AP: dense SGCP
+  `0.72/0.61/0.14`, Town06 SGCP `0.61/0.52/0.24`. Marked as non-paper
+  diagnostic.
+- Added migration summary document:
+  `C:\Workspace\2026-7-papers\infocom\SGCP\experiment-dense-lidar-ver\16_backbone_weight_migration_probe.md`.
+

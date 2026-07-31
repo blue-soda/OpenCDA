@@ -2382,3 +2382,28 @@ SECOND attentive-to-early:
 Conclusion: vanilla SECOND early is only a tradeoff probe, but SECOND
 attentive-to-early is suitable as a robustness result because SGCP exceeds pure
 late in both scenes and all AP thresholds while using far fewer detector calls.
+
+#### Additional backbone migration probe
+
+VoxelNet attentive-to-early:
+
+| Scene | Method | AP@0.3 | AP@0.5 | AP@0.7 | Raw Mbps | Box Mbps | Total Mbps | GFLOPs/frame | Calls/frame |
+| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| Dense roundabout | Pure late | 0.88 | 0.86 | 0.69 | 0.00 | 1.46 | 1.46 | 3188.50 | 20.00 |
+| Dense roundabout | SGCP | 0.83 | 0.80 | 0.64 | 27.84 | 0.69 | 28.53 | 1057.65 | 6.63 |
+| Town06 | Pure late | 0.96 | 0.95 | 0.89 | 0.00 | 0.66 | 0.66 | 1594.25 | 10.00 |
+| Town06 | SGCP | 0.97 | 0.95 | 0.86 | 15.42 | 0.43 | 15.85 | 838.27 | 5.26 |
+
+VoxelNet attentive-compression-to-early:
+
+| Scene | Method | AP@0.3 | AP@0.5 | AP@0.7 | Raw Mbps | Box Mbps | Total Mbps | GFLOPs/frame | Calls/frame |
+| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| Dense roundabout | Pure late | 0.81 | 0.67 | 0.15 | 0.00 | 1.13 | 1.13 | 3188.50 | 20.00 |
+| Dense roundabout | SGCP | 0.72 | 0.61 | 0.14 | 27.84 | 0.55 | 28.39 | 1057.65 | 6.63 |
+| Town06 | Pure late | 0.58 | 0.51 | 0.25 | 0.00 | 0.68 | 0.68 | 1594.25 | 10.00 |
+| Town06 | SGCP | 0.61 | 0.52 | 0.24 | 15.42 | 0.43 | 15.85 | 838.27 | 5.26 |
+
+Interpretation: VoxelNet attentive-to-early is a useful diagnostic but weaker
+than SECOND attentive-to-early. VoxelNet compression migration should not be
+used as paper evidence because the compression-specific modules are ignored by
+the early-fusion model.
