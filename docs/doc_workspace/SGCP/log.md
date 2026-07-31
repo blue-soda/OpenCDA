@@ -8846,3 +8846,25 @@ Dense SGCP experiments:
   and
   `C:\Workspace\2026-7-papers\infocom\SGCP\experiment-dense-lidar-ver\13_multiscene_town06_table1.md`.
 
+### 2026-07-31 18:45:00 +08:00 - SECOND backbone and attentive-to-early probe
+
+- User requested SECOND backbone; if pure late remained too strong, try
+  attentive-weight migration into early fusion.
+- Extracted and patched `second_early_fusion.zip`. Converted 12 SECOND 3D
+  backbone weights from old spconv layout to the local layout. Added
+  `enable_coperception_second_early.yaml`.
+- SECOND early fusion ran successfully after extending the offline empty-pillar
+  guard to also catch SECOND/spconv empty-index errors. Dense result:
+  pure late `0.97/0.96/0.82`, SGCP `0.93/0.91/0.80`; Town06 result:
+  pure late `0.95/0.95/0.83`, SGCP `0.98/0.97/0.81`.
+- Because dense pure late remained stronger, extracted
+  `second_attentive_fusion.zip`, migrated compatible attentive weights into the
+  SECOND early-fusion model definition, and added
+  `enable_coperception_second_att2early.yaml`.
+- SECOND attentive-to-early result: dense SGCP `0.92/0.90/0.78` at
+  `28.75 Mbps` vs pure late `0.88/0.86/0.73` at `2.05 Mbps`; Town06 SGCP
+  `0.95/0.94/0.87` at `15.93 Mbps` vs pure late `0.92/0.91/0.86` at
+  `0.81 Mbps`.
+- Added clean-package document:
+  `C:\Workspace\2026-7-papers\infocom\SGCP\experiment-dense-lidar-ver\15_multibackbone_second_subset.md`.
+

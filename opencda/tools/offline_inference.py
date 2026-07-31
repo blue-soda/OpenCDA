@@ -1962,9 +1962,12 @@ def collapse_frame_to_receiver_pointcloud(frame, receiver_lidar_pose):
 
 
 def is_empty_pillar_error(error):
+    message = str(error)
     return (
         isinstance(error, RuntimeError) and
-        'input.numel() == 0' in str(error))
+        ('input.numel() == 0' in message or
+         'N > 0 assert' in message or
+         'indices=torch.Size([0, 4])' in message))
 
 
 def format_channel_allocation(channel_allocation):

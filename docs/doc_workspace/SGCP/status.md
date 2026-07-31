@@ -473,3 +473,13 @@ SGCP 工作与仓库中以下部分关系最紧密：
   `C:\Workspace\2026-7-papers\infocom\SGCP\experiment-dense-lidar-ver\12_multibackbone_voxelnet_table1.md`
   and
   `C:\Workspace\2026-7-papers\infocom\SGCP\experiment-dense-lidar-ver\13_multiscene_town06_table1.md`.
+- SECOND follow-up requested by the user is complete. Vanilla SECOND early
+  fusion still leaves dense pure late too strong (`0.97/0.96/0.82`) relative
+  to SGCP (`0.93/0.91/0.80`), though SGCP wins on Town06 at AP@0.3/AP@0.5.
+  Migrating the SECOND attentive checkpoint into the early-fusion model gives
+  the desired result: dense SGCP `0.92/0.90/0.78` vs pure late
+  `0.88/0.86/0.73`, and Town06 SGCP `0.95/0.94/0.87` vs pure late
+  `0.92/0.91/0.86`. SGCP uses much fewer detector calls
+  (`6.63` vs `19.51` dense; `5.26` vs `10.00` Town06). External clean-package
+  document:
+  `C:\Workspace\2026-7-papers\infocom\SGCP\experiment-dense-lidar-ver\15_multibackbone_second_subset.md`.

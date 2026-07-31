@@ -2355,3 +2355,30 @@ PointPillar-only artifact and remains favorable on a different road topology.
 The VoxelNet runs also show that very strong pure-late AP can coexist with much
 higher detector-call/GFLOPs cost, which should be explained as a compute-limited
 tradeoff rather than a communication-only comparison.
+
+#### SECOND backbone targeted probe
+
+User requested SECOND first, then attentive-weight migration if pure late
+remained too strong. Both were completed under the same dense Table 1 protocol.
+
+SECOND early fusion:
+
+| Scene | Method | AP@0.3 | AP@0.5 | AP@0.7 | Raw Mbps | Box Mbps | Total Mbps | GFLOPs/frame | Calls/frame |
+| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| Dense roundabout | Pure late | 0.97 | 0.96 | 0.82 | 0.00 | 1.72 | 1.72 | 2951.96 | 19.51 |
+| Dense roundabout | SGCP | 0.93 | 0.91 | 0.80 | 27.84 | 0.84 | 28.67 | 1003.67 | 6.63 |
+| Town06 | Pure late | 0.95 | 0.95 | 0.83 | 0.00 | 0.75 | 0.75 | 1512.88 | 10.00 |
+| Town06 | SGCP | 0.98 | 0.97 | 0.81 | 15.42 | 0.49 | 15.91 | 795.48 | 5.26 |
+
+SECOND attentive-to-early:
+
+| Scene | Method | AP@0.3 | AP@0.5 | AP@0.7 | Raw Mbps | Box Mbps | Total Mbps | GFLOPs/frame | Calls/frame |
+| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| Dense roundabout | Pure late | 0.88 | 0.86 | 0.73 | 0.00 | 2.05 | 2.05 | 2951.96 | 19.51 |
+| Dense roundabout | SGCP | 0.92 | 0.90 | 0.78 | 27.84 | 0.92 | 28.75 | 1003.67 | 6.63 |
+| Town06 | Pure late | 0.92 | 0.91 | 0.86 | 0.00 | 0.81 | 0.81 | 1512.88 | 10.00 |
+| Town06 | SGCP | 0.95 | 0.94 | 0.87 | 15.42 | 0.51 | 15.93 | 795.48 | 5.26 |
+
+Conclusion: vanilla SECOND early is only a tradeoff probe, but SECOND
+attentive-to-early is suitable as a robustness result because SGCP exceeds pure
+late in both scenes and all AP thresholds while using far fewer detector calls.
