@@ -145,7 +145,10 @@ def main():
     parser.add_argument("--output-dir", required=True)
     parser.add_argument("--n-max", type=int, required=True)
     parser.add_argument("--sgcp-budget-mbps", type=float, default=40.0)
+    parser.add_argument("--cav-count", type=int, default=None)
     parser.add_argument("--local-preserving-output", action="store_true")
+    parser.add_argument("--gt-scope", default="sample",
+                        choices=["sample", "full-frame"])
     parser.add_argument("--force", action="store_true")
     parser.add_argument("--only", default=None)
     args = parser.parse_args()
@@ -167,7 +170,10 @@ def main():
         "--ns3-symbols-per-slot", "12",
         "--ns3-mcs", "28",
         "--communication-deadline-ms", "60",
+        "--gt-scope", args.gt_scope,
     ]
+    if args.cav_count is not None:
+        base_args.extend(["--cav-count", str(args.cav_count)])
     only = None
     if args.only:
         only = {item.strip() for item in args.only.split(",") if item.strip()}

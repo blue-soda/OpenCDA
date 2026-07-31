@@ -361,6 +361,14 @@ def parse_args():
                              'local boxes with cooperative early-fusion boxes. '
                              'This preserves local perception as a fallback '
                              'without changing communication payload.')
+    parser.add_argument('--gt-scope',
+                        choices=['sample', 'full-frame'],
+                        default='sample',
+                        help='Ground-truth scope for offline AP. sample uses '
+                             'the evaluated receiver sample, while full-frame '
+                             'uses all CAV annotations from the original frame '
+                             'projected to the receiver pose. full-frame keeps '
+                             'the AP denominator independent of the scheduler.')
     return parser.parse_args()
 
 
@@ -1922,6 +1930,16 @@ def run_opencood_inference(manager, frame, ego_lidar_pose,
         return_object_ids=manager.fusion_method != 'late')
 
 
+def run_opencood_gt(manager, frame, ego_lidar_pose):
+    reformat_data_dict = manager.opencood_dataset.get_item_test(
+        frame,
+        ego_lidar_pose)
+    output_dict = manager.opencood_dataset.collate_batch_test(
+        [reformat_data_dict])
+    batch_data = manager.to_device(output_dict)
+    return manager.opencood_dataset.post_processor.generate_gt_bbx(batch_data)
+
+
 def project_points_by_matrix(points, transformation_matrix):
     if points is None or points.size == 0:
         return points
@@ -2067,6 +2085,7 @@ def trace_row(scenario_id, timestamp, metadata, eval_frame,
         'receiver_policy': metadata.get('receiver_policy', ''),
         'coperception_yaml': metadata.get('coperception_yaml', ''),
         'resource_allocation': metadata.get('resource_allocation', ''),
+        'gt_scope': metadata.get('gt_scope', ''),
         'upload_mode': metadata.get('upload_mode', ''),
         'grid_selection_mode': metadata.get('grid_selection_mode', ''),
         'grid_score_mode': metadata.get('grid_score_mode', ''),
@@ -2166,6 +2185,7 @@ def write_trace_csv(path, rows):
         'receiver_policy',
         'coperception_yaml',
         'resource_allocation',
+        'gt_scope',
         'upload_mode',
         'grid_selection_mode',
         'grid_score_mode',
@@ -2668,10 +2688,18 @@ def main():
         for _, metadata in frame_items:
             if metadata is not None:
                 metadata['coperception_yaml'] = args.coperception_yaml
+                metadata['gt_scope'] = args.gt_scope
+        full_frame_gt_cache = {}
         if args.sgcp_inter_cluster_late_fusion:
             pred_tensors = []
             pred_scores = []
             gt_tensors = []
+            frame_full_gt_target = None
+            if args.gt_scope == 'full-frame':
+                frame_full_gt_target = run_opencood_gt(
+                    manager,
+                    frame,
+                    target_ego_lidar_pose)
             for receiver_index, (eval_frame, sgcp_metadata) in enumerate(
                     frame_items,
                     start=1):
@@ -2712,6 +2740,8 @@ def main():
                               sgcp_metadata['communication_bytes']))
                     continue
                 pred_box_tensor, pred_score, gt_box_tensor = ret[0:3]
+                if frame_full_gt_target is not None:
+                    gt_box_tensor = frame_full_gt_target
                 if (args.local_preserving_output and
                         sgcp_metadata is not None and
                         any(int(source_id) != int(sgcp_metadata['receiver_id'])
@@ -2740,7 +2770,8 @@ def main():
                 if pred_box_tensor is not None and pred_score is not None:
                     pred_tensors.append(pred_box_tensor)
                     pred_scores.append(pred_score)
-                if gt_box_tensor is not None:
+                if (gt_box_tensor is not None and
+                        args.gt_scope != 'full-frame'):
                     gt_tensors.append(gt_box_tensor)
                 if sgcp_metadata is not None:
                     update_coverage_quality_state(
@@ -2784,10 +2815,13 @@ def main():
                 pred_scores,
                 iou_threshold=args.sgcp_late_nms_thresh)
             fused_pred, fused_score = fused_pred_ret[:2]
-            fused_gt, _ = manager.naive_late_fusion(
-                gt_tensors,
-                None,
-                iou_threshold=args.sgcp_late_nms_thresh)
+            if frame_full_gt_target is not None:
+                fused_gt = frame_full_gt_target
+            else:
+                fused_gt, _ = manager.naive_late_fusion(
+                    gt_tensors,
+                    None,
+                    iou_threshold=args.sgcp_late_nms_thresh)
             print('sgcp_late_fusion frame=%s/%s scenario=%s timestamp=%s '
                   'sources=%s fused_pred_boxes=%s fused_gt_boxes=%s' % (
                       index,
@@ -2909,6 +2943,18 @@ def main():
                 debug_output=args.debug_opencood_output)
 
             pred_box_tensor, pred_score, gt_box_tensor = ret[0:3]
+            if args.gt_scope == 'full-frame':
+                receiver_id_for_gt = (
+                    int(sgcp_metadata['receiver_id'])
+                    if sgcp_metadata is not None
+                    else int(next(cav_id for cav_id, cav in eval_frame.items()
+                                  if cav['ego'])))
+                if receiver_id_for_gt not in full_frame_gt_cache:
+                    full_frame_gt_cache[receiver_id_for_gt] = run_opencood_gt(
+                        manager,
+                        frame,
+                        ego_lidar_pose)
+                gt_box_tensor = full_frame_gt_cache[receiver_id_for_gt]
             if (args.local_preserving_output and
                     sgcp_metadata is not None and
                     any(int(source_id) != int(sgcp_metadata['receiver_id'])
