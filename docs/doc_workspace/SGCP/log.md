@@ -8888,3 +8888,25 @@ Dense SGCP experiments:
 - Added migration summary document:
   `C:\Workspace\2026-7-papers\infocom\SGCP\experiment-dense-lidar-ver\16_backbone_weight_migration_probe.md`.
 
+### 2026-07-31 21:00:00 +08:00 - Clean package narrowed and SECOND full baselines
+
+- User requested moving all non-PointPillar-attentive main-table backbone
+  diagnostics out of the clean package, then completing SECOND-attentive-to-early
+  full main tables with all baselines on both scenes.
+- Moved external clean-package diagnostic files `12`, `14`, and `16` out to
+  sibling archive directory
+  `C:\Workspace\2026-7-papers\infocom\SGCP\experiment-dense-lidar-ver-extra-backbone-probes-20260731`.
+- Rewrote
+  `C:\Workspace\2026-7-papers\infocom\SGCP\experiment-dense-lidar-ver\13_multiscene_town06_table1.md`
+  to keep only the PointPillar-attentive Town06 main-table result.
+- Reran SECOND-attentive-to-early full Table 1 on dense roundabout and Town06:
+  centralized upper, no collaboration, pure late, FullPerception-PCS,
+  EdgeCooper-Pmax, PACP-LiDAR, and SGCP.
+- Dense SECOND-attentive-to-early SGCP result: `0.92/0.90/0.78`,
+  raw/box/total `27.84/0.92/28.75 Mbps`, `1003.67 GFLOPs/frame`.
+- Town06 SECOND-attentive-to-early SGCP result: `0.95/0.94/0.87`,
+  raw/box/total `15.42/0.51/15.93 Mbps`, `795.48 GFLOPs/frame`.
+- Updated external clean-package manifest and README. Added project-side
+  artifact summary:
+  `docs/doc_workspace/SGCP/artifacts/multi_backbone_20260731/SECOND_ATT2EARLY_FULL_TABLE.md`.
+

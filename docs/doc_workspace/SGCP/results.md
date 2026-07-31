@@ -2407,3 +2407,32 @@ Interpretation: VoxelNet attentive-to-early is a useful diagnostic but weaker
 than SECOND attentive-to-early. VoxelNet compression migration should not be
 used as paper evidence because the compression-specific modules are ignored by
 the early-fusion model.
+
+#### SECOND attentive-to-early full baseline table
+
+Artifact:
+`docs/doc_workspace/SGCP/artifacts/multi_backbone_20260731/SECOND_ATT2EARLY_FULL_TABLE.md`.
+
+Dense roundabout:
+
+| Method | AP@0.3 | AP@0.5 | AP@0.7 | Total Mbps | GFLOPs/frame |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| Centralized all-in-one raw-LiDAR upper ref | 0.96 | 0.96 | 0.92 | 337.08 | 151.29 |
+| No collaboration | 0.56 | 0.52 | 0.37 | 0.00 | 3025.76 |
+| Pure late | 0.88 | 0.86 | 0.73 | 2.05 | 3025.76 |
+| FullPerception-PCS | 0.55 | 0.51 | 0.37 | 70.49 | 3025.76 |
+| EdgeCooper-Pmax V2V adaptation | 0.53 | 0.50 | 0.39 | 86.30 | 3025.76 |
+| PACP-LiDAR V2V adaptation | 0.52 | 0.48 | 0.34 | 86.30 | 3025.76 |
+| SGCP | 0.92 | 0.90 | 0.78 | 28.75 | 1003.67 |
+
+Town06:
+
+| Method | AP@0.3 | AP@0.5 | AP@0.7 | Total Mbps | GFLOPs/frame |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| Centralized all-in-one raw-LiDAR upper ref | 0.99 | 0.99 | 0.98 | 147.23 | 151.29 |
+| No collaboration | 0.70 | 0.66 | 0.52 | 0.00 | 1512.88 |
+| Pure late | 0.92 | 0.91 | 0.86 | 0.81 | 1512.88 |
+| FullPerception-PCS | 0.68 | 0.65 | 0.53 | 36.35 | 1512.88 |
+| EdgeCooper-Pmax V2V adaptation | 0.79 | 0.77 | 0.69 | 69.14 | 1512.88 |
+| PACP-LiDAR V2V adaptation | 0.71 | 0.68 | 0.55 | 81.15 | 1512.88 |
+| SGCP | 0.95 | 0.94 | 0.87 | 15.93 | 795.48 |

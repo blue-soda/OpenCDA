@@ -491,3 +491,9 @@ SGCP 工作与仓库中以下部分关系最紧密：
   are ignored by the early-fusion model. Keep SECOND attentive-to-early as the
   strongest migrated-backbone evidence. Summary document:
   `C:\Workspace\2026-7-papers\infocom\SGCP\experiment-dense-lidar-ver\16_backbone_weight_migration_probe.md`.
+- Per user request, the external dense clean package has been narrowed to
+  paper-facing PointPillar-attentive and SECOND-attentive-to-early evidence.
+  VoxelNet/PIXOR/backbone diagnostic documents were moved out of the clean
+  package. SECOND-attentive-to-early full Table 1 is now complete for both
+  scenes: dense SGCP `0.92/0.90/0.78`, `28.75 Mbps`, `1003.67 GFLOPs/frame`;
+  Town06 SGCP `0.95/0.94/0.87`, `15.93 Mbps`, `795.48 GFLOPs/frame`.
