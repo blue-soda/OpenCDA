@@ -1,0 +1,368 @@
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+resuming by loading epoch 10000
+frame=1/3 receiver_sample=1/20 scenario=2026_07_29_02_32_08 timestamp=000060 cavs=[1, 2, 4, 8]
+sgcp_constrained receiver=1 policy=all-cavs sources=[1, 2, 4, 8] clusters=20 ra=selective_pacp_lidar comm_bytes=81424 selected_grids={2: 15, 4: 15, 8: 13}
+fusion_method=early pred_boxes=36 gt_boxes=72
+pred_scores_shape=(36,)
+frame=1/3 receiver_sample=2/20 scenario=2026_07_29_02_32_08 timestamp=000060 cavs=[2, 1, 10, 11]
+sgcp_constrained receiver=2 policy=all-cavs sources=[2, 1, 10, 11] clusters=20 ra=selective_pacp_lidar comm_bytes=53200 selected_grids={1: 15, 10: 14, 11: 14}
+fusion_method=early pred_boxes=33 gt_boxes=72
+pred_scores_shape=(33,)
+frame=1/3 receiver_sample=3/20 scenario=2026_07_29_02_32_08 timestamp=000060 cavs=[3, 16, 17, 18]
+sgcp_constrained receiver=3 policy=all-cavs sources=[3, 16, 17, 18] clusters=20 ra=selective_pacp_lidar comm_bytes=79760 selected_grids={16: 14, 17: 15, 18: 15}
+fusion_method=early pred_boxes=24 gt_boxes=65
+pred_scores_shape=(24,)
+frame=1/3 receiver_sample=4/20 scenario=2026_07_29_02_32_08 timestamp=000060 cavs=[4, 1, 7, 12]
+sgcp_constrained receiver=4 policy=all-cavs sources=[4, 1, 7, 12] clusters=20 ra=selective_pacp_lidar comm_bytes=80448 selected_grids={1: 15, 7: 15, 12: 15}
+fusion_method=early pred_boxes=34 gt_boxes=71
+pred_scores_shape=(34,)
+frame=1/3 receiver_sample=5/20 scenario=2026_07_29_02_32_08 timestamp=000060 cavs=[5, 9, 16, 20]
+sgcp_constrained receiver=5 policy=all-cavs sources=[5, 9, 16, 20] clusters=20 ra=selective_pacp_lidar comm_bytes=67680 selected_grids={9: 15, 16: 15, 20: 14}
+fusion_method=early pred_boxes=30 gt_boxes=48
+pred_scores_shape=(30,)
+frame=1/3 receiver_sample=6/20 scenario=2026_07_29_02_32_08 timestamp=000060 cavs=[6, 15]
+sgcp_constrained receiver=6 policy=all-cavs sources=[6, 15] clusters=20 ra=selective_pacp_lidar comm_bytes=21456 selected_grids={15: 15}
+fusion_method=early pred_boxes=13 gt_boxes=49
+pred_scores_shape=(13,)
+frame=1/3 receiver_sample=7/20 scenario=2026_07_29_02_32_08 timestamp=000060 cavs=[7, 8, 16, 20]
+sgcp_constrained receiver=7 policy=all-cavs sources=[7, 8, 16, 20] clusters=20 ra=selective_pacp_lidar comm_bytes=56256 selected_grids={8: 15, 16: 14, 20: 14}
+fusion_method=early pred_boxes=28 gt_boxes=51
+pred_scores_shape=(28,)
+frame=1/3 receiver_sample=8/20 scenario=2026_07_29_02_32_08 timestamp=000060 cavs=[8, 1, 7, 11]
+sgcp_constrained receiver=8 policy=all-cavs sources=[8, 1, 7, 11] clusters=20 ra=selective_pacp_lidar comm_bytes=82592 selected_grids={1: 15, 7: 15, 11: 15}
+fusion_method=early pred_boxes=32 gt_boxes=47
+pred_scores_shape=(32,)
+frame=1/3 receiver_sample=9/20 scenario=2026_07_29_02_32_08 timestamp=000060 cavs=[9, 10, 13, 19]
+sgcp_constrained receiver=9 policy=all-cavs sources=[9, 10, 13, 19] clusters=20 ra=selective_pacp_lidar comm_bytes=37792 selected_grids={10: 14, 13: 14, 19: 15}
+fusion_method=early pred_boxes=23 gt_boxes=54
+pred_scores_shape=(23,)
+frame=1/3 receiver_sample=10/20 scenario=2026_07_29_02_32_08 timestamp=000060 cavs=[10, 8, 9, 16]
+sgcp_constrained receiver=10 policy=all-cavs sources=[10, 8, 9, 16] clusters=20 ra=selective_pacp_lidar comm_bytes=72544 selected_grids={8: 15, 9: 15, 16: 14}
+fusion_method=early pred_boxes=28 gt_boxes=66
+pred_scores_shape=(28,)
+frame=1/3 receiver_sample=11/20 scenario=2026_07_29_02_32_08 timestamp=000060 cavs=[11, 1, 2, 9]
+sgcp_constrained receiver=11 policy=all-cavs sources=[11, 1, 2, 9] clusters=20 ra=selective_pacp_lidar comm_bytes=68736 selected_grids={1: 15, 2: 15, 9: 15}
+fusion_method=early pred_boxes=31 gt_boxes=69
+pred_scores_shape=(31,)
+frame=1/3 receiver_sample=12/20 scenario=2026_07_29_02_32_08 timestamp=000060 cavs=[12, 4, 7, 8]
+sgcp_constrained receiver=12 policy=all-cavs sources=[12, 4, 7, 8] clusters=20 ra=selective_pacp_lidar comm_bytes=63856 selected_grids={4: 15, 7: 15, 8: 15}
+fusion_method=early pred_boxes=30 gt_boxes=53
+pred_scores_shape=(30,)
+frame=1/3 receiver_sample=13/20 scenario=2026_07_29_02_32_08 timestamp=000060 cavs=[13, 9, 10, 19]
+sgcp_constrained receiver=13 policy=all-cavs sources=[13, 9, 10, 19] clusters=20 ra=selective_pacp_lidar comm_bytes=37744 selected_grids={9: 15, 10: 15, 19: 15}
+fusion_method=early pred_boxes=24 gt_boxes=55
+pred_scores_shape=(24,)
+frame=1/3 receiver_sample=14/20 scenario=2026_07_29_02_32_08 timestamp=000060 cavs=[14]
+sgcp_constrained receiver=14 policy=all-cavs sources=[14] clusters=20 ra=selective_pacp_lidar comm_bytes=0 selected_grids={}
+fusion_method=early pred_boxes=3 gt_boxes=7
+pred_scores_shape=(3,)
+frame=1/3 receiver_sample=15/20 scenario=2026_07_29_02_32_08 timestamp=000060 cavs=[15, 6]
+sgcp_constrained receiver=15 policy=all-cavs sources=[15, 6] clusters=20 ra=selective_pacp_lidar comm_bytes=31904 selected_grids={6: 15}
+fusion_method=early pred_boxes=17 gt_boxes=59
+pred_scores_shape=(17,)
+frame=1/3 receiver_sample=16/20 scenario=2026_07_29_02_32_08 timestamp=000060 cavs=[16, 5, 7, 20]
+sgcp_constrained receiver=16 policy=all-cavs sources=[16, 5, 7, 20] clusters=20 ra=selective_pacp_lidar comm_bytes=42096 selected_grids={5: 15, 7: 15, 20: 15}
+fusion_method=early pred_boxes=26 gt_boxes=64
+pred_scores_shape=(26,)
+frame=1/3 receiver_sample=17/20 scenario=2026_07_29_02_32_08 timestamp=000060 cavs=[17, 3, 18]
+sgcp_constrained receiver=17 policy=all-cavs sources=[17, 3, 18] clusters=20 ra=selective_pacp_lidar comm_bytes=43744 selected_grids={3: 15, 18: 15}
+fusion_method=early pred_boxes=19 gt_boxes=65
+pred_scores_shape=(19,)
+frame=1/3 receiver_sample=18/20 scenario=2026_07_29_02_32_08 timestamp=000060 cavs=[18, 3, 17]
+sgcp_constrained receiver=18 policy=all-cavs sources=[18, 3, 17] clusters=20 ra=selective_pacp_lidar comm_bytes=64096 selected_grids={3: 15, 17: 15}
+fusion_method=early pred_boxes=17 gt_boxes=49
+pred_scores_shape=(17,)
+frame=1/3 receiver_sample=19/20 scenario=2026_07_29_02_32_08 timestamp=000060 cavs=[19, 9, 10, 13]
+sgcp_constrained receiver=19 policy=all-cavs sources=[19, 9, 10, 13] clusters=20 ra=selective_pacp_lidar comm_bytes=47952 selected_grids={9: 15, 10: 15, 13: 15}
+fusion_method=early pred_boxes=23 gt_boxes=54
+pred_scores_shape=(23,)
+frame=1/3 receiver_sample=20/20 scenario=2026_07_29_02_32_08 timestamp=000060 cavs=[20, 5, 7, 16]
+sgcp_constrained receiver=20 policy=all-cavs sources=[20, 5, 7, 16] clusters=20 ra=selective_pacp_lidar comm_bytes=45520 selected_grids={5: 15, 7: 15, 16: 15}
+fusion_method=early pred_boxes=24 gt_boxes=62
+pred_scores_shape=(24,)
+frame=2/3 receiver_sample=1/20 scenario=2026_07_29_02_32_08 timestamp=000062 cavs=[1, 2, 4, 8]
+sgcp_constrained receiver=1 policy=all-cavs sources=[1, 2, 4, 8] clusters=20 ra=selective_pacp_lidar comm_bytes=78960 selected_grids={2: 15, 4: 15, 8: 14}
+fusion_method=early pred_boxes=35 gt_boxes=72
+pred_scores_shape=(35,)
+frame=2/3 receiver_sample=2/20 scenario=2026_07_29_02_32_08 timestamp=000062 cavs=[2, 1, 8, 11]
+sgcp_constrained receiver=2 policy=all-cavs sources=[2, 1, 8, 11] clusters=20 ra=selective_pacp_lidar comm_bytes=39536 selected_grids={1: 16, 8: 16, 11: 16}
+fusion_method=early pred_boxes=24 gt_boxes=72
+pred_scores_shape=(24,)
+frame=2/3 receiver_sample=3/20 scenario=2026_07_29_02_32_08 timestamp=000062 cavs=[3, 16, 17, 18]
+sgcp_constrained receiver=3 policy=all-cavs sources=[3, 16, 17, 18] clusters=20 ra=selective_pacp_lidar comm_bytes=83680 selected_grids={16: 15, 17: 15, 18: 16}
+fusion_method=early pred_boxes=25 gt_boxes=65
+pred_scores_shape=(25,)
+frame=2/3 receiver_sample=4/20 scenario=2026_07_29_02_32_08 timestamp=000062 cavs=[4, 1, 7, 12]
+sgcp_constrained receiver=4 policy=all-cavs sources=[4, 1, 7, 12] clusters=20 ra=selective_pacp_lidar comm_bytes=80688 selected_grids={1: 15, 7: 16, 12: 16}
+fusion_method=early pred_boxes=33 gt_boxes=71
+pred_scores_shape=(33,)
+frame=2/3 receiver_sample=5/20 scenario=2026_07_29_02_32_08 timestamp=000062 cavs=[5, 9, 16, 20]
+sgcp_constrained receiver=5 policy=all-cavs sources=[5, 9, 16, 20] clusters=20 ra=selective_pacp_lidar comm_bytes=68464 selected_grids={9: 15, 16: 15, 20: 15}
+fusion_method=early pred_boxes=30 gt_boxes=48
+pred_scores_shape=(30,)
+frame=2/3 receiver_sample=6/20 scenario=2026_07_29_02_32_08 timestamp=000062 cavs=[6, 15]Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+
+sgcp_constrained receiver=6 policy=all-cavs sources=[6, 15] clusters=20 ra=selective_pacp_lidar comm_bytes=21552 selected_grids={15: 17}
+fusion_method=early pred_boxes=13 gt_boxes=49
+pred_scores_shape=(13,)
+frame=2/3 receiver_sample=7/20 scenario=2026_07_29_02_32_08 timestamp=000062 cavs=[7, 8, 16, 20]
+sgcp_constrained receiver=7 policy=all-cavs sources=[7, 8, 16, 20] clusters=20 ra=selective_pacp_lidar comm_bytes=56384 selected_grids={8: 16, 16: 14, 20: 15}
+fusion_method=early pred_boxes=28 gt_boxes=51
+pred_scores_shape=(28,)
+frame=2/3 receiver_sample=8/20 scenario=2026_07_29_02_32_08 timestamp=000062 cavs=[8, 1, 2, 7]
+sgcp_constrained receiver=8 policy=all-cavs sources=[8, 1, 2, 7] clusters=20 ra=selective_pacp_lidar comm_bytes=85552 selected_grids={1: 15, 2: 15, 7: 15}
+fusion_method=early pred_boxes=32 gt_boxes=47
+pred_scores_shape=(32,)
+frame=2/3 receiver_sample=9/20 scenario=2026_07_29_02_32_08 timestamp=000062 cavs=[9, 10, 13, 19]
+sgcp_constrained receiver=9 policy=all-cavs sources=[9, 10, 13, 19] clusters=20 ra=selective_pacp_lidar comm_bytes=40288 selected_grids={10: 15, 13: 15, 19: 16}
+fusion_method=early pred_boxes=25 gt_boxes=54
+pred_scores_shape=(25,)
+frame=2/3 receiver_sample=10/20 scenario=2026_07_29_02_32_08 timestamp=000062 cavs=[10, 8, 9, 16]
+sgcp_constrained receiver=10 policy=all-cavs sources=[10, 8, 9, 16] clusters=20 ra=selective_pacp_lidar comm_bytes=72000 selected_grids={8: 15, 9: 16, 16: 15}
+fusion_method=early pred_boxes=28 gt_boxes=67
+pred_scores_shape=(28,)
+frame=2/3 receiver_sample=11/20 scenario=2026_07_29_02_32_08 timestamp=000062 cavs=[11, 1, 2, 9]
+sgcp_constrained receiver=11 policy=all-cavs sources=[11, 1, 2, 9] clusters=20 ra=selective_pacp_lidar comm_bytes=69200 selected_grids={1: 16, 2: 16, 9: 15}
+fusion_method=early pred_boxes=27 gt_boxes=69
+pred_scores_shape=(27,)
+frame=2/3 receiver_sample=12/20 scenario=2026_07_29_02_32_08 timestamp=000062 cavs=[12, 4, 7, 8]
+sgcp_constrained receiver=12 policy=all-cavs sources=[12, 4, 7, 8] clusters=20 ra=selective_pacp_lidar comm_bytes=63680 selected_grids={4: 16, 7: 15, 8: 16}
+fusion_method=early pred_boxes=27 gt_boxes=53
+pred_scores_shape=(27,)
+frame=2/3 receiver_sample=13/20 scenario=2026_07_29_02_32_08 timestamp=000062 cavs=[13, 9, 10, 19]
+sgcp_constrained receiver=13 policy=all-cavs sources=[13, 9, 10, 19] clusters=20 ra=selective_pacp_lidar comm_bytes=37728 selected_grids={9: 15, 10: 15, 19: 16}
+fusion_method=early pred_boxes=20 gt_boxes=55
+pred_scores_shape=(20,)
+frame=2/3 receiver_sample=14/20 scenario=2026_07_29_02_32_08 timestamp=000062 cavs=[14]
+sgcp_constrained receiver=14 policy=all-cavs sources=[14] clusters=20 ra=selective_pacp_lidar comm_bytes=0 selected_grids={}
+fusion_method=early pred_boxes=3 gt_boxes=7
+pred_scores_shape=(3,)
+frame=2/3 receiver_sample=15/20 scenario=2026_07_29_02_32_08 timestamp=000062 cavs=[15, 6]
+sgcp_constrained receiver=15 policy=all-cavs sources=[15, 6] clusters=20 ra=selective_pacp_lidar comm_bytes=31920 selected_grids={6: 16}
+fusion_method=early pred_boxes=16 gt_boxes=60
+pred_scores_shape=(16,)
+frame=2/3 receiver_sample=16/20 scenario=2026_07_29_02_32_08 timestamp=000062 cavs=[16, 5, 7, 20]
+sgcp_constrained receiver=16 policy=all-cavs sources=[16, 5, 7, 20] clusters=20 ra=selective_pacp_lidar comm_bytes=44048 selected_grids={5: 16, 7: 16, 20: 15}
+fusion_method=early pred_boxes=28 gt_boxes=66
+pred_scores_shape=(28,)
+frame=2/3 receiver_sample=17/20 scenario=2026_07_29_02_32_08 timestamp=000062 cavs=[17, 3, 18]
+sgcp_constrained receiver=17 policy=all-cavs sources=[17, 3, 18] clusters=20 ra=selective_pacp_lidar comm_bytes=45312 selected_grids={3: 16, 18: 16}
+fusion_method=early pred_boxes=22 gt_boxes=65
+pred_scores_shape=(22,)
+frame=2/3 receiver_sample=18/20 scenario=2026_07_29_02_32_08 timestamp=000062 cavs=[18, 3, 17]
+sgcp_constrained receiver=18 policy=all-cavs sources=[18, 3, 17] clusters=20 ra=selective_pacp_lidar comm_bytes=64976 selected_grids={3: 16, 17: 16}
+fusion_method=early pred_boxes=17 gt_boxes=49
+pred_scores_shape=(17,)
+frame=2/3 receiver_sample=19/20 scenario=2026_07_29_02_32_08 timestamp=000062 cavs=[19, 9, 10, 13]
+sgcp_constrained receiver=19 policy=all-cavs sources=[19, 9, 10, 13] clusters=20 ra=selective_pacp_lidar comm_bytes=48000 selected_grids={9: 16, 10: 16, 13: 15}
+fusion_method=early pred_boxes=22 gt_boxes=54
+pred_scores_shape=(22,)
+frame=2/3 receiver_sample=20/20 scenario=2026_07_29_02_32_08 timestamp=000062 cavs=[20, 5, 7, 16]
+sgcp_constrained receiver=20 policy=all-cavs sources=[20, 5, 7, 16] clusters=20 ra=selective_pacp_lidar comm_bytes=46832 selected_grids={5: 16, 7: 16, 16: 16}
+fusion_method=early pred_boxes=26 gt_boxes=62
+pred_scores_shape=(26,)
+frame=3/3 receiver_sample=1/20 scenario=2026_07_29_02_32_08 timestamp=000064 cavs=[1, 2, 4, 8]
+sgcp_constrained receiver=1 policy=all-cavs sources=[1, 2, 4, 8] clusters=20 ra=selective_pacp_lidar comm_bytes=80672 selected_grids={2: 16, 4: 16, 8: 15}
+fusion_method=early pred_boxes=33 gt_boxes=72
+pred_scores_shape=(33,)
+frame=3/3 receiver_sample=2/20 scenario=2026_07_29_02_32_08 timestamp=000064 cavs=[2, 1, 8, 11]
+sgcp_constrained receiver=2 policy=all-cavs sources=[2, 1, 8, 11] clusters=20 ra=selective_pacp_lidar comm_bytes=39632 selected_grids={1: 16, 8: 16, 11: 17}
+fusion_method=early pred_boxes=22 gt_boxes=72
+pred_scores_shape=(22,)
+frame=3/3 receiver_sample=3/20 scenario=2026_07_29_02_32_08 timestamp=000064 cavs=[3, 16, 17, 18]
+sgcp_constrained receiver=3 policy=all-cavs sources=[3, 16, 17, 18] clusters=20 ra=selective_pacp_lidar comm_bytes=86800 selected_grids={16: 16, 17: 16, 18: 17}
+fusion_method=early pred_boxes=29 gt_boxes=65
+pred_scores_shape=(29,)
+frame=3/3 receiver_sample=4/20 scenario=2026_07_29_02_32_08 timestamp=000064 cavs=[4, 1, 7, 12]
+sgcp_constrained receiver=4 policy=all-cavs sources=[4, 1, 7, 12] clusters=20 ra=selective_pacp_lidar comm_bytes=87472 selected_grids={1: 16, 7: 17, 12: 17}
+fusion_method=early pred_boxes=33 gt_boxes=71
+pred_scores_shape=(33,)
+frame=3/3 receiver_sample=5/20 scenario=2026_07_29_02_32_08 timestamp=000064 cavs=[5, 9, 16, 20]
+sgcp_constrained receiver=5 policy=all-cavs sources=[5, 9, 16, 20] clusters=20 ra=selective_pacp_lidar comm_bytes=70432 selected_grids={9: 16, 16: 16, 20: 15}
+fusion_method=early pred_boxes=30 gt_boxes=47
+pred_scores_shape=(30,)
+frame=3/3 receiver_sample=6/20 scenario=2026_07_29_02_32_08 timestamp=000064 cavs=[6, 15]
+sgcp_constrained receiver=6 policy=all-cavs sources=[6, 15] clusters=20 ra=selective_pacp_lidar comm_bytes=21248 selected_grids={15: 17}
+fusion_method=early pred_boxes=13 gt_boxes=49
+pred_scores_shape=(13,)
+frame=3/3 receiver_sample=7/20 scenario=2026_07_29_02_32_08 timestamp=000064 cavs=[7, 8, 16, 20]
+sgcp_constrained receiver=7 policy=all-cavs sources=[7, 8, 16, 20] clusters=20 ra=selective_pacp_lidar comm_bytes=58784 selected_grids={8: 17, 16: 15, 20: 16}
+fusion_method=early pred_boxes=32 gt_boxes=51
+pred_scores_shape=(32,)
+frame=3/3 receiver_sample=8/20 scenario=2026_07_29_02_32_08 timestamp=000064 cavs=[8, 1, 2, 7]
+sgcp_constrained receiver=8 policy=all-cavs sources=[8, 1, 2, 7] clusters=20 ra=selective_pacp_lidar comm_bytes=87904 selected_grids={1: 16, 2: 16, 7: 16}
+fusion_method=early pred_boxes=29 gt_boxes=47
+pred_scores_shape=(29,)
+frame=3/3 receiver_sample=9/20 scenario=2026_07_29_02_32_08 timestamp=000064 cavs=[9, 10, 13, 19]
+sgcp_constrained receiver=9 policy=all-cavs sources=[9, 10, 13, 19] clusters=20 ra=selective_pacp_lidar comm_bytes=39232 selected_grids={10: 16, 13: 16, 19: 17}
+fusion_method=early pred_boxes=25 gt_boxes=54
+pred_scores_shape=(25,)
+frame=3/3 receiver_sample=10/20 scenario=2026_07_29_02_32_08 timestamp=000064 cavs=[10, 8, 9, 19]
+sgcp_constrained receiver=10 policy=all-cavs sources=[10, 8, 9, 19] clusters=20 ra=selective_pacp_lidar comm_bytes=46560 selected_grids={8: 16, 9: 17, 19: 16}
+fusion_method=early pred_boxes=28 gt_boxes=67
+pred_scores_shape=(28,)
+frame=3/3 receiver_sample=11/20 scenario=2026_07_29_02_32_08 timestamp=000064 cavs=[11, 1, 2, 9]
+C:\Users\sakakibara\miniconda3\envs\opencda\lib\site-packages\torch\nn\functional.py:1806: UserWarning: nn.functional.sigmoid is deprecated. Use torch.sigmoid instead.
+  warnings.warn("nn.functional.sigmoid is deprecated. Use torch.sigmoid instead.")
+sgcp_constrained receiver=11 policy=all-cavs sources=[11, 1, 2, 9] clusters=20 ra=selective_pacp_lidar comm_bytes=71072 selected_grids={1: 16, 2: 17, 9: 16}
+fusion_method=early pred_boxes=34 gt_boxes=69
+pred_scores_shape=(34,)
+frame=3/3 receiver_sample=12/20 scenario=2026_07_29_02_32_08 timestamp=000064 cavs=[12, 4, 7, 8]
+sgcp_constrained receiver=12 policy=all-cavs sources=[12, 4, 7, 8] clusters=20 ra=selective_pacp_lidar comm_bytes=67200 selected_grids={4: 17, 7: 16, 8: 17}
+fusion_method=early pred_boxes=26 gt_boxes=54
+pred_scores_shape=(26,)
+frame=3/3 receiver_sample=13/20 scenario=2026_07_29_02_32_08 timestamp=000064 cavs=[13, 9, 10, 19]
+sgcp_constrained receiver=13 policy=all-cavs sources=[13, 9, 10, 19] clusters=20 ra=selective_pacp_lidar comm_bytes=37696 selected_grids={9: 16, 10: 16, 19: 17}
+fusion_method=early pred_boxes=23 gt_boxes=55
+pred_scores_shape=(23,)
+frame=3/3 receiver_sample=14/20 scenario=2026_07_29_02_32_08 timestamp=000064 cavs=[14]
+sgcp_constrained receiver=14 policy=all-cavs sources=[14] clusters=20 ra=selective_pacp_lidar comm_bytes=0 selected_grids={}
+fusion_method=early pred_boxes=3 gt_boxes=7
+pred_scores_shape=(3,)
+frame=3/3 receiver_sample=15/20 scenario=2026_07_29_02_32_08 timestamp=000064 cavs=[15, 6]
+sgcp_constrained receiver=15 policy=all-cavs sources=[15, 6] clusters=20 ra=selective_pacp_lidar comm_bytes=33264 selected_grids={6: 17}
+fusion_method=early pred_boxes=16 gt_boxes=61
+pred_scores_shape=(16,)
+frame=3/3 receiver_sample=16/20 scenario=2026_07_29_02_32_08 timestamp=000064 cavs=[16, 5, 7, 20]
+sgcp_constrained receiver=16 policy=all-cavs sources=[16, 5, 7, 20] clusters=20 ra=selective_pacp_lidar comm_bytes=44656 selected_grids={5: 17, 7: 16, 20: 16}
+fusion_method=early pred_boxes=29 gt_boxes=68
+pred_scores_shape=(29,)
+frame=3/3 receiver_sample=17/20 scenario=2026_07_29_02_32_08 timestamp=000064 cavs=[17, 3, 18]
+sgcp_constrained receiver=17 policy=all-cavs sources=[17, 3, 18] clusters=20 ra=selective_pacp_lidar comm_bytes=47120 selected_grids={3: 17, 18: 17}
+fusion_method=early pred_boxes=18 gt_boxes=65
+pred_scores_shape=(18,)
+frame=3/3 receiver_sample=18/20 scenario=2026_07_29_02_32_08 timestamp=000064 cavs=[18, 3, 17]
+sgcp_constrained receiver=18 policy=all-cavs sources=[18, 3, 17] clusters=20 ra=selective_pacp_lidar comm_bytes=65664 selected_grids={3: 17, 17: 16}
+fusion_method=early pred_boxes=17 gt_boxes=47
+pred_scores_shape=(17,)
+frame=3/3 receiver_sample=19/20 scenario=2026_07_29_02_32_08 timestamp=000064 cavs=[19, 9, 10, 13]
+sgcp_constrained receiver=19 policy=all-cavs sources=[19, 9, 10, 13] clusters=20 ra=selective_pacp_lidar comm_bytes=47200 selected_grids={9: 16, 10: 16, 13: 16}
+fusion_method=early pred_boxes=22 gt_boxes=54
+pred_scores_shape=(22,)
+frame=3/3 receiver_sample=20/20 scenario=2026_07_29_02_32_08 timestamp=000064 cavs=[20, 5, 7, 16]
+sgcp_constrained receiver=20 policy=all-cavs sources=[20, 5, 7, 16] clusters=20 ra=selective_pacp_lidar comm_bytes=46192 selected_grids={5: 17, 7: 16, 16: 17}
+fusion_method=early pred_boxes=28 gt_boxes=62
+pred_scores_shape=(28,)
+cp counter: 60
+Evaluate final average precision results:
+  - Fusion method: early
+  - The Average Precision at IOU 0.3 is 0.41, The Average Precision at IOU 0.5 is 0.38, The Average Precision at IOU 0.7 is 0.27
+sgcp_summary frames=60 avg_comm_bytes=53940.00 total_comm_bytes=3236400 avg_source_cavs=3.55 avg_selected_grids=39.62

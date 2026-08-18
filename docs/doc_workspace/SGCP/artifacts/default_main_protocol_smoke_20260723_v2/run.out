@@ -1,0 +1,57 @@
+﻿conda.exe : C:\Users\sakakibara\miniconda3\envs\opencda\lib\site-packages\torch\nn\functional.py:1806: UserWarning: nn.
+functional.sigmoid is deprecated. Use torch.sigmoid instead.
+At C:\Users\sakakibara\miniconda3\shell\condabin\Conda.psm1:194 char:17
++ ...             & $Env:CONDA_EXE $Env:_CE_M $Env:_CE_CONDA $Command @Othe ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (C:\Users\sakaki...igmoid instead.:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+  warnings.warn("nn.functional.sigmoid is deprecated. Use torch.sigmoid instead.")
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+resuming by loading epoch 10000
+frame=1/1 late_source=1/6 scenario=2026_07_15_01_26_56 timestamp=000060 receiver=4 cavs=[4, 12, 8] pred_boxes=31 gt_boxes=40 comm_bytes=155664
+frame=1/1 late_source=2/6 scenario=2026_07_15_01_26_56 timestamp=000060 receiver=11 cavs=[11, 10, 2] pred_boxes=27 gt_boxes=45 comm_bytes=157056
+frame=1/1 late_source=3/6 scenario=2026_07_15_01_26_56 timestamp=000060 receiver=13 cavs=[13, 14, 9] pred_boxes=8 gt_boxes=26 comm_bytes=158432
+frame=1/1 late_source=4/6 scenario=2026_07_15_01_26_56 timestamp=000060 receiver=15 cavs=[15, 6] pred_boxes=14 gt_boxes=17 comm_bytes=72896
+frame=1/1 late_source=5/6 scenario=2026_07_15_01_26_56 timestamp=000060 receiver=16 cavs=[16, 7, 20] pred_boxes=20 gt_boxes=30 comm_bytes=157072
+frame=1/1 late_source=6/6 scenario=2026_07_15_01_26_56 timestamp=000060 receiver=17 cavs=[17, 3] pred_boxes=11 gt_boxes=16 comm_bytes=79632
+sgcp_late_fusion frame=1/1 scenario=2026_07_15_01_26_56 timestamp=000060 sources=6 fused_pred_boxes=70 fused_gt_boxes=70

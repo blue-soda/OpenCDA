@@ -1,0 +1,5 @@
+enable_coperception:
+  coperception:
+    models:
+      early: 'docs/doc_workspace/SGCP/artifacts/early_from_late_checkpoint_20260719/pointpillar_early_from_attentive_weights'
+    fusion_method: 'early'

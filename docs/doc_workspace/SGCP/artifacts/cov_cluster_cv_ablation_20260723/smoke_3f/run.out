@@ -1,0 +1,158 @@
+﻿conda.exe : C:\Users\sakakibara\miniconda3\envs\opencda\lib\site-packages\torch\nn\functional.py:1806: UserWarning: nn.
+functional.sigmoid is deprecated. Use torch.sigmoid instead.
+At C:\Users\sakakibara\miniconda3\shell\condabin\Conda.psm1:194 char:17
++ ...             & $Env:CONDA_EXE $Env:_CE_M $Env:_CE_CONDA $Command @Othe ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (C:\Users\sakaki...igmoid instead.:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+  warnings.warn("nn.functional.sigmoid is deprecated. Use torch.sigmoid instead.")
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+resuming by loading epoch 10000
+frame=1/3 late_source=1/6 scenario=2026_07_15_01_26_56 timestamp=000060 receiver=5 cavs=[5, 12, 7] pred_boxes=22 gt_boxes=38 comm_bytes=151120
+frame=1/3 late_source=2/6 scenario=2026_07_15_01_26_56 timestamp=000060 receiver=10 cavs=[10, 2, 13] pred_boxes=28 gt_boxes=44 comm_bytes=151664
+frame=1/3 late_source=3/6 scenario=2026_07_15_01_26_56 timestamp=000060 receiver=11 cavs=[11, 4, 8] pred_boxes=36 gt_boxes=39 comm_bytes=154016
+frame=1/3 late_source=4/6 scenario=2026_07_15_01_26_56 timestamp=000060 receiver=15 cavs=[15, 6] pred_boxes=13 gt_boxes=17 comm_bytes=71760
+frame=1/3 late_source=5/6 scenario=2026_07_15_01_26_56 timestamp=000060 receiver=16 cavs=[16, 14, 3] pred_boxes=16 gt_boxes=29 comm_bytes=148736
+frame=1/3 late_source=6/6 scenario=2026_07_15_01_26_56 timestamp=000060 receiver=17 cavs=[17, 20] pred_boxes=18 gt_boxes=21 comm_bytes=78368
+sgcp_late_fusion frame=1/3 scenario=2026_07_15_01_26_56 timestamp=000060 sources=6 fused_pred_boxes=69 fused_gt_boxes=70
+frame=2/3 late_source=1/7 scenario=2026_07_15_01_26_56 timestamp=000062 receiver=2 cavs=[2, 4, 9] pred_boxes=33 gt_boxes=46 comm_bytes=112288
+frame=2/3 late_source=2/7 scenario=2026_07_15_01_26_56 timestamp=000062 receiver=10 cavs=[10, 13] pred_boxes=10 gt_boxes=33 comm_bytes=74720
+frame=2/3 late_source=3/7 scenario=2026_07_15_01_26_56 timestamp=000062 receiver=11 cavs=[11, 14, 1] pred_boxes=25 gt_boxes=29 comm_bytes=159232
+frame=2/3 late_source=4/7 scenario=2026_07_15_01_26_56 timestamp=000062 receiver=12 cavs=[12, 7, 5] pred_boxes=22 gt_boxes=36 comm_bytes=95712
+frame=2/3 late_source=5/7 scenario=2026_07_15_01_26_56 timestamp=000062 receiver=15 cavs=[15, 6] pred_boxes=15 gt_boxes=17 comm_bytes=71648
+frame=2/3 late_source=6/7 scenario=2026_07_15_01_26_56 timestamp=000062 receiver=16 cavs=[16, 17] pred_boxes=15 gt_boxes=25 comm_bytes=78976
+frame=2/3 late_source=7/7 scenario=2026_07_15_01_26_56 timestamp=000062 receiver=20 cavs=[20, 3] pred_boxes=19 gt_boxes=25 comm_bytes=79104
+sgcp_late_fusion frame=2/3 scenario=2026_07_15_01_26_56 timestamp=000062 sources=7 fused_pred_boxes=69 fused_gt_boxes=69
+frame=3/3 late_source=1/7 scenario=2026_07_15_01_26_56 timestamp=000064 receiver=1 cavs=[1, 13, 10] pred_boxes=28 gt_boxes=42 comm_bytes=147440
+frame=3/3 late_source=2/7 scenario=2026_07_15_01_26_56 timestamp=000064 receiver=2 cavs=[2, 4] pred_boxes=32 gt_boxes=42 comm_bytes=77936
+frame=3/3 late_source=3/7 scenario=2026_07_15_01_26_56 timestamp=000064 receiver=11 cavs=[11, 14, 19] pred_boxes=16 gt_boxes=21 comm_bytes=151920
+frame=3/3 late_source=4/7 scenario=2026_07_15_01_26_56 timestamp=000064 receiver=12 cavs=[12, 7] pred_boxes=23 gt_boxes=34 comm_bytes=78048
+frame=3/3 late_source=5/7 scenario=2026_07_15_01_26_56 timestamp=000064 receiver=15 cavs=[15, 6] pred_boxes=15 gt_boxes=17 comm_bytes=72192
+frame=3/3 late_source=6/7 scenario=2026_07_15_01_26_56 timestamp=000064 receiver=16 cavs=[16, 3] pred_boxes=14 gt_boxes=28 comm_bytes=78496
+frame=3/3 late_source=7/7 scenario=2026_07_15_01_26_56 timestamp=000064 receiver=17 cavs=[17, 20, 18] pred_boxes=18 gt_boxes=23 comm_bytes=154768
+sgcp_late_fusion frame=3/3 scenario=2026_07_15_01_26_56 timestamp=000064 sources=7 fused_pred_boxes=72 fused_gt_boxes=70
+cp counter: 3
+Evaluate final average precision results:
+  - Fusion method: early
+  - The Average Precision at IOU 0.3 is 0.92, The Average Precision at IOU 0.5 is 0.81, The Average Precision at IOU 0.7 is 0.34
+sgcp_summary frames=20 avg_comm_bytes=109407.20 total_comm_bytes=2188144 avg_source_cavs=2.50 avg_selected_grids=72.55

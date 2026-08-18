@@ -1,0 +1,28 @@
+dataset_root: D:\Data\Carla
+scenario_id: '2026_07_15_02_33_21'
+assignment_plan: C:\Workspace\OpenCDA\docs\doc_workspace\LGCP\experiments\hierarchy_plan\20260718_lgcp_carla_hierarchy_plan_area23_11f\area_assignment_plan.csv
+lgcp_yaml: C:\Workspace\OpenCDA\opencda\scenario_testing\config_yaml\lgcp_carla.yaml
+fusion_method: intermediate_where2comm
+start_index: 0
+max_frames: 11
+max_areas_per_frame: 23
+late_nms_thresh: 0.15
+score_threshold: 0.05
+global_gt_cav_id: '-1'
+global_reference_z_override: 2.0
+grid_size_x: 10.0
+grid_size_y: 6.0
+timestamps:
+- '000060'
+- '000062'
+- '000064'
+- '000066'
+- 000068
+- '000070'
+- '000072'
+- '000074'
+- '000076'
+- 000078
+- 000080
+note: Box-level hierarchy late fusion. This calls OpenCOOD but does not perform neural
+  feature slicing.

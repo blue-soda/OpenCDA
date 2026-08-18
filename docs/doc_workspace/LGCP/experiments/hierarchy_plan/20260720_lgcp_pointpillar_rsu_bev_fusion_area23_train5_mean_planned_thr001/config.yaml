@@ -1,0 +1,26 @@
+dataset_root: D:\Data\Carla
+scenario_id: '2026_07_15_02_33_21'
+assignment_plan: C:\Workspace\OpenCDA\docs\doc_workspace\LGCP\experiments\hierarchy_plan\20260718_lgcp_carla_hierarchy_plan_area23_11f\area_assignment_plan.csv
+fusion_method: intermediate_attentive
+coperception_yaml: null
+reference_cav_id: '1'
+reference_pose: null
+start_index: 0
+max_frames: 5
+max_areas_per_frame: 0
+grid_size_x: 10.0
+grid_size_y: 6.0
+query_mode: mean
+leader_feature_dtype: float16
+postprocess_score_threshold: 0.01
+eval_scope: planned_areas
+save_frame_tensors: false
+timestamps:
+- '000060'
+- '000062'
+- '000064'
+- '000066'
+- 000068
+note: LGCP RSU BEV feature-fusion prototype. Member point slices are projected into
+  a shared reference frame before PointPillar VFE; all leader scatter features are
+  fused by the existing attentive BEV backbone.

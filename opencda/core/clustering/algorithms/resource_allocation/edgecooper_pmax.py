@@ -97,7 +97,8 @@ def _consume_remaining(remaining, grid_id, payload_bytes):
 
 def _endpoint_matched_links(link_entries, baseline_name, max_senders_per_receiver,
                             num_channels):
-    if baseline_name not in ['edgecooper_global', 'edgecooper_global_hd']:
+    if baseline_name not in ['edgecooper_global', 'edgecooper_global_hd',
+                             'pacp_lidar']:
         return link_entries
     matched = []
     occupied_senders = set()
@@ -132,7 +133,8 @@ def _endpoint_matched_link_batches(link_entries, baseline_name,
     batch order lets the byte-budget admission below reuse the channel pool
     until the frame budget is exhausted.
     """
-    if baseline_name not in ['edgecooper_global', 'edgecooper_global_hd']:
+    if baseline_name not in ['edgecooper_global', 'edgecooper_global_hd',
+                             'pacp_lidar']:
         return [list(link_entries)]
 
     remaining = list(link_entries)

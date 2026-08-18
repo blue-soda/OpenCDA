@@ -28,6 +28,7 @@
 - `neural_feature_proxy.md`：PointPillar neural feature hierarchy 的 feature-path feasibility、coverage、byte proxy 和低 AP 边界。
 - `rsu_bev_attentive_calibration.md`：reference-aligned point-slice RSU BEV attentive fusion 的 threshold、query-mode、train/val calibration 汇总和论文安全口径。
 - `rsu_bev_training_plan.md`：如果继续推进 RSU BEV attentive 为模型级结果，需要新增的样本导出、dataset、model wrapper、训练策略、工作量和风险。
+- `two_hop_feature_fusion_routes.md`：LGCP 两跳融合路线分析，分别记录“第一跳早期融合 + 第二跳中期特征融合”和“两跳 Where2comm 中期特征融合”的问题、难点、当前最好结果和论文口径。
 - `grid_size_sensitivity.md`：LGCP ROI grid / area size sensitivity 的单场景 11 帧 smoke 结果。
 - `localization_error_sensitivity.md`：LGCP CAV pose localization error sensitivity 的单场景 11 帧 smoke 结果。
 - `stale_assignment_sensitivity.md`：LGCP update frequency / stale assignment sensitivity 的单场景 11 帧 smoke 结果。

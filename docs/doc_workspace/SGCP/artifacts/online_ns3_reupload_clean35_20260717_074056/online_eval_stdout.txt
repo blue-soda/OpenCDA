@@ -1,0 +1,17 @@
+﻿{
+  "application_complete_episodes": 0,
+  "application_partial_episodes": 0,
+  "cam_received_lines": 0,
+  "decoded_overlap_fail": 0,
+  "duplicate_incomplete_lines": 0,
+  "incomplete_log_lines": 0,
+  "manual_cmd_add": 0,
+  "manual_cmd_reject": 0,
+  "ns3_sync_ack": 0,
+  "ns3_sync_request": 0,
+  "pscch_decode_fail": 0,
+  "pssch_decode_fail": 0,
+  "success_log_lines": 0,
+  "unique_links_observed": 0,
+  "upload_episodes_observed": 0
+}

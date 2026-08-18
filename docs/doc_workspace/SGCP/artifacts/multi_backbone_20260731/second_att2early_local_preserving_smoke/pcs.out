@@ -1,0 +1,370 @@
+COMMAND: C:\Users\sakakibara\miniconda3\envs\opencda\python.exe -m opencda.tools.offline_inference --dataset-root D:\Data\Carla --scenario-id 2026_07_29_02_32_08 --ego-cav-id 1 --max-frames 3 --fusion-method early --coperception-yaml docs\doc_workspace\SGCP\artifacts\multi_backbone_20260731\enable_coperception_second_att2early.yaml --bandwidth-mhz 40 --num-channels 10 --channel-estimator ns3 --ns3-tb-size-bytes 899 --ns3-slot-duration-ms 0.5 --ns3-subchannel-prbs 10 --ns3-symbols-per-slot 12 --ns3-mcs 28 --communication-deadline-ms 60 --local-preserving-output --sgcp-constrained --clustering singleton --resource-allocation fullperception_pcs --sgcp-receiver-policy all-cavs --sgcp-upload-mode grid --pcs-frame-deadline-ms 60 --pcs-blind-spot-min-division 4 --pcs-blind-spot-radius 4 --pcs-min-spot-grids 128 --pcs-communication-range-m 35 --max-senders-per-receiver 2 --rho-th 2 --sgcp-trace-output docs\doc_workspace\SGCP\artifacts\multi_backbone_20260731\second_att2early_local_preserving_smoke\pcs_trace.csv --eval-stats-output docs\doc_workspace\SGCP\artifacts\multi_backbone_20260731\second_att2early_local_preserving_smoke\pcs_eval_stats.csv
+
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+resuming by loading epoch 10000
+frame=1/3 receiver_sample=1/20 scenario=2026_07_29_02_32_08 timestamp=000060 cavs=[1, 4]
+sgcp_constrained receiver=1 policy=all-cavs sources=[1, 4] clusters=20 ra=fullperception_pcs comm_bytes=107856 selected_grids={4: 7}
+fusion_method=early pred_boxes=28 gt_boxes=51
+pred_scores_shape=(28,)
+frame=1/3 receiver_sample=2/20 scenario=2026_07_29_02_32_08 timestamp=000060 cavs=[2]
+sgcp_constrained receiver=2 policy=all-cavs sources=[2] clusters=20 ra=fullperception_pcs comm_bytes=0 selected_grids={}
+fusion_method=early pred_boxes=24 gt_boxes=38
+pred_scores_shape=(24,)
+frame=1/3 receiver_sample=3/20 scenario=2026_07_29_02_32_08 timestamp=000060 cavs=[3]
+sgcp_constrained receiver=3 policy=all-cavs sources=[3] clusters=20 ra=fullperception_pcs comm_bytes=0 selected_grids={}
+fusion_method=early pred_boxes=22 gt_boxes=27
+pred_scores_shape=(22,)
+frame=1/3 receiver_sample=4/20 scenario=2026_07_29_02_32_08 timestamp=000060 cavs=[4]
+sgcp_constrained receiver=4 policy=all-cavs sources=[4] clusters=20 ra=fullperception_pcs comm_bytes=0 selected_grids={}
+fusion_method=early pred_boxes=23 gt_boxes=34
+pred_scores_shape=(23,)
+frame=1/3 receiver_sample=5/20 scenario=2026_07_29_02_32_08 timestamp=000060 cavs=[5, 9, 10]
+sgcp_constrained receiver=5 policy=all-cavs sources=[5, 9, 10] clusters=20 ra=fullperception_pcs comm_bytes=196736 selected_grids={9: 6, 10: 30}
+fusion_method=early pred_boxes=25 gt_boxes=42
+pred_scores_shape=(25,)
+frame=1/3 receiver_sample=6/20 scenario=2026_07_29_02_32_08 timestamp=000060 cavs=[6]
+sgcp_constrained receiver=6 policy=all-cavs sources=[6] clusters=20 ra=fullperception_pcs comm_bytes=0 selected_grids={}
+fusion_method=early pred_boxes=12 gt_boxes=13
+pred_scores_shape=(12,)
+frame=1/3 receiver_sample=7/20 scenario=2026_07_29_02_32_08 timestamp=000060 cavs=[7]
+sgcp_constrained receiver=7 policy=all-cavs sources=[7] clusters=20 ra=fullperception_pcs comm_bytes=0 selected_grids={}
+fusion_method=early pred_boxes=25 gt_boxes=36
+pred_scores_shape=(25,)
+frame=1/3 receiver_sample=8/20 scenario=2026_07_29_02_32_08 timestamp=000060 cavs=[8]
+sgcp_constrained receiver=8 policy=all-cavs sources=[8] clusters=20 ra=fullperception_pcs comm_bytes=0 selected_grids={}
+fusion_method=early pred_boxes=24 gt_boxes=42
+pred_scores_shape=(24,)
+frame=1/3 receiver_sample=9/20 scenario=2026_07_29_02_32_08 timestamp=000060 cavs=[9]
+sgcp_constrained receiver=9 policy=all-cavs sources=[9] clusters=20 ra=fullperception_pcs comm_bytes=0 selected_grids={}
+fusion_method=early pred_boxes=22 gt_boxes=35
+pred_scores_shape=(22,)
+frame=1/3 receiver_sample=10/20 scenario=2026_07_29_02_32_08 timestamp=000060 cavs=[10]
+sgcp_constrained receiver=10 policy=all-cavs sources=[10] clusters=20 ra=fullperception_pcs comm_bytes=0 selected_grids={}
+fusion_method=early pred_boxes=21 gt_boxes=42
+pred_scores_shape=(21,)
+frame=1/3 receiver_sample=11/20 scenario=2026_07_29_02_32_08 timestamp=000060 cavs=[11, 8]
+sgcp_constrained receiver=11 policy=all-cavs sources=[11, 8] clusters=20 ra=fullperception_pcs comm_bytes=30704 selected_grids={8: 23}
+fusion_method=early pred_boxes=26 gt_boxes=47
+pred_scores_shape=(26,)
+frame=1/3 receiver_sample=12/20 scenario=2026_07_29_02_32_08 timestamp=000060 cavs=[12]
+sgcp_constrained receiver=12 policy=all-cavs sources=[12] clusters=20 ra=fullperception_pcs comm_bytes=0 selected_grids={}
+fusion_method=early pred_boxes=16 gt_boxes=40
+pred_scores_shape=(16,)
+frame=1/3 receiver_sample=13/20 scenario=2026_07_29_02_32_08 timestamp=000060 cavs=[13]
+sgcp_constrained receiver=13 policy=all-cavs sources=[13] clusters=20 ra=fullperception_pcs comm_bytes=0 selected_grids={}
+fusion_method=early pred_boxes=12 gt_boxes=25
+pred_scores_shape=(12,)
+frame=1/3 receiver_sample=14/20 scenario=2026_07_29_02_32_08 timestamp=000060 cavs=[14]
+sgcp_constrained receiver=14 policy=all-cavs sources=[14] clusters=20 ra=fullperception_pcs comm_bytes=0 selected_grids={}
+fusion_method=early pred_boxes=3 gt_boxes=5
+pred_scores_shape=(3,)
+frame=1/3 receiver_sample=15/20 scenario=2026_07_29_02_32_08 timestamp=000060 cavs=[15, 6]
+sgcp_constrained receiver=15 policy=all-cavs sources=[15, 6] clusters=20 ra=fullperception_pcs comm_bytes=107856 selected_grids={6: 6}
+fusion_method=early pred_boxes=17 gt_boxes=21
+pred_scores_shape=(17,)
+frame=1/3 receiver_sample=16/20 scenario=2026_07_29_02_32_08 timestamp=000060 cavs=[16]
+sgcp_constrained receiver=16 policy=all-cavs sources=[16] clusters=20 ra=fullperception_pcs comm_bytes=0 selected_grids={}
+fusion_method=early pred_boxes=20 gt_boxes=36
+pred_scores_shape=(20,)
+frame=1/3 receiver_sample=17/20 scenario=2026_07_29_02_32_08 timestamp=000060 cavs=[17]
+sgcp_constrained receiver=17 policy=all-cavs sources=[17] clusters=20 ra=fullperception_pcs comm_bytes=0 selected_grids={}
+fusion_method=early pred_boxes=17 gt_boxes=28
+pred_scores_shape=(17,)
+frame=1/3 receiver_sample=18/20 scenario=2026_07_29_02_32_08 timestamp=000060 cavs=[18, 3, 17]
+sgcp_constrained receiver=18 policy=all-cavs sources=[18, 3, 17] clusters=20 ra=fullperception_pcs comm_bytes=215744 selected_grids={3: 4, 17: 15}
+fusion_method=early pred_boxes=19 gt_boxes=30
+pred_scores_shape=(19,)
+frame=1/3 receiver_sample=19/20 scenario=2026_07_29_02_32_08 timestamp=000060 cavs=[19, 16, 20]
+sgcp_constrained receiver=19 policy=all-cavs sources=[19, 16, 20] clusters=20 ra=fullperception_pcs comm_bytes=215744 selected_grids={16: 4, 20: 18}
+fusion_method=early pred_boxes=23 gt_boxes=38
+pred_scores_shape=(23,)
+frame=1/3 receiver_sample=20/20 scenario=2026_07_29_02_32_08 timestamp=000060 cavs=[20]
+sgcp_constrained receiver=20 policy=all-cavs sources=[20] clusters=20 ra=fullperception_pcs comm_bytes=0 selected_grids={}
+fusion_method=early pred_boxes=23 gt_boxes=35
+pred_scores_shape=(23,)
+frame=2/3 receiver_sample=1/20 scenario=2026_07_29_02_32_08 timestamp=000062 cavs=[1, 4]
+sgcp_constrained receiver=1 policy=all-cavs sources=[1, 4] clusters=20 ra=fullperception_pcs comm_bytes=107808 selected_grids={4: 8}
+fusion_method=early pred_boxes=29 gt_boxes=53
+pred_scores_shape=(29,)
+frame=2/3 receiver_sample=2/20 scenario=2026_07_29_02_32_08 timestamp=000062 cavs=[2]
+sgcp_constrained receiver=2 policy=all-cavs sources=[2] clusters=20 ra=fullperception_pcs comm_bytes=0 selected_grids={}
+fusion_method=early pred_boxes=21 gt_boxes=38
+pred_scores_shape=(21,)
+frame=2/3 receiver_sample=3/20 scenario=2026_07_29_02_32_08 timestamp=000062 cavs=[3]
+sgcp_constrained receiver=3 policy=all-cavs sources=[3] clusters=20 ra=fullperception_pcs comm_bytes=0 selected_grids={}
+fusion_method=early pred_boxes=22 gt_boxes=27
+pred_scores_shape=(22,)
+frame=2/3 receiver_sample=4/20 scenario=2026_07_29_02_32_08 timestamp=000062 cavs=[4]
+sgcp_constrained receiver=4 policy=all-cavs sources=[4] clusters=20 ra=fullperception_pcs comm_bytes=0 selected_grids={}
+fusion_method=early pred_boxes=23 gt_boxes=34
+pred_scores_shape=(23,)
+frame=2/3 receiver_sample=5/20 scenario=2026_07_29_02_32_08 timestamp=000062 cavs=[5, 9, 10]
+sgcp_constrained receiver=5 policy=all-cavs sources=[5, 9, 10] clusters=20 ra=fullperception_pcs comm_bytes=197968 selected_grids={9: 6, 10: 31}
+fusion_method=early pred_boxes=26 gt_boxes=40
+pred_scores_shape=(26,)
+frame=2/3 receiver_sample=6/20 scenario=2026_07_29_02_32_08 timestamp=000062 cavs=[6]
+sgcp_constrained receiver=6 policy=all-cavs sources=[6] clusters=20 ra=fullperception_pcs comm_bytes=0 selected_grids={}
+fusion_method=early pred_boxes=11 gt_boxes=13
+pred_scores_shape=(11,)
+frame=2/3 receiver_sample=7/20 scenario=2026_07_29_02_32_08 timestamp=000062 cavs=[7]
+sgcp_constrained receiver=7 policy=all-cavs sources=[7] clusters=20 ra=fullperception_pcs comm_bytes=0 selected_grids={}
+fusion_method=early pred_boxes=20 gt_boxes=38
+pred_scores_shape=(20,)
+frame=2/3 receiver_sample=8/20 scenario=2026_07_29_02_32_08 timestamp=000062 cavs=[8]
+sgcp_constrained receiver=8 policy=all-cavs sources=[8] clusters=20 ra=fullperception_pcs comm_bytes=0 selected_grids={}
+fusion_method=early pred_boxes=23 gt_boxes=43
+pred_scores_shape=(23,)
+frame=2/3 receiver_sample=9/20 scenario=2026_07_29_02_32_08 timestamp=000062 cavs=[9]Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+
+sgcp_constrained receiver=9 policy=all-cavs sources=[9] clusters=20 ra=fullperception_pcs comm_bytes=0 selected_grids={}
+fusion_method=early pred_boxes=21 gt_boxes=35
+pred_scores_shape=(21,)
+frame=2/3 receiver_sample=10/20 scenario=2026_07_29_02_32_08 timestamp=000062 cavs=[10]
+sgcp_constrained receiver=10 policy=all-cavs sources=[10] clusters=20 ra=fullperception_pcs comm_bytes=0 selected_grids={}
+fusion_method=early pred_boxes=24 gt_boxes=40
+pred_scores_shape=(24,)
+frame=2/3 receiver_sample=11/20 scenario=2026_07_29_02_32_08 timestamp=000062 cavs=[11, 8]
+sgcp_constrained receiver=11 policy=all-cavs sources=[11, 8] clusters=20 ra=fullperception_pcs comm_bytes=30656 selected_grids={8: 23}
+fusion_method=early pred_boxes=29 gt_boxes=48
+pred_scores_shape=(29,)
+frame=2/3 receiver_sample=12/20 scenario=2026_07_29_02_32_08 timestamp=000062 cavs=[12]
+sgcp_constrained receiver=12 policy=all-cavs sources=[12] clusters=20 ra=fullperception_pcs comm_bytes=0 selected_grids={}
+fusion_method=early pred_boxes=13 gt_boxes=38
+pred_scores_shape=(13,)
+frame=2/3 receiver_sample=13/20 scenario=2026_07_29_02_32_08 timestamp=000062 cavs=[13]
+sgcp_constrained receiver=13 policy=all-cavs sources=[13] clusters=20 ra=fullperception_pcs comm_bytes=0 selected_grids={}
+fusion_method=early pred_boxes=12 gt_boxes=25
+pred_scores_shape=(12,)
+frame=2/3 receiver_sample=14/20 scenario=2026_07_29_02_32_08 timestamp=000062 cavs=[14]
+sgcp_constrained receiver=14 policy=all-cavs sources=[14] clusters=20 ra=fullperception_pcs comm_bytes=0 selected_grids={}
+fusion_method=early pred_boxes=3 gt_boxes=6
+pred_scores_shape=(3,)
+frame=2/3 receiver_sample=15/20 scenario=2026_07_29_02_32_08 timestamp=000062 cavs=[15, 6]
+sgcp_constrained receiver=15 policy=all-cavs sources=[15, 6] clusters=20 ra=fullperception_pcs comm_bytes=107840 selected_grids={6: 6}
+fusion_method=early pred_boxes=16 gt_boxes=21
+pred_scores_shape=(16,)
+frame=2/3 receiver_sample=16/20 scenario=2026_07_29_02_32_08 timestamp=000062 cavs=[16]
+sgcp_constrained receiver=16 policy=all-cavs sources=[16] clusters=20 ra=fullperception_pcs comm_bytes=0 selected_grids={}
+fusion_method=early pred_boxes=21 gt_boxes=37
+pred_scores_shape=(21,)
+frame=2/3 receiver_sample=17/20 scenario=2026_07_29_02_32_08 timestamp=000062 cavs=[17]
+sgcp_constrained receiver=17 policy=all-cavs sources=[17] clusters=20 ra=fullperception_pcs comm_bytes=0 selected_grids={}
+fusion_method=early pred_boxes=18 gt_boxes=28
+pred_scores_shape=(18,)
+frame=2/3 receiver_sample=18/20 scenario=2026_07_29_02_32_08 timestamp=000062 cavs=[18, 3, 17]
+sgcp_constrained receiver=18 policy=all-cavs sources=[18, 3, 17] clusters=20 ra=fullperception_pcs comm_bytes=215744 selected_grids={3: 6, 17: 13}
+fusion_method=early pred_boxes=18 gt_boxes=31
+pred_scores_shape=(18,)
+frame=2/3 receiver_sample=19/20 scenario=2026_07_29_02_32_08 timestamp=000062 cavs=[19, 16, 20]
+sgcp_constrained receiver=19 policy=all-cavs sources=[19, 16, 20] clusters=20 ra=fullperception_pcs comm_bytes=215728 selected_grids={16: 5, 20: 18}
+fusion_method=early pred_boxes=21 gt_boxes=39
+pred_scores_shape=(21,)
+frame=2/3 receiver_sample=20/20 scenario=2026_07_29_02_32_08 timestamp=000062 cavs=[20]
+sgcp_constrained receiver=20 policy=all-cavs sources=[20] clusters=20 ra=fullperception_pcs comm_bytes=0 selected_grids={}
+fusion_method=early pred_boxes=23 gt_boxes=34
+pred_scores_shape=(23,)
+frame=3/3 receiver_sample=1/20 scenario=2026_07_29_02_32_08 timestamp=000064 cavs=[1, 2, 4]
+sgcp_constrained receiver=1 policy=all-cavs sources=[1, 2, 4] clusters=20 ra=fullperception_pcs comm_bytes=168560 selected_grids={2: 24, 4: 8}
+fusion_method=early pred_boxes=32 gt_boxes=56
+pred_scores_shape=(32,)
+frame=3/3 receiver_sample=2/20 scenario=2026_07_29_02_32_08 timestamp=000064 cavs=[2]
+sgcp_constrained receiver=2 policy=all-cavs sources=[2] clusters=20 ra=fullperception_pcs comm_bytes=0 selected_grids={}
+fusion_method=early pred_boxes=22 gt_boxes=38
+pred_scores_shape=(22,)
+frame=3/3 receiver_sample=3/20 scenario=2026_07_29_02_32_08 timestamp=000064 cavs=[3]
+sgcp_constrained receiver=3 policy=all-cavs sources=[3] clusters=20 ra=fullperception_pcs comm_bytes=0 selected_grids={}
+fusion_method=early pred_boxes=19 gt_boxes=27
+pred_scores_shape=(19,)
+frame=3/3 receiver_sample=4/20 scenario=2026_07_29_02_32_08 timestamp=000064 cavs=[4]
+sgcp_constrained receiver=4 policy=all-cavs sources=[4] clusters=20 ra=fullperception_pcs comm_bytes=0 selected_grids={}
+fusion_method=early pred_boxes=23 gt_boxes=36
+pred_scores_shape=(23,)
+frame=3/3 receiver_sample=5/20 scenario=2026_07_29_02_32_08 timestamp=000064 cavs=[5, 7, 13]
+sgcp_constrained receiver=5 policy=all-cavs sources=[5, 7, 13] clusters=20 ra=fullperception_pcs comm_bytes=215728 selected_grids={7: 7, 13: 6}
+fusion_method=early pred_boxes=24 gt_boxes=41
+pred_scores_shape=(24,)
+frame=3/3 receiver_sample=6/20 scenario=2026_07_29_02_32_08 timestamp=000064 cavs=[6]
+sgcp_constrained receiver=6 policy=all-cavs sources=[6] clusters=20 ra=fullperception_pcs comm_bytes=0 selected_grids={}
+fusion_method=early pred_boxes=12 gt_boxes=13
+pred_scores_shape=(12,)
+frame=3/3 receiver_sample=7/20 scenario=2026_07_29_02_32_08 timestamp=000064 cavs=[7]
+sgcp_constrained receiver=7 policy=all-cavs sources=[7] clusters=20 ra=fullperception_pcs comm_bytes=0 selected_grids={}
+fusion_method=early pred_boxes=22 gt_boxes=36
+pred_scores_shape=(22,)
+frame=3/3 receiver_sample=8/20 scenario=2026_07_29_02_32_08 timestamp=000064 cavs=[8]
+sgcp_constrained receiver=8 policy=all-cavs sources=[8] clusters=20 ra=fullperception_pcs comm_bytes=0 selected_grids={}
+fusion_method=early pred_boxes=25 gt_boxes=43
+pred_scores_shape=(25,)
+frame=3/3 receiver_sample=9/20 scenario=2026_07_29_02_32_08 timestamp=000064 cavs=[9, 16]
+sgcp_constrained receiver=9 policy=all-cavs sources=[9, 16] clusters=20 ra=fullperception_pcs comm_bytes=107808 selected_grids={16: 3}
+fusion_method=early pred_boxes=24 gt_boxes=44
+pred_scores_shape=(24,)
+frame=3/3 receiver_sample=10/20 scenario=2026_07_29_02_32_08 timestamp=000064 cavs=[10]
+sgcp_constrained receiver=10 policy=all-cavs sources=[10] clusters=20 ra=fullperception_pcs comm_bytes=0 selected_grids={}
+fusion_method=early pred_boxes=24 gt_boxes=42
+pred_scores_shape=(24,)
+frame=3/3 receiver_sample=11/20 scenario=2026_07_29_02_32_08 timestamp=000064 cavs=[11, 8]
+sgcp_constrained receiver=11 policy=all-cavs sources=[11, 8] clusters=20 ra=fullperception_pcs comm_bytes=30624 selected_grids={8: 23}
+fusion_method=early pred_boxes=28 gt_boxes=48
+pred_scores_shape=(28,)
+frame=3/3 receiver_sample=12/20 scenario=2026_07_29_02_32_08 timestamp=000064 cavs=[12]
+sgcp_constrained receiver=12 policy=all-cavs sources=[12] clusters=20 ra=fullperception_pcs comm_bytes=0 selected_grids={}
+fusion_method=early pred_boxes=16 gt_boxes=37
+pred_scores_shape=(16,)
+frame=3/3 receiver_sample=13/20 scenario=2026_07_29_02_32_08 timestamp=000064 cavs=[13]
+sgcp_constrained receiver=13 policy=all-cavs sources=[13] clusters=20 ra=fullperception_pcs comm_bytes=0 selected_grids={}
+fusion_method=early pred_boxes=11 gt_boxes=25
+pred_scores_shape=(11,)
+frame=3/3 receiver_sample=14/20 scenario=2026_07_29_02_32_08 timestamp=000064 cavs=[14]
+sgcp_constrained receiver=14 policy=all-cavs sources=[14] clusters=20 ra=fullperception_pcs comm_bytes=0 selected_grids={}
+fusion_method=early pred_boxes=3 gt_boxes=6
+pred_scores_shape=(3,)
+frame=3/3 receiver_sample=15/20 scenario=2026_07_29_02_32_08 timestamp=000064 cavs=[15, 6]
+sgcp_constrained receiver=15 policy=all-cavs sources=[15, 6] clusters=20 ra=fullperception_pcs comm_bytes=107776 selected_grids={6: 6}
+fusion_method=early pred_boxes=17 gt_boxes=21
+pred_scores_shape=(17,)
+frame=3/3 receiver_sample=16/20 scenario=2026_07_29_02_32_08 timestamp=000064 cavs=[16]
+sgcp_constrained receiver=16 policy=all-cavs sources=[16] clusters=20 ra=fullperception_pcs comm_bytes=0 selected_grids={}
+fusion_method=early pred_boxes=21 gt_boxes=38
+pred_scores_shape=(21,)
+frame=3/3 receiver_sample=17/20 scenario=2026_07_29_02_32_08 timestamp=000064 cavs=[17]
+sgcp_constrained receiver=17 policy=all-cavs sources=[17] clusters=20 ra=fullperception_pcs comm_bytes=0 selected_grids={}C:\Users\sakakibara\miniconda3\envs\opencda\lib\site-packages\torch\nn\functional.py:1806: UserWarning: nn.functional.sigmoid is deprecated. Use torch.sigmoid instead.
+  warnings.warn("nn.functional.sigmoid is deprecated. Use torch.sigmoid instead.")
+
+fusion_method=early pred_boxes=17 gt_boxes=28
+pred_scores_shape=(17,)
+frame=3/3 receiver_sample=18/20 scenario=2026_07_29_02_32_08 timestamp=000064 cavs=[18, 3, 17]
+sgcp_constrained receiver=18 policy=all-cavs sources=[18, 3, 17] clusters=20 ra=fullperception_pcs comm_bytes=215744 selected_grids={3: 6, 17: 12}
+fusion_method=early pred_boxes=17 gt_boxes=31
+pred_scores_shape=(17,)
+frame=3/3 receiver_sample=19/20 scenario=2026_07_29_02_32_08 timestamp=000064 cavs=[19]
+sgcp_constrained receiver=19 policy=all-cavs sources=[19] clusters=20 ra=fullperception_pcs comm_bytes=0 selected_grids={}
+fusion_method=early pred_boxes=11 gt_boxes=27
+pred_scores_shape=(11,)
+frame=3/3 receiver_sample=20/20 scenario=2026_07_29_02_32_08 timestamp=000064 cavs=[20, 10, 19]
+sgcp_constrained receiver=20 policy=all-cavs sources=[20, 10, 19] clusters=20 ra=fullperception_pcs comm_bytes=169808 selected_grids={10: 3, 19: 46}
+fusion_method=early pred_boxes=25 gt_boxes=50
+pred_scores_shape=(25,)
+cp counter: 60
+Evaluate final average precision results:
+  - Fusion method: early
+  - The Average Precision at IOU 0.3 is 0.55, The Average Precision at IOU 0.5 is 0.51, The Average Precision at IOU 0.7 is 0.37
+sgcp_summary frames=60 avg_comm_bytes=46107.20 total_comm_bytes=2766432 avg_source_cavs=1.48 avg_selected_grids=6.22

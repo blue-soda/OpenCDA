@@ -1,0 +1,43 @@
+scenario_id: '2026_07_22_22_00_04'
+dataset_root: D:\Data\Carla
+lgcp_yaml: C:\Workspace\OpenCDA\opencda\scenario_testing\config_yaml\lgcp_carla_intersection_easy.yaml
+selected_timestamps:
+- '000060'
+- '000062'
+- '000064'
+- '000066'
+- 000068
+- '000070'
+- '000072'
+- '000074'
+- '000076'
+- 000078
+- 000080
+- 000082
+- 000084
+- 000086
+- 000088
+- 000090
+- 000092
+- 000094
+- 000096
+- 000098
+- '000100'
+roi:
+  center:
+  - 1.0
+  - 134.0
+  size:
+  - 90.0
+  - 70.0
+  grid_size:
+  - 30.0
+  - 24.0
+density_threshold: 2.0
+include_empty: false
+localization_noise_std: 0.0
+localization_noise_seed: 7
+with_inference: true
+fusion_method: early
+note: area_ap_summary and confidence_quality_correlation are generated when with_inference
+  is true.

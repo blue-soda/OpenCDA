@@ -1,0 +1,143 @@
+description: |-
+  Five-CAV Town03 cross-intersection data-dump scenario for LGCP/OpenCOOD
+  diagnostics.
+
+  Compared with lgcp_carla_5veh_datadump, this variant keeps the same compact
+  ordinary junction near (1.10, 133.72) but uses both north-south and east-west
+  approaches. The intent is to avoid an overly regular single-corridor scene
+  whose AP becomes quantized by repeated identical detections.
+
+world:
+  weather:
+    sun_altitude_angle: 89
+    cloudiness: 0
+    precipitation: 0
+    precipitation_deposits: 0
+    wind_intensity: 0
+    fog_density: 0
+    fog_distance: 100000
+    fog_falloff: 0
+    wetness: 0
+
+blueprint:
+  use_multi_class_bp: false
+  bp_meta_path: "opencda/assets/blueprint_meta/bbx_stats_0911.json"
+  bp_class_sample_prob:
+    car: 1.00
+    truck: 0.00
+    bus: 0.00
+    bicycle: 0.00
+    motorcycle: 0.00
+
+lgcp:
+  enabled: true
+  roi:
+    center: [1.0, 134.0]
+    size: [90.0, 70.0]
+    grid_size: [30.0, 24.0]
+  target_cav_num: 5
+  target_total_vehicle_num: 5
+  notes:
+    - "Five-CAV cross-intersection data-dump scene; no background vehicles."
+    - "Designed for small OpenCOOD/LGCP AP sanity checks, not scalability claims."
+
+vehicle_base:
+  sensing:
+    perception:
+      lidar:
+        visualize: false
+        channels: 32
+        range: 90
+        points_per_second: 320000
+        rotation_frequency: 20
+        upper_fov: 10.0
+        lower_fov: -30.0
+        dropoff_general_rate: 0.0
+        dropoff_intensity_limit: 1.0
+        dropoff_zero_intensity: 0.0
+        noise_stddev: 0.0
+        enable_grids: true
+        grid_size: 10.0
+        density_threshold: 2.0
+  v2x:
+    communication_range: 80
+
+traffic_vehicle_base:
+  sensing:
+    perception:
+      lidar:
+        visualize: false
+        channels: 32
+        range: 90
+        points_per_second: 320000
+        rotation_frequency: 20
+        upper_fov: 10.0
+        lower_fov: -30.0
+        dropoff_general_rate: 0.0
+        dropoff_intensity_limit: 1.0
+        dropoff_zero_intensity: 0.0
+        noise_stddev: 0.0
+        enable_grids: true
+        grid_size: 10.0
+        density_threshold: 2.0
+  v2x:
+    communication_range: 80
+
+carla_traffic_manager:
+  sync_mode: true
+  global_distance: 10
+  global_speed_perc: -20
+  set_osm_mode: true
+  auto_lane_change: false
+  random: false
+  ignore_lights_percentage: 100
+  vehicle_list: []
+  range: []
+
+scenario:
+  single_cav_list:
+    -
+      spawn_position: [1.90, 122.30, 0.3, 0, -90.4, 0]
+      destination: [1.90, 90.00, 1.0]
+      behavior:
+        local_planner:
+          debug_trajectory: false
+          debug: false
+    -
+      spawn_position: [-5.90, 143.10, 0.3, 0, 89.6, 0]
+      destination: [-5.90, 175.00, 1.0]
+      behavior:
+        local_planner:
+          debug_trajectory: false
+          debug: false
+    -
+      spawn_position: [5.43, 122.28, 0.3, 0, -90.4, 0]
+      destination: [5.43, 90.00, 1.0]
+      behavior:
+        local_planner:
+          debug_trajectory: false
+          debug: false
+    -
+      spawn_position: [13.99, 134.39, 0.3, 0, -0.8, 0]
+      destination: [45.00, 134.39, 1.0]
+      behavior:
+        local_planner:
+          debug_trajectory: false
+          debug: false
+    -
+      spawn_position: [-16.63, 130.84, 0.3, 0, 178.7, 0]
+      destination: [-48.00, 130.84, 1.0]
+      behavior:
+        local_planner:
+          debug_trajectory: false
+          debug: false
+
+coperception:
+  models:
+    early: 'opencood/logs/pointpillar_early_fusion'
+    intermediate_v2xvit: 'opencood/logs/pointpillar_v2xvit_fusion'
+    intermediate_attentive: 'opencood/logs/pointpillar_attentive_fusion'
+    intermediate_where2comm: 'C:/Workspace/OpenCOOD/checkpoints/where2comm_10e'
+    intermediate_cobevt: 'opencood/logs/pointpillar_cobevt_fusion'
+    late: 'opencood/logs/pointpillar_late_fusion'
+  fusion_method: 'early'

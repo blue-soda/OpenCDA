@@ -2402,6 +2402,64 @@ Break-even against raw point slices:
 
 Where2comm is therefore highly efficient relative to dense BEV feature transmission, retaining only about `0.5%-1.0%` of the full multiscale feature payload in these runs. It is not automatically smaller than raw area point slices. For the network-paper argument, this should be written as a conditional communication trade-off: sparse intermediate features dominate when the selected area contains enough raw points or when the feature mask/quantization budget is sufficiently tight; sparse raw point slices dominate in low-density areas.
 
+Two-hop Where2comm intermediate-feature diagnostic:
+
+| Route | Scope | Areas/frame | Leader packets/frame | First hop Mbps | Second hop Mbps | Total Mbps | Raw-equivalent member KB/frame | AP@0.3 | AP@0.5 | AP@0.7 | GT | Pred samples |
+| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| Two-hop Where2comm, member feature -> leader feature -> RSU feature | planned areas | 5 | 4 | 7.617585 | 0.290621 | 7.908206 | 19.59 | 0.000000 | 0.000000 | 0.000000 | 210 | 0 |
+
+Diagnostic controls:
+
+- Same first frame / Top-10 one-hop Where2comm leader-feature route gives AP@0.3/0.5/0.7 `0.750000/0.657407/0.564815`, so the checkpoint and detection head are not globally broken.
+- Two-hop Top-10 area-packet, two-hop Top-10 leader-packet, and leader-packet full-mask / low-threshold first-frame controls all failed to recover useful AP.
+- The likely reason is distribution shift: the output of a Where2comm fusion module is not trained to become a normal per-CAV feature packet for a second Where2comm fusion pass. Two-hop intermediate feature sharing therefore needs a trained hierarchy adapter or dedicated leader/RSU fusion calibration before it can be a performance route.
+
+Direct fused-feature aggregation at the RSU:
+
+| Route | Scope | Areas/frame | Leader packets/frame | RSU fusion | First hop Mbps | Second hop Mbps | Total Mbps | AP@0.3 | AP@0.5 | AP@0.7 | GT | Pred |
+| --- | --- | ---: | ---: | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| Two-hop fused feature, Top-10 first frame | planned areas | 10 | 5 | direct mean | 11.991040 | 3027.763200 | 3039.754240 | 0.000000 | 0.000000 | 0.000000 | 12 | 0 |
+| Two-hop fused feature, Top-10 first frame | planned areas | 10 | 5 | direct max | 11.991040 | 3027.763200 | 3039.754240 | 0.000000 | 0.000000 | 0.000000 | 12 | 0 |
+| Two-hop fused feature, Top-10 first frame | planned areas | 10 | 5 | direct attention | 11.991040 | 3027.763200 | 3039.754240 | 0.000000 | 0.000000 | 0.000000 | 12 | 0 |
+| Two-hop fused feature, Top-10 first frame | planned areas | 10 | 5 | direct mean, threshold 0.001 | 11.991040 | 3027.763200 | 3039.754240 | 0.000000 | 0.000000 | 0.000000 | 12 | 1 |
+
+This confirms that direct aggregation over first-hop fused features is implementable, but it does not solve the current route. Without a second-hop selector/compressor, dense fused-feature upload is about `3027.76 Mbps` in the first-frame diagnostic; without a trained RSU fused-feature adapter, AP remains zero.
+
+Full-BEV first-hop feature diagnostic:
+
+| Route | Scope | Areas/frame | Packets/frame | First-hop input | Second-hop fusion | Threshold | First hop Mbps | Second hop Mbps | Total Mbps | AP@0.3 | AP@0.5 | AP@0.7 | GT | Pred |
+| --- | --- | ---: | ---: | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| Two-hop full-BEV mask, Top-10 first frame | planned areas | 10 | 5 leaders | full point cloud -> full BEV, area mask communication | Where2comm | 0.05 | 11.069440 | 3.512320 | 14.581760 | 0.000000 | 0.000000 | 0.000000 | 12 | 0 |
+| Two-hop full-BEV mask, Top-10 first frame | planned areas | 10 | 5 leaders | full point cloud -> full BEV, area mask communication | Where2comm | 0.001 | 11.069440 | 3.512320 | 14.581760 | 0.000000 | 0.000000 | 0.000000 | 12 | 9 |
+| Two-hop full-BEV mask, Top-5 21 frames | planned areas | 5 | 4 leaders | full point cloud -> full BEV, area mask communication | Where2comm | 0.001 | 7.112899 | 0.411550 | 7.524450 | 0.000000 | 0.000000 | 0.000000 | 210 | 21 |
+| Two-hop full-BEV mask, Top-10 first frame | planned areas | 10 | 10 area packets | full point cloud -> full BEV, area mask communication | Where2comm | 0.001 | 11.069440 | 3.051520 | 14.120960 | 0.000000 | 0.000000 | 0.000000 | 12 | 4 |
+| Two-hop full-BEV mask, Top-10 first frame | full scope | 10 | 10 area packets | full point cloud -> full BEV, area mask communication | Where2comm | 0.001 | 11.069440 | 3.051520 | 14.120960 | 0.000000 | 0.000000 | 0.000000 | 13 | 68 |
+
+This variant is closer to the original Where2comm input distribution than point-crop encoding because every member uses its full point cloud to build BEV features, and LGCP areas only mask transmitted feature cells. It still fails to produce non-zero AP when the leader fused feature is passed into a second Where2comm stage. The full-scope row shows that the issue is not caused by planned-area filtering: even with 68 predicted boxes in the whole scene, none match GT at AP@0.3.
+
+First-hop leader-side AP diagnostic for the Top-5 / 21-frame full-BEV route:
+
+| Stage | Eval unit | Pred samples | GT boxes | AP@0.3 | AP@0.5 | AP@0.7 |
+| --- | --- | ---: | ---: | ---: | ---: | ---: |
+| First hop after leader Where2comm fusion | area-level leader reference | 356 | 147 | 0.470496 | 0.470496 | 0.470496 |
+| Second hop after RSU Where2comm fusion | planned-area RSU reference | 21 | 210 | 0.000000 | 0.000000 | 0.000000 |
+
+This isolates the failure point: first-hop leader fused features still support non-zero local area detection, while the second-hop RSU Where2comm stage collapses useful alignment / distribution for detection.
+
+Coordinate-reference isolation for the same Top-10 first frame:
+
+| Route | First-hop feature reference | Query | Pairwise mode | Pred | GT | AP@0.3 | AP@0.5 | AP@0.7 | Total Mbps |
+| --- | --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| full-BEV leader packet | leader coordinate | zero | normal | 2 | 12 | 0.000000 | 0.000000 | 0.000000 | 14.581760 |
+| full-BEV leader packet | leader coordinate | zero | inverse | 1 | 12 | 0.000000 | 0.000000 | 0.000000 | 14.981120 |
+| full-BEV reference diagnostic | RSU/reference coordinate | zero | normal | 3 | 12 | 0.166667 | 0.166667 | 0.166667 | 28.979199 |
+
+Interpretation:
+
+- Reversing the pairwise transform direction does not recover AP, so the failure is not just a simple affine convention swap.
+- Forcing first-hop packet features into the RSU/reference BEV coordinate frame recovers non-zero AP on the same frame. This supports the diagnosis that leader-local fused features cannot be consumed by the RSU second-hop Where2comm stage unless they are explicitly warped/generated into a common RSU/global reference.
+- The recovered AP is still low, so coordinate alignment is necessary but not sufficient. The remaining gap is consistent with fused-feature distribution shift and an untrained second-hop selector / adapter / detection-head interface.
+
 ### 2026-07-18：Nearest vs Bilinear Coordinate-Warp AP Probe
 
 本次结果用于判断当前 PointPillar neural feature hierarchy 是否能直接形成论文级 AP。实验复用 Top-23 首帧 leader-local feature slices，以 CAV 1 为 reference canvas，比较 nearest 与 bilinear 的 `reference -> world -> leader` coordinate warp。
@@ -2451,3 +2509,487 @@ docs/doc_workspace/LGCP/experiments/hierarchy_plan/20260718_lgcp_neural_feature_
 - 未优化 PointPillar feature crop 不比 raw area-slice 省通信；Top23 首帧压缩 feature crop 是 raw member area23 均值的 `16.89x`。
 - RSU canvas / coordinate-warp canvas 较小，但它们是聚合后中间产物，不能当作 leader upload 负载。
 - 当前 neural feature hierarchy 只能安全写作 data-path feasibility / coverage / byte boundary；感知质量主证据应继续使用 box-level hierarchy late-fusion 或等待校准 / 重训练后的 neural AP。
+## 2026-07-28: OpenCOOD Original LGCP Reproduction
+
+Goal: reproduce the original LGCP paper description on OPV2V with RSU/ego as the reference, area grouping by collaborative confidence gain, first-hop area intermediate-feature accounting, and second-hop perception-result upload plus RSU box NMS.
+
+Implementation branch: `C:\Workspace\OpenCOOD`, branch `codex/lgcp-where2comm-area`.
+
+Remote environment: `mindspore-186:/data1/wql/gzc/workspace/OpenCOOD`, conda env `opencood-gzc`, OPV2V test slice `start_frame=423`, `max_frames=20`, `max_cav_override=5`, `comm_range_override=200`.
+
+New inference options:
+
+```text
+--lgcp_original
+--lgcp_original_execution leader_box|accounting
+--lgcp_original_delta_g
+--lgcp_original_area_w_m 10
+--lgcp_original_area_h_m 6
+--lgcp_original_full_feature_mbit 2.16
+--lgcp_original_box_payload_bytes 64
+```
+
+Two execution semantics:
+
+- `leader_box`: physically executes leader-local intermediate fusion per selected group, filters leader boxes by assigned areas, and then performs RSU box NMS. This is closer to a literal executable hierarchy.
+- `accounting`: keeps the original full intermediate model output for perception quality, while using LGCP area grouping to account first-hop area feature packets and second-hop detection-result packets. This matches the recovered original-code risk described by the original author: intermediate features are not actually spatially partitioned before inference; area partitioning is applied mainly to communication accounting and result grouping.
+
+Current OPV2V 5-CAV slice results:
+
+| Method | Execution | Delta_g | AP@0.3 | AP@0.5 | AP@0.7 | Mbps | Reduction vs edge-assisted full feature | Areas/frame | First-hop packets/frame | First-hop Mbps | Second-hop Mbps |
+| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| Where2comm full intermediate | baseline | - | 0.906450 | 0.904430 | 0.851670 | 425.548300 | - | - | - | - | - |
+| LGCP + Where2comm | accounting | 0.075 | 0.906450 | 0.904430 | 0.851670 | 4.112139 | 26.418x | 162 | 66 | 3.970059 | 0.142080 |
+| LGCP + Where2comm | accounting | 0.100 | 0.906450 | 0.904430 | 0.851670 | 2.314377 | 43.721x | 162 | 39 | 2.172297 | 0.142080 |
+| LGCP + Where2comm | accounting | 0.125 | 0.906450 | 0.904430 | 0.851670 | 1.370551 | 74.407x | 162 | 22 | 1.228471 | 0.142080 |
+| LGCP + Where2comm | leader_box | 0.075 | 0.383235 | 0.371399 | 0.354552 | 4.161035 | 26.286x | 162 | 66 | 3.970059 | 0.190976 |
+| LGCP + CoSDH | accounting | 0.075 | 0.842576 | 0.840305 | 0.775515 | 1.142095 | 177.806x | 88 | 8 | 1.009743 | 0.132352 |
+
+Interpretation:
+
+- The original-paper accounting route can reproduce the headline behavior on this slice: no AP loss relative to full intermediate inference, while `Delta_g=0.10` gives `43.721x` reduction, very close to the paper abstract's `44x` claim.
+- The reduction is computed against the paper's edge-assisted paradigm: every CAV uploads a complete shared feature of `2.16 Mb` per frame. It is not a reduction against raw point cloud slices.
+- Strict executable leader-local area perception is not yet strong enough: `leader_box` falls to AP@0.5 `0.371399`. Full-ROI and `Delta_g=0` diagnostics show the coordinate transform and subgroup inference are basically valid; the AP drop comes from fine-grained area assignment / area-box filtering and leader responsibility fragmentation.
+- This creates a paper-writing boundary: if we choose the low-workload InfoCom submission path, the main table can use the `accounting` reproduction only if the manuscript honestly frames LGCP as a scheduling/accounting layer over existing intermediate perception, not as proof that spatially partitioned neural features were truly transmitted and fused.
+
+Useful remote result files:
+
+```text
+opencood/logs/where2comm_10e/comm_stats_intermediate_baseline_same_slice_20f_epoch6.json
+opencood/logs/where2comm_10e/comm_stats_intermediate_lgcp_original_accounting_dg075_10x6_20f_epoch6.json
+opencood/logs/where2comm_10e/comm_stats_intermediate_lgcp_original_accounting_dg100_10x6_20f_epoch6.json
+opencood/logs/where2comm_10e/comm_stats_intermediate_lgcp_original_accounting_dg125_10x6_20f_epoch6.json
+opencood/logs/where2comm_10e/comm_stats_intermediate_lgcp_original_psm_dg075_10x6_20f_epoch6.json
+opencood/logs/opv2v_cosdh_2026_05_15_11_17_12/comm_stats_intermediate_lgcp_original_accounting_dg075_10x6_20f_epoch21.json
+```
+
+### 2026-07-28 Follow-up: Leader-box Implementation Audit
+
+The initial `leader_box` result was too low partly because of an implementation bug. `pairwise_t_matrix[i, j]` is generated as the transform from CAV `i` to CAV `j`, but the first implementation projected non-ego leader boxes with `[0, leader]` instead of `[leader, 0]`. The same direction issue also affected single-CAV box projection and PSM area-confidence projection. This has been fixed in OpenCOOD commit `2ff2ba31`.
+
+Additional diagnostic switches:
+
+```text
+--lgcp_original_force_single_group
+--lgcp_original_force_leader_idx
+--lgcp_original_no_area_box_filter
+```
+
+Updated Where2comm OPV2V 5-CAV diagnostics:
+
+| Diagnostic | AP@0.3 | AP@0.5 | AP@0.7 | Mbps | Areas/frame | First-hop packets/frame | Uploaded boxes/frame |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| Full intermediate baseline | 0.906450 | 0.904430 | 0.851670 | 425.548300 | - | - | - |
+| Accounting | 0.906450 | 0.904430 | 0.851670 | 4.112139 | 162 | 66 | 26 |
+| Ego-coordinate area box filter | 0.906450 | 0.904430 | 0.851670 | 4.112139 | 162 | 66 | 26 |
+| Leader-box, all CAVs, leader 0, no area filter | 0.906450 | 0.904430 | 0.851670 | 2.847713 | 176 | 42 | 26 |
+| Leader-box, all CAVs, leader 1, no area filter, fixed direction | 0.835573 | 0.830341 | 0.776291 | 4.402825 | 113 | 63 | 26 |
+| Leader-box, normal groups, fixed direction | 0.603480 | 0.594718 | 0.555254 | 4.355977 | 113 | 63 | 22 |
+| Leader-box, normal groups, fixed direction, no area filter | 0.904729 | 0.902794 | 0.852588 | 4.842377 | 113 | 63 | 120 |
+| Leader-box, all CAVs, leader 0, area filter | 0.906450 | 0.904430 | 0.851670 | 4.390793 | 113 | 63 | 26 |
+
+Conclusions:
+
+- AP statistics and full-batch baseline evaluation are correct.
+- The CAV-subset construction is correct when the leader is CAV 0: all-CAV single-group leader-box reproduces the baseline exactly.
+- Non-ego leader projection was previously wrong; after fixing transform direction, leader 1 all-CAV AP recovers from zero to `0.835573/0.830341/0.776291`. The remaining gap is consistent with changing the fusion reference/grid from ego to another CAV.
+- The main remaining AP loss in normal `leader_box` is the hard per-leader area box filter. With normal multi-leader groups but no area filter, AP returns to `0.904729/0.902794/0.852588`; with area filter, AP is `0.603480/0.594718/0.555254`.
+- Therefore the strictest leader responsibility rule is brittle for the current pretrained checkpoint. A more defensible executable variant is `leader_box + RSU NMS without per-leader area box filtering`, while communication accounting can remain area-based.
+
+### 2026-07-28 Follow-up: Area-filter TP/FP Diagnosis and Fix
+
+The strict area filter used center-cell ownership only. Because object boxes have spatial extent and OpenCOOD detections from different leaders may land in adjacent area cells, this hard boundary removed many true positives before the final RSU NMS. A one-cell area guard band was added through:
+
+```text
+--lgcp_original_area_filter_margin
+```
+
+Default is now `1` in OpenCOOD commit `950efbdf`.
+
+TP/FP comparison on the same Where2comm OPV2V 5-CAV / 20-frame slice:
+
+| Setting | AP@0.3 | AP@0.5 | AP@0.7 | IoU | TP | FP | GT | Pred | Recall | Precision |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| Strict filter, margin 0 | 0.602126 | 0.593372 | 0.549994 | 0.5 | 361 | 57 | 600 | 418 | 0.601667 | 0.863636 |
+| Guard-band filter, margin 1 | 0.901046 | 0.901046 | 0.845896 | 0.5 | 547 | 192 | 600 | 739 | 0.911667 | 0.740189 |
+| Guard-band filter, margin 2 | 0.905105 | 0.903159 | 0.852491 | 0.5 | 551 | 293 | 600 | 844 | 0.918333 | 0.652844 |
+| No per-leader filter | 0.904767 | 0.902836 | 0.852616 | 0.5 | 551 | 323 | 600 | 874 | 0.918333 | 0.630435 |
+
+At IoU 0.7:
+
+| Setting | TP | FP | GT | Pred | Recall | Precision |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| Strict filter, margin 0 | 337 | 81 | 600 | 418 | 0.561667 | 0.806220 |
+| Guard-band filter, margin 1 | 517 | 222 | 600 | 739 | 0.861667 | 0.699594 |
+| Guard-band filter, margin 2 | 522 | 322 | 600 | 844 | 0.870000 | 0.618483 |
+| No per-leader filter | 522 | 352 | 600 | 874 | 0.870000 | 0.597254 |
+
+Conclusion:
+
+- The AP drop was recall-driven. Strict filtering kept precision high but capped AP@0.5 recall at `0.601667`.
+- A one-cell guard band recovers almost all missing TP while keeping fewer FP than no filter.
+- This matches the intended LGCP semantics better: leader responsibility areas should form an overlapping or guard-banded cover of the scene before RSU aggregation, not a brittle non-overlapping center-cell ownership test.
+
+### 2026-07-28 Follow-up: Multi-leader and Area-mask Results
+
+All runs below use the same OPV2V 5-CAV slice: `start_frame=423`, `max_frames=20`, `comm_range_override=200`, Where2comm epoch 6 unless otherwise noted.
+
+Multi-leader `leader_box` with default one-cell guard band:
+
+| Delta_g | Leaders in first frame | AP@0.3 | AP@0.5 | AP@0.7 | Mbps | Edge-assisted reduction | Areas/frame | First-hop packets/frame | First-hop Mbps | Second-hop Mbps |
+| ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| 0.050 | 5 | 0.896900 | 0.894825 | 0.836048 | 6.765744 | 16.546x | 113 | 102 | 6.364080 | 0.401664 |
+| 0.075 | 5 | 0.901734 | 0.901734 | 0.846506 | 4.640137 | 25.998x | 113 | 63 | 4.248713 | 0.391424 |
+| 0.100 | 5 | 0.905693 | 0.902392 | 0.854416 | 2.579593 | 43.106x | 113 | 36 | 2.172297 | 0.407296 |
+| 0.125 | 5 | 0.898105 | 0.892381 | 0.856666 | 1.493406 | 77.076x | 113 | 18 | 1.087646 | 0.405760 |
+
+Interpretation:
+
+- This is no longer a single-leader diagnostic. The first frame uses five leaders in all four runs.
+- Increasing `Delta_g` reduces first-hop area packets and communication as expected. AP stays near the full Where2comm baseline `0.906450/0.904430/0.851670`.
+- `Delta_g=0.10` is the best current paper-style operating point: AP@0.5 `0.902392` and `43.106x` edge-assisted reduction, close to the original abstract's `44x` communication claim.
+
+Where2comm area mask, 3x4 BEV area grid, `constraint` mode:
+
+| Setting | AP@0.3 | AP@0.5 | AP@0.7 | Avg comm rate | Mbps | Reduction vs no area mask |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| No area mask | 0.906450 | 0.904430 | 0.851670 | 0.191447 | 425.548300 | 1.00x |
+| Top-1 area | 0.849722 | 0.848069 | 0.807164 | 0.034939 | 73.044482 | 5.83x |
+| Top-2 areas | 0.893243 | 0.891220 | 0.833890 | 0.069437 | 146.446853 | 2.91x |
+| Top-3 areas | 0.904974 | 0.902937 | 0.848870 | 0.097987 | 208.649222 | 2.04x |
+| Top-4 areas | 0.904998 | 0.902964 | 0.850613 | 0.121738 | 261.686792 | 1.63x |
+| Top-6 areas | 0.905343 | 0.903313 | 0.850865 | 0.159539 | 348.600844 | 1.22x |
+
+CoSDH area mask, same 3x4 BEV area grid and `constraint` mode, epoch 21:
+
+| Setting | AP@0.3 | AP@0.5 | AP@0.7 | Avg comm rate | Mbps | Reduction vs no area mask |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| No area mask | 0.842583 | 0.840308 | 0.775534 | 0.048765 | 7.403200 | 1.00x |
+| Top-1 area | 0.814698 | 0.812288 | 0.718339 | 0.010475 | 1.522016 | 4.86x |
+| Top-2 areas | 0.832293 | 0.829977 | 0.747939 | 0.019464 | 2.834528 | 2.61x |
+| Top-3 areas | 0.837550 | 0.835279 | 0.766961 | 0.027341 | 4.011488 | 1.85x |
+| Top-4 areas | 0.839244 | 0.836978 | 0.772112 | 0.034180 | 5.075936 | 1.46x |
+| Top-6 areas | 0.840916 | 0.838647 | 0.773973 | 0.042234 | 6.322016 | 1.17x |
+
+Interpretation:
+
+- The area-mask mechanism works cleanly for Where2comm: Top-3 keeps nearly the same AP while halving communication.
+- The same mask interface also works for another PointPillar BEV feature model, CoSDH. Its absolute communication is already much lower because the checkpoint uses `compression=16` and sparse selection, so the extra area-mask gain is smaller.
+- These results support two paper routes: original LGCP `leader_box` with box-result upload for the 44x-style claim, and model-level area-mask selective BEV feature communication as the stronger neural-feature extension.
+
+### 2026-07-28 Follow-up: 167-frame OPV2V 5-CAV Validation
+
+The 20-frame smoke results above were expanded to the full OPV2V test scenario segment `2021_08_22_07_52_02`, dataset indices `423-589` (`167` frames), with `comm_range_override=200`.
+
+Original-style multi-leader `leader_box`, Where2comm epoch 6:
+
+| Method | Delta_g | Leaders in first frame | AP@0.3 | AP@0.5 | AP@0.7 | Mbps | Edge-assisted reduction | First-hop Mbps | Second-hop Mbps | IoU0.5 TP / FP / GT |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | --- |
+| LGCP leader_box, guard-band margin 1 | 0.100 | 5 | 0.889357 | 0.886544 | 0.827220 | 2.200203 | 43.106x | 1.811757 | 0.388446 | 4236 / 2355 / 4623 |
+
+Area-mask validation on the same 167-frame segment:
+
+| Model | Setting | AP@0.3 | AP@0.5 | AP@0.7 | Avg comm rate | Mbps | Reduction vs model baseline |
+| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| Where2comm | No area mask | 0.874003 | 0.872776 | 0.821696 | 0.139849 | 312.840226 | 1.00x |
+| Where2comm | 3x4 Top-3 area mask | 0.846327 | 0.844633 | 0.789813 | 0.075207 | 160.382871 | 1.95x |
+| CoSDH | No area mask | 0.869307 | 0.856879 | 0.759882 | 0.048852 | 7.416263 | 1.00x |
+| CoSDH | 3x4 Top-3 area mask | 0.861586 | 0.848816 | 0.743772 | 0.031077 | 4.633623 | 1.60x |
+
+Additional candidate audit:
+
+- A local CoAlign checkpoint from `D:\Files\Recent\checkpoints\coAlign` was copied to the remote workspace and verified by SHA256.
+- Its config requires missing stage-1 box-alignment pre-calculation: `opencood/logs/coalign_precalc/opv2v/test/stage1_boxes.json`.
+- Running the checkpoint without `box_align` pre-calc, even with clean pose and `score_thresh=0.01`, produced zero predictions on the 5-frame smoke test. Therefore this checkpoint is not a valid current third-model AP/communication result.
+- `point_pillar_infocom` checkpoints are available and are PointPillar BEV feature models with their own spatial communication path, but their mask is not yet an LGCP area-tile mask. They are good follow-up candidates only after a specific area-mask adapter is added.
+
+Interpretation:
+
+- The multi-leader box-result route remains numerically normal on 167 frames and preserves the paper-style `~44x` communication reduction.
+- Where2comm area masking still reduces feature communication substantially on 167 frames, but AP loss is larger than on the 20-frame smoke slice. This is useful as a real Pareto point rather than a cherry-picked no-loss result.
+- CoSDH confirms the mask mechanism extends beyond Where2comm. Its AP drop is small and communication is already low, so the extra reduction is moderate.
+
+### 2026-07-29: Applying Area Mask Inside `leader_box`
+
+User question: apply the same `3x4` Top-3 area mask to `leader_box, Delta_g=0.10` and observe AP / communication.
+
+Command change:
+
+```text
+--lgcp_original
+--lgcp_original_execution leader_box
+--lgcp_original_delta_g 0.10
+--lgcp_original_area_filter_margin 1
+--lgcp_area_mask
+--lgcp_area_grid_h 3
+--lgcp_area_grid_w 4
+--lgcp_area_topk 3
+--lgcp_area_score mean
+--lgcp_area_mode constraint
+```
+
+20-frame OPV2V 5-CAV slice:
+
+| Setting | AP@0.3 | AP@0.5 | AP@0.7 | Mbps recorded by `leader_box` accounting | First-hop Mbps | Second-hop Mbps | IoU0.5 TP / FP / GT / Pred |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | --- |
+| `leader_box`, no area mask | 0.905693 | 0.902392 | 0.854416 | 2.579593 | 2.172297 | 0.407296 | 550 / 248 / 600 / 798 |
+| `leader_box`, Where2comm area mask Top-3 | 0.907384 | 0.904078 | 0.854991 | 2.575241 | 2.172297 | 0.402944 | 551 / 238 / 600 / 789 |
+
+167-frame OPV2V 5-CAV segment:
+
+| Setting | AP@0.3 | AP@0.5 | AP@0.7 | Mbps recorded by `leader_box` accounting | First-hop Mbps | Second-hop Mbps | IoU0.5 TP / FP / GT / Pred |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | --- |
+| `leader_box`, no area mask | 0.889357 | 0.886544 | 0.827220 | 2.200203 | 1.811757 | 0.388446 | 4236 / 2355 / 4623 / 6591 |
+| `leader_box`, Where2comm area mask Top-3 | 0.877374 | 0.874637 | 0.816406 | 2.179447 | 1.811757 | 0.367690 | 4173 / 2204 / 4623 / 6377 |
+
+Interpretation:
+
+- The mask is applied to the underlying Where2comm model during each leader-local intermediate fusion.
+- AP is nearly unchanged on 20 frames and drops moderately on 167 frames: AP@0.5 `0.886544 -> 0.874637`.
+- The recorded communication does not show a large first-hop reduction because `leader_box` currently reports the original LGCP communication accounting: first hop is still area-feature packet accounting from the paper, and second hop is uploaded detection boxes.
+- Therefore the small communication change comes only from the number of uploaded leader boxes after NMS/filtering, not from Where2comm Top-3 feature-mask payload.
+- If the paper needs the actual masked feature payload inside leader-local fusion, the next code change should aggregate each leader forward pass's `comm_mbps_meta` instead of using only `_lgcp_original_comm_meta`.
+
+### 2026-07-29 修正：原文口径必须使用 `Delta_g` 选出的 LGCP group areas
+
+用户指出：Top-K BEV area selection 不是 LGCP 原文机制，不能容忍“实际 mask”与
+`Delta_g=0.10` 选出的 group areas 不一致。随后在 OpenCOOD 中新增
+`--lgcp_original_area_feature_mask`，用于 `leader_box` 执行路径：
+
+- 每一帧先按 LGCP 原文 collaborative confidence gain rule 生成 `area_groups`。
+- 每个 leader 只为自己负责的 area 运行 leader-local fusion。
+- 每个 member 的 `external_comm_mask` 只保留它在该 leader 下被 `Delta_g` 选中的那些 areas。
+- leader 自身特征保持完整，因为它是本地计算，不计入 member-to-leader 通信。
+- 该开关与 `--lgcp_area_mask` 互斥，防止 Where2comm Top-K 探索口径混入原文复现。
+
+新的有效命令差异：
+
+```text
+--lgcp_original
+--lgcp_original_execution leader_box
+--lgcp_original_delta_g 0.10
+--lgcp_original_area_filter_margin 1
+--lgcp_original_area_feature_mask
+```
+
+20-frame OPV2V 5-CAV slice:
+
+| Setting | Actual feature mask | AP@0.3 | AP@0.5 | AP@0.7 | Mbps | Edge-assisted reduction | First-hop Mbps | Second-hop Mbps | IoU0.5 TP / FP / GT / Pred |
+| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | --- |
+| `leader_box`, no actual feature mask | none; accounting only | 0.905693 | 0.902392 | 0.854416 | 2.579593 | 43.106x | 2.172297 | 0.407296 | 550 / 248 / 600 / 798 |
+| `leader_box`, Where2comm Top-3 mask | Top-K exploration, not original LGCP | 0.907384 | 0.904078 | 0.854991 | 2.575241 | 43.106x | 2.172297 | 0.402944 | 551 / 238 / 600 / 789 |
+| `leader_box`, LGCP group-area mask | `Delta_g=0.10` selected group areas | 0.711166 | 0.706329 | 0.636381 | 2.322569 | 47.794x | 2.172297 | 0.150272 | 428 / 64 / 600 / 492 |
+
+167-frame OPV2V 5-CAV segment:
+
+| Setting | Actual feature mask | AP@0.3 | AP@0.5 | AP@0.7 | Mbps | Edge-assisted reduction | First-hop Mbps | Second-hop Mbps | IoU0.5 TP / FP / GT / Pred |
+| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | --- |
+| `leader_box`, no actual feature mask | none; accounting only | 0.889357 | 0.886544 | 0.827220 | 2.200203 | 43.106x | 1.811757 | 0.388446 | 4236 / 2355 / 4623 / 6591 |
+| `leader_box`, Where2comm Top-3 mask | Top-K exploration, not original LGCP | 0.877374 | 0.874637 | 0.816406 | 2.179447 | 43.106x | 1.811757 | 0.367690 | 4173 / 2204 / 4623 / 6377 |
+| `leader_box`, LGCP group-area mask | `Delta_g=0.10` selected group areas | 0.795933 | 0.791619 | 0.694981 | 1.988045 | 47.794x | 1.811757 | 0.176287 | 3700 / 604 / 4623 / 4304 |
+
+Mask diagnostic for the 167-frame strict LGCP group-area run:
+
+| Metric | Value |
+| --- | ---: |
+| Mask source | `lgcp_original_delta_g_area_groups` |
+| Average selected feature cells | 2804.31 |
+| Average full non-leader cells | 368676.79 |
+| Average feature-cell keep ratio | 0.7758% |
+| First-frame leaders | 5 |
+
+Interpretation:
+
+- 原文口径现在已经统一：实际 feature mask 与通信统计都来自同一套
+  `Delta_g=0.10` LGCP area/group selection；Top-K 结果只能保留为 Where2comm
+  selective-feature 探索，不能作为原文 LGCP 机制复现证据。
+- 严格对齐后，通信 reduction 可达到 `47.794x`，但 AP 明显下降，主要是召回下降：
+  167 帧 IoU0.5 recall 为 `3700 / 4623 = 80.03%`，低于无实际 feature mask 的
+  `4236 / 4623 = 91.63%`。
+- 换言之，原文 area-feature 统计口径和真实神经特征裁剪一旦完全对齐，暴露出的核心问题是
+  `10m x 6m` area packet 太窄，成员特征平均只保留约 `0.78%` 的 BEV cells。
+- 论文若继续走“最少工作量修复原文硬伤”的路线，应避免把 Top-K 或 full-feature
+  accounting 结果描述成真实 area-masked feature fusion；更稳妥的说法是：
+  LGCP 的调度与通信统计可按 area/group 对齐，但严格空间裁剪的中期特征融合存在召回损失，
+  需要 guard band、larger area、overlap 或 retraining 才能恢复检测质量。
+
+### 2026-07-29 Follow-up: Larger Area and Overlap for Strict Group-area Mask
+
+Goal: keep the original LGCP mechanism, i.e., feature masks are still generated
+from `Delta_g=0.10` group areas, but test whether larger areas and small
+overlap can recover the AP loss caused by strict `10m x 6m` feature slicing.
+
+Implementation:
+
+- Added `--lgcp_original_area_feature_overlap_w_m` and
+  `--lgcp_original_area_feature_overlap_h_m` in OpenCOOD.
+- The actual member feature mask expands each assigned area boundary by the
+  configured overlap in meters.
+- The first-hop area-feature accounting is also expanded by the same overlap:
+  `(area_w + 2 overlap_w) * (area_h + 2 overlap_h)`, so implementation and
+  communication statistics remain aligned.
+- This is still not Top-K. The selected areas still come from LGCP
+  `Delta_g=0.10` grouping.
+
+20-frame OPV2V 5-CAV sweep:
+
+| Area size | Overlap | AP@0.3 | AP@0.5 | AP@0.7 | Mbps | Reduction | First-hop Mbps | Second-hop Mbps | Mask keep ratio | Areas | First-hop packets |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| `10m x 6m` | `0m` | 0.711166 | 0.706329 | 0.636381 | 2.322569 | 47.794x | 2.172297 | 0.150272 | 0.7165% | 113 | 36 |
+| `20m x 12m` | `0m` | 0.753144 | 0.750067 | 0.708645 | 5.991919 | 16.427x | 5.824751 | 0.167168 | 2.0117% | 52 | 27 |
+| `20m x 12m` | `2m` | 0.761929 | 0.758884 | 0.715462 | 9.495730 | 10.328x | 9.319602 | 0.176128 | 3.1155% | 52 | 27 |
+| `20m x 12m` | `4m` | 0.814971 | 0.809971 | 0.766587 | 13.784367 | 7.094x | 13.591087 | 0.193280 | 4.4147% | 52 | 27 |
+| `20m x 12m` | `6m` | 0.827723 | 0.822795 | 0.779629 | 18.842725 | 5.184x | 18.639205 | 0.203520 | 5.9062% | 52 | 27 |
+| `20m x 12m` | `8m` | 0.866437 | 0.864462 | 0.803893 | 24.689236 | 3.952x | 24.463956 | 0.225280 | 7.5613% | 52 | 27 |
+| `30m x 18m` | `0m` | 0.750888 | 0.747976 | 0.692736 | 9.821836 | 10.974x | 9.627020 | 0.194816 | 3.7603% | 34 | 18 |
+| `30m x 18m` | `3m` | 0.780450 | 0.777580 | 0.724284 | 15.611616 | 6.892x | 15.403232 | 0.208384 | 5.7474% | 34 | 18 |
+| `30m x 18m` | `6m` | 0.810009 | 0.803496 | 0.752833 | 22.682694 | 4.731x | 22.463046 | 0.219648 | 8.0792% | 34 | 18 |
+
+Best 167-frame validation point:
+
+| Setting | AP@0.3 | AP@0.5 | AP@0.7 | Mbps | Reduction | First-hop Mbps | Second-hop Mbps | Mask keep ratio | IoU0.5 TP / FP / GT / Pred |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | --- |
+| `10m x 6m`, no overlap | 0.795933 | 0.791619 | 0.694981 | 1.988045 | 47.794x | 1.811757 | 0.176287 | 0.7758% | 3700 / 604 / 4623 / 4304 |
+| `20m x 12m`, `8m` overlap | 0.872071 | 0.868043 | 0.781997 | 19.907312 | 3.952x | 19.640612 | 0.266700 | 8.1619% | 4089 / 1097 / 4623 / 5186 |
+| No actual feature mask | 0.889357 | 0.886544 | 0.827220 | 2.200203 | 43.106x | 1.811757 | 0.388446 | n/a | 4236 / 2355 / 4623 / 6591 |
+
+Interpretation:
+
+- Larger areas and overlap do rescue AP. On 167 frames, `20m x 12m + 8m overlap`
+  recovers AP@0.5 from `0.791619` to `0.868043`, close to no-actual-mask
+  `0.886544`.
+- The recovery mainly comes from recall: IoU0.5 recall improves from
+  `3700/4623 = 80.03%` to `4089/4623 = 88.45%`.
+- The cost is large. The paper-style communication reduction drops from
+  `47.794x` to `3.952x` because the effective feature packet area becomes
+  `(20 + 16) * (12 + 16) = 1008 m^2`, much larger than the original
+  `10 * 6 = 60 m^2`.
+- Therefore this experiment answers the mechanism question clearly:
+  area overlap can repair strict feature slicing, but it trades away most of
+  the original `44x` communication advantage.
+- Current paper implication: if we need to defend the original `44x` claim,
+  strict real feature slicing is risky. If we instead present an honest
+  implementation-performance trade-off, the best tested point is
+  `20m x 12m + 8m overlap`, but it supports a moderate communication-reduction
+  story rather than the original abstract-level reduction.
+
+### 2026-07-29 Follow-up: Larger Area with Small Overlap Sweep
+
+User focus: test more area sizes and overlaps, especially larger areas with
+small overlap, and explicitly include `10m x 6m + 1m overlap`.
+
+All runs still use the strict original mechanism:
+
+- `Delta_g=0.10` selects LGCP group areas.
+- Actual feature masks come from those group areas.
+- No Top-K selection is used.
+- Feature-mask overlap and communication accounting use the same meter-level
+  expansion.
+
+20-frame sweep:
+
+| Area size | Overlap | AP@0.3 | AP@0.5 | AP@0.7 | Mbps | Reduction | Mask keep ratio | Areas | First-hop packets |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| `10m x 6m` | `0m` | 0.711166 | 0.706329 | 0.636381 | 2.322569 | 47.794x | 0.7165% | 113 | 36 |
+| `10m x 6m` | `1m` | 0.731251 | 0.725809 | 0.663680 | 3.636955 | 30.213x | 1.1141% | 113 | 36 |
+| `15m x 9m` | `0m` | 0.731939 | 0.728719 | 0.673358 | 4.039584 | 24.282x | 1.2642% | 70 | 32 |
+| `15m x 9m` | `1m` | 0.752817 | 0.749612 | 0.693805 | 5.544026 | 17.692x | 1.7086% | 70 | 32 |
+| `15m x 9m` | `2m` | 0.773223 | 0.771706 | 0.702051 | 7.276535 | 13.446x | 2.2234% | 70 | 32 |
+| `20m x 12m` | `0m` | 0.753144 | 0.750067 | 0.708645 | 5.991919 | 16.427x | 2.0117% | 52 | 27 |
+| `20m x 12m` | `1m` | 0.754954 | 0.751893 | 0.712172 | 7.646874 | 12.845x | 2.5231% | 52 | 27 |
+| `20m x 12m` | `2m` | 0.761929 | 0.758884 | 0.715462 | 9.495730 | 10.328x | 3.1155% | 52 | 27 |
+| `25m x 15m` | `0m` | 0.810998 | 0.809518 | 0.754794 | 7.279139 | 20.011x | 2.6432% | 34 | 14 |
+| `25m x 15m` | `1m` | 0.817240 | 0.815762 | 0.757978 | 8.867838 | 16.434x | 3.1888% | 34 | 14 |
+| `25m x 15m` | `2m` | 0.820025 | 0.818548 | 0.764200 | 10.605757 | 13.735x | 3.7615% | 34 | 14 |
+| `25m x 15m` | `3m` | 0.823271 | 0.821802 | 0.768098 | 12.497248 | 11.642x | 4.3649% | 34 | 14 |
+| `30m x 18m` | `0m` | 0.750888 | 0.747976 | 0.692736 | 9.821836 | 10.974x | 3.7603% | 34 | 18 |
+| `30m x 18m` | `1m` | 0.753768 | 0.750917 | 0.699080 | 11.609225 | 9.287x | 4.3870% | 34 | 18 |
+| `30m x 18m` | `2m` | 0.762773 | 0.759928 | 0.702585 | 13.537445 | 7.956x | 5.0453% | 34 | 18 |
+| `35m x 21m` | `0m` | 0.821382 | 0.811700 | 0.753444 | 11.277793 | 14.093x | 4.4774% | 26 | 10 |
+| `35m x 21m` | `1m` | 0.827331 | 0.817638 | 0.751528 | 13.019214 | 12.235x | 5.0961% | 26 | 10 |
+| `35m x 21m` | `2m` | 0.836187 | 0.828029 | 0.755223 | 14.881255 | 10.730x | 5.7189% | 26 | 10 |
+| `40m x 24m` | `0m` | 0.820531 | 0.812431 | 0.747371 | 12.918138 | 10.103x | 5.3859% | 21 | 11 |
+| `40m x 24m` | `1m` | 0.820577 | 0.812496 | 0.747504 | 14.658884 | 8.903x | 5.9849% | 21 | 11 |
+
+167-frame validation of representative small-overlap points:
+
+| Setting | AP@0.3 | AP@0.5 | AP@0.7 | Mbps | Reduction | First-hop Mbps | Second-hop Mbps | Mask keep ratio | IoU0.5 TP / FP / GT / Pred |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | --- |
+| `10m x 6m`, `0m` overlap | 0.795933 | 0.791619 | 0.694981 | 1.988045 | 47.794x | 1.811757 | 0.176287 | 0.7758% | 3700 / 604 / 4623 / 4304 |
+| `10m x 6m`, `1m` overlap | 0.810602 | 0.806211 | 0.710632 | 3.087516 | 30.213x | 2.898812 | 0.188704 | 1.1928% | 3777 / 680 / 4623 / 4457 |
+| `25m x 15m`, `1m` overlap | 0.855503 | 0.852906 | 0.753320 | 7.777682 | 16.434x | 7.535264 | 0.242418 | 3.7099% | 3988 / 773 / 4623 / 4761 |
+| `25m x 15m`, `2m` overlap | 0.856875 | 0.854296 | 0.757346 | 9.291298 | 13.735x | 9.045600 | 0.245699 | 4.3600% | 4000 / 818 / 4623 / 4818 |
+| `35m x 21m`, `2m` overlap | 0.866078 | 0.861531 | 0.767847 | 13.757980 | 10.730x | 13.493089 | 0.264891 | 6.6188% | 4029 / 827 / 4623 / 4856 |
+| `20m x 12m`, `8m` overlap | 0.872071 | 0.868043 | 0.781997 | 19.907312 | 3.952x | 19.640612 | 0.266700 | 8.1619% | 4089 / 1097 / 4623 / 5186 |
+
+Interpretation:
+
+- `10m x 6m + 1m overlap` helps only modestly: 167-frame AP@0.5 rises from
+  `0.791619` to `0.806211`, while reduction drops from `47.794x` to `30.213x`.
+- The most useful larger-area/small-overlap region is currently
+  `25m x 15m + 1m/2m overlap`: AP@0.5 reaches `0.852906/0.854296`, while still
+  retaining `16.434x/13.735x` reduction.
+- `35m x 21m + 2m overlap` improves AP@0.5 to `0.861531`, but reduction falls
+  to `10.730x`. It is a stronger AP point but a weaker communication point.
+- `40m x 24m` does not improve over `35m x 21m`; larger areas are not
+  monotonically better because the group assignment becomes coarser and the
+  selected leader/member structure changes.
+- Recommended paper-facing Pareto points:
+  - Conservative high-reduction: `10m x 6m + 1m`, AP@0.5 `0.806211`,
+    `30.213x`.
+  - Balanced small-overlap point: `25m x 15m + 1m`, AP@0.5 `0.852906`,
+    `16.434x`.
+  - Higher-AP small-overlap point: `35m x 21m + 2m`, AP@0.5 `0.861531`,
+    `10.730x`.
+  - Near-recovery but overlap-heavy point: `20m x 12m + 8m`, AP@0.5
+    `0.868043`, `3.952x`.
+
+### 2026-07-29 Follow-up: Apply the Same Area-Mask Protocol to Other Models
+
+Protocol:
+
+- Same OPV2V 5-CAV 167-frame segment: `start_frame=423`, `max_frames=167`.
+- Same original-LGCP execution: `leader_box`, `Delta_g=0.10`.
+- Same recommended strict group-area feature mask: `25m x 15m`, `1m` overlap.
+- Actual mask uses LGCP group areas selected by `Delta_g`; no Top-K area
+  selection is used.
+- Communication statistics use the existing LGCP feature-packet accounting.
+
+Main comparison:
+
+| Model / checkpoint | Variant | AP@0.3 | AP@0.5 | AP@0.7 | Mbps | Reduction | Notes |
+| --- | --- | ---: | ---: | ---: | ---: | ---: | --- |
+| Where2comm `where2comm_10e` | `25m x 15m + 1m` mask | 0.855503 | 0.852906 | 0.753320 | 7.777682 | 16.434x | Best current strict executable LGCP-style reproduction point. |
+| V2X-ViT `pointpillar_v2xvit_fusion` | no feature mask, same leader_box | 0.785449 | 0.762059 | 0.653262 | 4.935893 | 22.686x | Uses a compatibility fallback for missing `spatial_correction_matrix` / `prior_encoding`. |
+| V2X-ViT `pointpillar_v2xvit_fusion` | `25m x 15m + 1m` mask | 0.763181 | 0.749789 | 0.676781 | 5.693814 | 19.047x | AP@0.5 drops only `0.012270`, but AP ceiling is below Where2comm. |
+| CoAlign checkpoint from `D:\Files\Recent\checkpoints\coAlign` | no feature mask, no box-align | 0.956021 | 0.851802 | 0.528447 | 1.803286 | 44.118x | Stage-1 box-align files are missing on server, so this is CoAlign-w/o-box-align. |
+| CoAlign checkpoint from `D:\Files\Recent\checkpoints\coAlign` | `25m x 15m + 1m` mask, no box-align | 0.933200 | 0.819052 | 0.497706 | 2.061053 | 39.151x | Promising communication point, but not strict full CoAlign due missing box-align precalc. |
+
+Additional diagnostics:
+
+- `pointpillar_attentive_fusion` can be loaded after config schema adaptation,
+  but its 20-frame baseline AP is `0/0/0`. It outputs many boxes
+  (`6321` predictions for 20 frames) with `TP=0`, suggesting checkpoint/config
+  or training-domain mismatch. It should not be used as a paper-facing result
+  until the correct matching code/config is recovered.
+- `pointpillar_cobevt_fusion` in `C:\Workspace\OpenCDA\opencood\logs` is a
+  camera BEV segmentation config: `CamIntermediateFusionDataset`,
+  `CameraBevPostprocessor`, `model.core_method=corpbevt`. The current remote
+  OPV2V test set has no `bev_dynamic.png` / `bev_static.png` /
+  `bev_visibility_corp.png` files, and the current OpenCOOD workspace lacks the
+  `corpbevt` model entry. Therefore it cannot be placed in the same 3D box AP
+  table without preparing the camera BEV dataset/model stack.
+
+Interpretation:
+
+- Where2comm remains the cleanest strict reproduction candidate because its
+  own objectness-driven BEV communication design matches the LGCP area-mask
+  story most naturally.
+- V2X-ViT can technically accept the area mask after adding a compatibility
+  model entry, but its current baseline is weaker. It is useful as an
+  "LGCP mask can generalize to another BEV intermediate model" result, not as
+  the main performance claim.
+- CoAlign-w/o-box-align is surprisingly strong on AP@0.3/AP@0.5 and gives
+  high communication reduction under the same area-mask accounting. The caveat
+  is important: without the missing stage-1 box-align files, this is not the
+  full CoAlign protocol.

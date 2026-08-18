@@ -1,0 +1,2517 @@
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+resuming by loading epoch 10000
+frame=1/41 late_source=1/20 scenario=2026_07_29_02_32_08 timestamp=000060 receiver=1 cavs=[1, 2, 4, 8] pred_boxes=36 gt_boxes=72 comm_bytes=81424
+frame=1/41 late_source=2/20 scenario=2026_07_29_02_32_08 timestamp=000060 receiver=2 cavs=[2, 1, 10, 11] pred_boxes=37 gt_boxes=72 comm_bytes=53200
+frame=1/41 late_source=3/20 scenario=2026_07_29_02_32_08 timestamp=000060 receiver=3 cavs=[3, 16, 17, 18] pred_boxes=11 gt_boxes=72 comm_bytes=79760
+frame=1/41 late_source=4/20 scenario=2026_07_29_02_32_08 timestamp=000060 receiver=4 cavs=[4, 1, 7, 12] pred_boxes=32 gt_boxes=72 comm_bytes=80448
+frame=1/41 late_source=5/20 scenario=2026_07_29_02_32_08 timestamp=000060 receiver=5 cavs=[5, 9, 16, 20] pred_boxes=25 gt_boxes=72 comm_bytes=67680
+frame=1/41 late_source=6/20 scenario=2026_07_29_02_32_08 timestamp=000060 receiver=6 cavs=[6, 15] pred_boxes=13 gt_boxes=72 comm_bytes=21456
+frame=1/41 late_source=7/20 scenario=2026_07_29_02_32_08 timestamp=000060 receiver=7 cavs=[7, 8, 16, 20] pred_boxes=32 gt_boxes=72 comm_bytes=56256
+frame=1/41 late_source=8/20 scenario=2026_07_29_02_32_08 timestamp=000060 receiver=8 cavs=[8, 1, 7, 11] pred_boxes=38 gt_boxes=72 comm_bytes=82592
+frame=1/41 late_source=9/20 scenario=2026_07_29_02_32_08 timestamp=000060 receiver=9 cavs=[9, 10, 13, 19] pred_boxes=17 gt_boxes=72 comm_bytes=37792
+frame=1/41 late_source=10/20 scenario=2026_07_29_02_32_08 timestamp=000060 receiver=10 cavs=[10, 8, 9, 16] pred_boxes=30 gt_boxes=72 comm_bytes=72544
+frame=1/41 late_source=11/20 scenario=2026_07_29_02_32_08 timestamp=000060 receiver=11 cavs=[11, 1, 2, 9] pred_boxes=26 gt_boxes=72 comm_bytes=68736
+frame=1/41 late_source=12/20 scenario=2026_07_29_02_32_08 timestamp=000060 receiver=12 cavs=[12, 4, 7, 8] pred_boxes=32 gt_boxes=72 comm_bytes=63856
+frame=1/41 late_source=13/20 scenario=2026_07_29_02_32_08 timestamp=000060 receiver=13 cavs=[13, 9, 10, 19] pred_boxes=11 gt_boxes=72 comm_bytes=37744
+frame=1/41 late_source=14/20 scenario=2026_07_29_02_32_08 timestamp=000060 receiver=14 cavs=[14] pred_boxes=0 gt_boxes=72 comm_bytes=0
+frame=1/41 late_source=15/20 scenario=2026_07_29_02_32_08 timestamp=000060 receiver=15 cavs=[15, 6] pred_boxes=17 gt_boxes=72 comm_bytes=31904
+frame=1/41 late_source=16/20 scenario=2026_07_29_02_32_08 timestamp=000060 receiver=16 cavs=[16, 5, 7, 20] pred_boxes=25 gt_boxes=72 comm_bytes=42096
+frame=1/41 late_source=17/20 scenario=2026_07_29_02_32_08 timestamp=000060 receiver=17 cavs=[17, 3, 18] pred_boxes=10 gt_boxes=72 comm_bytes=43744
+frame=1/41 late_source=18/20 scenario=2026_07_29_02_32_08 timestamp=000060 receiver=18 cavs=[18, 3, 17] pred_boxes=7 gt_boxes=72 comm_bytes=64096
+frame=1/41 late_source=19/20 scenario=2026_07_29_02_32_08 timestamp=000060 receiver=19 cavs=[19, 9, 10, 13] pred_boxes=10 gt_boxes=72 comm_bytes=47952
+frame=1/41 late_source=20/20 scenario=2026_07_29_02_32_08 timestamp=000060 receiver=20 cavs=[20, 5, 7, 16] pred_boxes=26 gt_boxes=72 comm_bytes=45520
+sgcp_late_fusion frame=1/41 scenario=2026_07_29_02_32_08 timestamp=000060 sources=20 fused_pred_boxes=76 fused_gt_boxes=72
+frame=2/41 late_source=1/20 scenario=2026_07_29_02_32_08 timestamp=000062 receiver=1 cavs=[1, 2, 4, 8] pred_boxes=35 gt_boxes=72 comm_bytes=78960
+frame=2/41 late_source=2/20 scenario=2026_07_29_02_32_08 timestamp=000062 receiver=2 cavs=[2, 1, 8, 11] pred_boxes=32 gt_boxes=72 comm_bytes=39536
+frame=2/41 late_source=3/20 scenario=2026_07_29_02_32_08 timestamp=000062 receiver=3 cavs=[3, 16, 17, 18] pred_boxes=13 gt_boxes=72 comm_bytes=83680
+frame=2/41 late_source=4/20 scenario=2026_07_29_02_32_08 timestamp=000062 receiver=4 cavs=[4, 1, 7, 12] pred_boxes=30 gt_boxes=72 comm_bytes=80688
+frame=2/41 late_source=5/20 scenario=2026_07_29_02_32_08 timestamp=000062 receiver=5 cavs=[5, 9, 16, 20] pred_boxes=23 gt_boxes=72 comm_bytes=68464
+frame=2/41 late_source=6/20 scenario=2026_07_29_02_32_08 timestamp=000062 receiver=6 cavs=[6, 15] pred_boxes=13 gt_boxes=72 comm_bytes=21552
+frame=2/41 late_source=7/20 scenario=2026_07_29_02_32_08 timestamp=000062 receiver=7 cavs=[7, 8, 16, 20] pred_boxes=31 gt_boxes=72 comm_bytes=56384
+frame=2/41 late_source=8/20 scenario=2026_07_29_02_32_08 timestamp=000062 receiver=8 cavs=[8, 1, 2, 7] pred_boxes=37 gt_boxes=72 comm_bytes=85552
+frame=2/41 late_source=9/20 scenario=2026_07_29_02_32_08 timestamp=000062 receiver=9 cavs=[9, 10, 13, 19] pred_boxes=18 gt_boxes=72 comm_bytes=40288
+frame=2/41 late_source=10/20 scenario=2026_07_29_02_32_08 timestamp=000062 receiver=10 cavs=[10, 8, 9, 16] pred_boxes=35 gt_boxes=72 comm_bytes=72000
+frame=2/41 late_source=11/20 scenario=2026_07_29_02_32_08 timestamp=000062 receiver=11 cavs=[11, 1, 2, 9] pred_boxes=26 gt_boxes=72 comm_bytes=69200
+frame=2/41 late_source=12/20 scenario=2026_07_29_02_32_08 timestamp=000062 receiver=12 cavs=[12, 4, 7, 8] pred_boxes=36 gt_boxes=72 comm_bytes=63680
+frame=2/41 late_source=13/20 scenario=2026_07_29_02_32_08 timestamp=000062 receiver=13 cavs=[13, 9, 10, 19] pred_boxes=11 gt_boxes=72 comm_bytes=37728
+Warning: len(pillar_features.shape) == 1
+frame=2/41 late_source=14/20 scenario=2026_07_29_02_32_08 timestamp=000062 receiver=14 cavs=[14] pred_boxes=0 gt_boxes=72 comm_bytes=0
+frame=2/41 late_source=15/20 scenario=2026_07_29_02_32_08 timestamp=000062 receiver=15 cavs=[15, 6] pred_boxes=16 gt_boxes=72 comm_bytes=31920
+frame=2/41 late_source=16/20 scenario=2026_07_29_02_32_08 timestamp=000062 receiver=16 cavs=[16, 5, 7, 20] pred_boxes=26 gt_boxes=72 comm_bytes=44048
+frame=2/41 late_source=17/20 scenario=2026_07_29_02_32_08 timestamp=000062 receiver=17 cavs=[17, 3, 18] pred_boxes=9 gt_boxes=72 comm_bytes=45312
+frame=2/41 late_source=18/20 scenario=2026_07_29_02_32_08 timestamp=000062 receiver=18 cavs=[18, 3, 17] pred_boxes=7 gt_boxes=72 comm_bytes=64976
+frame=2/41 late_source=19/20 scenario=2026_07_29_02_32_08 timestamp=000062 receiver=19 cavs=[19, 9, 10, 13] pred_boxes=13 gt_boxes=72 comm_bytes=48000
+frame=2/41 late_source=20/20 scenario=2026_07_29_02_32_08 timestamp=000062 receiver=20 cavs=[20, 5, 7, 16] pred_boxes=25 gt_boxes=72 comm_bytes=46832
+sgcp_late_fusion frame=2/41 scenario=2026_07_29_02_32_08 timestamp=000062 sources=20 fused_pred_boxes=79 fused_gt_boxes=72
+frame=3/41 late_source=1/20 scenario=2026_07_29_02_32_08 timestamp=000064 receiver=1 cavs=[1, 2, 4, 8] pred_boxes=33 gt_boxes=72 comm_bytes=80672
+frame=3/41 late_source=2/20 scenario=2026_07_29_02_32_08 timestamp=000064 receiver=2 cavs=[2, 1, 8, 11] pred_boxes=28 gt_boxes=72 comm_bytes=39632
+frame=3/41 late_source=3/20 scenario=2026_07_29_02_32_08 timestamp=000064 receiver=3 cavs=[3, 16, 17, 18] pred_boxes=14 gt_boxes=72 comm_bytes=86800
+frame=3/41 late_source=4/20 scenario=2026_07_29_02_32_08 timestamp=000064 receiver=4 cavs=[4, 1, 7, 12] pred_boxes=32 gt_boxes=72 comm_bytes=87472
+frame=3/41 late_source=5/20 scenario=2026_07_29_02_32_08 timestamp=000064 receiver=5 cavs=[5, 9, 16, 20] pred_boxes=22 gt_boxes=72 comm_bytes=70432
+frame=3/41 late_source=6/20 scenario=2026_07_29_02_32_08 timestamp=000064 receiver=6 cavs=[6, 15] pred_boxes=13 gt_boxes=72 comm_bytes=21248
+frame=3/41 late_source=7/20 scenario=2026_07_29_02_32_08 timestamp=000064 receiver=7 cavs=[7, 8, 16, 20] pred_boxes=35 gt_boxes=72 comm_bytes=58784
+frame=3/41 late_source=8/20 scenario=2026_07_29_02_32_08 timestamp=000064 receiver=8 cavs=[8, 1, 2, 7] pred_boxes=37 gt_boxes=72 comm_bytes=87904
+frame=3/41 late_source=9/20 scenario=2026_07_29_02_32_08 timestamp=000064 receiver=9 cavs=[9, 10, 13, 19] pred_boxes=20 gt_boxes=72 comm_bytes=39232
+frame=3/41 late_source=10/20 scenario=2026_07_29_02_32_08 timestamp=000064 receiver=10 cavs=[10, 8, 9, 19] pred_boxes=29 gt_boxes=72 comm_bytes=46560
+frame=3/41 late_source=11/20 scenario=2026_07_29_02_32_08 timestamp=000064 receiver=11 cavs=[11, 1, 2, 9] pred_boxes=29 gt_boxes=72 comm_bytes=71072
+frame=3/41 late_source=12/20 scenario=2026_07_29_02_32_08 timestamp=000064 receiver=12 cavs=[12, 4, 7, 8] pred_boxes=35 gt_boxes=72 comm_bytes=67200
+frame=3/41 late_source=13/20 scenario=2026_07_29_02_32_08 timestamp=000064 receiver=13 cavs=[13, 9, 10, 19] pred_boxes=11 gt_boxes=72 comm_bytes=37696
+frame=3/41 late_source=14/20 scenario=2026_07_29_02_32_08 timestamp=000064 receiver=14 cavs=[14] pred_boxes=0 gt_boxes=72 comm_bytes=0Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+
+frame=3/41 late_source=15/20 scenario=2026_07_29_02_32_08 timestamp=000064 receiver=15 cavs=[15, 6] pred_boxes=18 gt_boxes=72 comm_bytes=33264
+frame=3/41 late_source=16/20 scenario=2026_07_29_02_32_08 timestamp=000064 receiver=16 cavs=[16, 5, 7, 20] pred_boxes=24 gt_boxes=72 comm_bytes=44656
+frame=3/41 late_source=17/20 scenario=2026_07_29_02_32_08 timestamp=000064 receiver=17 cavs=[17, 3, 18] pred_boxes=9 gt_boxes=72 comm_bytes=47120
+frame=3/41 late_source=18/20 scenario=2026_07_29_02_32_08 timestamp=000064 receiver=18 cavs=[18, 3, 17] pred_boxes=7 gt_boxes=72 comm_bytes=65664
+frame=3/41 late_source=19/20 scenario=2026_07_29_02_32_08 timestamp=000064 receiver=19 cavs=[19, 9, 10, 13] pred_boxes=8 gt_boxes=72 comm_bytes=47200
+frame=3/41 late_source=20/20 scenario=2026_07_29_02_32_08 timestamp=000064 receiver=20 cavs=[20, 5, 7, 16] pred_boxes=27 gt_boxes=72 comm_bytes=46192
+sgcp_late_fusion frame=3/41 scenario=2026_07_29_02_32_08 timestamp=000064 sources=20 fused_pred_boxes=82 fused_gt_boxes=72
+frame=4/41 late_source=1/20 scenario=2026_07_29_02_32_08 timestamp=000066 receiver=1 cavs=[1, 2, 4, 8] pred_boxes=35 gt_boxes=72 comm_bytes=75984
+frame=4/41 late_source=2/20 scenario=2026_07_29_02_32_08 timestamp=000066 receiver=2 cavs=[2, 1, 8, 11] pred_boxes=24 gt_boxes=72 comm_bytes=41072
+frame=4/41 late_source=3/20 scenario=2026_07_29_02_32_08 timestamp=000066 receiver=3 cavs=[3, 16, 17, 18] pred_boxes=10 gt_boxes=72 comm_bytes=84352
+frame=4/41 late_source=4/20 scenario=2026_07_29_02_32_08 timestamp=000066 receiver=4 cavs=[4, 1, 7, 12] pred_boxes=31 gt_boxes=72 comm_bytes=81696
+frame=4/41 late_source=5/20 scenario=2026_07_29_02_32_08 timestamp=000066 receiver=5 cavs=[5, 9, 16, 20] pred_boxes=20 gt_boxes=72 comm_bytes=67296
+frame=4/41 late_source=6/20 scenario=2026_07_29_02_32_08 timestamp=000066 receiver=6 cavs=[6, 15] pred_boxes=14 gt_boxes=72 comm_bytes=19936
+frame=4/41 late_source=7/20 scenario=2026_07_29_02_32_08 timestamp=000066 receiver=7 cavs=[7, 8, 16, 20] pred_boxes=35 gt_boxes=72 comm_bytes=56624
+frame=4/41 late_source=8/20 scenario=2026_07_29_02_32_08 timestamp=000066 receiver=8 cavs=[8, 1, 2, 7] pred_boxes=35 gt_boxes=72 comm_bytes=82016
+frame=4/41 late_source=9/20 scenario=2026_07_29_02_32_08 timestamp=000066 receiver=9 cavs=[9, 10, 13, 19] pred_boxes=20 gt_boxes=72 comm_bytes=37888
+frame=4/41 late_source=10/20 scenario=2026_07_29_02_32_08 timestamp=000066 receiver=10 cavs=[10, 8, 9, 19] pred_boxes=32 gt_boxes=72 comm_bytes=44832
+frame=4/41 late_source=11/20 scenario=2026_07_29_02_32_08 timestamp=000066 receiver=11 cavs=[11, 1, 2, 9] pred_boxes=25 gt_boxes=72 comm_bytes=65744
+frame=4/41 late_source=12/20 scenario=2026_07_29_02_32_08 timestamp=000066 receiver=12 cavs=[12, 4, 7, 8] pred_boxes=33 gt_boxes=72 comm_bytes=61424
+frame=4/41 late_source=13/20 scenario=2026_07_29_02_32_08 timestamp=000066 receiver=13 cavs=[13, 9, 10, 19] pred_boxes=10 gt_boxes=72 comm_bytes=36064
+Warning: len(pillar_features.shape) == 1
+frame=4/41 late_source=14/20 scenario=2026_07_29_02_32_08 timestamp=000066 receiver=14 cavs=[14] pred_boxes=0 gt_boxes=72 comm_bytes=0
+frame=4/41 late_source=15/20 scenario=2026_07_29_02_32_08 timestamp=000066 receiver=15 cavs=[15, 6] pred_boxes=18 gt_boxes=72 comm_bytes=32560
+frame=4/41 late_source=16/20 scenario=2026_07_29_02_32_08 timestamp=000066 receiver=16 cavs=[16, 5, 17, 20] pred_boxes=22 gt_boxes=72 comm_bytes=59520
+frame=4/41 late_source=17/20 scenario=2026_07_29_02_32_08 timestamp=000066 receiver=17 cavs=[17, 3, 16, 18] pred_boxes=13 gt_boxes=72 comm_bytes=75968
+frame=4/41 late_source=18/20 scenario=2026_07_29_02_32_08 timestamp=000066 receiver=18 cavs=[18, 3, 17] pred_boxes=5 gt_boxes=72 comm_bytes=63216
+frame=4/41 late_source=19/20 scenario=2026_07_29_02_32_08 timestamp=000066 receiver=19 cavs=[19, 9, 10, 13] pred_boxes=11 gt_boxes=72 comm_bytes=47184
+frame=4/41 late_source=20/20 scenario=2026_07_29_02_32_08 timestamp=000066 receiver=20 cavs=[20, 5, 7, 16] pred_boxes=25 gt_boxes=72 comm_bytes=45424
+sgcp_late_fusion frame=4/41 scenario=2026_07_29_02_32_08 timestamp=000066 sources=20 fused_pred_boxes=76 fused_gt_boxes=72
+frame=5/41 late_source=1/20 scenario=2026_07_29_02_32_08 timestamp=000068 receiver=1 cavs=[1, 2, 4, 11] pred_boxes=32 gt_boxes=72 comm_bytes=81328
+frame=5/41 late_source=2/20 scenario=2026_07_29_02_32_08 timestamp=000068 receiver=2 cavs=[2, 1, 8, 11] pred_boxes=26 gt_boxes=72 comm_bytes=40464
+frame=5/41 late_source=3/20 scenario=2026_07_29_02_32_08 timestamp=000068 receiver=3 cavs=[3, 16, 17, 18] pred_boxes=11 gt_boxes=72 comm_bytes=81152
+frame=5/41 late_source=4/20 scenario=2026_07_29_02_32_08 timestamp=000068 receiver=4 cavs=[4, 1, 7, 12] pred_boxes=32 gt_boxes=72 comm_bytes=78608
+frame=5/41 late_source=5/20 scenario=2026_07_29_02_32_08 timestamp=000068 receiver=5 cavs=[5, 9, 16, 20] pred_boxes=22 gt_boxes=72 comm_bytes=67376
+frame=5/41 late_source=6/20 scenario=2026_07_29_02_32_08 timestamp=000068 receiver=6 cavs=[6, 15] pred_boxes=14 gt_boxes=72 comm_bytes=18688
+frame=5/41 late_source=7/20 scenario=2026_07_29_02_32_08 timestamp=000068 receiver=7 cavs=[7, 8, 16, 20] pred_boxes=35 gt_boxes=72 comm_bytes=56624
+frame=5/41 late_source=8/20 scenario=2026_07_29_02_32_08 timestamp=000068 receiver=8 cavs=[8, 1, 2, 7] pred_boxes=37 gt_boxes=72 comm_bytes=81568
+frame=5/41 late_source=9/20 scenario=2026_07_29_02_32_08 timestamp=000068 receiver=9 cavs=[9, 13, 16, 19] pred_boxes=17 gt_boxes=72 comm_bytes=60736
+frame=5/41 late_source=10/20 scenario=2026_07_29_02_32_08 timestamp=000068 receiver=10 cavs=[10, 8, 9, 19] pred_boxes=32 gt_boxes=72 comm_bytes=42304
+frame=5/41 late_source=11/20 scenario=2026_07_29_02_32_08 timestamp=000068 receiver=11 cavs=[11, 1, 2, 10] pred_boxes=32 gt_boxes=72 comm_bytes=59312
+frame=5/41 late_source=12/20 scenario=2026_07_29_02_32_08 timestamp=000068 receiver=12 cavs=[12, 4, 7, 8] pred_boxes=33 gt_boxes=72 comm_bytes=59792
+frame=5/41 late_source=13/20 scenario=2026_07_29_02_32_08 timestamp=000068 receiver=13 cavs=[13, 9, 10, 19] pred_boxes=10 gt_boxes=72 comm_bytes=35696
+frame=5/41 late_source=14/20 scenario=2026_07_29_02_32_08 timestamp=000068 receiver=14 cavs=[14] pred_boxes=1 gt_boxes=72 comm_bytes=0
+frame=5/41 late_source=15/20 scenario=2026_07_29_02_32_08 timestamp=000068 receiver=15 cavs=[15, 6] pred_boxes=18 gt_boxes=72 comm_bytes=31488
+frame=5/41 late_source=16/20 scenario=2026_07_29_02_32_08 timestamp=000068 receiver=16 cavs=[16, 5, 17, 20] pred_boxes=22 gt_boxes=72 comm_bytes=55792
+frame=5/41 late_source=17/20 scenario=2026_07_29_02_32_08 timestamp=000068 receiver=17 cavs=[17, 3, 16, 18] pred_boxes=12 gt_boxes=72 comm_bytes=74400
+frame=5/41 late_source=18/20 scenario=2026_07_29_02_32_08 timestamp=000068 receiver=18 cavs=[18, 3, 17] pred_boxes=4 gt_boxes=72 comm_bytes=61152
+frame=5/41 late_source=19/20 scenario=2026_07_29_02_32_08 timestamp=000068 receiver=19 cavs=[19, 9, 10, 13] pred_boxes=16 gt_boxes=72 comm_bytes=47104
+frame=5/41 late_source=20/20 scenario=2026_07_29_02_32_08 timestamp=000068 receiver=20 cavs=[20, 5, 7, 16] pred_boxes=24 gt_boxes=72 comm_bytes=45216
+sgcp_late_fusion frame=5/41 scenario=2026_07_29_02_32_08 timestamp=000068 sources=20 fused_pred_boxes=80 fused_gt_boxes=72
+frame=6/41 late_source=1/20 scenario=2026_07_29_02_32_08 timestamp=000070 receiver=1 cavs=[1, 2, 4, 11] pred_boxes=31 gt_boxes=72 comm_bytes=79264
+frame=6/41 late_source=2/20 scenario=2026_07_29_02_32_08 timestamp=000070 receiver=2 cavs=[2, 1, 8, 11] pred_boxes=26 gt_boxes=72 comm_bytes=36784
+frame=6/41 late_source=3/20 scenario=2026_07_29_02_32_08 timestamp=000070 receiver=3 cavs=[3, 16, 17, 18] pred_boxes=9 gt_boxes=72 comm_bytes=80176
+frame=6/41 late_source=4/20 scenario=2026_07_29_02_32_08 timestamp=000070 receiver=4 cavs=[4, 1, 7, 12] pred_boxes=29 gt_boxes=72 comm_bytes=77248
+frame=6/41 late_source=5/20 scenario=2026_07_29_02_32_08 timestamp=000070 receiver=5 cavs=[5, 9, 16, 20] pred_boxes=21 gt_boxes=72 comm_bytes=65520
+frame=6/41 late_source=6/20 scenario=2026_07_29_02_32_08 timestamp=000070 receiver=6 cavs=[6, 15] pred_boxes=14 gt_boxes=72 comm_bytes=18896
+frame=6/41 late_source=7/20 scenario=2026_07_29_02_32_08 timestamp=000070 receiver=7 cavs=[7, 8, 16, 20] pred_boxes=33 gt_boxes=72 comm_bytes=57712Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+
+frame=6/41 late_source=8/20 scenario=2026_07_29_02_32_08 timestamp=000070 receiver=8 cavs=[8, 1, 4, 7] pred_boxes=37 gt_boxes=72 comm_bytes=83392
+frame=6/41 late_source=9/20 scenario=2026_07_29_02_32_08 timestamp=000070 receiver=9 cavs=[9, 13, 16, 19] pred_boxes=14 gt_boxes=72 comm_bytes=60592
+frame=6/41 late_source=10/20 scenario=2026_07_29_02_32_08 timestamp=000070 receiver=10 cavs=[10, 8, 9, 19] pred_boxes=32 gt_boxes=72 comm_bytes=41664
+frame=6/41 late_source=11/20 scenario=2026_07_29_02_32_08 timestamp=000070 receiver=11 cavs=[11, 1, 2, 10] pred_boxes=32 gt_boxes=72 comm_bytes=58960
+frame=6/41 late_source=12/20 scenario=2026_07_29_02_32_08 timestamp=000070 receiver=12 cavs=[12, 4, 7, 8] pred_boxes=28 gt_boxes=72 comm_bytes=61136
+frame=6/41 late_source=13/20 scenario=2026_07_29_02_32_08 timestamp=000070 receiver=13 cavs=[13, 9, 10, 19] pred_boxes=12 gt_boxes=72 comm_bytes=35056
+frame=6/41 late_source=14/20 scenario=2026_07_29_02_32_08 timestamp=000070 receiver=14 cavs=[14] pred_boxes=0 gt_boxes=72 comm_bytes=0
+frame=6/41 late_source=15/20 scenario=2026_07_29_02_32_08 timestamp=000070 receiver=15 cavs=[15, 6] pred_boxes=18 gt_boxes=72 comm_bytes=30368
+frame=6/41 late_source=16/20 scenario=2026_07_29_02_32_08 timestamp=000070 receiver=16 cavs=[16, 7, 17, 20] pred_boxes=22 gt_boxes=72 comm_bytes=64832
+frame=6/41 late_source=17/20 scenario=2026_07_29_02_32_08 timestamp=000070 receiver=17 cavs=[17, 3, 16, 18] pred_boxes=11 gt_boxes=72 comm_bytes=73776
+frame=6/41 late_source=18/20 scenario=2026_07_29_02_32_08 timestamp=000070 receiver=18 cavs=[18, 3, 17] pred_boxes=7 gt_boxes=72 comm_bytes=62048
+frame=6/41 late_source=19/20 scenario=2026_07_29_02_32_08 timestamp=000070 receiver=19 cavs=[19, 9, 10, 13] pred_boxes=13 gt_boxes=72 comm_bytes=46064
+frame=6/41 late_source=20/20 scenario=2026_07_29_02_32_08 timestamp=000070 receiver=20 cavs=[20, 5, 7, 16] pred_boxes=24 gt_boxes=72 comm_bytes=45312
+sgcp_late_fusion frame=6/41 scenario=2026_07_29_02_32_08 timestamp=000070 sources=20 fused_pred_boxes=77 fused_gt_boxes=72
+frame=7/41 late_source=1/20 scenario=2026_07_29_02_32_08 timestamp=000072 receiver=1 cavs=[1, 2, 4, 11] pred_boxes=33 gt_boxes=71 comm_bytes=78704
+frame=7/41 late_source=2/20 scenario=2026_07_29_02_32_08 timestamp=000072 receiver=2 cavs=[2, 1, 8, 11] pred_boxes=29 gt_boxes=71 comm_bytes=37296
+frame=7/41 late_source=3/20 scenario=2026_07_29_02_32_08 timestamp=000072 receiver=3 cavs=[3, 16, 17, 18] pred_boxes=12 gt_boxes=71 comm_bytes=79616
+frame=7/41 late_source=4/20 scenario=2026_07_29_02_32_08 timestamp=000072 receiver=4 cavs=[4, 1, 7, 12] pred_boxes=28 gt_boxes=71 comm_bytes=77152
+frame=7/41 late_source=5/20 scenario=2026_07_29_02_32_08 timestamp=000072 receiver=5 cavs=[5, 9, 16, 20] pred_boxes=19 gt_boxes=71 comm_bytes=65040
+frame=7/41 late_source=6/20 scenario=2026_07_29_02_32_08 timestamp=000072 receiver=6 cavs=[6, 15] pred_boxes=14 gt_boxes=71 comm_bytes=18016
+frame=7/41 late_source=7/20 scenario=2026_07_29_02_32_08 timestamp=000072 receiver=7 cavs=[7, 8, 16, 20] pred_boxes=32 gt_boxes=71 comm_bytes=57744
+frame=7/41 late_source=8/20 scenario=2026_07_29_02_32_08 timestamp=000072 receiver=8 cavs=[8, 1, 4, 7] pred_boxes=35 gt_boxes=71 comm_bytes=84016
+frame=7/41 late_source=9/20 scenario=2026_07_29_02_32_08 timestamp=000072 receiver=9 cavs=[9, 13, 16, 19] pred_boxes=19 gt_boxes=71 comm_bytes=61344
+frame=7/41 late_source=10/20 scenario=2026_07_29_02_32_08 timestamp=000072 receiver=10 cavs=[10, 8, 9, 19] pred_boxes=32 gt_boxes=71 comm_bytes=41568
+frame=7/41 late_source=11/20 scenario=2026_07_29_02_32_08 timestamp=000072 receiver=11 cavs=[11, 1, 2, 10] pred_boxes=33 gt_boxes=71 comm_bytes=58864
+frame=7/41 late_source=12/20 scenario=2026_07_29_02_32_08 timestamp=000072 receiver=12 cavs=[12, 4, 7, 8] pred_boxes=33 gt_boxes=71 comm_bytes=60096
+frame=7/41 late_source=13/20 scenario=2026_07_29_02_32_08 timestamp=000072 receiver=13 cavs=[13, 9, 10, 19] pred_boxes=14 gt_boxes=71 comm_bytes=35072
+Warning: len(pillar_features.shape) == 1
+frame=7/41 late_source=14/20 scenario=2026_07_29_02_32_08 timestamp=000072 receiver=14 cavs=[14] pred_boxes=0 gt_boxes=71 comm_bytes=0
+frame=7/41 late_source=15/20 scenario=2026_07_29_02_32_08 timestamp=000072 receiver=15 cavs=[15, 6] pred_boxes=18 gt_boxes=71 comm_bytes=30464
+frame=7/41 late_source=16/20 scenario=2026_07_29_02_32_08 timestamp=000072 receiver=16 cavs=[16, 7, 17, 20] pred_boxes=24 gt_boxes=71 comm_bytes=65952
+frame=7/41 late_source=17/20 scenario=2026_07_29_02_32_08 timestamp=000072 receiver=17 cavs=[17, 3, 16, 18] pred_boxes=11 gt_boxes=71 comm_bytes=76160
+frame=7/41 late_source=18/20 scenario=2026_07_29_02_32_08 timestamp=000072 receiver=18 cavs=[18, 3, 17] pred_boxes=7 gt_boxes=71 comm_bytes=59488
+frame=7/41 late_source=19/20 scenario=2026_07_29_02_32_08 timestamp=000072 receiver=19 cavs=[19, 9, 10, 13] pred_boxes=11 gt_boxes=71 comm_bytes=45536
+frame=7/41 late_source=20/20 scenario=2026_07_29_02_32_08 timestamp=000072 receiver=20 cavs=[20, 5, 7, 16] pred_boxes=24 gt_boxes=71 comm_bytes=46672
+sgcp_late_fusion frame=7/41 scenario=2026_07_29_02_32_08 timestamp=000072 sources=20 fused_pred_boxes=75 fused_gt_boxes=71
+frame=8/41 late_source=1/20 scenario=2026_07_29_02_32_08 timestamp=000074 receiver=1 cavs=[1, 2, 4, 11] pred_boxes=30 gt_boxes=70 comm_bytes=77184
+frame=8/41 late_source=2/20 scenario=2026_07_29_02_32_08 timestamp=000074 receiver=2 cavs=[2, 1, 8, 11] pred_boxes=27 gt_boxes=70 comm_bytes=39584
+frame=8/41 late_source=3/20 scenario=2026_07_29_02_32_08 timestamp=000074 receiver=3 cavs=[3, 16, 17, 18] pred_boxes=12 gt_boxes=70 comm_bytes=74944
+frame=8/41 late_source=4/20 scenario=2026_07_29_02_32_08 timestamp=000074 receiver=4 cavs=[4, 1, 7, 12] pred_boxes=28 gt_boxes=70 comm_bytes=78112
+frame=8/41 late_source=5/20 scenario=2026_07_29_02_32_08 timestamp=000074 receiver=5 cavs=[5, 9, 16, 20] pred_boxes=21 gt_boxes=70 comm_bytes=63936
+frame=8/41 late_source=6/20 scenario=2026_07_29_02_32_08 timestamp=000074 receiver=6 cavs=[6, 15] pred_boxes=15 gt_boxes=70 comm_bytes=19056
+frame=8/41 late_source=7/20 scenario=2026_07_29_02_32_08 timestamp=000074 receiver=7 cavs=[7, 8, 16, 20] pred_boxes=31 gt_boxes=70 comm_bytes=56128
+frame=8/41 late_source=8/20 scenario=2026_07_29_02_32_08 timestamp=000074 receiver=8 cavs=[8, 1, 4, 7] pred_boxes=33 gt_boxes=70 comm_bytes=84288
+frame=8/41 late_source=9/20 scenario=2026_07_29_02_32_08 timestamp=000074 receiver=9 cavs=[9, 13, 16, 19] pred_boxes=20 gt_boxes=70 comm_bytes=58496
+frame=8/41 late_source=10/20 scenario=2026_07_29_02_32_08 timestamp=000074 receiver=10 cavs=[10, 8, 9, 19] pred_boxes=29 gt_boxes=70 comm_bytes=41520
+frame=8/41 late_source=11/20 scenario=2026_07_29_02_32_08 timestamp=000074 receiver=11 cavs=[11, 1, 2, 9] pred_boxes=28 gt_boxes=70 comm_bytes=64032
+frame=8/41 late_source=12/20 scenario=2026_07_29_02_32_08 timestamp=000074 receiver=12 cavs=[12, 4, 7, 8] pred_boxes=26 gt_boxes=70 comm_bytes=63824
+frame=8/41 late_source=13/20 scenario=2026_07_29_02_32_08 timestamp=000074 receiver=13 cavs=[13, 9, 10, 19] pred_boxes=8 gt_boxes=70 comm_bytes=35168
+frame=8/41 late_source=14/20 scenario=2026_07_29_02_32_08 timestamp=000074 receiver=14 cavs=[14] pred_boxes=0 gt_boxes=70 comm_bytes=0
+frame=8/41 late_source=15/20 scenario=2026_07_29_02_32_08 timestamp=000074 receiver=15 cavs=[15, 6] pred_boxes=17 gt_boxes=70 comm_bytes=32112
+frame=8/41 late_source=16/20 scenario=2026_07_29_02_32_08 timestamp=000074 receiver=16 cavs=[16, 7, 17, 20] pred_boxes=24 gt_boxes=70 comm_bytes=65744
+frame=8/41 late_source=17/20 scenario=2026_07_29_02_32_08 timestamp=000074 receiver=17 cavs=[17, 3, 16, 18] pred_boxes=10 gt_boxes=70 comm_bytes=72880
+frame=8/41 late_source=18/20 scenario=2026_07_29_02_32_08 timestamp=000074 receiver=18 cavs=[18, 3, 17] pred_boxes=6 gt_boxes=70 comm_bytes=59792
+frame=8/41 late_source=19/20 scenario=2026_07_29_02_32_08 timestamp=000074 receiver=19 cavs=[19, 9, 10, 13] pred_boxes=15 gt_boxes=70 comm_bytes=45552
+frame=8/41 late_source=20/20 scenario=2026_07_29_02_32_08 timestamp=000074 receiver=20 cavs=[20, 5, 7, 16] pred_boxes=24 gt_boxes=70 comm_bytes=46448
+sgcp_late_fusion frame=8/41 scenario=2026_07_29_02_32_08 timestamp=000074 sources=20 fused_pred_boxes=74 fused_gt_boxes=70Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+
+frame=9/41 late_source=1/20 scenario=2026_07_29_02_32_08 timestamp=000076 receiver=1 cavs=[1, 2, 4, 11] pred_boxes=33 gt_boxes=70 comm_bytes=76816
+frame=9/41 late_source=2/20 scenario=2026_07_29_02_32_08 timestamp=000076 receiver=2 cavs=[2, 1, 8, 11] pred_boxes=28 gt_boxes=70 comm_bytes=37056
+frame=9/41 late_source=3/20 scenario=2026_07_29_02_32_08 timestamp=000076 receiver=3 cavs=[3, 16, 17, 18] pred_boxes=13 gt_boxes=70 comm_bytes=77504
+frame=9/41 late_source=4/20 scenario=2026_07_29_02_32_08 timestamp=000076 receiver=4 cavs=[4, 1, 7, 12] pred_boxes=29 gt_boxes=70 comm_bytes=77392
+frame=9/41 late_source=5/20 scenario=2026_07_29_02_32_08 timestamp=000076 receiver=5 cavs=[5, 13, 16, 20] pred_boxes=22 gt_boxes=70 comm_bytes=70272
+frame=9/41 late_source=6/20 scenario=2026_07_29_02_32_08 timestamp=000076 receiver=6 cavs=[6, 15] pred_boxes=15 gt_boxes=70 comm_bytes=19344
+frame=9/41 late_source=7/20 scenario=2026_07_29_02_32_08 timestamp=000076 receiver=7 cavs=[7, 8, 16, 20] pred_boxes=29 gt_boxes=70 comm_bytes=56320
+frame=9/41 late_source=8/20 scenario=2026_07_29_02_32_08 timestamp=000076 receiver=8 cavs=[8, 1, 4, 7] pred_boxes=35 gt_boxes=70 comm_bytes=83872
+frame=9/41 late_source=9/20 scenario=2026_07_29_02_32_08 timestamp=000076 receiver=9 cavs=[9, 13, 16, 19] pred_boxes=19 gt_boxes=70 comm_bytes=58768
+frame=9/41 late_source=10/20 scenario=2026_07_29_02_32_08 timestamp=000076 receiver=10 cavs=[10, 8, 9, 19] pred_boxes=29 gt_boxes=70 comm_bytes=41984
+frame=9/41 late_source=11/20 scenario=2026_07_29_02_32_08 timestamp=000076 receiver=11 cavs=[11, 1, 2, 9] pred_boxes=32 gt_boxes=70 comm_bytes=63776
+frame=9/41 late_source=12/20 scenario=2026_07_29_02_32_08 timestamp=000076 receiver=12 cavs=[12, 4, 7, 8] pred_boxes=27 gt_boxes=70 comm_bytes=61920
+frame=9/41 late_source=13/20 scenario=2026_07_29_02_32_08 timestamp=000076 receiver=13 cavs=[13, 9, 10, 19] pred_boxes=15 gt_boxes=70 comm_bytes=35424
+frame=9/41 late_source=14/20 scenario=2026_07_29_02_32_08 timestamp=000076 receiver=14 cavs=[14] pred_boxes=0 gt_boxes=70 comm_bytes=0
+frame=9/41 late_source=15/20 scenario=2026_07_29_02_32_08 timestamp=000076 receiver=15 cavs=[15, 6] pred_boxes=17 gt_boxes=70 comm_bytes=32000
+frame=9/41 late_source=16/20 scenario=2026_07_29_02_32_08 timestamp=000076 receiver=16 cavs=[16, 7, 17, 20] pred_boxes=25 gt_boxes=70 comm_bytes=63776
+frame=9/41 late_source=17/20 scenario=2026_07_29_02_32_08 timestamp=000076 receiver=17 cavs=[17, 3, 16, 18] pred_boxes=14 gt_boxes=70 comm_bytes=72320
+frame=9/41 late_source=18/20 scenario=2026_07_29_02_32_08 timestamp=000076 receiver=18 cavs=[18, 3, 17] pred_boxes=7 gt_boxes=70 comm_bytes=60336
+frame=9/41 late_source=19/20 scenario=2026_07_29_02_32_08 timestamp=000076 receiver=19 cavs=[19, 9, 10, 13] pred_boxes=17 gt_boxes=70 comm_bytes=43008
+frame=9/41 late_source=20/20 scenario=2026_07_29_02_32_08 timestamp=000076 receiver=20 cavs=[20, 5, 7, 16] pred_boxes=26 gt_boxes=70 comm_bytes=46912
+sgcp_late_fusion frame=9/41 scenario=2026_07_29_02_32_08 timestamp=000076 sources=20 fused_pred_boxes=75 fused_gt_boxes=70
+frame=10/41 late_source=1/20 scenario=2026_07_29_02_32_08 timestamp=000078 receiver=1 cavs=[1, 2, 8, 11] pred_boxes=28 gt_boxes=70 comm_bytes=53968
+frame=10/41 late_source=2/20 scenario=2026_07_29_02_32_08 timestamp=000078 receiver=2 cavs=[2, 1, 8, 11] pred_boxes=26 gt_boxes=70 comm_bytes=36928
+frame=10/41 late_source=3/20 scenario=2026_07_29_02_32_08 timestamp=000078 receiver=3 cavs=[3, 16, 17, 18] pred_boxes=11 gt_boxes=70 comm_bytes=78272
+frame=10/41 late_source=4/20 scenario=2026_07_29_02_32_08 timestamp=000078 receiver=4 cavs=[4, 1, 7, 12] pred_boxes=30 gt_boxes=70 comm_bytes=80992
+frame=10/41 late_source=5/20 scenario=2026_07_29_02_32_08 timestamp=000078 receiver=5 cavs=[5, 13, 16, 20] pred_boxes=21 gt_boxes=70 comm_bytes=70528
+frame=10/41 late_source=6/20 scenario=2026_07_29_02_32_08 timestamp=000078 receiver=6 cavs=[6, 15] pred_boxes=17 gt_boxes=70 comm_bytes=20656
+frame=10/41 late_source=7/20 scenario=2026_07_29_02_32_08 timestamp=000078 receiver=7 cavs=[7, 8, 16, 20] pred_boxes=30 gt_boxes=70 comm_bytes=61424
+frame=10/41 late_source=8/20 scenario=2026_07_29_02_32_08 timestamp=000078 receiver=8 cavs=[8, 1, 4, 7] pred_boxes=34 gt_boxes=70 comm_bytes=83152
+frame=10/41 late_source=9/20 scenario=2026_07_29_02_32_08 timestamp=000078 receiver=9 cavs=[9, 13, 16, 19] pred_boxes=19 gt_boxes=70 comm_bytes=62656
+frame=10/41 late_source=10/20 scenario=2026_07_29_02_32_08 timestamp=000078 receiver=10 cavs=[10, 8, 9, 19] pred_boxes=27 gt_boxes=70 comm_bytes=44208
+frame=10/41 late_source=11/20 scenario=2026_07_29_02_32_08 timestamp=000078 receiver=11 cavs=[11, 1, 2, 9] pred_boxes=27 gt_boxes=70 comm_bytes=64160
+frame=10/41 late_source=12/20 scenario=2026_07_29_02_32_08 timestamp=000078 receiver=12 cavs=[12, 4, 7, 8] pred_boxes=32 gt_boxes=70 comm_bytes=64752
+frame=10/41 late_source=13/20 scenario=2026_07_29_02_32_08 timestamp=000078 receiver=13 cavs=[13, 9, 10, 19] pred_boxes=17 gt_boxes=70 comm_bytes=36544
+Warning: len(pillar_features.shape) == 1
+frame=10/41 late_source=14/20 scenario=2026_07_29_02_32_08 timestamp=000078 receiver=14 cavs=[14] pred_boxes=0 gt_boxes=70 comm_bytes=0
+frame=10/41 late_source=15/20 scenario=2026_07_29_02_32_08 timestamp=000078 receiver=15 cavs=[15, 6] pred_boxes=18 gt_boxes=70 comm_bytes=29760
+frame=10/41 late_source=16/20 scenario=2026_07_29_02_32_08 timestamp=000078 receiver=16 cavs=[16, 7, 17, 20] pred_boxes=24 gt_boxes=70 comm_bytes=65936
+frame=10/41 late_source=17/20 scenario=2026_07_29_02_32_08 timestamp=000078 receiver=17 cavs=[17, 3, 16, 18] pred_boxes=14 gt_boxes=70 comm_bytes=75040
+frame=10/41 late_source=18/20 scenario=2026_07_29_02_32_08 timestamp=000078 receiver=18 cavs=[18, 3, 17] pred_boxes=6 gt_boxes=70 comm_bytes=58384
+frame=10/41 late_source=19/20 scenario=2026_07_29_02_32_08 timestamp=000078 receiver=19 cavs=[19, 9, 10, 13] pred_boxes=15 gt_boxes=70 comm_bytes=42768
+frame=10/41 late_source=20/20 scenario=2026_07_29_02_32_08 timestamp=000078 receiver=20 cavs=[20, 5, 7, 16] pred_boxes=25 gt_boxes=70 comm_bytes=48672
+sgcp_late_fusion frame=10/41 scenario=2026_07_29_02_32_08 timestamp=000078 sources=20 fused_pred_boxes=78 fused_gt_boxes=70
+frame=11/41 late_source=1/20 scenario=2026_07_29_02_32_08 timestamp=000080 receiver=1 cavs=[1, 2, 8, 11] pred_boxes=31 gt_boxes=71 comm_bytes=56112
+frame=11/41 late_source=2/20 scenario=2026_07_29_02_32_08 timestamp=000080 receiver=2 cavs=[2, 1, 8, 11] pred_boxes=27 gt_boxes=71 comm_bytes=40976
+frame=11/41 late_source=3/20 scenario=2026_07_29_02_32_08 timestamp=000080 receiver=3 cavs=[3, 16, 17, 18] pred_boxes=12 gt_boxes=71 comm_bytes=80176
+frame=11/41 late_source=4/20 scenario=2026_07_29_02_32_08 timestamp=000080 receiver=4 cavs=[4, 1, 7, 12] pred_boxes=29 gt_boxes=71 comm_bytes=83840
+frame=11/41 late_source=5/20 scenario=2026_07_29_02_32_08 timestamp=000080 receiver=5 cavs=[5, 13, 16, 20] pred_boxes=20 gt_boxes=71 comm_bytes=71200
+frame=11/41 late_source=6/20 scenario=2026_07_29_02_32_08 timestamp=000080 receiver=6 cavs=[6, 15] pred_boxes=16 gt_boxes=71 comm_bytes=23312
+frame=11/41 late_source=7/20 scenario=2026_07_29_02_32_08 timestamp=000080 receiver=7 cavs=[7, 8, 12, 20] pred_boxes=34 gt_boxes=71 comm_bytes=75168
+frame=11/41 late_source=8/20 scenario=2026_07_29_02_32_08 timestamp=000080 receiver=8 cavs=[8, 1, 4, 7] pred_boxes=38 gt_boxes=71 comm_bytes=87008
+frame=11/41 late_source=9/20 scenario=2026_07_29_02_32_08 timestamp=000080 receiver=9 cavs=[9, 13, 16, 19] pred_boxes=22 gt_boxes=71 comm_bytes=65792
+frame=11/41 late_source=10/20 scenario=2026_07_29_02_32_08 timestamp=000080 receiver=10 cavs=[10, 8, 9, 19] pred_boxes=29 gt_boxes=71 comm_bytes=45424
+frame=11/41 late_source=11/20 scenario=2026_07_29_02_32_08 timestamp=000080 receiver=11 cavs=[11, 1, 2, 9] pred_boxes=27 gt_boxes=71 comm_bytes=65888
+frame=11/41 late_source=12/20 scenario=2026_07_29_02_32_08 timestamp=000080 receiver=12 cavs=[12, 4, 7, 8] pred_boxes=31 gt_boxes=71 comm_bytes=68832
+frame=11/41 late_source=13/20 scenario=2026_07_29_02_32_08 timestamp=000080 receiver=13 cavs=[13, 9, 10, 19] pred_boxes=14 gt_boxes=71 comm_bytes=36784Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+
+Warning: len(pillar_features.shape) == 1
+frame=11/41 late_source=14/20 scenario=2026_07_29_02_32_08 timestamp=000080 receiver=14 cavs=[14] pred_boxes=0 gt_boxes=71 comm_bytes=0
+frame=11/41 late_source=15/20 scenario=2026_07_29_02_32_08 timestamp=000080 receiver=15 cavs=[15, 6] pred_boxes=17 gt_boxes=71 comm_bytes=32064
+frame=11/41 late_source=16/20 scenario=2026_07_29_02_32_08 timestamp=000080 receiver=16 cavs=[16, 3, 7, 20] pred_boxes=26 gt_boxes=71 comm_bytes=67328
+frame=11/41 late_source=17/20 scenario=2026_07_29_02_32_08 timestamp=000080 receiver=17 cavs=[17, 3, 16] pred_boxes=13 gt_boxes=71 comm_bytes=49680
+frame=11/41 late_source=18/20 scenario=2026_07_29_02_32_08 timestamp=000080 receiver=18 cavs=[18, 3] pred_boxes=7 gt_boxes=71 comm_bytes=32416
+frame=11/41 late_source=19/20 scenario=2026_07_29_02_32_08 timestamp=000080 receiver=19 cavs=[19, 9, 10, 13] pred_boxes=15 gt_boxes=71 comm_bytes=44656
+frame=11/41 late_source=20/20 scenario=2026_07_29_02_32_08 timestamp=000080 receiver=20 cavs=[20, 5, 7, 16] pred_boxes=23 gt_boxes=71 comm_bytes=52144
+sgcp_late_fusion frame=11/41 scenario=2026_07_29_02_32_08 timestamp=000080 sources=20 fused_pred_boxes=75 fused_gt_boxes=71
+frame=12/41 late_source=1/20 scenario=2026_07_29_02_32_08 timestamp=000082 receiver=1 cavs=[1, 2, 8, 11] pred_boxes=30 gt_boxes=71 comm_bytes=55456
+frame=12/41 late_source=2/20 scenario=2026_07_29_02_32_08 timestamp=000082 receiver=2 cavs=[2, 1, 8, 11] pred_boxes=25 gt_boxes=71 comm_bytes=37568
+frame=12/41 late_source=3/20 scenario=2026_07_29_02_32_08 timestamp=000082 receiver=3 cavs=[3, 16, 17, 18] pred_boxes=14 gt_boxes=71 comm_bytes=79104
+frame=12/41 late_source=4/20 scenario=2026_07_29_02_32_08 timestamp=000082 receiver=4 cavs=[4, 1, 7, 12] pred_boxes=29 gt_boxes=71 comm_bytes=83680
+frame=12/41 late_source=5/20 scenario=2026_07_29_02_32_08 timestamp=000082 receiver=5 cavs=[5, 13, 16, 20] pred_boxes=21 gt_boxes=71 comm_bytes=71888
+frame=12/41 late_source=6/20 scenario=2026_07_29_02_32_08 timestamp=000082 receiver=6 cavs=[6, 15] pred_boxes=15 gt_boxes=71 comm_bytes=23872
+frame=12/41 late_source=7/20 scenario=2026_07_29_02_32_08 timestamp=000082 receiver=7 cavs=[7, 8, 12, 20] pred_boxes=35 gt_boxes=71 comm_bytes=77168
+frame=12/41 late_source=8/20 scenario=2026_07_29_02_32_08 timestamp=000082 receiver=8 cavs=[8, 1, 4, 7] pred_boxes=36 gt_boxes=71 comm_bytes=86512
+frame=12/41 late_source=9/20 scenario=2026_07_29_02_32_08 timestamp=000082 receiver=9 cavs=[9, 10, 16, 19] pred_boxes=22 gt_boxes=71 comm_bytes=69792
+frame=12/41 late_source=10/20 scenario=2026_07_29_02_32_08 timestamp=000082 receiver=10 cavs=[10, 8, 9, 19] pred_boxes=26 gt_boxes=71 comm_bytes=45232
+frame=12/41 late_source=11/20 scenario=2026_07_29_02_32_08 timestamp=000082 receiver=11 cavs=[11, 1, 2, 9] pred_boxes=29 gt_boxes=71 comm_bytes=66016
+frame=12/41 late_source=12/20 scenario=2026_07_29_02_32_08 timestamp=000082 receiver=12 cavs=[12, 4, 7, 8] pred_boxes=32 gt_boxes=71 comm_bytes=65296
+frame=12/41 late_source=13/20 scenario=2026_07_29_02_32_08 timestamp=000082 receiver=13 cavs=[13, 9, 10, 19] pred_boxes=15 gt_boxes=71 comm_bytes=36624
+Warning: len(pillar_features.shape) == 1
+frame=12/41 late_source=14/20 scenario=2026_07_29_02_32_08 timestamp=000082 receiver=14 cavs=[14] pred_boxes=0 gt_boxes=71 comm_bytes=0
+frame=12/41 late_source=15/20 scenario=2026_07_29_02_32_08 timestamp=000082 receiver=15 cavs=[15, 6] pred_boxes=19 gt_boxes=71 comm_bytes=31936
+frame=12/41 late_source=16/20 scenario=2026_07_29_02_32_08 timestamp=000082 receiver=16 cavs=[16, 3, 7, 20] pred_boxes=28 gt_boxes=71 comm_bytes=68240
+frame=12/41 late_source=17/20 scenario=2026_07_29_02_32_08 timestamp=000082 receiver=17 cavs=[17, 3, 16] pred_boxes=13 gt_boxes=71 comm_bytes=49952
+frame=12/41 late_source=18/20 scenario=2026_07_29_02_32_08 timestamp=000082 receiver=18 cavs=[18, 3] pred_boxes=7 gt_boxes=71 comm_bytes=33392
+frame=12/41 late_source=19/20 scenario=2026_07_29_02_32_08 timestamp=000082 receiver=19 cavs=[19, 9, 10, 13] pred_boxes=12 gt_boxes=71 comm_bytes=44784
+frame=12/41 late_source=20/20 scenario=2026_07_29_02_32_08 timestamp=000082 receiver=20 cavs=[20, 5, 7, 16] pred_boxes=23 gt_boxes=71 comm_bytes=52288
+sgcp_late_fusion frame=12/41 scenario=2026_07_29_02_32_08 timestamp=000082 sources=20 fused_pred_boxes=77 fused_gt_boxes=71
+frame=13/41 late_source=1/20 scenario=2026_07_29_02_32_08 timestamp=000084 receiver=1 cavs=[1, 2, 4, 11] pred_boxes=31 gt_boxes=71 comm_bytes=77008
+frame=13/41 late_source=2/20 scenario=2026_07_29_02_32_08 timestamp=000084 receiver=2 cavs=[2, 1, 8, 11] pred_boxes=26 gt_boxes=71 comm_bytes=37904
+frame=13/41 late_source=3/20 scenario=2026_07_29_02_32_08 timestamp=000084 receiver=3 cavs=[3, 16, 17, 18] pred_boxes=14 gt_boxes=71 comm_bytes=75152
+frame=13/41 late_source=4/20 scenario=2026_07_29_02_32_08 timestamp=000084 receiver=4 cavs=[4, 1, 7, 12] pred_boxes=31 gt_boxes=71 comm_bytes=79552
+frame=13/41 late_source=5/20 scenario=2026_07_29_02_32_08 timestamp=000084 receiver=5 cavs=[5, 13, 16, 20] pred_boxes=21 gt_boxes=71 comm_bytes=70080
+frame=13/41 late_source=6/20 scenario=2026_07_29_02_32_08 timestamp=000084 receiver=6 cavs=[6, 15] pred_boxes=15 gt_boxes=71 comm_bytes=23216
+frame=13/41 late_source=7/20 scenario=2026_07_29_02_32_08 timestamp=000084 receiver=7 cavs=[7, 8, 12, 20] pred_boxes=34 gt_boxes=71 comm_bytes=74112
+frame=13/41 late_source=8/20 scenario=2026_07_29_02_32_08 timestamp=000084 receiver=8 cavs=[8, 1, 4, 7] pred_boxes=35 gt_boxes=71 comm_bytes=82960
+frame=13/41 late_source=9/20 scenario=2026_07_29_02_32_08 timestamp=000084 receiver=9 cavs=[9, 10, 16, 19] pred_boxes=25 gt_boxes=71 comm_bytes=66144
+frame=13/41 late_source=10/20 scenario=2026_07_29_02_32_08 timestamp=000084 receiver=10 cavs=[10, 8, 9, 19] pred_boxes=29 gt_boxes=71 comm_bytes=44864
+frame=13/41 late_source=11/20 scenario=2026_07_29_02_32_08 timestamp=000084 receiver=11 cavs=[11, 1, 2, 9] pred_boxes=27 gt_boxes=71 comm_bytes=64464
+frame=13/41 late_source=12/20 scenario=2026_07_29_02_32_08 timestamp=000084 receiver=12 cavs=[12, 4, 7, 8] pred_boxes=29 gt_boxes=71 comm_bytes=67888
+frame=13/41 late_source=13/20 scenario=2026_07_29_02_32_08 timestamp=000084 receiver=13 cavs=[13, 9, 10, 19] pred_boxes=15 gt_boxes=71 comm_bytes=36160
+Warning: len(pillar_features.shape) == 1
+frame=13/41 late_source=14/20 scenario=2026_07_29_02_32_08 timestamp=000084 receiver=14 cavs=[14] pred_boxes=0 gt_boxes=71 comm_bytes=0
+frame=13/41 late_source=15/20 scenario=2026_07_29_02_32_08 timestamp=000084 receiver=15 cavs=[15, 6] pred_boxes=17 gt_boxes=71 comm_bytes=31392
+frame=13/41 late_source=16/20 scenario=2026_07_29_02_32_08 timestamp=000084 receiver=16 cavs=[16, 3, 7, 20] pred_boxes=28 gt_boxes=71 comm_bytes=66384
+frame=13/41 late_source=17/20 scenario=2026_07_29_02_32_08 timestamp=000084 receiver=17 cavs=[17, 3, 16] pred_boxes=13 gt_boxes=71 comm_bytes=48944
+frame=13/41 late_source=18/20 scenario=2026_07_29_02_32_08 timestamp=000084 receiver=18 cavs=[18, 3] pred_boxes=6 gt_boxes=71 comm_bytes=33520
+frame=13/41 late_source=19/20 scenario=2026_07_29_02_32_08 timestamp=000084 receiver=19 cavs=[19, 9, 10, 13] pred_boxes=15 gt_boxes=71 comm_bytes=43824
+frame=13/41 late_source=20/20 scenario=2026_07_29_02_32_08 timestamp=000084 receiver=20 cavs=[20, 5, 7, 16] pred_boxes=29 gt_boxes=71 comm_bytes=55232
+sgcp_late_fusion frame=13/41 scenario=2026_07_29_02_32_08 timestamp=000084 sources=20 fused_pred_boxes=79 fused_gt_boxes=71
+frame=14/41 late_source=1/20 scenario=2026_07_29_02_32_08 timestamp=000086 receiver=1 cavs=[1, 2, 4, 11] pred_boxes=35 gt_boxes=71 comm_bytes=79072
+frame=14/41 late_source=2/20 scenario=2026_07_29_02_32_08 timestamp=000086 receiver=2 cavs=[2, 1, 8, 11] pred_boxes=27 gt_boxes=71 comm_bytes=39328
+frame=14/41 late_source=3/20 scenario=2026_07_29_02_32_08 timestamp=000086 receiver=3 cavs=[3, 16, 17, 18] pred_boxes=14 gt_boxes=71 comm_bytes=78944
+frame=14/41 late_source=4/20 scenario=2026_07_29_02_32_08 timestamp=000086 receiver=4 cavs=[4, 1, 7, 12] pred_boxes=29 gt_boxes=71 comm_bytes=82624
+frame=14/41 late_source=5/20 scenario=2026_07_29_02_32_08 timestamp=000086 receiver=5 cavs=[5, 9, 16, 20] pred_boxes=25 gt_boxes=71 comm_bytes=69248Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+
+frame=14/41 late_source=6/20 scenario=2026_07_29_02_32_08 timestamp=000086 receiver=6 cavs=[6, 15] pred_boxes=16 gt_boxes=71 comm_bytes=23520
+frame=14/41 late_source=7/20 scenario=2026_07_29_02_32_08 timestamp=000086 receiver=7 cavs=[7, 8, 12, 20] pred_boxes=35 gt_boxes=71 comm_bytes=77872
+frame=14/41 late_source=8/20 scenario=2026_07_29_02_32_08 timestamp=000086 receiver=8 cavs=[8, 1, 4, 7] pred_boxes=35 gt_boxes=71 comm_bytes=86624
+frame=14/41 late_source=9/20 scenario=2026_07_29_02_32_08 timestamp=000086 receiver=9 cavs=[9, 10, 13, 19] pred_boxes=19 gt_boxes=71 comm_bytes=39344
+frame=14/41 late_source=10/20 scenario=2026_07_29_02_32_08 timestamp=000086 receiver=10 cavs=[10, 8, 9, 19] pred_boxes=28 gt_boxes=71 comm_bytes=45280
+frame=14/41 late_source=11/20 scenario=2026_07_29_02_32_08 timestamp=000086 receiver=11 cavs=[11, 1, 2, 9] pred_boxes=29 gt_boxes=71 comm_bytes=66672
+frame=14/41 late_source=12/20 scenario=2026_07_29_02_32_08 timestamp=000086 receiver=12 cavs=[12, 4, 7, 8] pred_boxes=31 gt_boxes=71 comm_bytes=68304
+frame=14/41 late_source=13/20 scenario=2026_07_29_02_32_08 timestamp=000086 receiver=13 cavs=[13, 9, 10, 19] pred_boxes=17 gt_boxes=71 comm_bytes=35520
+Warning: len(pillar_features.shape) == 1
+frame=14/41 late_source=14/20 scenario=2026_07_29_02_32_08 timestamp=000086 receiver=14 cavs=[14] pred_boxes=0 gt_boxes=71 comm_bytes=0
+frame=14/41 late_source=15/20 scenario=2026_07_29_02_32_08 timestamp=000086 receiver=15 cavs=[15, 6] pred_boxes=16 gt_boxes=71 comm_bytes=32400
+frame=14/41 late_source=16/20 scenario=2026_07_29_02_32_08 timestamp=000086 receiver=16 cavs=[16, 3, 7, 20] pred_boxes=27 gt_boxes=71 comm_bytes=71296
+frame=14/41 late_source=17/20 scenario=2026_07_29_02_32_08 timestamp=000086 receiver=17 cavs=[17, 3, 16] pred_boxes=15 gt_boxes=71 comm_bytes=49920
+frame=14/41 late_source=18/20 scenario=2026_07_29_02_32_08 timestamp=000086 receiver=18 cavs=[18, 3] pred_boxes=7 gt_boxes=71 comm_bytes=33696
+frame=14/41 late_source=19/20 scenario=2026_07_29_02_32_08 timestamp=000086 receiver=19 cavs=[19, 9, 10, 13] pred_boxes=12 gt_boxes=71 comm_bytes=45104
+frame=14/41 late_source=20/20 scenario=2026_07_29_02_32_08 timestamp=000086 receiver=20 cavs=[20, 5, 7, 16] pred_boxes=25 gt_boxes=71 comm_bytes=54032
+sgcp_late_fusion frame=14/41 scenario=2026_07_29_02_32_08 timestamp=000086 sources=20 fused_pred_boxes=80 fused_gt_boxes=71
+frame=15/41 late_source=1/20 scenario=2026_07_29_02_32_08 timestamp=000088 receiver=1 cavs=[1, 2, 4, 11] pred_boxes=34 gt_boxes=71 comm_bytes=79600
+frame=15/41 late_source=2/20 scenario=2026_07_29_02_32_08 timestamp=000088 receiver=2 cavs=[2, 1, 8, 11] pred_boxes=25 gt_boxes=71 comm_bytes=39520
+frame=15/41 late_source=3/20 scenario=2026_07_29_02_32_08 timestamp=000088 receiver=3 cavs=[3, 16, 17, 18] pred_boxes=15 gt_boxes=71 comm_bytes=80288
+frame=15/41 late_source=4/20 scenario=2026_07_29_02_32_08 timestamp=000088 receiver=4 cavs=[4, 1, 7, 12] pred_boxes=28 gt_boxes=71 comm_bytes=83648
+frame=15/41 late_source=5/20 scenario=2026_07_29_02_32_08 timestamp=000088 receiver=5 cavs=[5, 9, 16, 20] pred_boxes=21 gt_boxes=71 comm_bytes=68896
+frame=15/41 late_source=6/20 scenario=2026_07_29_02_32_08 timestamp=000088 receiver=6 cavs=[6, 15] pred_boxes=15 gt_boxes=71 comm_bytes=24432
+frame=15/41 late_source=7/20 scenario=2026_07_29_02_32_08 timestamp=000088 receiver=7 cavs=[7, 8, 12, 20] pred_boxes=33 gt_boxes=71 comm_bytes=77824
+frame=15/41 late_source=8/20 scenario=2026_07_29_02_32_08 timestamp=000088 receiver=8 cavs=[8, 1, 4, 7] pred_boxes=32 gt_boxes=71 comm_bytes=86032
+frame=15/41 late_source=9/20 scenario=2026_07_29_02_32_08 timestamp=000088 receiver=9 cavs=[9, 10, 13, 19] pred_boxes=19 gt_boxes=71 comm_bytes=39200
+frame=15/41 late_source=10/20 scenario=2026_07_29_02_32_08 timestamp=000088 receiver=10 cavs=[10, 8, 9, 19] pred_boxes=27 gt_boxes=71 comm_bytes=45856
+frame=15/41 late_source=11/20 scenario=2026_07_29_02_32_08 timestamp=000088 receiver=11 cavs=[11, 1, 2, 9] pred_boxes=28 gt_boxes=71 comm_bytes=67344
+frame=15/41 late_source=12/20 scenario=2026_07_29_02_32_08 timestamp=000088 receiver=12 cavs=[12, 4, 7, 8] pred_boxes=33 gt_boxes=71 comm_bytes=67792
+frame=15/41 late_source=13/20 scenario=2026_07_29_02_32_08 timestamp=000088 receiver=13 cavs=[13, 9, 10, 19] pred_boxes=11 gt_boxes=71 comm_bytes=36400
+frame=15/41 late_source=14/20 scenario=2026_07_29_02_32_08 timestamp=000088 receiver=14 cavs=[14] skipped=empty_pillars comm_bytes=0
+frame=15/41 late_source=15/20 scenario=2026_07_29_02_32_08 timestamp=000088 receiver=15 cavs=[15, 6] pred_boxes=15 gt_boxes=71 comm_bytes=32912
+frame=15/41 late_source=16/20 scenario=2026_07_29_02_32_08 timestamp=000088 receiver=16 cavs=[16, 3, 5, 20] pred_boxes=23 gt_boxes=71 comm_bytes=57536
+frame=15/41 late_source=17/20 scenario=2026_07_29_02_32_08 timestamp=000088 receiver=17 cavs=[17, 3, 16] pred_boxes=14 gt_boxes=71 comm_bytes=50880
+frame=15/41 late_source=18/20 scenario=2026_07_29_02_32_08 timestamp=000088 receiver=18 cavs=[18, 3] pred_boxes=8 gt_boxes=71 comm_bytes=36816
+frame=15/41 late_source=19/20 scenario=2026_07_29_02_32_08 timestamp=000088 receiver=19 cavs=[19, 9, 10, 13] pred_boxes=14 gt_boxes=71 comm_bytes=49008
+frame=15/41 late_source=20/20 scenario=2026_07_29_02_32_08 timestamp=000088 receiver=20 cavs=[20, 5, 7, 16] pred_boxes=23 gt_boxes=71 comm_bytes=54816
+sgcp_late_fusion frame=15/41 scenario=2026_07_29_02_32_08 timestamp=000088 sources=20 fused_pred_boxes=81 fused_gt_boxes=71
+frame=16/41 late_source=1/20 scenario=2026_07_29_02_32_08 timestamp=000090 receiver=1 cavs=[1, 2, 4, 11] pred_boxes=34 gt_boxes=72 comm_bytes=79664
+frame=16/41 late_source=2/20 scenario=2026_07_29_02_32_08 timestamp=000090 receiver=2 cavs=[2, 1, 8, 11] pred_boxes=29 gt_boxes=72 comm_bytes=40192
+frame=16/41 late_source=3/20 scenario=2026_07_29_02_32_08 timestamp=000090 receiver=3 cavs=[3, 16, 17, 18] pred_boxes=14 gt_boxes=72 comm_bytes=81200
+frame=16/41 late_source=4/20 scenario=2026_07_29_02_32_08 timestamp=000090 receiver=4 cavs=[4, 1, 7, 12] pred_boxes=27 gt_boxes=72 comm_bytes=83632
+frame=16/41 late_source=5/20 scenario=2026_07_29_02_32_08 timestamp=000090 receiver=5 cavs=[5, 9, 16, 20] pred_boxes=18 gt_boxes=72 comm_bytes=68640
+frame=16/41 late_source=6/20 scenario=2026_07_29_02_32_08 timestamp=000090 receiver=6 cavs=[6, 15] pred_boxes=15 gt_boxes=72 comm_bytes=24544
+frame=16/41 late_source=7/20 scenario=2026_07_29_02_32_08 timestamp=000090 receiver=7 cavs=[7, 8, 12, 20] pred_boxes=36 gt_boxes=72 comm_bytes=77664
+frame=16/41 late_source=8/20 scenario=2026_07_29_02_32_08 timestamp=000090 receiver=8 cavs=[8, 1, 4, 7] pred_boxes=33 gt_boxes=72 comm_bytes=86048
+frame=16/41 late_source=9/20 scenario=2026_07_29_02_32_08 timestamp=000090 receiver=9 cavs=[9, 10, 13, 19] pred_boxes=17 gt_boxes=72 comm_bytes=40848
+frame=16/41 late_source=10/20 scenario=2026_07_29_02_32_08 timestamp=000090 receiver=10 cavs=[10, 8, 9, 19] pred_boxes=28 gt_boxes=72 comm_bytes=45504
+frame=16/41 late_source=11/20 scenario=2026_07_29_02_32_08 timestamp=000090 receiver=11 cavs=[11, 1, 2, 9] pred_boxes=30 gt_boxes=72 comm_bytes=67152
+frame=16/41 late_source=12/20 scenario=2026_07_29_02_32_08 timestamp=000090 receiver=12 cavs=[12, 4, 7, 8] pred_boxes=33 gt_boxes=72 comm_bytes=68336
+frame=16/41 late_source=13/20 scenario=2026_07_29_02_32_08 timestamp=000090 receiver=13 cavs=[13, 9, 10, 19] pred_boxes=9 gt_boxes=72 comm_bytes=37168
+frame=16/41 late_source=14/20 scenario=2026_07_29_02_32_08 timestamp=000090 receiver=14 cavs=[14] skipped=empty_pillars comm_bytes=0
+frame=16/41 late_source=15/20 scenario=2026_07_29_02_32_08 timestamp=000090 receiver=15 cavs=[15, 6] pred_boxes=17 gt_boxes=72 comm_bytes=31936
+frame=16/41 late_source=16/20 scenario=2026_07_29_02_32_08 timestamp=000090 receiver=16 cavs=[16, 3, 5, 20] pred_boxes=22 gt_boxes=72 comm_bytes=57360
+frame=16/41 late_source=17/20 scenario=2026_07_29_02_32_08 timestamp=000090 receiver=17 cavs=[17, 3, 16] pred_boxes=16 gt_boxes=72 comm_bytes=48944
+frame=16/41 late_source=18/20 scenario=2026_07_29_02_32_08 timestamp=000090 receiver=18 cavs=[18, 3] pred_boxes=5 gt_boxes=72 comm_bytes=34320
+frame=16/41 late_source=19/20 scenario=2026_07_29_02_32_08 timestamp=000090 receiver=19 cavs=[19, 9, 10, 13] pred_boxes=12 gt_boxes=72 comm_bytes=48784Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+
+frame=16/41 late_source=20/20 scenario=2026_07_29_02_32_08 timestamp=000090 receiver=20 cavs=[20, 5, 7, 16] pred_boxes=26 gt_boxes=72 comm_bytes=56864
+sgcp_late_fusion frame=16/41 scenario=2026_07_29_02_32_08 timestamp=000090 sources=20 fused_pred_boxes=76 fused_gt_boxes=72
+frame=17/41 late_source=1/20 scenario=2026_07_29_02_32_08 timestamp=000092 receiver=1 cavs=[1, 2, 4, 11] pred_boxes=34 gt_boxes=72 comm_bytes=80512
+frame=17/41 late_source=2/20 scenario=2026_07_29_02_32_08 timestamp=000092 receiver=2 cavs=[2, 1, 8, 11] pred_boxes=26 gt_boxes=72 comm_bytes=38896
+frame=17/41 late_source=3/20 scenario=2026_07_29_02_32_08 timestamp=000092 receiver=3 cavs=[3, 16, 17, 18] pred_boxes=16 gt_boxes=72 comm_bytes=82992
+frame=17/41 late_source=4/20 scenario=2026_07_29_02_32_08 timestamp=000092 receiver=4 cavs=[4, 1, 7, 12] pred_boxes=27 gt_boxes=72 comm_bytes=85504
+frame=17/41 late_source=5/20 scenario=2026_07_29_02_32_08 timestamp=000092 receiver=5 cavs=[5, 9, 16, 20] pred_boxes=24 gt_boxes=72 comm_bytes=69008
+frame=17/41 late_source=6/20 scenario=2026_07_29_02_32_08 timestamp=000092 receiver=6 cavs=[6, 15] pred_boxes=15 gt_boxes=72 comm_bytes=24656
+frame=17/41 late_source=7/20 scenario=2026_07_29_02_32_08 timestamp=000092 receiver=7 cavs=[7, 8, 12, 20] pred_boxes=34 gt_boxes=72 comm_bytes=77072
+frame=17/41 late_source=8/20 scenario=2026_07_29_02_32_08 timestamp=000092 receiver=8 cavs=[8, 1, 4, 7] pred_boxes=33 gt_boxes=72 comm_bytes=85856
+frame=17/41 late_source=9/20 scenario=2026_07_29_02_32_08 timestamp=000092 receiver=9 cavs=[9, 10, 13, 19] pred_boxes=16 gt_boxes=72 comm_bytes=38944
+frame=17/41 late_source=10/20 scenario=2026_07_29_02_32_08 timestamp=000092 receiver=10 cavs=[10, 8, 9, 19] pred_boxes=27 gt_boxes=72 comm_bytes=45376
+frame=17/41 late_source=11/20 scenario=2026_07_29_02_32_08 timestamp=000092 receiver=11 cavs=[11, 1, 2, 9] pred_boxes=29 gt_boxes=72 comm_bytes=66816
+frame=17/41 late_source=12/20 scenario=2026_07_29_02_32_08 timestamp=000092 receiver=12 cavs=[12, 4, 7, 8] pred_boxes=34 gt_boxes=72 comm_bytes=67744
+frame=17/41 late_source=13/20 scenario=2026_07_29_02_32_08 timestamp=000092 receiver=13 cavs=[13, 9, 10, 19] pred_boxes=16 gt_boxes=72 comm_bytes=37312
+frame=17/41 late_source=14/20 scenario=2026_07_29_02_32_08 timestamp=000092 receiver=14 cavs=[14] skipped=empty_pillars comm_bytes=0
+frame=17/41 late_source=15/20 scenario=2026_07_29_02_32_08 timestamp=000092 receiver=15 cavs=[15, 6] pred_boxes=17 gt_boxes=72 comm_bytes=31728
+frame=17/41 late_source=16/20 scenario=2026_07_29_02_32_08 timestamp=000092 receiver=16 cavs=[16, 3, 5, 20] pred_boxes=22 gt_boxes=72 comm_bytes=56800
+frame=17/41 late_source=17/20 scenario=2026_07_29_02_32_08 timestamp=000092 receiver=17 cavs=[17, 3, 16] pred_boxes=15 gt_boxes=72 comm_bytes=49072
+frame=17/41 late_source=18/20 scenario=2026_07_29_02_32_08 timestamp=000092 receiver=18 cavs=[18, 3] pred_boxes=6 gt_boxes=72 comm_bytes=34384
+frame=17/41 late_source=19/20 scenario=2026_07_29_02_32_08 timestamp=000092 receiver=19 cavs=[19, 9, 10, 13] pred_boxes=12 gt_boxes=72 comm_bytes=48736
+frame=17/41 late_source=20/20 scenario=2026_07_29_02_32_08 timestamp=000092 receiver=20 cavs=[20, 5, 7, 16] pred_boxes=26 gt_boxes=72 comm_bytes=57392
+sgcp_late_fusion frame=17/41 scenario=2026_07_29_02_32_08 timestamp=000092 sources=20 fused_pred_boxes=78 fused_gt_boxes=72
+frame=18/41 late_source=1/20 scenario=2026_07_29_02_32_08 timestamp=000094 receiver=1 cavs=[1, 2, 4, 11] pred_boxes=32 gt_boxes=72 comm_bytes=78848
+frame=18/41 late_source=2/20 scenario=2026_07_29_02_32_08 timestamp=000094 receiver=2 cavs=[2, 1, 8, 11] pred_boxes=26 gt_boxes=72 comm_bytes=40400
+frame=18/41 late_source=3/20 scenario=2026_07_29_02_32_08 timestamp=000094 receiver=3 cavs=[3, 16, 17, 18] pred_boxes=17 gt_boxes=72 comm_bytes=80176
+frame=18/41 late_source=4/20 scenario=2026_07_29_02_32_08 timestamp=000094 receiver=4 cavs=[4, 1, 7, 12] pred_boxes=27 gt_boxes=72 comm_bytes=83104
+frame=18/41 late_source=5/20 scenario=2026_07_29_02_32_08 timestamp=000094 receiver=5 cavs=[5, 9, 16, 20] pred_boxes=22 gt_boxes=72 comm_bytes=68816
+frame=18/41 late_source=6/20 scenario=2026_07_29_02_32_08 timestamp=000094 receiver=6 cavs=[6, 15] pred_boxes=17 gt_boxes=72 comm_bytes=24512
+frame=18/41 late_source=7/20 scenario=2026_07_29_02_32_08 timestamp=000094 receiver=7 cavs=[7, 8, 12, 20] pred_boxes=33 gt_boxes=72 comm_bytes=77664
+frame=18/41 late_source=8/20 scenario=2026_07_29_02_32_08 timestamp=000094 receiver=8 cavs=[8, 1, 4, 7] pred_boxes=33 gt_boxes=72 comm_bytes=84720
+frame=18/41 late_source=9/20 scenario=2026_07_29_02_32_08 timestamp=000094 receiver=9 cavs=[9, 10, 13, 19] pred_boxes=20 gt_boxes=72 comm_bytes=39264
+frame=18/41 late_source=10/20 scenario=2026_07_29_02_32_08 timestamp=000094 receiver=10 cavs=[10, 8, 9, 19] pred_boxes=26 gt_boxes=72 comm_bytes=44928
+frame=18/41 late_source=11/20 scenario=2026_07_29_02_32_08 timestamp=000094 receiver=11 cavs=[11, 1, 2, 9] pred_boxes=25 gt_boxes=72 comm_bytes=66080
+frame=18/41 late_source=12/20 scenario=2026_07_29_02_32_08 timestamp=000094 receiver=12 cavs=[12, 4, 7, 8] pred_boxes=31 gt_boxes=72 comm_bytes=67008
+frame=18/41 late_source=13/20 scenario=2026_07_29_02_32_08 timestamp=000094 receiver=13 cavs=[13, 9, 10, 19] pred_boxes=10 gt_boxes=72 comm_bytes=36912
+frame=18/41 late_source=14/20 scenario=2026_07_29_02_32_08 timestamp=000094 receiver=14 cavs=[14] skipped=empty_pillars comm_bytes=0
+frame=18/41 late_source=15/20 scenario=2026_07_29_02_32_08 timestamp=000094 receiver=15 cavs=[15, 6] pred_boxes=19 gt_boxes=72 comm_bytes=32688
+frame=18/41 late_source=16/20 scenario=2026_07_29_02_32_08 timestamp=000094 receiver=16 cavs=[16, 3, 17, 20] pred_boxes=24 gt_boxes=72 comm_bytes=64288
+frame=18/41 late_source=17/20 scenario=2026_07_29_02_32_08 timestamp=000094 receiver=17 cavs=[17, 3, 16] pred_boxes=17 gt_boxes=72 comm_bytes=47056
+frame=18/41 late_source=18/20 scenario=2026_07_29_02_32_08 timestamp=000094 receiver=18 cavs=[18, 3] pred_boxes=8 gt_boxes=72 comm_bytes=34624
+frame=18/41 late_source=19/20 scenario=2026_07_29_02_32_08 timestamp=000094 receiver=19 cavs=[19, 9, 10, 13] pred_boxes=14 gt_boxes=72 comm_bytes=49136
+frame=18/41 late_source=20/20 scenario=2026_07_29_02_32_08 timestamp=000094 receiver=20 cavs=[20, 5, 7, 16] pred_boxes=26 gt_boxes=72 comm_bytes=58576
+sgcp_late_fusion frame=18/41 scenario=2026_07_29_02_32_08 timestamp=000094 sources=20 fused_pred_boxes=79 fused_gt_boxes=72
+frame=19/41 late_source=1/20 scenario=2026_07_29_02_32_08 timestamp=000096 receiver=1 cavs=[1, 2, 4, 11] pred_boxes=34 gt_boxes=72 comm_bytes=80096
+frame=19/41 late_source=2/20 scenario=2026_07_29_02_32_08 timestamp=000096 receiver=2 cavs=[2, 1, 8, 11] pred_boxes=28 gt_boxes=72 comm_bytes=39728
+frame=19/41 late_source=3/20 scenario=2026_07_29_02_32_08 timestamp=000096 receiver=3 cavs=[3, 16, 17, 18] pred_boxes=15 gt_boxes=72 comm_bytes=81152
+frame=19/41 late_source=4/20 scenario=2026_07_29_02_32_08 timestamp=000096 receiver=4 cavs=[4, 1, 7, 12] pred_boxes=28 gt_boxes=72 comm_bytes=85136
+frame=19/41 late_source=5/20 scenario=2026_07_29_02_32_08 timestamp=000096 receiver=5 cavs=[5, 9, 16, 20] pred_boxes=23 gt_boxes=72 comm_bytes=68096
+frame=19/41 late_source=6/20 scenario=2026_07_29_02_32_08 timestamp=000096 receiver=6 cavs=[6, 15] pred_boxes=17 gt_boxes=72 comm_bytes=23392
+frame=19/41 late_source=7/20 scenario=2026_07_29_02_32_08 timestamp=000096 receiver=7 cavs=[7, 4, 8, 20] pred_boxes=34 gt_boxes=72 comm_bytes=73632
+frame=19/41 late_source=8/20 scenario=2026_07_29_02_32_08 timestamp=000096 receiver=8 cavs=[8, 1, 4, 7] pred_boxes=31 gt_boxes=72 comm_bytes=84928
+frame=19/41 late_source=9/20 scenario=2026_07_29_02_32_08 timestamp=000096 receiver=9 cavs=[9, 10, 13, 19] pred_boxes=22 gt_boxes=72 comm_bytes=38048
+frame=19/41 late_source=10/20 scenario=2026_07_29_02_32_08 timestamp=000096 receiver=10 cavs=[10, 8, 9, 19] pred_boxes=26 gt_boxes=72 comm_bytes=45088
+frame=19/41 late_source=11/20 scenario=2026_07_29_02_32_08 timestamp=000096 receiver=11 cavs=[11, 1, 2, 9] pred_boxes=26 gt_boxes=72 comm_bytes=64464
+frame=19/41 late_source=12/20 scenario=2026_07_29_02_32_08 timestamp=000096 receiver=12 cavs=[12, 4, 7, 8] pred_boxes=31 gt_boxes=72 comm_bytes=68256Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+
+frame=19/41 late_source=13/20 scenario=2026_07_29_02_32_08 timestamp=000096 receiver=13 cavs=[13, 9, 10, 19] pred_boxes=10 gt_boxes=72 comm_bytes=38512
+frame=19/41 late_source=14/20 scenario=2026_07_29_02_32_08 timestamp=000096 receiver=14 cavs=[14] skipped=empty_pillars comm_bytes=0
+frame=19/41 late_source=15/20 scenario=2026_07_29_02_32_08 timestamp=000096 receiver=15 cavs=[15, 6] pred_boxes=17 gt_boxes=72 comm_bytes=33440
+frame=19/41 late_source=16/20 scenario=2026_07_29_02_32_08 timestamp=000096 receiver=16 cavs=[16, 3, 17, 20] pred_boxes=22 gt_boxes=72 comm_bytes=62944
+frame=19/41 late_source=17/20 scenario=2026_07_29_02_32_08 timestamp=000096 receiver=17 cavs=[17, 3, 16] pred_boxes=15 gt_boxes=72 comm_bytes=47776
+frame=19/41 late_source=18/20 scenario=2026_07_29_02_32_08 timestamp=000096 receiver=18 cavs=[18, 3] pred_boxes=7 gt_boxes=72 comm_bytes=34992
+frame=19/41 late_source=19/20 scenario=2026_07_29_02_32_08 timestamp=000096 receiver=19 cavs=[19, 9, 10, 13] pred_boxes=10 gt_boxes=72 comm_bytes=49744
+frame=19/41 late_source=20/20 scenario=2026_07_29_02_32_08 timestamp=000096 receiver=20 cavs=[20, 5, 7, 16] pred_boxes=25 gt_boxes=72 comm_bytes=59376
+sgcp_late_fusion frame=19/41 scenario=2026_07_29_02_32_08 timestamp=000096 sources=20 fused_pred_boxes=78 fused_gt_boxes=72
+frame=20/41 late_source=1/20 scenario=2026_07_29_02_32_08 timestamp=000098 receiver=1 cavs=[1, 2, 4, 11] pred_boxes=31 gt_boxes=72 comm_bytes=72416
+frame=20/41 late_source=2/20 scenario=2026_07_29_02_32_08 timestamp=000098 receiver=2 cavs=[2, 1, 11, 15] pred_boxes=24 gt_boxes=72 comm_bytes=49536
+frame=20/41 late_source=3/20 scenario=2026_07_29_02_32_08 timestamp=000098 receiver=3 cavs=[3, 16, 17, 18] pred_boxes=14 gt_boxes=72 comm_bytes=75840
+frame=20/41 late_source=4/20 scenario=2026_07_29_02_32_08 timestamp=000098 receiver=4 cavs=[4, 1, 7, 12] pred_boxes=30 gt_boxes=72 comm_bytes=79760
+frame=20/41 late_source=5/20 scenario=2026_07_29_02_32_08 timestamp=000098 receiver=5 cavs=[5, 9, 16, 20] pred_boxes=22 gt_boxes=72 comm_bytes=64784
+frame=20/41 late_source=6/20 scenario=2026_07_29_02_32_08 timestamp=000098 receiver=6 cavs=[6, 15] pred_boxes=16 gt_boxes=72 comm_bytes=20192
+frame=20/41 late_source=7/20 scenario=2026_07_29_02_32_08 timestamp=000098 receiver=7 cavs=[7, 4, 8, 20] pred_boxes=33 gt_boxes=72 comm_bytes=69120
+frame=20/41 late_source=8/20 scenario=2026_07_29_02_32_08 timestamp=000098 receiver=8 cavs=[8, 1, 4, 7] pred_boxes=33 gt_boxes=72 comm_bytes=80368
+frame=20/41 late_source=9/20 scenario=2026_07_29_02_32_08 timestamp=000098 receiver=9 cavs=[9, 10, 13, 19] pred_boxes=20 gt_boxes=72 comm_bytes=40496
+frame=20/41 late_source=10/20 scenario=2026_07_29_02_32_08 timestamp=000098 receiver=10 cavs=[10, 8, 9, 19] pred_boxes=26 gt_boxes=72 comm_bytes=43440
+frame=20/41 late_source=11/20 scenario=2026_07_29_02_32_08 timestamp=000098 receiver=11 cavs=[11, 1, 2, 9] pred_boxes=27 gt_boxes=72 comm_bytes=63168
+frame=20/41 late_source=12/20 scenario=2026_07_29_02_32_08 timestamp=000098 receiver=12 cavs=[12, 4, 7, 8] pred_boxes=27 gt_boxes=72 comm_bytes=64768
+frame=20/41 late_source=13/20 scenario=2026_07_29_02_32_08 timestamp=000098 receiver=13 cavs=[13, 9, 10, 19] pred_boxes=13 gt_boxes=72 comm_bytes=40128
+frame=20/41 late_source=14/20 scenario=2026_07_29_02_32_08 timestamp=000098 receiver=14 cavs=[14] skipped=empty_pillars comm_bytes=0
+frame=20/41 late_source=15/20 scenario=2026_07_29_02_32_08 timestamp=000098 receiver=15 cavs=[15, 2, 6] pred_boxes=21 gt_boxes=72 comm_bytes=64800
+frame=20/41 late_source=16/20 scenario=2026_07_29_02_32_08 timestamp=000098 receiver=16 cavs=[16, 3, 17, 20] pred_boxes=18 gt_boxes=72 comm_bytes=63120
+frame=20/41 late_source=17/20 scenario=2026_07_29_02_32_08 timestamp=000098 receiver=17 cavs=[17, 3, 16] pred_boxes=14 gt_boxes=72 comm_bytes=46368
+frame=20/41 late_source=18/20 scenario=2026_07_29_02_32_08 timestamp=000098 receiver=18 cavs=[18, 3] pred_boxes=7 gt_boxes=72 comm_bytes=32832
+frame=20/41 late_source=19/20 scenario=2026_07_29_02_32_08 timestamp=000098 receiver=19 cavs=[19, 9, 10, 13] pred_boxes=12 gt_boxes=72 comm_bytes=49536
+frame=20/41 late_source=20/20 scenario=2026_07_29_02_32_08 timestamp=000098 receiver=20 cavs=[20, 5, 7, 16] pred_boxes=25 gt_boxes=72 comm_bytes=58128
+sgcp_late_fusion frame=20/41 scenario=2026_07_29_02_32_08 timestamp=000098 sources=20 fused_pred_boxes=80 fused_gt_boxes=72
+frame=21/41 late_source=1/20 scenario=2026_07_29_02_32_08 timestamp=000100 receiver=1 cavs=[1, 2, 4, 11] pred_boxes=28 gt_boxes=72 comm_bytes=72144
+frame=21/41 late_source=2/20 scenario=2026_07_29_02_32_08 timestamp=000100 receiver=2 cavs=[2, 1, 11, 15] pred_boxes=24 gt_boxes=72 comm_bytes=48448
+frame=21/41 late_source=3/20 scenario=2026_07_29_02_32_08 timestamp=000100 receiver=3 cavs=[3, 16, 17, 18] pred_boxes=17 gt_boxes=72 comm_bytes=71552
+frame=21/41 late_source=4/20 scenario=2026_07_29_02_32_08 timestamp=000100 receiver=4 cavs=[4, 1, 7, 12] pred_boxes=29 gt_boxes=72 comm_bytes=74480
+frame=21/41 late_source=5/20 scenario=2026_07_29_02_32_08 timestamp=000100 receiver=5 cavs=[5, 9, 16, 20] pred_boxes=21 gt_boxes=72 comm_bytes=62384
+frame=21/41 late_source=6/20 scenario=2026_07_29_02_32_08 timestamp=000100 receiver=6 cavs=[6, 15] pred_boxes=17 gt_boxes=72 comm_bytes=21392
+frame=21/41 late_source=7/20 scenario=2026_07_29_02_32_08 timestamp=000100 receiver=7 cavs=[7, 4, 8, 20] pred_boxes=36 gt_boxes=72 comm_bytes=67808
+frame=21/41 late_source=8/20 scenario=2026_07_29_02_32_08 timestamp=000100 receiver=8 cavs=[8, 1, 10, 12] pred_boxes=36 gt_boxes=72 comm_bytes=86192
+frame=21/41 late_source=9/20 scenario=2026_07_29_02_32_08 timestamp=000100 receiver=9 cavs=[9, 10, 13, 19] pred_boxes=19 gt_boxes=72 comm_bytes=43040
+frame=21/41 late_source=10/20 scenario=2026_07_29_02_32_08 timestamp=000100 receiver=10 cavs=[10, 8, 9, 19] pred_boxes=28 gt_boxes=72 comm_bytes=43568
+frame=21/41 late_source=11/20 scenario=2026_07_29_02_32_08 timestamp=000100 receiver=11 cavs=[11, 1, 2, 9] pred_boxes=28 gt_boxes=72 comm_bytes=60400
+frame=21/41 late_source=12/20 scenario=2026_07_29_02_32_08 timestamp=000100 receiver=12 cavs=[12, 4, 7, 8] pred_boxes=29 gt_boxes=72 comm_bytes=67040
+frame=21/41 late_source=13/20 scenario=2026_07_29_02_32_08 timestamp=000100 receiver=13 cavs=[13, 9, 10, 19] pred_boxes=11 gt_boxes=72 comm_bytes=40944
+frame=21/41 late_source=14/20 scenario=2026_07_29_02_32_08 timestamp=000100 receiver=14 cavs=[14] skipped=empty_pillars comm_bytes=0
+frame=21/41 late_source=15/20 scenario=2026_07_29_02_32_08 timestamp=000100 receiver=15 cavs=[15, 2, 6] pred_boxes=22 gt_boxes=72 comm_bytes=61728
+frame=21/41 late_source=16/20 scenario=2026_07_29_02_32_08 timestamp=000100 receiver=16 cavs=[16, 3, 17, 20] pred_boxes=19 gt_boxes=72 comm_bytes=60256
+frame=21/41 late_source=17/20 scenario=2026_07_29_02_32_08 timestamp=000100 receiver=17 cavs=[17, 3, 16, 20] pred_boxes=19 gt_boxes=72 comm_bytes=59088
+frame=21/41 late_source=18/20 scenario=2026_07_29_02_32_08 timestamp=000100 receiver=18 cavs=[18, 3] pred_boxes=3 gt_boxes=72 comm_bytes=32032
+frame=21/41 late_source=19/20 scenario=2026_07_29_02_32_08 timestamp=000100 receiver=19 cavs=[19, 9, 10, 13] pred_boxes=13 gt_boxes=72 comm_bytes=49344
+frame=21/41 late_source=20/20 scenario=2026_07_29_02_32_08 timestamp=000100 receiver=20 cavs=[20, 5, 7, 16] pred_boxes=29 gt_boxes=72 comm_bytes=56960
+sgcp_late_fusion frame=21/41 scenario=2026_07_29_02_32_08 timestamp=000100 sources=20 fused_pred_boxes=81 fused_gt_boxes=72
+frame=22/41 late_source=1/20 scenario=2026_07_29_02_32_08 timestamp=000102 receiver=1 cavs=[1, 2, 4, 11] pred_boxes=30 gt_boxes=72 comm_bytes=71664
+frame=22/41 late_source=2/20 scenario=2026_07_29_02_32_08 timestamp=000102 receiver=2 cavs=[2, 1, 11, 15] pred_boxes=24 gt_boxes=72 comm_bytes=47184
+frame=22/41 late_source=3/20 scenario=2026_07_29_02_32_08 timestamp=000102 receiver=3 cavs=[3, 16, 17, 18] pred_boxes=15 gt_boxes=72 comm_bytes=70544
+frame=22/41 late_source=4/20 scenario=2026_07_29_02_32_08 timestamp=000102 receiver=4 cavs=[4, 1, 7, 12] pred_boxes=27 gt_boxes=72 comm_bytes=77648
+frame=22/41 late_source=5/20 scenario=2026_07_29_02_32_08 timestamp=000102 receiver=5 cavs=[5, 10, 16, 20] pred_boxes=21 gt_boxes=72 comm_bytes=59680Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+
+frame=22/41 late_source=6/20 scenario=2026_07_29_02_32_08 timestamp=000102 receiver=6 cavs=[6, 15] pred_boxes=17 gt_boxes=72 comm_bytes=20384
+frame=22/41 late_source=7/20 scenario=2026_07_29_02_32_08 timestamp=000102 receiver=7 cavs=[7, 4, 8, 20] pred_boxes=37 gt_boxes=72 comm_bytes=68128
+frame=22/41 late_source=8/20 scenario=2026_07_29_02_32_08 timestamp=000102 receiver=8 cavs=[8, 1, 10, 12] pred_boxes=32 gt_boxes=72 comm_bytes=86432
+frame=22/41 late_source=9/20 scenario=2026_07_29_02_32_08 timestamp=000102 receiver=9 cavs=[9, 10, 13, 19] pred_boxes=18 gt_boxes=72 comm_bytes=43728
+frame=22/41 late_source=10/20 scenario=2026_07_29_02_32_08 timestamp=000102 receiver=10 cavs=[10, 8, 9, 19] pred_boxes=27 gt_boxes=72 comm_bytes=43568
+frame=22/41 late_source=11/20 scenario=2026_07_29_02_32_08 timestamp=000102 receiver=11 cavs=[11, 1, 2, 9] pred_boxes=29 gt_boxes=72 comm_bytes=60368
+frame=22/41 late_source=12/20 scenario=2026_07_29_02_32_08 timestamp=000102 receiver=12 cavs=[12, 4, 7, 8] pred_boxes=28 gt_boxes=72 comm_bytes=66176
+frame=22/41 late_source=13/20 scenario=2026_07_29_02_32_08 timestamp=000102 receiver=13 cavs=[13, 9, 10, 19] pred_boxes=13 gt_boxes=72 comm_bytes=41888
+frame=22/41 late_source=14/20 scenario=2026_07_29_02_32_08 timestamp=000102 receiver=14 cavs=[14] skipped=empty_pillars comm_bytes=0
+frame=22/41 late_source=15/20 scenario=2026_07_29_02_32_08 timestamp=000102 receiver=15 cavs=[15, 2, 6] pred_boxes=23 gt_boxes=72 comm_bytes=60912
+frame=22/41 late_source=16/20 scenario=2026_07_29_02_32_08 timestamp=000102 receiver=16 cavs=[16, 3, 17, 20] pred_boxes=19 gt_boxes=72 comm_bytes=60736
+frame=22/41 late_source=17/20 scenario=2026_07_29_02_32_08 timestamp=000102 receiver=17 cavs=[17, 3, 16, 20] pred_boxes=17 gt_boxes=72 comm_bytes=59056
+frame=22/41 late_source=18/20 scenario=2026_07_29_02_32_08 timestamp=000102 receiver=18 cavs=[18, 3] pred_boxes=5 gt_boxes=72 comm_bytes=32960
+frame=22/41 late_source=19/20 scenario=2026_07_29_02_32_08 timestamp=000102 receiver=19 cavs=[19, 9, 10, 13] pred_boxes=15 gt_boxes=72 comm_bytes=50160
+frame=22/41 late_source=20/20 scenario=2026_07_29_02_32_08 timestamp=000102 receiver=20 cavs=[20, 5, 7, 16] pred_boxes=27 gt_boxes=72 comm_bytes=57584
+sgcp_late_fusion frame=22/41 scenario=2026_07_29_02_32_08 timestamp=000102 sources=20 fused_pred_boxes=80 fused_gt_boxes=72
+frame=23/41 late_source=1/20 scenario=2026_07_29_02_32_08 timestamp=000104 receiver=1 cavs=[1, 2, 4, 11] pred_boxes=32 gt_boxes=72 comm_bytes=72064
+frame=23/41 late_source=2/20 scenario=2026_07_29_02_32_08 timestamp=000104 receiver=2 cavs=[2, 1, 11, 15] pred_boxes=24 gt_boxes=72 comm_bytes=47328
+frame=23/41 late_source=3/20 scenario=2026_07_29_02_32_08 timestamp=000104 receiver=3 cavs=[3, 16, 17, 18] pred_boxes=15 gt_boxes=72 comm_bytes=73008
+frame=23/41 late_source=4/20 scenario=2026_07_29_02_32_08 timestamp=000104 receiver=4 cavs=[4, 1, 7, 12] pred_boxes=30 gt_boxes=72 comm_bytes=76432
+frame=23/41 late_source=5/20 scenario=2026_07_29_02_32_08 timestamp=000104 receiver=5 cavs=[5, 10, 16, 20] pred_boxes=25 gt_boxes=72 comm_bytes=61312
+frame=23/41 late_source=6/20 scenario=2026_07_29_02_32_08 timestamp=000104 receiver=6 cavs=[6, 15] pred_boxes=16 gt_boxes=72 comm_bytes=21104
+frame=23/41 late_source=7/20 scenario=2026_07_29_02_32_08 timestamp=000104 receiver=7 cavs=[7, 4, 5, 20] pred_boxes=28 gt_boxes=72 comm_bytes=57376
+frame=23/41 late_source=8/20 scenario=2026_07_29_02_32_08 timestamp=000104 receiver=8 cavs=[8, 1, 10, 12] pred_boxes=34 gt_boxes=72 comm_bytes=90512
+frame=23/41 late_source=9/20 scenario=2026_07_29_02_32_08 timestamp=000104 receiver=9 cavs=[9, 10, 13, 19] pred_boxes=20 gt_boxes=72 comm_bytes=43904
+frame=23/41 late_source=10/20 scenario=2026_07_29_02_32_08 timestamp=000104 receiver=10 cavs=[10, 8, 9, 19] pred_boxes=28 gt_boxes=72 comm_bytes=43376
+frame=23/41 late_source=11/20 scenario=2026_07_29_02_32_08 timestamp=000104 receiver=11 cavs=[11, 1, 2, 9] pred_boxes=29 gt_boxes=72 comm_bytes=60544
+frame=23/41 late_source=12/20 scenario=2026_07_29_02_32_08 timestamp=000104 receiver=12 cavs=[12, 4, 7, 8] pred_boxes=29 gt_boxes=72 comm_bytes=67584
+frame=23/41 late_source=13/20 scenario=2026_07_29_02_32_08 timestamp=000104 receiver=13 cavs=[13, 9, 10, 19] pred_boxes=17 gt_boxes=72 comm_bytes=42160
+frame=23/41 late_source=14/20 scenario=2026_07_29_02_32_08 timestamp=000104 receiver=14 cavs=[14] skipped=empty_pillars comm_bytes=0
+frame=23/41 late_source=15/20 scenario=2026_07_29_02_32_08 timestamp=000104 receiver=15 cavs=[15, 2, 6] pred_boxes=22 gt_boxes=72 comm_bytes=67152
+frame=23/41 late_source=16/20 scenario=2026_07_29_02_32_08 timestamp=000104 receiver=16 cavs=[16, 5, 17, 20] pred_boxes=24 gt_boxes=72 comm_bytes=48816
+frame=23/41 late_source=17/20 scenario=2026_07_29_02_32_08 timestamp=000104 receiver=17 cavs=[17, 3, 16, 20] pred_boxes=17 gt_boxes=72 comm_bytes=60496
+frame=23/41 late_source=18/20 scenario=2026_07_29_02_32_08 timestamp=000104 receiver=18 cavs=[18, 3] pred_boxes=3 gt_boxes=72 comm_bytes=32912
+frame=23/41 late_source=19/20 scenario=2026_07_29_02_32_08 timestamp=000104 receiver=19 cavs=[19, 9, 10, 13] pred_boxes=16 gt_boxes=72 comm_bytes=50880
+frame=23/41 late_source=20/20 scenario=2026_07_29_02_32_08 timestamp=000104 receiver=20 cavs=[20, 5, 7, 16] pred_boxes=25 gt_boxes=72 comm_bytes=61840
+sgcp_late_fusion frame=23/41 scenario=2026_07_29_02_32_08 timestamp=000104 sources=20 fused_pred_boxes=83 fused_gt_boxes=72
+frame=24/41 late_source=1/20 scenario=2026_07_29_02_32_08 timestamp=000106 receiver=1 cavs=[1, 2, 4, 11] pred_boxes=33 gt_boxes=71 comm_bytes=71984
+frame=24/41 late_source=2/20 scenario=2026_07_29_02_32_08 timestamp=000106 receiver=2 cavs=[2, 1, 11, 15] pred_boxes=24 gt_boxes=71 comm_bytes=47008
+frame=24/41 late_source=3/20 scenario=2026_07_29_02_32_08 timestamp=000106 receiver=3 cavs=[3, 16, 17, 18] pred_boxes=14 gt_boxes=71 comm_bytes=71888
+frame=24/41 late_source=4/20 scenario=2026_07_29_02_32_08 timestamp=000106 receiver=4 cavs=[4, 1, 7, 12] pred_boxes=28 gt_boxes=71 comm_bytes=80496
+frame=24/41 late_source=5/20 scenario=2026_07_29_02_32_08 timestamp=000106 receiver=5 cavs=[5, 10, 16, 20] pred_boxes=23 gt_boxes=71 comm_bytes=62160
+frame=24/41 late_source=6/20 scenario=2026_07_29_02_32_08 timestamp=000106 receiver=6 cavs=[6, 15] pred_boxes=19 gt_boxes=71 comm_bytes=22144
+frame=24/41 late_source=7/20 scenario=2026_07_29_02_32_08 timestamp=000106 receiver=7 cavs=[7, 4, 5, 20] pred_boxes=28 gt_boxes=71 comm_bytes=55744
+frame=24/41 late_source=8/20 scenario=2026_07_29_02_32_08 timestamp=000106 receiver=8 cavs=[8, 1, 10, 12] pred_boxes=32 gt_boxes=71 comm_bytes=88336
+frame=24/41 late_source=9/20 scenario=2026_07_29_02_32_08 timestamp=000106 receiver=9 cavs=[9, 10, 13, 19] pred_boxes=18 gt_boxes=71 comm_bytes=40880
+frame=24/41 late_source=10/20 scenario=2026_07_29_02_32_08 timestamp=000106 receiver=10 cavs=[10, 8, 9, 19] pred_boxes=26 gt_boxes=71 comm_bytes=43376
+frame=24/41 late_source=11/20 scenario=2026_07_29_02_32_08 timestamp=000106 receiver=11 cavs=[11, 1, 2, 9] pred_boxes=30 gt_boxes=71 comm_bytes=63616
+frame=24/41 late_source=12/20 scenario=2026_07_29_02_32_08 timestamp=000106 receiver=12 cavs=[12, 4, 7, 8] pred_boxes=24 gt_boxes=71 comm_bytes=68016
+frame=24/41 late_source=13/20 scenario=2026_07_29_02_32_08 timestamp=000106 receiver=13 cavs=[13, 9, 10, 19] pred_boxes=9 gt_boxes=71 comm_bytes=42512
+frame=24/41 late_source=14/20 scenario=2026_07_29_02_32_08 timestamp=000106 receiver=14 cavs=[14] skipped=empty_pillars comm_bytes=0
+frame=24/41 late_source=15/20 scenario=2026_07_29_02_32_08 timestamp=000106 receiver=15 cavs=[15, 2, 6] pred_boxes=22 gt_boxes=71 comm_bytes=66640
+frame=24/41 late_source=16/20 scenario=2026_07_29_02_32_08 timestamp=000106 receiver=16 cavs=[16, 5, 17, 20] pred_boxes=21 gt_boxes=71 comm_bytes=48832
+frame=24/41 late_source=17/20 scenario=2026_07_29_02_32_08 timestamp=000106 receiver=17 cavs=[17, 3, 16, 20] pred_boxes=18 gt_boxes=71 comm_bytes=60832
+frame=24/41 late_source=18/20 scenario=2026_07_29_02_32_08 timestamp=000106 receiver=18 cavs=[18, 3] pred_boxes=5 gt_boxes=71 comm_bytes=33952
+frame=24/41 late_source=19/20 scenario=2026_07_29_02_32_08 timestamp=000106 receiver=19 cavs=[19, 9, 10, 13] pred_boxes=15 gt_boxes=71 comm_bytes=51536Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+
+frame=24/41 late_source=20/20 scenario=2026_07_29_02_32_08 timestamp=000106 receiver=20 cavs=[20, 5, 7, 16] pred_boxes=25 gt_boxes=71 comm_bytes=58848
+sgcp_late_fusion frame=24/41 scenario=2026_07_29_02_32_08 timestamp=000106 sources=20 fused_pred_boxes=81 fused_gt_boxes=71
+frame=25/41 late_source=1/20 scenario=2026_07_29_02_32_08 timestamp=000108 receiver=1 cavs=[1, 2, 4, 11] pred_boxes=30 gt_boxes=71 comm_bytes=71120
+frame=25/41 late_source=2/20 scenario=2026_07_29_02_32_08 timestamp=000108 receiver=2 cavs=[2, 1, 11, 15] pred_boxes=22 gt_boxes=71 comm_bytes=49760
+frame=25/41 late_source=3/20 scenario=2026_07_29_02_32_08 timestamp=000108 receiver=3 cavs=[3, 16, 17, 18] pred_boxes=15 gt_boxes=71 comm_bytes=72560
+frame=25/41 late_source=4/20 scenario=2026_07_29_02_32_08 timestamp=000108 receiver=4 cavs=[4, 1, 7, 12] pred_boxes=28 gt_boxes=71 comm_bytes=79360
+frame=25/41 late_source=5/20 scenario=2026_07_29_02_32_08 timestamp=000108 receiver=5 cavs=[5, 10, 16, 20] pred_boxes=25 gt_boxes=71 comm_bytes=61616
+frame=25/41 late_source=6/20 scenario=2026_07_29_02_32_08 timestamp=000108 receiver=6 cavs=[6, 15] pred_boxes=18 gt_boxes=71 comm_bytes=22944
+frame=25/41 late_source=7/20 scenario=2026_07_29_02_32_08 timestamp=000108 receiver=7 cavs=[7, 4, 5, 20] pred_boxes=28 gt_boxes=71 comm_bytes=56784
+frame=25/41 late_source=8/20 scenario=2026_07_29_02_32_08 timestamp=000108 receiver=8 cavs=[8, 1, 10, 12] pred_boxes=32 gt_boxes=71 comm_bytes=91632
+frame=25/41 late_source=9/20 scenario=2026_07_29_02_32_08 timestamp=000108 receiver=9 cavs=[9, 10, 13, 19] pred_boxes=18 gt_boxes=71 comm_bytes=41200
+frame=25/41 late_source=10/20 scenario=2026_07_29_02_32_08 timestamp=000108 receiver=10 cavs=[10, 8, 9, 19] pred_boxes=26 gt_boxes=71 comm_bytes=43376
+frame=25/41 late_source=11/20 scenario=2026_07_29_02_32_08 timestamp=000108 receiver=11 cavs=[11, 1, 2, 9] pred_boxes=26 gt_boxes=71 comm_bytes=60512
+frame=25/41 late_source=12/20 scenario=2026_07_29_02_32_08 timestamp=000108 receiver=12 cavs=[12, 4, 7, 8] pred_boxes=24 gt_boxes=71 comm_bytes=67552
+frame=25/41 late_source=13/20 scenario=2026_07_29_02_32_08 timestamp=000108 receiver=13 cavs=[13, 9, 10, 19] pred_boxes=17 gt_boxes=71 comm_bytes=42432
+frame=25/41 late_source=14/20 scenario=2026_07_29_02_32_08 timestamp=000108 receiver=14 cavs=[14] skipped=empty_pillars comm_bytes=0
+frame=25/41 late_source=15/20 scenario=2026_07_29_02_32_08 timestamp=000108 receiver=15 cavs=[15, 2, 6] pred_boxes=22 gt_boxes=71 comm_bytes=65056
+frame=25/41 late_source=16/20 scenario=2026_07_29_02_32_08 timestamp=000108 receiver=16 cavs=[16, 5, 17, 20] pred_boxes=21 gt_boxes=71 comm_bytes=49824
+frame=25/41 late_source=17/20 scenario=2026_07_29_02_32_08 timestamp=000108 receiver=17 cavs=[17, 3, 16, 20] pred_boxes=18 gt_boxes=71 comm_bytes=59840
+frame=25/41 late_source=18/20 scenario=2026_07_29_02_32_08 timestamp=000108 receiver=18 cavs=[18, 3] pred_boxes=5 gt_boxes=71 comm_bytes=34496
+frame=25/41 late_source=19/20 scenario=2026_07_29_02_32_08 timestamp=000108 receiver=19 cavs=[19, 9, 10, 13] pred_boxes=16 gt_boxes=71 comm_bytes=51632
+frame=25/41 late_source=20/20 scenario=2026_07_29_02_32_08 timestamp=000108 receiver=20 cavs=[20, 5, 7, 16] pred_boxes=28 gt_boxes=71 comm_bytes=57104
+sgcp_late_fusion frame=25/41 scenario=2026_07_29_02_32_08 timestamp=000108 sources=20 fused_pred_boxes=80 fused_gt_boxes=71
+frame=26/41 late_source=1/20 scenario=2026_07_29_02_32_08 timestamp=000110 receiver=1 cavs=[1, 2, 4, 11] pred_boxes=33 gt_boxes=70 comm_bytes=72800
+frame=26/41 late_source=2/20 scenario=2026_07_29_02_32_08 timestamp=000110 receiver=2 cavs=[2, 1, 11, 15] pred_boxes=23 gt_boxes=70 comm_bytes=49616
+frame=26/41 late_source=3/20 scenario=2026_07_29_02_32_08 timestamp=000110 receiver=3 cavs=[3, 16, 17, 18] pred_boxes=12 gt_boxes=70 comm_bytes=73472
+frame=26/41 late_source=4/20 scenario=2026_07_29_02_32_08 timestamp=000110 receiver=4 cavs=[4, 1, 7, 12] pred_boxes=25 gt_boxes=70 comm_bytes=80560
+frame=26/41 late_source=5/20 scenario=2026_07_29_02_32_08 timestamp=000110 receiver=5 cavs=[5, 7, 16, 20] pred_boxes=22 gt_boxes=70 comm_bytes=59296
+frame=26/41 late_source=6/20 scenario=2026_07_29_02_32_08 timestamp=000110 receiver=6 cavs=[6, 15] pred_boxes=18 gt_boxes=70 comm_bytes=23008
+frame=26/41 late_source=7/20 scenario=2026_07_29_02_32_08 timestamp=000110 receiver=7 cavs=[7, 4, 5, 20] pred_boxes=26 gt_boxes=70 comm_bytes=55904
+frame=26/41 late_source=8/20 scenario=2026_07_29_02_32_08 timestamp=000110 receiver=8 cavs=[8, 1, 10, 12] pred_boxes=34 gt_boxes=70 comm_bytes=91808
+frame=26/41 late_source=9/20 scenario=2026_07_29_02_32_08 timestamp=000110 receiver=9 cavs=[9, 10, 13, 19] pred_boxes=18 gt_boxes=70 comm_bytes=44608
+frame=26/41 late_source=10/20 scenario=2026_07_29_02_32_08 timestamp=000110 receiver=10 cavs=[10, 8, 9, 19] pred_boxes=25 gt_boxes=70 comm_bytes=43328
+frame=26/41 late_source=11/20 scenario=2026_07_29_02_32_08 timestamp=000110 receiver=11 cavs=[11, 1, 2, 9] pred_boxes=24 gt_boxes=70 comm_bytes=60048
+frame=26/41 late_source=12/20 scenario=2026_07_29_02_32_08 timestamp=000110 receiver=12 cavs=[12, 4, 7, 8] pred_boxes=28 gt_boxes=70 comm_bytes=64896
+frame=26/41 late_source=13/20 scenario=2026_07_29_02_32_08 timestamp=000110 receiver=13 cavs=[13, 9, 10, 19] pred_boxes=15 gt_boxes=70 comm_bytes=43584
+frame=26/41 late_source=14/20 scenario=2026_07_29_02_32_08 timestamp=000110 receiver=14 cavs=[14] skipped=empty_pillars comm_bytes=0
+frame=26/41 late_source=15/20 scenario=2026_07_29_02_32_08 timestamp=000110 receiver=15 cavs=[15, 2, 6] pred_boxes=18 gt_boxes=70 comm_bytes=62192
+frame=26/41 late_source=16/20 scenario=2026_07_29_02_32_08 timestamp=000110 receiver=16 cavs=[16, 5, 17, 20] pred_boxes=19 gt_boxes=70 comm_bytes=50048
+frame=26/41 late_source=17/20 scenario=2026_07_29_02_32_08 timestamp=000110 receiver=17 cavs=[17, 3, 16, 20] pred_boxes=16 gt_boxes=70 comm_bytes=59712
+frame=26/41 late_source=18/20 scenario=2026_07_29_02_32_08 timestamp=000110 receiver=18 cavs=[18, 3] pred_boxes=5 gt_boxes=70 comm_bytes=34912
+frame=26/41 late_source=19/20 scenario=2026_07_29_02_32_08 timestamp=000110 receiver=19 cavs=[19, 9, 10, 13] pred_boxes=13 gt_boxes=70 comm_bytes=52144
+frame=26/41 late_source=20/20 scenario=2026_07_29_02_32_08 timestamp=000110 receiver=20 cavs=[20, 5, 7, 16] pred_boxes=27 gt_boxes=70 comm_bytes=56864
+sgcp_late_fusion frame=26/41 scenario=2026_07_29_02_32_08 timestamp=000110 sources=20 fused_pred_boxes=78 fused_gt_boxes=70
+frame=27/41 late_source=1/20 scenario=2026_07_29_02_32_08 timestamp=000112 receiver=1 cavs=[1, 2, 4, 11] pred_boxes=33 gt_boxes=70 comm_bytes=72560
+frame=27/41 late_source=2/20 scenario=2026_07_29_02_32_08 timestamp=000112 receiver=2 cavs=[2, 1, 11, 15] pred_boxes=22 gt_boxes=70 comm_bytes=49392
+frame=27/41 late_source=3/20 scenario=2026_07_29_02_32_08 timestamp=000112 receiver=3 cavs=[3, 16, 17, 18] pred_boxes=13 gt_boxes=70 comm_bytes=71424
+frame=27/41 late_source=4/20 scenario=2026_07_29_02_32_08 timestamp=000112 receiver=4 cavs=[4, 1, 7, 12] pred_boxes=25 gt_boxes=70 comm_bytes=80064
+frame=27/41 late_source=5/20 scenario=2026_07_29_02_32_08 timestamp=000112 receiver=5 cavs=[5, 7, 16, 20] pred_boxes=29 gt_boxes=70 comm_bytes=61024
+frame=27/41 late_source=6/20 scenario=2026_07_29_02_32_08 timestamp=000112 receiver=6 cavs=[6, 15] pred_boxes=18 gt_boxes=70 comm_bytes=23328
+frame=27/41 late_source=7/20 scenario=2026_07_29_02_32_08 timestamp=000112 receiver=7 cavs=[7, 4, 5, 20] pred_boxes=26 gt_boxes=70 comm_bytes=56288
+frame=27/41 late_source=8/20 scenario=2026_07_29_02_32_08 timestamp=000112 receiver=8 cavs=[8, 1, 10, 12] pred_boxes=35 gt_boxes=70 comm_bytes=93088
+frame=27/41 late_source=9/20 scenario=2026_07_29_02_32_08 timestamp=000112 receiver=9 cavs=[9, 10, 13, 19] pred_boxes=18 gt_boxes=70 comm_bytes=44320
+frame=27/41 late_source=10/20 scenario=2026_07_29_02_32_08 timestamp=000112 receiver=10 cavs=[10, 8, 9, 19] pred_boxes=28 gt_boxes=70 comm_bytes=43408
+frame=27/41 late_source=11/20 scenario=2026_07_29_02_32_08 timestamp=000112 receiver=11 cavs=[11, 1, 2, 9] pred_boxes=26 gt_boxes=70 comm_bytes=60384
+frame=27/41 late_source=12/20 scenario=2026_07_29_02_32_08 timestamp=000112 receiver=12 cavs=[12, 4, 7, 8] pred_boxes=27 gt_boxes=70 comm_bytes=65152Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+
+frame=27/41 late_source=13/20 scenario=2026_07_29_02_32_08 timestamp=000112 receiver=13 cavs=[13, 9, 10, 19] pred_boxes=14 gt_boxes=70 comm_bytes=44576
+frame=27/41 late_source=14/20 scenario=2026_07_29_02_32_08 timestamp=000112 receiver=14 cavs=[14] skipped=empty_pillars comm_bytes=0
+frame=27/41 late_source=15/20 scenario=2026_07_29_02_32_08 timestamp=000112 receiver=15 cavs=[15, 2, 6] pred_boxes=24 gt_boxes=70 comm_bytes=61808
+frame=27/41 late_source=16/20 scenario=2026_07_29_02_32_08 timestamp=000112 receiver=16 cavs=[16, 5, 17, 20] pred_boxes=20 gt_boxes=70 comm_bytes=50896
+frame=27/41 late_source=17/20 scenario=2026_07_29_02_32_08 timestamp=000112 receiver=17 cavs=[17, 3, 16, 20] pred_boxes=14 gt_boxes=70 comm_bytes=61760
+frame=27/41 late_source=18/20 scenario=2026_07_29_02_32_08 timestamp=000112 receiver=18 cavs=[18, 3] pred_boxes=6 gt_boxes=70 comm_bytes=33488
+frame=27/41 late_source=19/20 scenario=2026_07_29_02_32_08 timestamp=000112 receiver=19 cavs=[19, 9, 10, 13] pred_boxes=14 gt_boxes=70 comm_bytes=49440
+frame=27/41 late_source=20/20 scenario=2026_07_29_02_32_08 timestamp=000112 receiver=20 cavs=[20, 5, 7, 16] pred_boxes=28 gt_boxes=70 comm_bytes=56400
+sgcp_late_fusion frame=27/41 scenario=2026_07_29_02_32_08 timestamp=000112 sources=20 fused_pred_boxes=80 fused_gt_boxes=70
+frame=28/41 late_source=1/20 scenario=2026_07_29_02_32_08 timestamp=000114 receiver=1 cavs=[1, 2, 8, 11] pred_boxes=28 gt_boxes=69 comm_bytes=52560
+frame=28/41 late_source=2/20 scenario=2026_07_29_02_32_08 timestamp=000114 receiver=2 cavs=[2, 1, 11, 15] pred_boxes=21 gt_boxes=69 comm_bytes=50752
+frame=28/41 late_source=3/20 scenario=2026_07_29_02_32_08 timestamp=000114 receiver=3 cavs=[3, 16, 17, 18] pred_boxes=11 gt_boxes=69 comm_bytes=67872
+frame=28/41 late_source=4/20 scenario=2026_07_29_02_32_08 timestamp=000114 receiver=4 cavs=[4, 1, 7, 12] pred_boxes=27 gt_boxes=69 comm_bytes=80064
+frame=28/41 late_source=5/20 scenario=2026_07_29_02_32_08 timestamp=000114 receiver=5 cavs=[5, 7, 16, 20] pred_boxes=30 gt_boxes=69 comm_bytes=60896
+frame=28/41 late_source=6/20 scenario=2026_07_29_02_32_08 timestamp=000114 receiver=6 cavs=[6, 15] pred_boxes=18 gt_boxes=69 comm_bytes=24304
+frame=28/41 late_source=7/20 scenario=2026_07_29_02_32_08 timestamp=000114 receiver=7 cavs=[7, 4, 5, 20] pred_boxes=27 gt_boxes=69 comm_bytes=56304
+frame=28/41 late_source=8/20 scenario=2026_07_29_02_32_08 timestamp=000114 receiver=8 cavs=[8, 1, 10, 12] pred_boxes=32 gt_boxes=69 comm_bytes=93248
+frame=28/41 late_source=9/20 scenario=2026_07_29_02_32_08 timestamp=000114 receiver=9 cavs=[9, 10, 13, 19] pred_boxes=17 gt_boxes=69 comm_bytes=44944
+frame=28/41 late_source=10/20 scenario=2026_07_29_02_32_08 timestamp=000114 receiver=10 cavs=[10, 8, 9, 19] pred_boxes=27 gt_boxes=69 comm_bytes=43200
+frame=28/41 late_source=11/20 scenario=2026_07_29_02_32_08 timestamp=000114 receiver=11 cavs=[11, 1, 2, 9] pred_boxes=30 gt_boxes=69 comm_bytes=59888
+frame=28/41 late_source=12/20 scenario=2026_07_29_02_32_08 timestamp=000114 receiver=12 cavs=[12, 4, 7, 8] pred_boxes=25 gt_boxes=69 comm_bytes=64896
+frame=28/41 late_source=13/20 scenario=2026_07_29_02_32_08 timestamp=000114 receiver=13 cavs=[13, 9, 10, 19] pred_boxes=14 gt_boxes=69 comm_bytes=44656
+frame=28/41 late_source=14/20 scenario=2026_07_29_02_32_08 timestamp=000114 receiver=14 cavs=[14] skipped=empty_pillars comm_bytes=0
+frame=28/41 late_source=15/20 scenario=2026_07_29_02_32_08 timestamp=000114 receiver=15 cavs=[15, 1, 2, 6] pred_boxes=27 gt_boxes=69 comm_bytes=79248
+frame=28/41 late_source=16/20 scenario=2026_07_29_02_32_08 timestamp=000114 receiver=16 cavs=[16, 5, 17, 20] pred_boxes=21 gt_boxes=69 comm_bytes=50768
+frame=28/41 late_source=17/20 scenario=2026_07_29_02_32_08 timestamp=000114 receiver=17 cavs=[17, 3, 16, 20] pred_boxes=13 gt_boxes=69 comm_bytes=60448
+frame=28/41 late_source=18/20 scenario=2026_07_29_02_32_08 timestamp=000114 receiver=18 cavs=[18, 3] pred_boxes=5 gt_boxes=69 comm_bytes=34640
+frame=28/41 late_source=19/20 scenario=2026_07_29_02_32_08 timestamp=000114 receiver=19 cavs=[19, 9, 10, 13] pred_boxes=16 gt_boxes=69 comm_bytes=50784
+frame=28/41 late_source=20/20 scenario=2026_07_29_02_32_08 timestamp=000114 receiver=20 cavs=[20, 5, 9, 16] pred_boxes=26 gt_boxes=69 comm_bytes=59312
+sgcp_late_fusion frame=28/41 scenario=2026_07_29_02_32_08 timestamp=000114 sources=20 fused_pred_boxes=79 fused_gt_boxes=69
+frame=29/41 late_source=1/20 scenario=2026_07_29_02_32_08 timestamp=000116 receiver=1 cavs=[1, 2, 8, 11] pred_boxes=26 gt_boxes=69 comm_bytes=52400
+frame=29/41 late_source=2/20 scenario=2026_07_29_02_32_08 timestamp=000116 receiver=2 cavs=[2, 1, 11, 15] pred_boxes=24 gt_boxes=69 comm_bytes=49264
+frame=29/41 late_source=3/20 scenario=2026_07_29_02_32_08 timestamp=000116 receiver=3 cavs=[3, 16, 17, 18] pred_boxes=9 gt_boxes=69 comm_bytes=69152
+frame=29/41 late_source=4/20 scenario=2026_07_29_02_32_08 timestamp=000116 receiver=4 cavs=[4, 1, 7, 12] pred_boxes=28 gt_boxes=69 comm_bytes=80016
+frame=29/41 late_source=5/20 scenario=2026_07_29_02_32_08 timestamp=000116 receiver=5 cavs=[5, 7, 16, 20] pred_boxes=30 gt_boxes=69 comm_bytes=64144
+frame=29/41 late_source=6/20 scenario=2026_07_29_02_32_08 timestamp=000116 receiver=6 cavs=[6, 15] pred_boxes=18 gt_boxes=69 comm_bytes=25376
+frame=29/41 late_source=7/20 scenario=2026_07_29_02_32_08 timestamp=000116 receiver=7 cavs=[7, 4, 5, 20] pred_boxes=27 gt_boxes=69 comm_bytes=56768
+frame=29/41 late_source=8/20 scenario=2026_07_29_02_32_08 timestamp=000116 receiver=8 cavs=[8, 1, 10, 12] pred_boxes=35 gt_boxes=69 comm_bytes=92464
+frame=29/41 late_source=9/20 scenario=2026_07_29_02_32_08 timestamp=000116 receiver=9 cavs=[9, 10, 13, 19] pred_boxes=16 gt_boxes=69 comm_bytes=41232
+frame=29/41 late_source=10/20 scenario=2026_07_29_02_32_08 timestamp=000116 receiver=10 cavs=[10, 8, 9, 19] pred_boxes=26 gt_boxes=69 comm_bytes=43440
+frame=29/41 late_source=11/20 scenario=2026_07_29_02_32_08 timestamp=000116 receiver=11 cavs=[11, 1, 2, 9] pred_boxes=29 gt_boxes=69 comm_bytes=63120
+frame=29/41 late_source=12/20 scenario=2026_07_29_02_32_08 timestamp=000116 receiver=12 cavs=[12, 4, 7, 8] pred_boxes=26 gt_boxes=69 comm_bytes=65472
+frame=29/41 late_source=13/20 scenario=2026_07_29_02_32_08 timestamp=000116 receiver=13 cavs=[13, 9, 10, 19] pred_boxes=15 gt_boxes=69 comm_bytes=45312
+frame=29/41 late_source=14/20 scenario=2026_07_29_02_32_08 timestamp=000116 receiver=14 cavs=[14] skipped=empty_pillars comm_bytes=0
+frame=29/41 late_source=15/20 scenario=2026_07_29_02_32_08 timestamp=000116 receiver=15 cavs=[15, 1, 2, 6] pred_boxes=27 gt_boxes=69 comm_bytes=77584
+frame=29/41 late_source=16/20 scenario=2026_07_29_02_32_08 timestamp=000116 receiver=16 cavs=[16, 5, 17, 20] pred_boxes=19 gt_boxes=69 comm_bytes=50768
+frame=29/41 late_source=17/20 scenario=2026_07_29_02_32_08 timestamp=000116 receiver=17 cavs=[17, 3, 5, 16] pred_boxes=10 gt_boxes=69 comm_bytes=58704
+frame=29/41 late_source=18/20 scenario=2026_07_29_02_32_08 timestamp=000116 receiver=18 cavs=[18, 3] pred_boxes=3 gt_boxes=69 comm_bytes=34576
+frame=29/41 late_source=19/20 scenario=2026_07_29_02_32_08 timestamp=000116 receiver=19 cavs=[19, 9, 10, 13] pred_boxes=17 gt_boxes=69 comm_bytes=51392
+frame=29/41 late_source=20/20 scenario=2026_07_29_02_32_08 timestamp=000116 receiver=20 cavs=[20, 5, 7, 16] pred_boxes=25 gt_boxes=69 comm_bytes=57616
+sgcp_late_fusion frame=29/41 scenario=2026_07_29_02_32_08 timestamp=000116 sources=20 fused_pred_boxes=80 fused_gt_boxes=69
+frame=30/41 late_source=1/20 scenario=2026_07_29_02_32_08 timestamp=000118 receiver=1 cavs=[1, 2, 8, 11] pred_boxes=26 gt_boxes=69 comm_bytes=52064
+frame=30/41 late_source=2/20 scenario=2026_07_29_02_32_08 timestamp=000118 receiver=2 cavs=[2, 1, 11, 15] pred_boxes=23 gt_boxes=69 comm_bytes=47648
+frame=30/41 late_source=3/20 scenario=2026_07_29_02_32_08 timestamp=000118 receiver=3 cavs=[3, 16, 17, 18] pred_boxes=10 gt_boxes=69 comm_bytes=68624
+frame=30/41 late_source=4/20 scenario=2026_07_29_02_32_08 timestamp=000118 receiver=4 cavs=[4, 1, 7, 12] pred_boxes=25 gt_boxes=69 comm_bytes=79824
+frame=30/41 late_source=5/20 scenario=2026_07_29_02_32_08 timestamp=000118 receiver=5 cavs=[5, 7, 16, 20] pred_boxes=29 gt_boxes=69 comm_bytes=65120Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+
+frame=30/41 late_source=6/20 scenario=2026_07_29_02_32_08 timestamp=000118 receiver=6 cavs=[6, 15] pred_boxes=16 gt_boxes=69 comm_bytes=24032
+frame=30/41 late_source=7/20 scenario=2026_07_29_02_32_08 timestamp=000118 receiver=7 cavs=[7, 4, 5, 20] pred_boxes=29 gt_boxes=69 comm_bytes=57136
+frame=30/41 late_source=8/20 scenario=2026_07_29_02_32_08 timestamp=000118 receiver=8 cavs=[8, 1, 10, 12] pred_boxes=33 gt_boxes=69 comm_bytes=92224
+frame=30/41 late_source=9/20 scenario=2026_07_29_02_32_08 timestamp=000118 receiver=9 cavs=[9, 10, 13, 19] pred_boxes=15 gt_boxes=69 comm_bytes=40976
+frame=30/41 late_source=10/20 scenario=2026_07_29_02_32_08 timestamp=000118 receiver=10 cavs=[10, 8, 9, 19] pred_boxes=29 gt_boxes=69 comm_bytes=43424
+frame=30/41 late_source=11/20 scenario=2026_07_29_02_32_08 timestamp=000118 receiver=11 cavs=[11, 1, 2, 9] pred_boxes=30 gt_boxes=69 comm_bytes=63248
+frame=30/41 late_source=12/20 scenario=2026_07_29_02_32_08 timestamp=000118 receiver=12 cavs=[12, 4, 7, 8] pred_boxes=22 gt_boxes=69 comm_bytes=64128
+frame=30/41 late_source=13/20 scenario=2026_07_29_02_32_08 timestamp=000118 receiver=13 cavs=[13, 9, 10, 19] pred_boxes=14 gt_boxes=69 comm_bytes=43600
+frame=30/41 late_source=14/20 scenario=2026_07_29_02_32_08 timestamp=000118 receiver=14 cavs=[14] skipped=empty_pillars comm_bytes=0
+frame=30/41 late_source=15/20 scenario=2026_07_29_02_32_08 timestamp=000118 receiver=15 cavs=[15, 1, 2, 6] pred_boxes=24 gt_boxes=69 comm_bytes=77984
+frame=30/41 late_source=16/20 scenario=2026_07_29_02_32_08 timestamp=000118 receiver=16 cavs=[16, 3, 5, 17] pred_boxes=15 gt_boxes=69 comm_bytes=57392
+frame=30/41 late_source=17/20 scenario=2026_07_29_02_32_08 timestamp=000118 receiver=17 cavs=[17, 3, 5, 16] pred_boxes=10 gt_boxes=69 comm_bytes=57104
+frame=30/41 late_source=18/20 scenario=2026_07_29_02_32_08 timestamp=000118 receiver=18 cavs=[18, 3] pred_boxes=3 gt_boxes=69 comm_bytes=32560
+frame=30/41 late_source=19/20 scenario=2026_07_29_02_32_08 timestamp=000118 receiver=19 cavs=[19, 9, 10, 13] pred_boxes=15 gt_boxes=69 comm_bytes=51456
+frame=30/41 late_source=20/20 scenario=2026_07_29_02_32_08 timestamp=000118 receiver=20 cavs=[20, 5, 7, 16] pred_boxes=26 gt_boxes=69 comm_bytes=60256
+sgcp_late_fusion frame=30/41 scenario=2026_07_29_02_32_08 timestamp=000118 sources=20 fused_pred_boxes=78 fused_gt_boxes=69
+frame=31/41 late_source=1/20 scenario=2026_07_29_02_32_08 timestamp=000120 receiver=1 cavs=[1, 2, 8, 11] pred_boxes=27 gt_boxes=69 comm_bytes=52320
+frame=31/41 late_source=2/20 scenario=2026_07_29_02_32_08 timestamp=000120 receiver=2 cavs=[2, 1, 11, 15] pred_boxes=21 gt_boxes=69 comm_bytes=46592
+frame=31/41 late_source=3/20 scenario=2026_07_29_02_32_08 timestamp=000120 receiver=3 cavs=[3, 16, 17, 18] pred_boxes=10 gt_boxes=69 comm_bytes=69344
+frame=31/41 late_source=4/20 scenario=2026_07_29_02_32_08 timestamp=000120 receiver=4 cavs=[4, 1, 7, 12] pred_boxes=26 gt_boxes=69 comm_bytes=78848
+frame=31/41 late_source=5/20 scenario=2026_07_29_02_32_08 timestamp=000120 receiver=5 cavs=[5, 7, 16, 20] pred_boxes=24 gt_boxes=69 comm_bytes=63984
+frame=31/41 late_source=6/20 scenario=2026_07_29_02_32_08 timestamp=000120 receiver=6 cavs=[6, 15] pred_boxes=16 gt_boxes=69 comm_bytes=25424
+frame=31/41 late_source=7/20 scenario=2026_07_29_02_32_08 timestamp=000120 receiver=7 cavs=[7, 4, 5, 20] pred_boxes=29 gt_boxes=69 comm_bytes=58768
+frame=31/41 late_source=8/20 scenario=2026_07_29_02_32_08 timestamp=000120 receiver=8 cavs=[8, 1, 10, 12] pred_boxes=32 gt_boxes=69 comm_bytes=89504
+frame=31/41 late_source=9/20 scenario=2026_07_29_02_32_08 timestamp=000120 receiver=9 cavs=[9, 10, 13, 19] pred_boxes=18 gt_boxes=69 comm_bytes=41792
+frame=31/41 late_source=10/20 scenario=2026_07_29_02_32_08 timestamp=000120 receiver=10 cavs=[10, 8, 9, 19] pred_boxes=27 gt_boxes=69 comm_bytes=43408
+frame=31/41 late_source=11/20 scenario=2026_07_29_02_32_08 timestamp=000120 receiver=11 cavs=[11, 1, 2, 9] pred_boxes=24 gt_boxes=69 comm_bytes=59984
+frame=31/41 late_source=12/20 scenario=2026_07_29_02_32_08 timestamp=000120 receiver=12 cavs=[12, 4, 7, 8] pred_boxes=23 gt_boxes=69 comm_bytes=64000
+frame=31/41 late_source=13/20 scenario=2026_07_29_02_32_08 timestamp=000120 receiver=13 cavs=[13, 9, 10, 19] pred_boxes=14 gt_boxes=69 comm_bytes=45776
+frame=31/41 late_source=14/20 scenario=2026_07_29_02_32_08 timestamp=000120 receiver=14 cavs=[14] skipped=empty_pillars comm_bytes=0
+frame=31/41 late_source=15/20 scenario=2026_07_29_02_32_08 timestamp=000120 receiver=15 cavs=[15, 1, 2, 6] pred_boxes=26 gt_boxes=69 comm_bytes=75360
+frame=31/41 late_source=16/20 scenario=2026_07_29_02_32_08 timestamp=000120 receiver=16 cavs=[16, 3, 5, 17] pred_boxes=18 gt_boxes=69 comm_bytes=57904
+frame=31/41 late_source=17/20 scenario=2026_07_29_02_32_08 timestamp=000120 receiver=17 cavs=[17, 3, 5, 16] pred_boxes=12 gt_boxes=69 comm_bytes=55488
+frame=31/41 late_source=18/20 scenario=2026_07_29_02_32_08 timestamp=000120 receiver=18 cavs=[18, 3] pred_boxes=4 gt_boxes=69 comm_bytes=32608
+frame=31/41 late_source=19/20 scenario=2026_07_29_02_32_08 timestamp=000120 receiver=19 cavs=[19, 9, 10, 13] pred_boxes=15 gt_boxes=69 comm_bytes=51328
+frame=31/41 late_source=20/20 scenario=2026_07_29_02_32_08 timestamp=000120 receiver=20 cavs=[20, 5, 9, 16] pred_boxes=24 gt_boxes=69 comm_bytes=66368
+sgcp_late_fusion frame=31/41 scenario=2026_07_29_02_32_08 timestamp=000120 sources=20 fused_pred_boxes=73 fused_gt_boxes=69
+frame=32/41 late_source=1/20 scenario=2026_07_29_02_32_08 timestamp=000122 receiver=1 cavs=[1, 2, 8, 11] pred_boxes=25 gt_boxes=69 comm_bytes=50272
+frame=32/41 late_source=2/20 scenario=2026_07_29_02_32_08 timestamp=000122 receiver=2 cavs=[2, 1, 11, 15] pred_boxes=23 gt_boxes=69 comm_bytes=44368
+frame=32/41 late_source=3/20 scenario=2026_07_29_02_32_08 timestamp=000122 receiver=3 cavs=[3, 16, 17, 18] pred_boxes=9 gt_boxes=69 comm_bytes=65808
+frame=32/41 late_source=4/20 scenario=2026_07_29_02_32_08 timestamp=000122 receiver=4 cavs=[4, 1, 7, 12] pred_boxes=29 gt_boxes=69 comm_bytes=74496
+frame=32/41 late_source=5/20 scenario=2026_07_29_02_32_08 timestamp=000122 receiver=5 cavs=[5, 7, 16, 20] pred_boxes=27 gt_boxes=69 comm_bytes=61024
+frame=32/41 late_source=6/20 scenario=2026_07_29_02_32_08 timestamp=000122 receiver=6 cavs=[6, 15] pred_boxes=16 gt_boxes=69 comm_bytes=24288
+frame=32/41 late_source=7/20 scenario=2026_07_29_02_32_08 timestamp=000122 receiver=7 cavs=[7, 4, 5, 20] pred_boxes=29 gt_boxes=69 comm_bytes=55200
+frame=32/41 late_source=8/20 scenario=2026_07_29_02_32_08 timestamp=000122 receiver=8 cavs=[8, 1, 10, 12] pred_boxes=34 gt_boxes=69 comm_bytes=83648
+frame=32/41 late_source=9/20 scenario=2026_07_29_02_32_08 timestamp=000122 receiver=9 cavs=[9, 10, 13, 19] pred_boxes=17 gt_boxes=69 comm_bytes=38736
+frame=32/41 late_source=10/20 scenario=2026_07_29_02_32_08 timestamp=000122 receiver=10 cavs=[10, 8, 9, 19] pred_boxes=28 gt_boxes=69 comm_bytes=42064
+frame=32/41 late_source=11/20 scenario=2026_07_29_02_32_08 timestamp=000122 receiver=11 cavs=[11, 1, 2, 9] pred_boxes=24 gt_boxes=69 comm_bytes=58800
+frame=32/41 late_source=12/20 scenario=2026_07_29_02_32_08 timestamp=000122 receiver=12 cavs=[12, 4, 7, 8] pred_boxes=20 gt_boxes=69 comm_bytes=62480
+frame=32/41 late_source=13/20 scenario=2026_07_29_02_32_08 timestamp=000122 receiver=13 cavs=[13, 9, 14, 19] pred_boxes=6 gt_boxes=69 comm_bytes=66864
+frame=32/41 late_source=14/20 scenario=2026_07_29_02_32_08 timestamp=000122 receiver=14 cavs=[14, 13] pred_boxes=0 gt_boxes=69 comm_bytes=29184
+frame=32/41 late_source=15/20 scenario=2026_07_29_02_32_08 timestamp=000122 receiver=15 cavs=[15, 1, 2, 6] pred_boxes=26 gt_boxes=69 comm_bytes=74096
+frame=32/41 late_source=16/20 scenario=2026_07_29_02_32_08 timestamp=000122 receiver=16 cavs=[16, 3, 5, 17] pred_boxes=17 gt_boxes=69 comm_bytes=55552
+frame=32/41 late_source=17/20 scenario=2026_07_29_02_32_08 timestamp=000122 receiver=17 cavs=[17, 3, 5, 16] pred_boxes=13 gt_boxes=69 comm_bytes=53664
+frame=32/41 late_source=18/20 scenario=2026_07_29_02_32_08 timestamp=000122 receiver=18 cavs=[18, 3] pred_boxes=0 gt_boxes=69 comm_bytes=29328
+frame=32/41 late_source=19/20 scenario=2026_07_29_02_32_08 timestamp=000122 receiver=19 cavs=[19, 9, 10, 13] pred_boxes=14 gt_boxes=69 comm_bytes=50480Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+
+frame=32/41 late_source=20/20 scenario=2026_07_29_02_32_08 timestamp=000122 receiver=20 cavs=[20, 5, 7, 16] pred_boxes=29 gt_boxes=69 comm_bytes=58448
+sgcp_late_fusion frame=32/41 scenario=2026_07_29_02_32_08 timestamp=000122 sources=20 fused_pred_boxes=74 fused_gt_boxes=69
+frame=33/41 late_source=1/20 scenario=2026_07_29_02_32_08 timestamp=000124 receiver=1 cavs=[1, 2, 8, 11] pred_boxes=25 gt_boxes=69 comm_bytes=50400
+frame=33/41 late_source=2/20 scenario=2026_07_29_02_32_08 timestamp=000124 receiver=2 cavs=[2, 1, 11, 15] pred_boxes=22 gt_boxes=69 comm_bytes=45024
+frame=33/41 late_source=3/20 scenario=2026_07_29_02_32_08 timestamp=000124 receiver=3 cavs=[3, 16, 17, 18] pred_boxes=9 gt_boxes=69 comm_bytes=67200
+frame=33/41 late_source=4/20 scenario=2026_07_29_02_32_08 timestamp=000124 receiver=4 cavs=[4, 1, 7, 12] pred_boxes=28 gt_boxes=69 comm_bytes=74432
+frame=33/41 late_source=5/20 scenario=2026_07_29_02_32_08 timestamp=000124 receiver=5 cavs=[5, 7, 16, 20] pred_boxes=26 gt_boxes=69 comm_bytes=65472
+frame=33/41 late_source=6/20 scenario=2026_07_29_02_32_08 timestamp=000124 receiver=6 cavs=[6, 15] pred_boxes=16 gt_boxes=69 comm_bytes=23984
+frame=33/41 late_source=7/20 scenario=2026_07_29_02_32_08 timestamp=000124 receiver=7 cavs=[7, 4, 5, 20] pred_boxes=27 gt_boxes=69 comm_bytes=54704
+frame=33/41 late_source=8/20 scenario=2026_07_29_02_32_08 timestamp=000124 receiver=8 cavs=[8, 1, 4, 7] pred_boxes=34 gt_boxes=69 comm_bytes=76128
+frame=33/41 late_source=9/20 scenario=2026_07_29_02_32_08 timestamp=000124 receiver=9 cavs=[9, 10, 13, 19] pred_boxes=16 gt_boxes=69 comm_bytes=42448
+frame=33/41 late_source=10/20 scenario=2026_07_29_02_32_08 timestamp=000124 receiver=10 cavs=[10, 8, 9, 19] pred_boxes=26 gt_boxes=69 comm_bytes=41984
+frame=33/41 late_source=11/20 scenario=2026_07_29_02_32_08 timestamp=000124 receiver=11 cavs=[11, 1, 2, 9] pred_boxes=26 gt_boxes=69 comm_bytes=58832
+frame=33/41 late_source=12/20 scenario=2026_07_29_02_32_08 timestamp=000124 receiver=12 cavs=[12, 4, 7] pred_boxes=13 gt_boxes=69 comm_bytes=48192
+frame=33/41 late_source=13/20 scenario=2026_07_29_02_32_08 timestamp=000124 receiver=13 cavs=[13, 9, 14, 19] pred_boxes=7 gt_boxes=69 comm_bytes=66720
+frame=33/41 late_source=14/20 scenario=2026_07_29_02_32_08 timestamp=000124 receiver=14 cavs=[14, 13] pred_boxes=0 gt_boxes=69 comm_bytes=29024
+frame=33/41 late_source=15/20 scenario=2026_07_29_02_32_08 timestamp=000124 receiver=15 cavs=[15, 1, 2, 6] pred_boxes=28 gt_boxes=69 comm_bytes=75152
+frame=33/41 late_source=16/20 scenario=2026_07_29_02_32_08 timestamp=000124 receiver=16 cavs=[16, 3, 5, 17] pred_boxes=16 gt_boxes=69 comm_bytes=57024
+frame=33/41 late_source=17/20 scenario=2026_07_29_02_32_08 timestamp=000124 receiver=17 cavs=[17, 3, 5, 16] pred_boxes=13 gt_boxes=69 comm_bytes=53776
+frame=33/41 late_source=18/20 scenario=2026_07_29_02_32_08 timestamp=000124 receiver=18 cavs=[18, 3] pred_boxes=2 gt_boxes=69 comm_bytes=30000
+frame=33/41 late_source=19/20 scenario=2026_07_29_02_32_08 timestamp=000124 receiver=19 cavs=[19, 9, 10, 13] pred_boxes=11 gt_boxes=69 comm_bytes=50880
+frame=33/41 late_source=20/20 scenario=2026_07_29_02_32_08 timestamp=000124 receiver=20 cavs=[20, 5, 7, 9] pred_boxes=28 gt_boxes=69 comm_bytes=67424
+sgcp_late_fusion frame=33/41 scenario=2026_07_29_02_32_08 timestamp=000124 sources=20 fused_pred_boxes=73 fused_gt_boxes=69
+frame=34/41 late_source=1/20 scenario=2026_07_29_02_32_08 timestamp=000126 receiver=1 cavs=[1, 2, 8, 11] pred_boxes=25 gt_boxes=69 comm_bytes=50512
+frame=34/41 late_source=2/20 scenario=2026_07_29_02_32_08 timestamp=000126 receiver=2 cavs=[2, 1, 11, 15] pred_boxes=22 gt_boxes=69 comm_bytes=44864
+frame=34/41 late_source=3/20 scenario=2026_07_29_02_32_08 timestamp=000126 receiver=3 cavs=[3, 16, 17, 18] pred_boxes=10 gt_boxes=69 comm_bytes=66352
+frame=34/41 late_source=4/20 scenario=2026_07_29_02_32_08 timestamp=000126 receiver=4 cavs=[4, 1, 7, 12] pred_boxes=28 gt_boxes=69 comm_bytes=75712
+frame=34/41 late_source=5/20 scenario=2026_07_29_02_32_08 timestamp=000126 receiver=5 cavs=[5, 7, 16, 20] pred_boxes=29 gt_boxes=69 comm_bytes=62352
+frame=34/41 late_source=6/20 scenario=2026_07_29_02_32_08 timestamp=000126 receiver=6 cavs=[6, 15] pred_boxes=17 gt_boxes=69 comm_bytes=24256
+frame=34/41 late_source=7/20 scenario=2026_07_29_02_32_08 timestamp=000126 receiver=7 cavs=[7, 4, 12, 20] pred_boxes=26 gt_boxes=69 comm_bytes=59808
+frame=34/41 late_source=8/20 scenario=2026_07_29_02_32_08 timestamp=000126 receiver=8 cavs=[8, 1, 4, 7] pred_boxes=34 gt_boxes=69 comm_bytes=75712
+frame=34/41 late_source=9/20 scenario=2026_07_29_02_32_08 timestamp=000126 receiver=9 cavs=[9, 10, 13, 19] pred_boxes=16 gt_boxes=69 comm_bytes=45168
+frame=34/41 late_source=10/20 scenario=2026_07_29_02_32_08 timestamp=000126 receiver=10 cavs=[10, 8, 9, 19] pred_boxes=27 gt_boxes=69 comm_bytes=41936
+frame=34/41 late_source=11/20 scenario=2026_07_29_02_32_08 timestamp=000126 receiver=11 cavs=[11, 1, 2, 9] pred_boxes=22 gt_boxes=69 comm_bytes=56384
+frame=34/41 late_source=12/20 scenario=2026_07_29_02_32_08 timestamp=000126 receiver=12 cavs=[12, 4, 7] pred_boxes=15 gt_boxes=69 comm_bytes=47888
+frame=34/41 late_source=13/20 scenario=2026_07_29_02_32_08 timestamp=000126 receiver=13 cavs=[13, 9, 14, 19] pred_boxes=7 gt_boxes=69 comm_bytes=64192
+frame=34/41 late_source=14/20 scenario=2026_07_29_02_32_08 timestamp=000126 receiver=14 cavs=[14, 13] pred_boxes=0 gt_boxes=69 comm_bytes=28752
+frame=34/41 late_source=15/20 scenario=2026_07_29_02_32_08 timestamp=000126 receiver=15 cavs=[15, 1, 2, 6] pred_boxes=27 gt_boxes=69 comm_bytes=76400
+frame=34/41 late_source=16/20 scenario=2026_07_29_02_32_08 timestamp=000126 receiver=16 cavs=[16, 3, 5, 17] pred_boxes=13 gt_boxes=69 comm_bytes=55008
+frame=34/41 late_source=17/20 scenario=2026_07_29_02_32_08 timestamp=000126 receiver=17 cavs=[17, 3, 5, 16] pred_boxes=16 gt_boxes=69 comm_bytes=53952
+frame=34/41 late_source=18/20 scenario=2026_07_29_02_32_08 timestamp=000126 receiver=18 cavs=[18, 3] pred_boxes=1 gt_boxes=69 comm_bytes=28528
+frame=34/41 late_source=19/20 scenario=2026_07_29_02_32_08 timestamp=000126 receiver=19 cavs=[19, 9, 10, 13] pred_boxes=13 gt_boxes=69 comm_bytes=53024
+frame=34/41 late_source=20/20 scenario=2026_07_29_02_32_08 timestamp=000126 receiver=20 cavs=[20, 5, 7, 9] pred_boxes=28 gt_boxes=69 comm_bytes=68000
+sgcp_late_fusion frame=34/41 scenario=2026_07_29_02_32_08 timestamp=000126 sources=20 fused_pred_boxes=75 fused_gt_boxes=69
+frame=35/41 late_source=1/20 scenario=2026_07_29_02_32_08 timestamp=000128 receiver=1 cavs=[1, 2, 8, 11] pred_boxes=26 gt_boxes=69 comm_bytes=50496
+frame=35/41 late_source=2/20 scenario=2026_07_29_02_32_08 timestamp=000128 receiver=2 cavs=[2, 1, 11, 15] pred_boxes=25 gt_boxes=69 comm_bytes=44640
+frame=35/41 late_source=3/20 scenario=2026_07_29_02_32_08 timestamp=000128 receiver=3 cavs=[3, 16, 17, 18] pred_boxes=9 gt_boxes=69 comm_bytes=67344
+frame=35/41 late_source=4/20 scenario=2026_07_29_02_32_08 timestamp=000128 receiver=4 cavs=[4, 1, 7, 12] pred_boxes=26 gt_boxes=69 comm_bytes=73488
+frame=35/41 late_source=5/20 scenario=2026_07_29_02_32_08 timestamp=000128 receiver=5 cavs=[5, 7, 16, 20] pred_boxes=27 gt_boxes=69 comm_bytes=67424
+frame=35/41 late_source=6/20 scenario=2026_07_29_02_32_08 timestamp=000128 receiver=6 cavs=[6, 15] pred_boxes=16 gt_boxes=69 comm_bytes=24064
+frame=35/41 late_source=7/20 scenario=2026_07_29_02_32_08 timestamp=000128 receiver=7 cavs=[7, 4, 12, 20] pred_boxes=29 gt_boxes=69 comm_bytes=61088
+frame=35/41 late_source=8/20 scenario=2026_07_29_02_32_08 timestamp=000128 receiver=8 cavs=[8, 1, 4, 7] pred_boxes=33 gt_boxes=69 comm_bytes=73056
+frame=35/41 late_source=9/20 scenario=2026_07_29_02_32_08 timestamp=000128 receiver=9 cavs=[9, 10, 13, 19] pred_boxes=16 gt_boxes=69 comm_bytes=42304
+frame=35/41 late_source=10/20 scenario=2026_07_29_02_32_08 timestamp=000128 receiver=10 cavs=[10, 8, 9, 19] pred_boxes=27 gt_boxes=69 comm_bytes=41904
+frame=35/41 late_source=11/20 scenario=2026_07_29_02_32_08 timestamp=000128 receiver=11 cavs=[11, 1, 2, 9] pred_boxes=21 gt_boxes=69 comm_bytes=56416
+frame=35/41 late_source=12/20 scenario=2026_07_29_02_32_08 timestamp=000128 receiver=12 cavs=[12, 4, 7] pred_boxes=17 gt_boxes=69 comm_bytes=49808Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+
+frame=35/41 late_source=13/20 scenario=2026_07_29_02_32_08 timestamp=000128 receiver=13 cavs=[13, 9, 14, 19] pred_boxes=8 gt_boxes=69 comm_bytes=64864
+frame=35/41 late_source=14/20 scenario=2026_07_29_02_32_08 timestamp=000128 receiver=14 cavs=[14, 13] pred_boxes=0 gt_boxes=69 comm_bytes=28208
+frame=35/41 late_source=15/20 scenario=2026_07_29_02_32_08 timestamp=000128 receiver=15 cavs=[15, 1, 2, 6] pred_boxes=28 gt_boxes=69 comm_bytes=76240
+frame=35/41 late_source=16/20 scenario=2026_07_29_02_32_08 timestamp=000128 receiver=16 cavs=[16, 3, 5, 17] pred_boxes=13 gt_boxes=69 comm_bytes=51264
+frame=35/41 late_source=17/20 scenario=2026_07_29_02_32_08 timestamp=000128 receiver=17 cavs=[17, 3, 5, 16] pred_boxes=13 gt_boxes=69 comm_bytes=56496
+frame=35/41 late_source=18/20 scenario=2026_07_29_02_32_08 timestamp=000128 receiver=18 cavs=[18, 3] pred_boxes=3 gt_boxes=69 comm_bytes=28640
+frame=35/41 late_source=19/20 scenario=2026_07_29_02_32_08 timestamp=000128 receiver=19 cavs=[19, 9, 10, 13] pred_boxes=13 gt_boxes=69 comm_bytes=54592
+frame=35/41 late_source=20/20 scenario=2026_07_29_02_32_08 timestamp=000128 receiver=20 cavs=[20, 5, 7, 9] pred_boxes=29 gt_boxes=69 comm_bytes=66464
+sgcp_late_fusion frame=35/41 scenario=2026_07_29_02_32_08 timestamp=000128 sources=20 fused_pred_boxes=79 fused_gt_boxes=69
+frame=36/41 late_source=1/20 scenario=2026_07_29_02_32_08 timestamp=000130 receiver=1 cavs=[1, 2, 8, 11] pred_boxes=26 gt_boxes=68 comm_bytes=51168
+frame=36/41 late_source=2/20 scenario=2026_07_29_02_32_08 timestamp=000130 receiver=2 cavs=[2, 1, 11, 15] pred_boxes=25 gt_boxes=68 comm_bytes=44400
+frame=36/41 late_source=3/20 scenario=2026_07_29_02_32_08 timestamp=000130 receiver=3 cavs=[3, 16, 17, 18] pred_boxes=10 gt_boxes=68 comm_bytes=62752
+frame=36/41 late_source=4/20 scenario=2026_07_29_02_32_08 timestamp=000130 receiver=4 cavs=[4, 1, 7, 12] pred_boxes=28 gt_boxes=68 comm_bytes=76224
+frame=36/41 late_source=5/20 scenario=2026_07_29_02_32_08 timestamp=000130 receiver=5 cavs=[5, 7, 16, 20] pred_boxes=28 gt_boxes=68 comm_bytes=66144
+frame=36/41 late_source=6/20 scenario=2026_07_29_02_32_08 timestamp=000130 receiver=6 cavs=[6, 15] pred_boxes=17 gt_boxes=68 comm_bytes=23536
+frame=36/41 late_source=7/20 scenario=2026_07_29_02_32_08 timestamp=000130 receiver=7 cavs=[7, 4, 12, 20] pred_boxes=26 gt_boxes=68 comm_bytes=61904
+frame=36/41 late_source=8/20 scenario=2026_07_29_02_32_08 timestamp=000130 receiver=8 cavs=[8, 1, 4, 7] pred_boxes=35 gt_boxes=68 comm_bytes=73680
+frame=36/41 late_source=9/20 scenario=2026_07_29_02_32_08 timestamp=000130 receiver=9 cavs=[9, 10, 13, 19] pred_boxes=16 gt_boxes=68 comm_bytes=44880
+frame=36/41 late_source=10/20 scenario=2026_07_29_02_32_08 timestamp=000130 receiver=10 cavs=[10, 8, 9, 19] pred_boxes=26 gt_boxes=68 comm_bytes=42160
+frame=36/41 late_source=11/20 scenario=2026_07_29_02_32_08 timestamp=000130 receiver=11 cavs=[11, 1, 2, 9] pred_boxes=22 gt_boxes=68 comm_bytes=56544
+frame=36/41 late_source=12/20 scenario=2026_07_29_02_32_08 timestamp=000130 receiver=12 cavs=[12, 4, 7] pred_boxes=11 gt_boxes=68 comm_bytes=52080
+frame=36/41 late_source=13/20 scenario=2026_07_29_02_32_08 timestamp=000130 receiver=13 cavs=[13, 9, 14, 19] pred_boxes=6 gt_boxes=68 comm_bytes=64400
+frame=36/41 late_source=14/20 scenario=2026_07_29_02_32_08 timestamp=000130 receiver=14 cavs=[14, 13] pred_boxes=0 gt_boxes=68 comm_bytes=28000
+frame=36/41 late_source=15/20 scenario=2026_07_29_02_32_08 timestamp=000130 receiver=15 cavs=[15, 1, 2, 6] pred_boxes=29 gt_boxes=68 comm_bytes=75648
+frame=36/41 late_source=16/20 scenario=2026_07_29_02_32_08 timestamp=000130 receiver=16 cavs=[16, 3, 5, 17] pred_boxes=14 gt_boxes=68 comm_bytes=51216
+frame=36/41 late_source=17/20 scenario=2026_07_29_02_32_08 timestamp=000130 receiver=17 cavs=[17, 3, 5, 16] pred_boxes=13 gt_boxes=68 comm_bytes=55280
+frame=36/41 late_source=18/20 scenario=2026_07_29_02_32_08 timestamp=000130 receiver=18 cavs=[18, 3] pred_boxes=3 gt_boxes=68 comm_bytes=29104
+frame=36/41 late_source=19/20 scenario=2026_07_29_02_32_08 timestamp=000130 receiver=19 cavs=[19, 9, 10, 13] pred_boxes=14 gt_boxes=68 comm_bytes=52656
+frame=36/41 late_source=20/20 scenario=2026_07_29_02_32_08 timestamp=000130 receiver=20 cavs=[20, 5, 7, 9] pred_boxes=28 gt_boxes=68 comm_bytes=67024
+sgcp_late_fusion frame=36/41 scenario=2026_07_29_02_32_08 timestamp=000130 sources=20 fused_pred_boxes=76 fused_gt_boxes=68
+frame=37/41 late_source=1/20 scenario=2026_07_29_02_32_08 timestamp=000132 receiver=1 cavs=[1, 2, 8, 11] pred_boxes=26 gt_boxes=68 comm_bytes=51280
+frame=37/41 late_source=2/20 scenario=2026_07_29_02_32_08 timestamp=000132 receiver=2 cavs=[2, 1, 11, 15] pred_boxes=26 gt_boxes=68 comm_bytes=44352
+frame=37/41 late_source=3/20 scenario=2026_07_29_02_32_08 timestamp=000132 receiver=3 cavs=[3, 16, 17, 18] pred_boxes=8 gt_boxes=68 comm_bytes=60288
+frame=37/41 late_source=4/20 scenario=2026_07_29_02_32_08 timestamp=000132 receiver=4 cavs=[4, 1, 7, 12] pred_boxes=24 gt_boxes=68 comm_bytes=78528
+frame=37/41 late_source=5/20 scenario=2026_07_29_02_32_08 timestamp=000132 receiver=5 cavs=[5, 7, 16, 20] pred_boxes=30 gt_boxes=68 comm_bytes=62560
+frame=37/41 late_source=6/20 scenario=2026_07_29_02_32_08 timestamp=000132 receiver=6 cavs=[6, 15] pred_boxes=17 gt_boxes=68 comm_bytes=24368
+frame=37/41 late_source=7/20 scenario=2026_07_29_02_32_08 timestamp=000132 receiver=7 cavs=[7, 4, 12, 20] pred_boxes=24 gt_boxes=68 comm_bytes=62064
+frame=37/41 late_source=8/20 scenario=2026_07_29_02_32_08 timestamp=000132 receiver=8 cavs=[8, 1, 4, 7] pred_boxes=33 gt_boxes=68 comm_bytes=72080
+frame=37/41 late_source=9/20 scenario=2026_07_29_02_32_08 timestamp=000132 receiver=9 cavs=[9, 10, 19, 20] pred_boxes=22 gt_boxes=68 comm_bytes=49392
+frame=37/41 late_source=10/20 scenario=2026_07_29_02_32_08 timestamp=000132 receiver=10 cavs=[10, 8, 9, 19] pred_boxes=27 gt_boxes=68 comm_bytes=42816
+frame=37/41 late_source=11/20 scenario=2026_07_29_02_32_08 timestamp=000132 receiver=11 cavs=[11, 1, 2, 9] pred_boxes=20 gt_boxes=68 comm_bytes=56720
+frame=37/41 late_source=12/20 scenario=2026_07_29_02_32_08 timestamp=000132 receiver=12 cavs=[12, 4, 7] pred_boxes=12 gt_boxes=68 comm_bytes=50608
+frame=37/41 late_source=13/20 scenario=2026_07_29_02_32_08 timestamp=000132 receiver=13 cavs=[13, 9, 14, 19] pred_boxes=7 gt_boxes=68 comm_bytes=67360
+frame=37/41 late_source=14/20 scenario=2026_07_29_02_32_08 timestamp=000132 receiver=14 cavs=[14, 13] pred_boxes=0 gt_boxes=68 comm_bytes=24512
+frame=37/41 late_source=15/20 scenario=2026_07_29_02_32_08 timestamp=000132 receiver=15 cavs=[15, 1, 2, 6] pred_boxes=26 gt_boxes=68 comm_bytes=76704
+frame=37/41 late_source=16/20 scenario=2026_07_29_02_32_08 timestamp=000132 receiver=16 cavs=[16, 3, 5, 17] pred_boxes=15 gt_boxes=68 comm_bytes=51024
+frame=37/41 late_source=17/20 scenario=2026_07_29_02_32_08 timestamp=000132 receiver=17 cavs=[17, 3, 5, 16] pred_boxes=16 gt_boxes=68 comm_bytes=55712
+frame=37/41 late_source=18/20 scenario=2026_07_29_02_32_08 timestamp=000132 receiver=18 cavs=[18, 3] pred_boxes=2 gt_boxes=68 comm_bytes=27776
+frame=37/41 late_source=19/20 scenario=2026_07_29_02_32_08 timestamp=000132 receiver=19 cavs=[19, 9, 10, 13] pred_boxes=15 gt_boxes=68 comm_bytes=51904
+frame=37/41 late_source=20/20 scenario=2026_07_29_02_32_08 timestamp=000132 receiver=20 cavs=[20, 5, 7, 9] pred_boxes=29 gt_boxes=68 comm_bytes=68752
+sgcp_late_fusion frame=37/41 scenario=2026_07_29_02_32_08 timestamp=000132 sources=20 fused_pred_boxes=78 fused_gt_boxes=68
+frame=38/41 late_source=1/20 scenario=2026_07_29_02_32_08 timestamp=000134 receiver=1 cavs=[1, 2, 8, 11] pred_boxes=26 gt_boxes=68 comm_bytes=51264
+frame=38/41 late_source=2/20 scenario=2026_07_29_02_32_08 timestamp=000134 receiver=2 cavs=[2, 1, 11, 15] pred_boxes=26 gt_boxes=68 comm_bytes=44048
+frame=38/41 late_source=3/20 scenario=2026_07_29_02_32_08 timestamp=000134 receiver=3 cavs=[3, 16, 17, 18] pred_boxes=10 gt_boxes=68 comm_bytes=58304
+frame=38/41 late_source=4/20 scenario=2026_07_29_02_32_08 timestamp=000134 receiver=4 cavs=[4, 1, 7, 12] pred_boxes=25 gt_boxes=68 comm_bytes=78032
+frame=38/41 late_source=5/20 scenario=2026_07_29_02_32_08 timestamp=000134 receiver=5 cavs=[5, 7, 16, 20] pred_boxes=25 gt_boxes=68 comm_bytes=60320Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+
+frame=38/41 late_source=6/20 scenario=2026_07_29_02_32_08 timestamp=000134 receiver=6 cavs=[6, 15] pred_boxes=19 gt_boxes=68 comm_bytes=23904
+frame=38/41 late_source=7/20 scenario=2026_07_29_02_32_08 timestamp=000134 receiver=7 cavs=[7, 4, 12, 20] pred_boxes=23 gt_boxes=68 comm_bytes=65136
+frame=38/41 late_source=8/20 scenario=2026_07_29_02_32_08 timestamp=000134 receiver=8 cavs=[8, 1, 4, 7] pred_boxes=33 gt_boxes=68 comm_bytes=71792
+frame=38/41 late_source=9/20 scenario=2026_07_29_02_32_08 timestamp=000134 receiver=9 cavs=[9, 10, 19, 20] pred_boxes=20 gt_boxes=68 comm_bytes=50336
+frame=38/41 late_source=10/20 scenario=2026_07_29_02_32_08 timestamp=000134 receiver=10 cavs=[10, 8, 9, 20] pred_boxes=27 gt_boxes=68 comm_bytes=62352
+frame=38/41 late_source=11/20 scenario=2026_07_29_02_32_08 timestamp=000134 receiver=11 cavs=[11, 1, 2, 9] pred_boxes=26 gt_boxes=68 comm_bytes=56192
+frame=38/41 late_source=12/20 scenario=2026_07_29_02_32_08 timestamp=000134 receiver=12 cavs=[12, 4, 7] pred_boxes=13 gt_boxes=68 comm_bytes=46800
+frame=38/41 late_source=13/20 scenario=2026_07_29_02_32_08 timestamp=000134 receiver=13 cavs=[13, 9, 14, 19] pred_boxes=6 gt_boxes=68 comm_bytes=68080
+frame=38/41 late_source=14/20 scenario=2026_07_29_02_32_08 timestamp=000134 receiver=14 cavs=[14, 13] pred_boxes=0 gt_boxes=68 comm_bytes=23664
+frame=38/41 late_source=15/20 scenario=2026_07_29_02_32_08 timestamp=000134 receiver=15 cavs=[15, 1, 2, 6] pred_boxes=28 gt_boxes=68 comm_bytes=71952
+frame=38/41 late_source=16/20 scenario=2026_07_29_02_32_08 timestamp=000134 receiver=16 cavs=[16, 3, 5, 17] pred_boxes=13 gt_boxes=68 comm_bytes=49664
+frame=38/41 late_source=17/20 scenario=2026_07_29_02_32_08 timestamp=000134 receiver=17 cavs=[17, 3, 5, 16] pred_boxes=14 gt_boxes=68 comm_bytes=52672
+frame=38/41 late_source=18/20 scenario=2026_07_29_02_32_08 timestamp=000134 receiver=18 cavs=[18, 3] pred_boxes=1 gt_boxes=68 comm_bytes=25504
+frame=38/41 late_source=19/20 scenario=2026_07_29_02_32_08 timestamp=000134 receiver=19 cavs=[19, 9, 10, 13] pred_boxes=13 gt_boxes=68 comm_bytes=52400
+frame=38/41 late_source=20/20 scenario=2026_07_29_02_32_08 timestamp=000134 receiver=20 cavs=[20, 5, 7, 9] pred_boxes=27 gt_boxes=68 comm_bytes=66384
+sgcp_late_fusion frame=38/41 scenario=2026_07_29_02_32_08 timestamp=000134 sources=20 fused_pred_boxes=76 fused_gt_boxes=68
+frame=39/41 late_source=1/20 scenario=2026_07_29_02_32_08 timestamp=000136 receiver=1 cavs=[1, 2, 8, 11] pred_boxes=27 gt_boxes=68 comm_bytes=51184
+frame=39/41 late_source=2/20 scenario=2026_07_29_02_32_08 timestamp=000136 receiver=2 cavs=[2, 1, 11, 15] pred_boxes=25 gt_boxes=68 comm_bytes=43664
+frame=39/41 late_source=3/20 scenario=2026_07_29_02_32_08 timestamp=000136 receiver=3 cavs=[3, 16, 17, 18] pred_boxes=8 gt_boxes=68 comm_bytes=62608
+frame=39/41 late_source=4/20 scenario=2026_07_29_02_32_08 timestamp=000136 receiver=4 cavs=[4, 1, 7, 12] pred_boxes=26 gt_boxes=68 comm_bytes=79728
+frame=39/41 late_source=5/20 scenario=2026_07_29_02_32_08 timestamp=000136 receiver=5 cavs=[5, 7, 16, 20] pred_boxes=24 gt_boxes=68 comm_bytes=61456
+frame=39/41 late_source=6/20 scenario=2026_07_29_02_32_08 timestamp=000136 receiver=6 cavs=[6, 15] pred_boxes=14 gt_boxes=68 comm_bytes=23536
+frame=39/41 late_source=7/20 scenario=2026_07_29_02_32_08 timestamp=000136 receiver=7 cavs=[7, 4, 12, 20] pred_boxes=25 gt_boxes=68 comm_bytes=65488
+frame=39/41 late_source=8/20 scenario=2026_07_29_02_32_08 timestamp=000136 receiver=8 cavs=[8, 1, 4, 7] pred_boxes=31 gt_boxes=68 comm_bytes=72800
+frame=39/41 late_source=9/20 scenario=2026_07_29_02_32_08 timestamp=000136 receiver=9 cavs=[9, 10, 19, 20] pred_boxes=21 gt_boxes=68 comm_bytes=48384
+frame=39/41 late_source=10/20 scenario=2026_07_29_02_32_08 timestamp=000136 receiver=10 cavs=[10, 8, 9, 19] pred_boxes=26 gt_boxes=68 comm_bytes=42768
+frame=39/41 late_source=11/20 scenario=2026_07_29_02_32_08 timestamp=000136 receiver=11 cavs=[11, 1, 2, 9] pred_boxes=20 gt_boxes=68 comm_bytes=56240
+frame=39/41 late_source=12/20 scenario=2026_07_29_02_32_08 timestamp=000136 receiver=12 cavs=[12, 4, 7] pred_boxes=11 gt_boxes=68 comm_bytes=49888
+frame=39/41 late_source=13/20 scenario=2026_07_29_02_32_08 timestamp=000136 receiver=13 cavs=[13, 9, 14, 19] pred_boxes=8 gt_boxes=68 comm_bytes=68304
+frame=39/41 late_source=14/20 scenario=2026_07_29_02_32_08 timestamp=000136 receiver=14 cavs=[14, 13] pred_boxes=0 gt_boxes=68 comm_bytes=23664
+frame=39/41 late_source=15/20 scenario=2026_07_29_02_32_08 timestamp=000136 receiver=15 cavs=[15, 1, 2, 6] pred_boxes=26 gt_boxes=68 comm_bytes=74048
+frame=39/41 late_source=16/20 scenario=2026_07_29_02_32_08 timestamp=000136 receiver=16 cavs=[16, 3, 5, 17] pred_boxes=12 gt_boxes=68 comm_bytes=50976
+frame=39/41 late_source=17/20 scenario=2026_07_29_02_32_08 timestamp=000136 receiver=17 cavs=[17, 3, 5, 16] pred_boxes=11 gt_boxes=68 comm_bytes=52496
+frame=39/41 late_source=18/20 scenario=2026_07_29_02_32_08 timestamp=000136 receiver=18 cavs=[18, 3] pred_boxes=3 gt_boxes=68 comm_bytes=28624
+frame=39/41 late_source=19/20 scenario=2026_07_29_02_32_08 timestamp=000136 receiver=19 cavs=[19, 9, 10, 13] pred_boxes=13 gt_boxes=68 comm_bytes=53456
+frame=39/41 late_source=20/20 scenario=2026_07_29_02_32_08 timestamp=000136 receiver=20 cavs=[20, 5, 7, 9] pred_boxes=25 gt_boxes=68 comm_bytes=69488
+sgcp_late_fusion frame=39/41 scenario=2026_07_29_02_32_08 timestamp=000136 sources=20 fused_pred_boxes=73 fused_gt_boxes=68
+frame=40/41 late_source=1/20 scenario=2026_07_29_02_32_08 timestamp=000138 receiver=1 cavs=[1, 2, 8, 11] pred_boxes=27 gt_boxes=68 comm_bytes=51328
+frame=40/41 late_source=2/20 scenario=2026_07_29_02_32_08 timestamp=000138 receiver=2 cavs=[2, 1, 11, 15] pred_boxes=23 gt_boxes=68 comm_bytes=42800
+frame=40/41 late_source=3/20 scenario=2026_07_29_02_32_08 timestamp=000138 receiver=3 cavs=[3, 16, 17, 18] pred_boxes=5 gt_boxes=68 comm_bytes=62256
+frame=40/41 late_source=4/20 scenario=2026_07_29_02_32_08 timestamp=000138 receiver=4 cavs=[4, 1, 7, 12] pred_boxes=25 gt_boxes=68 comm_bytes=80256
+frame=40/41 late_source=5/20 scenario=2026_07_29_02_32_08 timestamp=000138 receiver=5 cavs=[5, 7, 16, 20] pred_boxes=19 gt_boxes=68 comm_bytes=61648
+frame=40/41 late_source=6/20 scenario=2026_07_29_02_32_08 timestamp=000138 receiver=6 cavs=[6, 15] pred_boxes=17 gt_boxes=68 comm_bytes=23680
+frame=40/41 late_source=7/20 scenario=2026_07_29_02_32_08 timestamp=000138 receiver=7 cavs=[7, 4, 12, 20] pred_boxes=26 gt_boxes=68 comm_bytes=65888
+frame=40/41 late_source=8/20 scenario=2026_07_29_02_32_08 timestamp=000138 receiver=8 cavs=[8, 1, 4, 7] pred_boxes=30 gt_boxes=68 comm_bytes=71088
+frame=40/41 late_source=9/20 scenario=2026_07_29_02_32_08 timestamp=000138 receiver=9 cavs=[9, 10, 19, 20] pred_boxes=22 gt_boxes=68 comm_bytes=50352
+frame=40/41 late_source=10/20 scenario=2026_07_29_02_32_08 timestamp=000138 receiver=10 cavs=[10, 8, 9, 19] pred_boxes=25 gt_boxes=68 comm_bytes=42784
+frame=40/41 late_source=11/20 scenario=2026_07_29_02_32_08 timestamp=000138 receiver=11 cavs=[11, 1, 2, 9] pred_boxes=25 gt_boxes=68 comm_bytes=56976
+frame=40/41 late_source=12/20 scenario=2026_07_29_02_32_08 timestamp=000138 receiver=12 cavs=[12, 4, 7] pred_boxes=12 gt_boxes=68 comm_bytes=48544
+frame=40/41 late_source=13/20 scenario=2026_07_29_02_32_08 timestamp=000138 receiver=13 cavs=[13, 9, 14, 19] pred_boxes=8 gt_boxes=68 comm_bytes=69168
+frame=40/41 late_source=14/20 scenario=2026_07_29_02_32_08 timestamp=000138 receiver=14 cavs=[14, 13] pred_boxes=0 gt_boxes=68 comm_bytes=22688
+frame=40/41 late_source=15/20 scenario=2026_07_29_02_32_08 timestamp=000138 receiver=15 cavs=[15, 1, 2, 6] pred_boxes=30 gt_boxes=68 comm_bytes=73232
+frame=40/41 late_source=16/20 scenario=2026_07_29_02_32_08 timestamp=000138 receiver=16 cavs=[16, 3, 5, 17] pred_boxes=14 gt_boxes=68 comm_bytes=51312
+frame=40/41 late_source=17/20 scenario=2026_07_29_02_32_08 timestamp=000138 receiver=17 cavs=[17, 3, 5, 16] pred_boxes=12 gt_boxes=68 comm_bytes=52496
+frame=40/41 late_source=18/20 scenario=2026_07_29_02_32_08 timestamp=000138 receiver=18 cavs=[18, 3] pred_boxes=1 gt_boxes=68 comm_bytes=28928
+frame=40/41 late_source=19/20 scenario=2026_07_29_02_32_08 timestamp=000138 receiver=19 cavs=[19, 9, 10, 13] pred_boxes=13 gt_boxes=68 comm_bytes=53184Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+C:\Users\sakakibara\miniconda3\envs\opencda\lib\site-packages\torch\nn\functional.py:1806: UserWarning: nn.functional.sigmoid is deprecated. Use torch.sigmoid instead.
+  warnings.warn("nn.functional.sigmoid is deprecated. Use torch.sigmoid instead.")
+
+frame=40/41 late_source=20/20 scenario=2026_07_29_02_32_08 timestamp=000138 receiver=20 cavs=[20, 5, 7, 9] pred_boxes=27 gt_boxes=68 comm_bytes=70192
+sgcp_late_fusion frame=40/41 scenario=2026_07_29_02_32_08 timestamp=000138 sources=20 fused_pred_boxes=75 fused_gt_boxes=68
+frame=41/41 late_source=1/20 scenario=2026_07_29_02_32_08 timestamp=000140 receiver=1 cavs=[1, 2, 8, 11] pred_boxes=26 gt_boxes=67 comm_bytes=50976
+frame=41/41 late_source=2/20 scenario=2026_07_29_02_32_08 timestamp=000140 receiver=2 cavs=[2, 1, 11, 15] pred_boxes=25 gt_boxes=67 comm_bytes=44160
+frame=41/41 late_source=3/20 scenario=2026_07_29_02_32_08 timestamp=000140 receiver=3 cavs=[3, 16, 17, 18] pred_boxes=5 gt_boxes=67 comm_bytes=64640
+frame=41/41 late_source=4/20 scenario=2026_07_29_02_32_08 timestamp=000140 receiver=4 cavs=[4, 1, 7, 12] pred_boxes=23 gt_boxes=67 comm_bytes=86400
+frame=41/41 late_source=5/20 scenario=2026_07_29_02_32_08 timestamp=000140 receiver=5 cavs=[5, 7, 16, 20] pred_boxes=27 gt_boxes=67 comm_bytes=65808
+frame=41/41 late_source=6/20 scenario=2026_07_29_02_32_08 timestamp=000140 receiver=6 cavs=[6, 15] pred_boxes=16 gt_boxes=67 comm_bytes=23088
+frame=41/41 late_source=7/20 scenario=2026_07_29_02_32_08 timestamp=000140 receiver=7 cavs=[7, 4, 5, 20] pred_boxes=24 gt_boxes=67 comm_bytes=59248
+frame=41/41 late_source=8/20 scenario=2026_07_29_02_32_08 timestamp=000140 receiver=8 cavs=[8, 1, 4, 7] pred_boxes=31 gt_boxes=67 comm_bytes=75008
+frame=41/41 late_source=9/20 scenario=2026_07_29_02_32_08 timestamp=000140 receiver=9 cavs=[9, 10, 19, 20] pred_boxes=21 gt_boxes=67 comm_bytes=51904
+frame=41/41 late_source=10/20 scenario=2026_07_29_02_32_08 timestamp=000140 receiver=10 cavs=[10, 8, 9, 19] pred_boxes=25 gt_boxes=67 comm_bytes=43184
+frame=41/41 late_source=11/20 scenario=2026_07_29_02_32_08 timestamp=000140 receiver=11 cavs=[11, 1, 2, 9] pred_boxes=24 gt_boxes=67 comm_bytes=59456
+frame=41/41 late_source=12/20 scenario=2026_07_29_02_32_08 timestamp=000140 receiver=12 cavs=[12, 4] pred_boxes=9 gt_boxes=67 comm_bytes=25264
+frame=41/41 late_source=13/20 scenario=2026_07_29_02_32_08 timestamp=000140 receiver=13 cavs=[13, 9, 14, 19] pred_boxes=6 gt_boxes=67 comm_bytes=70048
+frame=41/41 late_source=14/20 scenario=2026_07_29_02_32_08 timestamp=000140 receiver=14 cavs=[14, 13] pred_boxes=0 gt_boxes=67 comm_bytes=23056
+frame=41/41 late_source=15/20 scenario=2026_07_29_02_32_08 timestamp=000140 receiver=15 cavs=[15, 1, 2, 6] pred_boxes=25 gt_boxes=67 comm_bytes=73024
+frame=41/41 late_source=16/20 scenario=2026_07_29_02_32_08 timestamp=000140 receiver=16 cavs=[16, 3, 5, 17] pred_boxes=14 gt_boxes=67 comm_bytes=54080
+frame=41/41 late_source=17/20 scenario=2026_07_29_02_32_08 timestamp=000140 receiver=17 cavs=[17, 3, 5, 16] pred_boxes=12 gt_boxes=67 comm_bytes=53888
+frame=41/41 late_source=18/20 scenario=2026_07_29_02_32_08 timestamp=000140 receiver=18 cavs=[18, 3] pred_boxes=0 gt_boxes=67 comm_bytes=29264
+frame=41/41 late_source=19/20 scenario=2026_07_29_02_32_08 timestamp=000140 receiver=19 cavs=[19, 9, 10, 13] pred_boxes=15 gt_boxes=67 comm_bytes=54688
+frame=41/41 late_source=20/20 scenario=2026_07_29_02_32_08 timestamp=000140 receiver=20 cavs=[20, 5, 7, 9] pred_boxes=25 gt_boxes=67 comm_bytes=71616
+sgcp_late_fusion frame=41/41 scenario=2026_07_29_02_32_08 timestamp=000140 sources=20 fused_pred_boxes=71 fused_gt_boxes=67
+cp counter: 41
+Evaluate final average precision results:
+  - Fusion method: early
+  - The Average Precision at IOU 0.3 is 0.86, The Average Precision at IOU 0.5 is 0.79, The Average Precision at IOU 0.7 is 0.55
+sgcp_summary frames=820 avg_comm_bytes=53939.98 total_comm_bytes=44230784 avg_source_cavs=3.59 avg_selected_grids=33.99

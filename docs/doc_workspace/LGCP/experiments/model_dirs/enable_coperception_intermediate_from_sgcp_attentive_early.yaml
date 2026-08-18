@@ -1,0 +1,5 @@
+enable_coperception:
+  coperception:
+    models:
+      intermediate_attentive: 'docs/doc_workspace/LGCP/experiments/model_dirs/pointpillar_intermediate_from_sgcp_attentive_early'
+    fusion_method: 'intermediate_attentive'

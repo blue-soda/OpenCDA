@@ -1,0 +1,15 @@
+dataset_root: D:\Data\Carla
+scenario_id: '2026_07_15_02_33_21'
+assignment_plan: docs\doc_workspace\LGCP\experiments\hierarchy_plan\20260718_lgcp_carla_hierarchy_plan_area23_11f\area_assignment_plan.csv
+output_dir: docs\doc_workspace\LGCP\experiments\hierarchy_plan\20260720_lgcp_v2xvit_feature_probe_area23_11f
+fusion_method: intermediate_v2xvit
+coperception_yaml: null
+reference_cav_id: '1'
+reference_pose: null
+start_index: 0
+max_frames: 11
+max_areas_per_frame: 23
+grid_size_x: 10.0
+grid_size_y: 6.0
+feature_dtype: float16
+crop_halo_cells: 1

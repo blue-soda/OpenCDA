@@ -1,0 +1,152 @@
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+resuming by loading epoch 10000
+frame=1/3 late_source=1/7 scenario=2026_07_29_02_32_08 timestamp=000060 receiver=1 cavs=[1, 8, 11] pred_boxes=34 gt_boxes=72 comm_bytes=55520
+frame=1/3 late_source=2/7 scenario=2026_07_29_02_32_08 timestamp=000060 receiver=10 cavs=[10, 9] pred_boxes=18 gt_boxes=72 comm_bytes=20944
+frame=1/3 late_source=3/7 scenario=2026_07_29_02_32_08 timestamp=000060 receiver=12 cavs=[12, 7] pred_boxes=28 gt_boxes=72 comm_bytes=45472
+frame=1/3 late_source=4/7 scenario=2026_07_29_02_32_08 timestamp=000060 receiver=13 cavs=[13, 14, 19] pred_boxes=6 gt_boxes=72 comm_bytes=87696
+frame=1/3 late_source=5/7 scenario=2026_07_29_02_32_08 timestamp=000060 receiver=15 cavs=[15, 6] pred_boxes=17 gt_boxes=72 comm_bytes=41856
+frame=1/3 late_source=6/7 scenario=2026_07_29_02_32_08 timestamp=000060 receiver=16 cavs=[16, 5] pred_boxes=21 gt_boxes=72 comm_bytes=20192
+frame=1/3 late_source=7/7 scenario=2026_07_29_02_32_08 timestamp=000060 receiver=17 cavs=[17, 3, 18] pred_boxes=10 gt_boxes=72 comm_bytes=58256
+sgcp_late_fusion frame=1/3 scenario=2026_07_29_02_32_08 timestamp=000060 sources=7 fused_pred_boxes=69 fused_gt_boxes=72
+frame=2/3 late_source=1/7 scenario=2026_07_29_02_32_08 timestamp=000062 receiver=1 cavs=[1, 8, 11] pred_boxes=32 gt_boxes=72 comm_bytes=55600
+frame=2/3 late_source=2/7 scenario=2026_07_29_02_32_08 timestamp=000062 receiver=10 cavs=[10, 9] pred_boxes=23 gt_boxes=72 comm_bytes=20704
+frame=2/3 late_source=3/7 scenario=2026_07_29_02_32_08 timestamp=000062 receiver=12 cavs=[12, 7] pred_boxes=31 gt_boxes=72 comm_bytes=45840
+frame=2/3 late_source=4/7 scenario=2026_07_29_02_32_08 timestamp=000062 receiver=13 cavs=[13, 14, 19] pred_boxes=6 gt_boxes=72 comm_bytes=86928
+frame=2/3 late_source=5/7 scenario=2026_07_29_02_32_08 timestamp=000062 receiver=15 cavs=[15, 6] pred_boxes=16 gt_boxes=72 comm_bytes=41664
+frame=2/3 late_source=6/7 scenario=2026_07_29_02_32_08 timestamp=000062 receiver=16 cavs=[16, 5] pred_boxes=20 gt_boxes=72 comm_bytes=20224
+frame=2/3 late_source=7/7 scenario=2026_07_29_02_32_08 timestamp=000062 receiver=17 cavs=[17, 3, 18] pred_boxes=10 gt_boxes=72 comm_bytes=58096
+sgcp_late_fusion frame=2/3 scenario=2026_07_29_02_32_08 timestamp=000062 sources=7 fused_pred_boxes=70 fused_gt_boxes=72
+frame=3/3 late_source=1/7 scenario=2026_07_29_02_32_08 timestamp=000064 receiver=1 cavs=[1, 8, 11] pred_boxes=33 gt_boxes=72 comm_bytes=54736
+frame=3/3 late_source=2/7 scenario=2026_07_29_02_32_08 timestamp=000064 receiver=10 cavs=[10, 9] pred_boxes=22 gt_boxes=72 comm_bytes=20272
+frame=3/3 late_source=3/7 scenario=2026_07_29_02_32_08 timestamp=000064 receiver=12 cavs=[12, 7] pred_boxes=28 gt_boxes=72 comm_bytes=45712
+frame=3/3 late_source=4/7 scenario=2026_07_29_02_32_08 timestamp=000064 receiver=13 cavs=[13, 14, 19] pred_boxes=4 gt_boxes=72 comm_bytes=87616
+frame=3/3 late_source=5/7 scenario=2026_07_29_02_32_08 timestamp=000064 receiver=15 cavs=[15, 6] pred_boxes=18 gt_boxes=72 comm_bytes=42544
+frame=3/3 late_source=6/7 scenario=2026_07_29_02_32_08 timestamp=000064 receiver=16 cavs=[16, 5] pred_boxes=17 gt_boxes=72 comm_bytes=20320
+frame=3/3 late_source=7/7 scenario=2026_07_29_02_32_08 timestamp=000064 receiver=17 cavs=[17, 3, 18] pred_boxes=9 gt_boxes=72 comm_bytes=58064
+sgcp_late_fusion frame=3/3 scenario=2026_07_29_02_32_08 timestamp=000064 sources=7 fused_pred_boxes=70 fused_gt_boxes=72
+cp counter: 3
+Evaluate final average precision results:
+  - Fusion method: early
+  - The Average Precision at IOU 0.3 is 0.88, The Average Precision at IOU 0.5 is 0.86, The Average Precision at IOU 0.7 is 0.64
+sgcp_summary frames=21 avg_comm_bytes=47059.81 total_comm_bytes=988256 avg_source_cavs=2.43 avg_selected_grids=46.81
+C:\Users\sakakibara\miniconda3\envs\opencda\lib\site-packages\torch\nn\functional.py:1806: UserWarning: nn.functional.sigmoid is deprecated. Use torch.sigmoid instead.
+  warnings.warn("nn.functional.sigmoid is deprecated. Use torch.sigmoid instead.")

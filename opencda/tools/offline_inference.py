@@ -61,6 +61,9 @@ from opencda.core.clustering.algorithms.resource_allocation.\
 from opencda.core.clustering.algorithms.resource_allocation.edgecooper import (
     edgecooper_grid_score,
 )
+from opencda.core.clustering.algorithms.resource_allocation.pacp_lidar import (
+    pacp_lidar_grid_score,
+)
 from opencda.core.clustering.algorithms.resource_allocation.\
     selective_baseline_common import (
     EDGECOOPER_GLOBAL_COMM_RANGE_M,
@@ -1598,6 +1601,7 @@ def apply_selective_sharing_baseline(frame, protocol, ego_cav_id,
     public_baseline_name = baseline_name
     base_baseline_name = edgecooper_base_baseline(baseline_name)
     edgecooper_pmax_enabled = is_edgecooper_pmax_baseline(baseline_name)
+    pacp_lidar_compressed_enabled = base_baseline_name == 'pacp_lidar'
     effective_rho_th = (
         extract_lidar_density_threshold(protocol)
         if rho_th is None else rho_th)
@@ -1665,7 +1669,10 @@ def apply_selective_sharing_baseline(frame, protocol, ego_cav_id,
             timestamp=timestamp)
     global_admission = None
     if selective_frame_deadline_ms is not None:
-        if edgecooper_pmax_enabled:
+        if edgecooper_pmax_enabled or pacp_lidar_compressed_enabled:
+            grid_score_fn = (
+                pacp_lidar_grid_score
+                if pacp_lidar_compressed_enabled else edgecooper_grid_score)
             admitted_selection, global_admission = (
                 trim_pmax_selection_to_global_deadline(
                     world,
@@ -1673,7 +1680,7 @@ def apply_selective_sharing_baseline(frame, protocol, ego_cav_id,
                     public_baseline_name,
                     selective_frame_deadline_ms,
                     channel_model,
-                    edgecooper_grid_score,
+                    grid_score_fn,
                     max_senders_per_receiver=max_senders_per_receiver,
                     density_cap_rho=pmax_density_cap_rho))
             apply_receiver_grid_selection(
@@ -1710,8 +1717,12 @@ def apply_selective_sharing_baseline(frame, protocol, ego_cav_id,
             receiver_id,
             max_upload_points_per_source=max_upload_points_per_source,
             upload_density_cap_rho=(
-                pmax_density_cap_rho if edgecooper_pmax_enabled else None),
-            upload_density_cap_seed='edgecooper-pmax-%s' % timestamp)
+                pmax_density_cap_rho
+                if (edgecooper_pmax_enabled or pacp_lidar_compressed_enabled)
+                else None),
+            upload_density_cap_seed='%s-density-cap-%s' % (
+                base_baseline_name,
+                timestamp))
         metadata['cluster_count'] = len(clusters)
         metadata['resource_allocation'] = (
             'selective_%s' % public_baseline_name)

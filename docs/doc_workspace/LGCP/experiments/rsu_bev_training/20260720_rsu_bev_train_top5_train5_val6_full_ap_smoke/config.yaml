@@ -1,0 +1,17 @@
+train_root: docs\doc_workspace\LGCP\experiments\rsu_bev_training_samples\20260720_rsu_bev_sparse_top5_train5
+val_root: docs\doc_workspace\LGCP\experiments\rsu_bev_training_samples\20260720_rsu_bev_sparse_top5_val6
+output_dir: docs\doc_workspace\LGCP\experiments\rsu_bev_training\20260720_rsu_bev_train_top5_train5_val6_full_ap_smoke
+fusion_method: intermediate_attentive
+coperception_yaml: null
+checkpoint_dir: opencood/logs/pointpillar_attentive_fusion
+query_mode: learnable_channel
+dataset_query_mode: mean
+freeze_mode: query_heads
+lr: 0.0001
+epochs: 1
+max_train_steps: 5
+max_val_steps: 6
+device: cpu
+eval_ap: true
+postprocess_score_threshold: 0.01
+save_checkpoint: false

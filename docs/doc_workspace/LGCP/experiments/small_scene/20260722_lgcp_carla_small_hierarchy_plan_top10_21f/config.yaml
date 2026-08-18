@@ -1,0 +1,13 @@
+area_records: C:\Workspace\OpenCDA\docs\doc_workspace\LGCP\experiments\small_scene\20260722_lgcp_carla_small_area_confidence_21f\area_records.csv
+area_quality: C:\Workspace\OpenCDA\docs\doc_workspace\LGCP\experiments\small_scene\20260722_lgcp_carla_small_area_confidence_21f\area_quality.csv
+confidence_field: density_distance
+delta_g: 0.05
+max_group_size: 4
+max_areas: 10
+max_frames: 0
+min_area_confidence: 0.0
+feature_packet_bytes: 10000
+leader_result_bytes: 2000
+assignment_bytes: 64
+broadcast_bytes: 2000
+note: Offline control-plane hierarchy plan; no real feature fusion.

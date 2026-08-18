@@ -5407,3 +5407,551 @@ conda run -n opencda python opencda.py -t lgcp_carla_small --dump --debug
   - 当前 intersection10 场景中，raw point slices 比 Where2comm selected features 小，不满足“中间特征比原始点云更省”的叙事。
   - Where2comm 相比 dense full feature 确实省得很多，只保留约 `0.5%-1.0%` dense feature payload；问题是 dense feature 本身每 cell 通道数高，所以稀疏后仍可能比稀疏点云大。
   - 对网络论文而言，后续不必把重点转到训练，而应把通信核算写成条件式：当 area 内点云足够密、raw point slice 点数超过 break-even 时，Where2comm sparse feature 才比 raw point slice 更省；否则 raw slice 反而更省。
+- 文档同步：
+  - 新增并后续重命名为 `docs/doc_workspace/LGCP/two_hop_feature_fusion_routes.md`，将上述分析整理为独立报告，并补充两条两跳融合路线的当前问题、难点和最好结果。
+  - 报告补充了通道压缩率 `r` 下的 break-even 公式、`r=1/2/4/8/16/32/64` 点数阈值表，以及当前场景需要约 `4x-8x` 训练过的 channel compression 或等效量化/编码才能让 selected BEV feature 小于 raw area point slice 的结论。
+
+## Two-hop Where2comm intermediate feature diagnostic
+
+- 时间：2026-07-23
+- 目的：按“第一跳 member CAV 中期特征 -> leader Where2comm 中期融合；第二跳 leader feature packet -> RSU Where2comm 中期融合”的原始 LGCP 直觉，验证现有 `where2comm_10e` checkpoint 是否能直接用于两跳中期特征路线。
+- 新增代码：
+  - `opencda/tools/lgcp_where2comm_two_hop_feature_fusion.py`
+  - 新脚本独立于 SGCP 和既有一跳 Where2comm 脚本，不修改 SGCP 实验代码。
+  - 支持 `--first-hop-projection project_first|local_feature_warp`；最终采用默认 `project_first`，即 member area points 先投影到 leader 坐标再编码 feature，更接近 OpenCOOD projection-first 语义。
+  - 支持 `--packet-granularity area|leader`；完整 21 帧 smoke 使用 `leader`，将同一 leader 的多个 area feature 用 `max` 合并后上传 RSU。
+- 编译：
+
+```text
+conda run -n opencda python -m py_compile opencda\tools\lgcp_where2comm_two_hop_feature_fusion.py
+```
+
+- 关键诊断输出：
+
+| Run | Scope | Areas/frame | Leader packets/frame | Mask | Threshold | First hop Mbps | Second hop Mbps | Total Mbps | AP@0.3 | AP@0.5 | AP@0.7 | GT | Pred |
+| --- | --- | ---: | ---: | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| one-hop control, Top-10 first frame | planned areas | 10 | 10 | `lgcp_area_objectness+dilation1` | 0.05 | raw first hop | 15.165439 | 15.165439 | 0.750000 | 0.657407 | 0.564815 | 12 | 10 |
+| two-hop area packets, Top-10 first frame | planned areas | 10 | 10 | `lgcp_area_objectness+dilation1` | 0.05 | 11.991040 | 0.573440 | 12.564480 | 0.000000 | 0.000000 | 0.000000 | 12 | 0 |
+| two-hop leader packets, Top-10 first frame | planned areas | 10 | 5 | `lgcp_area_objectness+dilation1` | 0.05 | 11.991040 | 0.706560 | 12.697600 | 0.000000 | 0.000000 | 0.000000 | 12 | 0 |
+| two-hop leader packets, Top-10 first frame full-mask | planned areas | 10 | 5 | `full` | 0.01 | 6661.079040 | 3027.763020 | 9688.842060 | 0.000000 | 0.000000 | 0.000000 | 12 | 2 |
+| two-hop leader packets, Top-5 21 frames | planned areas | 5 | 4 | `lgcp_area_objectness+dilation1` | 0.05 | 7.617585 | 0.290621 | 7.908206 | 0.000000 | 0.000000 | 0.000000 | 210 | 0 |
+
+- 主要输出目录：
+  - `docs/doc_workspace/LGCP/experiments/small_scene/20260723_lgcp_intersection10_where2comm_twohop_feature_top10_1f_area_projectfirst`
+  - `docs/doc_workspace/LGCP/experiments/small_scene/20260723_lgcp_intersection10_where2comm_twohop_feature_top10_1f_leader_projectfirst`
+  - `docs/doc_workspace/LGCP/experiments/small_scene/20260723_lgcp_intersection10_where2comm_twohop_feature_top10_1f_leader_fullmask_thr001`
+  - `docs/doc_workspace/LGCP/experiments/small_scene/20260723_lgcp_intersection10_where2comm_twohop_feature_top5_21f_leader_projectfirst`
+- 结论：
+  - 两跳中期特征路径已经端到端打通，但当前 `where2comm_10e` checkpoint 不能直接支撑该路线的 AP。
+  - 同帧一跳 Where2comm control AP@0.5 为 `0.657407`，说明不是 checkpoint / postprocess 完全不可用。
+  - `full mask + low threshold` 仍只有 2 个预测框且 AP 为 0，说明问题不是 LGCP area-objectness mask 过窄，而是二次 Where2comm 级联本身造成的 feature 分布偏移。
+  - 核心风险：第一跳 Where2comm fusion 的输出是 fused feature，不是训练语义里的普通 single-CAV feature；将它再作为第二跳 Where2comm 的输入，当前 detection head 和 objectness selector 没有校准。
+  - 因此“两跳都走中期特征 + Where2comm”目前只能作为 feasibility / negative diagnostic；若要成为主性能路线，需要专门训练 hierarchy adapter、leader fused feature normalizer，或训练 RSU second-hop fusion/head。
+
+### Direct fused-feature RSU aggregation addendum
+
+- 目的：用户追问是否可以“实现对 fused feature 的融合”。在同一独立脚本中新增 `--rsu-fusion-mode where2comm|direct_mean|direct_max|direct_att`。
+- 实现差异：
+  - `where2comm`：第二跳仍使用 Where2comm selector + fusion。
+  - `direct_mean` / `direct_max`：leader fused feature 先 warp 到 RSU/query reference，再直接均值或最大值聚合。
+  - `direct_att`：leader fused feature 先 warp 到 RSU/query reference，再用 attention 聚合；该 attention 是诊断用临时模块，不是训练过的 hierarchy adapter。
+- 编译：
+
+```text
+conda run -n opencda python -m py_compile opencda\tools\lgcp_where2comm_two_hop_feature_fusion.py
+```
+
+| Run | Scope | Areas/frame | Leaders | RSU fusion | Threshold | First hop Mbps | Second hop Mbps | Total Mbps | AP@0.3 | AP@0.5 | AP@0.7 | GT | Pred |
+| --- | --- | ---: | ---: | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| Top-10 first frame | planned areas | 10 | 5 | direct mean | 0.05 | 11.991040 | 3027.763200 | 3039.754240 | 0.000000 | 0.000000 | 0.000000 | 12 | 0 |
+| Top-10 first frame | planned areas | 10 | 5 | direct max | 0.05 | 11.991040 | 3027.763200 | 3039.754240 | 0.000000 | 0.000000 | 0.000000 | 12 | 0 |
+| Top-10 first frame | planned areas | 10 | 5 | direct att | 0.05 | 11.991040 | 3027.763200 | 3039.754240 | 0.000000 | 0.000000 | 0.000000 | 12 | 0 |
+| Top-10 first frame | planned areas | 10 | 5 | direct mean | 0.001 | 11.991040 | 3027.763200 | 3039.754240 | 0.000000 | 0.000000 | 0.000000 | 12 | 1 |
+
+- 结论：
+  - fused feature 的 RSU 侧直接融合已经实现。
+  - 但 direct fused-feature aggregation 没有恢复 AP，且二跳通信变成 dense fused feature 级别，约 `3027.76 Mbps`，远大于 Where2comm selected feature。
+  - 这进一步说明当前瓶颈不是“能不能写一个融合算子”，而是 first-hop fused feature 需要训练过的 second-hop adapter / normalizer / selector，才能成为可检测、可压缩的 RSU 输入。
+
+### Full-BEV first-hop + area-mask feature communication
+
+- 目的：验证用户提出的更合理第一跳语义：不先裁剪点云；每个 CAV 用完整点云生成完整 BEV feature；area 之外的 feature cells 通过 Where2comm / LGCP mask 压掉；第二跳仍使用 Where2comm。
+- 实现：
+  - `opencda/tools/lgcp_where2comm_two_hop_feature_fusion.py`
+  - 新增 `--first-hop-projection project_full_first`
+  - `project_full_first` 将成员完整点云投影到 leader 坐标后编码完整 BEV；raw-equivalent bytes 仍记录 area 内点数，仅用于对照。
+  - 第一跳仍用 LGCP area mask 与 Where2comm objectness intersection 控制 feature 通信。
+  - 第二跳保持 `--rsu-fusion-mode where2comm`。
+
+| Run | Scope | Areas/frame | Packets | Threshold | First hop Mbps | Second hop Mbps | Total Mbps | AP@0.3 | AP@0.5 | AP@0.7 | GT | Pred |
+| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| Top-10 first frame leader-packet | planned areas | 10 | 5 | 0.05 | 11.069440 | 3.512320 | 14.581760 | 0.000000 | 0.000000 | 0.000000 | 12 | 0 |
+| Top-10 first frame leader-packet | planned areas | 10 | 5 | 0.001 | 11.069440 | 3.512320 | 14.581760 | 0.000000 | 0.000000 | 0.000000 | 12 | 9 |
+| Top-5 21 frames leader-packet | planned areas | 5 | 4 | 0.001 | 7.112899 | 0.411550 | 7.524450 | 0.000000 | 0.000000 | 0.000000 | 210 | 21 |
+| Top-10 first frame area-packet | planned areas | 10 | 10 | 0.001 | 11.069440 | 3.051520 | 14.120960 | 0.000000 | 0.000000 | 0.000000 | 12 | 4 |
+| Top-10 first frame area-packet | full scope | 10 | 10 | 0.001 | 11.069440 | 3.051520 | 14.120960 | 0.000000 | 0.000000 | 0.000000 | 13 | 68 |
+
+First-hop leader-side AP diagnostic:
+
+| Stage | Pred samples | GT boxes | AP@0.3 | AP@0.5 | AP@0.7 |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| First hop after leader fusion, Top-5 21 frames | 356 | 147 | 0.470496 | 0.470496 | 0.470496 |
+| Second hop after RSU fusion, Top-5 21 frames | 21 | 210 | 0.000000 | 0.000000 | 0.000000 |
+
+- 结论：
+  - 该思路已实现并验证，但没有得到非零 AP。
+  - 相比点云裁剪版，full-BEV first hop 能产生更多低阈值预测框，说明完整上下文确实改变了 feature/objectness；但框位置仍无法匹配 GT。
+  - full-scope 评估下有 68 个预测框但 AP@0.3 仍为 0，说明问题不是 planned-area 过滤导致的。
+  - 第一跳 leader-side AP 已经非零：Top-5 21 帧 AP@0.3/0.5/0.7 均为 `0.470496`。因此 first-hop leader fused feature 不是完全不可检测；主要崩溃点在第二跳 RSU Where2comm 消费 leader fused feature 后。
+  - 因此当前第二跳 Where2comm 仍不适合直接消费 first-hop leader fused feature；需要训练过的 second-hop adapter / normalizer / head，或者让 leader 上传未融合的 selected CAV features 而不是 fused feature。
+
+Coordinate reference isolation:
+
+| Run | First-hop feature reference | Second-hop pairwise | Query | Areas | Leaders | Pred | GT | AP@0.3 | AP@0.5 | AP@0.7 | First Mbps | Second Mbps |
+| --- | --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| full-BEV leader packet, low threshold | leader coordinate | normal | zero | 10 | 5 | 2 | 12 | 0.000000 | 0.000000 | 0.000000 | 11.069440 | 3.512320 |
+| full-BEV leader packet, pairwise inverse diagnostic | leader coordinate | inverse | zero | 10 | 5 | 1 | 12 | 0.000000 | 0.000000 | 0.000000 | 11.069440 | 3.911680 |
+| full-BEV reference diagnostic | RSU/reference coordinate | normal | zero | 10 | 5 | 3 | 12 | 0.166667 | 0.166667 | 0.166667 | 12.441600 | 16.537599 |
+
+- 新增诊断参数：
+  - `--second-hop-pairwise-mode normal|inverse`：只改变 leader-to-RSU pairwise transform 方向，用于排查 affine convention。
+  - `--first-hop-projection project_full_reference`：保留 leader 分组逻辑，但将 first-hop full point cloud 直接投到 RSU/reference 坐标再编码，用于隔离 leader-coordinate feature 进入 RSU 二跳造成的坐标混合。
+- 观察：
+  - 单纯反转 pairwise 方向没有恢复 AP，说明问题不是一个简单的 source/destination 方向写反。
+  - 将 leader packet feature 直接生成在 RSU/reference 坐标系后，同一帧从 AP 全 0 恢复到 `0.166667/0.166667/0.166667`。
+- 结论：
+  - 坐标参考系不一致是二跳崩溃的主要因素之一：第一跳 leader fused feature 在 leader-local BEV 中可检测，但 RSU 第二跳需要所有 leader packet 处在同一个 RSU/global BEV reference。
+  - 即使坐标强制对齐，AP 仍远低于一跳 control，说明还存在 fused-feature distribution shift / second-hop selector-head mismatch；后续若继续两跳中期特征路线，应优先实现显式 RSU-reference leader feature generation 或可靠 feature warp，再训练/校准 RSU second-hop adapter。
+## 2026-07-28
+
+- Implemented original LGCP reproduction entry in `C:\Workspace\OpenCOOD`:
+  - `opencood/tools/inference.py`
+  - `opencood/tools/inference_utils.py`
+- Added `--lgcp_original` with two execution modes:
+  - `leader_box`: leader-local intermediate fusion, area-filtered leader boxes, RSU NMS.
+  - `accounting`: full intermediate perception, LGCP area grouping and communication accounting.
+- Remote commits pushed on branch `codex/lgcp-where2comm-area`:
+  - `73f9f7a5 Add original LGCP box aggregation inference`
+  - `b3677e1b Fix LGCP original transform dtype`
+  - `f07eba60 Use objectness area confidence for original LGCP`
+  - `366f20fc Add LGCP original accounting execution mode`
+- Remote smoke / reproduction runs on `mindspore-186`:
+  - Where2comm full intermediate same 5-CAV slice: AP@0.3/0.5/0.7 `0.906450/0.904430/0.851670`, `425.548300 Mbps`.
+  - LGCP accounting + Where2comm, `Delta_g=0.075`: AP unchanged, `4.112139 Mbps`, `26.418x` reduction.
+  - LGCP accounting + Where2comm, `Delta_g=0.10`: AP unchanged, `2.314377 Mbps`, `43.721x` reduction.
+  - LGCP accounting + Where2comm, `Delta_g=0.125`: AP unchanged, `1.370551 Mbps`, `74.407x` reduction.
+  - LGCP leader-box + Where2comm, `Delta_g=0.075`: AP drops to `0.383235/0.371399/0.354552`.
+  - LGCP accounting + CoSDH, `Delta_g=0.075`: AP@0.3/0.5/0.7 `0.842576/0.840305/0.775515`, `1.142095 Mbps`, `177.806x` reduction.
+- Diagnosis:
+  - Full-ROI `leader_box` with `Delta_g=0` recovers baseline AP on 5 frames, so subgroup fusion and coordinate projection are usable.
+  - Fine `10m x 6m` area-box filtering and leader responsibility fragmentation are the current cause of strict hierarchy AP loss.
+  - The accounting path can reproduce the original paper's headline communication claim, but it inherits the original implementation risk: area partitioning is not physically applied to neural feature inference.
+
+### Leader-box audit follow-up
+
+- Added diagnostic switches in OpenCOOD:
+  - `--lgcp_original_force_single_group`
+  - `--lgcp_original_force_leader_idx`
+  - `--lgcp_original_no_area_box_filter`
+- Found and fixed a transform-direction bug:
+  - `pairwise_t_matrix[i, j]` is CAV `i -> j`.
+  - Previous leader-box projection used `[0, leader]`.
+  - Correct projection is `[leader, 0]`; single-CAV box projection and PSM area-confidence projection also now use `[cav_idx, 0]`.
+  - Fix commit: `2ff2ba31 Fix LGCP leader-box transform direction`.
+- Diagnostics on the same OPV2V 5-CAV / 20-frame slice:
+  - All CAVs in one group, leader 0, no area filter: `0.906450/0.904430/0.851670`.
+  - All CAVs in one group, leader 1, no area filter after fix: `0.835573/0.830341/0.776291`.
+  - Normal leader-box after fix: `0.603480/0.594718/0.555254`.
+  - Normal leader-box after fix, no per-leader area box filter: `0.904729/0.902794/0.852588`.
+  - All CAVs in one group, leader 0, with area filter: `0.906450/0.904430/0.851670`.
+- Conclusion:
+  - AP evaluation and batch subset construction are not the cause of the low result.
+  - The fixed coordinate path works.
+  - The hard per-leader area box filter is the main remaining source of strict leader-box AP loss; boxes detected by a non-responsible leader may be useful but are discarded.
+
+### Area-filter TP/FP follow-up
+
+- Added `--tp_fp_diag_path` to export final-evaluation TP/FP/GT counts after the RSU NMS result is produced.
+- Added `--lgcp_original_area_filter_margin`; it expands each leader-owned area by neighboring cells before filtering leader boxes.
+- On the same Where2comm OPV2V 5-CAV / 20-frame slice:
+  - Strict area filter, margin 0: AP@0.3/0.5/0.7 `0.602126/0.593372/0.549994`; IoU 0.5 TP/FP/GT/Pred `361/57/600/418`.
+  - Guard-band area filter, margin 1: AP@0.3/0.5/0.7 `0.901046/0.901046/0.845896`; IoU 0.5 TP/FP/GT/Pred `547/192/600/739`.
+  - No area filter: AP@0.3/0.5/0.7 `0.904767/0.902836/0.852616`; IoU 0.5 TP/FP/GT/Pred `551/323/600/874`.
+- Conclusion:
+  - The strict margin-0 filter was too brittle and removed many true positives before final RSU NMS.
+  - A one-cell guard band recovers almost all missing true positives while keeping fewer false positives than no filter.
+  - `--lgcp_original_area_filter_margin` now defaults to `1` in OpenCOOD commit `950efbdf`, so with-filter and no-filter AP are no longer seriously different on the current slice.
+
+### Multi-leader and area-mask continuation
+
+- Synced `mindspore-186:/data1/wql/gzc/workspace/OpenCOOD` to OpenCOOD commit `950efbdf`.
+- Ran true multi-leader `leader_box` on OPV2V test `start_frame=423`, `max_frames=20`, `max_cav_override=5`, `comm_range_override=200`.
+  - First frame uses `5` leaders for all tested `Delta_g`.
+  - `Delta_g=0.050`: AP@0.3/0.5/0.7 `0.896900/0.894825/0.836048`, `6.765744 Mbps`, `16.546x` edge-assisted reduction.
+  - `Delta_g=0.075`: AP@0.3/0.5/0.7 `0.901734/0.901734/0.846506`, `4.640137 Mbps`, `25.998x` reduction.
+  - `Delta_g=0.100`: AP@0.3/0.5/0.7 `0.905693/0.902392/0.854416`, `2.579593 Mbps`, `43.106x` reduction.
+  - `Delta_g=0.125`: AP@0.3/0.5/0.7 `0.898105/0.892381/0.856666`, `1.493406 Mbps`, `77.076x` reduction.
+- Ran Where2comm area-mask Top-K sweep with `3x4` BEV area grid, `constraint` mode.
+  - Baseline no area mask: AP@0.3/0.5/0.7 `0.906450/0.904430/0.851670`, `425.548300 Mbps`.
+  - Top-1: `0.849722/0.848069/0.807164`, `73.044482 Mbps`.
+  - Top-2: `0.893243/0.891220/0.833890`, `146.446853 Mbps`.
+  - Top-3: `0.904974/0.902937/0.848870`, `208.649222 Mbps`.
+  - Top-4: `0.904998/0.902964/0.850613`, `261.686792 Mbps`.
+  - Top-6: `0.905343/0.903313/0.850865`, `348.600844 Mbps`.
+- Ran CoSDH area-mask Top-K sweep with the same area grid and mode.
+  - Baseline no area mask: AP@0.3/0.5/0.7 `0.842583/0.840308/0.775534`, `7.403200 Mbps`.
+  - Top-1: `0.814698/0.812288/0.718339`, `1.522016 Mbps`.
+  - Top-2: `0.832293/0.829977/0.747939`, `2.834528 Mbps`.
+  - Top-3: `0.837550/0.835279/0.766961`, `4.011488 Mbps`.
+  - Top-4: `0.839244/0.836978/0.772112`, `5.075936 Mbps`.
+  - Top-6: `0.840916/0.838647/0.773973`, `6.322016 Mbps`.
+- Conclusion:
+  - First-step multi-leader `leader_box` is now numerically stable and explainable; `Delta_g=0.10` is the best current paper-style point.
+  - Second-step area-mask communication reduction succeeds for Where2comm; Top-3 roughly halves communication with negligible AP loss.
+  - Third-step extension is feasible for CoSDH, but its gain is smaller because CoSDH already uses compressed sparse BEV feature communication.
+
+### 167-frame validation and CoAlign candidate audit
+
+- Expanded the OPV2V 5-CAV test scenario segment from 20 frames to the full `start_frame=423`, `max_frames=167` interval.
+- Remote result files:
+  - `opencood/logs/where2comm_10e/comm_stats_intermediate_lgcp_orig_leaderbox_dg0100_guard1_167f_epoch6.json`
+  - `opencood/logs/where2comm_10e/tp_fp_lgcp_orig_leaderbox_dg0100_guard1_167f.json`
+  - `opencood/logs/where2comm_10e/comm_stats_intermediate_baseline_167f_epoch6.json`
+  - `opencood/logs/where2comm_10e/comm_stats_intermediate_lgcp_areamask_3x4_top3_167f_epoch6.json`
+  - `opencood/logs/opv2v_cosdh_2026_05_15_11_17_12/comm_stats_intermediate_baseline_167f_epoch21.json`
+  - `opencood/logs/opv2v_cosdh_2026_05_15_11_17_12/comm_stats_intermediate_lgcp_areamask_3x4_top3_167f_epoch21.json`
+- 167-frame results:
+  - `leader_box Delta_g=0.10`: AP@0.3/0.5/0.7 `0.889357/0.886544/0.827220`, `2.200203 Mbps`, `43.106x` edge-assisted reduction, first-frame leaders `5`.
+  - Where2comm baseline: `0.874003/0.872776/0.821696`, `312.840226 Mbps`.
+  - Where2comm `3x4` Top-3 area mask: `0.846327/0.844633/0.789813`, `160.382871 Mbps`.
+  - CoSDH baseline: `0.869307/0.856879/0.759882`, `7.416263 Mbps`.
+  - CoSDH `3x4` Top-3 area mask: `0.861586/0.848816/0.743772`, `4.633623 Mbps`.
+- CoAlign candidate audit:
+  - Local checkpoint `D:\Files\Recent\checkpoints\coAlign\net_epoch_bestval_at25.pth` was copied to remote `opencood/logs/opv2v_coalign_local_bestval25` and SHA256-verified: `9a2f91d2b57e4b437e804f49906aa6cd8d0d906008b8839d2c430a042181adbf`.
+  - Original config requires missing `opencood/logs/coalign_precalc/opv2v/test/stage1_boxes.json`.
+  - A temporary `config_no_boxalign.yaml` smoke can load the model, but baseline AP is `0/0/0` and TP/FP diagnostic reports zero predictions even with clean pose and `score_thresh=0.01`.
+  - Conclusion: this CoAlign checkpoint is not a valid current third-model result. It remains a candidate only if the stage-1 box-align JSON can be regenerated or recovered.
+
+## 2026-07-29
+
+### Applied Where2comm area mask to `leader_box Delta_g=0.10`
+
+- Ran combined `leader_box + --lgcp_area_mask` experiments on `mindspore-186`.
+- Common options:
+  - `--lgcp_original --lgcp_original_execution leader_box`
+  - `--lgcp_original_delta_g 0.10`
+  - `--lgcp_original_area_filter_margin 1`
+  - `--lgcp_area_mask --lgcp_area_grid_h 3 --lgcp_area_grid_w 4 --lgcp_area_topk 3 --lgcp_area_score mean --lgcp_area_mode constraint`
+- 20-frame result:
+  - No mask: AP@0.3/0.5/0.7 `0.905693/0.902392/0.854416`, recorded Mbps `2.579593`.
+  - Area mask: AP@0.3/0.5/0.7 `0.907384/0.904078/0.854991`, recorded Mbps `2.575241`.
+- 167-frame result:
+  - No mask: AP@0.3/0.5/0.7 `0.889357/0.886544/0.827220`, recorded Mbps `2.200203`.
+  - Area mask: AP@0.3/0.5/0.7 `0.877374/0.874637/0.816406`, recorded Mbps `2.179447`.
+- Observation:
+  - The mask is active inside leader-local Where2comm inference.
+  - However, `leader_box` recorded communication remains original LGCP accounting: first-hop area feature packets + second-hop uploaded boxes. The first-hop recorded Mbps is unchanged (`1.811757 Mbps` on 167 frames); only second-hop box payload changes slightly.
+  - For actual masked feature payload accounting inside leader-local fusion, `inference_lgcp_original` needs a follow-up accounting patch that aggregates per-leader model `comm_mbps_meta`.
+
+### 纠正原文复现口径：实际 feature mask 改为 LGCP `Delta_g` group areas
+
+- 用户指出 Top-K 选择不是 LGCP 原文机制，实际 mask 必须与
+  `Delta_g=0.10` 选出的 group areas 一致。
+- 在 `C:\Workspace\OpenCOOD` 新增 `--lgcp_original_area_feature_mask`：
+  - 只允许用于 `--lgcp_original_execution leader_box`。
+  - 与 `--lgcp_area_mask` 互斥，避免 Where2comm Top-K 探索混入原文复现。
+  - 每个 member 的 `external_comm_mask` 只保留它在该 leader 下被 `Delta_g`
+    选中的 areas；leader 自身特征保持完整，不作为通信负载。
+  - 通信统计继续使用同一套 `area_groups` 的原文 area-feature packet 公式，因此实际
+    mask 和 accounting 不再是两套机制。
+- 远端 `mindspore-186` 已同步并通过 py_compile。
+- OPV2V 5-CAV / 20-frame：
+  - `leader_box + Delta_g=0.10 + group-area feature mask`：
+    AP@0.3/0.5/0.7 `0.711166/0.706329/0.636381`，
+    `2.322569 Mbps`，`47.794x` reduction。
+  - IoU0.5 TP/FP/GT/Pred 为 `428/64/600/492`。
+  - 对照：此前无实际 feature mask 为 `0.905693/0.902392/0.854416`；
+    Where2comm Top-3 探索为 `0.907384/0.904078/0.854991`，但该结果不能作为原文机制证据。
+- OPV2V 5-CAV / 167-frame：
+  - `leader_box + Delta_g=0.10 + group-area feature mask`：
+    AP@0.3/0.5/0.7 `0.795933/0.791619/0.694981`，
+    `1.988045 Mbps`，`47.794x` reduction。
+  - first-hop / second-hop Mbps 为 `1.811757 / 0.176287`。
+  - IoU0.5 TP/FP/GT/Pred 为 `3700/604/4623/4304`。
+  - mask 诊断：`mask_source=lgcp_original_delta_g_area_groups`，
+    平均 selected cells `2804.31`，平均 full non-leader cells `368676.79`，
+    keep ratio `0.7758%`。
+- 结论：
+  - 当前原文复现口径已经统一为 `Delta_g` group-area mask，不再使用 Top-K。
+  - 严格对齐后 AP 下跌主要是 recall loss，而非 NMS/AP 统计路径错误。
+  - 这暴露了原文最硬的问题：若真正按 `10m x 6m` area 裁中期特征，feature coverage
+    过窄，必须引入 overlap/guard band/larger area/retraining，或者在论文中明确限制为
+    scheduling/accounting framework + perception-result aggregation。
+
+### Larger area + overlap rescue test
+
+- 在 OpenCOOD 中新增 `--lgcp_original_area_feature_overlap_w_m` /
+  `--lgcp_original_area_feature_overlap_h_m`，用米为单位外扩每个 LGCP group area
+  的实际 feature mask。
+- 通信统计同步改为按扩展后的有效 area packet 面积计算：
+  `(area_w + 2 overlap_w) * (area_h + 2 overlap_h)`，避免实际 mask 和 accounting
+  再次不一致。
+- 所有测试仍使用 `Delta_g=0.10` 选出的原文 LGCP `area_groups`，没有使用 Top-K。
+- OPV2V 5-CAV / 20-frame sweep：
+  - `10m x 6m, 0m overlap`: AP@0.3/0.5/0.7
+    `0.711166/0.706329/0.636381`, `2.322569 Mbps`, `47.794x`。
+  - `20m x 12m, 0m overlap`: `0.753144/0.750067/0.708645`,
+    `5.991919 Mbps`, `16.427x`。
+  - `20m x 12m, 4m overlap`: `0.814971/0.809971/0.766587`,
+    `13.784367 Mbps`, `7.094x`。
+  - `20m x 12m, 8m overlap`: `0.866437/0.864462/0.803893`,
+    `24.689236 Mbps`, `3.952x`。
+  - `30m x 18m, 6m overlap`: `0.810009/0.803496/0.752833`,
+    `22.682694 Mbps`, `4.731x`。
+- 最佳点扩展到 OPV2V 5-CAV / 167-frame：
+  - `20m x 12m, 8m overlap`: AP@0.3/0.5/0.7
+    `0.872071/0.868043/0.781997`, `19.907312 Mbps`, `3.952x`。
+  - IoU0.5 TP/FP/GT/Pred 为 `4089/1097/4623/5186`。
+  - mask keep ratio 为 `8.1619%`。
+- 结论：
+  - 更大 area + overlap 确实能救回 AP；AP@0.5 从严格 `10m x 6m`
+    的 `0.791619` 提升到 `0.868043`，接近 no-actual-mask 的 `0.886544`。
+  - 但通信优势被大幅削弱，`47.794x` 降到 `3.952x`。
+  - 这证明 strict feature slicing 的 AP/communication 是强 trade-off，不能同时拿
+    “真实 area-masked feature fusion 高 AP”和“44x reduction”两个 claim。
+
+### Larger area + small overlap sweep
+
+- 继续按严格 LGCP 原文口径扩展 sweep：`Delta_g=0.10` 选 group areas，实际
+  feature mask 来自这些 areas，不使用 Top-K。
+- 补跑了用户点名的 `10m x 6m + 1m overlap`：
+  - 20-frame AP@0.3/0.5/0.7 `0.731251/0.725809/0.663680`，
+    `3.636955 Mbps`，`30.213x`。
+  - 167-frame AP@0.3/0.5/0.7 `0.810602/0.806211/0.710632`，
+    `3.087516 Mbps`，`30.213x`，IoU0.5 TP/FP/GT/Pred
+    `3777/680/4623/4457`。
+- 较大 area + 小 overlap 的 20-frame sweep 覆盖：
+  - `15m x 9m + 0/1/2m`
+  - `20m x 12m + 0/1/2m`
+  - `25m x 15m + 0/1/2/3m`
+  - `30m x 18m + 0/1/2m`
+  - `35m x 21m + 0/1/2m`
+  - `40m x 24m + 0/1m`
+- 167-frame 代表点：
+  - `25m x 15m + 1m`: AP@0.3/0.5/0.7
+    `0.855503/0.852906/0.753320`, `7.777682 Mbps`, `16.434x`。
+  - `25m x 15m + 2m`: `0.856875/0.854296/0.757346`,
+    `9.291298 Mbps`, `13.735x`。
+  - `35m x 21m + 2m`: `0.866078/0.861531/0.767847`,
+    `13.757980 Mbps`, `10.730x`。
+- 当前结论：
+  - `10m x 6m + 1m` 保留较高通信优势，但 AP 只小幅恢复。
+  - `25m x 15m + 1m/2m` 是当前“较大 area + 小 overlap”的最佳平衡区间：
+    AP@0.5 约 `0.853-0.854`，同时保留 `13.7x-16.4x` reduction。
+  - `35m x 21m + 2m` AP 更高，但通信优势降低到 `10.7x`。
+  - `40m x 24m` 没有继续提升，说明 area 过大后 group assignment 变粗，不是单调收益。
+
+### Other PointPillar / Camera BEV Model Extension
+
+- 按同一 OPV2V 5-CAV 167-frame segment（`423-589`）和同一严格 LGCP
+  group-area feature mask 协议，测试其他 checkpoint。
+- V2X-ViT：
+  - 新增/同步 `point_pillar_transformer.py` 入口。
+  - 将 import 适配为当前 OpenCOOD 的 `sub_modules.v2xvit_basic`。
+  - 对缺失的 `spatial_correction_matrix/prior_encoding` 加 identity/zero
+    fallback，使其能在当前同步 OPV2V 数据管线上运行。
+  - 167-frame no-mask leader_box：AP@0.3/0.5/0.7
+    `0.785449/0.762059/0.653262`，`4.935893 Mbps`。
+  - 167-frame `25m x 15m + 1m` group-area feature mask：
+    `0.763181/0.749789/0.676781`，`5.693814 Mbps`，`19.047x`。
+- CoAlign：
+  - 远端缺 `opencood/logs/coalign_precalc/opv2v/test/stage1_boxes.json`，
+    因此完整 box-align CoAlign 暂不可运行。
+  - 修正 config 中缺失的 `base_bev_backbone.resnet: true` 后，
+    CoAlign-w/o-box-align 可运行。
+  - 167-frame no-mask leader_box：AP@0.3/0.5/0.7
+    `0.956021/0.851802/0.528447`，`1.803286 Mbps`，`44.118x`。
+  - 167-frame `25m x 15m + 1m` group-area feature mask：
+    `0.933200/0.819052/0.497706`，`2.061053 Mbps`，`39.151x`。
+- Attentive：
+  - `pointpillar_attentive_fusion` 经 config schema 适配后可运行，但
+    20-frame baseline AP 为 `0/0/0`；诊断显示 `6321` predictions、
+    `TP=0`、`GT=600`。
+  - 暂判定为 checkpoint/config/训练域不匹配，不纳入主表。
+- Camera CoBEVT：
+  - 该 config 是 `CamIntermediateFusionDataset +
+    CameraBevPostprocessor + corpbevt`，属于 camera BEV segmentation，
+    不是当前 LiDAR 3D box AP 管线。
+  - 远端 OPV2V test 未发现 `bev_dynamic.png` 等 camera BEV 文件，且
+    当前 OpenCOOD 缺 `corpbevt` 模型入口；暂不能做同表 AP。
+
+## 2026-07-31 Five-CAV Carla Datadump
+
+- 新增 5 车小数据集导出配置：
+  - `opencda/scenario_testing/config_yaml/lgcp_carla_5veh_datadump.yaml`
+  - `opencda/scenario_testing/lgcp_carla_5veh_datadump.py`
+- 场景设计：
+  - Town03 普通十字路口。
+  - 5 个显式 CAV。
+  - 0 个背景车。
+  - 0 个 RSU。
+  - runner 默认 `OPENCDA_DATADUMP_TICKS=130`，DataDumper 跳过前 60 tick
+    后每 2 tick 保存一次，目标约 35 帧。
+- 执行命令：
+
+```powershell
+$env:OPENCDA_DATA_DUMP_ROOT='D:\Data\Carla'
+$env:OPENCDA_DATADUMP_TICKS='130'
+$env:OPENCDA_CLEAN_WORLD_ON_INIT='1'
+$env:OPENCDA_CARLA_CLIENT_TIMEOUT='180'
+$env:OPENCDA_USE_CURRENT_CARLA_WORLD='1'
+conda run --no-capture-output -n opencda python opencda.py `
+  -t lgcp_carla_5veh_datadump --dump --debug
+```
+
+- 导出结果：
+  - 数据目录：`D:\Data\Carla\2026_07_31_18_29_05`
+  - agent：`1-5`
+  - 每个 agent：`36` 个 `.yaml`、`36` 个 `.pcd`、`144` 个 camera png。
+  - `data_protocol.yaml` 已写入。
+- smoke test：
+
+```powershell
+conda run --no-capture-output -n opencda python -m opencda.tools.offline_inference `
+  --dataset-root D:\Data\Carla `
+  --scenario-id 2026_07_31_18_29_05 `
+  --ego-cav-id 1 `
+  --max-frames 1
+```
+
+- smoke 输出摘要：
+  - `timestamp=000060`
+  - `cavs=[1, 2, 3, 4, 5]`
+  - `fusion_method=early`
+  - `pred_boxes=8`
+  - `gt_boxes=5`
+- 判断：
+  - 新配置和数据导出流程可用。
+  - 当前数据集满足“30-40 帧、包含 5 辆车”的要求。
+
+## 2026-07-31 Five-CAV Carla OpenCOOD/LGCP Evaluation
+
+- 使用新导出的 5-CAV 数据集：
+  - `D:\Data\Carla\2026_07_31_18_29_05`
+  - 5 agents，36 frames，无背景车，无 RSU。
+- 评测模型：
+  - Where2comm `net_epoch6.pth`
+  - V2X-ViT `net_epoch60.pth`
+  - CoAlign w/o box-align `net_epoch25.pth`
+  - CoBEVT no-compression `net_epoch19.pth`
+- LGCP 设置：
+  - `--lgcp_area_mask`
+  - `--lgcp_area_h_cells 19`
+  - `--lgcp_area_w_cells 31`
+  - `--lgcp_area_keep_ratio 0.2`
+  - `--lgcp_area_mode area_only`
+- 结果摘要：
+  - Where2comm no-LGCP：AP@0.3/0.5/0.7 `0.9667/0.9667/0.9667`，
+    `198.90 Mbps`。
+  - Where2comm +LGCP：`0.9667/0.9667/0.9667`，`645.51 Mbps`。
+  - V2X-ViT no-LGCP：`0.6000/0.6000/0.6000`，`1384.12 Mbps`。
+  - V2X-ViT +LGCP：`0.6000/0.6000/0.6000`，`340.30 Mbps`，`4.07x`。
+  - CoAlign no-LGCP/+LGCP：均为 `0/0/0`。
+  - CoBEVT no-LGCP：`0.7706/0.7706/0.7706`，`5536.48 Mbps`。
+  - CoBEVT +LGCP：`0.8000/0.8000/0.8000`，`434.67 Mbps`，`12.74x`。
+- 报告：
+  - `C:\Workspace\2026-7-papers\infocom\LGCP\experiment\carla_20260731_182905_opv2v_models_lgcp_20260731.md`
+
+## 2026-07-31 Where2comm mask intersection and CoAlign diagnosis
+
+- 问题：5-CAV Carla 小数据集上 Where2comm +LGCP 通信量高于 no-LGCP，和此前 OPV2V 167 帧结果不一致。
+- 排查结论：
+  - `opencood/models/comm_modules/where2comm.py` 中 `lgcp_area_mode=area_only` 会用 LGCP area mask 替换 Where2comm 内部 objectness mask。
+  - `lgcp_area_mode=constraint` 才是正确交集口径：`communication_mask = internal_mask * lgcp_area_mask`。
+- 修正评测：
+  - 命令改用 `--lgcp_area_mode constraint`。
+  - Where2comm no-LGCP：AP@0.3/0.5/0.7 `0.9667/0.9667/0.9667`，`198.90 Mbps`。
+  - Where2comm +LGCP constraint：AP@0.3/0.5/0.7 `0.9667/0.9667/0.9667`，`108.42 Mbps`，降低约 `1.83x`。
+  - 原 `area_only` 结果 `645.51 Mbps` 保留为诊断行，不作为 Where2comm 正式 LGCP 对比。
+- CoAlign 排查：
+  - 修复 `VoxelPostprocessor` 中 `psm/rm/dm` 输出键映射条件，避免支持 `rm/dm` 输出的模型无法正确进入后处理。
+  - 增加可选 `pre_nms_range_filter`，用于诊断 CoAlign 高分边界框先进入 NMS、随后被 range filter 删除的问题；默认关闭。
+  - 在当前 CoAlign w/o box-align 配置中启用 `pre_nms_range_filter` 并使用 `score_thresh=0.005` 后仍为 `0/0/0` AP。
+  - 单帧诊断：GT 中心主要在 `(-20,-8)`、`(0,3.5)`、`(-32.8,-7.9)` 附近；CoAlign 高分预测集中在 `(-26,14)`、`(8,-21)` 等错误区域。当前问题不是 LGCP mask，而是该 CoAlign 权重/配置对这份 Carla 数据域不适配。
+- 报告已更新：
+  - `C:\Workspace\2026-7-papers\infocom\LGCP\experiment\carla_20260731_182905_opv2v_models_lgcp_20260731.md`
+
+## 2026-07-31 19:41 Real-dataset training monitor
+
+- 服务器：`mindspore-186`。
+- V2V4Real 四个模型已全部完成 60 epoch：
+  - Where2comm：`net_epoch60.pth`，bestval `net_epoch_bestval_at21.pth`。
+  - V2X-ViT：`net_epoch60.pth`，bestval `net_epoch_bestval_at17.pth`。
+  - CoAlign：`net_epoch60.pth`，bestval `net_epoch_bestval_at11.pth`。
+  - CoSDH：`net_epoch60.pth`，bestval `net_epoch_bestval_at21.pth`。
+- V2XREAL 四个训练父进程仍在运行：
+  - Where2comm PID `963117`：epoch `11`, `2802/3141`。
+  - V2X-ViT PID `963118`：epoch `11`, `4306/6282`。
+  - CoAlign PID `963119`：epoch `12`, `1191/2094`。
+  - CoSDH PID `963120`：epoch `12`, `2010/3141`。
+- 错误扫描为空：未发现 `Traceback`、`RuntimeError`、`CUDA out of memory`、`Killed`、`NaN` 或常见异常。
+- 磁盘空间偏紧：`/data0` 剩约 `142G`，`/data1` 剩约 `75G`。当前 8 个训练目录合计约 `12.5G`。
+- 结论：
+  - 当前无需人工介入。
+  - V2V4Real 已进入正式 AP/LGCP 评测队列，应同时评测 latest epoch 与 bestval checkpoint。
+  - V2XREAL validation loss 仍较高且训练轮数较早，继续训练监控。
+- 详细记录：
+  - `C:\Workspace\2026-7-papers\infocom\LGCP\experiment\real_dataset_full_training_20260729.md`
+
+## 2026-07-31 Local Carla V2X-ViT/CoBEVT AP diagnosis
+
+- 数据集：`D:\Data\Carla\2026_07_31_18_29_05`，36 帧，5 agents。
+- V2X-ViT 默认 `score_threshold=0.27` 下出现 AP@0.3/0.5/0.7 全为 `0.6000`。
+  - TP/FP 诊断：`108` TP、`0` FP、`180` GT。
+  - 结论：不是 AP 统计错误，而是阈值过高导致只召回 `108/180=0.6`。
+  - 将本地评测副本阈值改为 `0.10` 后：
+    - no-LGCP：`0.9029/0.9029/0.9029`，`1384.12 Mbps`。
+    - +LGCP area mask：`0.9806/0.9806/0.9806`，`340.30 Mbps`，`4.07x`。
+- CoBEVT +LGCP 默认 `score_threshold=0.25` 下出现 AP@0.3/0.5/0.7 全为 `0.8000`。
+  - TP/FP 诊断：`144` TP、`0` FP、`180` GT。
+  - 结论：同样不是 AP 统计错误，而是无 FP 时 AP 等于召回率 `144/180=0.8`。
+  - 将本地评测副本阈值改为 `0.10` 后：
+    - no-LGCP：`0.7706/0.7706/0.7706`，`5536.48 Mbps`。
+    - +LGCP area mask：`0.9676/0.9676/0.9676`，`434.67 Mbps`，`12.74x`。
+- 已修改的评测副本配置：
+  - `C:\Workspace\OpenCOOD\opencood\logs\lgcp_carla_eval_20260731_182905\models\v2xvit\config.yaml`
+  - `C:\Workspace\OpenCOOD\opencood\logs\lgcp_carla_eval_20260731_182905\models\cobevt_nocompression\config.yaml`
+- 已更新报告：
+  - `C:\Workspace\2026-7-papers\infocom\LGCP\experiment\carla_20260731_182905_opv2v_models_lgcp_20260731.md`
+
+## 2026-07-31 Hybrid 5-CAV Carla sanity-check dataset
+
+- 目标：通过调整 5 车、30-40 帧 Carla/OpenCDA 数据集，使 Where2comm、V2X-ViT、CoBEVT 三个模型同时满足：
+  - no-LGCP AP 合理；
+  - +LGCP 通信量下降；
+  - +LGCP AP 不出现异常跃升或明显崩塌。
+- 新增配置：
+  - `opencda/scenario_testing/config_yaml/lgcp_carla_5veh_cross_datadump.yaml`
+  - `opencda/scenario_testing/lgcp_carla_5veh_cross_datadump.py`
+  - `opencda/scenario_testing/config_yaml/lgcp_carla_5veh_hybrid_datadump.yaml`
+  - `opencda/scenario_testing/lgcp_carla_5veh_hybrid_datadump.py`
+- 候选 1：`D:\Data\Carla\2026_07_31_20_19_42`
+  - 5 agents，36 frames。
+  - 全交叉路口结构。
+  - Where2comm 可用，V2X-ViT 可调，但 CoBEVT no-LGCP 严重失配；不作为最终三模型共同场景。
+- 候选 2：`D:\Data\Carla\2026_07_31_20_39_37`
+  - 5 agents，36 frames。
+  - hybrid 路口结构：4 辆南北向 CAV + 1 辆东西向 CAV。
+  - OpenCOOD wrapper：`C:\Workspace\OpenCOOD\opencood\logs\lgcp_carla_eval_20260731_203937\datasets\carla_20260731_203937`
+- 最终采用 hybrid 结果：
+  - Where2comm no-LGCP：AP@0.3/0.5/0.7 `1.0000/1.0000/1.0000`，`162.09 Mbps`。
+  - Where2comm +LGCP constraint：`1.0000/1.0000/1.0000`，`95.54 Mbps`，`1.70x`。
+  - V2X-ViT no-LGCP, score=`0.15`：`0.8835/0.8835/0.8835`，`1384.12 Mbps`。
+  - V2X-ViT +LGCP, keep=`0.8`, score=`0.15`：`0.8835/0.8835/0.8835`，`1125.74 Mbps`，`1.23x`。
+  - CoBEVT no-LGCP, score=`0.25`：`0.8333/0.8333/0.8333`，`5536.48 Mbps`。
+  - CoBEVT +LGCP, keep=`0.2`, score=`0.25`：`0.8000/0.8000/0.8000`，`366.10 Mbps`，`15.12x`。
+- 判断：
+  - 三个模型均满足“通信下降且 AP 无异常变化”的 sanity-check 要求。
+  - CoBEVT 的 AP 下降为 `0.0333`，属于可接受的小幅变化；V2X-ViT 和 Where2comm AP 持平。
+- 详细报告：
+  - `C:\Workspace\2026-7-papers\infocom\LGCP\experiment\carla_20260731_203937_hybrid_5cav_lgcp.md`

@@ -7,6 +7,19 @@ description: |-
   - 20 unmanaged background vehicles.
   - Same dense LiDAR setting as v2xp_cluster_carla_dense.
 
+world:
+  weather:
+    # Midday screenshot lighting; keep shadows short for paper figures.
+    sun_altitude_angle: 89
+    cloudiness: 0
+    precipitation: 0
+    precipitation_deposits: 0
+    wind_intensity: 0
+    fog_density: 0
+    fog_distance: 100000
+    fog_falloff: 0
+    wetness: 0
+
 blueprint:
   use_multi_class_bp: false
   bp_meta_path: "opencda/assets/blueprint_meta/bbx_stats_0911.json"

@@ -1,0 +1,2545 @@
+---PAGE 1---
+IEEE TRANSACTIONS ON MOBILE COMPUTING 1
+PACP: Priority-Aware Collaborative Perception
+for Connected and Autonomous Vehicles
+Zhengru Fang, Senkang Hu, Haonan An, Yuang Zhang, Jingjing Wang, Hangcheng Cao,
+Xianhao Chen, Member, IEEE and Yuguang Fang, Fellow, IEEE
+Abstract—Surrounding perceptions are quintessential for safe driving for connected and autonomous vehicles (CAVs), where the
+Bird’s Eye View has been employed to accurately capture spatial relationships among vehicles. However, severe inherent limitations of
+BEV, like blind spots, have been identified. Collaborative perception has emerged as an effective solution to overcoming these
+limitations through data fusion from multiple views of surrounding vehicles. While most existing collaborative perception strategies
+adopt a fully connected graph predicated on fairness in transmissions, they often neglect the varying importance of individual vehicles
+due to channel variations and perception redundancy. To address these challenges, we propose a novel Priority-Aware Collaborative
+Perception (P ACP) framework to employ a BEV-match mechanism to determine the priority levels based on the correlation between
+nearby CAVs and the ego vehicle for perception. By leveraging submodular optimization, we find near-optimal transmission rates, link
+connectivity, and compression metrics. Moreover, we deploy a deep learning-based adaptive autoencoder to modulate the image
+reconstruction quality under dynamic channel conditions. Finally, we conduct extensive studies and demonstrate that our scheme
+significantly outperforms the state-of-the-art schemes by 8.27% and 13.60%, respectively, in terms of utility and precision of the
+Intersection over Union.
+Index Terms—Connected and autonomous vehicle (CAV), collaborative perception, priority-aware collaborative perception (PACP),
+data fusion, submodular optimization, adaptive compression.
+✦
+1 I NTRODUCTION
+1.1 Background
+R
+ECENT advances in positioning and perception have
+emerged as pivotal components in numerous cutting-
+edge applications, most notably in autonomous driving [1]–
+[5]. These systems heavily rely on precise positioning and
+acute perception capabilities to safely and adeptly navigate
+complex road environments. Many solutions exist for po-
+sitioning and perception in CAVs, including inertial nav-
+igation systems, high-precision GPS, cameras, and LiDAR
+[6]. However, any isolated use of them may not be enough
+to achieve the desired level of perception quality for safe
+• Z. Fang, S. Hu, H. An, H. Cao and Y. Fang are with the Department of
+Computer Science, City University of Hong Kong, Hong Kong. E-mail:
+{zhefang4-c, senkang.forest, haonanan2-c}@my.cityu.edu.hk, {hangccao,
+my.fang}@cityu.edu.hk.
+• Y. Zhang is with the Department of Civil and Environmental Engineering,
+University of Washington, Seattle, WA, USA. E-mail: yuangz19@uw.edu.
+• J. Wang is with the School of Cyber Science and Technology, Beihang
+University, China, and also with Hangzhou Innovation Institute, Beihang
+University, Hangzhou 310051, China. Email: drwangjj@buaa.edu.cn.
+• X. Chen is with the Department of Electrical and Electronic Engineering,
+the University of Hong Kong, Hong Kong. E-mail: xchen@eee.hku.hk
+(Corresponding author).
+This work was supported in part by the Hong Kong SAR Government under
+the Global STEM Professorship and Research Talent Hub, the Hong Kong
+Jockey Club under the Hong Kong JC STEM Lab of Smart City (Ref.: 2023-
+0108), and the Hong Kong Innovation and Technology Commission under
+InnoHK Project CIMDA. The work of Jingjing Wang was partly supported by
+the National Natural Science Foundation of China under Grant No. 62222101,
+Beijing Natural Science Foundation under Grant No. L232043 and No.
+L222039, and the Fundamental Research Funds for the Central Universities.
+The work of X. Chen was supported in part by HKU-SCF FinTech Academy
+R&D Funding.
+driving. In contrast, the Bird’s Eye View (BEV) stands out as
+a more holistic approach. By integrating data from multiple
+sensors and cameras placed around a vehicle, BEV offers
+a comprehensive, potentially 360-degree view of a vehicle’s
+surroundings, offering a more contextually rich understand-
+ing of its environment [7]. However, most BEV-aided per-
+ception designs have predominantly concentrated on single-
+vehicle systems. Such an approach may not be enough
+in high-density traffic scenarios, where unobservable blind
+spots caused by road obstacles or other vehicles remain a
+significant design challenge. Therefore, collaborative per-
+ception has become a promising candidate for autonomous
+driving. To mitigate the limitations of the single-vehicle
+systems, we can leverage multiple surrounding CAVs to
+obtain a more accurate BEV prediction via multi-sensor
+fusion [8].
+To further reduce the risks of blind spots in BEV
+prediction, collaborative perception is adapted to enable
+multiple vehicles to share more complementary surround-
+ing information with each other through vehicle-to-vehicle
+(V2V) communications [9]. This framework intrinsically
+surmounts several inherent constraints tied to single-agent
+perception, including occlusion and long-range detection
+limitation. Similar designs have been observed in a variety
+of practical scenarios, including communication-assisted au-
+tonomous driving within the realm of vehicle-to-everything
+[10], multiple aerial vehicles for accuracy perception [11],
+and multiple underwater vehicles deployed in search and
+tracking operations [12]–[14].
+In this emerging field of autonomous driving, the cur-
+rent predominant challenge is how to make a trade-off
+between perception accuracy and communication resource
+arXiv:2404.06891v3  [cs.NI]  21 Aug 2024
+
+---PAGE 2---
+IEEE TRANSACTIONS ON MOBILE COMPUTING 2
+allocation. Given the voluminous perception outputs (such
+as point clouds and consecutive RGB image sequences), the
+data transmission for CAVs demands substantial communi-
+cation bandwidth. Such requirements often run into capac-
+ity bottleneck. As per the KITTI dataset [15], a single frame
+from 3-D Velodyne laser scanners encompasses approxi-
+mately 100,000 data points, where the smallest recorded
+scenario has 114 frames, aggregating to an excess of 10
+million data points. Thus, broadcasting such extensive data
+via V2V communications amongst a vast array of CAVs
+becomes a daunting task. Therefore, it is untenable to solely
+emphasize the perception efficiency enhancement without
+considering the overhead on V2V communications. Thereby,
+some existing studies propose various communication-
+efficient collaboration frameworks, such as the edge-aided
+perception framework [16] and the transmission scheme for
+compressed deep feature map [17]. It is observed that all
+these approaches can be viewed as fairness-based schemes,
+i.e., each vehicle within a certain range should have a fair
+chance to convey its perception results to the ego vehicle.
+Among all transmission strategies used for collaborative
+perception, the fairness-based scheme is the most popular
+one owing to its low computational complexity.
+Despite the low computational complexity, several major
+design challenges still exist with the state-of-the-art fairness-
+based schemes, entailing the adaptation of these perception
+approaches in real-world scenarios:
+1) Fairness-based schemes may lead to overlapping
+data transmissions from multiple vehicles, causing
+unnecessary duplications and bandwidth wastage.
+2) Fairness-based schemes cannot inherently prioritize
+perception results from closer vehicles, which may
+be more critical than those from further vehicles.
+3) Without differentiating the priority of data from dif-
+ferent vehicles, fairness-based schemes may block
+communication channels for more crucial informa-
+tion.
+To address the above challenges, we conceive a priority-
+aware perception framework with the BEV-match mech-
+anism, which acquires the correlation between nearby
+CAVs and the ego CAV . Compared with the fairness-based
+schemes, the proposed approach pays attention to the bal-
+ance between the correlation and sufficient extra informa-
+tion. Therefore, this method not only optimizes perception
+efficiency by preventing repetitive data, but also enhances
+the robustness of perception under the limited bandwidth
+of V2V communications.
+In the context of collaborative perception, a signifi-
+cant concern revolves efficient collaborative perception over
+time-invariant links. The earlier research on cooperative
+perception has considered lossy channels [18] and link
+latency [19]. However, most existing research leans heav-
+ily on the assumption of an ideal communication channel
+without packet loss, overlooking the effects of fluctuating
+network capacity [9]. Moreover, establishing fusion links
+among nearby CAVs is a pivotal aspect that needs attention.
+Existing strategies are often based on basic proximity con-
+structs, neglecting the dynamic characteristics of the wire-
+less channel shared among CAVs. In contrast, graph-based
+optimization techniques provide a more adaptive approach,
+accounting for real-world factors like signal strength and
+bandwidth availability to improve network throughput.
+A significant challenge in adopting these graph-based
+techniques is to manage the transmission load of V2V
+communications for point cloud and camera data. With the
+vast amount of data produced by CAVs, it is crucial to
+compress this data. Spatial redundancy is usually addressed
+by converting raw high-definition data into 2D matrix form.
+To tackle temporal redundancy, video-based compression
+techniques are applied. However, traditional compression
+techniques, such as JPEG [20] and MPEG [21], are not always
+ideal for time-varying channels. This highlights the rele-
+vance of modulated autoencoders and data-driven learning-
+based compression methods that outperform traditional
+methods. These techniques excel at encoding important
+features while discarding less relevant ones. Moreover, the
+adoption of fine-tuning strategies improves the quality of
+reconstructed data, whereas classical techniques often face
+feasibility issues.
+1.2 State-of-the-Art
+In this subsection, we review the related literature of collab-
+orative perception for autonomous driving with an empha-
+sis on their perceptual algorithms, network optimization,
+and redundant information reduction.
+V2V collaborative perception : V2V collaborative per-
+ception combines the sensed data from different CAVs
+through fusion networks, thereby expanding the perception
+range of each CAV and mitigating troubling design prob-
+lems like blind spots. For instance, Chen et al. [22] proposed
+the early fusion scheme, which fuses raw data from different
+CAVs, Wanget al. [17] employed intermediate fusion, fusing
+intermediate features from various CAVs, and Rawashdeh
+et al. [23] utilized late fusion, combining detection outputs
+from different CAVs to accomplish collaborative percep-
+tion tasks. Although these methods show promising re-
+sults under ideal conditions, in real-world environments,
+where the channel conditions are highly variable, directly
+applying the same fusion methods often results in unsatis-
+factory outcomes. Transmitting raw-level sensing data has
+distinct advantages: it supports multiple downstream tasks,
+enhances data fusion accuracy, and ensures future-proof
+flexibility for evolving autonomous driving technologies.
+Therefore, we can combine the benefits of early fusion and
+intermediate fusion by utilizing adaptive compression for
+raw data transmission.
+Network optimization : High throughput can ensure
+more efficient data transmissions among CAVs, thereby
+potentially improving the IoU of cooperative perception
+systems. Lyu et al. [24] proposed a fully distributed graph-
+based throughput optimization framework by leveraging
+submodular optimization. Nguyen et al. [25] designed a
+cooperative technique, aiming to enhance data transmission
+reliability and improve throughput by successively selecting
+relay vehicles from the rear to follow the preceding vehicles.
+Ma et al. [26] developed an efficient scheme for the through-
+put optimization problem in the context of highly dynamic
+user requests. However, the intricate relationship between
+throughput maximization and IoU has not been thoroughly
+investigated in the literature. This gap in the research moti-
+
+---PAGE 3---
+IEEE TRANSACTIONS ON MOBILE COMPUTING 3
+TABLE 1: CONTRASTING OUR CONTRIBUTION TO THE LITERATURE
+[32] [3] [2] [18] [11] [16] [17] [22] [23] [24] [25] [26] [33] Proposed work
+BEV evaluation ✓ ✓ ✓ ✓ ✓ ✓
+Multi-agent selection ✓ ✓ ✓ ✓ ✓ ✓ ✓ ✓ ✓ ✓
+Data compression ✓ ✓ ✓ ✓ ✓ ✓ ✓
+Lossy communications ✓ ✓ ✓ ✓ ✓ ✓ ✓ ✓
+Priority mechanism ✓ ✓
+Coverage optimization ✓ ✓ ✓ ✓
+Throughput optimization ✓ ✓ ✓ ✓ ✓ ✓ ✓
+vates us to conduct more comprehensive studies on the role
+of throughput optimization in V2V cooperative perception.
+Vehicular data compression: For V2V collaborative per-
+ception, participating vehicles compress their data before
+transmitting it to the ego vehicle to reduce transmission
+latency. However, existing collaborative frameworks often
+employ very simple compressors, such as the naive encoder
+consisting of only one convolutional layer used in V2VNet
+[17]. Such compressors cannot meet the requirement of
+transmission latency under 100 ms in practical collaborative
+tasks [27]. Additionally, current views suggest that compres-
+sors composed of neural networks outperform the compres-
+sors based on traditional algorithms [28]. However, these
+studies are typically focused on general data compression
+tasks and lack research on adaptive compressors suitable
+for practical scenarios in V2V collaborative perception.
+Priority-Aware Perception Schemes: Priority-aware per-
+ception schemes have been advanced significantly, yet they
+have also encountered limitations in dynamic environments.
+Liao et al. ’s model uses an attention mechanism for tra-
+jectory prediction, effectively assigning dynamic weights
+but overlooking communication costs and information re-
+dundancy [29]. Similarly, Wen et al. ’s queue-based traffic
+scheduling enhances throughput but struggles with real-
+time data synchronization, which is critical for systems
+like autonomous vehicles [30]. Additionally, studies on
+edge-assisted visual simultaneous localization and mapping
+(SLAM) introduce a task scheduler that improves mapping
+precision but fails to account for the crucial role of channel
+quality in perception accuracy and throughput [31].
+Our framework mitigates these issues by introducing an
+adaptive mechanism that adjusts priorities based on real-
+time channel quality and analytics. This approach not only
+curtails unnecessary data processing and communication
+but also enhances raw-level sensing data fusion and sys-
+tem responsiveness, thereby addressing the core challenges
+identified in previous studies.
+1.3 Our Contributions
+To address the weakness of prior works and tackle the afore-
+mentioned design challenges, we design our Priority-Aware
+Collaborative Perception (PACP) framework for CAVs and
+evaluate its performance on a CAV simulation platform
+CARLA [34] with OPV2V dataset [35]. Experimental results
+verify PACP’s superior performance, with notable improve-
+ments in utility value and the average precision of Intersec-
+tion over Union (AP@IoU) compared with existing methods.
+To summarize, in this paper, we have made the following
+major contributions:
+• We introduce the first-ever implementation of a
+priority-aware collaborative perception framework
+that incorporates a novel BEV-match mechanism for
+autonomous driving. This mechanism uniquely bal-
+ances communication overhead with enhanced per-
+ception accuracy, directly addressing the inefficien-
+cies found in prior works.
+• Our two-stage optimization framework is the first
+to apply submodular theory in this context, allow-
+ing the joint optimization of transmission rates, link
+connectivity, and compression ratio. This innovation
+is particularly adept at overcoming the challenges
+of data-intensive transmissions under dynamic and
+constrained channel capacities.
+• We have integrated a deep learning-based adaptive
+autoencoder into PACP , supported by a new fine-
+tuning mechanism at roadside units (RSUs). The
+experimental evaluation reveals that this approach
+surpasses the state-of-the-art methods, especially in
+utility value and AP@IoU.
+Our new contributions are better illustrated in Table 1.
+2 F AIRNESS OR PRIORITY ?
+In this section, we show some practical difficulties with
+fairness-based collaborative perception for CAVs and also
+briefly demonstrate the superiority of adopting a priority-
+aware perception framework.
+2.1 Background of Two Schemes
+Fairness-based scheme : This scheme aims to achieve fair-
+ness in resource allocation among different CAVs. The Jain’s
+fairness index is used to measure fairness: [33]:
+𝐽 = (Í𝑛
+𝑖=1 𝑥𝑖)2
+𝑛 ·Í𝑛
+𝑖=1 𝑥2
+𝑖
+, (1)
+where 𝑛 is the total number of nodes and 𝑥𝑖 is the resource
+allocated to the 𝑖-th node. A perfect fairness index of 1
+indicates equal resource allocation. Two common fairness
+schemes are subchannel-fairness (equal spectrum resources)
+and throughput-fairness (equal transmission rates).
+Priority-aware scheme : Unlike fairness-based schemes,
+this scheme assigns different priority levels to CAVs based
+on the importance and quality of their data. The ego vehicle
+gives higher priority to CAVs with better channel conditions
+and more crucial perception data. Existing works have in-
+vestigated several popular priority factors as priority, such
+as link latency [36] and routing situation [37]. This approach
+mitigates the negative impact of "poisonous" CAVs with
+
+---PAGE 4---
+IEEE TRANSACTIONS ON MOBILE COMPUTING 4
+CAV 1 CAV 2 CAV 3
+0
+5
+10
+15
+20
+25Throughput (Mbps)
+2.02
+9.63
+23.85
+0
+50
+100
+150
+200
+250
+Bandwidth (MHz)
+66.67 66.67 66.67
+Throughput
+Bandwidth
+(a) Subchannel-fairness scheme
+CAV 1 CAV 2 CAV 3
+0
+2
+4
+6
+8
+10Throughput (Mbps)
+2.87
+5.75
+9.80
+0
+50
+100
+150
+200
+250
+Bandwidth (MHz)
+192.0
+4.0 4.0
+Throughput
+Bandwidth (b) Throughput-fairness scheme
+ (c) Priority-aware perception scheme
+Fig. 1: The bandwidth and throughput allocation by different schemes within V2V network.
+Camera 0 Camera 1
+Camera 2 Camera 3
+(a) Camera perception by ego
+CAV
+Priority Subchannel-
+ fairness
+Throughput-
+ fairness
+0.0
+0.2
+0.4
+0.6
+0.8
+1.0AP@IoU
+0.685
+0.603
+0.499
+Dynamic AP@IoU
+(b) AP@IoU vs. Different schemes
+Fig. 2: Camera data and different types of AP@IoU.
+poor channel conditions or less relevant data, thus enhanc-
+ing the overall system efficiency. Compared to the fairness-
+based scheme, the advantages of priority-aware perception
+can be summarized as follows:
+• Transmission Efficiency: By prioritizing CAVs with
+better data quality and channel conditions, the
+priority-aware scheme optimally allocates spectrum
+resources, ensuring efficient transmission.
+• Improved Prediction: This scheme reduces the influ-
+ence of poisonous data, leading to more accurate BEV
+predictions by focusing on high-quality perception
+inputs.
+• Dynamic Adaptability : The priority-aware scheme
+dynamically adjusts to changing channel conditions
+and task requirements, maintaining robust perfor-
+mance in diverse environments.
+2.2 An Illustrative Motivating Example
+To understand the limitations of fairness-based schemes,
+we compare their resource allocation and BEV prediction
+against an ad hoc priority-aware scheme. Fig. 1 illustrates
+the bandwidth and throughput allocation of three schemes
+in a V2V network, with a total bandwidth of 200 MHz.
+In the subchannel-fairness scheme (Fig. 1(a)), each CAV
+receives an equal amount of spectrum resources, leading to
+inefficient utilization, especially with poor channel condi-
+tions. The throughput-fairness scheme (Fig. 1(b)) equalizes
+transmission rates by allocating more resources to weaker
+channels, but it can still result in suboptimal BEV predic-
+tions. For instance, if a CAV has extremely poor channel
+quality (e.g., CAV 1), even the allocated bandwidth may be
+insufficient, reducing perception performance.
+In contrast, the priority-aware perception scheme (Fig.
+1(c)) dynamically adjusts the priority weights of each CAV
+based on channel resources, perception accuracy, and cover-
+age. For example, CAV 1, with the worst channel condition,
+is assigned with the lowest priority and its data is discarded.
+This approach ensures that critical and high-quality data
+from CAVs with the best channel conditions and/or prox-
+imity to the ego vehicle are transmitted with minimal loss
+and latency, significantly improving BEV predictions. Fig.
+2(b) demonstrates the superior performance of the priority-
+aware scheme, with the dynamic AP@IoU metric rising to
+0.685. Thus, this ad hoc priority-aware scheme outperforms
+fairness-based methods by selectively collaborating with the
+most valuable CAVs, leading to enhanced BEV predictions.
+However, how to design an effective priority-aware scheme
+is critical, which motivates this research.
+3 S YSTEM MODEL
+In this section, we present a V2X-aided collaborative percep-
+tion system with CAVs, including the system’s structure,
+channel modeling, and the constraints of computational
+capacity and energy. The key notations are listed in the
+Table 2.
+3.1 System Overview
+We consider a V2X-aided collaborative perception system
+with multiple CAVs and RSUs, which is shown in Fig. 3. In
+our scenario, CAVs can be divided into two types. The first
+type is the nearby CAVs (indexes 1-3), which monitor the
+surrounding traffic with cameras and share their perception
+results with other CAVs. The second type is the ego CAV
+(index 0), which fuses the camera data from the nearby
+CAVs with its own perception results. As shown in Fig. 3,
+the ego CAV 0 is covered with the parked car that the ego
+CAV’s own camera cannot observe the incoming pedestrian
+from the blind spot. Through the collaborative perception
+scheme, the ego CAV merges compressed data from CAVs
+2 and 3, i.e., 𝑠20 = 𝑠30 = 1, which catch the existence
+of the pedestrian. However, it is unnecessary to connect
+all CAVs together since the bandwidth and subchannel
+resources are limited. Therefore, the ego CAV can determine
+the importance of each nearby CAV by the priority-aware
+mechanism, depending on CAVs’ positions and channel
+states. For example, the ego CAV is disconnected from CAV
+1, because it fails to provide enough environmental percep-
+tion information, i.e., 𝑠10 = 0. For the sake of maximizing
+
+---PAGE 5---
+IEEE TRANSACTIONS ON MOBILE COMPUTING 5
+Parked car Pedestrian
+blind spots
+RSU
+CAV 1
+CAV 2
+CAV 3
+Ego CAV 0
+Camera perception
+(𝑠𝑠10 = 0, 𝑑𝑑10, 𝑟𝑟10)
+(𝑠𝑠30 = 1, 𝑑𝑑30, 𝑟𝑟30)
+(𝑠𝑠20 = 0, 𝑑𝑑20, 𝑟𝑟20)
+Compressed camera data
+Disconnect
+Fig. 3: Overview of V2X-aided collaborative perception sys-
+tem.
+TABLE 2: Summary of Key Notations
+Notation Definition
+𝑁 The total number of vehicles in the network
+𝐾 The number of orthogonal sub-channels for the
+whole V2V networks
+𝑊 The total bandwidth of the V2V networks
+𝐶𝑖 𝑗 The channel capacity between the 𝑖th transmitter
+and the 𝑗th receiver
+D The matrix of transmission rates
+𝑟𝑖 𝑗 The adaptive compression ratio
+𝐸𝑡
+𝑖 𝑗 The energy bounds for data transmission
+𝐸 𝑐
+𝑗 The energy consumption bounds for computation
+𝐸𝑇
+𝑗 The energy consumption threshold
+𝑃𝑡 Transmission power of each CAV
+𝐹𝑗 CPU capacity of CAV 𝑗
+𝛽 Model complexity parameter depending on the ar-
+chitecture of the neural networks
+𝐴 𝑗 Local data generation rate per second at CAV 𝑗
+P𝑖 𝑗 The priority weight between two CAVs
+I ( S𝑖 ) The total area covered by the union of perceptual
+regions of vehicles
+Usum The weighted utility function for the network
+Ur The sub-utility function for perception quality
+Up The sub-utility function for the perceptual regions
+( 𝜔1, 𝜔2 ) Weights for perception quality and region
+(𝑟min, 𝑟max ) Compression ratio range
+AP@IoU, the ego CAV obtains the near-optimal solution
+in terms of the transmission rate 𝑑𝑖 𝑗 and the compression
+ratio 𝑟𝑖 𝑗 at each time slot. Additionally, we deploy several
+RSUs to achieve a fine-tuning compression strategy, which
+is detailed in Sec. 5.4.
+3.2 Channel Modeling and System Constraints
+Consider the V2V network architecture G = (V, E), where
+V = (𝑣 1, 𝑣2, ..., 𝑣 𝑁 ) denotes CAVs and E is the set of
+links between them. As per 3GPP specifications for 5G
+[38], V2V networks adopt Cellular Vehicle-to-Everything
+(C-V2X) with Orthogonal Frequency Division Multiplex-
+ing (OFDM). The total bandwidth 𝑊 is split into 𝐾 or-
+thogonal sub-channels. Each sub-channel capacity is 𝐶𝑖 𝑗 =
+𝑊
+𝐾 log2
+
+1 + 𝑃𝑡 ℎ𝑖 𝑗
+𝑁0 𝑊
+𝐾
+
+, where 𝑃𝑡 represents the transmit power,
+ℎ𝑖 𝑗 denotes the channel gain from the 𝑖th transmitter to the
+𝑗th receiver, and 𝑁0 is the noise power spectral density.
+Additionally, let 𝑠𝑖 𝑗 = 1 indicate the presence of the
+directional link from CAV 𝑖 to ego CAV 𝑗. Such a link is
+denoted as (𝑖, 𝑗 ) ∈ S . The set S represents the collection of
+all established links in the network. When 𝑠𝑖 𝑗 = 1, CAV 𝑣 𝑖 is
+capable of sharing data with the ego CAV 𝑣 𝑗. Conversely,
+if 𝑠𝑖 𝑗 = 0, it implies the disconnected mode of the link
+(𝑖, 𝑗 ). However, the number of directed links potentially
+increase at a rate of 𝑁2 with the number of CAVs, possibly
+exhausting the limited communication spectrum resources.
+Therefore, the upper bound of the number of connections is
+given by:
+𝑁∑︁
+𝑖=1,𝑖≠ 𝑗
+𝑁∑︁
+𝑗=1
+𝑠𝑖 𝑗 ≤ 𝐾. (2)
+Let D =
+
+𝑑𝑖 𝑗
+	
+𝑁 × 𝑁 be the matrix consisting of transmission
+rates, where each element is non-negative, for ∀(𝑖, 𝑗 ) ∈ E.
+Each element 𝑑𝑖 𝑗 represents the data rate without compres-
+sion from vehicle 𝑣 𝑖 to vehicle 𝑣 𝑗, which is then processed
+by 𝑣 𝑗. It is noteworthy that 𝑑𝑖 𝑗 satisfies:
+𝑟𝑖 𝑗 𝑑𝑖 𝑗 ≤ min(𝐶𝑖 𝑗, 𝑟𝑖 𝑗 𝐴𝑖), (3)
+Here, 𝑟𝑖 𝑗 ∈ ( 0, 1] denotes the adaptive compression ratio,
+obtained by the compression algorithm outlined in Sec. 5.4.
+𝑟𝑖 𝑗 𝑑𝑖 𝑗 represents the actual transmission rate after compres-
+sion. 𝐴𝑖 signifies the amount of local perception data at
+𝑣 𝑖 per second, i.e., perception data generation rate at the
+location of 𝑣 𝑖. This constraint implies that the actual trans-
+mission rate must be limited either by the achievable data
+rate or by the locally compressed data present at vehicle 𝑣 𝑖.
+Furthermore, it is observed that an inadequate compression
+ratio results in a diminution in the accuracy of perception
+data, while an excessively high compression ratio results
+in suboptimal throughput maximization. Consequently, the
+constraint for the compression ratio is defined as follows:
+1⊤𝑟 𝑗, min ⪯ R 𝑗 ⪯ 1⊤𝑟 𝑗, max, (4)
+where R 𝑗 =
+
+r1 𝑗 , r2 𝑗 , ..., r𝑁 𝑗
+ ⊤, R = [R1, R2, ..., R 𝑁 ]. Given
+the surrounding data obtained through collaborative per-
+ception, perception data from closer vehicles are more
+important for perceptional detection, which has a higher
+level of accuracy. Therefore, we assume that the adaptive
+compression ratio for the link (𝑖, 𝑗 ) yields:
+𝑟𝑖 𝑗𝑒𝐿𝑖 𝑗 ⩾ 𝜂, (5)
+where 𝐿𝑖 𝑗 denotes the normalized distance between 𝑣 𝑖 and
+𝑣 𝑗, and 𝜂 ∈ ( 0, 1]. It is noted that we use an exponen-
+tial relationship in terms of normalized distance, because
+the compression ratio of the remote area should decrease
+rapidly, reducing communication overhead. Moreover, the
+link establishment and data transmission rate should satisfy
+the bounds of energy consumption as follows:
+𝐸 𝑡
+𝑖 𝑗 = 𝜏𝑡
+𝑗 𝑃𝑡 𝑠𝑖 𝑗, (6)
+
+---PAGE 6---
+IEEE TRANSACTIONS ON MOBILE COMPUTING 6
+where 𝜏𝑡
+𝑗 denotes the allocated time span, and 𝑃𝑡 signifies
+the transmission power. We define 𝐹𝑗 as the computational
+capability of vehicle 𝑣 𝑗. The data processed by 𝑣 𝑗, which
+includes its local data 𝐴 𝑗 and the data received from neigh-
+boring nodes, should satisfy the following constraint:
+𝐴 𝑗 +
+𝑁∑︁
+𝑖=1,𝑖≠ 𝑗
+𝑟𝑖 𝑗 𝑠𝑖 𝑗 𝑑𝑖 𝑗 ⩽ 𝐹𝑗 /𝛽, (7)
+where 𝐹𝑗 /𝛽 represents the aggregate size of data processed
+per second. Additionally, 𝛽 is tunable parameter depending
+on the architecture of the neural networks employed in these
+contexts, like the self-supervised autoencoder. The energy
+consumption for computation by 𝑣 𝑗 can be determined as
+follows:
+𝐸 𝑐
+𝑗 = ©­
+«
+𝐴 𝑗 +
+𝑁∑︁
+𝑖=1,𝑖≠ 𝑗
+𝑟𝑖 𝑗 𝑠𝑖 𝑗 𝑑𝑖 𝑗
+ª®
+¬
+𝜖 𝑗 𝜏𝑐
+𝑗 , (8)
+where 𝜖 𝑗 denotes the energy cost per unit of input data pro-
+cessed by 𝑣 𝑗’s processing unit.𝜏𝑐
+𝑗 represents the duration al-
+located for data processing. By imposing constraints on the
+overall energy consumption, a suitable trade-off between
+computing and communication can be made, facilitating
+optimal operation and extending the operational longevity
+of CAVs. Intuitively, the cumulative energy consumption in
+our CAV system must satisfy the following constraint:
+𝑁∑︁
+𝑖=1,𝑖≠ 𝑗
+
+𝐸 𝑡
+𝑖 𝑗 + 𝐸 𝑐
+𝑖 𝑗
+
+≤ 𝐸 𝑇
+𝑗 , ( 𝑗 = 1, 2, · · ·, 𝑁), (9)
+where 𝐸 𝑇
+𝑗 symbolizes the energy consumption threshold for
+the 𝑗th CAV group, including its nearby CAVs.
+4 P RIORITY -AWARE COLLABORATIVE PERCEP -
+TION ARCHITECTURE
+While BEV offers a top-down view aiding CAVs in learning
+relative positioning, not all data is of equal importance or
+relevance [10]. Some CAV data can be unreliable due to
+perception qualities, necessitating differential prioritization
+in data fusion. This section proposes a priority-aware per-
+ception scheme by BEV match mechanism.
+4.1 Selection of Priority Weights
+There exist many ways to define priority weights, such as
+distance [39], channel state [40], and information redun-
+dancy [41]. However, as CoBEVT is the backbone for RGB
+data fusion [7], our priority weight definition is based on
+the Intersection over Union (IoU) of BEV features between
+adjacent CAVs. IoU is an effective metric in computer vi-
+sion, especially in object detection, used to quantify the
+overlap between two areas. The background of IoU can
+be obtained in CoBEVT’s local attention aids in pixel-to-
+pixel correspondence during object detection fusion. IoU of
+the BEV features reveals the consistency in environmental
+perception between CAVs. Factors like channel interfer-
+ence and network congestion may cause inconsistencies.
+As consistency is crucial in fusion data, inconsistencies can
+lead to data misrepresentations. Hence, we design a BEV-
+match mechanism by relying on IoU analysis in the next
+subsection, giving preference to CAVs with closely aligned
+perceptions to the ego CAV .
+4.2 Procedure of Obtaining Priority Weights
+The procedure of calculating priority weights can be divided
+into three steps as follows:
+(1) Camera perception: As shown in Fig. 4(a), the nearby
+CAVs capture raw camera data 𝛤 using its four cameras.
+This perception data 𝛤 is then transmitted to the ego CAV
+by communication units through wireless channel. Let 𝛤𝑡 =
+F (𝛤) denote the perception data received by the ego CAV ,
+where F represents the function of data transmission over
+the network. In reality, different data processing strategies
+result in different impacts on 𝛤𝑡, such as compression and
+transmission latency.
+(2) Encoder & Decoder: Fig. 4(b) illustrates that upon
+reception, the ego CAV uses a SinBEVT-based neural net-
+work to process the single-vehicle’s RGB data [7]. This
+data is transformed through an encoding-decoding process
+to extract BEV features. The BEV feature transformation
+is denoted by BEV = G (𝛤𝑡 ), where G captures SinBEVT’s
+processing essence. In Fig. 4(c), the BEV feature depicts the
+traffic scenario from a single vehicle’s perspective, with the
+green dashed box marking the range of perceived moving
+vehicles, and the red box indicating surrounding vehicles to
+the ego CAV . In fact, SinBEVT and CoBEVT achieve real-
+time performance of over 70 fps with five CAVs [7].
+(3) Priority weight calculation: As shown in Fig. 4(d),
+we take the ego CAV and CAV 1 as an example. Along with
+their corresponding BEV perceptions BEV0 and BEV1, let the
+coordinates and orientation angle of both the Ego CAV and
+CAV 1 be represented as (𝑥0, 𝑦0, 𝜃0) and (𝑥1, 𝑦1, 𝜃1), respec-
+tively. Firstly, we can derive the translational displacement
+between Ego CAV and CAV 1: Δ𝑥 = 𝑥0 − 𝑥1, Δ𝑦 = 𝑦0 − 𝑦1 and
+Δ𝜃 = 𝜃0 − 𝜃1. Accordingly, the translation matrix 𝑇 and the
+rotation matrix 𝛩1 are articulated as:
+𝑇10 =
+
+1 0 Δ𝑥
+0 1 Δ𝑦
+0 0 1
+
+, 𝛩10 =
+
+cos (Δ𝜃) − sin (Δ𝜃) 0
+sin (Δ𝜃) cos (Δ𝜃) 0
+0 0 1
+
+, (10)
+where ˆ𝑇10 = 𝑇10 × 𝛩10 remap coordinates from BEV1 to BEV0.
+Let ˆ𝛤 be a point of the BEV feature of CAV 1. Furthermore,
+the transformation of a point ˆ𝛤 from the BEV perception
+BEV1 to BEV 0 is denoted by ˆ𝛤′ = ˆ𝑇10 × ˆ𝛤. ˆ𝛤′ represents
+the transformed coordinate in BEV 0 and the point ˆ𝛤 is
+articulated in homogeneous coordinates, i.e., ˆ𝛤 = [𝑥, 𝑦, 1]𝑇.
+Inspired by IoU, the metric for perceptual quality de-
+pends on the intersection of the ground truth and other
+predicted results. As we are mainly concerned with the
+impact of an unstable channel on perceptual quality, we can
+assume that the ego vehicle (CAV 0 in Fig. 5) can obtain
+highly accurate locations of nearby objects, which can serve
+as the ground truth. For each nearby CAV within commu-
+nication range, CAV 0 can calculate priority weights only
+using overlapping perceptual objects, i.e., we only calculate
+priority weights based on BEV features (boxes) about objects
+𝜋0, 𝜋1, 𝜋2, and 𝜋3. Specifically, the priority weight P10 is
+formulated as follows:
+P10 = ∥ [BEV0 ∩ BEV′
+1] 𝜋 ∥2
+| [BEV0] 𝜋 | , (11)
+1. We assume that the rotation matrix provided is based on the
+counter-clockwise rotation convention.
+
+---PAGE 7---
+IEEE TRANSACTIONS ON MOBILE COMPUTING 7
+C AV 1
+C AV 2
+C AV 0
+(Ego vehicle)
+BEVGT
+(a) Camera perception (b) Encoder & Decoder (d) Weight calculation
+(c) BEV feature
+BEV1
+BEV2
+BEV3
+Multi-view features
+: Wireless channel from 
+other CA V to CA V 0
+Priority weight
+Fig. 4: Procedure for priority weight calculation. Fig. 4(a): CAVs observe surroundings with 4 cameras; CAVs 1-2 relay
+RGB data to CAV 0. Figs. 4(b)-(c): BEV feature generation in CAV 0. Fig. 4(d): BEV-match mechanism determines priority
+weights.
+𝜋𝜋0
+𝜋𝜋1
+𝜋𝜋2 𝜋𝜋3
+C AV 0 ’scommunication range C AV 1 ’scommunication range
+Overlapping perceptual objects
+C AV 0 ’s  perceptual objects
+C AV1’s perceptual objects
+Fig. 5: An example of determining priority weight P10.
+where BEV0 denote the ego CAV’s BEV features and BEV′
+1 =
+ˆ𝑇10 × BEV1 signifies the transformed BEV , the operation
+[·]𝜋 zeroes out pixels outside the overlapping perceptual
+objects of the fused BEV’s non-zero region, ∥ · ∥ 2 measures
+the square root of squared pixel values, | · | sums all pixel
+values in an image, and the numerator in Eq. (11) quantifies
+perception difference between data from CAVs 1 and 0, with
+the denominator providing normalization. The term P in
+fact captures two characteristics between the view of the
+ego CAV and the transformed view of the assisting CAV
+for data fusion. If two views are very close, the intersection
+will be similar, the numerator in Eq. (11) will be very high,
+thus P10 will be very high, which implies that the view
+from CAV 1 will accurate enough to enhance the perception
+quality, meaning that the view from CAV 1 can be assigned
+high priority. If the view from CAV 1 is too dissimilar,
+the intersection will be close to empty, implying that the
+numerator in Eq. (11) will be close to 0, meaning that the
+view from CAV 1 may be more misleading and should be
+assigned lower priority.
+Moreover, our system incorporates a gate mechanism
+that effectively filters out data from CAVs whose priority
+weights fall below a certain threshold. This gating pro-
+cess prevents low-quality data from influencing the overall
+perception quality, thereby maintaining the integrity and
+accuracy of the collaborative perception system despite the
+inherent instabilities in vehicular network conditions.
+4.3 Utilization Maximization in Collaborative Percep-
+tion
+The performance of collaborative perception relies on the
+quality of the V2V communication network. Hence, our aim
+is to maximize the amount of perception data transmitted
+under the constraints of communication resources, such as
+power and bandwidth. However, given the varying contri-
+butions of nearby CAVs, it is unwise to directly optimize the
+total throughput of the V2V networks. Instead, we employ
+the aforementioned priority weight to adjust the resources
+allocated to each CAV . Moreover, one group of CAVs might
+have overlapping perceptual regions. To handle this, we
+leverage the union-style perception region set 𝐺𝑖, defined
+as:𝐺𝑖 = Ð
+𝑗 ∈ 𝐽𝑖 G 𝑗, where G 𝑗 represents the perception region
+of the 𝑗th CAV , and𝐽𝑖 = { 𝑗 |𝑠 𝑗𝑖 = 1}. Here, I (S𝑖) represents
+the total area covered by the union of perceptual regions of
+vehicles in set 𝐽𝑖, which is mathematically expressed as:
+I (S𝑖) = A
+ Ø
+𝑗 ∈ 𝐽𝑖
+G 𝑗
+!
+(12)
+where A (𝑋) denotes the area of a region 𝑋. The utilization
+of the union of regions inherently introduces a submodu-
+lar property in the coverage function. Submodularity 2 in
+this context means that adding an additional CAV to a
+group of vehicles with significantly overlapping regions
+provides diminishing marginal gains in covered area. This
+property naturally discourages the system from including
+excessive overlaps in the set of actively transmitting vehi-
+cles. Specifically, we exploit this submodular property by
+2. The definition of submodularity can be found in Definition 3.
+
+---PAGE 8---
+IEEE TRANSACTIONS ON MOBILE COMPUTING 8
+formulating the sub-utility function for perception quality
+as Ur = Í
+𝑖
+Í
+𝑗=1, 𝑗≠𝑖 P 𝑗𝑖 𝑠 𝑗𝑖 𝑑 𝑗𝑖 , which reflects the accuracy
+and robustness of surrounding perception. Concurrently,
+the sub-utility function for the perceptual regions of CAVs
+is defined as Up = Í
+𝑖 I (S𝑖), which represents the amount
+of information collected by data fusion. To maximize both
+utilities at the same time, the weighted utility function is
+formulated as:
+Usum (S, D) = 𝜔1Ur + 𝜔2Up
+= 𝜔1
+𝑁∑︁
+𝑖=1
+𝑁∑︁
+𝑗=1, 𝑗≠𝑖
+P 𝑗𝑖 𝑠 𝑗𝑖 𝑑 𝑗𝑖
+|                    {z                    }
+Perception quality
++ 𝜔2
+𝑁∑︁
+𝑖=1
+I (S𝑖)
+|       {z       }
+Perceptual region
+, (13)
+where 𝜔1 and 𝜔2 denote the weights of perception quality
+and perceptual region, respectively. The optimized variable
+D =
+
+𝑑𝑖 𝑗
+
+𝑁 × 𝑁 is the matrix of data transmission rate. By
+combining the constraints and objective function Eq. (13),
+we formulate the utility function maximization problem as:
+P : max
+R, S, D
+Usum (S, D)
+s.t. (2), (3), (4), (5), (7), (9),
+(14)
+where the constraint (2) is the upper bound of the number of
+subchannels; (3) denotes the constraint of transmission rate;
+(4) and (5) are the constraints of the compression ratio; (7)
+and (9) are the upper bounds of the computing capacity and
+transmission power, respectively. In Sec. 5, we prove that
+the utility function maximization can be decomposed into
+two problems, i.e., a nonlinear programming problem and
+submodular optimization problem that can be solved by a
+greedy algorithm with an approximation guarantee.
+5 T WO-S TAGE OPTIMIZATION FRAMEWORK FOR
+UTILITY MAXIMIZATION
+In this section, we first want to show that the original prob-
+lem P is NP-hard, making it hard to find its optimal solu-
+tion within latency-sensitive systems. To find a suboptimal
+solution, we conceive a two-stage optimization framework,
+which decomposes P into two distinct problems: a nonlinear
+programming (NLP) P1, and a submodular optimization P2.
+We ascertain the optimal solution for P1 in Sec. 5.1, and
+deduce a (1 − 𝑒−1)-approximation of the optimal value for
+P2 using an iterative algorithm in Sec. 5.3.
+5.1 Nonlinear Programming Problem Analysis
+Proposition 1: For fixed D (𝑛), problem P is reducible from
+Weighted Maximum Coverage Problem (WMCP). When optimiz-
+ing over matrices D and R, P surpasses WMCP’s complexity,
+establishing its NP-hardness.
+Proof: Please refer to Appendix A. ■
+According to Proposition 1, it can be concluded that the
+problem P is NP-hard. Besides, it can be observed that as the
+number of cooperative vehicles 𝑁 increases, the state space
+of problem P exhibits double exponential growth. Specifi-
+cally, with the state space represented as 2 ( 𝑁 2) × D 𝑛 × R 𝑛,
+the dimensionality increases rapidly with respect to 𝑁.
+For example, let D𝑛 and R𝑛 denote the discrete levels for
+continuous variables D and R. We can consider a scenario
+with 10 CAVs (refer to Sec. 6.2). As for the upper bound
+of D is 40 Mbps, we assume a step size of 1 Mbps with a
+total of D𝑛 = 40 levels. As for the compression ratio R, there
+are also R𝑛 = 20 levels with an increment of 0.05 per level.
+Therefore, we can obtain the state space of the problem P is
+approximately 1.014 × 1033.
+It is highly complicated to find the optimal solution even
+when the V2V network scale is no more than 10 vehicles.
+Since the control and decision of CAVs are latency-sensitive,
+we have to conceive a real-time optimization solver to
+address the issue of finding an optimal solution for the
+NP-hard problem P. Therefore, we decompose P into two
+subproblems by fixing one of the optimization variables.
+Denote the link establishment in the 𝑛th round as S (𝑛−1).
+We then focus on adjusting the matrices for the compression
+ratio R and the data rate D. Problem P1 is expressed as:
+P1 : max
+R, D
+Usum
+
+S (𝑛−1) , D
+
+s.t. (3), (4), (5),
+(15a) : 𝐴 𝑗 +
+𝑁∑︁
+𝑖=1,𝑖≠ 𝑗
+𝑟𝑖 𝑗 𝑠 (𝑛−1)
+𝑖 𝑗 𝑑𝑖 𝑗 ⩽ 𝐹𝑗 /𝛽,
+(15b) :
+𝑁∑︁
+𝑖=1,𝑖≠ 𝑗
+
+𝐸 𝑡
+𝑗
+
+𝑠 (𝑛−1)
+𝑖 𝑗
++ 𝐸 𝑐
+𝑖 𝑗
+
+𝑠 (𝑛−1)
+𝑖 𝑗
+
+≤ 𝐸 𝑇
+𝑗 .
+(15)
+For 𝑗 = 1, 2, . . . , 𝑁, the sub-problem P1 is an NLP problem
+due to the nonlinear constraints given by (3), (15a), and
+(15b)3. While global optimization techniques like branch
+and bound or genetic algorithms can be used for non-
+convex problems, they are computationally demanding. Our
+approach is to linearize the problem. We defineU = R ⊙ D =
+𝑢𝑖 𝑗
+
+𝑁 × 𝑁 where ⊙ is the Hadamard product and 𝑢𝑖 𝑗 = 𝑟𝑖 𝑗 𝑑𝑖 𝑗.
+This linearizes the product term in the constraints. Thus, P1
+is equivalently reformulated as4:
+P1−1 : max
+U, D
+𝑁∑︁
+𝑗=1
+𝑁∑︁
+𝑖=1,𝑖≠ 𝑗
+𝑠 (𝑛−1)
+𝑖 𝑗 P𝑖 𝑗 𝑑𝑖 𝑗
+s.t. (16a) : 𝑢𝑖 𝑗 ≤ min(𝐶𝑖 𝑗, 𝑢𝑖 𝑗 𝑑 −1
+𝑖 𝑗 𝐴𝑖),
+(16b) : max(𝑟 𝑗, min, 𝜂𝑒 −𝐿𝑖 𝑗 ) ≤ 𝑢𝑖 𝑗 𝑑 −1
+𝑖 𝑗 ≤ 𝑟 𝑗, max,
+(16c) :
+𝑁∑︁
+𝑖=1,𝑖≠ 𝑗
+𝑠 (𝑛−1)
+𝑖 𝑗 𝑢𝑖 𝑗 ⩽ min(𝛾 (𝑛−1)
+𝑗 , 𝜑 𝑗 ),
+(16)
+where we define 𝛾 (𝑛−1)
+𝑗 as 𝐸𝑇
+𝜖 𝑗 𝜏𝑐
+𝑗
+−
+𝜏𝑡
+𝑗 𝑃𝑡
+Í𝑁
+𝑖=1,𝑖≠ 𝑗 𝑠 (𝑛−1)
+𝑖 𝑗
+𝜖 𝑗 𝜏𝑐
+𝑗
+− 𝐴 𝑗 and
+𝜑 𝑗 as 𝐹𝑗
+𝛽 − 𝐴 𝑗. Moreover, the constraint (16c) is derived
+from both (15a) and (15b). Even though we add a bilinear
+equality constraint with 𝑢𝑖 𝑗, constraint (16b) remains non-
+linear, thereby we cannot obtain the optimal result directly.
+Given that P1−1 attempts to optimize Í𝑁
+𝑗=1
+Í𝑁
+𝑖=1,𝑖≠ 𝑗 𝑠 (𝑛−1)
+𝑖 𝑗 𝑑𝑖 𝑗,
+we have:
+𝑢𝑖 𝑗
+𝑟 𝑗, max
+≤ 𝑑𝑖 𝑗 ≤ min
+(
+𝐴𝑖, 𝑢𝑖 𝑗
+
+max
+
+𝑟 𝑗, min, 𝜂
+𝑒𝐿𝑖 𝑗
+ −1)
+, (17)
+3. This is due to the product of decision variables 𝑟𝑖 𝑗 and 𝑑𝑖 𝑗.
+4. For simplicity, we omit I ( S𝑖 ), 𝜔1, and 𝜔2 in the formulation of
+the first sub-problem, since those terms are independent of P1−1.
+
+---PAGE 9---
+IEEE TRANSACTIONS ON MOBILE COMPUTING 9
+which offers an upper bound for the optimal value of P1−1.
+To optimize 𝑑𝑖 𝑗, it is beneficial to focus on maximizing this
+limit. Therefore, we derive a relaxed problem as follows:
+P1−2 : max
+U
+𝑁∑︁
+𝑗=1
+𝑁∑︁
+𝑖=1,𝑖≠ 𝑗
+𝑠 (𝑛−1)
+𝑖 𝑗 P𝑖 𝑗𝑢𝑖 𝑗
+max
+
+𝑟 𝑗, min, 𝜂
+𝑒𝐿𝑖 𝑗
+
+s.t. (16a) and (16c),
+𝑢𝑖 𝑗 = 0 if 𝑠 (𝑛−1)
+𝑖 𝑗 = 0.
+(18)
+P1−2 is a standard linear programming solvable using tech-
+niques like the simplex or interior-point methods. If the
+optimal outcome of P1−2 is 𝑢 (𝑛)
+𝑖 𝑗 , the optimal solutions for
+transmission rate and adaptive compression ratio are 𝑑 (𝑛)
+𝑖 𝑗 =
+min
+
+𝐴𝑖, 𝑢𝑖 𝑗
+h
+max
+
+𝑟 𝑗, min, 𝜂
+𝑒𝐿𝑖 𝑗
+i −1
+and 𝑟 (𝑛)
+𝑖 𝑗 = 𝑢 (𝑛)
+𝑖 𝑗 /𝑑 (𝑛)
+𝑖 𝑗 , re-
+spectively. Considering that 𝑑𝑖 𝑗 values are at the edges of
+the feasible region, the optimal solution for P1−2 matches
+that of P1−1. It is noted that 𝑢𝑖 𝑗 = 0 if 𝑠 (𝑛−1)
+𝑖 𝑗 = 0 guarantees
+that 𝑢𝑖 𝑗 is explicitly set to zero whenever 𝑠 (𝑛−1)
+𝑖 𝑗 = 0.
+5.2 Preliminaries for Submodular Optimization
+Prior to delving into specific details of the other subproblem
+P2, we briefly review the definition and primary character-
+istics of submodularity as presented in [42].
+Definition 1: (Set Function Derivative) Given a set function
+𝑓 : 2 𝑉 → R, for a subset 𝑆 of 𝑉 and an element 𝑒 in 𝑉, the
+discrete derivative of 𝑓 at 𝑆 concerning 𝑒 is denoted by Δ 𝑓 (𝑒|𝑆)
+and defined as Δ 𝑓 (𝑒|𝑆) = 𝑓 (𝑆 ∪ {𝑒}) − 𝑓 (𝑆). If the context makes
+the function 𝑓 evident, we omit the subscript, expressing it simply
+as Δ(𝑒|𝑆).
+Definition 2: (Monotonicity) Given a function 𝑓 : 2𝑉 → R, 𝑓
+is deemed monotone if, for all 𝐴, 𝐵 ⊆ 𝑉 with 𝐴 ⊆ 𝐵, the condition
+𝑓 ( 𝐴) ≤ 𝑓 (𝐵) holds.
+It should be underscored that the function 𝑓 exhibits mono-
+tonicity if and only if every discrete derivative maintains
+a non-negative value. Specifically, for each 𝐴 ⊆ 𝑉 and any
+𝑒 ∈ 𝑉, the relation Δ(𝑒| 𝐴) ≥ 0 is satisfied.
+Definition 3: (Submodularity) Let 𝐸 denote a finite ground
+set. A set function 𝑓 : 2 𝐸 → R is said to be normalized, non-
+decreasing, and submodular if it satisfies the following properties:
+1) 𝑓 (∅) = 0;
+2) 𝑓 is monotone as per Definition 2;
+3) For any 𝐴, 𝐵 ⊆ 𝐸, 𝑓 ( 𝐴) + 𝑓 (𝐵) ≥ 𝑓 ( 𝐴 ∪ 𝐵) + 𝑓 ( 𝐴 ∩ 𝐵);
+4) For any 𝐴 ⊆ 𝐵 ⊆ 𝐸 and an element 𝑒 ∈ 𝐸 \ 𝐵, Δ 𝑓 (𝑒| 𝐴) ⩾
+Δ 𝑓 (𝑒|𝐵).
+In the next subsection, we prove that the objective
+function possesses submodular properties. As more CAVs
+share their perception results, the ego CAV tends to add
+significant new information for view fusion. However, as
+the number of CAV increases, each additional CAV pro-
+vides less new information, i.e., Diminishing Marginal Utility.
+This concept is crucial in CAVs’ scenarios, ensuring that
+resources are not wasted by redundant sensors.
+Algorithm 1: Greedy Algorithm for submodular
+function maximization
+Input: Adaptive compression ratio matrix R (𝑛), data
+transmission rate D (𝑛).
+Output: Output the optimal link establishment matrix S.
+1: Initialization: S ← ∅, 𝑖 ← 1;
+2: while 𝑖 ≤ 𝑁 do
+3: 𝑠∗
+𝑖 𝑗 = arg max𝑠𝑖 𝑗 ∈ S𝑛×𝑛\S Usum (S ∪ { 𝑠𝑖 𝑗 }, D (𝑛) );
+4: S ← S ∪ { 𝑠∗
+𝑖 𝑗 };
+5: 𝑖 ← 𝑖 + 1;
+6: end while
+7: return S.
+5.3 Submodular Analysis and Solutions
+In this subsection, we first prove that the objective func-
+tion of the problem P2 is a submodular function. The objec-
+tive function Usum (S, D) represents the aggregated utility
+of the system, incorporating both perception quality and
+coverage. However, achieving an optimal solution for this
+objective function is challenging due to its NP-hard nature.
+As more CAVs share their perception results, the ego CAV
+gains significant new information for view fusion. However,
+as the number of CAVs increases, each additional CAV
+provides less new information, i.e., Diminishing Marginal
+Utility. This concept is crucial in CAV scenarios to ensure re-
+sources are not wasted by redundant sensors. To efficiently
+solve the submodular function maximization problem, we
+adapt a greedy algorithm. Submodular functions exhibit the
+diminishing returns property, allowing a greedy algorithm
+to find a near-optimal solution. Specifically, we show that
+a greedy algorithm can achieve at least  1 − 𝑒−1 of the
+optimal value to solve P2 efficiently.
+Proposition 2: Given that P2 characterizes the link establish-
+ment problem and the data rate D = D (𝑛) is a constant matrix,
+the objective function Usum (S, D (𝑛) ) defined in Eq. (13) exhibits
+submodularity if Usum (S, D (𝑛) ) satisfies all the properties out-
+lined in Definition 3 within Sec. 5.2.
+Proof: Please refer to Appendix C. ■
+With the adaptive compression ratio matrix R (𝑛) =h
+𝑟 (𝑛)
+𝑖 𝑗
+i
+𝑁 × 𝑁
+and data transmission rate D (𝑛) =
+h
+𝑑 (𝑛)
+𝑖 𝑗
+i
+𝑁 × 𝑁
+, we
+then formulate the link establishment matrix S for P2 as:
+P2 : max
+S
+𝑁∑︁
+𝑖=1
+©­
+«
+𝜔1
+𝑁∑︁
+𝑗=1, 𝑗≠𝑖
+P 𝑗𝑖 𝑠 𝑗𝑖 𝑑 (𝑛)
+𝑖 𝑗 + 𝜔2I (S𝑖)ª®
+¬
+s.t. (19a) :
+𝑁∑︁
+𝑖=1,𝑖≠ 𝑗
+𝜒 (𝑛)
+𝑖 𝑗 𝑠𝑖 𝑗 ≤ 𝐸 𝑇
+𝑗 − 𝜏𝑐
+𝑗 𝜖 𝑗 𝐴 𝑗 ,
+(19b) :
+𝑁∑︁
+𝑖=1,𝑖≠ 𝑗
+𝑠𝑖 𝑗𝑢 (𝑛)
+𝑖 𝑗 ⩽ 𝜑 𝑗 and (2),
+(19)
+where 𝜒 (𝑛)
+𝑖 𝑗 = 𝑢 (𝑛)
+𝑖 𝑗 𝜖 𝑗 𝜏𝑐
+𝑗 + 𝜏𝑡
+𝑗 𝑃𝑡 can be obtained by the inequal-
+ity constraint (9). Since the objective function Usum (S, D) is
+a submodular function according to Proposition 2, P2 is a
+submodular function maximization problem, which can be
+solved by a greedy algorithm for near-optimal results.
+
+---PAGE 10---
+IEEE TRANSACTIONS ON MOBILE COMPUTING 10
+Encoder Decoder
+Reconstructed 
+perception data
+Raw camera
+perception data
+Roadside fine-tuning
+Historical data
+ Pre-trained modelRSU
+CSI feedback
+Wireless channel
+Compression 
+ratio
+Channel gain
+Nearby CA V Ego CA V
+Fig. 6: Overall architecture of adaptive compression.
+Proposition 3: Given a submodular, non-decreasing set function
+Usum (S, D (𝑛) ), which yields Usum (∅, D (𝑛) ) = 0, the greedy
+algorithm obtains a set S𝐺 satisfying:
+Usum
+
+S𝐺, D (𝑛)
+
+≥
+
+1 − 𝑒−1
+
+max
+S
+Usum
+
+S, D (𝑛)
+
+. (20)
+Proof: Please refer to Sec. II of [43]. ■
+According to Proposition 3, it can be observed that
+Algorithm 1 can obtain a (1 − 𝑒−1)-approximation of the
+optimal value of P2. During the 𝑛th round, we update the
+link establishment S (𝑛). If link (𝑖, 𝑗 ) reduces the throughput,
+it is removed: S (𝑛) ← S (𝑛) \{𝑠𝑖 𝑗 }. Otherwise, it is added:
+S (𝑛) ← S (𝑛) ∪ { 𝑠𝑖 𝑗 }. For P2, we iteratively adjust links until
+we find an optimal solution meeting all constraints or hit
+the iteration limit by relying on Algorithm 1.
+This greedy approach not only ensures maximization
+of the objective function Usum (S, D (𝑛) ) but also signifi-
+cantly reduces computational complexity, making it highly
+advantageous for real-time applications. According to the
+cardinality constraint 𝐾 in (2), the time-complexity of Al-
+gorithm 1 is only O (𝐾). Therefore, we can circumvent the
+complexities typically associated with optimization prob-
+lems by such a greedy algorithm rather than engaging in
+exhaustive searches or iterative procedures, which may not
+always guarantee convergence to the optimal solution.
+5.4 Deep Learning-Based Adaptive Compression
+The compression modules commonly employed in V2V
+collaborative networks often rely on predefined fixed com-
+pression ratios, such as JPEG and JPEG2000 [7]. However,
+these fixed ratios are inadequate to accommodate the de-
+mands of the dynamic channel conditions discussed in Sec.
+5. Moreover, it has been shown that the deep learning-based
+method generally offers better rate–distortion (R-D) per-
+formance compared to the standard compression methods
+[44]. In this section, we propose an adaptive compression
+method that comprises an adaptive R-D mechanism to refine
+the compression ratio, R, to align with the requirements
+of dynamic channel conditions. Then, we introduce a fine-
+tuning strategy to reduce temporal redundancy in V2V
+transmissions by exploiting the holistic RGB frames. We first
+present the main procedure of our DL-based compression
+scheme as follows.
+The Deep Learning-Based Compression (DBC) addresses
+the challenges by using trainable parameters from training
+datasets, thus offering adaptability to V2V dynamics. Under
+DBC architecture, both encoder and decoder utilize convo-
+lutional layers. The encoder transforms the input image x
+into a latent representation, z = 𝑓 (x; 𝜃), with transformation
+parameters 𝜃 learned from training. The decoder uses a
+distinct parameter set 𝜉 for reconstruction: ˜z = 𝐻 (z; 𝜉). ˆ x
+is the reconstruction image from the decoder. The training
+objective is to minimize:
+arg min
+𝜃 , 𝜉
+𝑅 (˜ z; 𝜃) + 𝛽𝐷 (x, ˆ x; 𝜃, 𝜉 ), (21)
+where 𝑅 (˜ z; 𝜃) = E
+
+− log2 𝑝 ˜ z(˜ z)
+
+represents the rate func-
+tion and 𝐷 (x, ˆ x; 𝜃, 𝜉 ) = E
+
+∥x − ˆ x∥2
+denotes the distortion
+function,where the constant 𝛽 manages the R-D trade-off.
+Moreover, we formulate the traditional fixed R-D problem
+as a multi-R-D problem for adaptability:
+arg min
+𝜃 , 𝜉
+𝑅( ˆℎ; 𝜃) + 𝛽𝐷 (x, ˆ x; 𝜃, 𝜉 ) . (22)
+It is noted that 𝛽 can affect reliable decoding and image
+quality, emphasizing the need to adjust 𝛽 adaptively. In this
+context, we introduce a DBC mechanism to dynamically
+modify 𝛽 under dynamic channel conditions (As shown in
+Fig. 6, given the channel state information (CSI) feedback,
+we can obtain 𝛽 and compression ratio according to Sec.
+5.1). Therefore, the revised problem can be formulated as:
+arg min
+𝜃 , 𝜉
+𝑅( ˆℎ; 𝜃, 𝑟) + 𝐺 (𝑟)𝐷 (x, ˆ x; 𝜃, 𝜉, 𝑟 ) , (23)
+where function 𝐺 is the R-D mapping function, which
+utilizes a lookup table and converts the compression ratio
+to the tradeoff parameter 𝛽. Therefore, there is no explicit
+expression for the function 𝐺. Moreover, the adaptive com-
+pression network is based on a pre-trained model [28],
+using historical camera data as training dataset to obtain
+network parameter 𝜃, 𝜉 by solving the multi-R-D problem in
+(23). The detailed architecture and processes are described
+in Appendix D. We also evaluate the R-D performance
+of our proposed PACP framework using the Multi-scale
+Structural Similarity (MS-SSIM) and Peak Signal-to-Noise
+Ratio (PSNR) metrics in Appendix D.5.
+As for computational cost, the encoder and de-
+coder of MAE require 0.155 MFLOPs/pixel and 0.241
+MFLOPs/pixel5, respectively [28]. Considering Tesla FSD
+as the computational unit, when three CAVs share their
+perception results at a rate of 10 fps, the average latencies for
+encoding and decoding processes are observed to be 40.26
+ms and 20.89 ms, respectively.
+6 S IMULATION RESULTS AND DISCUSSIONS
+In this section, we evaluate our schemes under various
+communication settings, which consist of bandwidth, trans-
+mission power, the number of CAVs, and the distribution of
+vehicles. Subsequently, we delve into the comparison of raw
+data reconstruction performance—both with and without
+the application of a fine-tuned compression strategy. In the
+final part of this section, we present the results of BEV along
+with the associated IoU.
+5. As a metric of computational cost, MFLOPs/pixel denotes the
+number of million floating point operations performed per pixel for
+camera perception data.
+
+---PAGE 11---
+IEEE TRANSACTIONS ON MOBILE COMPUTING 11
+Algorithm 2: Priority Aware Collaborative Percep-
+tion
+Input: Multi-CAV data 𝛤, number of vehicles 𝑁, channel
+parameter constraints 𝐾, 𝐶𝑖 𝑗, device parameters
+𝑟 𝑗, min, 𝑟 𝑗, max, 𝜂, 𝜏𝑡
+𝑗 , 𝜏𝑐
+𝑗 , 𝐸 𝑇
+𝑗 , etc.
+Output: Priority weight P, near-optimal compression ratio
+R, link establishment S, data rate D, modulated
+autoencoder, and BEV prediction.
+1: Initialize priority weight P (0) by equally allocating
+bandwidth and transmitting initial frames;
+2: Initialize the link establishment decision S (0);
+3: for 𝑗 = 0 to 𝑁 − 1 do
+4: Sort column of link establishment decision matrix in
+descending order and get the indices of the largest 𝐾
+capacity, and set the associated 𝑠𝑖 𝑗 = 1;
+5: end for
+6: while Convergence not achieved do
+7: Solve the linear programming problem P1−2;
+8: Solve the submodular problem P2 using Algorithm 1;
+9: Update priority weight P based on the current
+bandwidth allocation and perception results;
+10: if Priority weight P changes exceed the threshold 𝜖 P
+then
+11: Re-initialize the link establishment decision S (0),
+then re-calculate initial priority weight P;
+12: Continue the optimization iteration for problem P;
+13: end if
+14: end while
+15: Obtain the near-optimal solution for R, S, D;
+16: Determine the trade-off parameter 𝛽∗ based on the
+channel state;
+17: Train encoders and decoders to compress and
+reconstruct raw camera data according to Eq. (23);
+18: Predict BEV feature using the reconstructed camera
+data.
+6.1 Dataset and Baselines
+Dataset: To validate our approach, we employ the CARLA
+and OpenCOOD simulation platforms, exploiting the
+OPV2V dataset [35]. This dataset encompasses 73 varied
+scenes, a multitude of CAVs, 11,464 frames, and in excess of
+232,000 annotated 3D vehicle bounding boxes. All of these
+have been amassed using the CARLA simulator [34].
+Baseline 1: the Fairness Transmission Scheme ( FTS),
+which is built on the principles laid out in [33]. The cor-
+nerstone of this approach is the allocation of subchannels in
+a manner that resonates with Jain index defined in Eq. (1).
+Baseline 2: The core of this baseline is the Distributed
+Multicast Data Dissemination Algorithm ( DMDDA), as
+outlined in [24], which seeks to optimize throughput in a
+decentralized fashion.
+Baseline 3: the No Fusion scheme, which implies the
+usage of a single ego vehicle for gathering information about
+its surroundings. It operates without integrating data from
+the cameras of proximate CAVs.
+To ensure a fair comparison, we maintain uniformity in
+the transmission model and simulation parameters, aligning
+them to those discussed in Sec. 3.2.
+TABLE 3: Simulation Parameters
+Parameter Value
+Number of vehicles ( 𝑁) 10
+Local data per vehicle ( 𝐴 𝑗) 40 Mbits
+Number of subchannels ( 𝐾) 4
+Computation complexity (𝛽) 100 Cycles/bit
+Transmission power (𝑃𝑡) 8 mW
+CPU capacity (𝐹𝑗) 1 GHz - 3 GHz
+Bandwidth (𝑊) 200 MHz
+Power threshold (𝐸𝑇
+𝑗 ) 1 kW
+Weight for perception quality (𝑤1) 1 × 10−2
+Weight for perceptual region (𝑤2) 1 × 10−3
+Parameter ( 𝜂) 1
+Compression ratio range (𝑟min, 𝑟max) (0.3, 0.95)
+(a) IoU vs. Noise level
++78.79%
++167.00%
++309.79%
++535.84%
++893.
+2.0
+1.5
+1.0
+0.5
+0.0 Mean Utility Value (x10 6 )
+PACP
+DMDDA
+0              2              4              6 8
+Noise Level (dB)
+93%
+ (b) Utility vs. Noise level
+Fig. 7: AP@IoU and utility value under different noise levels.
+6.2 Simulation Settings
+Our simulations are based on the 3GPP standard [38].
+Specifically, the communication range for vehicles is 150 m.
+Vehicular speeds, unless otherwise stated, ranging from 0 to
+50 km/h (typical speed range on city roads), are generated
+using the CARLA simulator [34]. Additionally, vehicles are
+uniformly distributed over a six-lane highway of 200 meters,
+with three lanes allocated for each traveling direction. To
+simplify, certain frame types, such as cyclic redundancy
+checks and Reed-Solomon coding, have been omitted from
+our simulation. Table 3 presents the main simulation param-
+eters utilized in our research.
+6.3 Analysis of Experimental Results
+In our study, we evaluate the efficacy of the proposed
+PACP algorithm in maximizing utility value and enhancing
+perception accuracy (AP@IoU). We benchmark its perfor-
+mance against two established methods: DMDDA [24] and
+FTS [33]. For fairness, all evaluations are carried out under
+consistent conditions. Firstly, we conducted experiments
+to investigate the impact of electromagnetic interference
+on collaborative perception. The interference levels were
+classified based on their relative noise floor according to
+urban environment: 0 dB over -174 dBm/Hz (Low), 4 dB
+over -174 dBm/Hz (Medium), and 8 dB over -174 dBm/Hz
+(High). As illustrated in Fig. 7, perception accuracy and
+utility value deteriorate sharply as noise level intensifies.
+While PACP outperforms both DMDDA and FTS in terms
+of AP@IoU. Specifically, PACP shows an improvement of
+14.04% over DMDDA and 36.58% over FTS, because PACP
+utilizes the adaptive compression to reduce packet loss and
+latency. In Fig. 7(a), due to the priority-aware scheme, PACP
+
+---PAGE 12---
+IEEE TRANSACTIONS ON MOBILE COMPUTING 12
++8.27%
++9.94% +10.75%
++4.52%
++5.86%
+4.0 6.0 8.0 10.0 12.0
+Transmission power (mW)
+3.2
+3.0
+2.8
+2.6
+2.4
+2.2
+2.0
+PACP
+DMDDA
+Utility value (×10 6)
+(a) Usum vs. Power
++7.28%
++2.13%
++0.72%
++0.22%
+80.0 120.0 160.0  200.0
+Maximun range (m)
+2.0
+1.8
+1.6
+1.4
+1.2
+1.0
+PACP
+DMDDA
+Utility value (×10 6)
+ (b) Usum vs. 𝑅max
++11.07%
++15.47% +17.79%
++3.77%
+3.0 5.0 7.0 9.0
+Number of V ehicles
+3.2
+3.0
+2.8
+2.6
+2.4
+2.2
+2.0
+PACP
+DMDDA
+Utility value (×10 6)
+ (c) Usum vs. CAV num.
++6.94% +7.40% +7.79% +8.
++5.61%
++6.35%
+80.0  100.0  120.0  140.0 160.0  180.0
+Bandwidth (MHz)
+3.0
+2.8
+2.6
+2.4
+2.2
+2.0
+PACP
+DMDDA
+Utility value (×10 6)
+07% (d) Usum vs. Bandwidth
+Fig. 8: Results on average utility value Usum under different communication settings.
++18.94%
+4 5 6 7 8 9 10 11 12
+Transmission power (mW)
+140
+120
+100
+80
+60
+40
+20
+PACP
+DMDDA
+FTS
+Throughput (M bps)
+(a) Throughput vs. Power
+PACP
+DMDDA
+FTS
++25.55%
+80      100 120 140 160 180 200
+Maximun range (m)
+160
+140
+120
+100
+80
+60
+40
+20
+Throughput (Mbps) (b) Throughput vs. 𝑅max
++20.39%
+3 4         5         6   7         8         9        10
+Number of CAV
+160
+140
+120
+100
+80
+60
+40
+20
+PACP
+DMDDA
+FTS
+Throughput (Mbps)
+ (c) Throughput vs. CAV num.
++18.61%
+80 100 120 140 160 180
+Bandwidth (MHz)
+160
+140
+120
+100
+80
+60
+40
+PACP
+DMDDA
+FTS
+Throughput (M bps)
+ (d) Throughput vs. Bandwidth
+Fig. 9: Results on average network throughput under different communication settings.
+effectively discards poisonous data, thereby mitigating in-
+terference adverse impact on perception. In Fig. 7(b), PACP
+demonstrates superior performance compared to DMDDA
+in terms of utility value by increasing over 78.79%.
+In Eq. (13), the utility value Usum denotes the weighted
+utility function of perception quality and perceptual region.
+As the priority value is determined by the degree of IoU
+matching, a larger utility value indicates that more data
+matching the perception results of the ego CAV have been
+transmitted. Intuitively, the higher the utility value, the
+higher the accuracy of the perception results of the ego
+CAV . Fig. 8 presents a comprehensive view of how different
+communication parameters influence the utility value Usum.
+In Fig. 8(a), as the transmission power increases, both PACP
+and DMDDA show an improvement in the utility value.
+However, the utility value of PACP consistently surpasses
+that of DMDDA. Specifically, at a typical power 8.0 mW,
+PACP is about 8.27% better than DMDDA, underlining the
+efficiency of the proposed PACP approach over the baseline
+in terms of better prioritized data communication. Fig. 8(b)
+indicates that the utility value generally declines as the max-
+imum range increases. Despite this trend, PACP consistently
+outperforms DMDDA, illustrating its robustness even when
+the communication range is extended. Fig. 8(c) reveals that
+as the number of CAVs increases, the utility value increases.
+After deploying 9 vehicles, the PACP algorithm outstrips
+DMDDA by a notable margin of 17.79%. This accentuates
+the scalability and efficacy of PACP in larger vehicular
+networks. From Fig. 8(d), PACP amplifies the utility value
+by 8.07% in comparison with DMDDA at a bandwidth of
+180 MHz. This suggests that PACP is adept at capitalizing on
+larger bandwidths to enhance the perception accuracy of the
+ego CAV . In Fig. 11, as the energy consumption constraints
+𝐸 𝑇 increase, both PACP and DMDDA show an improve-
+ment in the utility value. However, the utility value of
+PACP consistently surpasses that of DMDDA. Specifically,
+at a typical constraint of 10 W, PACP achieves about 21.34%
+higher utility value than DMDDA.
+Intuitively, we can adopt throughput as a metric for
+cooperative perception. Similar to utility value, a higher
+throughput often entails a greater amount of valuable infor-
+mation being transmitted. Fig. 9(a) shows that larger power
+enhances throughput. Fig. 9(b) depicts an inverse correlation
+between the vehicle distribution maximum range (80 m -
+210 m) and throughput. It is noted that the performance
+of FTS strategy deteriorates because of balancing commu-
+nication channels of remote vehicles. Remarkably, with five
+cooperative CAVs, the PACP algorithm augments the aver-
+age throughput by 20.39% compared with DMDDA. Fur-
+thermore, Fig. 9(d) underscores the linear affinity between
+the network’s bandwidth (80-180 MHz) and throughput.
+Specifically, a bandwidth of 𝑊 = 180 MHz elevates the
+average throughput by 18.61% using the PACP algorithm
+against other baselines. To sum up, it is evident that a higher
+throughput results in a richer amount of high-priority data
+being transmitted according to Figs. 8-9.
+To further analyze the performance of perception accu-
+racy, we conduct extensive experiments to verify the perfor-
+mance of PACP . From Table 4, it is evident that the proposed
+PACP method consistently outperforms other techniques
+under various settings. PACP , underpinned by a priority-
+aware perception scheme, demonstrates a remarkable in-
+crease in perception accuracy, surpassing FTS by a minimum
+of 35.38% and DMDDA by 5.71% in scenarios under varying
+numbers of CAVs. Given a typical bandwidth 200 MHz, the
+improvement of adapting PACP achieves up to 13.60%. Such
+performance elevation is attributed to PACP’s adeptness at
+channel allocation based on CAVs’ significance to the ego
+
+---PAGE 13---
+IEEE TRANSACTIONS ON MOBILE COMPUTING 13
+TABLE 4: The comparison of PACP with three baselines under different parameters in terms of perception accuracy.
+AP@IoU
+Parameters Power (mW) Num. of CA Vs Bandwidth (MHz)
+5 8 11 2 3 4 80 140 200
+No Fusion 0.408 0.408 0.408 0.408 0.408 0.408 0.408 0.408 0.408
+FTS 0.410 0.499 0.499 0.506 0.447 0.410 0.410 0.410 0.499
+DMDDA 0.590 0.605 0.646 0.648 0.605 0.603 0.597 0.597 0.603
+PACP 0.662 0.673 0.684 0.685 0.685 0.685 0.672 0.680 0.685
+Improvement 12.20% 11.24% 5.88% 5.71% 13.22% 13.60% 12.56% 13.90% 13.60%
+(c) DMDDA (d) FTS(b) PACP(a) Ground truth
+ (e) No Fusion
+Missing 
+detection
+False 
+detection
+False 
+detection
+Missing 
+detection
+False 
+detection
+False 
+detection
+Fig. 10: BEV prediction: (a) Ground Truth, (b) PACP , (c) DMDDA, (d) No Fusion. PACP accurately detects dynamic objects,
+unlike DMDDA, FTS, and No Fusion. White: correct detection; Red: missing detection; Purple: false detection.
+6 8 10 12 14 16 18
+Energy consumption constraints ET (W)
+0.0
+0.5
+1.0
+1.5
+2.0
+2.5
+3.0Utility value (106)
++23.77%
++21.80%
++21.34%
++20.92% +20.56% +20.23% +20.19%
+PACP
+DMDDA
+Fig. 11: The Utility value vs Energy consumption constraints
+𝐸 𝑇 (W).
+vehicle, ensuring optimal transmission of pivotal perception
+data. Contrarily, fairness-based strategies, as exemplified
+by FTS’s bandwidth-fairness and DMDDA’s subchannel-
+fairness, inadvertently lead to suboptimal resource alloca-
+tion by treating every CAV with uniform significance. This
+often results in the situation that vital information receives
+the same resource allocation as non-essential data, conse-
+quently diminishing AP@IoU and increasing the chances of
+missed detections in a BEV context. Not unexpectedly, as
+the power, the number of CAVs, and bandwidth increase,
+the amount of information perceived by the ego CAV ex-
+pands, leading to a consequent rise in the AP@IoU for all
+perception strategies.
+Fig. 10 illustrates the BEV predictions across different
+schemes, setting an emphasis on the deviations from the
+Ground truth (GT), depicted in Fig. 10(a), which symbolizes
+the paragon of collaborative perception communication.
+Observing Fig. 10(b), the PACP stands out by registering
+zero false or missing detections, adhering closely to GT. On
+the other hand, DMDDA and FTS schemes, represented in
+Figs. 10(c) and (d), manifest a notable number of missing
+detections, highlighting the inefficacies in their perception
+algorithms. The most striking deviations are observed in the
+No Fusion scheme, as portrayed in Fig. 10(e). This scheme,
+relying solely on single vehicle perception, results in an
+escalated number of both false and missing detections. Such
+stark disparities accentuate the imperativeness of leveraging
+multi-view data fusion for optimized perception outcomes
+and further illuminate the pronounced efficacy of the PACP
+scheme over its contemporaries.
+7 C ONCLUSIONS
+In this paper, we have investigated the perception chal-
+lenges posed by the inherent limitations of the BEV , partic-
+ularly its blind spots, in ensuring the safety and reliability
+of connected and autonomous vehicles. We have introduced
+the novel PACP framework that leverages a unique BEV-
+match mechanism, discerning priority levels by comput-
+ing the correlation between the captured information from
+nearby CAVs and the ego vehicle. By employing a two-stage
+optimization based on submodular optimization, PACP op-
+timally regulates transmission rates, link connectivity, and
+compression metrics. A distinguishing feature of PACP is
+its integration with a deep learning-based adaptive autoen-
+coder, which is further enhanced by fine-tuning mecha-
+nisms, ensuring efficient image reconstruction quality under
+dynamic channel conditions. Evaluations conducted on the
+CARLA platform with the OPV2V dataset have confirmed
+the superiority of PACP to existing methodologies. The
+results have demonstrated that PACP improves the utility
+value and AP@IoU by 8.27% and 13.60%, respectively, high-
+lighting its potential to set new benchmarks in the realm
+of collaborative perception for connected and autonomous
+vehicles.
+
+---PAGE 14---
+IEEE TRANSACTIONS ON MOBILE COMPUTING 14
+APPENDIX A
+THE BACKGROUND INFORMATION ON IOU
+Intersection over Union (IoU) is an effective metric in com-
+puter vision, especially in object detection, used to quantify
+the overlap between two areas. Though IoU fundamentally
+informs the design of our priority weight system in subse-
+quent sections, it is directly applied as a validation tool in
+our experimental setup to assess the accuracy of perception
+overlaps among Connected Autonomous Vehicles (CAVs).
+Ground Truth 𝐺𝐺
+Predicted Box 𝑃𝑃
+Intersection
+𝐺𝐺∩ 𝑃𝑃
+Union
+𝐺𝐺∪ 𝑃𝑃
+Ground Truth 𝐺𝐺
+Predicted Box 𝑃𝑃
+(a) The intersection of 𝐺 and 𝑃.
+Ground Truth 𝐺𝐺
+Predicted Box 𝑃𝑃
+Intersection
+𝐺𝐺∩ 𝑃𝑃
+Union
+𝐺𝐺∪ 𝑃𝑃
+Ground Truth 𝐺𝐺
+Predicted Box 𝑃𝑃
+ (b) The union of 𝐺 and 𝑃.
+Fig. 12: Illustration of Intersection over Union (IoU) using
+a ground truth bounding box 𝐺 and a predicted bounding
+box 𝑃.
+As shown in Fig. 12, IoU is calculated between a ground
+truth bounding box 𝐺 and a predicted bounding box 𝑃,
+which represent the actual and camera-based perceived
+locations, respectively. The coordinates for 𝐺 ((𝑥𝐺
+0 , 𝑦𝐺
+0 ) and
+(𝑥𝐺
+1 , 𝑦𝐺
+1 )) and 𝑃 ((𝑥 𝑃
+0 , 𝑦 𝑃
+0 ) and (𝑥 𝑃
+1 , 𝑦 𝑃
+1 )) denote their respec-
+tive top-left and bottom-right corners.
+The respective areas of 𝐺 and 𝑃 are defined as follows:
+𝑆𝐺 = |( 𝑥𝐺
+0 − 𝑥𝐺
+1 ) × ( 𝑦𝐺
+0 − 𝑦𝐺
+1 )| ,
+𝑆𝑃 = |( 𝑥 𝑃
+0 − 𝑥 𝑃
+1 ) × ( 𝑦𝑃
+0 − 𝑦𝑃
+1 )| . (24)
+The area of overlap, critical for the IoU calculation, is
+derived from the extremities of the overlapping coordinates:
+𝑆𝐺∩𝑃 =
+(𝑥 𝐼
+0 − 𝑥 𝐼
+1) × ( 𝑦𝐼
+0 − 𝑦𝐼
+1)
+ (25)
+The union area, combining both bounding boxes minus
+their intersection, is given by:
+𝑆𝐺∪𝑃 = 𝑆𝐺 + 𝑆𝑃 − 𝑆𝐺∩𝑃 (26)
+IoU is thus calculated as:
+IoU(𝐺, 𝑃) = 𝑆𝐺∩𝑃
+𝑆𝐺∪𝑃
+=
+(𝑥 𝐼
+0 − 𝑥 𝐼
+1) × ( 𝑦𝐼
+0 − 𝑦𝐼
+1)
+
+𝑆𝐺 + 𝑆𝑃 − 𝑆𝐺∩𝑃
+. (27)
+The performance of IoU is heavily influenced by the
+quality of the communication channel. Superior channel
+quality enhances the transmission of camera data, leading
+to more precise and synchronized data fusion among CAVs.
+This synchronization reduces latency in data exchanges,
+directly improving the alignment of perceived and actual
+locations, thus boosting IoU performance. Conversely, poor
+channel conditions can decrease overlap accuracy between
+predicted and ground truth boxes, thereby reducing IoU
+scores. This emphasizes the critical role of robust channel
+quality in achieving optimal perception system performance
+in CAV networks.
+APPENDIX B
+PROOF OF PROPOSITION 1
+Proof: Define the Weighted Maximum Coverage Problem
+(WMCP) with universe 𝑈, subset family F =
+ ˆ𝑆1, . . . , ˆ𝑆𝐹
+	
+,
+and weight function 𝑤 : 𝑈 → R≥0. For set ˆ𝑆 ⊆ 𝑈 and subset
+family Y ⊆ F :
+𝑤 ( ˆ𝑆) =
+∑︁
+𝑢∈ ˆ𝑆
+𝑤 (𝑢),
+where 𝑤 (Y) = 𝑤
+Ð
+ˆ𝑆 ∈ Y ˆ𝑆
+
+. WMCP aims to select subsets
+from F to maximize the weight of their elements:
+max
+ˆ𝑆
+∑︁
+𝑢∈ ˆ𝑆
+𝑤 (𝑢) s.t.
+ ˆ𝑆
+ < 𝐾, ˆ𝑆 𝑓 ⊆ 𝑈. (28)
+According to the definition of the utility function in Eq. (13),
+we define the weight function with fixed D (𝑛) as follows:
+U𝑖 (S𝑖, D (𝑛) ) = 𝜔1
+𝑁∑︁
+𝑗=1, 𝑗≠𝑖
+P 𝑗𝑖 𝑠 𝑗𝑖 𝑑 (𝑛)
+𝑖 𝑗 + 𝜔2I (S𝑖) . (29)
+It is noted that each element in 𝑈 is a unique link for a
+CAV in P. The weight 𝑤 in WMCP aligns with the utility
+U𝑖 (S𝑖, D (𝑛) ) in P. Hence, with fixed D (𝑛), the problem can
+be seen as WMCP . Considering the optimization overD and
+R, P extends beyond WMCP , introducing complexities from
+D and R. Given the inherent NP-hardness of WMCP and
+the added complexity when including optimization over D
+and R, we can infer that problem P is, at the very least, as
+hard as the classical WMCP . Hence, problem P is NP-hard.
+■
+APPENDIX C
+PROOF OF PROPOSITION 2
+Proof: Refer to four properties from Definition 3 in Sec. 5.2,
+we will prove that the objective function of the problem P
+satisfies all essential conditions for submodular functions as
+follows:
+(1) To show the first property of Definition 3, we can
+obtain 𝑓 (∅) = Usum (S, D) = 0 if S = 0, which represents
+that we do not establish any links so S is a zero matrix.
+Therefore, the first property of Definition 3 can be satisfied.
+(2) To show the second property of Definition 3, we
+assume B1 and B2 are link establishment sets, where ∀B1 ⊆
+B2 ⊆ E. Let
+n
+𝑠B1
+𝑖 𝑗
+o
+𝑁 × 𝑁
+and
+n
+𝑠B2
+𝑖 𝑗
+o
+𝑁 × 𝑁
+denote the associated
+link establishment matrices. Thus, we have:
+𝑓 (B1) = Usum (B1, D) =
+𝑁∑︁
+𝑖=1
+©­
+«
+𝜔1
+𝑁∑︁
+𝑗=1, 𝑗≠𝑖
+P 𝑗𝑖 𝑠B1
+𝑗𝑖 𝑑 (𝑛)
+𝑖 𝑗 + 𝜔2I (B1)ª®
+¬
+.
+(30)
+Similarity,
+𝑓 (B2) =
+𝑁∑︁
+𝑖=1
+©­
+«
+𝜔1
+𝑁∑︁
+𝑗=1, 𝑗≠𝑖
+P 𝑗𝑖 𝑠B2
+𝑗𝑖 𝑑 (𝑛)
+𝑖 𝑗 + 𝜔2I (B2)ª®
+¬
+. (31)
+Then, let B2\B1 represent the set of all elements that
+are in B2 but not in B1. Therefore, we can derive
+the difference between B1 and B2 as 𝑓 (B2\B1) =Í𝑁
+𝑖=1
+
+𝜔1
+Í𝑁
+𝑗=1, 𝑗≠𝑖 P 𝑗𝑖 𝑠B2\B1
+𝑗𝑖 𝑑 (𝑛)
+𝑖 𝑗 + 𝜔2I (B2\B1)
+
+. Each element
+of the matrices 𝑠B
+𝑖 𝑗 can only take values of 0 or 1, where 1
+
+---PAGE 15---
+IEEE TRANSACTIONS ON MOBILE COMPUTING 15
+signifies a connected link and 0 denotes a broken or non-
+existent link. Given ∀B1 ⊆ B2 ⊆ E, it is evident that every
+link connected in B1 is also connected in B2. However, the
+converse may not be true; there might be links in B2 that
+are not connected in B1. When 𝑠B2
+𝑖 𝑗 = 𝑠B1
+𝑖 𝑗 , the difference is
+zero. When 𝑠B1
+𝑖 𝑗 ≠ 𝑠B2
+𝑖 𝑗 , the difference is positive. Therefore,
+the difference 𝑓 (B2\B1) ≥ 0, and the objective function
+Usum (S, D) is monotone.
+(3) To show the third property of Definition 3, we have to
+prove 𝑓 (B1) + 𝑓 (B2) ≥ 𝑓 (B1 ∪ B2) + 𝑓 (B1 ∩ B2). According to
+Eqs. (12) and (30), we can decompose 𝑓 (S𝑖) into two distinct
+components as follows:
+𝑓 (S𝑖) = 𝑔 (S𝑖) + ℎ(S𝑖), (32)
+where 𝑔 (S𝑖) = 𝜔1Ur is a modular function and ℎ(S𝑖) = 𝜔2Up
+is a submodular function. As for 𝑔 (S𝑖), the modular prop-
+erty ensures that the sum of the values for any two sub-
+sets is equal to the sum of their union and intersection:
+𝑔 (B1) + 𝑔 (B2) = 𝑔 (B1 ∪ B2) + 𝑔 (B1 ∩ B2). As for ℎ(S𝑖),
+encapsulates the union of perceptual regions. The inherent
+property of the union operation ensures diminishing re-
+turns; adding more regions results in a lesser incremental
+gain, thereby making ℎ submodular. Therefore, for any
+B1, B2 ⊆ S : ℎ(B1) + ℎ(B2) ≥ ℎ(B1 ∪ B2) + ℎ(B1 ∩ B2). Com-
+bining the modular and submodular components, we have
+𝑓 (B1) + 𝑓 (B2) ≥ 𝑓 (B1 ∪ B2) + 𝑓 (B1 ∩ B2).
+(4) To show the fourth property of Definition 3, we
+need to prove Δ 𝑓 (𝑒|B1) ⩾ Δ 𝑓 (𝑒|B2), where 𝑒 is an arbitrary
+element in the set E\B2. The original inequality can be
+formulated as:
+𝑓 (B2 ∪ {𝑒}) − 𝑓 (B1 ∪ {𝑒}) ⩽ 𝑓 (B2) − 𝑓 (B1). (33)
+Combining Eqs. (30), (31), (32) and (33), we extend the left
+side of the equality, which can be given by:
+Usum (B1 ∩ {𝑒}, D) − U sum (B2 ∩ {𝑒}, D)
+= 𝑔 (B2\B1) + [ℎ (B2 ∩ {𝑒}) − ℎ (B1 ∩ {𝑒})] , (34)
+Given that 𝑔 (B) is modular and ℎ(B) is submodular, it
+follows that 𝑔 (B2\B1) = 𝑔 (B2) − 𝑔 (B1) and ℎ (B2 ∩ {𝑒}) −
+ℎ (B1 ∩ {𝑒}) ⩽ ℎ (B2) − ℎ (B1) for all possible link estab-
+lishment 𝑒. Therefore, we can obtain Usum (B1 ∩ { 𝑒}, D) −
+Usum (B2 ∩ { 𝑒}, D) ⩽ 𝑔 (B2) − 𝑔 (B1) + ℎ (B2) − ℎ (B1) =
+Usum (B2, D) − U sum (B1, D). ■
+APPENDIX D
+NETWORK STRUCTURE DETAILS
+D.1 Encoder Phase
+The input image x undergoes transformation to latent rep-
+resentation z. A quantization function 𝑄 further refines z
+into a discrete vector 𝑞 ∈ H𝐷, leading to 𝑞 = 𝑄(z). In
+V2V scenarios, 𝑞 is serialized into bitstream 𝑏, with entropy
+coding to maximize the bandwidth efficiency. As shown in
+Fig. 13(a), the encoder compresses the input camera data,
+reducing its size for transmission while retaining essential
+information. It comprises the following layers:
+• Convolutional Layers (Conv): There are three convo-
+lutional layers with kernel sizes of 9×9, 5×5, and 5×5,
+and strides of 4, 2, and 2, respectively. These layers
+progressively reduce the spatial dimensions of the
+input data from [𝐻, 𝑊, 3] to [𝐻/16, 𝑊/16, 𝐹3], where
+𝐻 is the height, 𝑊 is the width, and 𝐹1, 𝐹2, and 𝐹3
+are the number of filters at each layer.
+• Generalized Divisive Normalization (GDN) Layers:
+GDN layers follow each convolutional layer to nor-
+malize the feature maps, promoting sparsity and
+reducing redundancy, which is critical for efficient
+compression. The output dimensions remain the
+same as those of the preceding convolutional layers.
+• Element-wise Modulation: The outputs of the
+GDN layers are modulated by element-wise mul-
+tiplication with modulation vectors m(ℎ𝑖 𝑗) =
+(𝑚1 (ℎ𝑖 𝑗), 𝑚2 (ℎ𝑖 𝑗), 𝑚3 (ℎ𝑖 𝑗)) generated by the modula-
+tion network. This modulation adapts the compres-
+sion process to the CSI feedback, ℎ𝑖 𝑗.
+• Quantization: The modulated data is then quantized,
+reducing the precision of the latent representation
+and enabling efficient encoding into a bitstream.
+D.2 Decoding Phase
+The bitstream 𝑏 undergoes inverse transformations. This
+includes dequantization (ˆz = 𝑄 −1 (𝑞)) and a reconstruction
+function (ˆx = 𝐻 (ˆz)) to retrieve the original image. As shown
+in Fig. 13(b), the decoder reconstructs the original camera
+data from the compressed bitstream, ensuring that the es-
+sential information is preserved and accurately recovered. It
+consists of:
+• Inverse Generalized Divisive Normalization (IGDN)
+Layers: IGDN layers, which reverse the normaliza-
+tion effect of the GDN layers, are applied to the quan-
+tized latent representation. The output dimensions
+are [𝐻/16, 𝑊/16, 𝐹3].
+• Element-wise Demodulation: The outputs of the
+IGDN layers are demodulated by element-wise
+multiplication with demodulation vectors d(ℎ𝑖 𝑗) =
+(𝑑1 (ℎ𝑖 𝑗), 𝑑2 (ℎ𝑖 𝑗), 𝑑3 (ℎ𝑖 𝑗)) generated by the demodula-
+tion network, adapting the reconstruction to the CSI
+feedback.
+• Deconvolutional Layers (Deconv): These layers up-
+sample the feature maps to reconstruct the data, with
+kernel sizes of 5 × 5, 5 × 5, and 9 × 9, and strides of
+2, 2, and 4, respectively, restoring the dimensions to
+[𝐻, 𝑊, 3].
+D.3 Modulation/Demodulation Networks
+As shown in Fig. 14, the modulation and demodulation net-
+works translate the CSI feedback into adaptive modulation
+and demodulation vectors, respectively, for the encoder and
+decoder. They include:
+• R-D Mapping: Converts the CSI feedback ℎ𝑖 𝑗 into
+rate-distortion lambda parameters.
+• Fully Connected (FC) Layers: Multiple FC layers
+with ReLU activations introduce non-linearity and
+enhance the representation capacity of the network.
+• Exponential Layer (E-Layer): Ensures that the output
+vectors are positive, necessary for the subsequent
+modulation and demodulation processes.
+
+---PAGE 16---
+IEEE TRANSACTIONS ON MOBILE COMPUTING 16
+IGDN
+Conv 1
+IGDN
+Conv 2
+IGDN
+Conv 3
+CSI feedback
+Demodulation networks
+. . .
+Reconstructed data
+Decoder
+Bitstream
+Conv 1
+GDN
+Conv 2
+GDN
+Conv 3
+GDN
+CSI feedback
+Modulation networks
+. . .
+Quantization
+Camera data
+Encoder
+Bitstream
+R-D mapping
+FC Layer
+ReLU
+FC Layer
+E- Layer
+Modulation networks
+Channel gain
+R-D mapping
+FC Layer
+ReLU
+FC Layer
+E- Layer
+Demodulation networks
+(a) The encoder part.
+IGDN
+Conv 1
+IGDN
+Conv 2
+IGDN
+Conv 3
+CSI feedback
+Demodulation networks
+. . .
+Reconstructed data
+Decoder
+Bitstream
+Conv 1
+GDN
+Conv 2
+GDN
+Conv 3
+GDN
+CSI feedback
+Modulation networks
+. . .
+Quantization
+Camera data
+Encoder
+Bitstream
+R-D mapping
+FC Layer
+ReLU
+FC Layer
+E- Layer
+Modulation networks
+Channel gain
+R-D mapping
+FC Layer
+ReLU
+FC Layer
+E- Layer
+Demodulation networks (b) The decoder part.
+Fig. 13: The architecture of the deep learning-based adaptive compression.
+IGDN
+Conv 1
+IGDN
+Conv 2
+IGDN
+Conv 3
+CSI feedback
+Demodulation networks
+. . .
+Reconstructed data
+Decoder
+Bitstream
+Conv 1
+GDN
+Conv 2
+GDN
+Conv 3
+GDN
+CSI feedback
+Modulation networks
+. . .
+Quantization
+Camera data
+Encoder
+Bitstream
+R-D mapping
+FC Layer
+ReLU
+FC Layer
+E- Layer
+Modulation networks
+Channel gain
+R-D mapping
+FC Layer
+ReLU
+FC Layer
+E- Layer
+Demodulation networks
+Fig. 14: The architecture of modulation/ demodulation net-
+works.
+D.4 Fine-tuning Phase
+This adaptive approach enables the ego CAV and nearby
+CAVs to adaptively adjust the data compression ratio ac-
+cording to dynamic channel conditions. As shown in Fig. 6,
+we introduce a fine-tuning compression strategy to further
+reduce temporal redundancy between frames. Utilizing a
+Modulated Autoencoder (MAE), our method first transmits
+a few uncompressed images to RSU for real-time fine-
+tuning.
+Even though digitization and quantization modules are
+present in the encoder and decoder, we employ scalar
+quantization by rounding to the nearest neighbor during
+inference. During training, this is replaced by additive uni-
+form noise as a proxy, i.e., ˜ z= z + Δz with Δz ∼ U (− 1
+2 , 1
+2 ).
+This approach allows the network to approximate gradients
+during the backward pass, enabling effective backpropaga-
+tion through these non-differentiable layers. This technique
+ensures that the network can be trained end-to-end, despite
+the presence of quantization layers.
+D.5 The Evaluation of Rate-Distoration (R-D) Perfor-
+mance
+We evaluate the R-D performance of our proposed PACP
+framework using the Multi-scale Structural Similarity (MS-
+SSIM) and Peak Signal-to-Noise Ratio (PSNR) metrics. MS-
+SSIM is a perceptual metric that measures the similarity
+0.3 0.4 0.5 0.6 0.7 0.8
+BPP(bit per pixel)
+11
+12
+13
+14
+15
+16
+17MS-SSIM(dB)
+Unfinetuned PACP 
+Finetuned     PACP
+ JPEG
+(a) MS-SSIM vs. bit per pixel levels
+0.3 0.4 0.5 0.6 0.7 0.8
+BPP(bit per pixel)
+33
+34
+35
+36
+37
+38
+39
+40
+41PSNR(dB)
+Unfinetuned PACP 
+Finetuned
+JPEG
+PACP (b) PSNR vs. bit per pixel levels
+Fig. 15: Comparison of rate–distortion (R-D) performance
+between finetuned PACP , unfinetuned PACP and JPEG at
+the different bit per pixel levels.
+between the original and compressed images, accounting
+for variations in resolution and viewing conditions. Be-
+sides, PSNR quantifies the reconstruction quality of images
+by comparing the original and compressed versions, with
+higher values indicating better quality. As shown in Fig.
+15(a), at lower BPP levels (below 0.4), our PACP method,
+both unfine-tuned and fine-tuned, achieves at least 1-2 dB
+higher MS-SSIM compared with JPEG. At higher BPP levels,
+the fine-tuned PACP maintains at least a 1 dB advantage.
+Fig. 15(b) demonstrates that the fine-tuned PACP consis-
+tently improves PSNR over JPEG by 2-5 dB across all BPP
+levels. These results validate the superior R-D performance
+of our deep learning-based adaptive compression method
+compared with the standard JPEG compression.
+REFERENCES
+[1] S. Hu, Z. Fang, Y. Deng, X. Chen, and Y. Fang, “Collaborative per-
+ception for connected and autonomous driving: Challenges, pos-
+sible solutions and opportunities,” arXiv preprint arXiv:2401.01544,
+2024.
+[2] S. Hu, Z. Fang, H. An, G. Xu, Y. Zhou, X. Chen, and
+Y. Fang, “Adaptive communications in collaborative perception
+with domain alignment for autonomous driving,” arXiv preprint
+arXiv:2310.00013, 2023.
+[3] S. Hu, Z. Fang, X. Chen, Y. Fang, and S. Kwong, “Towards full-
+scene domain generalization in multi-agent collaborative bird’s
+eye view segmentation for connected and autonomous driving,”
+arXiv preprint arXiv:2311.16754, 2023.
+
+---PAGE 17---
+IEEE TRANSACTIONS ON MOBILE COMPUTING 17
+[4] X. Chen, Y. Deng, H. Ding, G. Qu, H. Zhang, P . Li, and Y. Fang,
+“Vehicle as a service (VaaS): Leverage vehicles to build ser-
+vice networks and capabilities for smart cities,” arXiv preprint
+arXiv:2304.11397, 2023.
+[5] Z. Lin, G. Zhu, Y. Deng, X. Chen, Y. Gao, K. Huang, and Y. Fang,
+“Efficient parallel split learning over resource-constrained wireless
+edge networks,” IEEE Transactions on Mobile Computing , pp. 1–16,
+Jan. 2024.
+[6] Y. Xiao, F. Codevilla, A. Gurram, O. Urfalioglu, and A. M. López,
+“Multimodal end-to-end autonomous driving,” IEEE Transactions
+on Intelligent Transportation Systems , vol. 23, no. 1, pp. 537–547,
+Aug. 2022.
+[7] R. Xu, Z. Tu, H. Xiang, W. Shao, B. Zhou, and J. Ma, “CoBEVT:
+Cooperative bird’s eye view semantic segmentation with sparse
+transformers,” in Conference on Robot Learning (CoRL) , Auckland,
+NZ, Dec. 2022.
+[8] Y. Zhang, H. An, Z. Fang, G. Xu, Y. Zhou, X. Chen, and Y. Fang,
+“SmartCooper: Vehicular collaborative perception with adaptive
+fusion and judger mechanism,” in IEEE International Conference on
+Robotics and Automation (ICRA), Yokohama, Japan, May 2024.
+[9] Y. Yuan, H. Cheng, and M. Sester, “Keypoints-based deep feature
+fusion for cooperative vehicle detection of autonomous driving,”
+IEEE Robotics and Automation Letters , vol. 7, no. 2, pp. 3054–3061,
+Jan. 2022.
+[10] M. Noor-A-Rahim, Z. Liu, H. Lee, M. O. Khyam, J. He, D. Pesch,
+K. Moessner, W. Saad, and H. V . Poor, “6G for vehicle-to-
+everything (V2X) communications: Enabling technologies, chal-
+lenges, and opportunities,” Proceedings of the IEEE , vol. 110, no. 6,
+pp. 712–734, May 2022.
+[11] Y.-C. Liu, J. Tian, N. Glaser, and Z. Kira, “When2com: Multi-agent
+perception via communication graph grouping,” in IEEE/CVF
+Conference on Computer Vision and Pattern Recognition (CVPR) ,
+Seattle, WA (Virtual), 2020, pp. 4106–4115.
+[12] Z. Wang, Z. Zhang, J. Wang, C. Jiang, W. Wei, and Y. Ren,
+“AUV-assisted node repair for IoUT relying on multi-agent
+reinforcement learning,” IEEE Internet of Things Journal, (DOI:
+10.1109/JIOT.2023.3298522), 2023.
+[13] Z. Fang, J. Wang, J. Du, X. Hou, Y. Ren, and Z. Han, “Stochas-
+tic optimization-aided energy-efficient information collection in
+internet of underwater things networks,” IEEE Internet of Things
+Journal, vol. 9, no. 3, pp. 1775–1789, Jun. 2022.
+[14] Z. Wang, J. Du, C. Jiang, Y. Ren, and X.-P . Zhang, “UAV-
+assisted target tracking and computation offloading in USV-based
+MEC networks,” IEEE Transactions on Mobile Computing, (DOI:
+10.1109/TMC.2024.3396121), pp. 1–16, 2024.
+[15] A. Geiger, P . Lenz, and R. Urtasun, “Are we ready for autonomous
+driving? The KITTI vision benchmark suite,” in IEEE Conference
+on Computer Vision and Pattern Recognition (CVPR), Providence, RI,
+Jul. 2012, pp. 3354–3361.
+[16] Q. Chen, X. Ma, S. Tang, J. Guo, Q. Yang, and S. Fu, “F-cooper:
+Feature based cooperative perception for autonomous vehicle
+edge computing system using 3D point clouds,” in Proceedings
+of the 4th ACM/IEEE Symposium on Edge Computing , Arlington,
+Virginia, Nov. 2019, pp. 88–100.
+[17] T.-H. Wang, S. Manivasagam, M. Liang, B. Yang, W. Zeng, and
+R. Urtasun, “V2VNet: Vehicle-to-vehicle communication for joint
+perception and prediction,” in European Conference on Computer
+Vision (ECCV), Glasgow, United Kingdom, Aug. 2020, pp. 605–621.
+[18] J. Li, R. Xu, X. Liu, J. Ma, Z. Chi, J. Ma, and H. Yu, “Learning for
+vehicle-to-vehicle cooperative perception under lossy communi-
+cation,” IEEE Transactions on Intelligent Vehicles , vol. 8, no. 4, pp.
+2650–2660, Mar. 2023.
+[19] S. Wang, Y. Hong, R. Wang, Q. Hao, Y.-C. Wu, and D. W. K. Ng,
+“Edge federated learning via unit-modulus over-the-air compu-
+tation,” IEEE Transactions on Communications , vol. 70, no. 5, pp.
+3141–3156, Feb. 2022.
+[20] A. Skodras, C. Christopoulos, and T. Ebrahimi, “The JPEG 2000
+still image compression standard,” IEEE Signal Processing Maga-
+zine, vol. 18, no. 5, pp. 36–58, Sep. 2001.
+[21] H. Liu, H. Yuan, Q. Liu, J. Hou, and J. Liu, “A comprehensive
+study and comparison of core technologies for MPEG 3-D point
+cloud compression,” IEEE Transactions on Broadcasting , vol. 66,
+no. 3, pp. 701–717, Dec. 2020.
+[22] Q. Chen, S. Tang, Q. Yang, and S. Fu, “Cooper: Cooperative
+perception for connected autonomous vehicles based on 3d point
+clouds,” in IEEE 39th International Conference on Distributed Com-
+puting Systems (ICDCS), Dallas, TX, Oct. 2019, pp. 514–524.
+[23] Z. Y. Rawashdeh and Z. Wang, “Collaborative automated driving:
+A machine learning-based method to enhance the accuracy of
+shared information,” in 21st International Conference on Intelligent
+Transportation Systems (ITSC), Maui, Hawaii, Dec. 2018, pp. 3961–
+3966.
+[24] X. Lyu, C. Zhang, C. Ren, and Y. Hou, “Distributed graph-based
+optimization of multicast data dissemination for internet of vehi-
+cles,” IEEE Transactions on Intelligent Transportation Systems, vol. 24,
+no. 3, pp. 3117–3128, Dec. 2022.
+[25] B. L. Nguyen, D. T. Ngo, N. H. Tran, M. N. Dao, and H. L.
+Vu, “Dynamic V2I/V2V cooperative scheme for connectivity and
+throughput enhancement,” IEEE Transactions on Intelligent Trans-
+portation Systems, vol. 23, no. 2, pp. 1236–1246, Sep. 2022.
+[26] Y. Ma, W. Liang, J. Wu, and Z. Xu, “Throughput maximization of
+NFV-enabled multicasting in mobile edge cloud networks,” IEEE
+Transactions on Parallel and Distributed Systems , vol. 31, no. 2, pp.
+393–407, 2020.
+[27] S. Zhang, J. Chen, F. Lyu, N. Cheng, W. Shi, and X. Shen, “Vehicu-
+lar communication networks in the automated driving era,” IEEE
+Communications Magazine, vol. 56, no. 9, pp. 26–32, Sep. 2018.
+[28] F. Yang, L. Herranz, J. Van De Weijer, J. A. I. Guitián, A. M. López,
+and M. G. Mozerov, “Variable rate deep image compression with
+modulated autoencoder,” IEEE Signal Processing Letters , vol. 27,
+pp. 331–335, Jul. 2020.
+[29] H. Liao, Z. Li, H. Shen, W. Zeng, D. Liao, G. Li, and C. Xu, “BAT:
+Behavior-aware human-like trajectory prediction for autonomous
+driving,” in Proceedings of the AAAI Conference on Artificial Intelli-
+gence (AAAI), Vancouver, Canada, Feb. 2024, pp. 10 332–10 340.
+[30] Z. Wen, R. Yang, B. Qian, Y. Xuan, L. Lu, Z. Wang, H. Peng,
+J. Xu, A. Y. Zomaya, and R. Ranjan, “JANUS: Latency-aware traffic
+scheduling for IoT data streaming in edge environments,” IEEE
+Transactions on Services Computing , vol. 16, no. 6, pp. 4302–4316,
+Sep. 2023.
+[31] H. Cao, J. Xu, Z. Yang, L. Shangguan, J. Zhang, X. He, and Y. Liu,
+“Scaling up edge-assisted real-time collaborative visual SLAM
+applications,” IEEE/ACM Transactions on Networking, vol. 32, no. 2,
+pp. 1823–1838, Nov. 2024.
+[32] H. An, Z. Fang, Y. Zhang, S. Hu, X. Chen, G. Xu, and
+Y. Fang, “Cooperative vehicular perception with throughput max-
+imization and adaptive compression,” in in the submission to
+IEEE International Conference on Distributed Computing Systems
+(ICDCS), 2024, password: FJUfPp! [Online]. Available: https://
+zhengrufang.com/paper/ICDCS.pdf.
+[33] E. R. Magsino and I. W.-H. Ho, “An enhanced information sharing
+roadside unit allocation scheme for vehicular networks,” IEEE
+Transactions on Intelligent Transportation Systems, vol. 23, no. 9, pp.
+15 462–15 475, Jan. 2022.
+[34] A. Dosovitskiy, G. Ros, F. Codevilla, A. Lopez, and V . Koltun,
+“CARLA: An open urban driving simulator,” inConference on robot
+learning (CoRL), Mountain View, California, Nov. 2017, pp. 1–16.
+[35] R. Xu, H. Xiang, X. Xia, X. Han, J. Li, and J. Ma, “OPV2V: An
+open benchmark dataset and fusion pipeline for perception with
+vehicle-to-vehicle communication,” in International Conference on
+Robotics and Automation (ICRA) , Philadelphia, PA, May 2022, pp.
+2583–2589.
+[36] M. Adil, H. Song, J. Ali, M. A. Jan, M. Attique, S. Abbas, and
+A. Farouk, “Enhanced-AODV: A robust three phase priority-based
+traffic load balancing scheme for internet of things,” IEEE Internet
+of Things Journal, vol. 9, no. 16, pp. 14 426–14 437, Apr. 2022.
+[37] X. Luo and P . Li, “Learning-based off-chain transaction scheduling
+in prioritized payment channel networks,” IEEE Journal on Selected
+Areas in Communications, vol. 40, no. 12, pp. 3589–3599, Oct. 2022.
+[38] W. Anwar, N. Franchi, and G. Fettweis, “Physical layer evaluation
+of V2X communications technologies: 5G NR-V2X, LTE-V2X, IEEE
+802.11bd, and IEEE 802.11p,” in IEEE 90th Vehicular Technology
+Conference (VTC2019-Fall), Honolulu, HI, Sep. 2019, pp. 1–7.
+[39] M. Adil, H. Song, J. Ali, M. A. Jan, M. Attique, S. Abbas, and
+A. Farouk, “Enhanced-AODV: A robust three phase priority-based
+traffic load balancing scheme for internet of things,” IEEE Internet
+of Things Journal, vol. 9, no. 16, pp. 14 426–14 437, Apr. 2021.
+[40] Z. Xiao, Z. Han, A. Nallanathan, O. A. Dobre, B. Clerckx, J. Choi,
+C. He, and W. Tong, “Antenna array enabled space/air/ground
+communications and networking for 6G,” IEEE Journal on Selected
+Areas in Communications, vol. 40, no. 10, pp. 2773–2804, Aug. 2022.
+[41] W. Chen, X. Lin, J. Lee, A. Toskala, S. Sun, C. F. Chiasserini, and
+L. Liu, “5G-Advanced toward 6G: Past, present, and future,” IEEE
+
+---PAGE 18---
+IEEE TRANSACTIONS ON MOBILE COMPUTING 18
+Journal on Selected Areas in Communications, vol. 41, no. 6, pp. 1592–
+1619, Jun. 2023.
+[42] S. Dobzinski and J. Vondrák, “Communication complexity of
+combinatorial auctions with submodular valuations,” in Twenty-
+Fourth Annual ACM-SIAM Symposium on Discrete Algorithms, 2013,
+pp. 1205–1215.
+[43] A. Krause and D. Golovin, “Submodular function maximization.”
+Tractability, vol. 3, no. 71-104, p. 3, 2014.
+[44] J. Ballé, V . Laparra, and E. P . Simoncelli, “End-to-end optimized
+image compression,” in International Conference on Learning Repre-
+sentations (ICLR), Toulon, France, Apr. 2017, pp. 1–27.
+Zhengru Fang (S’20) received his B.S. degree in electronics and in-
+formation engineering from Huazhong University of Science and Tech-
+nology, Wuhan, China, in 2019, and his M.S. degree from Tsinghua
+University, Beijing, China, in 2022. He is currently pursuing a Ph.D. in
+the Department of Computer Science at City University of Hong Kong.
+His research interests include collaborative perception, V2X, age of
+information, and mobile edge computing. He serves as a reviewer for
+ACM Computing Surveys, IEEE TMC, IEEE JSAC, IEEE TIV, IEEE IoTJ,
+IEEE TVT, and IEEE VTM.
+Senkang Hu received his B.S. degree in electronic and information
+engineering from Beijing Institute of Technology, Beijing, China, in 2022.
+He is currently pursuing his PhD degree in the Department of Computer
+Science at City University of Hong Kong, Hong Kong. His research
+interests include autonomous driving, vehicle-to-vehicle collaborative
+perception.
+Haonan An received his B.S. degree in Telecommunication Engineering
+from Huazhong University of Science and Technology, Wuhan, China,
+and his M.S. degree from the School of Electrical and Electronic Engi-
+neering, Nanyang Technological University, Singapore. He is currently
+pursuing a Ph.D. in the Department of Computer Science at City Uni-
+versity of Hong Kong. His research interests are focused on AI security,
+generative models, and collaborative perception.
+Y uang Zhang is currently a Ph. D. student in the Department of Civil
+and Environmental Engineering, University of Washington, Seattle, WA,
+USA. He obtained the Bachelor and Master’s degree in the Department
+of Automation, Tsinghua University. Mr. Zhang has published papers in
+IEEE ICRA, IEEE IST and COTA ICTP , etc. His research interests lie in
+the area of Intelligent transportation.
+Jingjing Wang (S’14-M’19-SM’21) received his B.S. degree in Elec-
+tronic Information Engineering from Dalian University of Technology,
+Liaoning, China in 2014 and the Ph.D. degree in Information and
+Communication Engineering from Tsinghua University, Beijing, China in
+2019, both with the highest honors. From 2017 to 2018, he visited the
+Next Generation Wireless Group chaired by Prof. Lajos Hanzo, Univer-
+sity of Southampton, UK. Dr. Wang is currently an associate professor
+at School of Cyber Science and Technology, Beihang University, and
+also a researcher at Hangzhou Innovation Institute, Beihang University,
+Hangzhou, China. His research interests include AI enhanced next-
+generation wireless networks, swarm intelligence and confrontation. He
+has published over 100 IEEE Journal/Conference papers. Dr. Wang was
+a recipient of the Best Journal Paper Award of IEEE ComSoc Technical
+Committee on Green Communications & Computing in 2018, the Best
+Paper Award of IEEE ICC and IWCMC in 2019.
+Hangcheng Cao is currently a postdoctoral fellow in the Department of
+Computer Science, City University of Hong Kong. He obtained the Ph.D.
+degree in the College of Computer Science and Electronic Engineer, Hu-
+nan University, China, in 2023. He studied as a joint PhD student in the
+School of Computer Science and Engineering, Nanyang Technological
+University, Singapore, in 2022. He has published papers in IEEE S&P ,
+ACM Ubicomp/IMWUT, IEEE INFOCOM, IEEE TMC, IEEE ICDCS, ACM
+MobiCom Workshop, ACM ToSN, IEEE Communications Magazine, etc.
+His research interests lie in the area of IoT security.
+Xianhao Chen received the B.Eng. degree in electronic information
+from Southwest Jiaotong University in 2017, and the Ph.D. degree in
+electrical and computer engineering from the University of Florida in
+2022. He is currently an assistant professor with the Department of
+Electrical and Electronic Engineering, the University of Hong Kong. He
+received the 2022 ECE graduate excellence award for research from the
+University of Florida. His research interests include wireless networking,
+edge intelligence, and machine learning.
+Y uguang Fang (S’92, M’97, SM’99, F’08) received the MS degree
+from Qufu Normal University, China in 1987, a PhD degree from Case
+Western Reserve University, Cleveland, Ohio, USA, in 1994, and a
+PhD degree from Boston University, Boston, Massachusetts, USA in
+1997. He joined the Department of Electrical and Computer Engineering
+at University of Florida in 2000 as an assistant professor, then was
+promoted to associate professor in 2003, full professor in 2005, and
+distinguished professor in 2019, respectively. Since August 2022, he
+has been the Chair Professor of Internet of Things with the Department
+of Computer Science at City University of Hong Kong. Prof. Fang re-
+ceived many awards including the US NSF CAREER Award (2001), US
+ONR Y oung Investigator Award (2002), 2018 IEEE Vehicular Technol-
+ogy Outstanding Service Award, IEEE Communications Society AHSN
+Technical Achievement Award (2019), CISTC Technical Recognition
+Award (2015), and WTC Recognition Award (2014), and 2010-2011
+UF Doctoral Dissertation Advisor/Mentoring Award. He held multiple
+professorships including the Changjiang Scholar Chair Professorship
+(2008-2011), Tsinghua University Guest Chair Professorship (2009-
+2012), University of Florida Foundation Preeminence Term Professor-
+ship (2019-2022), and University of Florida Research Foundation Pro-
+fessorship (2017-2020, 2006- 2009). He served as the Editor-in-Chief
+of IEEE Transactions on Vehicular Technology (2013-2017) and IEEE
+Wireless Communications (2009-2012) and serves/served on several
+editorial boards of journals including Proceedings of the IEEE (2018-
+present), ACM Computing Surveys (2017-present), ACM Transactions
+on Cyber-Physical Systems (2020-present), IEEE Transactions on Mo-
+bile Computing (2003-2008, 2011-2016, 2019-present), IEEE Trans-
+actions on Communications (2000-2011), and IEEE Transactions on
+Wireless Communications (2002-2009). He served as the Technical
+Program CoChair of IEEE INFOCOM’2014. He is a Member-at-Large of
+the Board of Governors of IEEE Communications Society (2022-2024)
+and the Director of Magazines of IEEE Communications Society (2018-
+2019). He is a fellow of ACM, IEEE, and AAAS.

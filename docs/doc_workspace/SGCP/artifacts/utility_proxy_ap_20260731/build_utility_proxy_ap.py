@@ -4,6 +4,12 @@
 The script replays the dense Table-3 schedulers, reads their actual grid
 selection from the in-memory OpenCDA scheduler, computes the paper-facing
 early/late utility proxy, and joins it with the already measured AP@0.5.
+The utility uses the current paper formulation:
+
+    U_early_r(g; x) = 1 - (1 - q_r(g)) prod_i (1 - x_i,r,g q_i(g)).
+
+This is an offline analysis over existing traces/scheduler replay; it does not
+run detector inference.
 """
 
 import csv
@@ -191,8 +197,7 @@ def utility_for_selection(world, clusters, selection, rho_th=RHO_TH):
 
     before_by_receiver = {}
     after_by_receiver = {}
-    cov_gain = 0.0
-    view_gain = 0.0
+    marginal_gain = 0.0
     for receiver_id in receiver_ids:
         receiver_vm = world.get_vehicle_manager(receiver_id)
         current = {}
@@ -213,11 +218,9 @@ def utility_for_selection(world, clusters, selection, rho_th=RHO_TH):
                 if qi <= 0.0:
                     continue
                 cur = current.get(grid_id, 0.0)
-                cov = min(qi, max(0.0, 1.0 - cur))
-                view = min(qi, max(0.0, 1.0 - cur)) if cur > 0.0 else 0.0
-                cov_gain += cov
-                view_gain += view
-                current[grid_id] = min(1.0, cur + cov + view)
+                delta = qi * max(0.0, 1.0 - cur)
+                marginal_gain += delta
+                current[grid_id] = min(1.0, cur + delta)
         before_by_receiver[receiver_id] = before
         after_by_receiver[receiver_id] = current
 
@@ -235,8 +238,7 @@ def utility_for_selection(world, clusters, selection, rho_th=RHO_TH):
         "u_before": u_before / denom,
         "u_after": u_after / denom,
         "u_gain": (u_after - u_before) / denom,
-        "cov_gain": cov_gain / denom,
-        "view_gain": view_gain / denom,
+        "marginal_gain": marginal_gain / denom,
     }
 
 
@@ -459,8 +461,7 @@ def main():
                 "timestamp": timestamp,
                 "u_final": utility["u_after"],
                 "u_gain": utility["u_gain"],
-                "cov_gain": utility["cov_gain"],
-                "view_gain": utility["view_gain"],
+                "marginal_gain": utility["marginal_gain"],
                 "selected_grids": float(selected_grids),
                 "links": float(links),
                 "raw_mbps": raw_bytes * 8.0 / 1e6 / 0.1,
@@ -473,8 +474,7 @@ def main():
             "method": method["name"],
             "utility_final": stats["u_final_mean"],
             "utility_gain": stats["u_gain_mean"],
-            "coverage_gain": stats["cov_gain_mean"],
-            "view_gain": stats["view_gain_mean"],
+            "marginal_gain": stats["marginal_gain_mean"],
             "selected_grids": stats["selected_grids_mean"],
             "links": stats["links_mean"],
             "raw_mbps_proxy": stats["raw_mbps_mean"],
@@ -524,13 +524,13 @@ def main():
             "computed by replaying each scheduler without detector inference "
             "and evaluating the paper-facing early/late surrogate on the "
             "actual selected grid set.\n\n")
-        stream.write("| Method | Utility final | Utility gain | C gain | V gain | AP@0.5 | Avg grids | Links/frame |\n")
-        stream.write("|---|---:|---:|---:|---:|---:|---:|---:|\n")
+        stream.write("| Method | Utility final | Utility gain | Dynamic marginal gain | AP@0.5 | Avg grids | Links/frame |\n")
+        stream.write("|---|---:|---:|---:|---:|---:|---:|\n")
         for row in sorted(method_rows, key=lambda item: item["ap_05"],
                           reverse=True):
             stream.write(
                 "| {method} | {utility_final:.4f} | {utility_gain:.4f} | "
-                "{coverage_gain:.4f} | {view_gain:.4f} | {ap_05:.2f} | "
+                "{marginal_gain:.4f} | {ap_05:.2f} | "
                 "{selected_grids:.2f} | {links:.2f} |\n".format(**row))
         stream.write("\nCorrelation with AP@0.5:\n\n")
         stream.write(

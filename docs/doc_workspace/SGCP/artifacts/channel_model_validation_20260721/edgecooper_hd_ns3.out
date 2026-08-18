@@ -1,0 +1,74 @@
+﻿conda.exe : C:\Users\sakakibara\miniconda3\envs\opencda\lib\site-packages\torch\nn\functional.py:1806: UserWarning: nn.
+functional.sigmoid is deprecated. Use torch.sigmoid instead.
+At C:\Users\sakakibara\miniconda3\shell\condabin\Conda.psm1:194 char:17
++ ...             & $Env:CONDA_EXE $Env:_CE_M $Env:_CE_CONDA $Command @Othe ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (C:\Users\sakaki...igmoid instead.:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+  warnings.warn("nn.functional.sigmoid is deprecated. Use torch.sigmoid instead.")
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+resuming by loading epoch 10000
+frame=1/1 receiver_sample=1/6 scenario=2026_07_15_01_26_56 timestamp=000060 cavs=[4, 8, 12]
+sgcp_constrained receiver=4 policy=all-cluster-heads sources=[4, 8, 12] clusters=6 ra=selective_edgecooper_global_hd comm_bytes=110544 selected_grids={8: 53, 12: 57}
+fusion_method=early pred_boxes=20 gt_boxes=34
+pred_scores_shape=(20,)
+frame=1/1 receiver_sample=2/6 scenario=2026_07_15_01_26_56 timestamp=000060 cavs=[11, 1, 9, 2]
+sgcp_constrained receiver=11 policy=all-cluster-heads sources=[11, 1, 9, 2] clusters=6 ra=selective_edgecooper_global_hd comm_bytes=203440 selected_grids={1: 39, 9: 39, 2: 39}
+fusion_method=early pred_boxes=21 gt_boxes=56
+pred_scores_shape=(21,)
+frame=1/1 receiver_sample=3/6 scenario=2026_07_15_01_26_56 timestamp=000060 cavs=[13, 10, 19, 5]
+sgcp_constrained receiver=13 policy=all-cluster-heads sources=[13, 10, 19, 5] clusters=6 ra=selective_edgecooper_global_hd comm_bytes=176176 selected_grids={10: 39, 19: 39, 5: 39}
+fusion_method=early pred_boxes=20 gt_boxes=40
+pred_scores_shape=(20,)
+frame=1/1 receiver_sample=4/6 scenario=2026_07_15_01_26_56 timestamp=000060 cavs=[15, 6]
+sgcp_constrained receiver=15 policy=all-cluster-heads sources=[15, 6] clusters=6 ra=selective_edgecooper_global_hd comm_bytes=71760 selected_grids={6: 56}
+fusion_method=early pred_boxes=12 gt_boxes=17
+pred_scores_shape=(12,)
+frame=1/1 receiver_sample=5/6 scenario=2026_07_15_01_26_56 timestamp=000060 cavs=[16, 7, 3, 20]
+sgcp_constrained receiver=16 policy=all-cluster-heads sources=[16, 7, 3, 20] clusters=6 ra=selective_edgecooper_global_hd comm_bytes=185312 selected_grids={7: 39, 3: 39, 20: 39}
+fusion_method=early pred_boxes=24 gt_boxes=30
+pred_scores_shape=(24,)
+frame=1/1 receiver_sample=6/6 scenario=2026_07_15_01_26_56 timestamp=000060 cavs=[17, 18]
+sgcp_constrained receiver=17 policy=all-cluster-heads sources=[17, 18] clusters=6 ra=selective_edgecooper_global_hd comm_bytes=79600 selected_grids={18: 58}
+fusion_method=early pred_boxes=14 gt_boxes=18
+pred_scores_shape=(14,)

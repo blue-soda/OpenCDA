@@ -1,0 +1,1 @@
+this pretrained PIXOR model has different weights as the one used in the paper, as the original model was damaged.

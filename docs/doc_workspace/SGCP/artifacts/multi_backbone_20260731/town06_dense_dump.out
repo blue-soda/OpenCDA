@@ -1,0 +1,72 @@
+DEBUG conda.gateways.logging:set_log_level(207): log_level set to 10
+DEBUG conda.gateways.subprocess:subprocess_call(97): executing>> C:\WINDOWS\system32\cmd.exe /d /c C:\Users\SAKAKI~1\AppData\Local\Temp\tmpy8qw_568.bat
+C:\Users\sakakibara\miniconda3\envs\opencda\lib\site-packages\numpy\core\fromnumeric.py:3441: RuntimeWarning: Mean of empty slice.
+  out=out, **kwargs)
+C:\Users\sakakibara\miniconda3\envs\opencda\lib\site-packages\numpy\core\_methods.py:189: RuntimeWarning: invalid value encountered in double_scalars
+  ret = ret.dtype.type(ret / rcount)
+OpenCDA Version: 0.1.3
+carla_version: 0.9.11
+Creating single CAVs.
+1 vehicles initialized
+vehicle 182
+global_ego_id 1
+enable_network: False
+grid_size = 10.0, Generated 961 perception grids.
+Density threshold set to: 2.0
+deactivate mode
+Spawning CARLA traffic flow.
+old version
+Create 9 vehicle managers for traffic.
+2 vehicles initialized
+enable_network: False
+grid_size = 10.0, Generated 961 perception grids.
+Density threshold set to: 2.0
+deactivate mode
+3 vehicles initialized
+enable_network: False
+grid_size = 10.0, Generated 961 perception grids.
+Density threshold set to: 2.0
+deactivate mode
+4 vehicles initialized
+enable_network: False
+grid_size = 10.0, Generated 961 perception grids.
+Density threshold set to: 2.0
+deactivate mode
+5 vehicles initialized
+enable_network: False
+grid_size = 10.0, Generated 961 perception grids.
+Density threshold set to: 2.0
+deactivate mode
+6 vehicles initialized
+enable_network: False
+grid_size = 10.0, Generated 961 perception grids.
+Density threshold set to: 2.0
+deactivate mode
+7 vehicles initialized
+enable_network: False
+grid_size = 10.0, Generated 961 perception grids.
+Density threshold set to: 2.0
+deactivate mode
+8 vehicles initialized
+enable_network: False
+grid_size = 10.0, Generated 961 perception grids.
+Density threshold set to: 2.0
+deactivate mode
+9 vehicles initialized
+enable_network: False
+grid_size = 10.0, Generated 961 perception grids.
+Density threshold set to: 2.0
+deactivate mode
+10 vehicles initialized
+enable_network: False
+grid_size = 10.0, Generated 961 perception grids.
+Density threshold set to: 2.0
+deactivate mode
+CARLA traffic flow generated, with 29 vehicles and 9 vms
+lane change not allowed
+Localization Evaluation Done.
+Kinematics Evaluation Done.
+Platooning Evaluation Done.
+{}
+Destroying all the actors...
+Simulation closed

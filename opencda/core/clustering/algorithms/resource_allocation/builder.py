@@ -31,6 +31,12 @@ from opencda.core.clustering.algorithms.resource_allocation.dynamic_marginal_two
 from opencda.core.clustering.algorithms.resource_allocation.dynamic_cv_potential_game import (
     DynamicCVPotentialGame,
 )
+from opencda.core.clustering.algorithms.resource_allocation.round_robin_dynamic_marginal import (
+    RoundRobinDynamicMarginal,
+)
+from opencda.core.clustering.algorithms.resource_allocation.hybrid_round_robin_dynamic_marginal import (
+    HybridRoundRobinDynamicMarginal,
+)
 from opencda.core.clustering.algorithms.resource_allocation.balanced_perception_aware_potential_game import (
     BalancedPerceptionAwarePotentialGame,
 )
@@ -77,6 +83,15 @@ RESOURCE_ALLOCATION_ALGORITHMS = {
     'dynamic_cv_pg': DynamicCVPotentialGame,
     'dynamic_cv': DynamicCVPotentialGame,
     'dcvpg': DynamicCVPotentialGame,
+    'round_robin_dynamic_marginal': RoundRobinDynamicMarginal,
+    'round_robin_dynamic_marginal_pg': RoundRobinDynamicMarginal,
+    'rr_dynamic_marginal': RoundRobinDynamicMarginal,
+    'rrdmpg': RoundRobinDynamicMarginal,
+    'hybrid_round_robin_dynamic_marginal':
+        HybridRoundRobinDynamicMarginal,
+    'hybrid_rr_dynamic_marginal': HybridRoundRobinDynamicMarginal,
+    'hrr_dynamic_marginal': HybridRoundRobinDynamicMarginal,
+    'hrrdmpg': HybridRoundRobinDynamicMarginal,
     'balanced_perception_aware_potential_game':
         BalancedPerceptionAwarePotentialGame,
     'balanced_perception_aware_pg': BalancedPerceptionAwarePotentialGame,

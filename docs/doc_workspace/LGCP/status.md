@@ -112,6 +112,10 @@
 - 已完成 ordinary-intersection 10-CAV Top-10 area 的 `<=5` Leader 限制 sweep。K=3/4/5 的 full-scope AP@0.3/0.5/0.7 分别为 `0.710024/0.700737/0.578433`、`0.811164/0.748394/0.697697`、`0.811164/0.753897/0.705270`；planned-area AP 分别为 `0.809229/0.798743/0.660574`、`0.865886/0.798881/0.744764`、`0.865886/0.804755/0.752848`。K=5 是当前 `<=5` Leader 约束下的推荐点，K=4 作为保守 checkpoint-friendly 对照，K=3 过粗导致 full-scope AP 明显下降。
 - 已在同一 ordinary-intersection 10-CAV Top-10 / K=5 assignment 上复测 Where2comm leader-feature route。`lgcp_area_objectness + dilation1` 下 planned-area AP@0.3/0.5/0.7 为 `0.759775/0.743407/0.381554`，full-scope 为 `0.643896/0.629983/0.323233`；第一跳 member upload 同为 `36.37KB/frame`，二跳 feature 约 `184.12KB/frame` / `15.083032Mbps`。Where2comm 比 SGCP attentive-derived K=5 的二跳 `214.58KB/frame` 更低，但 AP@0.7 明显不足，当前更适合作为 communication-aware checkpoint 对照。
 - 已将 ordinary-intersection 10-CAV 的 LGCP area 从 `10m x 6m` 粗化到 `30m x 24m`，使 `90m x 70m` RoI 变为 `9` 个总 area，并用同一离线数据复算 area confidence、all-area hierarchy plan、K=5 reassignment、SGCP attentive-derived 与 Where2comm。粗 area K=5 下第一跳 member upload 从 `36.37KB/frame` 增至 `94.60KB/frame`；但二跳特征仍更大：SGCP attentive-derived `916.46KB/frame`，Where2comm `382.02KB/frame`，Where2comm dilation0 也有 `359.56KB/frame`。结论：area 总数问题已修正，但“中间特征应显著小于原始点云”的通信目标仍未满足，下一步需要 feature-cell budget / threshold / quantization。
+- 已将 Where2comm 通信量核算文档重命名并扩展为 `two_hop_feature_fusion_routes.md`，按两条路线复核当前结论：第一跳早期融合 + 第二跳中期特征融合当前 AP 最好但二跳 feature payload 偏大；第一跳 Where2comm + 第二跳 Where2comm 已端到端打通但 AP 崩溃，主要风险是 RSU/global 坐标对齐、fused-feature distribution shift、second-hop selector/head mismatch。当前 ordinary-intersection 10-CAV Where2comm selected feature/raw 为 `3.80x-5.06x`；若保持现有 selected-cell 数量，需要约 `4x-8x` 训练过的通道压缩或等效量化/编码，才能让二跳 BEV feature 小于第一跳 raw area point slice。
+- 已新增 `opencda/tools/lgcp_where2comm_two_hop_feature_fusion.py`，按“member CAV feature -> leader Where2comm feature fusion -> leader feature packet -> RSU Where2comm feature fusion -> detection”实现两跳中期特征诊断，不修改 SGCP 或既有一跳脚本。ordinary-intersection 10-CAV Top-5 / 21 帧 planned-area 结果为 AP@0.3/0.5/0.7 `0/0/0`，first/second/total feature Mbps 为 `7.617585/0.290621/7.908206`；同帧一跳 Where2comm 对照 AP@0.5 为 `0.657407`，说明两跳级联的主要问题是 fused feature 再作为普通 CAV feature 输入第二次 Where2comm 的分布偏移，而不是 checkpoint 完全不可用。
+- `lgcp_where2comm_two_hop_feature_fusion.py` 已进一步支持 `--rsu-fusion-mode direct_mean|direct_max|direct_att`，可在 RSU 侧直接融合 first-hop fused feature。Top-10 首帧 direct mean / max / att 均未恢复 AP，低阈值 `0.001` 也只有 1 个预测框且 AP 为 0；同时二跳 dense fused-feature 通信约 `3027.76 Mbps`。结论是 fused feature 直接融合可实现，但未经训练/压缩不具备当前主线价值。
+- `lgcp_where2comm_two_hop_feature_fusion.py` 已新增 `--first-hop-projection project_full_first`，按“完整点云生成完整 BEV，area 外 feature cell 通过 mask 压缩，第二跳仍用 Where2comm”验证用户提出的新思路。Top-10 首帧 leader-packet 在阈值 `0.001` 下有 9 个预测框但 AP 仍为 0；Top-5 21 帧第二跳 AP@0.3/0.5/0.7 仍为 `0/0/0`；full-scope 首帧 68 个预测框 AP@0.3 仍为 0。新增 first-hop leader-side AP 诊断后，Top-5 21 帧第一跳 AP@0.3/0.5/0.7 为 `0.470496/0.470496/0.470496`，说明 first-hop leader fused feature 本身可检测，主要崩溃点在 second-hop Where2comm 消费 leader fused feature 后。2026-07-23 进一步新增 `--second-hop-pairwise-mode normal|inverse` 和 `project_full_reference` 坐标隔离诊断：单纯反转 pairwise 方向仍为 AP 全 0，但将 first-hop packet feature 强制生成在 RSU/reference 坐标系后，同一 Top-10 首帧恢复到 AP@0.3/0.5/0.7 `0.166667/0.166667/0.166667`。结论是 leader-local feature 未显式对齐到 RSU/global BEV reference 是二跳崩溃的主要因素之一；即便坐标对齐，仍需处理 fused-feature distribution shift 和未训练 second-hop selector/head mismatch。
 - 已新增 `opencda/tools/lgcp_v2xvit_feature_probe.py`，验证 `pointpillar_v2xvit_fusion` 的 backbone 后、fusion 前 compressed latent 是否适合作为 LGCP leader-to-RSU feature packet；Top-23 11 帧 compressed area crop bytes 为 `248912` total / `22628.36 bytes/frame`，低于 member area point slice `527840` total / `47985.45 bytes/frame`，也远低于 scatter sparse bytes `5949952` total。`pointpillar_cobevt_fusion` 当前 checkpoint 是 camera BEV segmentation 配置，不适合直接替换当前 LiDAR detection route。
 - 已新增 `opencda/tools/lgcp_v2xvit_rsu_detection_probe.py`，将 V2X-ViT compressed latent packet 接回 RSU 侧 decoder / V2XTransformer / detection heads；Top-5 首帧 crop-mode AP@0.3/0.5/0.7 为 `0.468204/0.065476/0.000000`，full-latent upper bound 为 `0.333333/0.229167/0.000000`。该结果说明接口已打通，但检测质量尚未闭环。
 - V2X-ViT RSU detection threshold sweep 已完成：Top-5 首帧 crop/full mode 在 thresholds `0.005/0.01/0.02/0.05/0.1` 下预测数量和 AP 完全不变，说明 AP 低不是简单 score threshold calibration 问题；下一步应转向 query-mode / RSU query 语义和 head 微调。
@@ -132,7 +136,7 @@
 ## 近期建议焦点
 
 1. 扩大 area confidence validation 到多 seed / 多场景，形成可进入论文的稳定相关性结果；OpenCOOD 评估入口、日志格式、远端数据路径和候选 checkpoint 已确认，下一步应在 `mindspore-186` 跑 400-frame gate。
-2. 基于已完成的 selected-agent raw-byte、area-slice accounting、PointPillar feature geometry probe、feature crop export smoke、leader-local feature fusion smoke、RSU feature assembly smoke、detection-head probe、reference-frame alignment diagnostic、nearest/bilinear coordinate-warp smoke、AP probe、neural feature proxy summary、`rsu_bev_attentive_calibration.md` 和 `rsu_bev_training_plan.md`，下一步不应继续扩大简单 warp；scatter BEV 路线证明机制可行但通信偏大，V2X-ViT compressed area-crop probe 已显示更好的 byte boundary，但 compressed latent RSU route 的 `query_heads/query_fusion_heads` 都不能带来可用 AP，应收窄为 limitation；native point-crop intermediate route更符合 checkpoint 语义，其中 attentive Top-5 11 帧 AP@0.5 `0.420702` / AP@0.7 `0.244483` 明显优于 V2X-ViT 的 `0.208964` / `0.011765`；Where2comm + LGCP area-objectness intersection 和 SGCP attentive-derived leader-BEV route 是当前两个模型级候选。普通十字路口 10-CAV 场景中，fine-grid K=5 的 SGCP attentive full-scope AP@0.5/AP@0.7 为 `0.753897/0.705270`，但二跳 `214.58KB/frame` 仍高于第一跳 `36.37KB/frame`；coarse-grid 9-area rerun 纠正了 area 语义，但二跳仍高于第一跳。下一步应优先做 feature-cell budget / stricter objectness selection / quantization，并重新测 AP-byte Pareto。
+2. 基于已完成的 selected-agent raw-byte、area-slice accounting、PointPillar feature geometry probe、feature crop export smoke、leader-local feature fusion smoke、RSU feature assembly smoke、detection-head probe、reference-frame alignment diagnostic、nearest/bilinear coordinate-warp smoke、AP probe、neural feature proxy summary、`rsu_bev_attentive_calibration.md`、`rsu_bev_training_plan.md`、`two_hop_feature_fusion_routes.md` 和两跳 Where2comm 诊断，下一步不应继续扩大简单 warp；scatter BEV 路线证明机制可行但通信偏大，V2X-ViT compressed area-crop probe 已显示更好的 byte boundary，但 compressed latent RSU route 的 `query_heads/query_fusion_heads` 都不能带来可用 AP，应收窄为 limitation；native point-crop intermediate route更符合 checkpoint 语义，其中 attentive Top-5 11 帧 AP@0.5 `0.420702` / AP@0.7 `0.244483` 明显优于 V2X-ViT 的 `0.208964` / `0.011765`；Where2comm + LGCP area-objectness intersection 和 SGCP attentive-derived leader-BEV route 是当前两个模型级候选。普通十字路口 10-CAV 场景中，fine-grid K=5 的 SGCP attentive full-scope AP@0.5/AP@0.7 为 `0.753897/0.705270`，但二跳 `214.58KB/frame` 仍高于第一跳 `36.37KB/frame`；Where2comm selected feature 在同场景中为 raw point slice 的 `3.80x-5.06x`，需要约 `4x-8x` 的训练过的通道压缩或等效量化/编码才可能低于 raw；未训练两跳 Where2comm 级联当前 AP 为 0，不应作为主线。下一步应优先做 feature-cell budget / stricter objectness selection / trained compression / quantization，并重新测 AP-byte Pareto。
 3. 若继续扩展 ablation，应将 source-unique 作为更真实 scheduler 约束保留，同时继续诊断 member slots 的 target receiver setup 和非 RSU receiver 的 CAM application completion；另一条主线是推进 model-level leader/RSU fusion。
 4. 大规模 30 CAV 结果若短期只跑 latency，应在论文中收窄为 communication/computation scalability；若报告 perception scalability，只能报告已校准的 proxy，不能写成真实 AP。
 5. 下一步将 request-level PHY/RLC/HARQ trace 和 control-plane overhead 扩展到多 seed，或开始推进完整 LGCP local fusion / RSU aggregation。
@@ -151,3 +155,152 @@
 - `lgcp_carla` 用作 LGCP 后续机制实现和实验的专用场景：保留 Town03 规模，新增 RSU，并显式开启车辆网格感知配置。
 - `lgcp_carla` 已完成纯 CARLA 运行、数据导出和离线 OpenCOOD 推理 smoke test，适合推进 `target.md` 中的数据导出、离线验证、RSU/20 CAV 场景基础任务。
 - 受 `BehaviorAgent.is_close_to_destination()` 的 10m 结束阈值限制，ego destination 不能设置到离 spawn 过近，否则会启动即结束。当前目的地被收近到刚超过阈值的位置以缩短在线仿真。
+## 2026-07-28: Original LGCP Reproduction Status
+
+Current best reproduction path is `OpenCOOD --lgcp_original --lgcp_original_execution accounting`.
+
+What is now working:
+
+- Original-style area grouping is implemented with the paper's collaborative confidence gain rule `Delta_g`.
+- First-hop communication is accounted as area-specific intermediate feature packets using the paper's `2.16 Mb` full-feature size and `10m x 6m` area grid.
+- Second-hop communication is accounted as leader detection-box / perception-result upload.
+- RSU/global output uses box-level aggregation semantics.
+- Where2comm OPV2V 5-CAV slice reproduces the paper-like claim under accounting semantics: `Delta_g=0.10` gives AP@0.3/0.5/0.7 `0.906450/0.904430/0.851670`, `2.314377 Mbps`, and `43.721x` reduction vs edge-assisted full-feature upload.
+
+Important limitation:
+
+- The stricter executable hierarchy, `--lgcp_original_execution leader_box`, currently drops to AP@0.3/0.5/0.7 `0.383235/0.371399/0.354552` at `Delta_g=0.075`.
+- Therefore the low-workload paper route should not claim that we have fully solved true spatially partitioned leader-local neural perception. It should claim an RSU scheduling/accounting framework over existing collaborative perception, with area-level packet selection and perception-result aggregation.
+- This limitation is consistent with the original-author clarification that the lost implementation did not actually split intermediate features by area before inference; it used full intermediate features and then applied area partitioning to detection boxes and communication accounting.
+
+Recommended next move:
+
+- For a fast InfoCom submission, use the accounting reproduction as the main OpenCOOD evidence, add a transparent limitation paragraph, and avoid claiming true area-cropped neural feature fusion unless additional training/adaptation is completed.
+- If pursuing stronger technical novelty, the next hard task is to make `leader_box` AP competitive by improving area confidence, leader assignment, or training a hierarchy-aware adapter.
+
+Follow-up audit:
+
+- `leader_box` implementation had a transform-direction bug for non-ego leaders. `pairwise_t_matrix[i, j]` means CAV `i` to CAV `j`; the code now uses `[leader, 0]` and `[cav_idx, 0]` when projecting boxes / PSM area coordinates back to ego.
+- After the fix, normal `leader_box` improves to AP@0.3/0.5/0.7 `0.603480/0.594718/0.555254`.
+- Normal multi-group `leader_box` without per-leader area box filtering reaches `0.904729/0.902794/0.852588`, essentially matching the full intermediate baseline.
+- Current conclusion: the remaining strict `leader_box` loss is not AP bookkeeping or general coordinate failure; it is mainly caused by hard per-leader area box filtering. The better executable route is to let leaders upload their detected boxes and let RSU NMS aggregate them, while retaining area-based scheduling/accounting for communication.
+
+Guard-band fix:
+
+- `--lgcp_original_area_filter_margin` was added and now defaults to `1`.
+- With margin `1`, normal `leader_box` AP@0.3/0.5/0.7 becomes `0.901046/0.901046/0.845896`, close to no-filter `0.904767/0.902836/0.852616`.
+- TP/FP diagnosis shows the original margin `0` loss was recall-driven: at IoU 0.5, TP rose from `361` to `547` after margin `1`, while GT stayed `600`.
+- Status update: `leader_box` is no longer blocked by AP-statistics or coordinate-alignment bugs; the default guard-band area filter makes with-filter and no-filter AP nearly equivalent on the current slice.
+
+Multi-leader / area-mask update:
+
+- Natural `leader_box` grouping on the OPV2V 5-CAV slice is a true multi-leader case: the first frame uses `5` leaders.
+- With the guard-band filter, `Delta_g=0.10` reaches AP@0.3/0.5/0.7 `0.905693/0.902392/0.854416`, `2.579593 Mbps`, and `43.106x` reduction against the edge-assisted full-feature accounting baseline.
+- Where2comm area-mask selection now has a clean AP-byte Pareto curve on the same slice. A `3x4` grid with Top-3 areas gives AP@0.3/0.5/0.7 `0.904974/0.902937/0.848870` and reduces communication from `425.548300 Mbps` to `208.649222 Mbps`.
+- The same area-mask interface has also been validated on CoSDH, another PointPillar BEV feature model. CoSDH Top-3 areas give AP@0.3/0.5/0.7 `0.837550/0.835279/0.766961` and reduce communication from `7.403200 Mbps` to `4.011488 Mbps`.
+- Current interpretation: first-step multi-leader values are now normal and explainable; second-step Where2comm area-mask communication reduction succeeds; third-step extension is feasible at least for CoSDH, but still needs longer multi-scenario evaluation and possibly additional adapters for non-Where2comm/CoSDH PointPillar models.
+
+167-frame validation update:
+
+- The OPV2V 5-CAV scenario segment `423-589` has now been evaluated for the main current points.
+- `leader_box`, `Delta_g=0.10`, guard-band margin `1`: AP@0.3/0.5/0.7 `0.889357/0.886544/0.827220`, `2.200203 Mbps`, `43.106x` edge-assisted reduction. This confirms the multi-leader route remains explainable beyond the 20-frame smoke slice.
+- Where2comm `3x4` Top-3 area mask on 167 frames: AP@0.3/0.5/0.7 `0.846327/0.844633/0.789813`, communication `160.382871 Mbps`, versus baseline `0.874003/0.872776/0.821696`, `312.840226 Mbps`.
+- CoSDH `3x4` Top-3 area mask on 167 frames: AP@0.3/0.5/0.7 `0.861586/0.848816/0.743772`, communication `4.633623 Mbps`, versus baseline `0.869307/0.856879/0.759882`, `7.416263 Mbps`.
+- CoAlign checkpoint audit update: local `coAlign` checkpoint can run after
+  adding the missing `base_bev_backbone.resnet: true` config flag. The remote
+  server still lacks the required stage-1 box-alignment JSON, so the current
+  result is explicitly CoAlign-w/o-box-align, not full CoAlign.
+
+## 2026-07-29: Strict LGCP Group-area Feature Mask
+
+用户确认 Top-K BEV area selection 不是 LGCP 原文机制，不能作为原文复现口径。
+当前 OpenCOOD 已新增 `--lgcp_original_area_feature_mask`，使 `leader_box`
+路径中的实际 feature mask 直接来自 `Delta_g=0.10` 选出的 LGCP `area_groups`。
+
+当前状态：
+
+- `--lgcp_original_area_feature_mask` 只允许用于 `leader_box`，并与
+  `--lgcp_area_mask` 互斥。
+- 每个 member 只上传它在该 leader 下被 `Delta_g` 选中的 areas；leader 自身特征保持完整。
+- 通信统计与实际 mask 使用同一套 `area_groups`，不再把 Where2comm Top-K 选择当成原文机制。
+- OPV2V 5-CAV / 167-frame 结果：
+  AP@0.3/0.5/0.7 `0.795933/0.791619/0.694981`，
+  `1.988045 Mbps`，`47.794x` reduction。
+- 对照：无实际 feature mask 的 `leader_box Delta_g=0.10` 为
+  `0.889357/0.886544/0.827220`；此前 Where2comm Top-3 mask 为
+  `0.877374/0.874637/0.816406`，但该 Top-K 结果现在只能作为探索实验。
+
+当前判断：
+
+- 原文机制/通信统计/实际 mask 已经在代码层面对齐。
+- 对齐后的主要损失是召回下降：167-frame IoU0.5 TP/GT 从无实际 mask 的
+  `4236/4623` 降到 `3700/4623`。
+- 平均 feature-cell keep ratio 只有 `0.7758%`，说明严格 `10m x 6m` area
+  中期特征裁剪过窄。若论文坚持真实 area-masked intermediate feature fusion，
+  需要 overlap、larger area、guard band 或重新训练；若走最少工作量投稿路线，应把
+  Top-K/full-feature 结果从原文主证据中剥离，转为 limitation 或 extension。
+
+Follow-up rescue test:
+
+- 已新增米级 feature-mask overlap 参数：
+  `--lgcp_original_area_feature_overlap_w_m` /
+  `--lgcp_original_area_feature_overlap_h_m`。
+- 通信统计已同步按扩展后的 area packet 面积计算，避免实际 mask 与 accounting
+  不一致。
+- 20-frame sweep 显示 `20m x 12m` 优于 `30m x 18m`；overlap 越大 AP 越高，但通信
+  reduction 快速下降。
+- 当前最佳 167-frame 点：
+  `20m x 12m + 8m overlap`，AP@0.3/0.5/0.7
+  `0.872071/0.868043/0.781997`，`19.907312 Mbps`，`3.952x` reduction。
+- 与严格 `10m x 6m` 相比，AP@0.5 从 `0.791619` 提升到 `0.868043`；
+  与 no-actual-mask `0.886544` 已接近。
+- 关键风险：这个结果救回 AP，但通信 reduction 从 `47.794x` 降到 `3.952x`。
+  因此它适合作为“真实 area-masked feature fusion 的 Pareto/limitation”
+  结果，不适合作为原摘要 `44x` 通信优势的主证据。
+
+Additional sweep for larger area + small overlap:
+
+- `10m x 6m + 1m overlap` 已完成：
+  167-frame AP@0.3/0.5/0.7 `0.810602/0.806211/0.710632`，
+  `3.087516 Mbps`，`30.213x`。
+- 小 overlap 条件下，`25m x 15m` 是当前更好的平衡区间：
+  - `25m x 15m + 1m`: AP@0.3/0.5/0.7
+    `0.855503/0.852906/0.753320`，`7.777682 Mbps`，`16.434x`。
+  - `25m x 15m + 2m`: `0.856875/0.854296/0.757346`，
+    `9.291298 Mbps`，`13.735x`。
+- `35m x 21m + 2m` 提供更高 AP：
+  `0.866078/0.861531/0.767847`，但通信降为 `13.757980 Mbps`，
+  reduction `10.730x`。
+- `40m x 24m + 0/1m` 在 20-frame sweep 中没有超过 `35m x 21m + 2m`；
+  area 继续变大并不单调改善 AP。
+
+Current recommendation:
+
+- 若论文需要“真实 area-masked feature fusion + 仍有较强通信优势”，优先使用
+  `25m x 15m + 1m` 或 `25m x 15m + 2m` 作为主 Pareto 点。
+- `10m x 6m + 1m` 可作为高 reduction 对照。
+- `20m x 12m + 8m` 可作为高 AP 但 overlap-heavy 的上界点，不宜包装成“小重叠”。
+
+## 2026-07-29: Other Model Extension Under Same Area Mask
+
+已把 `25m x 15m + 1m overlap` 的严格 LGCP group-area feature mask 扩展到其他
+PointPillar BEV intermediate 模型：
+
+- V2X-ViT：新增兼容入口 `point_pillar_transformer.py`，补 fallback
+  `spatial_correction_matrix/prior_encoding`。167-frame no-mask
+  `0.785449/0.762059/0.653262`，mask 后
+  `0.763181/0.749789/0.676781`，`5.693814 Mbps`，`19.047x`。
+- CoAlign-w/o-box-align：远端缺 stage-1 box-align JSON，因此禁用 box-align；
+  167-frame no-mask `0.956021/0.851802/0.528447`，mask 后
+  `0.933200/0.819052/0.497706`，`2.061053 Mbps`，`39.151x`。
+- Attentive：配置适配后能跑，但 20-frame baseline AP 为 `0/0/0`，输出
+  `6321` 个预测且 `TP=0`，暂判定 checkpoint/config/训练域不匹配，不能作为主结果。
+- Camera CoBEVT：`pointpillar_cobevt_fusion` 实际是 camera BEV segmentation
+  config，当前远端 OPV2V test 没有 `bev_dynamic.png` 等 BEV camera 标签/输入，
+  且 OpenCOOD 缺 `corpbevt` 入口，因此不能纳入当前 3D box AP 表。
+
+当前判断：
+
+- Where2comm 仍是主复现候选。
+- V2X-ViT 可以作为“area mask 可迁移到另一种 BEV intermediate 模型”的补充。
+- CoAlign-w/o-box-align 的通信优势很强，但必须标注缺少 box-align，不能直接宣称为完整 CoAlign。

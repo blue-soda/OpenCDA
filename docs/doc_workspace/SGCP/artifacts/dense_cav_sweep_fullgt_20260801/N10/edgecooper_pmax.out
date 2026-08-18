@@ -1,0 +1,2470 @@
+COMMAND: C:\Users\sakakibara\miniconda3\envs\opencda\python.exe -m opencda.tools.offline_inference --dataset-root D:\Data\Carla --scenario-id 2026_07_29_02_32_08 --ego-cav-id 1 --max-frames 41 --fusion-method early --coperception-yaml docs\doc_workspace\SGCP\artifacts\early_from_late_checkpoint_20260719\enable_coperception_early_from_attentive.yaml --bandwidth-mhz 40 --num-channels 10 --channel-estimator ns3 --ns3-tb-size-bytes 899 --ns3-slot-duration-ms 0.5 --ns3-subchannel-prbs 10 --ns3-symbols-per-slot 12 --ns3-mcs 28 --communication-deadline-ms 60 --gt-scope full-frame --cav-count 10 --selective-sharing-baseline edgecooper_global_pmax --clustering singleton --sgcp-receiver-policy all-cavs --sgcp-upload-mode grid --selective-member-budget 3 --selective-grid-budget 117 --selective-frame-deadline-ms 60 --edgecooper-global-comm-range-m 35 --edgecooper-pmax-density-cap-rho 2 --max-senders-per-receiver 2 --rho-th 2 --local-preserving-output --sgcp-trace-output docs\doc_workspace\SGCP\artifacts\dense_cav_sweep_fullgt_20260801\N10\edgecooper_pmax_trace.csv --eval-stats-output docs\doc_workspace\SGCP\artifacts\dense_cav_sweep_fullgt_20260801\N10\edgecooper_pmax_eval_stats.csv
+
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+resuming by loading epoch 10000
+frame=1/41 receiver_sample=1/10 scenario=2026_07_29_02_32_08 timestamp=000060 cavs=[1, 2, 4, 8]
+sgcp_constrained receiver=1 policy=all-cavs sources=[1, 2, 4, 8] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=107328 selected_grids={2: 36, 4: 34, 8: 27}
+fusion_method=early pred_boxes=45 gt_boxes=72
+pred_scores_shape=(45,)
+frame=1/41 receiver_sample=2/10 scenario=2026_07_29_02_32_08 timestamp=000060 cavs=[2, 1, 8, 10]
+sgcp_constrained receiver=2 policy=all-cavs sources=[2, 1, 8, 10] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=74112 selected_grids={1: 28, 8: 31, 10: 32}
+fusion_method=early pred_boxes=40 gt_boxes=72
+pred_scores_shape=(40,)
+frame=1/41 receiver_sample=3/10 scenario=2026_07_29_02_32_08 timestamp=000060 cavs=[3]
+sgcp_constrained receiver=3 policy=all-cavs sources=[3] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=0 selected_grids={}
+fusion_method=early pred_boxes=18 gt_boxes=63
+pred_scores_shape=(18,)
+frame=1/41 receiver_sample=4/10 scenario=2026_07_29_02_32_08 timestamp=000060 cavs=[4, 1, 7, 8]
+sgcp_constrained receiver=4 policy=all-cavs sources=[4, 1, 7, 8] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=95648 selected_grids={1: 35, 7: 37, 8: 30}
+fusion_method=early pred_boxes=48 gt_boxes=70
+pred_scores_shape=(48,)
+frame=1/41 receiver_sample=5/10 scenario=2026_07_29_02_32_08 timestamp=000060 cavs=[5, 7, 9, 10]
+sgcp_constrained receiver=5 policy=all-cavs sources=[5, 7, 9, 10] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=105920 selected_grids={7: 38, 9: 25, 10: 30}
+fusion_method=early pred_boxes=32 gt_boxes=48
+pred_scores_shape=(32,)
+frame=1/41 receiver_sample=6/10 scenario=2026_07_29_02_32_08 timestamp=000060 cavs=[6]
+sgcp_constrained receiver=6 policy=all-cavs sources=[6] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=0 selected_grids={}
+fusion_method=early pred_boxes=12 gt_boxes=49
+pred_scores_shape=(12,)
+frame=1/41 receiver_sample=7/10 scenario=2026_07_29_02_32_08 timestamp=000060 cavs=[7, 4, 5]
+sgcp_constrained receiver=7 policy=all-cavs sources=[7, 4, 5] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=74192 selected_grids={4: 53, 5: 44}
+fusion_method=early pred_boxes=37 gt_boxes=47
+pred_scores_shape=(37,)
+frame=1/41 receiver_sample=8/10 scenario=2026_07_29_02_32_08 timestamp=000060 cavs=[8, 1, 2, 7]
+sgcp_constrained receiver=8 policy=all-cavs sources=[8, 1, 2, 7] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=120112 selected_grids={1: 31, 2: 34, 7: 39}
+fusion_method=early pred_boxes=35 gt_boxes=47
+pred_scores_shape=(35,)
+frame=1/41 receiver_sample=9/10 scenario=2026_07_29_02_32_08 timestamp=000060 cavs=[9, 5, 10]
+sgcp_constrained receiver=9 policy=all-cavs sources=[9, 5, 10] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=52352 selected_grids={5: 40, 10: 46}
+fusion_method=early pred_boxes=33 gt_boxes=54
+pred_scores_shape=(33,)
+frame=1/41 receiver_sample=10/10 scenario=2026_07_29_02_32_08 timestamp=000060 cavs=[10, 2, 5, 9]
+sgcp_constrained receiver=10 policy=all-cavs sources=[10, 2, 5, 9] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=102544 selected_grids={2: 38, 5: 35, 9: 34}
+fusion_method=early pred_boxes=39 gt_boxes=62
+pred_scores_shape=(39,)
+frame=2/41 receiver_sample=1/10 scenario=2026_07_29_02_32_08 timestamp=000062 cavs=[1, 2, 4, 8]
+sgcp_constrained receiver=1 policy=all-cavs sources=[1, 2, 4, 8] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=107472 selected_grids={2: 34, 4: 36, 8: 25}
+fusion_method=early pred_boxes=44 gt_boxes=72
+pred_scores_shape=(44,)
+frame=2/41 receiver_sample=2/10 scenario=2026_07_29_02_32_08 timestamp=000062 cavs=[2, 1, 8, 10]
+sgcp_constrained receiver=2 policy=all-cavs sources=[2, 1, 8, 10] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=74080 selected_grids={1: 27, 8: 30, 10: 32}
+fusion_method=early pred_boxes=43 gt_boxes=72
+pred_scores_shape=(43,)
+frame=2/41 receiver_sample=3/10 scenario=2026_07_29_02_32_08 timestamp=000062 cavs=[3]
+sgcp_constrained receiver=3 policy=all-cavs sources=[3] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=0 selected_grids={}
+fusion_method=early pred_boxes=20 gt_boxes=63
+pred_scores_shape=(20,)
+frame=2/41 receiver_sample=4/10 scenario=2026_07_29_02_32_08 timestamp=000062 cavs=[4, 1, 7, 8]
+sgcp_constrained receiver=4 policy=all-cavs sources=[4, 1, 7, 8] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=96512 selected_grids={1: 35, 7: 36, 8: 32}
+fusion_method=early pred_boxes=48 gt_boxes=70
+pred_scores_shape=(48,)
+frame=2/41 receiver_sample=5/10 scenario=2026_07_29_02_32_08 timestamp=000062 cavs=[5, 7, 9, 10]
+sgcp_constrained receiver=5 policy=all-cavs sources=[5, 7, 9, 10] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=106160 selected_grids={7: 38, 9: 25, 10: 30}
+fusion_method=early pred_boxes=33 gt_boxes=48
+pred_scores_shape=(33,)
+frame=2/41 receiver_sample=6/10 scenario=2026_07_29_02_32_08 timestamp=000062 cavs=[6]
+sgcp_constrained receiver=6 policy=all-cavs sources=[6] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=0 selected_grids={}
+fusion_method=early pred_boxes=12 gt_boxes=49
+pred_scores_shape=(12,)
+frame=2/41 receiver_sample=7/10 scenario=2026_07_29_02_32_08 timestamp=000062 cavs=[7, 4, 5]
+sgcp_constrained receiver=7 policy=all-cavs sources=[7, 4, 5] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=74080 selected_grids={4: 52, 5: 43}
+fusion_method=early pred_boxes=36 gt_boxes=47
+pred_scores_shape=(36,)
+frame=2/41 receiver_sample=8/10 scenario=2026_07_29_02_32_08 timestamp=000062 cavs=[8, 1, 2, 7]
+sgcp_constrained receiver=8 policy=all-cavs sources=[8, 1, 2, 7] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=120368 selected_grids={1: 30, 2: 34, 7: 39}
+fusion_method=early pred_boxes=34 gt_boxes=47
+pred_scores_shape=(34,)
+frame=2/41 receiver_sample=9/10 scenario=2026_07_29_02_32_08 timestamp=000062 cavs=[9, 5, 10]
+sgcp_constrained receiver=9 policy=all-cavs sources=[9, 5, 10] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=52384 selected_grids={5: 39, 10: 45}
+fusion_method=early pred_boxes=30 gt_boxes=54
+pred_scores_shape=(30,)
+frame=2/41 receiver_sample=10/10 scenario=2026_07_29_02_32_08 timestamp=000062 cavs=[10, 2, 5, 9]
+sgcp_constrained receiver=10 policy=all-cavs sources=[10, 2, 5, 9] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=102000 selected_grids={2: 37, 5: 33, 9: 34}
+fusion_method=early pred_boxes=44 gt_boxes=63
+pred_scores_shape=(44,)
+frame=3/41 receiver_sample=1/10 scenario=2026_07_29_02_32_08 timestamp=000064 cavs=[1, 2, 4, 8]
+sgcp_constrained receiver=1 policy=all-cavs sources=[1, 2, 4, 8] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=106160 selected_grids={2: 34, 4: 35, 8: 25}
+fusion_method=early pred_boxes=44 gt_boxes=72
+pred_scores_shape=(44,)
+frame=3/41 receiver_sample=2/10 scenario=2026_07_29_02_32_08 timestamp=000064 cavs=[2, 1, 8, 10]
+sgcp_constrained receiver=2 policy=all-cavs sources=[2, 1, 8, 10] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=74448 selected_grids={1: 27, 8: 30, 10: 32}
+fusion_method=early pred_boxes=40 gt_boxes=72
+pred_scores_shape=(40,)
+frame=3/41 receiver_sample=3/10 scenario=2026_07_29_02_32_08 timestamp=000064 cavs=[3]
+sgcp_constrained receiver=3 policy=all-cavs sources=[3] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=0 selected_grids={}
+fusion_method=early pred_boxes=18 gt_boxes=63
+pred_scores_shape=(18,)
+frame=3/41 receiver_sample=4/10 scenario=2026_07_29_02_32_08 timestamp=000064 cavs=[4, 1, 7, 8]
+sgcp_constrained receiver=4 policy=all-cavs sources=[4, 1, 7, 8] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=97424 selected_grids={1: 35, 7: 37, 8: 33}
+fusion_method=early pred_boxes=49 gt_boxes=70
+pred_scores_shape=(49,)
+frame=3/41 receiver_sample=5/10 scenario=2026_07_29_02_32_08 timestamp=000064 cavs=[5, 7, 9, 10]
+sgcp_constrained receiver=5 policy=all-cavs sources=[5, 7, 9, 10] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=105920 selected_grids={7: 38, 9: 25, 10: 30}
+fusion_method=early pred_boxes=34 gt_boxes=47Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+
+pred_scores_shape=(34,)
+frame=3/41 receiver_sample=6/10 scenario=2026_07_29_02_32_08 timestamp=000064 cavs=[6]
+sgcp_constrained receiver=6 policy=all-cavs sources=[6] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=0 selected_grids={}
+fusion_method=early pred_boxes=12 gt_boxes=49
+pred_scores_shape=(12,)
+frame=3/41 receiver_sample=7/10 scenario=2026_07_29_02_32_08 timestamp=000064 cavs=[7, 4, 5]
+sgcp_constrained receiver=7 policy=all-cavs sources=[7, 4, 5] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=73936 selected_grids={4: 53, 5: 43}
+fusion_method=early pred_boxes=38 gt_boxes=47
+pred_scores_shape=(38,)
+frame=3/41 receiver_sample=8/10 scenario=2026_07_29_02_32_08 timestamp=000064 cavs=[8, 1, 2, 7]
+sgcp_constrained receiver=8 policy=all-cavs sources=[8, 1, 2, 7] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=119888 selected_grids={1: 30, 2: 34, 7: 39}
+fusion_method=early pred_boxes=38 gt_boxes=47
+pred_scores_shape=(38,)
+frame=3/41 receiver_sample=9/10 scenario=2026_07_29_02_32_08 timestamp=000064 cavs=[9, 5, 10]
+sgcp_constrained receiver=9 policy=all-cavs sources=[9, 5, 10] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=52128 selected_grids={5: 39, 10: 47}
+fusion_method=early pred_boxes=30 gt_boxes=54
+pred_scores_shape=(30,)
+frame=3/41 receiver_sample=10/10 scenario=2026_07_29_02_32_08 timestamp=000064 cavs=[10, 2, 5, 9]
+sgcp_constrained receiver=10 policy=all-cavs sources=[10, 2, 5, 9] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=101968 selected_grids={2: 37, 5: 33, 9: 35}
+fusion_method=early pred_boxes=43 gt_boxes=64
+pred_scores_shape=(43,)
+frame=4/41 receiver_sample=1/10 scenario=2026_07_29_02_32_08 timestamp=000066 cavs=[1, 2, 4, 8]
+sgcp_constrained receiver=1 policy=all-cavs sources=[1, 2, 4, 8] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=105680 selected_grids={2: 36, 4: 34, 8: 25}
+fusion_method=early pred_boxes=43 gt_boxes=72
+pred_scores_shape=(43,)
+frame=4/41 receiver_sample=2/10 scenario=2026_07_29_02_32_08 timestamp=000066 cavs=[2, 1, 8, 10]
+sgcp_constrained receiver=2 policy=all-cavs sources=[2, 1, 8, 10] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=75344 selected_grids={1: 28, 8: 31, 10: 32}
+fusion_method=early pred_boxes=44 gt_boxes=72
+pred_scores_shape=(44,)
+frame=4/41 receiver_sample=3/10 scenario=2026_07_29_02_32_08 timestamp=000066 cavs=[3]
+sgcp_constrained receiver=3 policy=all-cavs sources=[3] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=0 selected_grids={}
+fusion_method=early pred_boxes=19 gt_boxes=63
+pred_scores_shape=(19,)
+frame=4/41 receiver_sample=4/10 scenario=2026_07_29_02_32_08 timestamp=000066 cavs=[4, 1, 7, 8]
+sgcp_constrained receiver=4 policy=all-cavs sources=[4, 1, 7, 8] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=96352 selected_grids={1: 35, 7: 37, 8: 31}
+fusion_method=early pred_boxes=49 gt_boxes=70
+pred_scores_shape=(49,)
+frame=4/41 receiver_sample=5/10 scenario=2026_07_29_02_32_08 timestamp=000066 cavs=[5, 7, 9, 10]
+sgcp_constrained receiver=5 policy=all-cavs sources=[5, 7, 9, 10] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=105904 selected_grids={7: 38, 9: 26, 10: 30}
+fusion_method=early pred_boxes=28 gt_boxes=47
+pred_scores_shape=(28,)
+frame=4/41 receiver_sample=6/10 scenario=2026_07_29_02_32_08 timestamp=000066 cavs=[6]
+sgcp_constrained receiver=6 policy=all-cavs sources=[6] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=0 selected_grids={}
+fusion_method=early pred_boxes=12 gt_boxes=50
+pred_scores_shape=(12,)
+frame=4/41 receiver_sample=7/10 scenario=2026_07_29_02_32_08 timestamp=000066 cavs=[7, 4, 5]
+sgcp_constrained receiver=7 policy=all-cavs sources=[7, 4, 5] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=73840 selected_grids={4: 54, 5: 43}
+fusion_method=early pred_boxes=39 gt_boxes=47
+pred_scores_shape=(39,)
+frame=4/41 receiver_sample=8/10 scenario=2026_07_29_02_32_08 timestamp=000066 cavs=[8, 1, 2, 7]
+sgcp_constrained receiver=8 policy=all-cavs sources=[8, 1, 2, 7] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=119840 selected_grids={1: 30, 2: 34, 7: 39}
+fusion_method=early pred_boxes=35 gt_boxes=47
+pred_scores_shape=(35,)
+frame=4/41 receiver_sample=9/10 scenario=2026_07_29_02_32_08 timestamp=000066 cavs=[9, 5, 10]
+sgcp_constrained receiver=9 policy=all-cavs sources=[9, 5, 10] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=51696 selected_grids={5: 39, 10: 48}
+fusion_method=early pred_boxes=31 gt_boxes=53
+pred_scores_shape=(31,)
+frame=4/41 receiver_sample=10/10 scenario=2026_07_29_02_32_08 timestamp=000066 cavs=[10, 2, 5, 9]
+sgcp_constrained receiver=10 policy=all-cavs sources=[10, 2, 5, 9] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=101488 selected_grids={2: 37, 5: 33, 9: 35}
+fusion_method=early pred_boxes=43 gt_boxes=64
+pred_scores_shape=(43,)
+frame=5/41 receiver_sample=1/10 scenario=2026_07_29_02_32_08 timestamp=000068 cavs=[1, 2, 4, 8]
+sgcp_constrained receiver=1 policy=all-cavs sources=[1, 2, 4, 8] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=104944 selected_grids={2: 35, 4: 34, 8: 24}
+fusion_method=early pred_boxes=42 gt_boxes=72
+pred_scores_shape=(42,)
+frame=5/41 receiver_sample=2/10 scenario=2026_07_29_02_32_08 timestamp=000068 cavs=[2, 1, 8, 10]
+sgcp_constrained receiver=2 policy=all-cavs sources=[2, 1, 8, 10] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=76240 selected_grids={1: 28, 8: 31, 10: 32}
+fusion_method=early pred_boxes=42 gt_boxes=72
+pred_scores_shape=(42,)
+frame=5/41 receiver_sample=3/10 scenario=2026_07_29_02_32_08 timestamp=000068 cavs=[3]
+sgcp_constrained receiver=3 policy=all-cavs sources=[3] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=0 selected_grids={}
+fusion_method=early pred_boxes=18 gt_boxes=63
+pred_scores_shape=(18,)
+frame=5/41 receiver_sample=4/10 scenario=2026_07_29_02_32_08 timestamp=000068 cavs=[4, 1, 7, 8]
+sgcp_constrained receiver=4 policy=all-cavs sources=[4, 1, 7, 8] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=96448 selected_grids={1: 35, 7: 37, 8: 31}
+fusion_method=early pred_boxes=50 gt_boxes=69
+pred_scores_shape=(50,)
+frame=5/41 receiver_sample=5/10 scenario=2026_07_29_02_32_08 timestamp=000068 cavs=[5, 7, 9, 10]
+sgcp_constrained receiver=5 policy=all-cavs sources=[5, 7, 9, 10] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=105360 selected_grids={7: 38, 9: 26, 10: 30}
+fusion_method=early pred_boxes=31 gt_boxes=47
+pred_scores_shape=(31,)
+frame=5/41 receiver_sample=6/10 scenario=2026_07_29_02_32_08 timestamp=000068 cavs=[6]
+sgcp_constrained receiver=6 policy=all-cavs sources=[6] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=0 selected_grids={}
+fusion_method=early pred_boxes=13 gt_boxes=50
+pred_scores_shape=(13,)
+frame=5/41 receiver_sample=7/10 scenario=2026_07_29_02_32_08 timestamp=000068 cavs=[7, 4, 5]
+sgcp_constrained receiver=7 policy=all-cavs sources=[7, 4, 5] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=73760 selected_grids={4: 53, 5: 43}
+fusion_method=early pred_boxes=34 gt_boxes=47
+pred_scores_shape=(34,)
+frame=5/41 receiver_sample=8/10 scenario=2026_07_29_02_32_08 timestamp=000068 cavs=[8, 1, 2, 7]
+sgcp_constrained receiver=8 policy=all-cavs sources=[8, 1, 2, 7] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=119408 selected_grids={1: 32, 2: 33, 7: 39}
+fusion_method=early pred_boxes=34 gt_boxes=47
+pred_scores_shape=(34,)
+frame=5/41 receiver_sample=9/10 scenario=2026_07_29_02_32_08 timestamp=000068 cavs=[9, 5, 10]
+sgcp_constrained receiver=9 policy=all-cavs sources=[9, 5, 10] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=51616 selected_grids={5: 41, 10: 48}
+fusion_method=early pred_boxes=32 gt_boxes=53
+pred_scores_shape=(32,)
+frame=5/41 receiver_sample=10/10 scenario=2026_07_29_02_32_08 timestamp=000068 cavs=[10, 2, 5, 9]
+sgcp_constrained receiver=10 policy=all-cavs sources=[10, 2, 5, 9] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=101056 selected_grids={2: 38, 5: 33, 9: 35}
+fusion_method=early pred_boxes=42 gt_boxes=64
+pred_scores_shape=(42,)Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+
+frame=6/41 receiver_sample=1/10 scenario=2026_07_29_02_32_08 timestamp=000070 cavs=[1, 2, 4, 8]
+sgcp_constrained receiver=1 policy=all-cavs sources=[1, 2, 4, 8] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=104288 selected_grids={2: 36, 4: 34, 8: 26}
+fusion_method=early pred_boxes=43 gt_boxes=72
+pred_scores_shape=(43,)
+frame=6/41 receiver_sample=2/10 scenario=2026_07_29_02_32_08 timestamp=000070 cavs=[2, 1, 8, 10]
+sgcp_constrained receiver=2 policy=all-cavs sources=[2, 1, 8, 10] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=75936 selected_grids={1: 28, 8: 31, 10: 32}
+fusion_method=early pred_boxes=44 gt_boxes=72
+pred_scores_shape=(44,)
+frame=6/41 receiver_sample=3/10 scenario=2026_07_29_02_32_08 timestamp=000070 cavs=[3]
+sgcp_constrained receiver=3 policy=all-cavs sources=[3] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=0 selected_grids={}
+fusion_method=early pred_boxes=18 gt_boxes=63
+pred_scores_shape=(18,)
+frame=6/41 receiver_sample=4/10 scenario=2026_07_29_02_32_08 timestamp=000070 cavs=[4, 1, 7, 8]
+sgcp_constrained receiver=4 policy=all-cavs sources=[4, 1, 7, 8] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=95968 selected_grids={1: 35, 7: 37, 8: 30}
+fusion_method=early pred_boxes=52 gt_boxes=70
+pred_scores_shape=(52,)
+frame=6/41 receiver_sample=5/10 scenario=2026_07_29_02_32_08 timestamp=000070 cavs=[5, 7, 9, 10]
+sgcp_constrained receiver=5 policy=all-cavs sources=[5, 7, 9, 10] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=105536 selected_grids={7: 38, 9: 27, 10: 30}
+fusion_method=early pred_boxes=33 gt_boxes=47
+pred_scores_shape=(33,)
+frame=6/41 receiver_sample=6/10 scenario=2026_07_29_02_32_08 timestamp=000070 cavs=[6]
+sgcp_constrained receiver=6 policy=all-cavs sources=[6] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=0 selected_grids={}
+fusion_method=early pred_boxes=12 gt_boxes=50
+pred_scores_shape=(12,)
+frame=6/41 receiver_sample=7/10 scenario=2026_07_29_02_32_08 timestamp=000070 cavs=[7, 4, 5]
+sgcp_constrained receiver=7 policy=all-cavs sources=[7, 4, 5] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=74240 selected_grids={4: 53, 5: 43}
+fusion_method=early pred_boxes=32 gt_boxes=47
+pred_scores_shape=(32,)
+frame=6/41 receiver_sample=8/10 scenario=2026_07_29_02_32_08 timestamp=000070 cavs=[8, 1, 2, 7]
+sgcp_constrained receiver=8 policy=all-cavs sources=[8, 1, 2, 7] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=118608 selected_grids={1: 29, 2: 34, 7: 39}
+fusion_method=early pred_boxes=34 gt_boxes=47
+pred_scores_shape=(34,)
+frame=6/41 receiver_sample=9/10 scenario=2026_07_29_02_32_08 timestamp=000070 cavs=[9, 5, 10]
+sgcp_constrained receiver=9 policy=all-cavs sources=[9, 5, 10] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=51456 selected_grids={5: 42, 10: 46}
+fusion_method=early pred_boxes=34 gt_boxes=53
+pred_scores_shape=(34,)
+frame=6/41 receiver_sample=10/10 scenario=2026_07_29_02_32_08 timestamp=000070 cavs=[10, 2, 5, 9]
+sgcp_constrained receiver=10 policy=all-cavs sources=[10, 2, 5, 9] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=101168 selected_grids={2: 38, 5: 33, 9: 33}
+fusion_method=early pred_boxes=46 gt_boxes=64
+pred_scores_shape=(46,)
+frame=7/41 receiver_sample=1/10 scenario=2026_07_29_02_32_08 timestamp=000072 cavs=[1, 2, 4, 8]
+sgcp_constrained receiver=1 policy=all-cavs sources=[1, 2, 4, 8] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=103424 selected_grids={2: 35, 4: 34, 8: 26}
+fusion_method=early pred_boxes=41 gt_boxes=71
+pred_scores_shape=(41,)
+frame=7/41 receiver_sample=2/10 scenario=2026_07_29_02_32_08 timestamp=000072 cavs=[2, 1, 8, 10]
+sgcp_constrained receiver=2 policy=all-cavs sources=[2, 1, 8, 10] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=76480 selected_grids={1: 29, 8: 30, 10: 32}
+fusion_method=early pred_boxes=45 gt_boxes=72
+pred_scores_shape=(45,)
+frame=7/41 receiver_sample=3/10 scenario=2026_07_29_02_32_08 timestamp=000072 cavs=[3]
+sgcp_constrained receiver=3 policy=all-cavs sources=[3] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=0 selected_grids={}
+fusion_method=early pred_boxes=19 gt_boxes=63
+pred_scores_shape=(19,)
+frame=7/41 receiver_sample=4/10 scenario=2026_07_29_02_32_08 timestamp=000072 cavs=[4, 1, 7, 8]
+sgcp_constrained receiver=4 policy=all-cavs sources=[4, 1, 7, 8] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=95952 selected_grids={1: 35, 7: 37, 8: 30}
+fusion_method=early pred_boxes=48 gt_boxes=70
+pred_scores_shape=(48,)
+frame=7/41 receiver_sample=5/10 scenario=2026_07_29_02_32_08 timestamp=000072 cavs=[5, 7, 9, 10]
+sgcp_constrained receiver=5 policy=all-cavs sources=[5, 7, 9, 10] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=105792 selected_grids={7: 38, 9: 27, 10: 31}
+fusion_method=early pred_boxes=30 gt_boxes=47
+pred_scores_shape=(30,)
+frame=7/41 receiver_sample=6/10 scenario=2026_07_29_02_32_08 timestamp=000072 cavs=[6]
+sgcp_constrained receiver=6 policy=all-cavs sources=[6] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=0 selected_grids={}
+fusion_method=early pred_boxes=12 gt_boxes=50
+pred_scores_shape=(12,)
+frame=7/41 receiver_sample=7/10 scenario=2026_07_29_02_32_08 timestamp=000072 cavs=[7, 4, 5]
+sgcp_constrained receiver=7 policy=all-cavs sources=[7, 4, 5] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=73968 selected_grids={4: 53, 5: 42}
+fusion_method=early pred_boxes=36 gt_boxes=47
+pred_scores_shape=(36,)
+frame=7/41 receiver_sample=8/10 scenario=2026_07_29_02_32_08 timestamp=000072 cavs=[8, 1, 2, 7]
+sgcp_constrained receiver=8 policy=all-cavs sources=[8, 1, 2, 7] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=118304 selected_grids={1: 30, 2: 34, 7: 39}
+fusion_method=early pred_boxes=35 gt_boxes=48
+pred_scores_shape=(35,)
+frame=7/41 receiver_sample=9/10 scenario=2026_07_29_02_32_08 timestamp=000072 cavs=[9, 5, 10]
+sgcp_constrained receiver=9 policy=all-cavs sources=[9, 5, 10] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=51808 selected_grids={5: 41, 10: 49}
+fusion_method=early pred_boxes=35 gt_boxes=53
+pred_scores_shape=(35,)
+frame=7/41 receiver_sample=10/10 scenario=2026_07_29_02_32_08 timestamp=000072 cavs=[10, 2, 5, 9]
+sgcp_constrained receiver=10 policy=all-cavs sources=[10, 2, 5, 9] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=101536 selected_grids={2: 38, 5: 33, 9: 34}
+fusion_method=early pred_boxes=47 gt_boxes=66
+pred_scores_shape=(47,)
+frame=8/41 receiver_sample=1/10 scenario=2026_07_29_02_32_08 timestamp=000074 cavs=[1, 2, 4, 8]
+sgcp_constrained receiver=1 policy=all-cavs sources=[1, 2, 4, 8] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=102448 selected_grids={2: 36, 4: 34, 8: 26}
+fusion_method=early pred_boxes=43 gt_boxes=70
+pred_scores_shape=(43,)
+frame=8/41 receiver_sample=2/10 scenario=2026_07_29_02_32_08 timestamp=000074 cavs=[2, 1, 8, 10]
+sgcp_constrained receiver=2 policy=all-cavs sources=[2, 1, 8, 10] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=76560 selected_grids={1: 29, 8: 30, 10: 32}
+fusion_method=early pred_boxes=43 gt_boxes=72
+pred_scores_shape=(43,)
+frame=8/41 receiver_sample=3/10 scenario=2026_07_29_02_32_08 timestamp=000074 cavs=[3]
+sgcp_constrained receiver=3 policy=all-cavs sources=[3] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=0 selected_grids={}
+fusion_method=early pred_boxes=20 gt_boxes=63
+pred_scores_shape=(20,)
+frame=8/41 receiver_sample=4/10 scenario=2026_07_29_02_32_08 timestamp=000074 cavs=[4, 1, 7, 8]
+sgcp_constrained receiver=4 policy=all-cavs sources=[4, 1, 7, 8] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=97184 selected_grids={1: 35, 7: 37, 8: 30}
+fusion_method=early pred_boxes=45 gt_boxes=70
+pred_scores_shape=(45,)
+frame=8/41 receiver_sample=5/10 scenario=2026_07_29_02_32_08 timestamp=000074 cavs=[5, 7, 9, 10]
+sgcp_constrained receiver=5 policy=all-cavs sources=[5, 7, 9, 10] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=105680 selected_grids={7: 38, 9: 26, 10: 31}
+fusion_method=early pred_boxes=31 gt_boxes=47
+pred_scores_shape=(31,)Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+
+frame=8/41 receiver_sample=6/10 scenario=2026_07_29_02_32_08 timestamp=000074 cavs=[6]
+sgcp_constrained receiver=6 policy=all-cavs sources=[6] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=0 selected_grids={}
+fusion_method=early pred_boxes=13 gt_boxes=50
+pred_scores_shape=(13,)
+frame=8/41 receiver_sample=7/10 scenario=2026_07_29_02_32_08 timestamp=000074 cavs=[7, 4, 5]
+sgcp_constrained receiver=7 policy=all-cavs sources=[7, 4, 5] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=73792 selected_grids={4: 50, 5: 42}
+fusion_method=early pred_boxes=36 gt_boxes=46
+pred_scores_shape=(36,)
+frame=8/41 receiver_sample=8/10 scenario=2026_07_29_02_32_08 timestamp=000074 cavs=[8, 1, 2, 7]
+sgcp_constrained receiver=8 policy=all-cavs sources=[8, 1, 2, 7] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=118288 selected_grids={1: 30, 2: 34, 7: 39}
+fusion_method=early pred_boxes=33 gt_boxes=48
+pred_scores_shape=(33,)
+frame=8/41 receiver_sample=9/10 scenario=2026_07_29_02_32_08 timestamp=000074 cavs=[9, 5, 10]
+sgcp_constrained receiver=9 policy=all-cavs sources=[9, 5, 10] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=51520 selected_grids={5: 39, 10: 46}
+fusion_method=early pred_boxes=35 gt_boxes=53
+pred_scores_shape=(35,)
+frame=8/41 receiver_sample=10/10 scenario=2026_07_29_02_32_08 timestamp=000074 cavs=[10, 2, 5, 9]
+sgcp_constrained receiver=10 policy=all-cavs sources=[10, 2, 5, 9] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=101664 selected_grids={2: 38, 5: 33, 9: 34}
+fusion_method=early pred_boxes=47 gt_boxes=66
+pred_scores_shape=(47,)
+frame=9/41 receiver_sample=1/10 scenario=2026_07_29_02_32_08 timestamp=000076 cavs=[1, 2, 4, 8]
+sgcp_constrained receiver=1 policy=all-cavs sources=[1, 2, 4, 8] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=101728 selected_grids={2: 36, 4: 34, 8: 26}
+fusion_method=early pred_boxes=43 gt_boxes=70
+pred_scores_shape=(43,)
+frame=9/41 receiver_sample=2/10 scenario=2026_07_29_02_32_08 timestamp=000076 cavs=[2, 1, 8, 10]
+sgcp_constrained receiver=2 policy=all-cavs sources=[2, 1, 8, 10] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=75936 selected_grids={1: 29, 8: 29, 10: 31}
+fusion_method=early pred_boxes=43 gt_boxes=72
+pred_scores_shape=(43,)
+frame=9/41 receiver_sample=3/10 scenario=2026_07_29_02_32_08 timestamp=000076 cavs=[3]
+sgcp_constrained receiver=3 policy=all-cavs sources=[3] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=0 selected_grids={}
+fusion_method=early pred_boxes=19 gt_boxes=62
+pred_scores_shape=(19,)
+frame=9/41 receiver_sample=4/10 scenario=2026_07_29_02_32_08 timestamp=000076 cavs=[4, 1, 7, 8]
+sgcp_constrained receiver=4 policy=all-cavs sources=[4, 1, 7, 8] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=97040 selected_grids={1: 35, 7: 37, 8: 30}
+fusion_method=early pred_boxes=47 gt_boxes=70
+pred_scores_shape=(47,)
+frame=9/41 receiver_sample=5/10 scenario=2026_07_29_02_32_08 timestamp=000076 cavs=[5, 7, 9, 10]
+sgcp_constrained receiver=5 policy=all-cavs sources=[5, 7, 9, 10] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=105104 selected_grids={7: 38, 9: 26, 10: 28}
+fusion_method=early pred_boxes=31 gt_boxes=47
+pred_scores_shape=(31,)
+frame=9/41 receiver_sample=6/10 scenario=2026_07_29_02_32_08 timestamp=000076 cavs=[6]
+sgcp_constrained receiver=6 policy=all-cavs sources=[6] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=0 selected_grids={}
+fusion_method=early pred_boxes=13 gt_boxes=51
+pred_scores_shape=(13,)
+frame=9/41 receiver_sample=7/10 scenario=2026_07_29_02_32_08 timestamp=000076 cavs=[7, 4, 5]
+sgcp_constrained receiver=7 policy=all-cavs sources=[7, 4, 5] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=73424 selected_grids={4: 52, 5: 42}
+fusion_method=early pred_boxes=35 gt_boxes=45
+pred_scores_shape=(35,)
+frame=9/41 receiver_sample=8/10 scenario=2026_07_29_02_32_08 timestamp=000076 cavs=[8, 1, 2, 7]
+sgcp_constrained receiver=8 policy=all-cavs sources=[8, 1, 2, 7] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=118304 selected_grids={1: 31, 2: 34, 7: 39}
+fusion_method=early pred_boxes=39 gt_boxes=48
+pred_scores_shape=(39,)
+frame=9/41 receiver_sample=9/10 scenario=2026_07_29_02_32_08 timestamp=000076 cavs=[9, 5, 10]
+sgcp_constrained receiver=9 policy=all-cavs sources=[9, 5, 10] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=51152 selected_grids={5: 40, 10: 45}
+fusion_method=early pred_boxes=32 gt_boxes=53
+pred_scores_shape=(32,)
+frame=9/41 receiver_sample=10/10 scenario=2026_07_29_02_32_08 timestamp=000076 cavs=[10, 2, 5, 9]
+sgcp_constrained receiver=10 policy=all-cavs sources=[10, 2, 5, 9] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=101888 selected_grids={2: 38, 5: 32, 9: 35}
+fusion_method=early pred_boxes=45 gt_boxes=66
+pred_scores_shape=(45,)
+frame=10/41 receiver_sample=1/10 scenario=2026_07_29_02_32_08 timestamp=000078 cavs=[1, 2, 4, 8]
+sgcp_constrained receiver=1 policy=all-cavs sources=[1, 2, 4, 8] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=100736 selected_grids={2: 35, 4: 34, 8: 26}
+fusion_method=early pred_boxes=41 gt_boxes=70
+pred_scores_shape=(41,)
+frame=10/41 receiver_sample=2/10 scenario=2026_07_29_02_32_08 timestamp=000078 cavs=[2, 1, 8, 10]
+sgcp_constrained receiver=2 policy=all-cavs sources=[2, 1, 8, 10] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=76256 selected_grids={1: 28, 8: 29, 10: 32}
+fusion_method=early pred_boxes=44 gt_boxes=71
+pred_scores_shape=(44,)
+frame=10/41 receiver_sample=3/10 scenario=2026_07_29_02_32_08 timestamp=000078 cavs=[3]
+sgcp_constrained receiver=3 policy=all-cavs sources=[3] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=0 selected_grids={}
+fusion_method=early pred_boxes=18 gt_boxes=62
+pred_scores_shape=(18,)
+frame=10/41 receiver_sample=4/10 scenario=2026_07_29_02_32_08 timestamp=000078 cavs=[4, 1, 7, 8]
+sgcp_constrained receiver=4 policy=all-cavs sources=[4, 1, 7, 8] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=96448 selected_grids={1: 35, 7: 37, 8: 29}
+fusion_method=early pred_boxes=48 gt_boxes=70
+pred_scores_shape=(48,)
+frame=10/41 receiver_sample=5/10 scenario=2026_07_29_02_32_08 timestamp=000078 cavs=[5, 7, 9, 10]
+sgcp_constrained receiver=5 policy=all-cavs sources=[5, 7, 9, 10] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=105616 selected_grids={7: 38, 9: 26, 10: 29}
+fusion_method=early pred_boxes=34 gt_boxes=47
+pred_scores_shape=(34,)
+frame=10/41 receiver_sample=6/10 scenario=2026_07_29_02_32_08 timestamp=000078 cavs=[6]
+sgcp_constrained receiver=6 policy=all-cavs sources=[6] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=0 selected_grids={}
+fusion_method=early pred_boxes=13 gt_boxes=51
+pred_scores_shape=(13,)
+frame=10/41 receiver_sample=7/10 scenario=2026_07_29_02_32_08 timestamp=000078 cavs=[7, 4, 5]
+sgcp_constrained receiver=7 policy=all-cavs sources=[7, 4, 5] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=72464 selected_grids={4: 49, 5: 43}
+fusion_method=early pred_boxes=37 gt_boxes=45
+pred_scores_shape=(37,)
+frame=10/41 receiver_sample=8/10 scenario=2026_07_29_02_32_08 timestamp=000078 cavs=[8, 1, 2, 7]
+sgcp_constrained receiver=8 policy=all-cavs sources=[8, 1, 2, 7] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=118592 selected_grids={1: 30, 2: 34, 7: 39}
+fusion_method=early pred_boxes=33 gt_boxes=48
+pred_scores_shape=(33,)
+frame=10/41 receiver_sample=9/10 scenario=2026_07_29_02_32_08 timestamp=000078 cavs=[9, 5, 10]
+sgcp_constrained receiver=9 policy=all-cavs sources=[9, 5, 10] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=51776 selected_grids={5: 40, 10: 44}
+fusion_method=early pred_boxes=37 gt_boxes=53
+pred_scores_shape=(37,)
+frame=10/41 receiver_sample=10/10 scenario=2026_07_29_02_32_08 timestamp=000078 cavs=[10, 2, 5, 9]
+sgcp_constrained receiver=10 policy=all-cavs sources=[10, 2, 5, 9] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=102080 selected_grids={2: 38, 5: 32, 9: 35}
+fusion_method=early pred_boxes=45 gt_boxes=67
+pred_scores_shape=(45,)Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+
+frame=11/41 receiver_sample=1/10 scenario=2026_07_29_02_32_08 timestamp=000080 cavs=[1, 2, 4, 8]
+sgcp_constrained receiver=1 policy=all-cavs sources=[1, 2, 4, 8] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=100512 selected_grids={2: 35, 4: 34, 8: 26}
+fusion_method=early pred_boxes=42 gt_boxes=71
+pred_scores_shape=(42,)
+frame=11/41 receiver_sample=2/10 scenario=2026_07_29_02_32_08 timestamp=000080 cavs=[2, 1, 8, 10]
+sgcp_constrained receiver=2 policy=all-cavs sources=[2, 1, 8, 10] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=76416 selected_grids={1: 27, 8: 29, 10: 32}
+fusion_method=early pred_boxes=45 gt_boxes=71
+pred_scores_shape=(45,)
+frame=11/41 receiver_sample=3/10 scenario=2026_07_29_02_32_08 timestamp=000080 cavs=[3]
+sgcp_constrained receiver=3 policy=all-cavs sources=[3] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=0 selected_grids={}
+fusion_method=early pred_boxes=21 gt_boxes=62
+pred_scores_shape=(21,)
+frame=11/41 receiver_sample=4/10 scenario=2026_07_29_02_32_08 timestamp=000080 cavs=[4, 1, 7, 8]
+sgcp_constrained receiver=4 policy=all-cavs sources=[4, 1, 7, 8] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=96800 selected_grids={1: 34, 7: 37, 8: 28}
+fusion_method=early pred_boxes=47 gt_boxes=70
+pred_scores_shape=(47,)
+frame=11/41 receiver_sample=5/10 scenario=2026_07_29_02_32_08 timestamp=000080 cavs=[5, 7, 9, 10]
+sgcp_constrained receiver=5 policy=all-cavs sources=[5, 7, 9, 10] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=105712 selected_grids={7: 38, 9: 27, 10: 29}
+fusion_method=early pred_boxes=32 gt_boxes=47
+pred_scores_shape=(32,)
+frame=11/41 receiver_sample=6/10 scenario=2026_07_29_02_32_08 timestamp=000080 cavs=[6]
+sgcp_constrained receiver=6 policy=all-cavs sources=[6] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=0 selected_grids={}
+fusion_method=early pred_boxes=13 gt_boxes=51
+pred_scores_shape=(13,)
+frame=11/41 receiver_sample=7/10 scenario=2026_07_29_02_32_08 timestamp=000080 cavs=[7, 4, 5]
+sgcp_constrained receiver=7 policy=all-cavs sources=[7, 4, 5] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=72272 selected_grids={4: 49, 5: 44}
+fusion_method=early pred_boxes=36 gt_boxes=45
+pred_scores_shape=(36,)
+frame=11/41 receiver_sample=8/10 scenario=2026_07_29_02_32_08 timestamp=000080 cavs=[8, 1, 2, 7]
+sgcp_constrained receiver=8 policy=all-cavs sources=[8, 1, 2, 7] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=118720 selected_grids={1: 30, 2: 34, 7: 39}
+fusion_method=early pred_boxes=34 gt_boxes=48
+pred_scores_shape=(34,)
+frame=11/41 receiver_sample=9/10 scenario=2026_07_29_02_32_08 timestamp=000080 cavs=[9, 5, 10]
+sgcp_constrained receiver=9 policy=all-cavs sources=[9, 5, 10] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=52096 selected_grids={5: 40, 10: 44}
+fusion_method=early pred_boxes=35 gt_boxes=53
+pred_scores_shape=(35,)
+frame=11/41 receiver_sample=10/10 scenario=2026_07_29_02_32_08 timestamp=000080 cavs=[10, 2, 5, 9]
+sgcp_constrained receiver=10 policy=all-cavs sources=[10, 2, 5, 9] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=102688 selected_grids={2: 38, 5: 33, 9: 35}
+fusion_method=early pred_boxes=49 gt_boxes=67
+pred_scores_shape=(49,)
+frame=12/41 receiver_sample=1/10 scenario=2026_07_29_02_32_08 timestamp=000082 cavs=[1, 2, 4, 8]
+sgcp_constrained receiver=1 policy=all-cavs sources=[1, 2, 4, 8] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=100624 selected_grids={2: 35, 4: 34, 8: 27}
+fusion_method=early pred_boxes=41 gt_boxes=71
+pred_scores_shape=(41,)
+frame=12/41 receiver_sample=2/10 scenario=2026_07_29_02_32_08 timestamp=000082 cavs=[2, 1, 8, 10]
+sgcp_constrained receiver=2 policy=all-cavs sources=[2, 1, 8, 10] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=76624 selected_grids={1: 26, 8: 29, 10: 33}
+fusion_method=early pred_boxes=42 gt_boxes=71
+pred_scores_shape=(42,)
+frame=12/41 receiver_sample=3/10 scenario=2026_07_29_02_32_08 timestamp=000082 cavs=[3]
+sgcp_constrained receiver=3 policy=all-cavs sources=[3] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=0 selected_grids={}
+fusion_method=early pred_boxes=17 gt_boxes=62
+pred_scores_shape=(17,)
+frame=12/41 receiver_sample=4/10 scenario=2026_07_29_02_32_08 timestamp=000082 cavs=[4, 1, 7, 8]
+sgcp_constrained receiver=4 policy=all-cavs sources=[4, 1, 7, 8] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=97040 selected_grids={1: 34, 7: 37, 8: 29}
+fusion_method=early pred_boxes=49 gt_boxes=70
+pred_scores_shape=(49,)
+frame=12/41 receiver_sample=5/10 scenario=2026_07_29_02_32_08 timestamp=000082 cavs=[5, 7, 9, 10]
+sgcp_constrained receiver=5 policy=all-cavs sources=[5, 7, 9, 10] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=105728 selected_grids={7: 38, 9: 27, 10: 29}
+fusion_method=early pred_boxes=34 gt_boxes=47
+pred_scores_shape=(34,)
+frame=12/41 receiver_sample=6/10 scenario=2026_07_29_02_32_08 timestamp=000082 cavs=[6]
+sgcp_constrained receiver=6 policy=all-cavs sources=[6] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=0 selected_grids={}
+fusion_method=early pred_boxes=13 gt_boxes=51
+pred_scores_shape=(13,)
+frame=12/41 receiver_sample=7/10 scenario=2026_07_29_02_32_08 timestamp=000082 cavs=[7, 4, 5]
+sgcp_constrained receiver=7 policy=all-cavs sources=[7, 4, 5] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=73216 selected_grids={4: 49, 5: 45}
+fusion_method=early pred_boxes=37 gt_boxes=45
+pred_scores_shape=(37,)
+frame=12/41 receiver_sample=8/10 scenario=2026_07_29_02_32_08 timestamp=000082 cavs=[8, 1, 2, 7]
+sgcp_constrained receiver=8 policy=all-cavs sources=[8, 1, 2, 7] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=118304 selected_grids={1: 30, 2: 35, 7: 39}
+fusion_method=early pred_boxes=33 gt_boxes=48
+pred_scores_shape=(33,)
+frame=12/41 receiver_sample=9/10 scenario=2026_07_29_02_32_08 timestamp=000082 cavs=[9, 5, 10]
+sgcp_constrained receiver=9 policy=all-cavs sources=[9, 5, 10] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=53392 selected_grids={5: 41, 10: 45}
+fusion_method=early pred_boxes=35 gt_boxes=53
+pred_scores_shape=(35,)
+frame=12/41 receiver_sample=10/10 scenario=2026_07_29_02_32_08 timestamp=000082 cavs=[10, 2, 5, 9]
+sgcp_constrained receiver=10 policy=all-cavs sources=[10, 2, 5, 9] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=103664 selected_grids={2: 38, 5: 33, 9: 34}
+fusion_method=early pred_boxes=45 gt_boxes=66
+pred_scores_shape=(45,)
+frame=13/41 receiver_sample=1/10 scenario=2026_07_29_02_32_08 timestamp=000084 cavs=[1, 2, 4, 8]
+sgcp_constrained receiver=1 policy=all-cavs sources=[1, 2, 4, 8] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=100592 selected_grids={2: 36, 4: 34, 8: 26}
+fusion_method=early pred_boxes=43 gt_boxes=71
+pred_scores_shape=(43,)
+frame=13/41 receiver_sample=2/10 scenario=2026_07_29_02_32_08 timestamp=000084 cavs=[2, 1, 8, 10]
+sgcp_constrained receiver=2 policy=all-cavs sources=[2, 1, 8, 10] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=76592 selected_grids={1: 26, 8: 29, 10: 32}
+fusion_method=early pred_boxes=45 gt_boxes=71
+pred_scores_shape=(45,)
+frame=13/41 receiver_sample=3/10 scenario=2026_07_29_02_32_08 timestamp=000084 cavs=[3]
+sgcp_constrained receiver=3 policy=all-cavs sources=[3] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=0 selected_grids={}
+fusion_method=early pred_boxes=18 gt_boxes=62
+pred_scores_shape=(18,)
+frame=13/41 receiver_sample=4/10 scenario=2026_07_29_02_32_08 timestamp=000084 cavs=[4, 1, 7, 8]
+sgcp_constrained receiver=4 policy=all-cavs sources=[4, 1, 7, 8] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=96752 selected_grids={1: 34, 7: 37, 8: 29}
+fusion_method=early pred_boxes=50 gt_boxes=70
+pred_scores_shape=(50,)
+frame=13/41 receiver_sample=5/10 scenario=2026_07_29_02_32_08 timestamp=000084 cavs=[5, 7, 9, 10]
+sgcp_constrained receiver=5 policy=all-cavs sources=[5, 7, 9, 10] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=106288 selected_grids={7: 39, 9: 28, 10: 29}
+fusion_method=early pred_boxes=33 gt_boxes=47Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+
+pred_scores_shape=(33,)
+frame=13/41 receiver_sample=6/10 scenario=2026_07_29_02_32_08 timestamp=000084 cavs=[6]
+sgcp_constrained receiver=6 policy=all-cavs sources=[6] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=0 selected_grids={}
+fusion_method=early pred_boxes=13 gt_boxes=51
+pred_scores_shape=(13,)
+frame=13/41 receiver_sample=7/10 scenario=2026_07_29_02_32_08 timestamp=000084 cavs=[7, 4, 5]
+sgcp_constrained receiver=7 policy=all-cavs sources=[7, 4, 5] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=73600 selected_grids={4: 50, 5: 45}
+fusion_method=early pred_boxes=33 gt_boxes=45
+pred_scores_shape=(33,)
+frame=13/41 receiver_sample=8/10 scenario=2026_07_29_02_32_08 timestamp=000084 cavs=[8, 1, 2, 7]
+sgcp_constrained receiver=8 policy=all-cavs sources=[8, 1, 2, 7] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=118112 selected_grids={1: 29, 2: 35, 7: 39}
+fusion_method=early pred_boxes=36 gt_boxes=48
+pred_scores_shape=(36,)
+frame=13/41 receiver_sample=9/10 scenario=2026_07_29_02_32_08 timestamp=000084 cavs=[9, 5, 10]
+sgcp_constrained receiver=9 policy=all-cavs sources=[9, 5, 10] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=54096 selected_grids={5: 43, 10: 44}
+fusion_method=early pred_boxes=36 gt_boxes=53
+pred_scores_shape=(36,)
+frame=13/41 receiver_sample=10/10 scenario=2026_07_29_02_32_08 timestamp=000084 cavs=[10, 2, 5, 9]
+sgcp_constrained receiver=10 policy=all-cavs sources=[10, 2, 5, 9] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=104048 selected_grids={2: 38, 5: 32, 9: 34}
+fusion_method=early pred_boxes=46 gt_boxes=66
+pred_scores_shape=(46,)
+frame=14/41 receiver_sample=1/10 scenario=2026_07_29_02_32_08 timestamp=000086 cavs=[1, 2, 4, 8]
+sgcp_constrained receiver=1 policy=all-cavs sources=[1, 2, 4, 8] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=100992 selected_grids={2: 35, 4: 34, 8: 27}
+fusion_method=early pred_boxes=43 gt_boxes=71
+pred_scores_shape=(43,)
+frame=14/41 receiver_sample=2/10 scenario=2026_07_29_02_32_08 timestamp=000086 cavs=[2, 1, 8, 10]
+sgcp_constrained receiver=2 policy=all-cavs sources=[2, 1, 8, 10] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=76880 selected_grids={1: 26, 8: 29, 10: 32}
+fusion_method=early pred_boxes=40 gt_boxes=71
+pred_scores_shape=(40,)
+frame=14/41 receiver_sample=3/10 scenario=2026_07_29_02_32_08 timestamp=000086 cavs=[3]
+sgcp_constrained receiver=3 policy=all-cavs sources=[3] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=0 selected_grids={}
+fusion_method=early pred_boxes=18 gt_boxes=61
+pred_scores_shape=(18,)
+frame=14/41 receiver_sample=4/10 scenario=2026_07_29_02_32_08 timestamp=000086 cavs=[4, 1, 7, 8]
+sgcp_constrained receiver=4 policy=all-cavs sources=[4, 1, 7, 8] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=96592 selected_grids={1: 34, 7: 37, 8: 29}
+fusion_method=early pred_boxes=51 gt_boxes=69
+pred_scores_shape=(51,)
+frame=14/41 receiver_sample=5/10 scenario=2026_07_29_02_32_08 timestamp=000086 cavs=[5, 7, 9, 10]
+sgcp_constrained receiver=5 policy=all-cavs sources=[5, 7, 9, 10] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=106144 selected_grids={7: 38, 9: 27, 10: 31}
+fusion_method=early pred_boxes=33 gt_boxes=47
+pred_scores_shape=(33,)
+frame=14/41 receiver_sample=6/10 scenario=2026_07_29_02_32_08 timestamp=000086 cavs=[6]
+sgcp_constrained receiver=6 policy=all-cavs sources=[6] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=0 selected_grids={}
+fusion_method=early pred_boxes=14 gt_boxes=52
+pred_scores_shape=(14,)
+frame=14/41 receiver_sample=7/10 scenario=2026_07_29_02_32_08 timestamp=000086 cavs=[7, 4, 5]
+sgcp_constrained receiver=7 policy=all-cavs sources=[7, 4, 5] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=73792 selected_grids={4: 51, 5: 43}
+fusion_method=early pred_boxes=34 gt_boxes=45
+pred_scores_shape=(34,)
+frame=14/41 receiver_sample=8/10 scenario=2026_07_29_02_32_08 timestamp=000086 cavs=[8, 1, 2, 7]
+sgcp_constrained receiver=8 policy=all-cavs sources=[8, 1, 2, 7] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=118336 selected_grids={1: 30, 2: 34, 7: 39}
+fusion_method=early pred_boxes=36 gt_boxes=47
+pred_scores_shape=(36,)
+frame=14/41 receiver_sample=9/10 scenario=2026_07_29_02_32_08 timestamp=000086 cavs=[9, 5, 10]
+sgcp_constrained receiver=9 policy=all-cavs sources=[9, 5, 10] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=54368 selected_grids={5: 41, 10: 45}
+fusion_method=early pred_boxes=37 gt_boxes=53
+pred_scores_shape=(37,)
+frame=14/41 receiver_sample=10/10 scenario=2026_07_29_02_32_08 timestamp=000086 cavs=[10, 2, 5, 9]
+sgcp_constrained receiver=10 policy=all-cavs sources=[10, 2, 5, 9] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=104848 selected_grids={2: 38, 5: 33, 9: 34}
+fusion_method=early pred_boxes=47 gt_boxes=65
+pred_scores_shape=(47,)
+frame=15/41 receiver_sample=1/10 scenario=2026_07_29_02_32_08 timestamp=000088 cavs=[1, 2, 4, 8]
+sgcp_constrained receiver=1 policy=all-cavs sources=[1, 2, 4, 8] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=101472 selected_grids={2: 35, 4: 34, 8: 27}
+fusion_method=early pred_boxes=40 gt_boxes=71
+pred_scores_shape=(40,)
+frame=15/41 receiver_sample=2/10 scenario=2026_07_29_02_32_08 timestamp=000088 cavs=[2, 1, 8, 10]
+sgcp_constrained receiver=2 policy=all-cavs sources=[2, 1, 8, 10] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=77008 selected_grids={1: 26, 8: 29, 10: 32}
+fusion_method=early pred_boxes=42 gt_boxes=71
+pred_scores_shape=(42,)
+frame=15/41 receiver_sample=3/10 scenario=2026_07_29_02_32_08 timestamp=000088 cavs=[3]
+sgcp_constrained receiver=3 policy=all-cavs sources=[3] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=0 selected_grids={}
+fusion_method=early pred_boxes=17 gt_boxes=61
+pred_scores_shape=(17,)
+frame=15/41 receiver_sample=4/10 scenario=2026_07_29_02_32_08 timestamp=000088 cavs=[4, 1, 7, 8]
+sgcp_constrained receiver=4 policy=all-cavs sources=[4, 1, 7, 8] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=96192 selected_grids={1: 34, 7: 37, 8: 29}
+fusion_method=early pred_boxes=46 gt_boxes=69
+pred_scores_shape=(46,)
+frame=15/41 receiver_sample=5/10 scenario=2026_07_29_02_32_08 timestamp=000088 cavs=[5, 7, 9, 10]
+sgcp_constrained receiver=5 policy=all-cavs sources=[5, 7, 9, 10] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=106448 selected_grids={7: 39, 9: 27, 10: 30}
+fusion_method=early pred_boxes=31 gt_boxes=47
+pred_scores_shape=(31,)
+frame=15/41 receiver_sample=6/10 scenario=2026_07_29_02_32_08 timestamp=000088 cavs=[6]
+sgcp_constrained receiver=6 policy=all-cavs sources=[6] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=0 selected_grids={}
+fusion_method=early pred_boxes=13 gt_boxes=51
+pred_scores_shape=(13,)
+frame=15/41 receiver_sample=7/10 scenario=2026_07_29_02_32_08 timestamp=000088 cavs=[7, 4, 5]
+sgcp_constrained receiver=7 policy=all-cavs sources=[7, 4, 5] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=74032 selected_grids={4: 54, 5: 45}
+fusion_method=early pred_boxes=34 gt_boxes=44
+pred_scores_shape=(34,)
+frame=15/41 receiver_sample=8/10 scenario=2026_07_29_02_32_08 timestamp=000088 cavs=[8, 1, 2, 7]
+sgcp_constrained receiver=8 policy=all-cavs sources=[8, 1, 2, 7] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=118144 selected_grids={1: 30, 2: 34, 7: 39}
+fusion_method=early pred_boxes=36 gt_boxes=47
+pred_scores_shape=(36,)
+frame=15/41 receiver_sample=9/10 scenario=2026_07_29_02_32_08 timestamp=000088 cavs=[9, 5, 10]
+sgcp_constrained receiver=9 policy=all-cavs sources=[9, 5, 10] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=55232 selected_grids={5: 43, 10: 44}
+fusion_method=early pred_boxes=37 gt_boxes=53
+pred_scores_shape=(37,)
+frame=15/41 receiver_sample=10/10 scenario=2026_07_29_02_32_08 timestamp=000088 cavs=[10, 2, 5, 9]
+sgcp_constrained receiver=10 policy=all-cavs sources=[10, 2, 5, 9] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=105904 selected_grids={2: 38, 5: 33, 9: 34}
+fusion_method=early pred_boxes=44 gt_boxes=64Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+
+pred_scores_shape=(44,)
+frame=16/41 receiver_sample=1/10 scenario=2026_07_29_02_32_08 timestamp=000090 cavs=[1, 2, 4, 8]
+sgcp_constrained receiver=1 policy=all-cavs sources=[1, 2, 4, 8] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=101456 selected_grids={2: 35, 4: 34, 8: 28}
+fusion_method=early pred_boxes=40 gt_boxes=72
+pred_scores_shape=(40,)
+frame=16/41 receiver_sample=2/10 scenario=2026_07_29_02_32_08 timestamp=000090 cavs=[2, 1, 8, 10]
+sgcp_constrained receiver=2 policy=all-cavs sources=[2, 1, 8, 10] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=76992 selected_grids={1: 26, 8: 29, 10: 32}
+fusion_method=early pred_boxes=42 gt_boxes=71
+pred_scores_shape=(42,)
+frame=16/41 receiver_sample=3/10 scenario=2026_07_29_02_32_08 timestamp=000090 cavs=[3]
+sgcp_constrained receiver=3 policy=all-cavs sources=[3] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=0 selected_grids={}
+fusion_method=early pred_boxes=18 gt_boxes=61
+pred_scores_shape=(18,)
+frame=16/41 receiver_sample=4/10 scenario=2026_07_29_02_32_08 timestamp=000090 cavs=[4, 1, 7, 8]
+sgcp_constrained receiver=4 policy=all-cavs sources=[4, 1, 7, 8] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=96080 selected_grids={1: 34, 7: 36, 8: 29}
+fusion_method=early pred_boxes=48 gt_boxes=68
+pred_scores_shape=(48,)
+frame=16/41 receiver_sample=5/10 scenario=2026_07_29_02_32_08 timestamp=000090 cavs=[5, 7, 9, 10]
+sgcp_constrained receiver=5 policy=all-cavs sources=[5, 7, 9, 10] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=106624 selected_grids={7: 39, 9: 27, 10: 29}
+fusion_method=early pred_boxes=35 gt_boxes=47
+pred_scores_shape=(35,)
+frame=16/41 receiver_sample=6/10 scenario=2026_07_29_02_32_08 timestamp=000090 cavs=[6]
+sgcp_constrained receiver=6 policy=all-cavs sources=[6] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=0 selected_grids={}
+fusion_method=early pred_boxes=14 gt_boxes=52
+pred_scores_shape=(14,)
+frame=16/41 receiver_sample=7/10 scenario=2026_07_29_02_32_08 timestamp=000090 cavs=[7, 4, 5]
+sgcp_constrained receiver=7 policy=all-cavs sources=[7, 4, 5] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=73904 selected_grids={4: 53, 5: 44}
+fusion_method=early pred_boxes=35 gt_boxes=43
+pred_scores_shape=(35,)
+frame=16/41 receiver_sample=8/10 scenario=2026_07_29_02_32_08 timestamp=000090 cavs=[8, 1, 2, 7]
+sgcp_constrained receiver=8 policy=all-cavs sources=[8, 1, 2, 7] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=118448 selected_grids={1: 30, 2: 34, 7: 39}
+fusion_method=early pred_boxes=35 gt_boxes=47
+pred_scores_shape=(35,)
+frame=16/41 receiver_sample=9/10 scenario=2026_07_29_02_32_08 timestamp=000090 cavs=[9, 5, 10]
+sgcp_constrained receiver=9 policy=all-cavs sources=[9, 5, 10] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=55968 selected_grids={5: 42, 10: 42}
+fusion_method=early pred_boxes=36 gt_boxes=53
+pred_scores_shape=(36,)
+frame=16/41 receiver_sample=10/10 scenario=2026_07_29_02_32_08 timestamp=000090 cavs=[10, 2, 5, 9]
+sgcp_constrained receiver=10 policy=all-cavs sources=[10, 2, 5, 9] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=107104 selected_grids={2: 38, 5: 33, 9: 35}
+fusion_method=early pred_boxes=45 gt_boxes=65
+pred_scores_shape=(45,)
+frame=17/41 receiver_sample=1/10 scenario=2026_07_29_02_32_08 timestamp=000092 cavs=[1, 2, 4, 8]
+sgcp_constrained receiver=1 policy=all-cavs sources=[1, 2, 4, 8] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=100992 selected_grids={2: 36, 4: 34, 8: 27}
+fusion_method=early pred_boxes=41 gt_boxes=72
+pred_scores_shape=(41,)
+frame=17/41 receiver_sample=2/10 scenario=2026_07_29_02_32_08 timestamp=000092 cavs=[2, 1, 8, 10]
+sgcp_constrained receiver=2 policy=all-cavs sources=[2, 1, 8, 10] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=77216 selected_grids={1: 26, 8: 29, 10: 32}
+fusion_method=early pred_boxes=45 gt_boxes=71
+pred_scores_shape=(45,)
+frame=17/41 receiver_sample=3/10 scenario=2026_07_29_02_32_08 timestamp=000092 cavs=[3]
+sgcp_constrained receiver=3 policy=all-cavs sources=[3] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=0 selected_grids={}
+fusion_method=early pred_boxes=16 gt_boxes=61
+pred_scores_shape=(16,)
+frame=17/41 receiver_sample=4/10 scenario=2026_07_29_02_32_08 timestamp=000092 cavs=[4, 1, 7, 8]
+sgcp_constrained receiver=4 policy=all-cavs sources=[4, 1, 7, 8] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=96272 selected_grids={1: 34, 7: 37, 8: 29}
+fusion_method=early pred_boxes=45 gt_boxes=68
+pred_scores_shape=(45,)
+frame=17/41 receiver_sample=5/10 scenario=2026_07_29_02_32_08 timestamp=000092 cavs=[5, 7, 9, 10]
+sgcp_constrained receiver=5 policy=all-cavs sources=[5, 7, 9, 10] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=107088 selected_grids={7: 39, 9: 27, 10: 30}
+fusion_method=early pred_boxes=30 gt_boxes=47
+pred_scores_shape=(30,)
+frame=17/41 receiver_sample=6/10 scenario=2026_07_29_02_32_08 timestamp=000092 cavs=[6]
+sgcp_constrained receiver=6 policy=all-cavs sources=[6] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=0 selected_grids={}
+fusion_method=early pred_boxes=14 gt_boxes=52
+pred_scores_shape=(14,)
+frame=17/41 receiver_sample=7/10 scenario=2026_07_29_02_32_08 timestamp=000092 cavs=[7, 4, 5]
+sgcp_constrained receiver=7 policy=all-cavs sources=[7, 4, 5] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=73264 selected_grids={4: 53, 5: 45}
+fusion_method=early pred_boxes=33 gt_boxes=43
+pred_scores_shape=(33,)
+frame=17/41 receiver_sample=8/10 scenario=2026_07_29_02_32_08 timestamp=000092 cavs=[8, 1, 2, 7]
+sgcp_constrained receiver=8 policy=all-cavs sources=[8, 1, 2, 7] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=118432 selected_grids={1: 31, 2: 34, 7: 39}
+fusion_method=early pred_boxes=34 gt_boxes=47
+pred_scores_shape=(34,)
+frame=17/41 receiver_sample=9/10 scenario=2026_07_29_02_32_08 timestamp=000092 cavs=[9, 5, 10]
+sgcp_constrained receiver=9 policy=all-cavs sources=[9, 5, 10] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=56640 selected_grids={5: 43, 10: 42}
+fusion_method=early pred_boxes=35 gt_boxes=53
+pred_scores_shape=(35,)
+frame=17/41 receiver_sample=10/10 scenario=2026_07_29_02_32_08 timestamp=000092 cavs=[10, 2, 5, 9]
+sgcp_constrained receiver=10 policy=all-cavs sources=[10, 2, 5, 9] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=107088 selected_grids={2: 38, 5: 33, 9: 33}
+fusion_method=early pred_boxes=46 gt_boxes=65
+pred_scores_shape=(46,)
+frame=18/41 receiver_sample=1/10 scenario=2026_07_29_02_32_08 timestamp=000094 cavs=[1, 2, 4, 8]
+sgcp_constrained receiver=1 policy=all-cavs sources=[1, 2, 4, 8] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=100640 selected_grids={2: 36, 4: 34, 8: 27}
+fusion_method=early pred_boxes=41 gt_boxes=72
+pred_scores_shape=(41,)
+frame=18/41 receiver_sample=2/10 scenario=2026_07_29_02_32_08 timestamp=000094 cavs=[2, 1, 8, 10]
+sgcp_constrained receiver=2 policy=all-cavs sources=[2, 1, 8, 10] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=77088 selected_grids={1: 26, 8: 29, 10: 32}
+fusion_method=early pred_boxes=42 gt_boxes=70
+pred_scores_shape=(42,)
+frame=18/41 receiver_sample=3/10 scenario=2026_07_29_02_32_08 timestamp=000094 cavs=[3]
+sgcp_constrained receiver=3 policy=all-cavs sources=[3] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=0 selected_grids={}
+fusion_method=early pred_boxes=18 gt_boxes=59
+pred_scores_shape=(18,)
+frame=18/41 receiver_sample=4/10 scenario=2026_07_29_02_32_08 timestamp=000094 cavs=[4, 1, 7, 8]
+sgcp_constrained receiver=4 policy=all-cavs sources=[4, 1, 7, 8] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=95760 selected_grids={1: 34, 7: 36, 8: 28}
+fusion_method=early pred_boxes=42 gt_boxes=68
+pred_scores_shape=(42,)
+frame=18/41 receiver_sample=5/10 scenario=2026_07_29_02_32_08 timestamp=000094 cavs=[5, 7, 9, 10]
+sgcp_constrained receiver=5 policy=all-cavs sources=[5, 7, 9, 10] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=108096 selected_grids={7: 39, 9: 27, 10: 30}
+fusion_method=early pred_boxes=33 gt_boxes=48Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+
+pred_scores_shape=(33,)
+frame=18/41 receiver_sample=6/10 scenario=2026_07_29_02_32_08 timestamp=000094 cavs=[6]
+sgcp_constrained receiver=6 policy=all-cavs sources=[6] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=0 selected_grids={}
+fusion_method=early pred_boxes=14 gt_boxes=52
+pred_scores_shape=(14,)
+frame=18/41 receiver_sample=7/10 scenario=2026_07_29_02_32_08 timestamp=000094 cavs=[7, 4, 5]
+sgcp_constrained receiver=7 policy=all-cavs sources=[7, 4, 5] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=72864 selected_grids={4: 51, 5: 42}
+fusion_method=early pred_boxes=33 gt_boxes=43
+pred_scores_shape=(33,)
+frame=18/41 receiver_sample=8/10 scenario=2026_07_29_02_32_08 timestamp=000094 cavs=[8, 1, 2, 7]
+sgcp_constrained receiver=8 policy=all-cavs sources=[8, 1, 2, 7] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=118384 selected_grids={1: 30, 2: 34, 7: 39}
+fusion_method=early pred_boxes=34 gt_boxes=47
+pred_scores_shape=(34,)
+frame=18/41 receiver_sample=9/10 scenario=2026_07_29_02_32_08 timestamp=000094 cavs=[9, 5, 10]
+sgcp_constrained receiver=9 policy=all-cavs sources=[9, 5, 10] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=57216 selected_grids={5: 43, 10: 44}
+fusion_method=early pred_boxes=36 gt_boxes=53
+pred_scores_shape=(36,)
+frame=18/41 receiver_sample=10/10 scenario=2026_07_29_02_32_08 timestamp=000094 cavs=[10, 2, 5, 9]
+sgcp_constrained receiver=10 policy=all-cavs sources=[10, 2, 5, 9] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=107584 selected_grids={2: 38, 5: 33, 9: 33}
+fusion_method=early pred_boxes=45 gt_boxes=65
+pred_scores_shape=(45,)
+frame=19/41 receiver_sample=1/10 scenario=2026_07_29_02_32_08 timestamp=000096 cavs=[1, 2, 4, 8]
+sgcp_constrained receiver=1 policy=all-cavs sources=[1, 2, 4, 8] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=100672 selected_grids={2: 36, 4: 34, 8: 28}
+fusion_method=early pred_boxes=41 gt_boxes=72
+pred_scores_shape=(41,)
+frame=19/41 receiver_sample=2/10 scenario=2026_07_29_02_32_08 timestamp=000096 cavs=[2, 1, 8, 10]
+sgcp_constrained receiver=2 policy=all-cavs sources=[2, 1, 8, 10] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=76640 selected_grids={1: 25, 8: 29, 10: 32}
+fusion_method=early pred_boxes=41 gt_boxes=70
+pred_scores_shape=(41,)
+frame=19/41 receiver_sample=3/10 scenario=2026_07_29_02_32_08 timestamp=000096 cavs=[3]
+sgcp_constrained receiver=3 policy=all-cavs sources=[3] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=0 selected_grids={}
+fusion_method=early pred_boxes=17 gt_boxes=59
+pred_scores_shape=(17,)
+frame=19/41 receiver_sample=4/10 scenario=2026_07_29_02_32_08 timestamp=000096 cavs=[4, 1, 7, 8]
+sgcp_constrained receiver=4 policy=all-cavs sources=[4, 1, 7, 8] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=96016 selected_grids={1: 34, 7: 36, 8: 28}
+fusion_method=early pred_boxes=47 gt_boxes=68
+pred_scores_shape=(47,)
+frame=19/41 receiver_sample=5/10 scenario=2026_07_29_02_32_08 timestamp=000096 cavs=[5, 7, 9, 10]
+sgcp_constrained receiver=5 policy=all-cavs sources=[5, 7, 9, 10] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=107808 selected_grids={7: 39, 9: 27, 10: 30}
+fusion_method=early pred_boxes=33 gt_boxes=48
+pred_scores_shape=(33,)
+frame=19/41 receiver_sample=6/10 scenario=2026_07_29_02_32_08 timestamp=000096 cavs=[6]
+sgcp_constrained receiver=6 policy=all-cavs sources=[6] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=0 selected_grids={}
+fusion_method=early pred_boxes=14 gt_boxes=52
+pred_scores_shape=(14,)
+frame=19/41 receiver_sample=7/10 scenario=2026_07_29_02_32_08 timestamp=000096 cavs=[7, 4, 5]
+sgcp_constrained receiver=7 policy=all-cavs sources=[7, 4, 5] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=73648 selected_grids={4: 51, 5: 41}
+fusion_method=early pred_boxes=34 gt_boxes=44
+pred_scores_shape=(34,)
+frame=19/41 receiver_sample=8/10 scenario=2026_07_29_02_32_08 timestamp=000096 cavs=[8, 1, 2, 7]
+sgcp_constrained receiver=8 policy=all-cavs sources=[8, 1, 2, 7] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=118464 selected_grids={1: 29, 2: 34, 7: 39}
+fusion_method=early pred_boxes=33 gt_boxes=47
+pred_scores_shape=(33,)
+frame=19/41 receiver_sample=9/10 scenario=2026_07_29_02_32_08 timestamp=000096 cavs=[9, 5, 10]
+sgcp_constrained receiver=9 policy=all-cavs sources=[9, 5, 10] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=58304 selected_grids={5: 41, 10: 44}
+fusion_method=early pred_boxes=36 gt_boxes=54
+pred_scores_shape=(36,)
+frame=19/41 receiver_sample=10/10 scenario=2026_07_29_02_32_08 timestamp=000096 cavs=[10, 2, 5, 9]
+sgcp_constrained receiver=10 policy=all-cavs sources=[10, 2, 5, 9] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=108704 selected_grids={2: 38, 5: 33, 9: 34}
+fusion_method=early pred_boxes=47 gt_boxes=65
+pred_scores_shape=(47,)
+frame=20/41 receiver_sample=1/10 scenario=2026_07_29_02_32_08 timestamp=000098 cavs=[1, 2, 4, 8]
+sgcp_constrained receiver=1 policy=all-cavs sources=[1, 2, 4, 8] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=99968 selected_grids={2: 36, 4: 34, 8: 27}
+fusion_method=early pred_boxes=39 gt_boxes=72
+pred_scores_shape=(39,)
+frame=20/41 receiver_sample=2/10 scenario=2026_07_29_02_32_08 timestamp=000098 cavs=[2, 1, 8, 10]
+sgcp_constrained receiver=2 policy=all-cavs sources=[2, 1, 8, 10] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=76544 selected_grids={1: 25, 8: 29, 10: 32}
+fusion_method=early pred_boxes=44 gt_boxes=70
+pred_scores_shape=(44,)
+frame=20/41 receiver_sample=3/10 scenario=2026_07_29_02_32_08 timestamp=000098 cavs=[3]
+sgcp_constrained receiver=3 policy=all-cavs sources=[3] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=0 selected_grids={}
+fusion_method=early pred_boxes=17 gt_boxes=59
+pred_scores_shape=(17,)
+frame=20/41 receiver_sample=4/10 scenario=2026_07_29_02_32_08 timestamp=000098 cavs=[4, 1, 7, 8]
+sgcp_constrained receiver=4 policy=all-cavs sources=[4, 1, 7, 8] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=96304 selected_grids={1: 34, 7: 36, 8: 28}
+fusion_method=early pred_boxes=45 gt_boxes=68
+pred_scores_shape=(45,)
+frame=20/41 receiver_sample=5/10 scenario=2026_07_29_02_32_08 timestamp=000098 cavs=[5, 7, 9, 10]
+sgcp_constrained receiver=5 policy=all-cavs sources=[5, 7, 9, 10] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=108144 selected_grids={7: 39, 9: 27, 10: 30}
+fusion_method=early pred_boxes=30 gt_boxes=48
+pred_scores_shape=(30,)
+frame=20/41 receiver_sample=6/10 scenario=2026_07_29_02_32_08 timestamp=000098 cavs=[6]
+sgcp_constrained receiver=6 policy=all-cavs sources=[6] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=0 selected_grids={}
+fusion_method=early pred_boxes=14 gt_boxes=53
+pred_scores_shape=(14,)
+frame=20/41 receiver_sample=7/10 scenario=2026_07_29_02_32_08 timestamp=000098 cavs=[7, 4, 5]
+sgcp_constrained receiver=7 policy=all-cavs sources=[7, 4, 5] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=73200 selected_grids={4: 51, 5: 42}
+fusion_method=early pred_boxes=31 gt_boxes=43
+pred_scores_shape=(31,)
+frame=20/41 receiver_sample=8/10 scenario=2026_07_29_02_32_08 timestamp=000098 cavs=[8, 1, 2, 7]
+sgcp_constrained receiver=8 policy=all-cavs sources=[8, 1, 2, 7] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=118224 selected_grids={1: 29, 2: 34, 7: 39}
+fusion_method=early pred_boxes=35 gt_boxes=47
+pred_scores_shape=(35,)
+frame=20/41 receiver_sample=9/10 scenario=2026_07_29_02_32_08 timestamp=000098 cavs=[9, 5, 10]
+sgcp_constrained receiver=9 policy=all-cavs sources=[9, 5, 10] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=59008 selected_grids={5: 43, 10: 44}
+fusion_method=early pred_boxes=37 gt_boxes=54
+pred_scores_shape=(37,)
+frame=20/41 receiver_sample=10/10 scenario=2026_07_29_02_32_08 timestamp=000098 cavs=[10, 2, 5, 9]
+sgcp_constrained receiver=10 policy=all-cavs sources=[10, 2, 5, 9] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=109072 selected_grids={2: 38, 5: 33, 9: 34}
+fusion_method=early pred_boxes=44 gt_boxes=65Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+
+pred_scores_shape=(44,)
+frame=21/41 receiver_sample=1/10 scenario=2026_07_29_02_32_08 timestamp=000100 cavs=[1, 2, 4, 8]
+sgcp_constrained receiver=1 policy=all-cavs sources=[1, 2, 4, 8] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=99248 selected_grids={2: 36, 4: 34, 8: 27}
+fusion_method=early pred_boxes=41 gt_boxes=72
+pred_scores_shape=(41,)
+frame=21/41 receiver_sample=2/10 scenario=2026_07_29_02_32_08 timestamp=000100 cavs=[2, 1, 8, 10]
+sgcp_constrained receiver=2 policy=all-cavs sources=[2, 1, 8, 10] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=76560 selected_grids={1: 25, 8: 29, 10: 32}
+fusion_method=early pred_boxes=40 gt_boxes=70
+pred_scores_shape=(40,)
+frame=21/41 receiver_sample=3/10 scenario=2026_07_29_02_32_08 timestamp=000100 cavs=[3]
+sgcp_constrained receiver=3 policy=all-cavs sources=[3] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=0 selected_grids={}
+fusion_method=early pred_boxes=17 gt_boxes=59
+pred_scores_shape=(17,)
+frame=21/41 receiver_sample=4/10 scenario=2026_07_29_02_32_08 timestamp=000100 cavs=[4, 1, 7, 8]
+sgcp_constrained receiver=4 policy=all-cavs sources=[4, 1, 7, 8] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=96480 selected_grids={1: 34, 7: 36, 8: 29}
+fusion_method=early pred_boxes=46 gt_boxes=67
+pred_scores_shape=(46,)
+frame=21/41 receiver_sample=5/10 scenario=2026_07_29_02_32_08 timestamp=000100 cavs=[5, 7, 9, 10]
+sgcp_constrained receiver=5 policy=all-cavs sources=[5, 7, 9, 10] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=108416 selected_grids={7: 39, 9: 27, 10: 30}
+fusion_method=early pred_boxes=32 gt_boxes=48
+pred_scores_shape=(32,)
+frame=21/41 receiver_sample=6/10 scenario=2026_07_29_02_32_08 timestamp=000100 cavs=[6]
+sgcp_constrained receiver=6 policy=all-cavs sources=[6] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=0 selected_grids={}
+fusion_method=early pred_boxes=14 gt_boxes=53
+pred_scores_shape=(14,)
+frame=21/41 receiver_sample=7/10 scenario=2026_07_29_02_32_08 timestamp=000100 cavs=[7, 4, 5]
+sgcp_constrained receiver=7 policy=all-cavs sources=[7, 4, 5] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=72784 selected_grids={4: 51, 5: 43}
+fusion_method=early pred_boxes=34 gt_boxes=44
+pred_scores_shape=(34,)
+frame=21/41 receiver_sample=8/10 scenario=2026_07_29_02_32_08 timestamp=000100 cavs=[8, 1, 2, 7]
+sgcp_constrained receiver=8 policy=all-cavs sources=[8, 1, 2, 7] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=117968 selected_grids={1: 30, 2: 34, 7: 39}
+fusion_method=early pred_boxes=33 gt_boxes=47
+pred_scores_shape=(33,)
+frame=21/41 receiver_sample=9/10 scenario=2026_07_29_02_32_08 timestamp=000100 cavs=[9, 5, 10]
+sgcp_constrained receiver=9 policy=all-cavs sources=[9, 5, 10] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=59936 selected_grids={5: 43, 10: 44}
+fusion_method=early pred_boxes=36 gt_boxes=54
+pred_scores_shape=(36,)
+frame=21/41 receiver_sample=10/10 scenario=2026_07_29_02_32_08 timestamp=000100 cavs=[10, 2, 5, 9]
+sgcp_constrained receiver=10 policy=all-cavs sources=[10, 2, 5, 9] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=109712 selected_grids={2: 38, 5: 33, 9: 34}
+fusion_method=early pred_boxes=46 gt_boxes=65
+pred_scores_shape=(46,)
+frame=22/41 receiver_sample=1/10 scenario=2026_07_29_02_32_08 timestamp=000102 cavs=[1, 2, 4, 8]
+sgcp_constrained receiver=1 policy=all-cavs sources=[1, 2, 4, 8] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=98640 selected_grids={2: 36, 4: 34, 8: 27}
+fusion_method=early pred_boxes=40 gt_boxes=72
+pred_scores_shape=(40,)
+frame=22/41 receiver_sample=2/10 scenario=2026_07_29_02_32_08 timestamp=000102 cavs=[2, 1, 8, 10]
+sgcp_constrained receiver=2 policy=all-cavs sources=[2, 1, 8, 10] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=76608 selected_grids={1: 27, 8: 28, 10: 32}
+fusion_method=early pred_boxes=42 gt_boxes=70
+pred_scores_shape=(42,)
+frame=22/41 receiver_sample=3/10 scenario=2026_07_29_02_32_08 timestamp=000102 cavs=[3]
+sgcp_constrained receiver=3 policy=all-cavs sources=[3] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=0 selected_grids={}
+fusion_method=early pred_boxes=15 gt_boxes=59
+pred_scores_shape=(15,)
+frame=22/41 receiver_sample=4/10 scenario=2026_07_29_02_32_08 timestamp=000102 cavs=[4, 1, 7, 8]
+sgcp_constrained receiver=4 policy=all-cavs sources=[4, 1, 7, 8] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=96720 selected_grids={1: 34, 7: 36, 8: 27}
+fusion_method=early pred_boxes=43 gt_boxes=66
+pred_scores_shape=(43,)
+frame=22/41 receiver_sample=5/10 scenario=2026_07_29_02_32_08 timestamp=000102 cavs=[5, 7, 9, 10]
+sgcp_constrained receiver=5 policy=all-cavs sources=[5, 7, 9, 10] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=108816 selected_grids={7: 39, 9: 27, 10: 30}
+fusion_method=early pred_boxes=33 gt_boxes=49
+pred_scores_shape=(33,)
+frame=22/41 receiver_sample=6/10 scenario=2026_07_29_02_32_08 timestamp=000102 cavs=[6]
+sgcp_constrained receiver=6 policy=all-cavs sources=[6] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=0 selected_grids={}
+fusion_method=early pred_boxes=14 gt_boxes=52
+pred_scores_shape=(14,)
+frame=22/41 receiver_sample=7/10 scenario=2026_07_29_02_32_08 timestamp=000102 cavs=[7, 4, 5]
+sgcp_constrained receiver=7 policy=all-cavs sources=[7, 4, 5] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=72704 selected_grids={4: 52, 5: 42}
+fusion_method=early pred_boxes=31 gt_boxes=45
+pred_scores_shape=(31,)
+frame=22/41 receiver_sample=8/10 scenario=2026_07_29_02_32_08 timestamp=000102 cavs=[8, 1, 2, 7]
+sgcp_constrained receiver=8 policy=all-cavs sources=[8, 1, 2, 7] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=118288 selected_grids={1: 30, 2: 35, 7: 39}
+fusion_method=early pred_boxes=34 gt_boxes=47
+pred_scores_shape=(34,)
+frame=22/41 receiver_sample=9/10 scenario=2026_07_29_02_32_08 timestamp=000102 cavs=[9, 5, 10]
+sgcp_constrained receiver=9 policy=all-cavs sources=[9, 5, 10] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=60752 selected_grids={5: 43, 10: 44}
+fusion_method=early pred_boxes=35 gt_boxes=54
+pred_scores_shape=(35,)
+frame=22/41 receiver_sample=10/10 scenario=2026_07_29_02_32_08 timestamp=000102 cavs=[10, 2, 5, 9]
+sgcp_constrained receiver=10 policy=all-cavs sources=[10, 2, 5, 9] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=110528 selected_grids={2: 38, 5: 33, 9: 34}
+fusion_method=early pred_boxes=45 gt_boxes=65
+pred_scores_shape=(45,)
+frame=23/41 receiver_sample=1/10 scenario=2026_07_29_02_32_08 timestamp=000104 cavs=[1, 2, 4, 8]
+sgcp_constrained receiver=1 policy=all-cavs sources=[1, 2, 4, 8] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=98208 selected_grids={2: 35, 4: 34, 8: 27}
+fusion_method=early pred_boxes=42 gt_boxes=72
+pred_scores_shape=(42,)
+frame=23/41 receiver_sample=2/10 scenario=2026_07_29_02_32_08 timestamp=000104 cavs=[2, 1, 8, 10]
+sgcp_constrained receiver=2 policy=all-cavs sources=[2, 1, 8, 10] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=76672 selected_grids={1: 28, 8: 29, 10: 32}
+fusion_method=early pred_boxes=45 gt_boxes=70
+pred_scores_shape=(45,)
+frame=23/41 receiver_sample=3/10 scenario=2026_07_29_02_32_08 timestamp=000104 cavs=[3]
+sgcp_constrained receiver=3 policy=all-cavs sources=[3] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=0 selected_grids={}
+fusion_method=early pred_boxes=16 gt_boxes=59
+pred_scores_shape=(16,)
+frame=23/41 receiver_sample=4/10 scenario=2026_07_29_02_32_08 timestamp=000104 cavs=[4, 1, 7, 8]
+sgcp_constrained receiver=4 policy=all-cavs sources=[4, 1, 7, 8] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=96960 selected_grids={1: 34, 7: 35, 8: 29}
+fusion_method=early pred_boxes=45 gt_boxes=66
+pred_scores_shape=(45,)
+frame=23/41 receiver_sample=5/10 scenario=2026_07_29_02_32_08 timestamp=000104 cavs=[5, 7, 9, 10]
+sgcp_constrained receiver=5 policy=all-cavs sources=[5, 7, 9, 10] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=109072 selected_grids={7: 39, 9: 27, 10: 30}
+fusion_method=early pred_boxes=33 gt_boxes=49Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+
+pred_scores_shape=(33,)
+frame=23/41 receiver_sample=6/10 scenario=2026_07_29_02_32_08 timestamp=000104 cavs=[6]
+sgcp_constrained receiver=6 policy=all-cavs sources=[6] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=0 selected_grids={}
+fusion_method=early pred_boxes=15 gt_boxes=52
+pred_scores_shape=(15,)
+frame=23/41 receiver_sample=7/10 scenario=2026_07_29_02_32_08 timestamp=000104 cavs=[7, 4, 5]
+sgcp_constrained receiver=7 policy=all-cavs sources=[7, 4, 5] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=72416 selected_grids={4: 51, 5: 44}
+fusion_method=early pred_boxes=32 gt_boxes=46
+pred_scores_shape=(32,)
+frame=23/41 receiver_sample=8/10 scenario=2026_07_29_02_32_08 timestamp=000104 cavs=[8, 1, 2, 7]
+sgcp_constrained receiver=8 policy=all-cavs sources=[8, 1, 2, 7] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=118528 selected_grids={1: 30, 2: 34, 7: 39}
+fusion_method=early pred_boxes=33 gt_boxes=47
+pred_scores_shape=(33,)
+frame=23/41 receiver_sample=9/10 scenario=2026_07_29_02_32_08 timestamp=000104 cavs=[9, 5, 10]
+sgcp_constrained receiver=9 policy=all-cavs sources=[9, 5, 10] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=61488 selected_grids={5: 43, 10: 44}
+fusion_method=early pred_boxes=33 gt_boxes=54
+pred_scores_shape=(33,)
+frame=23/41 receiver_sample=10/10 scenario=2026_07_29_02_32_08 timestamp=000104 cavs=[10, 2, 5, 9]
+sgcp_constrained receiver=10 policy=all-cavs sources=[10, 2, 5, 9] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=110928 selected_grids={2: 38, 5: 33, 9: 34}
+fusion_method=early pred_boxes=44 gt_boxes=65
+pred_scores_shape=(44,)
+frame=24/41 receiver_sample=1/10 scenario=2026_07_29_02_32_08 timestamp=000106 cavs=[1, 2, 4, 8]
+sgcp_constrained receiver=1 policy=all-cavs sources=[1, 2, 4, 8] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=98128 selected_grids={2: 36, 4: 34, 8: 28}
+fusion_method=early pred_boxes=40 gt_boxes=71
+pred_scores_shape=(40,)
+frame=24/41 receiver_sample=2/10 scenario=2026_07_29_02_32_08 timestamp=000106 cavs=[2, 1, 8, 10]
+sgcp_constrained receiver=2 policy=all-cavs sources=[2, 1, 8, 10] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=76816 selected_grids={1: 28, 8: 29, 10: 32}
+fusion_method=early pred_boxes=45 gt_boxes=70
+pred_scores_shape=(45,)
+frame=24/41 receiver_sample=3/10 scenario=2026_07_29_02_32_08 timestamp=000106 cavs=[3]
+sgcp_constrained receiver=3 policy=all-cavs sources=[3] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=0 selected_grids={}
+fusion_method=early pred_boxes=17 gt_boxes=58
+pred_scores_shape=(17,)
+frame=24/41 receiver_sample=4/10 scenario=2026_07_29_02_32_08 timestamp=000106 cavs=[4, 1, 7, 8]
+sgcp_constrained receiver=4 policy=all-cavs sources=[4, 1, 7, 8] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=96960 selected_grids={1: 35, 7: 36, 8: 28}
+fusion_method=early pred_boxes=42 gt_boxes=66
+pred_scores_shape=(42,)
+frame=24/41 receiver_sample=5/10 scenario=2026_07_29_02_32_08 timestamp=000106 cavs=[5, 7, 9, 10]
+sgcp_constrained receiver=5 policy=all-cavs sources=[5, 7, 9, 10] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=109104 selected_grids={7: 39, 9: 26, 10: 30}
+fusion_method=early pred_boxes=30 gt_boxes=49
+pred_scores_shape=(30,)
+frame=24/41 receiver_sample=6/10 scenario=2026_07_29_02_32_08 timestamp=000106 cavs=[6]
+sgcp_constrained receiver=6 policy=all-cavs sources=[6] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=0 selected_grids={}
+fusion_method=early pred_boxes=15 gt_boxes=52
+pred_scores_shape=(15,)
+frame=24/41 receiver_sample=7/10 scenario=2026_07_29_02_32_08 timestamp=000106 cavs=[7, 4, 5]
+sgcp_constrained receiver=7 policy=all-cavs sources=[7, 4, 5] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=71792 selected_grids={4: 51, 5: 45}
+fusion_method=early pred_boxes=32 gt_boxes=46
+pred_scores_shape=(32,)
+frame=24/41 receiver_sample=8/10 scenario=2026_07_29_02_32_08 timestamp=000106 cavs=[8, 1, 2, 7]
+sgcp_constrained receiver=8 policy=all-cavs sources=[8, 1, 2, 7] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=118336 selected_grids={1: 30, 2: 33, 7: 39}
+fusion_method=early pred_boxes=32 gt_boxes=47
+pred_scores_shape=(32,)
+frame=24/41 receiver_sample=9/10 scenario=2026_07_29_02_32_08 timestamp=000106 cavs=[9, 5, 10]
+sgcp_constrained receiver=9 policy=all-cavs sources=[9, 5, 10] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=61984 selected_grids={5: 43, 10: 43}
+fusion_method=early pred_boxes=35 gt_boxes=54
+pred_scores_shape=(35,)
+frame=24/41 receiver_sample=10/10 scenario=2026_07_29_02_32_08 timestamp=000106 cavs=[10, 2, 5, 9]
+sgcp_constrained receiver=10 policy=all-cavs sources=[10, 2, 5, 9] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=111120 selected_grids={2: 38, 5: 33, 9: 34}
+fusion_method=early pred_boxes=43 gt_boxes=65
+pred_scores_shape=(43,)
+frame=25/41 receiver_sample=1/10 scenario=2026_07_29_02_32_08 timestamp=000108 cavs=[1, 2, 4, 8]
+sgcp_constrained receiver=1 policy=all-cavs sources=[1, 2, 4, 8] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=98032 selected_grids={2: 35, 4: 34, 8: 28}
+fusion_method=early pred_boxes=39 gt_boxes=71
+pred_scores_shape=(39,)
+frame=25/41 receiver_sample=2/10 scenario=2026_07_29_02_32_08 timestamp=000108 cavs=[2, 1, 8, 10]
+sgcp_constrained receiver=2 policy=all-cavs sources=[2, 1, 8, 10] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=77024 selected_grids={1: 28, 8: 29, 10: 32}
+fusion_method=early pred_boxes=46 gt_boxes=70
+pred_scores_shape=(46,)
+frame=25/41 receiver_sample=3/10 scenario=2026_07_29_02_32_08 timestamp=000108 cavs=[3]
+sgcp_constrained receiver=3 policy=all-cavs sources=[3] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=0 selected_grids={}
+fusion_method=early pred_boxes=17 gt_boxes=58
+pred_scores_shape=(17,)
+frame=25/41 receiver_sample=4/10 scenario=2026_07_29_02_32_08 timestamp=000108 cavs=[4, 1, 7, 8]
+sgcp_constrained receiver=4 policy=all-cavs sources=[4, 1, 7, 8] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=97152 selected_grids={1: 35, 7: 36, 8: 28}
+fusion_method=early pred_boxes=45 gt_boxes=66
+pred_scores_shape=(45,)
+frame=25/41 receiver_sample=5/10 scenario=2026_07_29_02_32_08 timestamp=000108 cavs=[5, 7, 9, 10]
+sgcp_constrained receiver=5 policy=all-cavs sources=[5, 7, 9, 10] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=109632 selected_grids={7: 39, 9: 26, 10: 30}
+fusion_method=early pred_boxes=31 gt_boxes=50
+pred_scores_shape=(31,)
+frame=25/41 receiver_sample=6/10 scenario=2026_07_29_02_32_08 timestamp=000108 cavs=[6]
+sgcp_constrained receiver=6 policy=all-cavs sources=[6] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=0 selected_grids={}
+fusion_method=early pred_boxes=14 gt_boxes=52
+pred_scores_shape=(14,)
+frame=25/41 receiver_sample=7/10 scenario=2026_07_29_02_32_08 timestamp=000108 cavs=[7, 4, 5]
+sgcp_constrained receiver=7 policy=all-cavs sources=[7, 4, 5] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=73088 selected_grids={4: 51, 5: 47}
+fusion_method=early pred_boxes=30 gt_boxes=45
+pred_scores_shape=(30,)
+frame=25/41 receiver_sample=8/10 scenario=2026_07_29_02_32_08 timestamp=000108 cavs=[8, 1, 2, 7]
+sgcp_constrained receiver=8 policy=all-cavs sources=[8, 1, 2, 7] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=118832 selected_grids={1: 30, 2: 33, 7: 39}
+fusion_method=early pred_boxes=32 gt_boxes=47
+pred_scores_shape=(32,)
+frame=25/41 receiver_sample=9/10 scenario=2026_07_29_02_32_08 timestamp=000108 cavs=[9, 5, 10]
+sgcp_constrained receiver=9 policy=all-cavs sources=[9, 5, 10] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=63584 selected_grids={5: 45, 10: 41}
+fusion_method=early pred_boxes=34 gt_boxes=54
+pred_scores_shape=(34,)
+frame=25/41 receiver_sample=10/10 scenario=2026_07_29_02_32_08 timestamp=000108 cavs=[10, 2, 5, 9]
+sgcp_constrained receiver=10 policy=all-cavs sources=[10, 2, 5, 9] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=112752 selected_grids={2: 38, 5: 34, 9: 32}
+fusion_method=early pred_boxes=42 gt_boxes=65Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+
+pred_scores_shape=(42,)
+frame=26/41 receiver_sample=1/10 scenario=2026_07_29_02_32_08 timestamp=000110 cavs=[1, 2, 4, 8]
+sgcp_constrained receiver=1 policy=all-cavs sources=[1, 2, 4, 8] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=97984 selected_grids={2: 35, 4: 34, 8: 28}
+fusion_method=early pred_boxes=40 gt_boxes=70
+pred_scores_shape=(40,)
+frame=26/41 receiver_sample=2/10 scenario=2026_07_29_02_32_08 timestamp=000110 cavs=[2, 1, 8, 10]
+sgcp_constrained receiver=2 policy=all-cavs sources=[2, 1, 8, 10] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=77088 selected_grids={1: 28, 8: 29, 10: 32}
+fusion_method=early pred_boxes=47 gt_boxes=71
+pred_scores_shape=(47,)
+frame=26/41 receiver_sample=3/10 scenario=2026_07_29_02_32_08 timestamp=000110 cavs=[3]
+sgcp_constrained receiver=3 policy=all-cavs sources=[3] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=0 selected_grids={}
+fusion_method=early pred_boxes=16 gt_boxes=58
+pred_scores_shape=(16,)
+frame=26/41 receiver_sample=4/10 scenario=2026_07_29_02_32_08 timestamp=000110 cavs=[4, 1, 7, 8]
+sgcp_constrained receiver=4 policy=all-cavs sources=[4, 1, 7, 8] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=96832 selected_grids={1: 34, 7: 35, 8: 28}
+fusion_method=early pred_boxes=48 gt_boxes=65
+pred_scores_shape=(48,)
+frame=26/41 receiver_sample=5/10 scenario=2026_07_29_02_32_08 timestamp=000110 cavs=[5, 7, 9, 10]
+sgcp_constrained receiver=5 policy=all-cavs sources=[5, 7, 9, 10] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=111056 selected_grids={7: 39, 9: 26, 10: 30}
+fusion_method=early pred_boxes=33 gt_boxes=50
+pred_scores_shape=(33,)
+frame=26/41 receiver_sample=6/10 scenario=2026_07_29_02_32_08 timestamp=000110 cavs=[6]
+sgcp_constrained receiver=6 policy=all-cavs sources=[6] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=0 selected_grids={}
+fusion_method=early pred_boxes=15 gt_boxes=52
+pred_scores_shape=(15,)
+frame=26/41 receiver_sample=7/10 scenario=2026_07_29_02_32_08 timestamp=000110 cavs=[7, 4, 5]
+sgcp_constrained receiver=7 policy=all-cavs sources=[7, 4, 5] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=72656 selected_grids={4: 51, 5: 46}
+fusion_method=early pred_boxes=26 gt_boxes=44
+pred_scores_shape=(26,)
+frame=26/41 receiver_sample=8/10 scenario=2026_07_29_02_32_08 timestamp=000110 cavs=[8, 1, 2, 7]
+sgcp_constrained receiver=8 policy=all-cavs sources=[8, 1, 2, 7] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=118784 selected_grids={1: 30, 2: 34, 7: 39}
+fusion_method=early pred_boxes=34 gt_boxes=46
+pred_scores_shape=(34,)
+frame=26/41 receiver_sample=9/10 scenario=2026_07_29_02_32_08 timestamp=000110 cavs=[9, 5, 10]
+sgcp_constrained receiver=9 policy=all-cavs sources=[9, 5, 10] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=64480 selected_grids={5: 45, 10: 40}
+fusion_method=early pred_boxes=31 gt_boxes=52
+pred_scores_shape=(31,)
+frame=26/41 receiver_sample=10/10 scenario=2026_07_29_02_32_08 timestamp=000110 cavs=[10, 2, 5, 9]
+sgcp_constrained receiver=10 policy=all-cavs sources=[10, 2, 5, 9] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=113344 selected_grids={2: 38, 5: 34, 9: 32}
+fusion_method=early pred_boxes=43 gt_boxes=65
+pred_scores_shape=(43,)
+frame=27/41 receiver_sample=1/10 scenario=2026_07_29_02_32_08 timestamp=000112 cavs=[1, 2, 4, 8]
+sgcp_constrained receiver=1 policy=all-cavs sources=[1, 2, 4, 8] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=97840 selected_grids={2: 35, 4: 34, 8: 28}
+fusion_method=early pred_boxes=41 gt_boxes=70
+pred_scores_shape=(41,)
+frame=27/41 receiver_sample=2/10 scenario=2026_07_29_02_32_08 timestamp=000112 cavs=[2, 1, 8, 10]
+sgcp_constrained receiver=2 policy=all-cavs sources=[2, 1, 8, 10] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=77088 selected_grids={1: 28, 8: 29, 10: 32}
+fusion_method=early pred_boxes=48 gt_boxes=71
+pred_scores_shape=(48,)
+frame=27/41 receiver_sample=3/10 scenario=2026_07_29_02_32_08 timestamp=000112 cavs=[3]
+sgcp_constrained receiver=3 policy=all-cavs sources=[3] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=0 selected_grids={}
+fusion_method=early pred_boxes=14 gt_boxes=58
+pred_scores_shape=(14,)
+frame=27/41 receiver_sample=4/10 scenario=2026_07_29_02_32_08 timestamp=000112 cavs=[4, 1, 7, 8]
+sgcp_constrained receiver=4 policy=all-cavs sources=[4, 1, 7, 8] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=96672 selected_grids={1: 35, 7: 36, 8: 26}
+fusion_method=early pred_boxes=44 gt_boxes=65
+pred_scores_shape=(44,)
+frame=27/41 receiver_sample=5/10 scenario=2026_07_29_02_32_08 timestamp=000112 cavs=[5, 7, 9, 10]
+sgcp_constrained receiver=5 policy=all-cavs sources=[5, 7, 9, 10] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=110640 selected_grids={7: 39, 9: 26, 10: 30}
+fusion_method=early pred_boxes=33 gt_boxes=51
+pred_scores_shape=(33,)
+frame=27/41 receiver_sample=6/10 scenario=2026_07_29_02_32_08 timestamp=000112 cavs=[6]
+sgcp_constrained receiver=6 policy=all-cavs sources=[6] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=0 selected_grids={}
+fusion_method=early pred_boxes=15 gt_boxes=52
+pred_scores_shape=(15,)
+frame=27/41 receiver_sample=7/10 scenario=2026_07_29_02_32_08 timestamp=000112 cavs=[7, 4, 5]
+sgcp_constrained receiver=7 policy=all-cavs sources=[7, 4, 5] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=73776 selected_grids={4: 51, 5: 46}
+fusion_method=early pred_boxes=27 gt_boxes=44
+pred_scores_shape=(27,)
+frame=27/41 receiver_sample=8/10 scenario=2026_07_29_02_32_08 timestamp=000112 cavs=[8, 1, 2, 7]
+sgcp_constrained receiver=8 policy=all-cavs sources=[8, 1, 2, 7] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=118304 selected_grids={1: 30, 2: 34, 7: 39}
+fusion_method=early pred_boxes=30 gt_boxes=46
+pred_scores_shape=(30,)
+frame=27/41 receiver_sample=9/10 scenario=2026_07_29_02_32_08 timestamp=000112 cavs=[9, 5, 10]
+sgcp_constrained receiver=9 policy=all-cavs sources=[9, 5, 10] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=65456 selected_grids={5: 45, 10: 40}
+fusion_method=early pred_boxes=34 gt_boxes=52
+pred_scores_shape=(34,)
+frame=27/41 receiver_sample=10/10 scenario=2026_07_29_02_32_08 timestamp=000112 cavs=[10, 2, 5, 9]
+sgcp_constrained receiver=10 policy=all-cavs sources=[10, 2, 5, 9] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=114096 selected_grids={2: 38, 5: 33, 9: 32}
+fusion_method=early pred_boxes=43 gt_boxes=65
+pred_scores_shape=(43,)
+frame=28/41 receiver_sample=1/10 scenario=2026_07_29_02_32_08 timestamp=000114 cavs=[1, 2, 4, 8]
+sgcp_constrained receiver=1 policy=all-cavs sources=[1, 2, 4, 8] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=97744 selected_grids={2: 35, 4: 34, 8: 28}
+fusion_method=early pred_boxes=40 gt_boxes=69
+pred_scores_shape=(40,)
+frame=28/41 receiver_sample=2/10 scenario=2026_07_29_02_32_08 timestamp=000114 cavs=[2, 1, 8, 10]
+sgcp_constrained receiver=2 policy=all-cavs sources=[2, 1, 8, 10] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=77008 selected_grids={1: 28, 8: 30, 10: 32}
+fusion_method=early pred_boxes=45 gt_boxes=70
+pred_scores_shape=(45,)
+frame=28/41 receiver_sample=3/10 scenario=2026_07_29_02_32_08 timestamp=000114 cavs=[3]
+sgcp_constrained receiver=3 policy=all-cavs sources=[3] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=0 selected_grids={}
+fusion_method=early pred_boxes=14 gt_boxes=58
+pred_scores_shape=(14,)
+frame=28/41 receiver_sample=4/10 scenario=2026_07_29_02_32_08 timestamp=000114 cavs=[4, 1, 7, 8]
+sgcp_constrained receiver=4 policy=all-cavs sources=[4, 1, 7, 8] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=96640 selected_grids={1: 34, 7: 35, 8: 28}
+fusion_method=early pred_boxes=45 gt_boxes=65
+pred_scores_shape=(45,)
+frame=28/41 receiver_sample=5/10 scenario=2026_07_29_02_32_08 timestamp=000114 cavs=[5, 7, 9, 10]
+sgcp_constrained receiver=5 policy=all-cavs sources=[5, 7, 9, 10] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=112720 selected_grids={7: 38, 9: 26, 10: 30}
+fusion_method=early pred_boxes=31 gt_boxes=51Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+
+pred_scores_shape=(31,)
+frame=28/41 receiver_sample=6/10 scenario=2026_07_29_02_32_08 timestamp=000114 cavs=[6]
+sgcp_constrained receiver=6 policy=all-cavs sources=[6] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=0 selected_grids={}
+fusion_method=early pred_boxes=15 gt_boxes=52
+pred_scores_shape=(15,)
+frame=28/41 receiver_sample=7/10 scenario=2026_07_29_02_32_08 timestamp=000114 cavs=[7, 4, 5]
+sgcp_constrained receiver=7 policy=all-cavs sources=[7, 4, 5] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=72592 selected_grids={4: 51, 5: 47}
+fusion_method=early pred_boxes=27 gt_boxes=44
+pred_scores_shape=(27,)
+frame=28/41 receiver_sample=8/10 scenario=2026_07_29_02_32_08 timestamp=000114 cavs=[8, 1, 2, 7]
+sgcp_constrained receiver=8 policy=all-cavs sources=[8, 1, 2, 7] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=118304 selected_grids={1: 30, 2: 34, 7: 39}
+fusion_method=early pred_boxes=31 gt_boxes=46
+pred_scores_shape=(31,)
+frame=28/41 receiver_sample=9/10 scenario=2026_07_29_02_32_08 timestamp=000114 cavs=[9, 5, 10]
+sgcp_constrained receiver=9 policy=all-cavs sources=[9, 5, 10] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=66544 selected_grids={5: 46, 10: 40}
+fusion_method=early pred_boxes=34 gt_boxes=52
+pred_scores_shape=(34,)
+frame=28/41 receiver_sample=10/10 scenario=2026_07_29_02_32_08 timestamp=000114 cavs=[10, 2, 5, 9]
+sgcp_constrained receiver=10 policy=all-cavs sources=[10, 2, 5, 9] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=115264 selected_grids={2: 38, 5: 34, 9: 33}
+fusion_method=early pred_boxes=43 gt_boxes=66
+pred_scores_shape=(43,)
+frame=29/41 receiver_sample=1/10 scenario=2026_07_29_02_32_08 timestamp=000116 cavs=[1, 2, 4, 8]
+sgcp_constrained receiver=1 policy=all-cavs sources=[1, 2, 4, 8] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=97840 selected_grids={2: 35, 4: 34, 8: 28}
+fusion_method=early pred_boxes=42 gt_boxes=69
+pred_scores_shape=(42,)
+frame=29/41 receiver_sample=2/10 scenario=2026_07_29_02_32_08 timestamp=000116 cavs=[2, 1, 8, 10]
+sgcp_constrained receiver=2 policy=all-cavs sources=[2, 1, 8, 10] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=76928 selected_grids={1: 28, 8: 31, 10: 32}
+fusion_method=early pred_boxes=46 gt_boxes=70
+pred_scores_shape=(46,)
+frame=29/41 receiver_sample=3/10 scenario=2026_07_29_02_32_08 timestamp=000116 cavs=[3]
+sgcp_constrained receiver=3 policy=all-cavs sources=[3] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=0 selected_grids={}
+fusion_method=early pred_boxes=14 gt_boxes=57
+pred_scores_shape=(14,)
+frame=29/41 receiver_sample=4/10 scenario=2026_07_29_02_32_08 timestamp=000116 cavs=[4, 1, 7, 8]
+sgcp_constrained receiver=4 policy=all-cavs sources=[4, 1, 7, 8] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=96704 selected_grids={1: 34, 7: 35, 8: 28}
+fusion_method=early pred_boxes=45 gt_boxes=65
+pred_scores_shape=(45,)
+frame=29/41 receiver_sample=5/10 scenario=2026_07_29_02_32_08 timestamp=000116 cavs=[5, 7, 9, 10]
+sgcp_constrained receiver=5 policy=all-cavs sources=[5, 7, 9, 10] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=113936 selected_grids={7: 39, 9: 25, 10: 30}
+fusion_method=early pred_boxes=34 gt_boxes=51
+pred_scores_shape=(34,)
+frame=29/41 receiver_sample=6/10 scenario=2026_07_29_02_32_08 timestamp=000116 cavs=[6]
+sgcp_constrained receiver=6 policy=all-cavs sources=[6] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=0 selected_grids={}
+fusion_method=early pred_boxes=15 gt_boxes=52
+pred_scores_shape=(15,)
+frame=29/41 receiver_sample=7/10 scenario=2026_07_29_02_32_08 timestamp=000116 cavs=[7, 4, 5]
+sgcp_constrained receiver=7 policy=all-cavs sources=[7, 4, 5] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=72112 selected_grids={4: 52, 5: 46}
+fusion_method=early pred_boxes=28 gt_boxes=44
+pred_scores_shape=(28,)
+frame=29/41 receiver_sample=8/10 scenario=2026_07_29_02_32_08 timestamp=000116 cavs=[8, 1, 2, 7]
+sgcp_constrained receiver=8 policy=all-cavs sources=[8, 1, 2, 7] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=118336 selected_grids={1: 30, 2: 34, 7: 39}
+fusion_method=early pred_boxes=29 gt_boxes=46
+pred_scores_shape=(29,)
+frame=29/41 receiver_sample=9/10 scenario=2026_07_29_02_32_08 timestamp=000116 cavs=[9, 5, 10]
+sgcp_constrained receiver=9 policy=all-cavs sources=[9, 5, 10] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=67216 selected_grids={5: 44, 10: 42}
+fusion_method=early pred_boxes=35 gt_boxes=52
+pred_scores_shape=(35,)
+frame=29/41 receiver_sample=10/10 scenario=2026_07_29_02_32_08 timestamp=000116 cavs=[10, 2, 5, 9]
+sgcp_constrained receiver=10 policy=all-cavs sources=[10, 2, 5, 9] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=115936 selected_grids={2: 38, 5: 34, 9: 32}
+fusion_method=early pred_boxes=43 gt_boxes=66
+pred_scores_shape=(43,)
+frame=30/41 receiver_sample=1/10 scenario=2026_07_29_02_32_08 timestamp=000118 cavs=[1, 2, 4, 8]
+sgcp_constrained receiver=1 policy=all-cavs sources=[1, 2, 4, 8] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=97824 selected_grids={2: 35, 4: 34, 8: 28}
+fusion_method=early pred_boxes=43 gt_boxes=69
+pred_scores_shape=(43,)
+frame=30/41 receiver_sample=2/10 scenario=2026_07_29_02_32_08 timestamp=000118 cavs=[2, 1, 8, 10]
+sgcp_constrained receiver=2 policy=all-cavs sources=[2, 1, 8, 10] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=76752 selected_grids={1: 26, 8: 31, 10: 32}
+fusion_method=early pred_boxes=46 gt_boxes=70
+pred_scores_shape=(46,)
+frame=30/41 receiver_sample=3/10 scenario=2026_07_29_02_32_08 timestamp=000118 cavs=[3]
+sgcp_constrained receiver=3 policy=all-cavs sources=[3] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=0 selected_grids={}
+fusion_method=early pred_boxes=15 gt_boxes=57
+pred_scores_shape=(15,)
+frame=30/41 receiver_sample=4/10 scenario=2026_07_29_02_32_08 timestamp=000118 cavs=[4, 1, 7, 8]
+sgcp_constrained receiver=4 policy=all-cavs sources=[4, 1, 7, 8] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=96304 selected_grids={1: 34, 7: 35, 8: 27}
+fusion_method=early pred_boxes=46 gt_boxes=65
+pred_scores_shape=(46,)
+frame=30/41 receiver_sample=5/10 scenario=2026_07_29_02_32_08 timestamp=000118 cavs=[5, 7, 9, 10]
+sgcp_constrained receiver=5 policy=all-cavs sources=[5, 7, 9, 10] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=114080 selected_grids={7: 38, 9: 26, 10: 30}
+fusion_method=early pred_boxes=33 gt_boxes=52
+pred_scores_shape=(33,)
+frame=30/41 receiver_sample=6/10 scenario=2026_07_29_02_32_08 timestamp=000118 cavs=[6]
+sgcp_constrained receiver=6 policy=all-cavs sources=[6] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=0 selected_grids={}
+fusion_method=early pred_boxes=15 gt_boxes=53
+pred_scores_shape=(15,)
+frame=30/41 receiver_sample=7/10 scenario=2026_07_29_02_32_08 timestamp=000118 cavs=[7, 4, 5]
+sgcp_constrained receiver=7 policy=all-cavs sources=[7, 4, 5] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=72704 selected_grids={4: 52, 5: 47}
+fusion_method=early pred_boxes=32 gt_boxes=43
+pred_scores_shape=(32,)
+frame=30/41 receiver_sample=8/10 scenario=2026_07_29_02_32_08 timestamp=000118 cavs=[8, 1, 2, 7]
+sgcp_constrained receiver=8 policy=all-cavs sources=[8, 1, 2, 7] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=117920 selected_grids={1: 30, 2: 34, 7: 39}
+fusion_method=early pred_boxes=32 gt_boxes=46
+pred_scores_shape=(32,)
+frame=30/41 receiver_sample=9/10 scenario=2026_07_29_02_32_08 timestamp=000118 cavs=[9, 5, 10]
+sgcp_constrained receiver=9 policy=all-cavs sources=[9, 5, 10] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=67824 selected_grids={5: 45, 10: 41}
+fusion_method=early pred_boxes=36 gt_boxes=52
+pred_scores_shape=(36,)
+frame=30/41 receiver_sample=10/10 scenario=2026_07_29_02_32_08 timestamp=000118 cavs=[10, 2, 5, 9]
+sgcp_constrained receiver=10 policy=all-cavs sources=[10, 2, 5, 9] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=116864 selected_grids={2: 38, 5: 34, 9: 32}
+fusion_method=early pred_boxes=43 gt_boxes=66Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+
+pred_scores_shape=(43,)
+frame=31/41 receiver_sample=1/10 scenario=2026_07_29_02_32_08 timestamp=000120 cavs=[1, 2, 4, 8]
+sgcp_constrained receiver=1 policy=all-cavs sources=[1, 2, 4, 8] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=97744 selected_grids={2: 35, 4: 34, 8: 28}
+fusion_method=early pred_boxes=40 gt_boxes=69
+pred_scores_shape=(40,)
+frame=31/41 receiver_sample=2/10 scenario=2026_07_29_02_32_08 timestamp=000120 cavs=[2, 1, 8, 10]
+sgcp_constrained receiver=2 policy=all-cavs sources=[2, 1, 8, 10] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=76608 selected_grids={1: 26, 8: 31, 10: 32}
+fusion_method=early pred_boxes=45 gt_boxes=70
+pred_scores_shape=(45,)
+frame=31/41 receiver_sample=3/10 scenario=2026_07_29_02_32_08 timestamp=000120 cavs=[3]
+sgcp_constrained receiver=3 policy=all-cavs sources=[3] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=0 selected_grids={}
+fusion_method=early pred_boxes=14 gt_boxes=57
+pred_scores_shape=(14,)
+frame=31/41 receiver_sample=4/10 scenario=2026_07_29_02_32_08 timestamp=000120 cavs=[4, 1, 7, 8]
+sgcp_constrained receiver=4 policy=all-cavs sources=[4, 1, 7, 8] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=95568 selected_grids={1: 34, 7: 35, 8: 28}
+fusion_method=early pred_boxes=47 gt_boxes=65
+pred_scores_shape=(47,)
+frame=31/41 receiver_sample=5/10 scenario=2026_07_29_02_32_08 timestamp=000120 cavs=[5, 7, 9, 10]
+sgcp_constrained receiver=5 policy=all-cavs sources=[5, 7, 9, 10] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=115328 selected_grids={7: 39, 9: 26, 10: 29}
+fusion_method=early pred_boxes=34 gt_boxes=53
+pred_scores_shape=(34,)
+frame=31/41 receiver_sample=6/10 scenario=2026_07_29_02_32_08 timestamp=000120 cavs=[6]
+sgcp_constrained receiver=6 policy=all-cavs sources=[6] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=0 selected_grids={}
+fusion_method=early pred_boxes=14 gt_boxes=54
+pred_scores_shape=(14,)
+frame=31/41 receiver_sample=7/10 scenario=2026_07_29_02_32_08 timestamp=000120 cavs=[7, 4, 5]
+sgcp_constrained receiver=7 policy=all-cavs sources=[7, 4, 5] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=73280 selected_grids={4: 51, 5: 49}
+fusion_method=early pred_boxes=33 gt_boxes=43
+pred_scores_shape=(33,)
+frame=31/41 receiver_sample=8/10 scenario=2026_07_29_02_32_08 timestamp=000120 cavs=[8, 1, 2, 7]
+sgcp_constrained receiver=8 policy=all-cavs sources=[8, 1, 2, 7] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=116944 selected_grids={1: 30, 2: 34, 7: 39}
+fusion_method=early pred_boxes=31 gt_boxes=46
+pred_scores_shape=(31,)
+frame=31/41 receiver_sample=9/10 scenario=2026_07_29_02_32_08 timestamp=000120 cavs=[9, 5, 10]
+sgcp_constrained receiver=9 policy=all-cavs sources=[9, 5, 10] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=68624 selected_grids={5: 46, 10: 41}
+fusion_method=early pred_boxes=34 gt_boxes=51
+pred_scores_shape=(34,)
+frame=31/41 receiver_sample=10/10 scenario=2026_07_29_02_32_08 timestamp=000120 cavs=[10, 2, 5, 9]
+sgcp_constrained receiver=10 policy=all-cavs sources=[10, 2, 5, 9] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=117760 selected_grids={2: 38, 5: 34, 9: 33}
+fusion_method=early pred_boxes=45 gt_boxes=66
+pred_scores_shape=(45,)
+frame=32/41 receiver_sample=1/10 scenario=2026_07_29_02_32_08 timestamp=000122 cavs=[1, 2, 4, 8]
+sgcp_constrained receiver=1 policy=all-cavs sources=[1, 2, 4, 8] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=97856 selected_grids={2: 35, 4: 34, 8: 28}
+fusion_method=early pred_boxes=44 gt_boxes=69
+pred_scores_shape=(44,)
+frame=32/41 receiver_sample=2/10 scenario=2026_07_29_02_32_08 timestamp=000122 cavs=[2, 1, 8, 10]
+sgcp_constrained receiver=2 policy=all-cavs sources=[2, 1, 8, 10] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=76528 selected_grids={1: 25, 8: 31, 10: 32}
+fusion_method=early pred_boxes=45 gt_boxes=69
+pred_scores_shape=(45,)
+frame=32/41 receiver_sample=3/10 scenario=2026_07_29_02_32_08 timestamp=000122 cavs=[3]
+sgcp_constrained receiver=3 policy=all-cavs sources=[3] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=0 selected_grids={}
+fusion_method=early pred_boxes=15 gt_boxes=55
+pred_scores_shape=(15,)
+frame=32/41 receiver_sample=4/10 scenario=2026_07_29_02_32_08 timestamp=000122 cavs=[4, 1, 7, 8]
+sgcp_constrained receiver=4 policy=all-cavs sources=[4, 1, 7, 8] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=95360 selected_grids={1: 34, 7: 35, 8: 28}
+fusion_method=early pred_boxes=44 gt_boxes=65
+pred_scores_shape=(44,)
+frame=32/41 receiver_sample=5/10 scenario=2026_07_29_02_32_08 timestamp=000122 cavs=[5, 7, 9, 10]
+sgcp_constrained receiver=5 policy=all-cavs sources=[5, 7, 9, 10] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=116672 selected_grids={7: 39, 9: 26, 10: 29}
+fusion_method=early pred_boxes=32 gt_boxes=56
+pred_scores_shape=(32,)
+frame=32/41 receiver_sample=6/10 scenario=2026_07_29_02_32_08 timestamp=000122 cavs=[6]
+sgcp_constrained receiver=6 policy=all-cavs sources=[6] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=0 selected_grids={}
+fusion_method=early pred_boxes=14 gt_boxes=54
+pred_scores_shape=(14,)
+frame=32/41 receiver_sample=7/10 scenario=2026_07_29_02_32_08 timestamp=000122 cavs=[7, 4, 5]
+sgcp_constrained receiver=7 policy=all-cavs sources=[7, 4, 5] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=72912 selected_grids={4: 51, 5: 48}
+fusion_method=early pred_boxes=31 gt_boxes=43
+pred_scores_shape=(31,)
+frame=32/41 receiver_sample=8/10 scenario=2026_07_29_02_32_08 timestamp=000122 cavs=[8, 1, 2, 7]
+sgcp_constrained receiver=8 policy=all-cavs sources=[8, 1, 2, 7] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=117168 selected_grids={1: 30, 2: 34, 7: 39}
+fusion_method=early pred_boxes=31 gt_boxes=46
+pred_scores_shape=(31,)
+frame=32/41 receiver_sample=9/10 scenario=2026_07_29_02_32_08 timestamp=000122 cavs=[9, 5, 10]
+sgcp_constrained receiver=9 policy=all-cavs sources=[9, 5, 10] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=68896 selected_grids={5: 44, 10: 42}
+fusion_method=early pred_boxes=36 gt_boxes=51
+pred_scores_shape=(36,)
+frame=32/41 receiver_sample=10/10 scenario=2026_07_29_02_32_08 timestamp=000122 cavs=[10, 2, 5, 9]
+sgcp_constrained receiver=10 policy=all-cavs sources=[10, 2, 5, 9] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=117920 selected_grids={2: 38, 5: 34, 9: 34}
+fusion_method=early pred_boxes=46 gt_boxes=66
+pred_scores_shape=(46,)
+frame=33/41 receiver_sample=1/10 scenario=2026_07_29_02_32_08 timestamp=000124 cavs=[1, 2, 4, 8]
+sgcp_constrained receiver=1 policy=all-cavs sources=[1, 2, 4, 8] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=97744 selected_grids={2: 35, 4: 34, 8: 27}
+fusion_method=early pred_boxes=40 gt_boxes=69
+pred_scores_shape=(40,)
+frame=33/41 receiver_sample=2/10 scenario=2026_07_29_02_32_08 timestamp=000124 cavs=[2, 1, 8, 10]
+sgcp_constrained receiver=2 policy=all-cavs sources=[2, 1, 8, 10] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=76480 selected_grids={1: 25, 8: 31, 10: 32}
+fusion_method=early pred_boxes=44 gt_boxes=69
+pred_scores_shape=(44,)
+frame=33/41 receiver_sample=3/10 scenario=2026_07_29_02_32_08 timestamp=000124 cavs=[3]
+sgcp_constrained receiver=3 policy=all-cavs sources=[3] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=0 selected_grids={}
+fusion_method=early pred_boxes=14 gt_boxes=55
+pred_scores_shape=(14,)
+frame=33/41 receiver_sample=4/10 scenario=2026_07_29_02_32_08 timestamp=000124 cavs=[4, 1, 7, 8]
+sgcp_constrained receiver=4 policy=all-cavs sources=[4, 1, 7, 8] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=94848 selected_grids={1: 34, 7: 35, 8: 27}
+fusion_method=early pred_boxes=45 gt_boxes=65
+pred_scores_shape=(45,)
+frame=33/41 receiver_sample=5/10 scenario=2026_07_29_02_32_08 timestamp=000124 cavs=[5, 7, 9, 10]
+sgcp_constrained receiver=5 policy=all-cavs sources=[5, 7, 9, 10] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=117840 selected_grids={7: 39, 9: 26, 10: 29}
+fusion_method=early pred_boxes=39 gt_boxes=57Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+
+pred_scores_shape=(39,)
+frame=33/41 receiver_sample=6/10 scenario=2026_07_29_02_32_08 timestamp=000124 cavs=[6]
+sgcp_constrained receiver=6 policy=all-cavs sources=[6] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=0 selected_grids={}
+fusion_method=early pred_boxes=14 gt_boxes=54
+pred_scores_shape=(14,)
+frame=33/41 receiver_sample=7/10 scenario=2026_07_29_02_32_08 timestamp=000124 cavs=[7, 4, 5]
+sgcp_constrained receiver=7 policy=all-cavs sources=[7, 4, 5] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=72192 selected_grids={4: 50, 5: 47}
+fusion_method=early pred_boxes=28 gt_boxes=43
+pred_scores_shape=(28,)
+frame=33/41 receiver_sample=8/10 scenario=2026_07_29_02_32_08 timestamp=000124 cavs=[8, 1, 2, 7]
+sgcp_constrained receiver=8 policy=all-cavs sources=[8, 1, 2, 7] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=117040 selected_grids={1: 30, 2: 34, 7: 39}
+fusion_method=early pred_boxes=33 gt_boxes=46
+pred_scores_shape=(33,)
+frame=33/41 receiver_sample=9/10 scenario=2026_07_29_02_32_08 timestamp=000124 cavs=[9, 5, 10]
+sgcp_constrained receiver=9 policy=all-cavs sources=[9, 5, 10] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=68528 selected_grids={5: 45, 10: 41}
+fusion_method=early pred_boxes=34 gt_boxes=51
+pred_scores_shape=(34,)
+frame=33/41 receiver_sample=10/10 scenario=2026_07_29_02_32_08 timestamp=000124 cavs=[10, 2, 5, 9]
+sgcp_constrained receiver=10 policy=all-cavs sources=[10, 2, 5, 9] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=117856 selected_grids={2: 37, 5: 35, 9: 34}
+fusion_method=early pred_boxes=44 gt_boxes=66
+pred_scores_shape=(44,)
+frame=34/41 receiver_sample=1/10 scenario=2026_07_29_02_32_08 timestamp=000126 cavs=[1, 2, 4, 8]
+sgcp_constrained receiver=1 policy=all-cavs sources=[1, 2, 4, 8] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=97760 selected_grids={2: 35, 4: 34, 8: 27}
+fusion_method=early pred_boxes=41 gt_boxes=69
+pred_scores_shape=(41,)
+frame=34/41 receiver_sample=2/10 scenario=2026_07_29_02_32_08 timestamp=000126 cavs=[2, 1, 8, 10]
+sgcp_constrained receiver=2 policy=all-cavs sources=[2, 1, 8, 10] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=76528 selected_grids={1: 25, 8: 31, 10: 32}
+fusion_method=early pred_boxes=44 gt_boxes=69
+pred_scores_shape=(44,)
+frame=34/41 receiver_sample=3/10 scenario=2026_07_29_02_32_08 timestamp=000126 cavs=[3]
+sgcp_constrained receiver=3 policy=all-cavs sources=[3] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=0 selected_grids={}
+fusion_method=early pred_boxes=14 gt_boxes=55
+pred_scores_shape=(14,)
+frame=34/41 receiver_sample=4/10 scenario=2026_07_29_02_32_08 timestamp=000126 cavs=[4, 1, 7, 8]
+sgcp_constrained receiver=4 policy=all-cavs sources=[4, 1, 7, 8] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=94720 selected_grids={1: 34, 7: 35, 8: 28}
+fusion_method=early pred_boxes=45 gt_boxes=65
+pred_scores_shape=(45,)
+frame=34/41 receiver_sample=5/10 scenario=2026_07_29_02_32_08 timestamp=000126 cavs=[5, 7, 9, 10]
+sgcp_constrained receiver=5 policy=all-cavs sources=[5, 7, 9, 10] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=118032 selected_grids={7: 39, 9: 26, 10: 30}
+fusion_method=early pred_boxes=33 gt_boxes=58
+pred_scores_shape=(33,)
+frame=34/41 receiver_sample=6/10 scenario=2026_07_29_02_32_08 timestamp=000126 cavs=[6]
+sgcp_constrained receiver=6 policy=all-cavs sources=[6] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=0 selected_grids={}
+fusion_method=early pred_boxes=13 gt_boxes=55
+pred_scores_shape=(13,)
+frame=34/41 receiver_sample=7/10 scenario=2026_07_29_02_32_08 timestamp=000126 cavs=[7, 4, 5]
+sgcp_constrained receiver=7 policy=all-cavs sources=[7, 4, 5] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=72288 selected_grids={4: 49, 5: 45}
+fusion_method=early pred_boxes=32 gt_boxes=43
+pred_scores_shape=(32,)
+frame=34/41 receiver_sample=8/10 scenario=2026_07_29_02_32_08 timestamp=000126 cavs=[8, 1, 2, 7]
+sgcp_constrained receiver=8 policy=all-cavs sources=[8, 1, 2, 7] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=117248 selected_grids={1: 30, 2: 34, 7: 39}
+fusion_method=early pred_boxes=31 gt_boxes=45
+pred_scores_shape=(31,)
+frame=34/41 receiver_sample=9/10 scenario=2026_07_29_02_32_08 timestamp=000126 cavs=[9, 5, 10]
+sgcp_constrained receiver=9 policy=all-cavs sources=[9, 5, 10] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=68560 selected_grids={5: 45, 10: 41}
+fusion_method=early pred_boxes=36 gt_boxes=51
+pred_scores_shape=(36,)
+frame=34/41 receiver_sample=10/10 scenario=2026_07_29_02_32_08 timestamp=000126 cavs=[10, 2, 5, 9]
+sgcp_constrained receiver=10 policy=all-cavs sources=[10, 2, 5, 9] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=117712 selected_grids={2: 37, 5: 35, 9: 34}
+fusion_method=early pred_boxes=44 gt_boxes=66
+pred_scores_shape=(44,)
+frame=35/41 receiver_sample=1/10 scenario=2026_07_29_02_32_08 timestamp=000128 cavs=[1, 2, 4, 8]
+sgcp_constrained receiver=1 policy=all-cavs sources=[1, 2, 4, 8] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=97760 selected_grids={2: 35, 4: 34, 8: 29}
+fusion_method=early pred_boxes=40 gt_boxes=69
+pred_scores_shape=(40,)
+frame=35/41 receiver_sample=2/10 scenario=2026_07_29_02_32_08 timestamp=000128 cavs=[2, 1, 8, 10]
+sgcp_constrained receiver=2 policy=all-cavs sources=[2, 1, 8, 10] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=76560 selected_grids={1: 26, 8: 31, 10: 32}
+fusion_method=early pred_boxes=43 gt_boxes=69
+pred_scores_shape=(43,)
+frame=35/41 receiver_sample=3/10 scenario=2026_07_29_02_32_08 timestamp=000128 cavs=[3]
+sgcp_constrained receiver=3 policy=all-cavs sources=[3] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=0 selected_grids={}
+fusion_method=early pred_boxes=14 gt_boxes=55
+pred_scores_shape=(14,)
+frame=35/41 receiver_sample=4/10 scenario=2026_07_29_02_32_08 timestamp=000128 cavs=[4, 1, 7, 8]
+sgcp_constrained receiver=4 policy=all-cavs sources=[4, 1, 7, 8] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=94800 selected_grids={1: 34, 7: 36, 8: 27}
+fusion_method=early pred_boxes=43 gt_boxes=65
+pred_scores_shape=(43,)
+frame=35/41 receiver_sample=5/10 scenario=2026_07_29_02_32_08 timestamp=000128 cavs=[5, 7, 9, 10]
+sgcp_constrained receiver=5 policy=all-cavs sources=[5, 7, 9, 10] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=118672 selected_grids={7: 39, 9: 26, 10: 30}
+fusion_method=early pred_boxes=40 gt_boxes=62
+pred_scores_shape=(40,)
+frame=35/41 receiver_sample=6/10 scenario=2026_07_29_02_32_08 timestamp=000128 cavs=[6]
+sgcp_constrained receiver=6 policy=all-cavs sources=[6] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=0 selected_grids={}
+fusion_method=early pred_boxes=15 gt_boxes=54
+pred_scores_shape=(15,)
+frame=35/41 receiver_sample=7/10 scenario=2026_07_29_02_32_08 timestamp=000128 cavs=[7, 4, 5]
+sgcp_constrained receiver=7 policy=all-cavs sources=[7, 4, 5] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=72000 selected_grids={4: 50, 5: 46}
+fusion_method=early pred_boxes=31 gt_boxes=43
+pred_scores_shape=(31,)
+frame=35/41 receiver_sample=8/10 scenario=2026_07_29_02_32_08 timestamp=000128 cavs=[8, 1, 2, 7]
+sgcp_constrained receiver=8 policy=all-cavs sources=[8, 1, 2, 7] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=117696 selected_grids={1: 30, 2: 34, 7: 39}
+fusion_method=early pred_boxes=29 gt_boxes=45
+pred_scores_shape=(29,)
+frame=35/41 receiver_sample=9/10 scenario=2026_07_29_02_32_08 timestamp=000128 cavs=[9, 5, 10]
+sgcp_constrained receiver=9 policy=all-cavs sources=[9, 5, 10] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=68160 selected_grids={5: 47, 10: 41}
+fusion_method=early pred_boxes=36 gt_boxes=51
+pred_scores_shape=(36,)
+frame=35/41 receiver_sample=10/10 scenario=2026_07_29_02_32_08 timestamp=000128 cavs=[10, 2, 5, 9]
+sgcp_constrained receiver=10 policy=all-cavs sources=[10, 2, 5, 9] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=117344 selected_grids={2: 37, 5: 35, 9: 34}
+fusion_method=early pred_boxes=44 gt_boxes=66Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+
+pred_scores_shape=(44,)
+frame=36/41 receiver_sample=1/10 scenario=2026_07_29_02_32_08 timestamp=000130 cavs=[1, 2, 4, 8]
+sgcp_constrained receiver=1 policy=all-cavs sources=[1, 2, 4, 8] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=97296 selected_grids={2: 35, 4: 34, 8: 28}
+fusion_method=early pred_boxes=41 gt_boxes=68
+pred_scores_shape=(41,)
+frame=36/41 receiver_sample=2/10 scenario=2026_07_29_02_32_08 timestamp=000130 cavs=[2, 1, 8, 10]
+sgcp_constrained receiver=2 policy=all-cavs sources=[2, 1, 8, 10] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=76576 selected_grids={1: 27, 8: 31, 10: 32}
+fusion_method=early pred_boxes=44 gt_boxes=69
+pred_scores_shape=(44,)
+frame=36/41 receiver_sample=3/10 scenario=2026_07_29_02_32_08 timestamp=000130 cavs=[3]
+sgcp_constrained receiver=3 policy=all-cavs sources=[3] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=0 selected_grids={}
+fusion_method=early pred_boxes=15 gt_boxes=55
+pred_scores_shape=(15,)
+frame=36/41 receiver_sample=4/10 scenario=2026_07_29_02_32_08 timestamp=000130 cavs=[4, 1, 7, 8]
+sgcp_constrained receiver=4 policy=all-cavs sources=[4, 1, 7, 8] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=95056 selected_grids={1: 34, 7: 35, 8: 28}
+fusion_method=early pred_boxes=43 gt_boxes=65
+pred_scores_shape=(43,)
+frame=36/41 receiver_sample=5/10 scenario=2026_07_29_02_32_08 timestamp=000130 cavs=[5, 7, 9, 10]
+sgcp_constrained receiver=5 policy=all-cavs sources=[5, 7, 9, 10] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=119424 selected_grids={7: 39, 9: 26, 10: 31}
+fusion_method=early pred_boxes=36 gt_boxes=64
+pred_scores_shape=(36,)
+frame=36/41 receiver_sample=6/10 scenario=2026_07_29_02_32_08 timestamp=000130 cavs=[6]
+sgcp_constrained receiver=6 policy=all-cavs sources=[6] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=0 selected_grids={}
+fusion_method=early pred_boxes=12 gt_boxes=54
+pred_scores_shape=(12,)
+frame=36/41 receiver_sample=7/10 scenario=2026_07_29_02_32_08 timestamp=000130 cavs=[7, 4, 5]
+sgcp_constrained receiver=7 policy=all-cavs sources=[7, 4, 5] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=72272 selected_grids={4: 51, 5: 43}
+fusion_method=early pred_boxes=29 gt_boxes=44
+pred_scores_shape=(29,)
+frame=36/41 receiver_sample=8/10 scenario=2026_07_29_02_32_08 timestamp=000130 cavs=[8, 1, 2, 7]
+sgcp_constrained receiver=8 policy=all-cavs sources=[8, 1, 2, 7] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=117280 selected_grids={1: 30, 2: 33, 7: 39}
+fusion_method=early pred_boxes=32 gt_boxes=46
+pred_scores_shape=(32,)
+frame=36/41 receiver_sample=9/10 scenario=2026_07_29_02_32_08 timestamp=000130 cavs=[9, 5, 10]
+sgcp_constrained receiver=9 policy=all-cavs sources=[9, 5, 10] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=67760 selected_grids={5: 45, 10: 41}
+fusion_method=early pred_boxes=35 gt_boxes=53
+pred_scores_shape=(35,)
+frame=36/41 receiver_sample=10/10 scenario=2026_07_29_02_32_08 timestamp=000130 cavs=[10, 2, 5, 9]
+sgcp_constrained receiver=10 policy=all-cavs sources=[10, 2, 5, 9] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=117440 selected_grids={2: 37, 5: 36, 9: 33}
+fusion_method=early pred_boxes=43 gt_boxes=66
+pred_scores_shape=(43,)
+frame=37/41 receiver_sample=1/10 scenario=2026_07_29_02_32_08 timestamp=000132 cavs=[1, 2, 4, 8]
+sgcp_constrained receiver=1 policy=all-cavs sources=[1, 2, 4, 8] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=96864 selected_grids={2: 35, 4: 34, 8: 28}
+fusion_method=early pred_boxes=39 gt_boxes=68
+pred_scores_shape=(39,)
+frame=37/41 receiver_sample=2/10 scenario=2026_07_29_02_32_08 timestamp=000132 cavs=[2, 1, 8, 10]
+sgcp_constrained receiver=2 policy=all-cavs sources=[2, 1, 8, 10] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=76704 selected_grids={1: 25, 8: 31, 10: 32}
+fusion_method=early pred_boxes=43 gt_boxes=69
+pred_scores_shape=(43,)
+frame=37/41 receiver_sample=3/10 scenario=2026_07_29_02_32_08 timestamp=000132 cavs=[3]
+sgcp_constrained receiver=3 policy=all-cavs sources=[3] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=0 selected_grids={}
+fusion_method=early pred_boxes=15 gt_boxes=54
+pred_scores_shape=(15,)
+frame=37/41 receiver_sample=4/10 scenario=2026_07_29_02_32_08 timestamp=000132 cavs=[4, 1, 7, 8]
+sgcp_constrained receiver=4 policy=all-cavs sources=[4, 1, 7, 8] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=95024 selected_grids={1: 34, 7: 35, 8: 28}
+fusion_method=early pred_boxes=42 gt_boxes=65
+pred_scores_shape=(42,)
+frame=37/41 receiver_sample=5/10 scenario=2026_07_29_02_32_08 timestamp=000132 cavs=[5, 7, 9, 10]
+sgcp_constrained receiver=5 policy=all-cavs sources=[5, 7, 9, 10] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=119168 selected_grids={7: 38, 9: 27, 10: 30}
+fusion_method=early pred_boxes=41 gt_boxes=64
+pred_scores_shape=(41,)
+frame=37/41 receiver_sample=6/10 scenario=2026_07_29_02_32_08 timestamp=000132 cavs=[6]
+sgcp_constrained receiver=6 policy=all-cavs sources=[6] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=0 selected_grids={}
+fusion_method=early pred_boxes=12 gt_boxes=54
+pred_scores_shape=(12,)
+frame=37/41 receiver_sample=7/10 scenario=2026_07_29_02_32_08 timestamp=000132 cavs=[7, 4, 5]
+sgcp_constrained receiver=7 policy=all-cavs sources=[7, 4, 5] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=72736 selected_grids={4: 51, 5: 46}
+fusion_method=early pred_boxes=30 gt_boxes=44
+pred_scores_shape=(30,)
+frame=37/41 receiver_sample=8/10 scenario=2026_07_29_02_32_08 timestamp=000132 cavs=[8, 1, 2, 7]
+sgcp_constrained receiver=8 policy=all-cavs sources=[8, 1, 2, 7] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=117472 selected_grids={1: 29, 2: 33, 7: 39}
+fusion_method=early pred_boxes=31 gt_boxes=47
+pred_scores_shape=(31,)
+frame=37/41 receiver_sample=9/10 scenario=2026_07_29_02_32_08 timestamp=000132 cavs=[9, 5, 10]
+sgcp_constrained receiver=9 policy=all-cavs sources=[9, 5, 10] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=68784 selected_grids={5: 47, 10: 41}
+fusion_method=early pred_boxes=38 gt_boxes=53
+pred_scores_shape=(38,)
+frame=37/41 receiver_sample=10/10 scenario=2026_07_29_02_32_08 timestamp=000132 cavs=[10, 2, 5, 9]
+sgcp_constrained receiver=10 policy=all-cavs sources=[10, 2, 5, 9] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=118464 selected_grids={2: 37, 5: 35, 9: 34}
+fusion_method=early pred_boxes=40 gt_boxes=65
+pred_scores_shape=(40,)
+frame=38/41 receiver_sample=1/10 scenario=2026_07_29_02_32_08 timestamp=000134 cavs=[1, 2, 4, 8]
+sgcp_constrained receiver=1 policy=all-cavs sources=[1, 2, 4, 8] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=96528 selected_grids={2: 36, 4: 34, 8: 28}
+fusion_method=early pred_boxes=40 gt_boxes=68
+pred_scores_shape=(40,)
+frame=38/41 receiver_sample=2/10 scenario=2026_07_29_02_32_08 timestamp=000134 cavs=[2, 1, 8, 10]
+sgcp_constrained receiver=2 policy=all-cavs sources=[2, 1, 8, 10] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=76656 selected_grids={1: 25, 8: 31, 10: 32}
+fusion_method=early pred_boxes=41 gt_boxes=69
+pred_scores_shape=(41,)
+frame=38/41 receiver_sample=3/10 scenario=2026_07_29_02_32_08 timestamp=000134 cavs=[3]
+sgcp_constrained receiver=3 policy=all-cavs sources=[3] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=0 selected_grids={}
+fusion_method=early pred_boxes=13 gt_boxes=53
+pred_scores_shape=(13,)
+frame=38/41 receiver_sample=4/10 scenario=2026_07_29_02_32_08 timestamp=000134 cavs=[4, 1, 7, 8]
+sgcp_constrained receiver=4 policy=all-cavs sources=[4, 1, 7, 8] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=95232 selected_grids={1: 34, 7: 35, 8: 28}
+fusion_method=early pred_boxes=43 gt_boxes=65
+pred_scores_shape=(43,)
+frame=38/41 receiver_sample=5/10 scenario=2026_07_29_02_32_08 timestamp=000134 cavs=[5, 7, 9, 10]
+sgcp_constrained receiver=5 policy=all-cavs sources=[5, 7, 9, 10] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=119664 selected_grids={7: 38, 9: 27, 10: 29}
+fusion_method=early pred_boxes=39 gt_boxes=65Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+
+pred_scores_shape=(39,)
+frame=38/41 receiver_sample=6/10 scenario=2026_07_29_02_32_08 timestamp=000134 cavs=[6]
+sgcp_constrained receiver=6 policy=all-cavs sources=[6] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=0 selected_grids={}
+fusion_method=early pred_boxes=12 gt_boxes=54
+pred_scores_shape=(12,)
+frame=38/41 receiver_sample=7/10 scenario=2026_07_29_02_32_08 timestamp=000134 cavs=[7, 4, 5]
+sgcp_constrained receiver=7 policy=all-cavs sources=[7, 4, 5] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=72848 selected_grids={4: 49, 5: 45}
+fusion_method=early pred_boxes=33 gt_boxes=43
+pred_scores_shape=(33,)
+frame=38/41 receiver_sample=8/10 scenario=2026_07_29_02_32_08 timestamp=000134 cavs=[8, 1, 2, 7]
+sgcp_constrained receiver=8 policy=all-cavs sources=[8, 1, 2, 7] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=117760 selected_grids={1: 29, 2: 34, 7: 39}
+fusion_method=early pred_boxes=33 gt_boxes=46
+pred_scores_shape=(33,)
+frame=38/41 receiver_sample=9/10 scenario=2026_07_29_02_32_08 timestamp=000134 cavs=[9, 5, 10]
+sgcp_constrained receiver=9 policy=all-cavs sources=[9, 5, 10] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=69456 selected_grids={5: 46, 10: 40}
+fusion_method=early pred_boxes=37 gt_boxes=52
+pred_scores_shape=(37,)
+frame=38/41 receiver_sample=10/10 scenario=2026_07_29_02_32_08 timestamp=000134 cavs=[10, 2, 5, 9]
+sgcp_constrained receiver=10 policy=all-cavs sources=[10, 2, 5, 9] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=119232 selected_grids={2: 37, 5: 35, 9: 33}
+fusion_method=early pred_boxes=45 gt_boxes=65
+pred_scores_shape=(45,)
+frame=39/41 receiver_sample=1/10 scenario=2026_07_29_02_32_08 timestamp=000136 cavs=[1, 2, 4, 8]
+sgcp_constrained receiver=1 policy=all-cavs sources=[1, 2, 4, 8] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=95952 selected_grids={2: 35, 4: 34, 8: 28}
+fusion_method=early pred_boxes=40 gt_boxes=68
+pred_scores_shape=(40,)
+frame=39/41 receiver_sample=2/10 scenario=2026_07_29_02_32_08 timestamp=000136 cavs=[2, 1, 8, 10]
+sgcp_constrained receiver=2 policy=all-cavs sources=[2, 1, 8, 10] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=76736 selected_grids={1: 24, 8: 30, 10: 32}
+fusion_method=early pred_boxes=41 gt_boxes=69
+pred_scores_shape=(41,)
+frame=39/41 receiver_sample=3/10 scenario=2026_07_29_02_32_08 timestamp=000136 cavs=[3]
+sgcp_constrained receiver=3 policy=all-cavs sources=[3] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=0 selected_grids={}
+fusion_method=early pred_boxes=13 gt_boxes=53
+pred_scores_shape=(13,)
+frame=39/41 receiver_sample=4/10 scenario=2026_07_29_02_32_08 timestamp=000136 cavs=[4, 1, 7, 8]
+sgcp_constrained receiver=4 policy=all-cavs sources=[4, 1, 7, 8] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=95360 selected_grids={1: 33, 7: 35, 8: 28}
+fusion_method=early pred_boxes=44 gt_boxes=65
+pred_scores_shape=(44,)
+frame=39/41 receiver_sample=5/10 scenario=2026_07_29_02_32_08 timestamp=000136 cavs=[5, 7, 9, 10]
+sgcp_constrained receiver=5 policy=all-cavs sources=[5, 7, 9, 10] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=120880 selected_grids={7: 38, 9: 27, 10: 29}
+fusion_method=early pred_boxes=43 gt_boxes=65
+pred_scores_shape=(43,)
+frame=39/41 receiver_sample=6/10 scenario=2026_07_29_02_32_08 timestamp=000136 cavs=[6]
+sgcp_constrained receiver=6 policy=all-cavs sources=[6] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=0 selected_grids={}
+fusion_method=early pred_boxes=13 gt_boxes=54
+pred_scores_shape=(13,)
+frame=39/41 receiver_sample=7/10 scenario=2026_07_29_02_32_08 timestamp=000136 cavs=[7, 4, 5]
+sgcp_constrained receiver=7 policy=all-cavs sources=[7, 4, 5] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=73008 selected_grids={4: 49, 5: 46}
+fusion_method=early pred_boxes=28 gt_boxes=44
+pred_scores_shape=(28,)
+frame=39/41 receiver_sample=8/10 scenario=2026_07_29_02_32_08 timestamp=000136 cavs=[8, 1, 2, 7]
+sgcp_constrained receiver=8 policy=all-cavs sources=[8, 1, 2, 7] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=118112 selected_grids={1: 29, 2: 34, 7: 39}
+fusion_method=early pred_boxes=35 gt_boxes=47
+pred_scores_shape=(35,)
+frame=39/41 receiver_sample=9/10 scenario=2026_07_29_02_32_08 timestamp=000136 cavs=[9, 5, 10]
+sgcp_constrained receiver=9 policy=all-cavs sources=[9, 5, 10] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=70384 selected_grids={5: 47, 10: 39}
+fusion_method=early pred_boxes=35 gt_boxes=53
+pred_scores_shape=(35,)
+frame=39/41 receiver_sample=10/10 scenario=2026_07_29_02_32_08 timestamp=000136 cavs=[10, 2, 5, 9]
+sgcp_constrained receiver=10 policy=all-cavs sources=[10, 2, 5, 9] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=120288 selected_grids={2: 37, 5: 35, 9: 32}
+fusion_method=early pred_boxes=43 gt_boxes=64
+pred_scores_shape=(43,)
+frame=40/41 receiver_sample=1/10 scenario=2026_07_29_02_32_08 timestamp=000138 cavs=[1, 2, 4, 8]
+sgcp_constrained receiver=1 policy=all-cavs sources=[1, 2, 4, 8] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=95712 selected_grids={2: 35, 4: 34, 8: 28}
+fusion_method=early pred_boxes=39 gt_boxes=68
+pred_scores_shape=(39,)
+frame=40/41 receiver_sample=2/10 scenario=2026_07_29_02_32_08 timestamp=000138 cavs=[2, 1, 8, 10]
+sgcp_constrained receiver=2 policy=all-cavs sources=[2, 1, 8, 10] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=77072 selected_grids={1: 25, 8: 30, 10: 32}
+fusion_method=early pred_boxes=43 gt_boxes=69
+pred_scores_shape=(43,)
+frame=40/41 receiver_sample=3/10 scenario=2026_07_29_02_32_08 timestamp=000138 cavs=[3]
+sgcp_constrained receiver=3 policy=all-cavs sources=[3] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=0 selected_grids={}
+fusion_method=early pred_boxes=13 gt_boxes=52
+pred_scores_shape=(13,)
+frame=40/41 receiver_sample=4/10 scenario=2026_07_29_02_32_08 timestamp=000138 cavs=[4, 1, 7, 8]
+sgcp_constrained receiver=4 policy=all-cavs sources=[4, 1, 7, 8] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=95616 selected_grids={1: 33, 7: 35, 8: 28}
+fusion_method=early pred_boxes=43 gt_boxes=65
+pred_scores_shape=(43,)
+frame=40/41 receiver_sample=5/10 scenario=2026_07_29_02_32_08 timestamp=000138 cavs=[5, 7, 9, 10]
+sgcp_constrained receiver=5 policy=all-cavs sources=[5, 7, 9, 10] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=120576 selected_grids={7: 38, 9: 25, 10: 29}
+fusion_method=early pred_boxes=43 gt_boxes=65
+pred_scores_shape=(43,)
+frame=40/41 receiver_sample=6/10 scenario=2026_07_29_02_32_08 timestamp=000138 cavs=[6]
+sgcp_constrained receiver=6 policy=all-cavs sources=[6] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=0 selected_grids={}
+fusion_method=early pred_boxes=13 gt_boxes=54
+pred_scores_shape=(13,)
+frame=40/41 receiver_sample=7/10 scenario=2026_07_29_02_32_08 timestamp=000138 cavs=[7, 4, 5]
+sgcp_constrained receiver=7 policy=all-cavs sources=[7, 4, 5] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=74176 selected_grids={4: 47, 5: 46}
+fusion_method=early pred_boxes=31 gt_boxes=43
+pred_scores_shape=(31,)
+frame=40/41 receiver_sample=8/10 scenario=2026_07_29_02_32_08 timestamp=000138 cavs=[8, 1, 2, 7]
+sgcp_constrained receiver=8 policy=all-cavs sources=[8, 1, 2, 7] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=118352 selected_grids={1: 29, 2: 34, 7: 39}
+fusion_method=early pred_boxes=33 gt_boxes=46
+pred_scores_shape=(33,)
+frame=40/41 receiver_sample=9/10 scenario=2026_07_29_02_32_08 timestamp=000138 cavs=[9, 5, 10]
+sgcp_constrained receiver=9 policy=all-cavs sources=[9, 5, 10] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=72928 selected_grids={5: 47, 10: 39}
+fusion_method=early pred_boxes=35 gt_boxes=53
+pred_scores_shape=(35,)
+frame=40/41 receiver_sample=10/10 scenario=2026_07_29_02_32_08 timestamp=000138 cavs=[10, 2, 5, 9]
+sgcp_constrained receiver=10 policy=all-cavs sources=[10, 2, 5, 9] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=122928 selected_grids={2: 36, 5: 36, 9: 33}
+fusion_method=early pred_boxes=46 gt_boxes=64Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+C:\Users\sakakibara\miniconda3\envs\opencda\lib\site-packages\torch\nn\functional.py:1806: UserWarning: nn.functional.sigmoid is deprecated. Use torch.sigmoid instead.
+  warnings.warn("nn.functional.sigmoid is deprecated. Use torch.sigmoid instead.")
+
+pred_scores_shape=(46,)
+frame=41/41 receiver_sample=1/10 scenario=2026_07_29_02_32_08 timestamp=000140 cavs=[1, 2, 4, 8]
+sgcp_constrained receiver=1 policy=all-cavs sources=[1, 2, 4, 8] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=95552 selected_grids={2: 35, 4: 34, 8: 28}
+fusion_method=early pred_boxes=38 gt_boxes=67
+pred_scores_shape=(38,)
+frame=41/41 receiver_sample=2/10 scenario=2026_07_29_02_32_08 timestamp=000140 cavs=[2, 1, 8, 10]
+sgcp_constrained receiver=2 policy=all-cavs sources=[2, 1, 8, 10] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=77600 selected_grids={1: 25, 8: 30, 10: 32}
+fusion_method=early pred_boxes=42 gt_boxes=68
+pred_scores_shape=(42,)
+frame=41/41 receiver_sample=3/10 scenario=2026_07_29_02_32_08 timestamp=000140 cavs=[3]
+sgcp_constrained receiver=3 policy=all-cavs sources=[3] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=0 selected_grids={}
+fusion_method=early pred_boxes=14 gt_boxes=52
+pred_scores_shape=(14,)
+frame=41/41 receiver_sample=4/10 scenario=2026_07_29_02_32_08 timestamp=000140 cavs=[4, 1, 7, 8]
+sgcp_constrained receiver=4 policy=all-cavs sources=[4, 1, 7, 8] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=95888 selected_grids={1: 34, 7: 35, 8: 29}
+fusion_method=early pred_boxes=42 gt_boxes=65
+pred_scores_shape=(42,)
+frame=41/41 receiver_sample=5/10 scenario=2026_07_29_02_32_08 timestamp=000140 cavs=[5, 7, 9, 10]
+sgcp_constrained receiver=5 policy=all-cavs sources=[5, 7, 9, 10] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=120736 selected_grids={7: 38, 9: 26, 10: 28}
+fusion_method=early pred_boxes=42 gt_boxes=66
+pred_scores_shape=(42,)
+frame=41/41 receiver_sample=6/10 scenario=2026_07_29_02_32_08 timestamp=000140 cavs=[6]
+sgcp_constrained receiver=6 policy=all-cavs sources=[6] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=0 selected_grids={}
+fusion_method=early pred_boxes=13 gt_boxes=53
+pred_scores_shape=(13,)
+frame=41/41 receiver_sample=7/10 scenario=2026_07_29_02_32_08 timestamp=000140 cavs=[7, 4, 5]
+sgcp_constrained receiver=7 policy=all-cavs sources=[7, 4, 5] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=75136 selected_grids={4: 47, 5: 46}
+fusion_method=early pred_boxes=30 gt_boxes=43
+pred_scores_shape=(30,)
+frame=41/41 receiver_sample=8/10 scenario=2026_07_29_02_32_08 timestamp=000140 cavs=[8, 1, 2, 7]
+sgcp_constrained receiver=8 policy=all-cavs sources=[8, 1, 2, 7] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=118528 selected_grids={1: 29, 2: 35, 7: 39}
+fusion_method=early pred_boxes=33 gt_boxes=46
+pred_scores_shape=(33,)
+frame=41/41 receiver_sample=9/10 scenario=2026_07_29_02_32_08 timestamp=000140 cavs=[9, 5, 10]
+sgcp_constrained receiver=9 policy=all-cavs sources=[9, 5, 10] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=74256 selected_grids={5: 46, 10: 38}
+fusion_method=early pred_boxes=37 gt_boxes=53
+pred_scores_shape=(37,)
+frame=41/41 receiver_sample=10/10 scenario=2026_07_29_02_32_08 timestamp=000140 cavs=[10, 2, 5, 9]
+sgcp_constrained receiver=10 policy=all-cavs sources=[10, 2, 5, 9] clusters=10 ra=selective_edgecooper_global_pmax comm_bytes=124640 selected_grids={2: 36, 5: 36, 9: 32}
+fusion_method=early pred_boxes=44 gt_boxes=64
+pred_scores_shape=(44,)
+cp counter: 410
+Evaluate final average precision results:
+  - Fusion method: early
+  - The Average Precision at IOU 0.3 is 0.55, The Average Precision at IOU 0.5 is 0.50, The Average Precision at IOU 0.7 is 0.33
+sgcp_summary frames=410 avg_comm_bytes=74568.43 total_comm_bytes=30573056 avg_source_cavs=3.20 avg_selected_grids=76.80

@@ -1,0 +1,69 @@
+Format = auto
+C:\Users\sakakibara\miniconda3\envs\opencda\lib\site-packages\torch\nn\functional.py:1806: UserWarning: nn.functional.sigmoid is deprecated. Use torch.sigmoid instead.
+  warnings.warn("nn.functional.sigmoid is deprecated. Use torch.sigmoid instead.")
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+Format = auto
+Extension = pcd
+resuming by loading epoch 10000
+{
+  "cav_count": 20,
+  "coperception_yaml": "docs\\doc_workspace\\SGCP\\artifacts\\multi_backbone_20260731\\enable_coperception_voxelnet_early.yaml",
+  "dataset_root": "D:\\Data\\Carla",
+  "ego_cav_id": "1",
+  "flop_policy": "Conv2d/ConvTranspose2d/Linear/BatchNorm/ReLU hooks plus PillarVFE elementwise estimate; multiply-add=2 FLOPs; voxelization/hash/scatter memory ops excluded",
+  "flops_by_module_type": {
+    "BatchNorm1d": 152408064.0,
+    "BatchNorm2d": 104755200.0,
+    "Conv2d": 72262502400.0,
+    "ConvTranspose2d": 85381120000.0,
+    "Linear": 1524080640.0
+  },
+  "flops_by_scope": {
+    "detection_head": 865638400.0,
+    "other_detector": 158559227904.0
+  },
+  "fusion_method": "early",
+  "input_points": 277236,
+  "point_feature_flops_per_forward": 0.0,
+  "point_feature_gflops_per_forward": 0.0,
+  "profiled_flops_per_forward": 159424866304.0,
+  "profiled_gflops_per_forward": 159.424866304,
+  "scenario_id": "2026_07_29_02_32_08",
+  "timestamp": "000060"
+}

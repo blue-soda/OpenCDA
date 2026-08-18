@@ -1,4 +1,16 @@
-# Dense PointPillar Local-Preserving Table 1 Rerun
+# DEPRECATED: Dense PointPillar Local-Preserving Table 1 Rerun
+
+Status: deprecated for paper-facing tables.
+
+Reason: this artifact used the older scheduler/sample-dependent GT accounting
+path. The resulting AP values are not suitable for the global-GT Table 1
+protocol because the evaluated GT scope can vary with the receiver sample and
+helper composition. The current dense paper-facing Table 1 is
+`C:\Workspace\2026-7-papers\infocom\SGCP\experiment-dense-lidar-ver\01_protocol_native_baselines.md`,
+which uses full-frame GT for every method.
+
+Keep this file only as provenance for the local-preserving-output debugging
+step; do not cite its AP numbers in the paper.
 
 Purpose: fix the Dense Roundabout / PointPillar-Attentive Table 1 issues where protocol-native baselines could lose receiver-local detections and where GFLOPs were nearly identical despite different fused point-cloud sizes.
 

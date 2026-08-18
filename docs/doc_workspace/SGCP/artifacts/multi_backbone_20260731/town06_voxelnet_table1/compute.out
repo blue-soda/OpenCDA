@@ -1,0 +1,3 @@
+compute_profile_rows=7
+output_csv=docs\doc_workspace\SGCP\artifacts\multi_backbone_20260731\town06_voxelnet_table1\compute.csv
+summary_md=docs\doc_workspace\SGCP\artifacts\multi_backbone_20260731\town06_voxelnet_table1\compute.md
