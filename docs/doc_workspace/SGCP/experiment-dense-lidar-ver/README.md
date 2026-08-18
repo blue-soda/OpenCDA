@@ -7,6 +7,16 @@ backbone validation, and dense package audit are complete.
 
 Dataset: `D:\Data\Carla\2026_07_29_02_32_08`.
 
+Dataset export command:
+
+```powershell
+conda run --no-capture-output -n opencda python opencda.py -t v2xp_cluster_carla_dense --dump
+```
+
+This command requires one running CARLA server and writes the dump under
+`D:\Data\Carla`; the dense package uses the generated scenario directory
+`2026_07_29_02_32_08`.
+
 Scenario: `v2xp_cluster_carla_dense`, same 20-CAV Town03 layout as `v2xp_cluster_carla`; vehicle LiDAR changed to 32 channels, 320000 points/s, 20 Hz rotation, 50 m range.
 
 Frame protocol: DataDumper skips ticks before `000060` and stores every 2 CARLA ticks; exported frame range is `000060`-`000140`, 41 frames per CAV.

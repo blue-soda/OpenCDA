@@ -10,6 +10,7 @@ This document records the dense-LiDAR experiment parameters and the exact SGCP a
 | CARLA map/config source | `opencda/scenario_testing/config_yaml/v2xp_cluster_carla_dense.yaml` plus `default.yaml` | Same 20-CAV layout as `v2xp_cluster_carla`; vehicle LiDAR parameters are overridden for dense export. |
 | Offline dataset root | `D:\Data\Carla` | Dataset path used for replay experiments. |
 | Dataset scenario id | `2026_07_29_02_32_08` | Dense 41-frame experiment dump. |
+| Dataset export command | `conda run --no-capture-output -n opencda python opencda.py -t v2xp_cluster_carla_dense --dump` | Run with one CARLA server active; output is placed under `D:\Data\Carla` and then replayed offline. |
 | Total simulated vehicles | 100 | One `single_cav` plus 99 traffic-manager vehicles in the scenario; 19 of the traffic-manager vehicles are managed CAVs. |
 | CAV count | 20 | One ego/single CAV plus 19 managed traffic CAVs. |
 | Background vehicles | 80 | Simulated traffic vehicles without CAV perception participation. |

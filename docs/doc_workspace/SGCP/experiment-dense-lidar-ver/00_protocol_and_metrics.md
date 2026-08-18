@@ -7,6 +7,7 @@ This directory contains the 2026-07-29 dense-LiDAR SGCP experiment data. All res
 | Item | Value |
 | --- | --- |
 | Dataset | `D:\Data\Carla\2026_07_29_02_32_08` |
+| Dataset export command | `conda run --no-capture-output -n opencda python opencda.py -t v2xp_cluster_carla_dense --dump`; requires one running CARLA server and writes under `D:\Data\Carla` |
 | Scenario | `v2xp_cluster_carla_dense` offline replay |
 | CAV count | 20 |
 | Evaluation frames | 41 frames, `000060` to `000140` |
